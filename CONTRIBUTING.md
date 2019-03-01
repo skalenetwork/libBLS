@@ -4,7 +4,14 @@ Thank you for considering to help out with the source code! We welcome
 contributions from anyone on the internet, and are grateful for even the
 smallest of fixes!
 
-## Coding guidelines
+
+**When contributing to this repository, please first discuss the change you wish to make by opening an issue.**
+
+
+## I don't want to read this whole thing I just have a question!!!
+
+> **Note:** Please don't file an issue to ask a question. You'll get faster results by simply [joining our Discord and asking our team there](https://discord.gg/vvUtWJB).
+
 
 ## Pull Request Philosophy
 
@@ -12,6 +19,14 @@ Patchsets should always be focused. For example, a pull request could add a
 feature, fix a bug, or refactor code; but not a mixture. Please also avoid super
 pull requests which attempt to do too much, are overly large, or overly complex
 as this makes review difficult.
+
+## Branch naming convention
+Name your branches with one of the following prefixes (`bugs/`, `features/`, or `enhancements/`), add the issue number and add a description: `[type]/[issueNum]-[change-with-hyphens]`. Examples:
+
+- `bugs/87-archives-crash-app`
+- `bugs/92-font-size-update-not-immediate`
+- `enhancements/56-add-date-search`
+- `enhancements/63-show-number-tweets-in-search-results`
 
 
 ### Features
