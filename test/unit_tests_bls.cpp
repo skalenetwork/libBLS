@@ -371,8 +371,8 @@ BOOST_AUTO_TEST_CASE(simillarSignatures) {
   
   
 
-  std::vector<libff::alt_bn128_G1> single_signatures_snd(16);
-  for (size_t i = 0; i < 16; ++i) {
+  std::vector<libff::alt_bn128_G1> single_signatures_snd(11);
+  for (size_t i = 0; i < 11; ++i) {
     single_signatures_snd[i] = obj.Signing(hash, secret_keys_for_random_subgroup[i]);
   }
 
