@@ -458,7 +458,7 @@ BOOST_AUTO_TEST_CASE(RandomPolynomial) {
 
   std::srand(unsigned(std::time(0)));
 
-  size_t deg = std::rand() % 16 + 1;
+  size_t deg = std::rand() % 30 + 1; //  a degree of polynomial should never be 0
 
   std::vector<libff::alt_bn128_Fr> pol(deg + 1);
 
@@ -489,12 +489,13 @@ BOOST_AUTO_TEST_CASE(RandomPolynomial) {
     return value;
   };
 
+  // generating random points to interpolate their values and to get a value at point zero
   std::vector<size_t> indexes(deg + 1, 0);
   std::set<size_t> nodes;
   for (size_t i = 0; i < deg + 1; ++i) {
     std::srand(unsigned(std::time(0)));
     while (indexes[i] == 0 || nodes.find(indexes[i]) != nodes.end()) {
-      indexes[i] = std::rand() % 16 + 1;
+      indexes[i] = std::rand() % (5 * deg)  ;
     }
     nodes.insert(indexes[i]);
   }
