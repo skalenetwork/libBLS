@@ -33,6 +33,7 @@ matrix:
                       - lcov --directory . --capture --output-file coverage.info # capture coverage info
                       - lcov --list coverage.info # debug before upload
                       - coveralls-lcov coverage.info # for open source
+                      - codecov
                       - echo "========================================="
         - os: linux
           env: BUILDING_FOR_OS=linux CXX=g++-7 CC=gcc-7
