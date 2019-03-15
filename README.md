@@ -13,7 +13,7 @@ The signature process proceeds in 3 steps:
 2. Signing
 3. Verification
 
-libBLS uses the alt_bn128 elliptic curve.
+libBLS uses the alt_bn128 (Barreto-Naehrig curve) elliptic curve to be compatible with Ethereum's cryptography and provides 128 bits of security.
 
 ## Installation Requirements
 
