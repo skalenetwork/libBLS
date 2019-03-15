@@ -5,7 +5,7 @@ A mathematical library written in C++ that supports BLS threshold signatures and
 The libBLS library is developed by SKALE Labs and uses SCIPR-LAB's libff (see Libraries below).
 
 # Overview
-libBLS is a C++ library for BLS signatures and DKG that supports both threshold signatures and multi-signatures. 
+libBLS is a C++ library for [BLS signatures](https://en.wikipedia.org/wiki/Boneh%E2%80%93Lynn%E2%80%93Shacham) and [DKG](https://en.wikipedia.org/wiki/Distributed_key_generation) that supports both threshold signatures and multi-signatures. 
 
 The signature process proceeds in 4 steps:
 
@@ -14,7 +14,7 @@ The signature process proceeds in 4 steps:
 3. Signing
 4. Verification
 
-libBLS uses the alt_bn128 (Barreto-Naehrig curve) elliptic curve to be compatible with Ethereum's cryptography and provides 128 bits of security.
+libBLS uses the alt_bn128 (Barreto-Naehrig curve) elliptic curve to be compatible with [Ethereum's cryptography](https://ethereum.github.io/yellowpaper/paper.pdf) and provides 128 bits of security.
 
 ## Perfomance Specifications
 
@@ -47,7 +47,7 @@ cmake -H. -Bbuild                   # Configure the project and create a build d
 cmake --build build -- -j$(nproc)   # Build all default targets using all cores.
 ```
 
-### Import the library
+### Include the library
 ```
 #include <bls/bls.h>
 #include <dkg/dkg.h>
