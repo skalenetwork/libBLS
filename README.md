@@ -15,6 +15,11 @@ The signature process proceeds in 3 steps:
 
 libBLS uses the alt_bn128 (Barreto-Naehrig curve) elliptic curve to be compatible with Ethereum's cryptography and provides 128 bits of security.
 
+## Perfomance Specifications
+
+libBLS allows to sign about 3000 messages per second on a single thread(Intel® Core™ i3-4160 CPU @ 3.60GHz).
+However, for our solution we have implemented constant time signing (0.01 sec for sign) to avoid timing attacks.
+
 ## Installation Requirements
 
 libBLS has been built and tested on Ubuntu and Mac.
