@@ -1,0 +1,38 @@
+language: generic
+sudo: required
+branches:
+    only:
+        - travis-ci
+matrix:
+    include:
+        - os: linux
+          env: BUILDING_FOR_OS=linux CXX=g++-7 CC=gcc-7
+          addons:
+              apt:
+                  packages:
+                      - g++-7
+                      - valgrind
+                      - gawk
+                      - sed
+                      - lcov
+                      - libboost-dev
+                  sources: &sources
+                      - ubuntu-toolchain-r-test
+        - os: osx
+          osx_image: xcode10.1
+          env: BUILDING_FOR_OS=osx
+          addons:
+              apt:
+                  packages:
+                      - boost
+script:
+    - mkdir build
+    - cd build
+    - cmake ..
+    - make
+notifications:
+    email:
+        recipients:
+            - sergiy@skalelabs.com
+        on_success: change
+        on_failure: always
