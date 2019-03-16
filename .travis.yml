@@ -28,7 +28,7 @@ matrix:
                   after_success:
                       - cd build
                       - echo "========================================="
-                      - ctest
+                      - make test
                       - cd ..
                       - lcov --directory . --capture --output-file coverage.info # capture coverage info
                       - lcov --list coverage.info # debug before upload
