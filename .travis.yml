@@ -6,7 +6,7 @@ branches:
 matrix:
     include:
         - os: linux
-          env: BUILDING_FOR_OS=linux CXX=g++-7 CC=gcc-7 CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+          env: BUILDING_FOR_OS=linux CXX=g++-7 CC=gcc-7 CMAKE_BUILD_FLAGS="-DCOVERAGE=ON" CODECOV_TOKEN="77018e0e-be89-47c6-8db5-cbde75153dce"
           addons:
               apt:
                   packages:
@@ -19,8 +19,7 @@ matrix:
                   sources: &sources
                       - ubuntu-toolchain-r-test
           before_script:
-              - echo "========================================= before_script"
-              - export CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+              - echo "========================================= before_script (coverage)"
               - gem install coveralls-lcov
               - mkdir -p build
               - cd build
@@ -28,7 +27,7 @@ matrix:
               - cd ..
           after_success:
               - cd build
-              - echo "========================================= after_success"
+              - echo "========================================= after_success (coverage)"
               - make test
               - cd ..
               - lcov --directory . --capture --output-file coverage.info # capture coverage info
