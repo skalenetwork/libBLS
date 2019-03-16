@@ -21,7 +21,8 @@ matrix:
           before_script:
               - echo "========================================= before_script (coverage)"
               - sudo apt-get update -qq
-              - pip install codecov
+              - sudo pip install --upgrade pip
+              - sudo pip install codecov
               - echo "========================================= before_script (codecov installed)"
               - gem install coveralls-lcov
               - echo "========================================= before_script (coveralls-lcov installed)"
