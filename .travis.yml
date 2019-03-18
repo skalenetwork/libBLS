@@ -14,7 +14,6 @@ matrix:
                       - valgrind
                       - gawk
                       - sed
-                      - lcov
                       - libboost-dev
                   sources: &sources
                       - ubuntu-toolchain-r-test
@@ -22,24 +21,20 @@ matrix:
               - echo "========================================= before_script (coverage)"
               - sudo apt-get update -qq
               - sudo pip install --upgrade pip
-              - #sudo pip install codecov
+              - sudo python -m pip install
               - echo "========================================= before_script (codecov installed)"
-              - #gem install coveralls-lcov
-              - echo "========================================= before_script (coveralls-lcov installed)"
               - mkdir -p build
               - cd build
-              - #lcov --directory . --zerocounters
               - cd ..
           after_success:
               - cd build
               - echo "========================================= after_success (coverage)"
               - make test
               - cd ..
-              - #lcov --directory . --capture --output-file coverage.info # capture coverage info
-              - #lcov --list coverage.info # debug before upload
-              - #coveralls-lcov coverage.info # for open source
-              - #codecov
-              - #bash <(curl -s https://codecov.io/bash)
+              - ./get_code_cov
+              - echo "========================================= after_success (coverage gathered to gcov files)"
+              - codecov
+              - bash <(curl -s https://codecov.io/bash)
               - echo "========================================= after_success (coverage end)"
         - os: linux
           env: BUILDING_FOR_OS=linux CXX=g++-7 CC=gcc-7 CMAKE_BUILD_FLAGS=""
