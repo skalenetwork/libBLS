@@ -21,7 +21,7 @@ matrix:
               - echo "========================================= before_script (coverage)"
               - sudo apt-get update -qq
               - sudo pip install --upgrade pip
-              - sudo python -m pip install
+              - sudo python -m pip install codecov
               - echo "========================================= before_script (codecov installed)"
               - mkdir -p build
               - cd build
