@@ -15,12 +15,16 @@ matrix:
                       - gawk
                       - sed
                       - libboost-dev
+                      - libffi-dev
+                      - libssl-dev
                   sources: &sources
                       - ubuntu-toolchain-r-test
           before_script:
               - echo "========================================= before_script (coverage)"
               - sudo apt-get update -qq
-              - sudo pip install --upgrade pip
+              - sudo python -m pip install --upgrade pip
+              - sudo python -m pip install pyopenssl ndg-httpsclient pyasn1
+              - sudo python -m pip install requests[security]
               - sudo python -m pip install codecov --ignore-installed
               - echo "========================================= before_script (codecov installed)"
               - mkdir -p build
