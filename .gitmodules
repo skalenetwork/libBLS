@@ -1,0 +1,7 @@
+[submodule "libBLS"]
+	path = libBLS
+	url = git@github.com:scipr-lab/libff.git
+
+[submodule "mpir"]
+	path = mpir
+	url = git@github.com:chfast/mpir.git
