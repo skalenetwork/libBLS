@@ -5,7 +5,7 @@ A mathematical library written in C++ that supports BLS threshold signatures and
 The libBLS library is developed by SKALE Labs and uses SCIPR-LAB's libff (see Libraries below).
 
 # Overview
-libBLS is a C++ library for [BLS signatures](https://link.springer.com/chapter/10.1007%2F3-540-45682-1_30) and [DKG](https://link.springer.com/chapter/10.1007/3-540-48910-X_21) that supports both threshold signatures and multi-signatures. 
+libBLS is a C++ library for [BLS signatures](https://doi.org/10.1007%2F3-540-45682-1_30) and [DKG](https://doi.org/10.1007%2F3-540-48910-X_21) that supports both threshold signatures and multi-signatures. 
 
 The signature process proceeds in 4 steps:
 
