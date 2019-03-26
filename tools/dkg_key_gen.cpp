@@ -48,8 +48,12 @@ void KeyGeneration(const size_t t, const size_t n) {
   }
   
   std::vector<libff::alt_bn128_Fr> secret_key(n);
+  std::vector<libff::alt_bn128_G2> public_keys(n);
+  libff::alt_bn128_G2 common_public_key = libff::alt_bn128_G2::zero();
   for (size_t i = 0; i < n; ++i) {
     secret_key[i] = dkg_instance.SecretKeyShareCreate(secret_key_contribution[i]);
+    public_keys[i] = polynomial[i][0] * libff::alt_bn128_G2::one();
+    common_public_key = common_public_key + public_keys[i];
   }
 
   for (size_t i = 0; i < n; ++i) {
@@ -66,6 +70,17 @@ void KeyGeneration(const size_t t, const size_t n) {
         << strFileName << " file:\n"
         << secretKey.dump( 4 ) << "\n\n";
   }
+
+  nlohmann::json public_key_json;
+  public_key_json["public_key"]["X"]["c0"] = convertToString<libff::alt_bn128_Fq>(common_public_key.X.c0);
+  public_key_json["public_key"]["X"]["c1"] = convertToString<libff::alt_bn128_Fq>(common_public_key.X.c1);
+  public_key_json["public_key"]["Y"]["c0"] = convertToString<libff::alt_bn128_Fq>(common_public_key.Y.c0);
+  public_key_json["public_key"]["Y"]["c1"] = convertToString<libff::alt_bn128_Fq>(common_public_key.Y.c1);
+  public_key_json["public_key"]["Z"]["c0"] = convertToString<libff::alt_bn128_Fq>(common_public_key.Z.c0);
+  public_key_json["public_key"]["Z"]["c1"] = convertToString<libff::alt_bn128_Fq>(common_public_key.Z.c1);
+
+  std::ofstream outfile_pk("public_key.json");
+  outfile_pk << public_key_json.dump(4) << "\n";
 }
 
 int main(int argc, const char *argv[]) {

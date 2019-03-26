@@ -46,8 +46,6 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
 
   libff::alt_bn128_G1 common_signature;
 
-  libff::alt_bn128_G2 public_key;
-
   if (sign_all) {
     std::vector<libff::alt_bn128_Fr> secret_key(n);
     
@@ -73,8 +71,6 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
     std::vector<libff::alt_bn128_Fr> lagrange_coeffs = bls_instance.LagrangeCoeffs(idx);
 
     common_signature = bls_instance.SignatureRecover(signature_shares, lagrange_coeffs);
-
-    public_key = bls_instance.KeysRecover(lagrange_coeffs, secret_key).second;
   } else {
     libff::alt_bn128_Fr secret_key;
 
@@ -86,27 +82,18 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
     secret_key = libff::alt_bn128_Fr(secretKey["secret_key"].get<std::string>().c_str());
 
     common_signature = bls_instance.Signing(hash, secret_key);
-
-    public_key = secret_key * libff::alt_bn128_G2::one();
   }
    
   nlohmann::json signature;
+  if (idx >= 0) {
+    signature["index"] = std::to_string(idx);
+  }
+
   signature["signature"]["X"] = convertToString<libff::alt_bn128_Fq>(common_signature.X);
   signature["signature"]["Y"] = convertToString<libff::alt_bn128_Fq>(common_signature.Y);
   signature["signature"]["Z"] = convertToString<libff::alt_bn128_Fq>(common_signature.Z);
 
-  nlohmann::json public_key_json;
-  public_key_json["public_key"]["X"]["c0"] = convertToString<libff::alt_bn128_Fq>(public_key.X.c0);
-  public_key_json["public_key"]["X"]["c1"] = convertToString<libff::alt_bn128_Fq>(public_key.X.c1);
-  public_key_json["public_key"]["Y"]["c0"] = convertToString<libff::alt_bn128_Fq>(public_key.Y.c0);
-  public_key_json["public_key"]["Y"]["c1"] = convertToString<libff::alt_bn128_Fq>(public_key.Y.c1);
-  public_key_json["public_key"]["Z"]["c0"] = convertToString<libff::alt_bn128_Fq>(public_key.Z.c0);
-  public_key_json["public_key"]["Z"]["c1"] = convertToString<libff::alt_bn128_Fq>(public_key.Z.c1);
-
-  std::ofstream outfile_pk("public_key.json");
   std::ofstream outfile_h("hash.json");
-
-  outfile_pk << public_key_json.dump(4) << "\n";
   outfile_h << hash_json.dump(4) << "\n";
 
   outfile << signature.dump(4) << "\n";
