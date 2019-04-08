@@ -28,10 +28,6 @@ add_definitions( -DBLS_VERSION=0.1.0 )
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++11 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-unused-variable")
 
-include_directories(${CMAKE_BINARY_DIR}/deps/include /usr/include/python3.5m)
-
-link_directories(${CMAKE_BINARY_DIR}/deps/lib usr/lib/python3.5)
-
 include_directories(${CMAKE_BINARY_DIR}/deps/include ${GMP_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/libff )
 
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
@@ -53,6 +49,10 @@ target_link_libraries(dkg_keygen PRIVATE bls boost_program_options)
 add_executable(sign_bls tools/sign_bls.cpp)
 target_include_directories(sign_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(sign_bls PRIVATE bls boost_program_options)
+
+add_executable(bls_glue tools/bols_glue.cpp)
+target_include_directories(bls_glue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(bls_glue PRIVATE bls boost_program_options)
 
 add_executable(verify_bls tools/verify_bls.cpp)
 target_include_directories(verify_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -85,6 +85,8 @@ install(TARGETS bls DESTINATION lib)
 install(TARGETS dkg_keygen DESTINATION bin)
 
 install(TARGETS sign_bls DESTINATION bin)
+
+install(TARGETS bls_glue DESTINATION bin)
 
 install(TARGETS verify_bls DESTINATION bin)
 
