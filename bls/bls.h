@@ -4,7 +4,7 @@
 #include <vector>
 #include <utility>
 
-#include <third_party/sha256.h>
+#include <third_party/cryptlite/sha256.h>
 
 namespace signatures {
 
