@@ -50,7 +50,7 @@ add_executable(sign_bls tools/sign_bls.cpp)
 target_include_directories(sign_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(sign_bls PRIVATE bls boost_program_options)
 
-add_executable(bls_glue tools/bols_glue.cpp)
+add_executable(bls_glue tools/bls_glue.cpp)
 target_include_directories(bls_glue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(bls_glue PRIVATE bls boost_program_options)
 
