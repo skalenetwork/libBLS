@@ -24,7 +24,9 @@ set(headers_bls
     third_party/cryptlite/base64.h
 )
 
-add_definitions( -DBLS_VERSION=0.1.0 )
+set(PROJECT_VERSION 0.4.0)
+
+add_definitions(-DBLS_VERSION=${PROJECT_VERSION})
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++11 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-unused-variable")
 
