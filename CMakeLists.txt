@@ -30,14 +30,31 @@ add_definitions(-DBLS_VERSION=${PROJECT_VERSION})
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++11 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-unused-variable")
 
-include_directories(${CMAKE_BINARY_DIR}/deps/include ${GMP_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/libff )
-
+include_directories(${CMAKE_BINARY_DIR}/deps/include ${GMP_INCLUDE_DIR} )
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 
 include(deps/ProjectGMP.cmake)
-include(deps/ProjectSecp256k1.cmake)
 
-add_subdirectory(libff)
+IF (( DEFINED BLS_WITH_SECP256K1_INCLUDE_DIR ) AND ( DEFINED BLS_WITH_SECP256K1_LIBRARY_DIR ))
+	#nothing
+ELSE()
+	include(deps/ProjectSecp256k1.cmake)
+	set( BLS_WITH_SECP256K1_INCLUDE_DIR ${CMAKE_BINARY_DIR}/deps/include )
+	set( BLS_WITH_SECP256K1_LIBRARY_DIR ${CMAKE_BINARY_DIR}/deps/lib )
+ENDIF()
+include_directories( ${BLS_WITH_SECP256K1_INCLUDE_DIR} )
+link_directories( ${BLS_WITH_SECP256K1_LIBRARY_DIR} )
+
+IF (( DEFINED BLS_WITH_FF_INCLUDE_DIR ) AND ( DEFINED BLS_WITH_FF_LIBRARY_DIR ))
+	#nothing
+ELSE()
+	add_subdirectory( libff )
+	set( BLS_WITH_FF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libff )
+	set( BLS_WITH_FF_LIBRARY_DIR ${CMAKE_BINARY_DIR}/libff/libff )
+ENDIF()
+include_directories( ${BLS_WITH_FF_INCLUDE_DIR} )
+link_directories( ${BLS_WITH_FF_LIBRARY_DIR} )
+
 
 add_library(bls ${sourses_bls} ${headers_bls})
 add_dependencies(bls gmp ff secp256k1)
