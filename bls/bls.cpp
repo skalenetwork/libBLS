@@ -11,24 +11,24 @@
 
 namespace signatures {
 
-  bls::bls(const size_t t, const size_t n) : t(t), n(n) {
+  Bls::Bls(const size_t t, const size_t n) : t_(t), n_(n) {
     libff::init_alt_bn128_params();  // init all parameters for math operations
   }
 
-  std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> bls::KeyGeneration() {
+  std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> Bls::KeyGeneration() {
     // generate secret and public KeysRecover
-    libff::alt_bn128_Fr x = libff::alt_bn128_Fr::random_element();  // secret key generation
+    libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();  // secret key generation
 
-    while (x == libff::alt_bn128_Fr::zero()) {
-      x = libff::alt_bn128_Fr::random_element();
+    while (secret_key == libff::alt_bn128_Fr::zero()) {
+      secret_key = libff::alt_bn128_Fr::random_element();
     }
 
-    const libff::alt_bn128_G2 p = x * libff::alt_bn128_G2::one();  // public key generation
+    const libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();  // public key generation
 
-    return std::make_pair(x, p);
+    return std::make_pair(secret_key, public_key);
   }
 
-  libff::alt_bn128_G1 bls::Hashing(const std::string& message,
+  libff::alt_bn128_G1 Bls::Hashing(const std::string& message,
                                   std::string (*hash_func)(const std::string& str)) {
     std::string sha256hex = hash_func(message);
 
@@ -47,7 +47,8 @@ namespace signatures {
     return hash;
   }
 
-  libff::alt_bn128_G1 bls::Signing(const libff::alt_bn128_G1 hash, const libff::alt_bn128_Fr secret_key) {
+  libff::alt_bn128_G1 Bls::Signing(const libff::alt_bn128_G1 hash,
+                                    const libff::alt_bn128_Fr secret_key) {
     // sign a message with its hash and secret key
     // implemented constant time signing
 
@@ -67,7 +68,7 @@ namespace signatures {
     return sign;
   }
 
-  bool bls::Verification(const libff::alt_bn128_G1 hash, const libff::alt_bn128_G1 sign,
+  bool Bls::Verification(const libff::alt_bn128_G1 hash, const libff::alt_bn128_G1 sign,
                          const libff::alt_bn128_G2 public_key) {
     // verifies that a given signature corresponds to given public key
 
@@ -76,38 +77,40 @@ namespace signatures {
     }
 
     return (libff::alt_bn128_ate_reduced_pairing(sign, libff::alt_bn128_G2::one()) ==
-            libff::alt_bn128_ate_reduced_pairing(hash, public_key));  // there are several types of pairing, it does not matter which one is chosen for verification
+            libff::alt_bn128_ate_reduced_pairing(hash, public_key));
+    // there are several types of pairing, it does not matter which one is chosen for verification
   }
 
-  std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> bls::KeysRecover(const std::vector<libff::alt_bn128_Fr>& coeffs,
+  std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> Bls::KeysRecover(
+                                                  const std::vector<libff::alt_bn128_Fr>& coeffs,
                                                   const std::vector<libff::alt_bn128_Fr>& shares) {
-    if (shares.size() < this->t || coeffs.size() < this->t) {
+    if (shares.size() < this->t_ || coeffs.size() < this->t_) {
       throw std::runtime_error("Error, not enough participants in the threshold group");
     }
 
-    libff::alt_bn128_Fr sk = libff::alt_bn128_Fr::zero();
+    libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::zero();
 
-    for (size_t i = 0; i < this->t; ++i) {
+    for (size_t i = 0; i < this->t_; ++i) {
       if (shares[i] == libff::alt_bn128_Fr::zero()) {
         throw std::runtime_error("Error, at least one secret key share is equal to zero");
       }
-      sk += coeffs[i] * shares[i];  // secret key recovering using Lagrange Interpolation
+      secret_key += coeffs[i] * shares[i];  // secret key recovering using Lagrange Interpolation
     }
 
-    const libff::alt_bn128_G2 pk = sk * libff::alt_bn128_G2::one();  // public key recovering
+    const libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();  // public key recovering
 
-    return std::make_pair(sk, pk);
+    return std::make_pair(secret_key, public_key);
   }
 
-  libff::alt_bn128_G1 bls::SignatureRecover(const std::vector<libff::alt_bn128_G1>& shares,
+  libff::alt_bn128_G1 Bls::SignatureRecover(const std::vector<libff::alt_bn128_G1>& shares,
                                             const std::vector<libff::alt_bn128_Fr>& coeffs) {
-    if (shares.size() < this->t || coeffs.size() < this->t) {
+    if (shares.size() < this->t_ || coeffs.size() < this->t_) {
       throw std::runtime_error("Error, not enough participants in the threshold group");
     }
 
     libff::alt_bn128_G1 sign = libff::alt_bn128_G1::zero();
 
-    for (size_t i = 0; i < this->t; ++i) {
+    for (size_t i = 0; i < this->t_; ++i) {
       if (!shares[i].is_well_formed()) {
         throw std::runtime_error("Error, incorrect input data to recover signature");
       }
@@ -117,27 +120,28 @@ namespace signatures {
     return sign;  // first element is hash of a receiving message
   }
 
-  std::vector<libff::alt_bn128_Fr> bls::LagrangeCoeffs(const std::vector<size_t>& idx) {
-    if (idx.size() < this->t) {
+  std::vector<libff::alt_bn128_Fr> Bls::LagrangeCoeffs(const std::vector<size_t>& idx) {
+    if (idx.size() < this->t_) {
       throw std::runtime_error("Error, not enough participants in the threshold group");
     }
 
-    std::vector<libff::alt_bn128_Fr> res(this->t);
+    std::vector<libff::alt_bn128_Fr> res(this->t_);
 
     libff::alt_bn128_Fr w = libff::alt_bn128_Fr::one();
 
-    for (size_t j = 0; j < this->t; ++j) {
+    for (size_t j = 0; j < this->t_; ++j) {
       w *= libff::alt_bn128_Fr(idx[j]);
     }
 
-    for (size_t i = 0; i < this->t; ++i) {
+    for (size_t i = 0; i < this->t_; ++i) {
       libff::alt_bn128_Fr v = libff::alt_bn128_Fr(idx[i]);
 
-      for (size_t j = 0; j < this->t; ++j) {
+      for (size_t j = 0; j < this->t_; ++j) {
         if (j != i) {
           if (libff::alt_bn128_Fr(idx[i]) ==
               libff::alt_bn128_Fr(idx[j])) {
-            throw std::runtime_error("Error during the interpolation, have same indexes in list of indexes");
+            throw std::runtime_error(
+              "Error during the interpolation, have same indexes in list of indexes");
           }
 
           v *= (libff::alt_bn128_Fr(idx[j]) -

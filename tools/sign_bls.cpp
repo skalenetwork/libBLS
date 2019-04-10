@@ -8,10 +8,10 @@
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
 #define __EXPAND_AS_STR__( x ) #x
 
-static bool g_bVerboseMode = false;
+static bool g_b_verbose_mode = false;
 
 template<class T>
-std::string convertToString(T field_elem) {
+std::string ConvertToString(T field_elem) {
   mpz_t t;
   mpz_init(t);
 
@@ -27,22 +27,22 @@ std::string convertToString(T field_elem) {
 
 void Sign(const size_t t, const size_t n, std::istream& data_file,
           std::ostream& outfile, const std::string& key, bool sign_all = true, int idx = -1) {
-  signatures::bls bls_instance = signatures::bls(t, n);
+  signatures::Bls bls_instance = signatures::Bls(t, n);
 
-  std::vector <uint8_t> messageData;
-  while( ! data_file.eof() ) {
-    uint8_t nByte;
-    data_file >> nByte;
-    messageData.push_back( nByte );
+  std::vector <uint8_t> message_data;
+  while(!data_file.eof()) {
+    uint8_t n_byte;
+    data_file >> n_byte;
+    message_data.push_back(n_byte);
   }
 
-  std::string message( messageData.cbegin(), messageData.cend() );
+  std::string message( message_data.cbegin(), message_data.cend() );
   libff::alt_bn128_G1 hash = bls_instance.Hashing(message);
 
   nlohmann::json hash_json;
-  hash_json["hash"]["X"] = convertToString<libff::alt_bn128_Fq>(hash.X);
-  hash_json["hash"]["Y"] = convertToString<libff::alt_bn128_Fq>(hash.Y);
-  hash_json["hash"]["Z"] = convertToString<libff::alt_bn128_Fq>(hash.Z);
+  hash_json["hash"]["X"] = ConvertToString<libff::alt_bn128_Fq>(hash.X);
+  hash_json["hash"]["Y"] = ConvertToString<libff::alt_bn128_Fq>(hash.Y);
+  hash_json["hash"]["Z"] = ConvertToString<libff::alt_bn128_Fq>(hash.Z);
 
   libff::alt_bn128_G1 common_signature;
 
@@ -50,12 +50,12 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
     std::vector<libff::alt_bn128_Fr> secret_key(n);
     
     for (size_t i = 0; i < n; ++i) {
-      nlohmann::json secretKey;
+      nlohmann::json secret_key_file;
 
       std::ifstream infile(key + std::to_string(i) + ".json");
-      infile >> secretKey;
+      infile >> secret_key_file;
 
-      secret_key[i] = libff::alt_bn128_Fr(secretKey["secret_key"].get<std::string>().c_str());
+      secret_key[i] = libff::alt_bn128_Fr(secret_key_file["secret_key"].get<std::string>().c_str());
     }
 
     std::vector<libff::alt_bn128_G1> signature_shares(n);
@@ -74,12 +74,12 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
   } else {
     libff::alt_bn128_Fr secret_key;
 
-    nlohmann::json secretKey;
+    nlohmann::json secret_key_file;
 
     std::ifstream infile(key + std::to_string(idx) + ".json");
-    infile >> secretKey;
+    infile >> secret_key_file;
 
-    secret_key = libff::alt_bn128_Fr(secretKey["secret_key"].get<std::string>().c_str());
+    secret_key = libff::alt_bn128_Fr(secret_key_file["secret_key"].get<std::string>().c_str());
 
     common_signature = bls_instance.Signing(hash, secret_key);
   }
@@ -89,9 +89,9 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
     signature["index"] = std::to_string(idx);
   }
 
-  signature["signature"]["X"] = convertToString<libff::alt_bn128_Fq>(common_signature.X);
-  signature["signature"]["Y"] = convertToString<libff::alt_bn128_Fq>(common_signature.Y);
-  signature["signature"]["Z"] = convertToString<libff::alt_bn128_Fq>(common_signature.Z);
+  signature["signature"]["X"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.X);
+  signature["signature"]["Y"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.Y);
+  signature["signature"]["Z"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.Z);
 
   std::ofstream outfile_h("hash.json");
   outfile_h << hash_json.dump(4) << "\n";
@@ -100,8 +100,8 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
 }
 
 int main(int argc, const char *argv[]) {
-  std::istream * pIn = &std::cin;
-  std::ostream * pOut = &std::cout;
+  std::istream* p_in = &std::cin;
+  std::ostream* p_out = &std::cout;
   int r = 1;
   try {
     boost::program_options::options_description desc("Options");
@@ -144,11 +144,11 @@ int main(int argc, const char *argv[]) {
       throw std::runtime_error( "--key is missing (see --help)" );
 
     if (vm.count("v"))
-      g_bVerboseMode = true;
+      g_b_verbose_mode = true;
 
     size_t t = vm["t"].as<size_t>();
     size_t n = vm["n"].as<size_t>();
-    if( g_bVerboseMode )
+    if( g_b_verbose_mode )
       std::cout
         << "t = " << t << '\n'
         << "n = " << n << '\n'
@@ -157,43 +157,43 @@ int main(int argc, const char *argv[]) {
     int j = -1;
     if (vm.count("j")) {
       j = vm["j"].as<int>();
-      if( g_bVerboseMode )
+      if( g_b_verbose_mode )
         std::cout << "j = " << j << '\n';
     }
 
     std::string key = vm["key"].as<std::string>();
-    if( g_bVerboseMode )
+    if( g_b_verbose_mode )
       std::cout << "key = " << key << '\n';
 
     if( vm.count("input") ) {
-      if( g_bVerboseMode ) 
+      if( g_b_verbose_mode ) 
         std::cout << "input = " << vm["input"].as<std::string>() << '\n';
-      pIn = new std::ifstream( vm["input"].as<std::string>().c_str(), std::ifstream::binary);
+      p_in = new std::ifstream( vm["input"].as<std::string>().c_str(), std::ifstream::binary);
     }
     if( vm.count("output") ) {
-      if( g_bVerboseMode ) 
+      if( g_b_verbose_mode ) 
         std::cout << "output = " << vm["output"].as<std::string>() << '\n';
-      pOut = new std::ofstream( vm["output"].as<std::string>().c_str(), std::ofstream::binary);
+      p_out = new std::ofstream( vm["output"].as<std::string>().c_str(), std::ofstream::binary);
     }
 
     if (j < 0)
-      Sign( t, n, *pIn, *pOut, key );
+      Sign( t, n, *p_in, *p_out, key );
     else
-      Sign( t, n, *pIn, *pOut, key, false, j );
+      Sign( t, n, *p_in, *p_out, key, false, j );
     r = 0; // success
   } catch ( std::exception & ex ) {
     r = 1;
-    std::string strWhat = ex.what();
-    if( strWhat.empty() )
-      strWhat = "exception without description";
-    std::cerr << "exception: " << strWhat << "\n";
+    std::string str_what = ex.what();
+    if( str_what.empty() )
+      str_what = "exception without description";
+    std::cerr << "exception: " << str_what << "\n";
   } catch (...) {
     r = 2;
     std::cerr << "unknown exception\n";
   }
-  if( pIn != &std::cin )
-    delete (std::ifstream*)pIn;
-  if( pOut != &std::cout )
-    delete (std::ofstream*)pOut;
+  if( p_in != &std::cin )
+    delete (std::ifstream*)p_in;
+  if( p_out != &std::cout )
+    delete (std::ofstream*)p_out;
   return r;
 }
