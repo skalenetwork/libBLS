@@ -39,8 +39,10 @@ IF ((DEFINED BLS_WITH_SECP256K1_INCLUDE_DIR) AND (DEFINED BLS_WITH_SECP256K1_LIB
 	#nothing
 ELSE()
 	include(deps/ProjectSecp256k1.cmake)
-	set(BLS_WITH_SECP256K1_INCLUDE_DIR ${CMAKE_BINARY_DIR}/deps/include)
-	set(BLS_WITH_SECP256K1_LIBRARY_DIR ${CMAKE_BINARY_DIR}/deps/lib)
+	set( BLS_WITH_SECP256K1_INCLUDE_DIR ${CMAKE_BINARY_DIR}/deps/include )
+	set( BLS_WITH_SECP256K1_LIBRARY_DIR ${CMAKE_BINARY_DIR}/deps/lib )
+	add_dependencies(bls secp256k1)
+
 ENDIF()
 include_directories( ${BLS_WITH_SECP256K1_INCLUDE_DIR} )
 link_directories( ${BLS_WITH_SECP256K1_LIBRARY_DIR} )
@@ -49,15 +51,19 @@ IF ((DEFINED BLS_WITH_FF_INCLUDE_DIR) AND (DEFINED BLS_WITH_FF_LIBRARY_DIR))
 	#nothing
 ELSE()
 	add_subdirectory( libff )
-	set(BLS_WITH_FF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libff)
-	set(BLS_WITH_FF_LIBRARY_DIR ${CMAKE_BINARY_DIR}/libff/libff)
+	set( BLS_WITH_FF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libff )
+	set( BLS_WITH_FF_LIBRARY_DIR ${CMAKE_BINARY_DIR}/libff/libff )
+	add_dependencies(bls ff)
 ENDIF()
 include_directories( ${BLS_WITH_FF_INCLUDE_DIR} )
 link_directories( ${BLS_WITH_FF_LIBRARY_DIR} )
 
 
 add_library(bls ${sourses_bls} ${headers_bls})
-add_dependencies(bls gmp ff secp256k1)
+
+target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wno-error=unused-but-set-variable)
+
+add_dependencies(bls gmp)
 target_include_directories(bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(bls PRIVATE ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
