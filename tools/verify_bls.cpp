@@ -1,3 +1,28 @@
+/**
+ * @license
+ * SKALE libBLS
+ * Copyright (C) 2019-Present SKALE Labs
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file verify_bls.cpp
+ * @date 2019
+ */
+
+
 #include <fstream>
 
 #include <bls/bls.h>
@@ -8,10 +33,10 @@
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
 #define __EXPAND_AS_STR__( x ) #x
 
-static bool g_bVerboseMode = false;
+static bool g_b_verbose_mode = false;
 
 void Verify(const size_t t, const size_t n, std::istream & sign_file) {
-  signatures::bls bls_instance = signatures::bls(t ,n);
+  signatures::Bls bls_instance = signatures::Bls(t ,n);
 
   nlohmann::json signature;
   sign_file >> signature;
@@ -43,14 +68,14 @@ void Verify(const size_t t, const size_t n, std::istream & sign_file) {
   public_key.Z.c1 = libff::alt_bn128_Fq(pk_in["public_key"]["Z"]["c1"].get<std::string>().c_str());
 
 bool bRes = bls_instance.Verification(hash, sign, public_key);
-  if( g_bVerboseMode )
-    std::cout << "Signature verification result: " << ( bRes ? "True" : "False") << '\n';
-  if( ! bRes )
+  if (g_b_verbose_mode)
+    std::cout << "Signature verification result: " << (bRes ? "True" : "False") << '\n';
+  if (!bRes)
     throw std::runtime_error("Signature verification failed");
 }
 
 int main(int argc, const char *argv[]) {
-  std::istream * pIn = &std::cin;
+  std::istream * p_in = &std::cin;
   int r = 1;
   try {
     boost::program_options::options_description desc("Options");
@@ -87,35 +112,35 @@ int main(int argc, const char *argv[]) {
       throw std::runtime_error( "--n is missing (see --help)" );
 
     if (vm.count("v"))
-      g_bVerboseMode = true;
+      g_b_verbose_mode = true;
 
     size_t t = vm["t"].as<size_t>();
     size_t n = vm["n"].as<size_t>();
-    if( g_bVerboseMode )
+    if( g_b_verbose_mode )
       std::cout
         << "t = " << t << '\n'
         << "n = " << n << '\n'
         << '\n';
 
     if( vm.count("input") ) {
-      if( g_bVerboseMode ) 
+      if( g_b_verbose_mode ) 
         std::cout << "input = " << vm["input"].as<std::string>() << '\n';
-      pIn = new std::ifstream( vm["input"].as<std::string>().c_str(), std::ifstream::binary);
+      p_in = new std::ifstream( vm["input"].as<std::string>().c_str(), std::ifstream::binary);
     }
 
-    Verify(t, n, *pIn);
+    Verify(t, n, *p_in);
     r = 0; // success
   } catch ( std::exception & ex ) {
     r = 1;
-    std::string strWhat = ex.what();
-    if( strWhat.empty() )
-      strWhat = "exception without description";
-    std::cerr << "exception: " << strWhat << "\n";
+    std::string str_what = ex.what();
+    if( str_what.empty() )
+      str_what = "exception without description";
+    std::cerr << "exception: " << str_what << "\n";
   } catch (...) {
     r = 2;
     std::cerr << "unknown exception\n";
   }
-  if( pIn != &std::cin )
-    delete (std::ifstream*)pIn;
+  if( p_in != &std::cin )
+    delete (std::ifstream*)p_in;
   return r;
 }

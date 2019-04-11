@@ -1,3 +1,28 @@
+/**
+ * @license
+ * SKALE libBLS
+ * Copyright (C) 2019-Present SKALE Labs
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file bls_glue.cpp
+ * @date 2019
+ */
+
+
 #include <fstream>
 
 #include <bls/bls.h>
@@ -8,10 +33,10 @@
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
 #define __EXPAND_AS_STR__( x ) #x
 
-static bool g_bVerboseMode = false;
+static bool g_b_verbose_mode = false;
 
 template<class T>
-std::string convertToString(T field_elem) {
+std::string ConvertToString(T field_elem) {
   mpz_t t;
   mpz_init(t);
 
@@ -26,7 +51,7 @@ std::string convertToString(T field_elem) {
 }
 
 void RecoverSignature(const size_t t, const size_t n, const std::vector<std::string>& input) {
-  signatures::bls bls_instance = signatures::bls(t, n);
+  signatures::Bls bls_instance = signatures::Bls(t, n);
 
   std::vector<size_t> idx(t);
   std::vector<libff::alt_bn128_G1> signature_shares(t);
@@ -54,9 +79,9 @@ void RecoverSignature(const size_t t, const size_t n, const std::vector<std::str
 
   nlohmann::json outdata;
 
-  outdata["signature"]["X"] = convertToString<libff::alt_bn128_Fq>(common_signature.X);
-  outdata["signature"]["Y"] = convertToString<libff::alt_bn128_Fq>(common_signature.Y);
-  outdata["signature"]["Z"] = convertToString<libff::alt_bn128_Fq>(common_signature.Z);
+  outdata["signature"]["X"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.X);
+  outdata["signature"]["Y"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.Y);
+  outdata["signature"]["Z"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.Z);
 
   std::cout << outdata.dump(4) << '\n';
 }
@@ -98,11 +123,11 @@ int main(int argc, const char *argv[]) {
       throw std::runtime_error( "--n is missing (see --help)" );
 
     if (vm.count("v"))
-      g_bVerboseMode = true;
+      g_b_verbose_mode = true;
 
     size_t t = vm["t"].as<size_t>();
     size_t n = vm["n"].as<size_t>();
-    if( g_bVerboseMode )
+    if( g_b_verbose_mode )
       std::cout
         << "t = " << t << '\n'
         << "n = " << n << '\n'
@@ -111,7 +136,7 @@ int main(int argc, const char *argv[]) {
     std::vector<std::string> input;
     if( vm.count("input") ) {
       input = vm["input"].as<std::vector<std::string>>();
-      if( g_bVerboseMode ) {
+      if( g_b_verbose_mode ) {
         std::cout << "input =\n";
         for(auto& elem : input)
           std::cout << elem << '\n';
@@ -123,15 +148,14 @@ int main(int argc, const char *argv[]) {
 
   } catch ( std::exception & ex ) {
     r = 1;
-    std::string strWhat = ex.what();
-    if( strWhat.empty() )
-      strWhat = "exception without description";
-    std::cerr << "exception: " << strWhat << "\n";
+    std::string str_what = ex.what();
+    if( str_what.empty() )
+      str_what = "exception without description";
+    std::cerr << "exception: " << str_what << "\n";
   } catch (...) {
     r = 2;
     std::cerr << "unknown exception\n";
   }
-  /*if( pIn != &std::cin )
-    delete (std::ifstream*)pIn;*/
+
   return r;
 }
