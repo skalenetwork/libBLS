@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5.1)
 
-project(libBLS)	
+project(libBLS)
 
 option(BUILD_TESTS "Build tests" ON)
 
@@ -35,22 +35,22 @@ link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 
 include(deps/ProjectGMP.cmake)
 
-IF (( DEFINED BLS_WITH_SECP256K1_INCLUDE_DIR ) AND ( DEFINED BLS_WITH_SECP256K1_LIBRARY_DIR ))
+IF ((DEFINED BLS_WITH_SECP256K1_INCLUDE_DIR) AND (DEFINED BLS_WITH_SECP256K1_LIBRARY_DIR))
 	#nothing
 ELSE()
 	include(deps/ProjectSecp256k1.cmake)
-	set( BLS_WITH_SECP256K1_INCLUDE_DIR ${CMAKE_BINARY_DIR}/deps/include )
-	set( BLS_WITH_SECP256K1_LIBRARY_DIR ${CMAKE_BINARY_DIR}/deps/lib )
+	set(BLS_WITH_SECP256K1_INCLUDE_DIR ${CMAKE_BINARY_DIR}/deps/include)
+	set(BLS_WITH_SECP256K1_LIBRARY_DIR ${CMAKE_BINARY_DIR}/deps/lib)
 ENDIF()
 include_directories( ${BLS_WITH_SECP256K1_INCLUDE_DIR} )
 link_directories( ${BLS_WITH_SECP256K1_LIBRARY_DIR} )
 
-IF (( DEFINED BLS_WITH_FF_INCLUDE_DIR ) AND ( DEFINED BLS_WITH_FF_LIBRARY_DIR ))
+IF ((DEFINED BLS_WITH_FF_INCLUDE_DIR) AND (DEFINED BLS_WITH_FF_LIBRARY_DIR))
 	#nothing
 ELSE()
 	add_subdirectory( libff )
-	set( BLS_WITH_FF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libff )
-	set( BLS_WITH_FF_LIBRARY_DIR ${CMAKE_BINARY_DIR}/libff/libff )
+	set(BLS_WITH_FF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libff)
+	set(BLS_WITH_FF_LIBRARY_DIR ${CMAKE_BINARY_DIR}/libff/libff)
 ENDIF()
 include_directories( ${BLS_WITH_FF_INCLUDE_DIR} )
 link_directories( ${BLS_WITH_FF_LIBRARY_DIR} )
@@ -64,6 +64,10 @@ target_link_libraries(bls PRIVATE ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 add_executable(dkg_keygen tools/dkg_key_gen.cpp)
 target_include_directories(dkg_keygen PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(dkg_keygen PRIVATE bls boost_program_options)
+
+add_executable(dkg_glue tools/dkg_glue.cpp)
+target_include_directories(dkg_glue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(dkg_glue PRIVATE bls boost_program_options)
 
 add_executable(sign_bls tools/sign_bls.cpp)
 target_include_directories(sign_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -102,6 +106,8 @@ endif()
 install(TARGETS bls DESTINATION lib)
 
 install(TARGETS dkg_keygen DESTINATION bin)
+
+install(TARGETS dkg_glue DESTINATION bin)
 
 install(TARGETS sign_bls DESTINATION bin)
 
