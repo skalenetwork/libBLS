@@ -53,7 +53,7 @@ ELSE()
 	add_dependencies(bls secp256k1)
 
 ENDIF()
-include_directories(${BLS_WITH_SECP256K1_INCLUDE_DIR})
+include_directories(${BLS_WITH_SECP256K1_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
 link_directories(${BLS_WITH_SECP256K1_LIBRARY_DIR})
 
 IF ((DEFINED BLS_WITH_FF_INCLUDE_DIR) AND (DEFINED BLS_WITH_FF_LIBRARY_DIR))
