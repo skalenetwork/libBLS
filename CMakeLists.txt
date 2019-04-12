@@ -45,7 +45,7 @@ find_package(Boost REQUIRED program_options system)
 find_package(OpenSSL REQUIRED)
 
 IF ((DEFINED BLS_WITH_SECP256K1_INCLUDE_DIR) AND (DEFINED BLS_WITH_SECP256K1_LIBRARY_DIR))
-	#nothing
+	add_dependencies(bls secp256k1)
 ELSE()
 	include(deps/ProjectSecp256k1.cmake)
 	set(BLS_WITH_SECP256K1_INCLUDE_DIR ${CMAKE_BINARY_DIR}/deps/include)
