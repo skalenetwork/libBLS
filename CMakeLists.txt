@@ -42,6 +42,8 @@ target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wn
 
 find_package(Boost REQUIRED program_options system)
 
+find_package(OpenSSL REQUIRED)
+
 IF ((DEFINED BLS_WITH_SECP256K1_INCLUDE_DIR) AND (DEFINED BLS_WITH_SECP256K1_LIBRARY_DIR))
 	#nothing
 ELSE()
