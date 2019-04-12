@@ -28,40 +28,43 @@ set(PROJECT_VERSION 0.4.0)
 
 add_definitions(-DBLS_VERSION=${PROJECT_VERSION})
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++11 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-unused-variable")
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++17 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-unused-variable")
 
 include_directories(${CMAKE_BINARY_DIR}/deps/include ${GMP_INCLUDE_DIR} )
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 
 include(deps/ProjectGMP.cmake)
 
+add_library(bls ${sourses_bls} ${headers_bls})
+
+target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wno-error=unused-but-set-variable)
+
+find_package(Boost REQUIRED program_options system)
+
 IF ((DEFINED BLS_WITH_SECP256K1_INCLUDE_DIR) AND (DEFINED BLS_WITH_SECP256K1_LIBRARY_DIR))
 	#nothing
 ELSE()
 	include(deps/ProjectSecp256k1.cmake)
-	set( BLS_WITH_SECP256K1_INCLUDE_DIR ${CMAKE_BINARY_DIR}/deps/include )
-	set( BLS_WITH_SECP256K1_LIBRARY_DIR ${CMAKE_BINARY_DIR}/deps/lib )
+	set(BLS_WITH_SECP256K1_INCLUDE_DIR ${CMAKE_BINARY_DIR}/deps/include)
+	set(BLS_WITH_SECP256K1_LIBRARY_DIR ${CMAKE_BINARY_DIR}/deps/lib)
 	add_dependencies(bls secp256k1)
 
 ENDIF()
-include_directories( ${BLS_WITH_SECP256K1_INCLUDE_DIR} )
-link_directories( ${BLS_WITH_SECP256K1_LIBRARY_DIR} )
+include_directories(${BLS_WITH_SECP256K1_INCLUDE_DIR})
+link_directories(${BLS_WITH_SECP256K1_LIBRARY_DIR})
 
 IF ((DEFINED BLS_WITH_FF_INCLUDE_DIR) AND (DEFINED BLS_WITH_FF_LIBRARY_DIR))
 	#nothing
 ELSE()
-	add_subdirectory( libff )
-	set( BLS_WITH_FF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libff )
-	set( BLS_WITH_FF_LIBRARY_DIR ${CMAKE_BINARY_DIR}/libff/libff )
+	add_subdirectory(libff)
+	set(BLS_WITH_FF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libff)
+	set(BLS_WITH_FF_LIBRARY_DIR ${CMAKE_BINARY_DIR}/libff/libff)
 	add_dependencies(bls ff)
 ENDIF()
-include_directories( ${BLS_WITH_FF_INCLUDE_DIR} )
-link_directories( ${BLS_WITH_FF_LIBRARY_DIR} )
+include_directories(${BLS_WITH_FF_INCLUDE_DIR})
+link_directories(${BLS_WITH_FF_LIBRARY_DIR})
 
-
-add_library(bls ${sourses_bls} ${headers_bls})
-
-target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wno-error=unused-but-set-variable)
 
 add_dependencies(bls gmp)
 target_include_directories(bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -69,19 +72,19 @@ target_link_libraries(bls PRIVATE ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
 add_executable(dkg_keygen tools/dkg_key_gen.cpp)
 target_include_directories(dkg_keygen PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(dkg_keygen PRIVATE bls boost_program_options)
+target_link_libraries(dkg_keygen PRIVATE bls Boost::program_options)
 
 add_executable(dkg_glue tools/dkg_glue.cpp)
 target_include_directories(dkg_glue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(dkg_glue PRIVATE bls boost_program_options)
+target_link_libraries(dkg_glue PRIVATE bls Boost::program_options)
 
 add_executable(sign_bls tools/sign_bls.cpp)
 target_include_directories(sign_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(sign_bls PRIVATE bls boost_program_options)
+target_link_libraries(sign_bls PRIVATE bls Boost::program_options)
 
 add_executable(bls_glue tools/bls_glue.cpp)
 target_include_directories(bls_glue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(bls_glue PRIVATE bls boost_program_options)
+target_link_libraries(bls_glue PRIVATE bls Boost::program_options)
 
 add_executable(verify_bls tools/verify_bls.cpp)
 target_include_directories(verify_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -90,14 +93,13 @@ target_link_libraries(verify_bls PRIVATE bls boost_program_options)
 if (BUILD_TESTS)
 	add_executable(bls_unit_test test/unit_tests_bls.cpp)
 	target_include_directories(bls_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-	target_link_libraries(bls_unit_test PRIVATE bls ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+	target_link_libraries(bls_unit_test PRIVATE bls)
 
 	add_test(NAME bls_tests COMMAND bls_unit_test)
 
 	add_executable(dkg_unit_test test/unit_tests_dkg.cpp)
 	target_include_directories(dkg_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-	target_link_libraries(dkg_unit_test PRIVATE bls ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
-
+	target_link_libraries(dkg_unit_test PRIVATE bls)
 	add_test(NAME dkg_tests COMMAND dkg_unit_test)
 
 	add_custom_target( all_bls_tests
