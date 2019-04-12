@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include <cassert>
 #include <sstream>
 #include <iomanip>
-#include "base64.h"
+#include <third_party/cryptlite/base64.h>
 #include <boost/cstdint.hpp>
 
 namespace cryptlite {

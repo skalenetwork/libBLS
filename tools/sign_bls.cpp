@@ -22,16 +22,16 @@
  * @date 2019
  */
 
+#include <bls/bls.h>
 
 #include <fstream>
 
-#include <bls/bls.h>
 #include <third_party/json.hpp>
 
 #include <boost/program_options.hpp>
 
-#define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
-#define __EXPAND_AS_STR__( x ) #x
+#define EXPAND_AS_STR(x) __EXPAND_AS_STR__(x)
+#define __EXPAND_AS_STR__(x) #x
 
 static bool g_b_verbose_mode = false;
 
@@ -55,13 +55,13 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
   signatures::Bls bls_instance = signatures::Bls(t, n);
 
   std::vector <uint8_t> message_data;
-  while(!data_file.eof()) {
+  while (!data_file.eof()) {
     uint8_t n_byte;
     data_file >> n_byte;
     message_data.push_back(n_byte);
   }
 
-  std::string message( message_data.cbegin(), message_data.cend() );
+  std::string message(message_data.cbegin(), message_data.cend());
   libff::alt_bn128_G1 hash = bls_instance.Hashing(message);
 
   nlohmann::json hash_json;
@@ -73,7 +73,7 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
 
   if (sign_all) {
     std::vector<libff::alt_bn128_Fr> secret_key(n);
-    
+
     for (size_t i = 0; i < n; ++i) {
       nlohmann::json secret_key_file;
 
@@ -108,7 +108,7 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
 
     common_signature = bls_instance.Signing(hash, secret_key);
   }
-   
+
   nlohmann::json signature;
   if (idx >= 0) {
     signature["index"] = std::to_string(idx);
@@ -135,12 +135,15 @@ int main(int argc, const char *argv[]) {
       ("version", "Show version number")
       ("t", boost::program_options::value<size_t>(), "Threshold")
       ("n", boost::program_options::value<size_t>(), "Number of participants")
-      ("input", boost::program_options::value<std::string>(), "Input file path; if not specified then use standard input")
-      ("j", boost::program_options::value<int>(), "Index of participant to sign; if not specified then all participants")
-      ("key", boost::program_options::value<std::string>(), "Directory with secret keys which are secret_key<j>.json ")
-      ("output", boost::program_options::value<std::string>(), "Output file path to save signature to; if not specified then use standard output")
-      ("v", "Verbose mode (optional)")
-      ;
+      ("input", boost::program_options::value<std::string>(),
+                                      "Input file path; if not specified then use standard input")
+      ("j", boost::program_options::value<int>(),
+                            "Index of participant to sign; if not specified then all participants")
+      ("key", boost::program_options::value<std::string>(),
+                                        "Directory with secret keys which are secret_key<j>.json ")
+      ("output", boost::program_options::value<std::string>(),
+                "Output file path to save signature to; if not specified then use standard output")
+      ("v", "Verbose mode (optional)");
 
     boost::program_options::variables_map vm;
     boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
@@ -148,32 +151,32 @@ int main(int argc, const char *argv[]) {
 
     if (vm.count("help") || argc <= 1) {
       std::cout
-        << "BLS sign tool, version " << EXPAND_AS_STR( BLS_VERSION ) << '\n'
+        << "BLS sign tool, version " << EXPAND_AS_STR(BLS_VERSION) << '\n'
         << "Usage:\n"
-        << "   " << argv[0] << " --t <threshold> --n <num_participants> [--j <participant>] [--input <path>] [--output <path>] [--key <path>] [--v]" << '\n'
+        << "   " << argv[0] << "--t <threshold> --n <num_participants> [--j <participant>] [--input <path>] [--output <path>] [--key <path>] [--v]" << '\n'
         << desc << '\n';
       return 0;
     }
     if (vm.count("version")) {
       std::cout
-        << EXPAND_AS_STR( BLS_VERSION ) << '\n';
+        << EXPAND_AS_STR(BLS_VERSION) << '\n';
       return 0;
     }
 
     if (vm.count("t") == 0)
-      throw std::runtime_error( "--t is missing (see --help)" );
+      throw std::runtime_error("--t is missing (see --help)");
     if (vm.count("n") == 0)
-      throw std::runtime_error( "--n is missing (see --help)" );
+      throw std::runtime_error("--n is missing (see --help)");
 
     if (vm.count("key") == 0)
-      throw std::runtime_error( "--key is missing (see --help)" );
+      throw std::runtime_error("--key is missing (see --help)");
 
     if (vm.count("v"))
       g_b_verbose_mode = true;
 
     size_t t = vm["t"].as<size_t>();
     size_t n = vm["n"].as<size_t>();
-    if( g_b_verbose_mode )
+    if (g_b_verbose_mode)
       std::cout
         << "t = " << t << '\n'
         << "n = " << n << '\n'
@@ -182,43 +185,43 @@ int main(int argc, const char *argv[]) {
     int j = -1;
     if (vm.count("j")) {
       j = vm["j"].as<int>();
-      if( g_b_verbose_mode )
+      if (g_b_verbose_mode)
         std::cout << "j = " << j << '\n';
     }
 
     std::string key = vm["key"].as<std::string>();
-    if( g_b_verbose_mode )
+    if (g_b_verbose_mode)
       std::cout << "key = " << key << '\n';
 
-    if( vm.count("input") ) {
-      if( g_b_verbose_mode ) 
+    if (vm.count("input")) {
+      if (g_b_verbose_mode)
         std::cout << "input = " << vm["input"].as<std::string>() << '\n';
       p_in = new std::ifstream( vm["input"].as<std::string>().c_str(), std::ifstream::binary);
     }
-    if( vm.count("output") ) {
-      if( g_b_verbose_mode ) 
+    if (vm.count("output")) {
+      if (g_b_verbose_mode)
         std::cout << "output = " << vm["output"].as<std::string>() << '\n';
       p_out = new std::ofstream( vm["output"].as<std::string>().c_str(), std::ofstream::binary);
     }
 
     if (j < 0)
-      Sign( t, n, *p_in, *p_out, key );
+      Sign(t, n, *p_in, *p_out, key);
     else
-      Sign( t, n, *p_in, *p_out, key, false, j );
-    r = 0; // success
-  } catch ( std::exception & ex ) {
+      Sign(t, n, *p_in, *p_out, key, false, j);
+    r = 0;  // success
+  } catch (std::exception& ex) {
     r = 1;
     std::string str_what = ex.what();
-    if( str_what.empty() )
+    if (str_what.empty())
       str_what = "exception without description";
     std::cerr << "exception: " << str_what << "\n";
   } catch (...) {
     r = 2;
     std::cerr << "unknown exception\n";
   }
-  if( p_in != &std::cin )
+  if (p_in != &std::cin)
     delete (std::ifstream*)p_in;
-  if( p_out != &std::cout )
+  if (p_out != &std::cout)
     delete (std::ofstream*)p_out;
   return r;
 }
