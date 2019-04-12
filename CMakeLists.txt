@@ -57,13 +57,15 @@ include_directories(${BLS_WITH_SECP256K1_INCLUDE_DIR})
 link_directories(${BLS_WITH_SECP256K1_LIBRARY_DIR})
 
 IF ((DEFINED BLS_WITH_FF_INCLUDE_DIR) AND (DEFINED BLS_WITH_FF_LIBRARY_DIR))
-	#nothing
+    add_dependencies(bls libff)
 ELSE()
 	add_subdirectory(libff)
 	set(BLS_WITH_FF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libff)
 	set(BLS_WITH_FF_LIBRARY_DIR ${CMAKE_BINARY_DIR}/libff/libff)
-	add_dependencies(bls ff)
+        add_dependencies(bls ff)
 ENDIF()
+message( INFO " - Using final BLS INC=${BLS_WITH_FF_INCLUDE_DIR}")
+message( INFO " - Using final BLS LIB=${BLS_WITH_FF_LIBRARY_DIR}")
 include_directories(${BLS_WITH_FF_INCLUDE_DIR})
 link_directories(${BLS_WITH_FF_LIBRARY_DIR})
 
@@ -90,7 +92,7 @@ target_link_libraries(bls_glue PRIVATE bls Boost::program_options)
 
 add_executable(verify_bls tools/verify_bls.cpp)
 target_include_directories(verify_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(verify_bls PRIVATE bls boost_program_options)
+target_link_libraries(verify_bls PRIVATE bls Boost::program_options)
 
 if (BUILD_TESTS)
 	add_executable(bls_unit_test test/unit_tests_bls.cpp)
