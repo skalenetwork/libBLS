@@ -28,7 +28,7 @@ THE SOFTWARE.
 #include <cassert>
 #include <sstream>
 #include <iomanip>
-#include "base64.h"
+#include <third_party/cryptlite/base64.h>
 #include <boost/cstdint.hpp>
 
 namespace cryptlite {
@@ -74,7 +74,7 @@ class sha256 {
 
   static std::string hash_hex(const std::string& s) 
   {
-    int i;
+    unsigned int i;
     boost::uint8_t digest[HASH_SIZE];
     std::ostringstream oss;
     oss << std::hex << std::setfill('0');
@@ -229,16 +229,16 @@ private:
 
   void pad_message(boost::uint8_t pad_byte)
   {
-    if (message_block_index_ >= (BLOCK_SIZE - 8)) {
+    if (message_block_index_ >= (int)(BLOCK_SIZE - 8)) {
       message_block_[message_block_index_++] = pad_byte;
-      while (message_block_index_ < BLOCK_SIZE)
+      while (message_block_index_ < (int)BLOCK_SIZE)
         message_block_[message_block_index_++] = 0;
       process_message_block();
     } else {
       message_block_[message_block_index_++] = pad_byte;
     }
 
-    while (message_block_index_ < (BLOCK_SIZE - 8))
+    while (message_block_index_ < (int)(BLOCK_SIZE - 8))
       message_block_[message_block_index_++] = 0;
 
     message_block_[56] = static_cast<boost::uint8_t>(length_high_ >> 24);
@@ -255,7 +255,7 @@ private:
 
   void finalize(boost::uint8_t pad_byte)
   {
-    int i;
+    unsigned int i;
     pad_message(pad_byte);
     for (i = 0; i < BLOCK_SIZE; ++i)
         message_block_[i] = 0;
