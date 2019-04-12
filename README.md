@@ -1,8 +1,14 @@
 # libBLS: a C++ library for BLS Threshold Signatures
+
+[![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
  
 A mathematical library written in C++ that supports BLS threshold signatures and Distributed Key Generation (DKG).
 
 The libBLS library is developed by SKALE Labs and uses SCIPR-LAB's libff (see Libraries below).
+
+## An important note about production readiness:
+
+This libBLS library is still in active development and therefore should be regarded as _alpha software_. The development is still subject to security hardening, further testing, and breaking changes.  **This library has not yet been reviewed or audited for security.**
 
 # Overview
 libBLS is a C++ library for [BLS signatures](https://doi.org/10.1007%2F3-540-45682-1_30) and [DKG](https://doi.org/10.1007%2F3-540-48910-X_21) that supports both threshold signatures and multi-signatures. 
@@ -93,6 +99,14 @@ assert(bls_instance.Verification(hash, signature, public_key) == true);
 ## Libraries
 - [libff by SCIPR-LAB](http://www.scipr-lab.org/)
 
+## Contributing
+
+**If you have any questions please ask our development community on [Discord](https://discord.gg/vvUtWJB).**
+
+[![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
+
 # License
 
-Copyright (c) 2018 SKALE Labs, Inc. and contributors.
+[![License](https://img.shields.io/github/license/GalacticExchange/libBLS.svg)](License)
+
+Copyright (C) 2018-present SKALE Labs
