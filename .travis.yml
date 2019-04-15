@@ -60,13 +60,6 @@ matrix:
                       - libgmp3-dev
                   sources: &sources
                       - ubuntu-toolchain-r-test
-        - os: osx
-          osx_image: xcode10.1
-          env: BUILDING_FOR_OS=osx CMAKE_BUILD_FLAGS="" OPENSSL_ROOT_DIR=/usr/local/opt/openssl WITH_PROCPS=0
-          addons:
-              apt:
-                  packages:
-                      - boost
 before_install:
     - eval "${MATRIX_EVAL}"
 script:
