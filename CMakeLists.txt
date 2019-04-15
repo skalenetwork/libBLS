@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.5.1)
 
+project(bls)
+
 option(BUILD_TESTS "Build tests" ON)
 if(BUILD_TESTS)
 	enable_testing()

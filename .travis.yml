@@ -1,12 +1,9 @@
-language: generic
+language: cpp
 sudo: required
-branches:
-    only:
-        - travis-ci
 matrix:
     include:
         - os: linux
-          env: BUILDING_FOR_OS=linux CXX=g++-7 CC=gcc-7 CMAKE_BUILD_FLAGS="-DCOVERAGE=ON" CODECOV_TOKEN="77018e0e-be89-47c6-8db5-cbde75153dce"
+          env: BUILDING_FOR_OS=linux CXX=g++-7 CC=gcc-7 CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
           addons:
               apt:
                   packages:
