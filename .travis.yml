@@ -71,7 +71,7 @@ script:
     - mkdir -p build
     - cd build
     - cmake $CMAKE_BUILD_FLAGS ..
-    - make
+    - cmake --build . -- -j$(nproc)
     - cd ..
     - echo "========================================= script (2)"
 notifications:
