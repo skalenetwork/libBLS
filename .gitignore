@@ -2,3 +2,4 @@ build
 gmp-6.1.2
 *.gcov
 *.user
+.idea
