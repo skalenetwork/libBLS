@@ -22,7 +22,7 @@ The signature process proceeds in 4 steps:
 
 libBLS uses the alt_bn128 (Barreto-Naehrig curve) elliptic curve to be compatible with [Ethereum's cryptography](https://ethereum.github.io/yellowpaper/paper.pdf) and provides 128 bits of security. Also, it provides opportunity to generate secret keys with DKG algorithm that supports the same curve. 
 
-libBLS for the most part corresponds to [BLS signature standard](https://tools.ietf.org/html/draft-boneh-bls-signature-00). This work is still in progress and is going to be improved in the next couple of month.
+libBLS for the most part corresponds to [BLS signature standard](https://tools.ietf.org/html/draft-boneh-bls-signature-00). This work is still in progress and is going to be improved in the next couple of months.
 
 ## Perfomance Specifications
 
@@ -93,7 +93,7 @@ libff::alt_bn128_G1 signature = bls_instance.Signing(hash, secret_key);
 ```
 5. Verify a signature by running the function Verification.
 ```
-assert(bls_instance.Verification(hash, signature, public_key) == true);
+assert(bls_instance.Verification(message, signature, public_key) == true);
 ```
 
 ## Libraries
@@ -107,6 +107,6 @@ assert(bls_instance.Verification(hash, signature, public_key) == true);
 
 # License
 
-[![License](https://img.shields.io/github/license/GalacticExchange/libBLS.svg)](License)
+[![License](https://img.shields.io/github/license/skalelabs/libBLS.svg)](License)
 
 Copyright (C) 2018-present SKALE Labs
