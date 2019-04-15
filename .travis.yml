@@ -14,7 +14,7 @@ matrix:
                       - valgrind
                       - gawk
                       - sed
-                      - libboost-dev
+                      - libboost-all-dev
                       - libffi-dev
                       - libssl-dev
                       - libprocps3-dev
@@ -55,7 +55,9 @@ matrix:
                       - gawk
                       - sed
                       - lcov
-                      - libboost-dev
+                      - libboost-all-dev
+                      - libprocps3-dev
+                      - libgmp3-dev
                   sources: &sources
                       - ubuntu-toolchain-r-test
         - os: osx
