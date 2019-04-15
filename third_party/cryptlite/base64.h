@@ -102,24 +102,24 @@ class base64 : public boost::noncopyable {
       if (c2 == -1)
         break;
 
-      dest[dest_len++] = static_cast<boost::uint8_t>(((c1 << 2)|((c2 & 0x30) >> 4) & 0xff));
+      dest[dest_len++] = static_cast<boost::uint8_t>((c1 << 2)|(((c2 & 0x30) >> 4) & 0xff));
 
       do {
         c3 = s[i++] & 0xff;
         if (c3 == 61)
           return boost::make_tuple(dest, dest_len);
-        c3 = dectable[c3];
+        c3 = dectable[static_cast<int>(c3)];
       } while (i < size && c3 == -1);
       if (c3 == -1)
         break;
 
-      dest[dest_len++] = static_cast<boost::uint8_t>((((c2 & 0xf) << 4)|((c3 & 0x3c) >> 2) & 0xff));
+      dest[dest_len++] = static_cast<boost::uint8_t>(((c2 & 0xf) << 4)|(((c3 & 0x3c) >> 2) & 0xff));
 
       do {
         c4 = s[i++] & 0xff;
         if (c4 == 61)
           return boost::make_tuple(dest, dest_len);
-        c4 = dectable[c4];
+        c4 = dectable[static_cast<int>(c4)];
       } while (i < size && c4 == -1);
       if (c4 == -1)
         break;
@@ -169,7 +169,7 @@ class base64 : public boost::noncopyable {
         c3 = s[i++] & 0xff;
         if (c3 == 61)
             return;
-        c3 = dectable[c3];
+        c3 = dectable[static_cast<int>(c3)];
       } while (i < size && c3 == -1);
       if (c3 == -1)
         break;
@@ -180,7 +180,7 @@ class base64 : public boost::noncopyable {
         c4 = s[i++] & 0xff;
         if (c4 == 61)
           return;
-        c4 = dectable[c4];
+        c4 = dectable[static_cast<int>(c4)];
       } while (i < size && c4 == -1);
       if (c4 == -1)
         break;
