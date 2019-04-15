@@ -23,7 +23,7 @@ if( COVERAGE )
 endif()
 
 
-set(sourses
+set(sourses_bls
     bls/bls.cpp
     dkg/dkg.cpp
     third_party/cryptlite/base64.cpp
@@ -142,4 +142,3 @@ install(TARGETS sign_bls DESTINATION bin)
 install(TARGETS bls_glue DESTINATION bin)
 
 install(TARGETS verify_bls DESTINATION bin)
-
