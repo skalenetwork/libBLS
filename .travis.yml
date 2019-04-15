@@ -1,0 +1,82 @@
+language: cpp
+sudo: required
+matrix:
+    include:
+        - os: linux
+          env:
+            - BUILDING_FOR_OS=linux
+            - CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+          addons:
+              apt:
+                  packages:
+                      - g++-7
+                      - valgrind
+                      - gawk
+                      - sed
+                      - libboost-dev
+                      - libffi-dev
+                      - libssl-dev
+                  sources: &sources
+                      - ubuntu-toolchain-r-test
+          before_script:
+              - echo "========================================= before_script (coverage)"
+              - sudo apt-get update -qq
+              - sudo python -m pip install --upgrade pip
+              - sudo python -m pip install pyopenssl ndg-httpsclient pyasn1
+              - sudo python -m pip install requests[security]
+              - sudo python -m pip install codecov --ignore-installed
+              - echo "========================================= before_script (codecov installed)"
+              - mkdir -p build
+              - cd build
+              - cd ..
+          after_success:
+              - cd build
+              - echo "========================================= after_success (coverage)"
+              - make test
+              - cd ..
+              - ./get_code_cov
+              - echo "========================================= after_success (coverage gathered to gcov files)"
+              - codecov
+              - bash <(curl -s https://codecov.io/bash)
+              - echo "========================================= after_success (coverage end)"
+        - os: linux
+          env:
+            - BUILDING_FOR_OS=linux
+            - CMAKE_BUILD_FLAGS=""
+            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+          addons:
+              apt:
+                  packages:
+                      - g++-7
+                      - valgrind
+                      - gawk
+                      - sed
+                      - lcov
+                      - libboost-dev
+                  sources: &sources
+                      - ubuntu-toolchain-r-test
+        - os: osx
+          osx_image: xcode10.1
+          env: BUILDING_FOR_OS=osx CMAKE_BUILD_FLAGS=""
+          addons:
+              apt:
+                  packages:
+                      - boost
+before_install:
+    - eval "${MATRIX_EVAL}"
+script:
+    - echo "========================================= script (1)"
+    - echo "CMAKE_BUILD_FLAGS=$CMAKE_BUILD_FLAGS"
+    - mkdir -p build
+    - cd build
+    - cmake $CMAKE_BUILD_FLAGS ..
+    - cmake --build . -- -j$(nproc)
+    - cd ..
+    - echo "========================================= script (2)"
+notifications:
+    email:
+        recipients:
+            - sergiy@skalelabs.com
+        on_success: change
+        on_failure: always
