@@ -229,16 +229,16 @@ private:
 
   void pad_message(boost::uint8_t pad_byte)
   {
-    if (message_block_index_ >= (int)(BLOCK_SIZE - 8)) {
+    if (message_block_index_ >= static_cast<int>((BLOCK_SIZE - 8))) {
       message_block_[message_block_index_++] = pad_byte;
-      while (message_block_index_ < (int)BLOCK_SIZE)
+      while (message_block_index_ < static_cast<int>(BLOCK_SIZE))
         message_block_[message_block_index_++] = 0;
       process_message_block();
     } else {
       message_block_[message_block_index_++] = pad_byte;
     }
 
-    while (message_block_index_ < (int)(BLOCK_SIZE - 8))
+    while (message_block_index_ < static_cast<int>((BLOCK_SIZE - 8)))
       message_block_[message_block_index_++] = 0;
 
     message_block_[56] = static_cast<boost::uint8_t>(length_high_ >> 24);
