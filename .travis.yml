@@ -17,6 +17,8 @@ matrix:
                       - libboost-dev
                       - libffi-dev
                       - libssl-dev
+		      - libprocps
+                      - libgmp3-dev
                   sources: &sources
                       - ubuntu-toolchain-r-test
           before_script:
