@@ -3,7 +3,10 @@ sudo: required
 matrix:
     include:
         - os: linux
-          env: BUILDING_FOR_OS=linux CXX=g++-7 CC=gcc-7 CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+          env:
+            - BUILDING_FOR_OS=linux
+            - CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
           addons:
               apt:
                   packages:
@@ -38,7 +41,10 @@ matrix:
               - bash <(curl -s https://codecov.io/bash)
               - echo "========================================= after_success (coverage end)"
         - os: linux
-          env: BUILDING_FOR_OS=linux CXX=g++-7 CC=gcc-7 CMAKE_BUILD_FLAGS=""
+          env:
+            - BUILDING_FOR_OS=linux
+            - CMAKE_BUILD_FLAGS=""
+            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
           addons:
               apt:
                   packages:
@@ -57,6 +63,8 @@ matrix:
               apt:
                   packages:
                       - boost
+before_install:
+    - eval "${MATRIX_EVAL}"
 script:
     - echo "========================================= script (1)"
     - echo "CMAKE_BUILD_FLAGS=$CMAKE_BUILD_FLAGS"
