@@ -17,7 +17,7 @@ matrix:
                       - libboost-dev
                       - libffi-dev
                       - libssl-dev
-		      - libprocps
+                      - libprocps
                       - libgmp3-dev
                   sources: &sources
                       - ubuntu-toolchain-r-test
