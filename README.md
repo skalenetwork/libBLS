@@ -107,6 +107,6 @@ assert(bls_instance.Verification(message, signature, public_key) == true);
 
 # License
 
-[![License](https://img.shields.io/github/license/skalelabs/libBLS.svg)](License)
+[![License](https://img.shields.io/github/license/skalelabs/libBLS.svg)](LICENSE)
 
 Copyright (C) 2018-present SKALE Labs
