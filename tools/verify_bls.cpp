@@ -49,10 +49,7 @@ void Verify(const size_t t, const size_t n, std::istream & sign_file) {
   std::ifstream hash_file("hash.json");
   hash_file >> hash_in;
 
-  libff::alt_bn128_G1 hash;
-  hash.X = libff::alt_bn128_Fq(hash_in["hash"]["X"].get<std::string>().c_str());
-  hash.Y = libff::alt_bn128_Fq(hash_in["hash"]["Y"].get<std::string>().c_str());
-  hash.Z = libff::alt_bn128_Fq(hash_in["hash"]["Z"].get<std::string>().c_str());
+  std::string to_be_hashed = hash_in["message"].get<std::string>();
 
   nlohmann::json pk_in;
   std::ifstream pk_file("public_key.json");
@@ -66,7 +63,7 @@ void Verify(const size_t t, const size_t n, std::istream & sign_file) {
   public_key.Z.c0 = libff::alt_bn128_Fq(pk_in["public_key"]["Z"]["c0"].get<std::string>().c_str());
   public_key.Z.c1 = libff::alt_bn128_Fq(pk_in["public_key"]["Z"]["c1"].get<std::string>().c_str());
 
-bool bRes = bls_instance.Verification(hash, sign, public_key);
+bool bRes = bls_instance.Verification(to_be_hashed, sign, public_key);
   if (g_b_verbose_mode)
     std::cout << "Signature verification result: " << (bRes ? "True" : "False") << '\n';
   if (!bRes)

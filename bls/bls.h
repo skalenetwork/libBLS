@@ -49,7 +49,7 @@ class Bls {
     libff::alt_bn128_G1 Signing(const libff::alt_bn128_G1 hash,
                                   const libff::alt_bn128_Fr secret_key);
 
-    bool Verification(const libff::alt_bn128_G1 hash, const libff::alt_bn128_G1 sign,
+    bool Verification(const std::string& to_be_hashed, const libff::alt_bn128_G1 sign,
                         const libff::alt_bn128_G2 public_key);
 
     std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> KeysRecover(

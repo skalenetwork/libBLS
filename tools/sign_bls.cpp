@@ -64,9 +64,7 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
   libff::alt_bn128_G1 hash = bls_instance.Hashing(message);
 
   nlohmann::json hash_json;
-  hash_json["hash"]["X"] = ConvertToString<libff::alt_bn128_Fq>(hash.X);
-  hash_json["hash"]["Y"] = ConvertToString<libff::alt_bn128_Fq>(hash.Y);
-  hash_json["hash"]["Z"] = ConvertToString<libff::alt_bn128_Fq>(hash.Z);
+  hash_json["message"] = message;
 
   libff::alt_bn128_G1 common_signature;
 

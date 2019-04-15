@@ -92,13 +92,19 @@ namespace signatures {
     return sign;
   }
 
-  bool Bls::Verification(const libff::alt_bn128_G1 hash, const libff::alt_bn128_G1 sign,
+  bool Bls::Verification(const std::string& to_be_hashed, const libff::alt_bn128_G1 sign,
                          const libff::alt_bn128_G2 public_key) {
     // verifies that a given signature corresponds to given public key
 
-    if (!hash.is_well_formed() || !sign.is_well_formed() || !public_key.is_well_formed()) {
+    if (!sign.is_well_formed() || !public_key.is_well_formed()) {
       throw std::runtime_error("Error, incorrect input data to verify signature");
     }
+
+    if (libff::alt_bn128_modulus_r * sign != libff::alt_bn128_G1::zero()) {
+      throw std::runtime_error("Error, signature is invalid");
+    }
+
+    libff::alt_bn128_G1 hash = this->Hashing(to_be_hashed);
 
     return (libff::alt_bn128_ate_reduced_pairing(sign, libff::alt_bn128_G2::one()) ==
             libff::alt_bn128_ate_reduced_pairing(hash, public_key));

@@ -1,25 +1,26 @@
-/*
-    Copyright (C) 2018-2019 SKALE Labs
+/**
+ * @license
+ * SKALE libBLS
+ * Copyright (C) 2019-Present SKALE Labs
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
 
-    This file is part of libBLS.
-
-    libBLS is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    libBLS is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
-
-    You should have received a copy of the GNU Lesser General Public License
-    along with skale-consensus.  If not, see <http://www.gnu.org/licenses/>.
-
-    @file unit_tests_bls.cpp
-    @author Oleh Nikolaiev
-    @date 2019
-*/
+/**
+ * @file unit_tests_bls.cpp
+ * @date 2019
+ */
 
 
 #include <bls/bls.h>
@@ -53,7 +54,7 @@ BOOST_AUTO_TEST_CASE(zeroSecretKey) {
   try {
     libff::alt_bn128_G1 hash = obj.Hashing(message);
     libff::alt_bn128_G1 signature = obj.Signing(hash, secret_key);
-    bool res = obj.Verification(hash, signature, public_key);
+    bool res = obj.Verification(message, signature, public_key);
   } catch (...) {
     is_exception_caught = true;
   }
@@ -88,7 +89,7 @@ BOOST_AUTO_TEST_CASE(singleBlsrun) {
 
 
 
-  BOOST_REQUIRE(obj.Verification(hash, signature, public_key));
+  BOOST_REQUIRE(obj.Verification(message, signature, public_key));
 
   std::cout << "DONE\n";
 }
@@ -155,7 +156,7 @@ BOOST_AUTO_TEST_CASE(BlsThresholdSignatures) {
 
 
 
-  BOOST_REQUIRE(obj.Verification(hash, common_signature, common_public));
+  BOOST_REQUIRE(obj.Verification(message, common_signature, common_public));
 
   std::cout << "DONE\n";
 }
@@ -219,7 +220,7 @@ BOOST_AUTO_TEST_CASE(BlsThresholdSignaturesFalse) {
 
 
 
-  BOOST_REQUIRE(obj.Verification(hash, common_signature, public_key) == false);
+  BOOST_REQUIRE(obj.Verification(message, common_signature, public_key) == false);
 
   std::cout << "DONE\n";
 }
@@ -294,7 +295,7 @@ BOOST_AUTO_TEST_CASE(BlsThresholdSignaturesReal) {
   BOOST_CHECK(common_signature == obj.Signing(hash, common_secret));
 
 
-  BOOST_REQUIRE(obj.Verification(hash, common_signature, common_public));
+  BOOST_REQUIRE(obj.Verification(message, common_signature, common_public));
 
   std::cout << "DONE\n";
 }
@@ -475,7 +476,7 @@ BOOST_AUTO_TEST_CASE(differentMessages) {
 
     libff::alt_bn128_G1 common_signature = obj.SignatureRecover(single_signatures, lagrange_coeffs);
 
-    BOOST_REQUIRE(obj.Verification(hash, common_signature, common_public));
+    BOOST_REQUIRE(obj.Verification(message, common_signature, common_public));
   }
 }*/
 
