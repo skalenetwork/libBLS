@@ -1,10 +1,10 @@
 # libBLS: a C++ library for BLS Threshold Signatures
 
-[![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
+[![Build Status](https://travis-ci.com/skalelabs/libBLS.svg?token=GpDGXHqy9kTj5H5cyHGS&branch=develop)](https://travis-ci.com/skalelabs/libBLS) [![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
  
 A mathematical library written in C++ that supports BLS threshold signatures and Distributed Key Generation (DKG).
 
-The libBLS library is developed by SKALE Labs and uses SCIPR-LAB's libff (see Libraries below).
+This libBLS library is developed by SKALE Labs and uses SCIPR-LAB's libff (see Libraries below).
 
 ## An important note about production readiness:
 
@@ -26,18 +26,31 @@ libBLS for the most part corresponds to [BLS signature standard](https://tools.i
 
 ## Perfomance Specifications
 
-libBLS allows to sign about 3000 messages per second on a single thread(Intel® Core™ i3-4160 CPU @ 3.60GHz).
+libBLS allows to sign about 3000 messages per second on a single thread (Intel® Core™ i3-4160 CPU @ 3.60GHz).
 However, for our solution we have implemented constant time signing (0.01 sec for sign) to avoid timing attacks.
 
 ## Installation Requirements
 
 libBLS has been built and tested on Ubuntu and Mac.
 
-Make sure that the following libraries are installed:
-1. Boost verison >= 1.65.1
-2. OpenSSL version >= 1.1.1
+GitHub is used to maintain this source code. Clone this repository by:
+
+```
+git clone --recurse-submodules https://github.com/skalelabs/libBLS.git
+cd libBLS
+```
+
+⚠️ Note: Because this repository depends on an additional submodule, it is important to pass`--recurse-submodules` to the `git clone` command to automatically initialize and update the submodule.
+
+If you have already cloned the repository and forgot to pass `--recurse-submodules`, then simply execute `git submodule update --init`.
+
 
 ## Building from source on Mac
+
+Ensure that the following required packages are installed:
+- Boost version >= 1.65.1
+- OpenSSL version >= 1.1.1
+
 Configure the project build with the following commands.
 ```
 cmake -H. -Bbuild                               # Configure the project and create a build directory.
@@ -47,7 +60,7 @@ cmake --build build -- -j$(sysctl -n hw.ncpu)   # Build all default targets usin
 ## Building from source on Ubuntu
 Ensure that the required packages are installed by executing:
 ```sudo apt-get update```
-```sudo apt-get install -y cmake build-essential automake```
+```sudo apt-get install -y cmake build-essential automake libprocps3-dev  libboost-all-dev libgmp3-dev libssl-dev```
 
 Configure the project build with the following commands.
 ```
@@ -70,7 +83,7 @@ cmake --build build -- -j$(nproc)   # Build all default targets using all cores.
 ```
 
 ## How to use the BLS algorithm
-1. Create an instance of class bls with input parameters t, and n; where n is a number of participants in your group and t is a threshold number for your case.
+1. Create an instance of class Bls with input parameters t, and n; where n is a number of participants in your group and t is a threshold number for your case.
 ```
 signatures::bls bls_instance = signatures::bls(t, n);
 ```
@@ -104,6 +117,8 @@ assert(bls_instance.Verification(message, signature, public_key) == true);
 **If you have any questions please ask our development community on [Discord](https://discord.gg/vvUtWJB).**
 
 [![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
+
+Otherwise see our [CONTRIBUTING.md](.github/CONTRIBUTING.md) for more information.
 
 # License
 

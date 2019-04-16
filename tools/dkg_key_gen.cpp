@@ -14,7 +14,7 @@
     GNU Lesser General Public License for more details.
 
     You should have received a copy of the GNU Lesser General Public License
-    along with skale-consensus.  If not, see <http://www.gnu.org/licenses/>.
+    along with libBLS.  If not, see <http://www.gnu.org/licenses/>.
 
     @file dkg_key_gen.cpp
     @author Oleh Nikolaiev
