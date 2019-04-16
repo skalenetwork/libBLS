@@ -14,9 +14,11 @@ matrix:
                       - valgrind
                       - gawk
                       - sed
-                      - libboost-dev
+                      - libboost-all-dev
                       - libffi-dev
                       - libssl-dev
+                      - libprocps3-dev
+                      - libgmp3-dev
                   sources: &sources
                       - ubuntu-toolchain-r-test
           before_script:
@@ -53,16 +55,11 @@ matrix:
                       - gawk
                       - sed
                       - lcov
-                      - libboost-dev
+                      - libboost-all-dev
+                      - libprocps3-dev
+                      - libgmp3-dev
                   sources: &sources
                       - ubuntu-toolchain-r-test
-        - os: osx
-          osx_image: xcode10.1
-          env: BUILDING_FOR_OS=osx CMAKE_BUILD_FLAGS=""
-          addons:
-              apt:
-                  packages:
-                      - boost
 before_install:
     - eval "${MATRIX_EVAL}"
 script:

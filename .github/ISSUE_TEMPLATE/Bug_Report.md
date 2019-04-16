@@ -7,7 +7,7 @@ about: Let us know about a bug!
 
 For questions, the best place to get answers is on our Discord channel, where questions will get more visibility from experienced users than the issue tracker.
 
-Please note: We take security and our users' trust very seriously. If you believe you have found a security issue in libBLS, please responsibly disclose by contacting us at security@skalelabs.com. Our PGP key is available at [our security page](https://www.skalelabs.com/security/).
+Please note: We take security and our users' trust very seriously. If you believe you have found a security issue in libBLS, please responsibly disclose by contacting us at security@skalelabs.com.
 
 -->
 

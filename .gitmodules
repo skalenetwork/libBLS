@@ -1,0 +1,7 @@
+[submodule "libff"]
+	path = libff
+	url = https://github.com/scipr-lab/libff.git
+
+[submodule "mpir"]
+	path = mpir
+	url = https://github.com/chfast/mpir.git
