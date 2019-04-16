@@ -1,6 +1,7 @@
 # libBLS: a C++ library for BLS Threshold Signatures
 
 [![Build Status](https://travis-ci.com/skalelabs/libBLS.svg?token=GpDGXHqy9kTj5H5cyHGS&branch=develop)](https://travis-ci.com/skalelabs/libBLS) [![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fskalelabs%2FlibBLS.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fskalelabs%2FlibBLS?ref=badge_shield)
  
 A mathematical library written in C++ that supports BLS threshold signatures and Distributed Key Generation (DKG).
 
@@ -125,3 +126,6 @@ Otherwise see our [CONTRIBUTING.md](.github/CONTRIBUTING.md) for more informatio
 ![GitHub](https://img.shields.io/github/license/skalelabs/libbls.svg)
 
 Copyright (C) 2018-present SKALE Labs
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fskalelabs%2FlibBLS.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fskalelabs%2FlibBLS?ref=badge_large)
