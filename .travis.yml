@@ -64,9 +64,9 @@ matrix:
           osx_image: xcode10.1
           env:
             - BUILDING_FOR_OS=osx
-            - CMAKE_BUILD_FLAGS=""
+            - CMAKE_BUILD_FLAGS="-DWITH_PROCPS=OFF"
             - OPENSSL_ROOT_DIR=/usr/local/opt/openssl
-            - WITH_PROCPS=0
+            # - WITH_PROCPS=0
           addons:
               apt:
                   packages:
