@@ -71,6 +71,17 @@ namespace signatures {
     return hash;
   }
 
+  libff::alt_bn128_G1 Bls::HashBytes(const char* raw_bytes, size_t length,
+                                  std::string (*hash_func)(const std::string& str)) {
+    std::string from_bytes(raw_bytes, length);
+
+    std::cout << from_bytes << '\n';
+
+    libff::alt_bn128_G1 hash = this->Hashing(from_bytes, *hash_func);
+
+    return hash;
+  }
+
   libff::alt_bn128_G1 Bls::Signing(const libff::alt_bn128_G1 hash,
                                     const libff::alt_bn128_Fr secret_key) {
     // sign a message with its hash and secret key
