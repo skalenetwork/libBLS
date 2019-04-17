@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Let us know about a bug!
+about: Let us know about a bug
 ---
 
 <!-- Please reserve GitHub issues for bug reports and feature requests.
@@ -16,15 +16,16 @@ A clear and concise description of what the bug is.
 
 **To Reproduce**
 Steps to reproduce the behavior:
-1. Run `...`
-2. See error
+1\. Run `...`
+2\. See error
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
 **Environment:**
-* OS Platform and Distribution (e.g. Linux Ubuntu 16.04):
-* GCC/Compiler version:
+
+-   OS Platform and Distribution (e.g. Linux Ubuntu 16.04):
+-   GCC/Compiler version:
 
 **Additional context**
 Add any other context about the problem here, such as logs or source code. Please link to a GitHub Gist instead of posting any lengthy content.
