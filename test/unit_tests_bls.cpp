@@ -93,6 +93,20 @@ BOOST_AUTO_TEST_CASE(singleBlsrun) {
   std::cout << "DONE\n";
 }
 
+BOOST_AUTO_TEST_CASE(SimillarHashes) {
+  std::cout << "Testing SimillarHashes\n";
+
+  signatures::Bls obj = signatures::Bls(1, 1);
+
+  std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> keys = obj.KeyGeneration();
+
+  const char message[5] = {104, 101, 108, 108, 111};
+
+  BOOST_REQUIRE(obj.HashBytes(message, 5) == obj.Hashing("hello"));
+
+  std::cout << "DONE\n";
+}
+
 
 
 

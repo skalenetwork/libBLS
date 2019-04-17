@@ -46,6 +46,10 @@ class Bls {
                                   std::string (*hash_func)(const std::string& str) =
                                                cryptlite::sha256::hash_hex);
 
+    libff::alt_bn128_G1 HashBytes(const char* raw_bytes, size_t length,
+                                  std::string (*hash_func)(const std::string& str) =
+                                               cryptlite::sha256::hash_hex);
+
     libff::alt_bn128_G1 Signing(const libff::alt_bn128_G1 hash,
                                   const libff::alt_bn128_Fr secret_key);
 

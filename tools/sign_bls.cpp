@@ -53,7 +53,7 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
           std::ostream& outfile, const std::string& key, bool sign_all = true, int idx = -1) {
   signatures::Bls bls_instance = signatures::Bls(t, n);
 
-  std::vector <uint8_t> message_data;
+  std::vector<uint8_t> message_data;
   while (!data_file.eof()) {
     uint8_t n_byte;
     data_file >> n_byte;
