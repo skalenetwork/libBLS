@@ -46,7 +46,7 @@ add_definitions(-DBLS_VERSION=${PROJECT_VERSION})
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++17 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-unused-variable")
 
-include_directories(${CMAKE_BINARY_DIR}/deps/include ${GMP_INCLUDE_DIR} )
+include_directories(${CMAKE_BINARY_DIR}/deps/include ${GMP_INCLUDE_DIR})
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 
 include(deps/ProjectGMP.cmake)
@@ -84,6 +84,14 @@ message( INFO " - Using final BLS INC=${BLS_WITH_FF_INCLUDE_DIR}")
 message( INFO " - Using final BLS LIB=${BLS_WITH_FF_LIBRARY_DIR}")
 include_directories(${BLS_WITH_FF_INCLUDE_DIR})
 link_directories(${BLS_WITH_FF_LIBRARY_DIR})
+
+set(BLS_INCLUDE_DIRS
+	${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}/bls
+	${CMAKE_CURRENT_SOURCE_DIR}deps/include
+	${CMAKE_CURRENT_SOURCE_DIR}/libff
+	${BLS_WITH_FF_INCLUDE_DIR}
+	)
 
 
 add_dependencies(bls gmp)
