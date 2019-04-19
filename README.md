@@ -134,7 +134,7 @@ or
 
 Otherwise see our [CONTRIBUTING.md](.github/CONTRIBUTING.md) for more information.
 
-# License
+## License
 
 ![GitHub](https://img.shields.io/github/license/skalelabs/libbls.svg)
 

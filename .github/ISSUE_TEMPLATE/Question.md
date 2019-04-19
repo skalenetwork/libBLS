@@ -9,7 +9,7 @@ Issues on GitHub are intended to be related to problems with the library itself 
 
 * * *
 
-## Support Forums
+### Support Forums
 
 -   SKALE on Discord <https://discord.gg/vvUtWJB>
 

@@ -3,8 +3,8 @@ name: Feature Request
 about: I have a suggestion (and might want to implement myself)
 ---
 
-### Describe the feature you would like:
+### Describe the feature you would like
 
-### Suggested implementation:
+### Suggested implementation
 
-### Describe alternatives that you have considered:
+### Describe alternatives that you have considered
