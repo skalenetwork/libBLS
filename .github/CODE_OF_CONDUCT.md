@@ -20,14 +20,11 @@ include:
 
 Examples of unacceptable behavior by participants include:
 
--   The use of sexualized language or imagery and unwelcome sexual attention or
-    advances
+-   The use of sexualized language or imagery and unwelcome sexual attention or advances
 -   Trolling, insulting/derogatory comments, and personal or political attacks
 -   Public or private harassment
--   Publishing others' private information, such as a physical or electronic
-    address, without explicit permission
--   Conduct which could reasonably be considered inappropriate for the forum in
-    which it occurs.
+-   Publishing others' private information, such as a physical or electronic address, without explicit permission
+-   Conduct which could reasonably be considered inappropriate for the forum in which it occurs.
 
 All SKALE forums and spaces are meant for professional interactions, and any 
 behavior which could reasonably be considered inappropriate in a professional 
@@ -72,12 +69,9 @@ over the outcome of their dispute.
 If you are experiencing or witnessing conflict, we ask you to use the following 
 escalation strategy to address the conflict:
 
-1.  Address the perceived conflict directly with those involved, preferably in 
-    a real-time medium.
-2.  If this fails, get a third party (e.g. a mutual friend, and/or someone with 
-    background on the issue, but not involved in the conflict) to intercede.
-3.  If you are still unable to resolve the conflict, and you believe it rises to 
-    harassment or another code of conduct violation, report it.
+1.  Address the perceived conflict directly with those involved, preferably in a real-time medium.
+2.  If this fails, get a third party (e.g. a mutual friend, and/or someone with background on the issue, but not involved in the conflict) to intercede.
+3.  If you are still unable to resolve the conflict, and you believe it rises to harassment or another code of conduct violation, report it.
 
 ## Reporting Violations
 
@@ -105,7 +99,4 @@ sanctions without notice.
 
 ## Attribution
 
-This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 1.4,
-available at <https://www.contributor-covenant.org/version/1/4/code-of-conduct.html>
-and includes some aspects of the Geek Feminism Code of Conduct and the Drupal 
-Code of Conduct.
+This Code of Conduct is adapted from the Contributor Covenant, version 1.4, available at <https://www.contributor-covenant.org/version/1/4/code-of-conduct.html>, and includes some aspects of the Geek Feminism Code of Conduct and the Drupal Code of Conduct.
