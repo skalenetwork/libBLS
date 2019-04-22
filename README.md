@@ -1,6 +1,6 @@
 # libBLS: a C++ library for BLS Threshold Signatures
 
-[![Build Status](https://travis-ci.com/skalelabs/libBLS.svg?token=GpDGXHqy9kTj5H5cyHGS&branch=develop)](https://travis-ci.com/skalelabs/libBLS) [![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
+[![Build Status](https://travis-ci.com/skalenetwork/libBLS.svg?token=GpDGXHqy9kTj5H5cyHGS&branch=develop)](https://travis-ci.com/skalenetwork/libBLS) [![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
 
 A mathematical library written in C++ that supports BLS threshold signatures and Distributed Key Generation (DKG).
 
@@ -35,7 +35,7 @@ libBLS has been built and tested on Ubuntu and Mac.
 
 GitHub is used to maintain this source code. Clone this repository by:
 
-    git clone --recurse-submodules https://github.com/skalelabs/libBLS.git
+    git clone --recurse-submodules https://github.com/skalenetwork/libBLS.git
     cd libBLS
 
 ⚠️ Note: Because this repository depends on an additional submodule, it is important to pass`--recurse-submodules` to the `git clone` command to automatically initialize and update the submodule.
@@ -136,6 +136,6 @@ Otherwise see our [CONTRIBUTING.md](.github/CONTRIBUTING.md) for more informatio
 
 ## License
 
-![GitHub](https://img.shields.io/github/license/skalelabs/libbls.svg)
+![GitHub](https://img.shields.io/github/license/skalenetwork/libbls.svg)
 
 Copyright (C) 2018-present SKALE Labs
