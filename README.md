@@ -136,6 +136,6 @@ Otherwise see our [CONTRIBUTING.md](.github/CONTRIBUTING.md) for more informatio
 
 ## License
 
-![GitHub](https://img.shields.io/github/license/skalenetwork/libbls.svg)
+[![License](https://img.shields.io/github/license/skalenetwork/libbls.svg)](LICENSE)
 
 Copyright (C) 2018-present SKALE Labs
