@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.5.1)
 
 project(libBLS)
 
+
+set(HUNTER_ENABLED OFF)
+
 option(BUILD_TESTS "Build tests" ON)
 
 if(BUILD_TESTS)
@@ -54,6 +57,7 @@ include(deps/ProjectGMP.cmake)
 add_library(bls ${sourses_bls} ${headers_bls})
 
 target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wno-error=unused-but-set-variable)
+
 
 find_package(Boost REQUIRED program_options system)
 
