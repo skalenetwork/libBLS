@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.5.1)
 
 project(libBLS)
 
+
+set(HUNTER_ENABLED OFF)
+
 option(BUILD_TESTS "Build tests" ON)
 
 if(BUILD_TESTS)
