@@ -1,12 +1,12 @@
-language: generic
+language: cpp
 sudo: required
-branches:
-    only:
-        - travis-ci
 matrix:
     include:
         - os: linux
-          env: BUILDING_FOR_OS=linux CXX=g++-7 CC=gcc-7 CMAKE_BUILD_FLAGS="-DCOVERAGE=ON" CODECOV_TOKEN="77018e0e-be89-47c6-8db5-cbde75153dce"
+          env:
+            - BUILDING_FOR_OS=linux
+            - CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
           addons:
               apt:
                   packages:
@@ -14,9 +14,11 @@ matrix:
                       - valgrind
                       - gawk
                       - sed
-                      - libboost-dev
+                      - libboost-all-dev
                       - libffi-dev
                       - libssl-dev
+                      - libprocps3-dev
+                      - libgmp3-dev
                   sources: &sources
                       - ubuntu-toolchain-r-test
           before_script:
@@ -41,7 +43,10 @@ matrix:
               - bash <(curl -s https://codecov.io/bash)
               - echo "========================================= after_success (coverage end)"
         - os: linux
-          env: BUILDING_FOR_OS=linux CXX=g++-7 CC=gcc-7 CMAKE_BUILD_FLAGS=""
+          env:
+            - BUILDING_FOR_OS=linux
+            - CMAKE_BUILD_FLAGS=""
+            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
           addons:
               apt:
                   packages:
@@ -50,23 +55,31 @@ matrix:
                       - gawk
                       - sed
                       - lcov
-                      - libboost-dev
+                      - libboost-all-dev
+                      - libprocps3-dev
+                      - libgmp3-dev
                   sources: &sources
                       - ubuntu-toolchain-r-test
         - os: osx
           osx_image: xcode10.1
-          env: BUILDING_FOR_OS=osx CMAKE_BUILD_FLAGS=""
+          env:
+            - BUILDING_FOR_OS=osx
+            - CMAKE_BUILD_FLAGS="-DWITH_PROCPS=OFF"
+            - OPENSSL_ROOT_DIR=/usr/local/opt/openssl
+            # - WITH_PROCPS=0
           addons:
               apt:
                   packages:
                       - boost
+before_install:
+    - eval "${MATRIX_EVAL}"
 script:
     - echo "========================================= script (1)"
     - echo "CMAKE_BUILD_FLAGS=$CMAKE_BUILD_FLAGS"
     - mkdir -p build
     - cd build
     - cmake $CMAKE_BUILD_FLAGS ..
-    - make
+    - cmake --build . -- -j$(nproc)
     - cd ..
     - echo "========================================= script (2)"
 notifications:

@@ -1,4 +1,4 @@
-#include <third_party/base64.h>
+#include <third_party/cryptlite/base64.h>
 
 namespace cryptlite {
   const char base64::enctable[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

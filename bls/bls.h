@@ -1,41 +1,74 @@
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
+/*
+    Copyright (C) 2018-2019 SKALE Labs
+
+    This file is part of libBLS.
+
+    libBLS is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    libBLS is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with libBLS.  If not, see <http://www.gnu.org/licenses/>.
+
+    @file bls.h
+    @author Oleh Nikolaiev
+    @date 2018
+*/
+
+
+#pragma once
+
+#include <third_party/cryptlite/sha256.h>
 
 #include <string>
 #include <vector>
 #include <utility>
 
-#include <third_party/sha256.h>
+
+#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
+
 
 namespace signatures {
 
-  class bls {
-    public:
-      bls(const size_t t, const size_t n);
+class Bls {
+ public:
+    Bls(const size_t t, const size_t n);
 
-      std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> KeyGeneration();
-      
-      libff::alt_bn128_G1 Hashing(const std::string& message,
-                                  std::string (*hash_func)(const std::string& str) = 
+    std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> KeyGeneration();
+
+    libff::alt_bn128_G1 Hashing(const std::string& message,
+                                  std::string (*hash_func)(const std::string& str) =
                                                cryptlite::sha256::hash_hex);
 
-      libff::alt_bn128_G1 Signing(const libff::alt_bn128_G1 hash,
+    libff::alt_bn128_G1 HashBytes(const char* raw_bytes, size_t length,
+                                  std::string (*hash_func)(const std::string& str) =
+                                               cryptlite::sha256::hash_hex);
+
+    libff::alt_bn128_G1 Signing(const libff::alt_bn128_G1 hash,
                                   const libff::alt_bn128_Fr secret_key);
 
-      bool Verification(const libff::alt_bn128_G1 hash, const libff::alt_bn128_G1 sign,
+    bool Verification(const std::string& to_be_hashed, const libff::alt_bn128_G1 sign,
                         const libff::alt_bn128_G2 public_key);
 
-      std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> KeysRecover(const std::vector<libff::alt_bn128_Fr>& coeffs,
+    std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> KeysRecover(
+                                                  const std::vector<libff::alt_bn128_Fr>& coeffs,
                                                   const std::vector<libff::alt_bn128_Fr>& shares);
 
-      libff::alt_bn128_G1 SignatureRecover(const std::vector<libff::alt_bn128_G1>& shares,
+    libff::alt_bn128_G1 SignatureRecover(const std::vector<libff::alt_bn128_G1>& shares,
                                           const std::vector<libff::alt_bn128_Fr>& coeffs);
 
-      std::vector<libff::alt_bn128_Fr> LagrangeCoeffs(const std::vector<size_t>& idx);
+    std::vector<libff::alt_bn128_Fr> LagrangeCoeffs(const std::vector<size_t>& idx);
 
-    private:
-      const size_t t = 0;
+ private:
+    const size_t t_ = 0;
 
-      const size_t n = 0;
-  };
+    const size_t n_ = 0;
+};
 
 }  // namespace signatures
