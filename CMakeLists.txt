@@ -39,6 +39,16 @@ set(headers_bls
     third_party/cryptlite/base64.h
 )
 
+set(sources_te
+    threshold_encryption/threshold_encryption.cpp
+    threshold_encryption/utils.cpp
+    )
+
+set(headers_te
+    threshold_encryption/threshold_encryption.h
+    threshold_encryption/utils.h
+)
+
 set(PROJECT_VERSION 0.4.0)
 
 add_definitions(-DBLS_VERSION=${PROJECT_VERSION})
@@ -52,8 +62,10 @@ link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 include(deps/ProjectGMP.cmake)
 
 add_library(bls ${sourses_bls} ${headers_bls})
+#add_library(te ${sources_te} ${headers_te})
 
 target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wno-error=unused-but-set-variable)
+#target_compile_options(te PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wno-error=unused-but-set-variable)
 
 find_package(Boost REQUIRED program_options system)
 
@@ -61,23 +73,27 @@ find_package(OpenSSL REQUIRED)
 
 IF ((DEFINED BLS_WITH_SECP256K1_INCLUDE_DIR) AND (DEFINED BLS_WITH_SECP256K1_LIBRARY_DIR))
 	add_dependencies(bls secp256k1)
+	#add_dependencies(te secp256k1)
 ELSE()
 	include(deps/ProjectSecp256k1.cmake)
 	set(BLS_WITH_SECP256K1_INCLUDE_DIR ${CMAKE_BINARY_DIR}/deps/include)
 	set(BLS_WITH_SECP256K1_LIBRARY_DIR ${CMAKE_BINARY_DIR}/deps/lib)
 	add_dependencies(bls secp256k1)
+	#add_dependencies(te secp256k1)
 
 ENDIF()
 include_directories(${BLS_WITH_SECP256K1_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
 link_directories(${BLS_WITH_SECP256K1_LIBRARY_DIR})
 
 IF ((DEFINED BLS_WITH_FF_INCLUDE_DIR) AND (DEFINED BLS_WITH_FF_LIBRARY_DIR))
-    add_dependencies(bls libff)
+	add_dependencies(bls libff)
+	#add_dependencies(te libff)
 ELSE()
 	add_subdirectory(libff)
 	set(BLS_WITH_FF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libff)
 	set(BLS_WITH_FF_LIBRARY_DIR ${CMAKE_BINARY_DIR}/libff/libff)
         add_dependencies(bls ff)
+	#add_dependencies(te ff)
 ENDIF()
 
 message( INFO " - Using final BLS INC=${BLS_WITH_FF_INCLUDE_DIR}")
@@ -98,6 +114,10 @@ set(BLS_INCLUDE_DIRS
 add_dependencies(bls gmp)
 target_include_directories(bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(bls PRIVATE ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+
+#add_dependencies(te gmp)
+#target_include_directories(te PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+#target_link_libraries(te PRIVATE ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
 add_executable(dkg_keygen tools/dkg_key_gen.cpp)
 target_include_directories(dkg_keygen PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -131,10 +151,17 @@ if (BUILD_TESTS)
 	target_link_libraries(dkg_unit_test PRIVATE bls)
 	add_test(NAME dkg_tests COMMAND dkg_unit_test)
 
+	add_executable(te_unit_test test/unit_tests_te.cpp)
+	target_include_directories(te_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+	target_link_libraries(te_unit_test PRIVATE bls)
+
+	add_test(NAME te_tests COMMAND te_unit_test)
+
 	add_custom_target( all_bls_tests
 		COMMAND ./bls_unit_test
 		COMMAND ./dkg_unit_test
-		DEPENDS bls_unit_test dkg_unit_test
+		COMMAND ./te_unit_test
+		DEPENDS bls_unit_test dkg_unit_test te_unit_test
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		COMMENT "Run all BLS and DKG tests"
 		)
