@@ -1,3 +1,26 @@
+/*
+    Copyright (C) 2018-2019 SKALE Labs
+
+    This file is part of libBLS.
+
+    libBLS is free software: you can redistribute it and/or modify
+    it under the terms of the GNU Lesser General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    libBLS is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public License
+    along with libBLS. If not, see <https://www.gnu.org/licenses/>.
+
+    @file utils.cpp
+    @author Oleh Nikolaiev
+    @date 2019
+ */
+
 #include <threshold_encryption/utils.h>
 
 class G2 {
@@ -136,14 +159,15 @@ libff::alt_bn128_Fq12 MillerLoop(const G2& P, const G2& Q) {
     R = R.dbl();
 
     f = f.squared();
-    f = f * tangent_line_dbl * ComputeVerticalLine(R, Q) * tangent_line.inverse() * ComputeVerticalLine(R, Qdbl).inverse();
+    f = f * tangent_line_dbl * ComputeVerticalLine(R, Q) * (tangent_line * ComputeVerticalLine(R, Qdbl)).inverse();
+
     if (bit) {
       libff::alt_bn128_Fq12 line = ComputeLine(R, P, Q);
       libff::alt_bn128_Fq12 line_dbl = ComputeLine(R, P, Qdbl);
 
       R = R + P;
 
-      f = f * line_dbl * ComputeVerticalLine(R, Q) * line.inverse() * ComputeVerticalLine(R, Qdbl).inverse();
+      f = f * line_dbl * ComputeVerticalLine(R, Q) * (line * ComputeVerticalLine(R, Qdbl)).inverse();
     }
   }
 
@@ -158,7 +182,6 @@ libff::alt_bn128_GT WeilPairing(const libff::alt_bn128_G2& Pc, const libff::alt_
   libff::alt_bn128_Fq12 g = MillerLoop(Q, P);
 
   libff::alt_bn128_Fq12 miller = f * g.inverse();
-  miller.print();
 
   return miller;
 }
