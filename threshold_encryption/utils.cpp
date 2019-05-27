@@ -29,7 +29,7 @@ class G2 {
 
     G2();
 
-    G2(const libff::alt_bn128_Fq12& x, const libff::alt_bn128_Fq12& y) : X(x), Y(y) {};
+    G2(const libff::alt_bn128_Fq12& x, const libff::alt_bn128_Fq12& y) : X(x), Y(y) {}
 
     G2(const libff::alt_bn128_Fq2& x, const libff::alt_bn128_Fq2& y) {
       libff::alt_bn128_Fq12 z = libff::alt_bn128_Fq12(libff::alt_bn128_Fq6::zero(), libff::alt_bn128_Fq6::one());
@@ -52,7 +52,14 @@ class G2 {
       this->Y = temp.Y;
     }
 
+    bool IsZero() const {
+      return (this->X == libff::alt_bn128_Fq12::zero() && this->Y == libff::alt_bn128_Fq12::zero());
+    }
+
     bool IsWellFormed() {
+      if (this->IsZero()) {
+        return true;
+      }
       libff::alt_bn128_Fq12 x3 = this->X.squared() * this->X;
       libff::alt_bn128_Fq12 y2 = this->Y.squared();
 
@@ -68,6 +75,14 @@ class G2 {
     }
 
     G2 operator+(const G2& other) const {
+      if (this->IsZero()) {
+        return other;
+      }
+
+      if (other.IsZero()) {
+        return *this;
+      }
+
       if (this->X == other.X) {
         if (this->Y == other.Y) {
           return this->dbl();
@@ -123,15 +138,13 @@ libff::alt_bn128_Fq12 ComputeLine(const G2& R, const G2& P, const G2& Q) {
 }
 
 libff::alt_bn128_Fq12 ComputeTangentLine(const G2& P, const G2& Q) {
-  libff::alt_bn128_Fq12 z = libff::alt_bn128_Fq12(libff::alt_bn128_Fq6::zero(), libff::alt_bn128_Fq6::one());
-
   libff::alt_bn128_Fq12 X2 = P.X.squared();
   libff::alt_bn128_Fq12 X2_3 = libff::alt_bn128_Fq(3) * X2;
   libff::alt_bn128_Fq12 Ydbl = libff::alt_bn128_Fq(2) * P.Y;
   libff::alt_bn128_Fq12 Ydbl_inv = Ydbl.inverse();
   libff::alt_bn128_Fq12 A = X2_3 * Ydbl_inv;
   libff::alt_bn128_Fq12 Y2 = P.Y.squared();
-  libff::alt_bn128_Fq12 U = -Y2 + libff::alt_bn128_Fq(9) * libff::alt_bn128_Fq12::one();
+  libff::alt_bn128_Fq12 U = -Y2 + libff::alt_bn128_Fq(3) * (libff::alt_bn128_Fq(3) * libff::alt_bn128_Fq12::one());
   libff::alt_bn128_Fq12 B = U * Ydbl_inv;
 
   libff::alt_bn128_Fq12 res = Q.Y - A * Q.X - B;
@@ -174,14 +187,34 @@ libff::alt_bn128_Fq12 MillerLoop(const G2& P, const G2& Q) {
   return f;
 }
 
-libff::alt_bn128_GT WeilPairing(const libff::alt_bn128_G2& Pc, const libff::alt_bn128_G2& Qc) {
-  G2 P = G2(Pc);
+libff::alt_bn128_GT WeilPairing(const libff::alt_bn128_G1& Pc, const libff::alt_bn128_G2& Qc) {
+  libff::alt_bn128_G1 copy = Pc;
+  copy.to_affine_coordinates();
+
+  G2 P = G2(copy.X * libff::alt_bn128_Fq12::one(), copy.Y * libff::alt_bn128_Fq12::one());
   G2 Q = G2(Qc);
+
+  G2 R = Q;
+
+  for (long int i = libff::alt_bn128_modulus_r.num_bits() - 2; i >= 0; --i) {
+    const bool bit = libff::alt_bn128_modulus_r.test_bit(i);
+
+    R = R.dbl();
+    
+    if (bit) {
+      R = R + P;
+    }
+  }
+
+  R.X.print();
+  R.Y.print();
 
   libff::alt_bn128_Fq12 f = MillerLoop(P, Q);
   libff::alt_bn128_Fq12 g = MillerLoop(Q, P);
 
-  libff::alt_bn128_Fq12 miller = f * g.inverse();
+  libff::alt_bn128_GT miller = f * g.inverse();
+
+  miller.print();
 
   return miller;
 }

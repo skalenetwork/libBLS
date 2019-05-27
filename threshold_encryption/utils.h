@@ -33,15 +33,12 @@ bool IsQuadraticResidue(const libff::alt_bn128_Fq& field_elem);
 
 libff::alt_bn128_Fq SquareRoot(const libff::alt_bn128_Fq& field_elem);
 
-libff::alt_bn128_Fq12 ComputeLine(const libff::alt_bn128_Fq12 R, const libff::alt_bn128_Fq12 P,
-                                                                    const libff::alt_bn128_Fq12 Q);
+libff::alt_bn128_Fq12 ComputeLine(const G2& R, const G2& P, const G2& Q);
 
-libff::alt_bn128_Fq12 ComputeTangentLine(const libff::alt_bn128_G2& P,
-                                          const libff::alt_bn128_G2& Q);
+libff::alt_bn128_Fq12 ComputeTangentLine(const G2& P, const G2& Q);
 
-libff::alt_bn128_Fq12 ComputeVerticalLine(const libff::alt_bn128_G2& P,
-                                          const libff::alt_bn128_G2& Q);
+libff::alt_bn128_Fq12 ComputeVerticalLine(const G2& P, const G2& Q);
 
-libff::alt_bn128_Fq12 MillerLoop(const libff::alt_bn128_G2& P, const libff::alt_bn128_G2& Q);
+libff::alt_bn128_Fq12 MillerLoop(const G2& P, const G2& Q);
 
-libff::alt_bn128_GT WeilPairing(const libff::alt_bn128_G2& P, const libff::alt_bn128_G2& Q);
+libff::alt_bn128_GT WeilPairing(const libff::alt_bn128_G1& P, const libff::alt_bn128_G2& Q);

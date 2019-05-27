@@ -22,16 +22,7 @@
  */
 
 
-#include <bls/bls.h>
-#include <threshold_encryption/utils.h>
-
-#include <cstdlib>
-#include <ctime>
-#include <map>
-#include <set>
-
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-#include <libff/algebra/exponentiation/exponentiation.hpp>
+#include <threshold_encryption.h>
 
 #define BOOST_TEST_MODULE
 
@@ -39,15 +30,35 @@
 
 BOOST_AUTO_TEST_SUITE(ThresholdEncryption)
 
-BOOST_AUTO_TEST_CASE(TE) {
-  libff::init_alt_bn128_params();
+BOOST_AUTO_TEST_CASE(Pairing) {
+  encryption::TE test_instance = encryption::TE(1, 2);
 
-  libff::alt_bn128_G2 P = libff::alt_bn128_G2::random_element();
-  libff::alt_bn128_Fq x = libff::alt_bn128_Fq::random_element();
-  libff::alt_bn128_Fq y = libff::alt_bn128_Fq::random_element();
-  libff::alt_bn128_G2 Q = libff::alt_bn128_G2::random_element();
+  element_t g, h;
+  element_t public_key, secret_key;
+  element_t sig;
+  element_t temp1, temp2;
 
-  BOOST_REQUIRE(WeilPairing(x * P, y * Q) == (WeilPairing(P, Q) ^ (x * y).as_bigint()));
+  element_init_G1(h, *test_instance.pairing);
+  element_init_G1(sig, *test_instance.pairing);
+  element_init_G2(g, *test_instance.pairing);
+  element_init_G2(public_key, *test_instance.pairing);
+  element_init_GT(temp1, *test_instance.pairing);
+  element_init_GT(temp2, *test_instance.pairing);
+  element_init_Zr(secret_key, *test_instance.pairing);
+
+  element_random(g);
+  element_random(secret_key);
+  element_pow_zn(public_key, g, secret_key);
+
+  char* message = "abcdef";
+  element_from_hash(h, message, 6);
+
+  element_pow_zn(sig, h, secret_key);
+
+  pairing_apply(temp1, sig, g, *test_instance.pairing);
+  pairing_apply(temp2, h, public_key, *test_instance.pairing);
+
+  BOOST_REQUIRE(element_cmp(temp1, temp2));
 }
 
 BOOST_AUTO_TEST_SUITE_END()
