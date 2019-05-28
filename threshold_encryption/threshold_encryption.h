@@ -33,9 +33,11 @@ namespace encryption{
 
   class TE{
    public:
-      pairing_t* pairing;
-      
+      pairing_t pairing_;
+
       TE(const size_t t, const size_t n);
+
+      ~TE();
 
       Ciphertext Encrypt(const std::string& message, const element_t& public_key);
 

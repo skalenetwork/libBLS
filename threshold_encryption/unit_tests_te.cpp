@@ -38,13 +38,13 @@ BOOST_AUTO_TEST_CASE(Pairing) {
   element_t sig;
   element_t temp1, temp2;
 
-  element_init_G1(h, *test_instance.pairing);
-  element_init_G1(sig, *test_instance.pairing);
-  element_init_G2(g, *test_instance.pairing);
-  element_init_G2(public_key, *test_instance.pairing);
-  element_init_GT(temp1, *test_instance.pairing);
-  element_init_GT(temp2, *test_instance.pairing);
-  element_init_Zr(secret_key, *test_instance.pairing);
+  element_init_Zr(secret_key, test_instance.pairing_);
+  element_init_G1(h, test_instance.pairing_);
+  element_init_G1(sig, test_instance.pairing_);
+  element_init_G2(g, test_instance.pairing_);
+  element_init_G2(public_key, test_instance.pairing_);
+  element_init_GT(temp1, test_instance.pairing_);
+  element_init_GT(temp2, test_instance.pairing_);
 
   element_random(g);
   element_random(secret_key);
@@ -55,10 +55,10 @@ BOOST_AUTO_TEST_CASE(Pairing) {
 
   element_pow_zn(sig, h, secret_key);
 
-  pairing_apply(temp1, sig, g, *test_instance.pairing);
-  pairing_apply(temp2, h, public_key, *test_instance.pairing);
+  pairing_apply(temp1, sig, g, test_instance.pairing_);
+  pairing_apply(temp2, h, public_key, test_instance.pairing_);
 
-  BOOST_REQUIRE(element_cmp(temp1, temp2));
+  BOOST_REQUIRE(!element_cmp(temp1, temp2));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

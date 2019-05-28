@@ -25,10 +25,7 @@
 
 namespace encryption {
 
-  TE::TE(const size_t t, const size_t n) : t_(t), n_(n) {
-    pairing_t pairing;
-
-    static char *aparam =
+  static char *aparam =
       "type a\n"
       "q 8780710799663312522437781984754049815806883199414208211028653399266475630880222957078625179422662221423155858769582317459277713367317481324925129998224791\n"
       "h 12016012264891146079388821366740534204802954401251311822919615131047207289359704531102844802183906537786776\n"
@@ -38,9 +35,12 @@ namespace encryption {
       "sign1 1\n"
       "sign0 1\n";
 
-    pairing_init_set_str(pairing, aparam);
+  TE::TE(const size_t t, const size_t n) : t_(t), n_(n) {
+    pairing_init_set_str(this->pairing_, aparam);
+  }
 
-    this->pairing = &pairing;
+  TE::~TE() {
+    pairing_clear(this->pairing_);
   }
 
   bool TE::Verify(const Ciphertext& ciphertext, const element_t& decrypted) {
@@ -72,7 +72,7 @@ namespace encryption {
           }
 
           element_t u;
-          element_init_Zr(u, *this->pairing);
+          element_init_Zr(u, this->pairing_);
 
           element_set_si(u, idx[j] - idx[i]);
 

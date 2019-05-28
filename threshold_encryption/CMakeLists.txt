@@ -26,17 +26,16 @@ link_directories(${CMAKE_BINARY_DIR})
 target_include_directories(te PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_dependencies(te gmp)
-target_include_directories(te PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(te PRIVATE ${GMP_INCLUDE_DIR})
 target_link_libraries(te PRIVATE ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
-add_dependencies(te pbc)
 target_include_directories(te PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(te PRIVATE pbc)
 
 if (BUILD_TESTS)
 	add_executable(te_unit_test unit_tests_te.cpp)
 	target_include_directories(te_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-	target_link_libraries(te_unit_test PRIVATE te)
+	target_link_libraries(te_unit_test PRIVATE te pbc ${GMP_LIBRARY})
 
 	add_test(NAME te_tests COMMAND te_unit_test)
 
