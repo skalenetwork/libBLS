@@ -21,6 +21,8 @@
     @date 2018
 */
 
+#include <string.h>
+
 #include <threshold_encryption.h>
 
 namespace encryption {
@@ -43,8 +45,107 @@ namespace encryption {
     pairing_clear(this->pairing_);
   }
 
-  bool TE::Verify(const Ciphertext& ciphertext, const element_t& decrypted) {
-    return true;
+  void TE::Hash(element_t ret_val, const element_t& Y, std::string (*hash_func)(const std::string& str)) {
+    mpz_t z;
+    element_to_mpz(z, Y);
+
+    char* tmp = mpz_get_str(NULL, 10, z);
+    mpz_clear(z);
+
+    const std::string sha256hex = hash_func(tmp);
+
+    const char* hash = sha256hex.c_str();
+
+    mpz_t res;
+    mpz_set_str(res, hash, 16);
+
+    element_set_mpz(ret_val, res);
+
+    mpz_clear(res);
+  }
+
+  void TE::Hash(element_t ret_val, const element_t& U, const std::string& V,
+                          std::string (*hash_func)(const std::string& str)) {
+    mpz_t z;
+    element_to_mpz(z, U);
+
+    char* tmp = mpz_get_str(NULL, 10, z);
+    mpz_clear(z);
+
+    const std::string sha256hex1 = hash_func(tmp);
+
+    const char* hash1 = sha256hex1.c_str();
+
+    const std::string sha256hex2 = hash_func(V.c_str());
+
+    const char* hash2 = sha256hex2.c_str();
+
+    char* hash;
+    hash = malloc(strlen(hash1) + strlen(hash2));
+    strcpy(hash, hash1);
+    strcat(hash, hash2);
+
+    mpz_t res;
+    mpz_set_str(res, hash, 16);
+
+    element_set_mpz(ret_val, res);
+
+    mpz_clear(res);
+  }
+
+  bool TE::Verify(const Ciphertext& ciphertext, const element_t& decrypted, const element_t& public_key) {
+    element_t U;
+    element_init_G1(U, this->pairing_);
+    element_set(U, std::get<0>(ciphertext));
+
+    std::string V = std::get<1>(ciphertext);
+
+    element_t W;
+    element_init_G1(W, this->pairing_);
+    element_set(W, std::get<2>(ciphertext));
+
+    element_t H;
+    element_init_G1(H, this->pairing_);
+    this->Hash(H, U, V);
+
+    element_t fst, snd;
+    element_init_GT(fst, this->pairing_);
+    element_init_GT(snd, this->pairing_);
+
+    element_t g;
+    element_init_G1(g, this->pairing_);
+    element_set1(g);
+
+    pairing_apply(fst, g, W, this->pairing_);
+    pairing_apply(snd, U, H, this->pairing_);
+
+    bool res = !element_cmp(fst, snd);
+
+    bool ret_val = true;
+
+    if (res) {
+      if (element_is0(decrypted)) {
+        ret_val = false;
+      } else {
+        element_t pp1. pp2;
+        element_init_GT(pp1, this->pairing_);
+        element_init_GT(pp2, this->pairing_);
+
+        pairing_apply(pp1, decrypted, g, this->pairing_);
+        pairing_apply(pp2, U, public_key, this->pairing_);
+
+        bool check = element_cmp(pp1, pp2);
+        if (check) {
+          ret_val = false;
+        }
+      }
+    }
+
+    element_clear(U);
+    element_clear(W);
+    element_clear(H);
+
+    return ret_val;
   }
 
   std::vector<element_t> TE::LagrangeCoeffs(const std::vector<int>& idx) {

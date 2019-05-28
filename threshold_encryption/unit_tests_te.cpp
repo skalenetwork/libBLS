@@ -30,7 +30,7 @@
 
 BOOST_AUTO_TEST_SUITE(ThresholdEncryption)
 
-BOOST_AUTO_TEST_CASE(Pairing) {
+BOOST_AUTO_TEST_CASE(PairingBillinearity) {
   encryption::TE test_instance = encryption::TE(1, 2);
 
   element_t g, h;
@@ -41,8 +41,8 @@ BOOST_AUTO_TEST_CASE(Pairing) {
   element_init_Zr(secret_key, test_instance.pairing_);
   element_init_G1(h, test_instance.pairing_);
   element_init_G1(sig, test_instance.pairing_);
-  element_init_G2(g, test_instance.pairing_);
-  element_init_G2(public_key, test_instance.pairing_);
+  element_init_G1(g, test_instance.pairing_);
+  element_init_G1(public_key, test_instance.pairing_);
   element_init_GT(temp1, test_instance.pairing_);
   element_init_GT(temp2, test_instance.pairing_);
 
