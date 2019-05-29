@@ -18,10 +18,11 @@
 
     @file threshold_encryption.cpp
     @author Oleh Nikolaiev
-    @date 2018
+    @date 2019
 */
 
 #include <string.h>
+#include <valarray>
 
 #include <threshold_encryption.h>
 
@@ -45,7 +46,7 @@ namespace encryption {
     pairing_clear(this->pairing_);
   }
 
-  void TE::Hash(element_t ret_val, const element_t& Y, std::string (*hash_func)(const std::string& str)) {
+  std::string TE::Hash(const element_t& Y, std::string (*hash_func)(const std::string& str)) {
     mpz_t z;
     element_to_mpz(z, Y);
 
@@ -56,12 +57,7 @@ namespace encryption {
 
     const char* hash = sha256hex.c_str();
 
-    mpz_t res;
-    mpz_set_str(res, hash, 16);
-
-    element_set_mpz(ret_val, res);
-
-    mpz_clear(res);
+    return std::string(hash);
   }
 
   void TE::Hash(element_t ret_val, const element_t& U, const std::string& V,
@@ -91,6 +87,102 @@ namespace encryption {
     element_set_mpz(ret_val, res);
 
     mpz_clear(res);
+  }
+
+  Ciphertext TE::Encrypt(const std::string& message, const element_t& common_public) {
+    element_t r;
+    element_init_Zr(r, this->pairing_);
+    element_random(r);
+
+    while (element_is0(r)) {
+      element_random(r);
+    }
+
+    element_t g;
+    element_init_G1(g, this->pairing_);
+    element_set1(g);
+
+    element_t U, Y;
+    element_init_G1(U, this->pairing_);
+    element_init_G1(Y, this->pairing_);
+    element_mul(U, r, g);
+    element_mul(Y, r, common_public);
+
+    std::string hash = Hash(Y);
+
+    // assuming message and hash are same size strings
+    std::valarray<uint8_t> lhs_to_hash(hash.size());
+    for (size_t i = 0; i < hash.size(); ++i) {
+      lhs_to_hash[i] = static_cast<uint8_t>(hash[i]);
+    }
+
+    std::valarray<uint8_t> rhs_to_hash(message.size());
+    for (size_t i = 0; i < message.size(); ++i) {
+      rhs_to_hash[i] = static_cast<uint8_t>(message[i]);
+    }
+
+    std::valarray<uint8_t> res = lhs_to_hash ^ rhs_to_hash;
+
+    std::string V = "";
+    for (size_t i = 0; i < V.size(); ++i) {
+      V[i] += static_cast<char>(res[i]);
+    }
+
+    element_t W, H;
+    element_init_G1(W, this->pairing_);
+    element_init_G1(H, this->pairing_);
+
+    Hash(H, U, V);
+    element_mul(W, r, H);
+
+    std::tuple<element_t, std::string, element_t> result;
+    std::get<0>(result)[0] = U[0];
+    std::get<1>(result) = V;
+    std::get<2>(result)[0] = W[0];
+    return result;
+  }
+
+  void TE::Decrypt(element_t ret_val, const Ciphertext& ciphertext, const element_t& secret_key) {
+    element_t U;
+    element_init_G1(U, this->pairing_);
+    element_set(U, std::get<0>(ciphertext));
+
+    std::string V = std::get<1>(ciphertext);
+
+    element_t W;
+    element_init_G1(W, this->pairing_);
+    element_set(W, std::get<2>(ciphertext));
+
+    element_t H;
+    element_init_G1(H, this->pairing_);
+    this->Hash(H, U, V);
+
+    element_t fst, snd;
+    element_init_GT(fst, this->pairing_);
+    element_init_GT(snd, this->pairing_);
+
+    element_t g;
+    element_init_G1(g, this->pairing_);
+    element_set1(g);
+
+    pairing_apply(fst, g, W, this->pairing_);
+    pairing_apply(snd, U, H, this->pairing_);
+
+    bool res = element_cmp(fst, snd);
+
+    if (res) {
+      throw std::runtime_error("cannot decrypt data");
+    }
+
+    element_mul(ret_val, secret_key, U);
+
+    element_clear(g);
+    element_clear(fst);
+    element_clear(snd);
+
+    element_clear(U);
+    element_clear(W);
+    element_clear(H);
   }
 
   bool TE::Verify(const Ciphertext& ciphertext, const element_t& decrypted, const element_t& public_key) {
@@ -127,7 +219,7 @@ namespace encryption {
       if (element_is0(decrypted)) {
         ret_val = false;
       } else {
-        element_t pp1. pp2;
+        element_t pp1, pp2;
         element_init_GT(pp1, this->pairing_);
         element_init_GT(pp2, this->pairing_);
 
@@ -138,8 +230,15 @@ namespace encryption {
         if (check) {
           ret_val = false;
         }
+
+        element_clear(pp1);
+        element_clear(pp2);
       }
     }
+
+    element_clear(g);
+    element_clear(fst);
+    element_clear(snd);
 
     element_clear(U);
     element_clear(W);

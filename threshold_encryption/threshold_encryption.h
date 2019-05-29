@@ -18,7 +18,7 @@
 
     @file threshold_encryption.h
     @author Oleh Nikolaiev
-    @date 2018
+    @date 2019
 */
 
 #pragma once
@@ -43,15 +43,15 @@ namespace encryption{
 
       ~TE();
 
-      Ciphertext Encrypt(const std::string& message, const element_t& public_key);
+      Ciphertext Encrypt(const std::string& message, const element_t& common_public);
 
-      void Decrypt(element_t ret_val, const Ciphertext& ciphertext);
+      void Decrypt(element_t ret_val, const Ciphertext& ciphertext, const element_t& secret_key);
 
       void Hash(element_t ret_val, const element_t& U, const std::string& V,
                           std::string (*hash_func)(const std::string& str) =
                                                cryptlite::sha256::hash_hex);
 
-      void Hash(element_t ret_val, const element_t& Y, std::string (*hash_func)(const std::string& str) =
+      std::string Hash(const element_t& Y, std::string (*hash_func)(const std::string& str) =
                                                cryptlite::sha256::hash_hex);
 
       bool Verify(const Ciphertext& ciphertext, const element_t& decrypted, const element_t& public_key);
