@@ -110,7 +110,7 @@ namespace encryption {
 
     std::string hash = Hash(Y);
 
-    // assuming message and hash are same size strings
+    // assuming message and hash are the same size strings
     std::valarray<uint8_t> lhs_to_hash(hash.size());
     for (size_t i = 0; i < hash.size(); ++i) {
       lhs_to_hash[i] = static_cast<uint8_t>(hash[i]);
