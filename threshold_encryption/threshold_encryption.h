@@ -57,7 +57,7 @@ namespace encryption{
       bool Verify(const Ciphertext& ciphertext, const element_t& decrypted, const element_t& public_key);
 
       std::string CombineShares(const Ciphertext& ciphertext,
-                      const std::vector<std::pair<element_t, size_t>>& decrypted);
+                                const std::vector<std::pair<element_s, size_t>>& decrypted);
 
       std::vector<element_t> LagrangeCoeffs(const std::vector<int>& idx);
 
@@ -65,5 +65,7 @@ namespace encryption{
       const size_t t_ = 0;
 
       const size_t n_ = 0;
+
+      const element_t generator_;
   };
 }  // namespace encryption

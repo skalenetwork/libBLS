@@ -21,6 +21,7 @@
     @date 2019
 */
 
+#include <iostream>
 #include <string.h>
 #include <valarray>
 
@@ -40,14 +41,19 @@ namespace encryption {
 
   TE::TE(const size_t t, const size_t n) : t_(t), n_(n) {
     pairing_init_set_str(this->pairing_, aparam);
+
+    element_init_G1(this->generator_, this->pairing_);
+    element_random(this->generator_);
   }
 
   TE::~TE() {
+    element_clear(this->generator_);
     pairing_clear(this->pairing_);
   }
 
   std::string TE::Hash(const element_t& Y, std::string (*hash_func)(const std::string& str)) {
     mpz_t z;
+    mpz_init(z);
     element_to_mpz(z, Y);
 
     char* tmp = mpz_get_str(NULL, 10, z);
@@ -63,6 +69,7 @@ namespace encryption {
   void TE::Hash(element_t ret_val, const element_t& U, const std::string& V,
                           std::string (*hash_func)(const std::string& str)) {
     mpz_t z;
+    mpz_init(z);
     element_to_mpz(z, U);
 
     char* tmp = mpz_get_str(NULL, 10, z);
@@ -82,6 +89,7 @@ namespace encryption {
     strcat(hash, hash2);
 
     mpz_t res;
+    mpz_init(res);
     mpz_set_str(res, hash, 16);
 
     element_set_mpz(ret_val, res);
@@ -100,7 +108,7 @@ namespace encryption {
 
     element_t g;
     element_init_G1(g, this->pairing_);
-    element_set1(g);
+    element_set(g, this->generator_);
 
     element_t U, Y;
     element_init_G1(U, this->pairing_);
@@ -108,9 +116,12 @@ namespace encryption {
     element_mul(U, r, g);
     element_mul(Y, r, common_public);
 
+
     std::string hash = Hash(Y);
 
     // assuming message and hash are the same size strings
+    // the behaviour is undefined when the two arguments are valarrays with different sizes
+
     std::valarray<uint8_t> lhs_to_hash(hash.size());
     for (size_t i = 0; i < hash.size(); ++i) {
       lhs_to_hash[i] = static_cast<uint8_t>(hash[i]);
@@ -121,11 +132,12 @@ namespace encryption {
       rhs_to_hash[i] = static_cast<uint8_t>(message[i]);
     }
 
+
     std::valarray<uint8_t> res = lhs_to_hash ^ rhs_to_hash;
 
     std::string V = "";
-    for (size_t i = 0; i < V.size(); ++i) {
-      V[i] += static_cast<char>(res[i]);
+    for (size_t i = 0; i < res.size(); ++i) {
+      V += static_cast<char>(res[i]);
     }
 
     element_t W, H;
@@ -139,6 +151,7 @@ namespace encryption {
     std::get<0>(result)[0] = U[0];
     std::get<1>(result) = V;
     std::get<2>(result)[0] = W[0];
+
     return result;
   }
 
@@ -163,7 +176,7 @@ namespace encryption {
 
     element_t g;
     element_init_G1(g, this->pairing_);
-    element_set1(g);
+    element_set(g, this->generator_);
 
     pairing_apply(fst, g, W, this->pairing_);
     pairing_apply(snd, U, H, this->pairing_);
@@ -206,7 +219,7 @@ namespace encryption {
 
     element_t g;
     element_init_G1(g, this->pairing_);
-    element_set1(g);
+    element_set(g, this->generator_);
 
     pairing_apply(fst, g, W, this->pairing_);
     pairing_apply(snd, U, H, this->pairing_);
@@ -247,6 +260,92 @@ namespace encryption {
     return ret_val;
   }
 
+  std::string TE::CombineShares(const Ciphertext& ciphertext,
+                                const std::vector<std::pair<element_s, size_t>>& decrypted) {
+    element_t U;
+    element_init_G1(U, this->pairing_);
+    element_set(U, std::get<0>(ciphertext));
+
+    std::string V = std::get<1>(ciphertext);
+
+    element_t W;
+    element_init_G1(W, this->pairing_);
+    element_set(W, std::get<2>(ciphertext));
+
+    element_t H;
+    element_init_G1(H, this->pairing_);
+    this->Hash(H, U, V);
+
+    element_t fst, snd;
+    element_init_GT(fst, this->pairing_);
+    element_init_GT(snd, this->pairing_);
+
+    element_t g;
+    element_init_G1(g, this->pairing_);
+    element_set(g, this->generator_);
+
+    pairing_apply(fst, g, W, this->pairing_);
+    pairing_apply(snd, U, H, this->pairing_);
+
+    bool res = element_cmp(fst, snd);
+
+    if (res) {
+      throw std::runtime_error("error during share combinig");
+    }
+
+    std::vector<int> idx(this->t_);
+    for (size_t i = 0; i < this->t_; ++i) {
+      idx[i] = decrypted[i].second;
+    }
+
+
+    std::vector<element_t> lagrange_coeffs = this->LagrangeCoeffs(idx);
+
+    element_t sum;
+    element_init_G1(sum, this->pairing_);
+    element_set0(sum);
+    for (size_t i = 0; i < this->t_; ++i) {
+      element_t temp;
+      element_init_G1(temp, this->pairing_);
+      element_mul(temp, lagrange_coeffs[i], &decrypted[i].first);
+
+      element_add(sum, sum, temp);
+
+      element_clear(temp);
+    }
+
+    std::string hash = this->Hash(sum);
+
+    std::valarray<uint8_t> lhs_to_hash(hash.size());
+    for (size_t i = 0; i < hash.size(); ++i) {
+      lhs_to_hash[i] = static_cast<uint8_t>(hash[i]);
+    }
+
+    std::valarray<uint8_t> rhs_to_hash(V.size());
+    for (size_t i = 0; i < V.size(); ++i) {
+      rhs_to_hash[i] = static_cast<uint8_t>(V[i]);
+    }
+
+    std::valarray<uint8_t> xor_res = lhs_to_hash ^ rhs_to_hash;
+
+    std::string message = "";
+    for (size_t i = 0; i < xor_res.size(); ++i) {
+      message += static_cast<char>(xor_res[i]);
+    }
+
+    element_clear(sum);
+
+    element_clear(g);
+    element_clear(fst);
+    element_clear(snd);
+
+    element_clear(U);
+    element_clear(W);
+    element_clear(H);
+
+    return message;
+  }
+
   std::vector<element_t> TE::LagrangeCoeffs(const std::vector<int>& idx) {
     if (idx.size() < this->t_) {
       throw std::runtime_error("Error, not enough participants in the threshold group");
@@ -255,6 +354,7 @@ namespace encryption {
     std::vector<element_t> res(this->t_);
 
     element_t w;
+    element_init_Zr(w, this->pairing_);
     element_set1(w);
 
     for (size_t i = 0; i < this->t_; ++i) {
@@ -263,6 +363,7 @@ namespace encryption {
 
     for (size_t i = 0; i < this->t_; ++i) {
       element_t v;
+      element_init_Zr(v, this->pairing_);
       element_set_si(v, idx[i]);
 
       for (size_t j = 0; j < this->t_; ++j) {
@@ -286,6 +387,7 @@ namespace encryption {
 
       element_mul(w, w, v);
 
+      element_init_Zr(res[i], this->pairing_);
       element_set(res[i], w);
 
       element_clear(v);
