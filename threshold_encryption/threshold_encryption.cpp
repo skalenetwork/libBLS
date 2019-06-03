@@ -21,7 +21,6 @@
     @date 2019
 */
 
-#include <iostream>
 #include <string.h>
 #include <valarray>
 
