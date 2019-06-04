@@ -73,6 +73,7 @@ matrix:
                   packages:
                       - boost
                       - shtool
+                      - libtool
 before_install:
     - eval "${MATRIX_EVAL}"
 script:
