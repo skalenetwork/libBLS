@@ -14,6 +14,7 @@ matrix:
                       - valgrind
                       - gawk
                       - sed
+                      - shtool
                       - libboost-all-dev
                       - libffi-dev
                       - libssl-dev
@@ -28,7 +29,6 @@ matrix:
               - sudo python -m pip install pyopenssl ndg-httpsclient pyasn1
               - sudo python -m pip install requests[security]
               - sudo python -m pip install codecov --ignore-installed
-              #- sudo apt-get install shtool
               - echo "========================================= before_script (codecov installed)"
               - mkdir -p build
               - cd build
