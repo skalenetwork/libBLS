@@ -76,20 +76,13 @@ namespace encryption {
 
     const std::string sha256hex1 = hash_func(tmp);
 
-    const char* hash1 = sha256hex1.c_str();
-
     const std::string sha256hex2 = hash_func(V.c_str());
 
-    const char* hash2 = sha256hex2.c_str();
-
-    char* hash;
-    hash = malloc(strlen(hash1) + strlen(hash2));
-    strcpy(hash, hash1);
-    strcat(hash, hash2);
+    const std::string hash = sha256hex1 + sha256hex2;
 
     mpz_t res;
     mpz_init(res);
-    mpz_set_str(res, hash, 16);
+    mpz_set_str(res, hash.c_str(), 16);
 
     element_set_mpz(ret_val, res);
 
