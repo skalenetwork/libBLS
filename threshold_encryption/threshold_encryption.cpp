@@ -53,8 +53,7 @@ namespace encryption {
   std::string TE::Hash(const element_t& Y, std::string (*hash_func)(const std::string& str)) {
     mpz_t z;
     mpz_init(z);
-    //element_to_mpz(z, &Y[0]);
-    element_to_mpz(z, const_cast < element_t& >( Y ) );
+    element_to_mpz(z, const_cast<element_t&>(Y));
 
     char* tmp = mpz_get_str(NULL, 10, z);
     mpz_clear(z);
@@ -70,7 +69,7 @@ namespace encryption {
                           std::string (*hash_func)(const std::string& str)) {
     mpz_t z;
     mpz_init(z);
-    element_to_mpz(z, &U[0]);
+    element_to_mpz(z, const_cast<element_t&>(U));
 
     char* tmp = mpz_get_str(NULL, 10, z);
     mpz_clear(z);
@@ -107,7 +106,7 @@ namespace encryption {
     element_init_G1(U, this->pairing_);
     element_init_G1(Y, this->pairing_);
     element_mul(U, r, g);
-    element_mul(Y, r, common_public);
+    element_mul(Y, r, const_cast<element_t&>(common_public));
 
 
     std::string hash = Hash(Y);
@@ -151,13 +150,13 @@ namespace encryption {
   void TE::Decrypt(element_t ret_val, const Ciphertext& ciphertext, const element_t& secret_key) {
     element_t U;
     element_init_G1(U, this->pairing_);
-    element_set(U, std::get<0>(ciphertext));
+    element_set(U, const_cast<element_t&>(std::get<0>(ciphertext)));
 
     std::string V = std::get<1>(ciphertext);
 
     element_t W;
     element_init_G1(W, this->pairing_);
-    element_set(W, std::get<2>(ciphertext));
+    element_set(W, const_cast<element_t&>(std::get<2>(ciphertext)));
 
     element_t H;
     element_init_G1(H, this->pairing_);
@@ -180,7 +179,7 @@ namespace encryption {
       throw std::runtime_error("cannot decrypt data");
     }
 
-    element_mul(ret_val, secret_key, U);
+    element_mul(ret_val, const_cast<element_t&>(secret_key), U);
 
     element_clear(g);
     element_clear(fst);
@@ -194,13 +193,13 @@ namespace encryption {
   bool TE::Verify(const Ciphertext& ciphertext, const element_t& decrypted, const element_t& public_key) {
     element_t U;
     element_init_G1(U, this->pairing_);
-    element_set(U, std::get<0>(ciphertext));
+    element_set(U, const_cast<element_t&>(std::get<0>(ciphertext)));
 
     std::string V = std::get<1>(ciphertext);
 
     element_t W;
     element_init_G1(W, this->pairing_);
-    element_set(W, std::get<2>(ciphertext));
+    element_set(W, const_cast<element_t&>(std::get<2>(ciphertext)));
 
     element_t H;
     element_init_G1(H, this->pairing_);
@@ -222,15 +221,15 @@ namespace encryption {
     bool ret_val = true;
 
     if (res) {
-      if (element_is0(decrypted)) {
+      if (element_is0(const_cast<element_t&>(decrypted))) {
         ret_val = false;
       } else {
         element_t pp1, pp2;
         element_init_GT(pp1, this->pairing_);
         element_init_GT(pp2, this->pairing_);
 
-        pairing_apply(pp1, decrypted, g, this->pairing_);
-        pairing_apply(pp2, U, public_key, this->pairing_);
+        pairing_apply(pp1, const_cast<element_t&>(decrypted), g, this->pairing_);
+        pairing_apply(pp2, U, const_cast<element_t&>(public_key), this->pairing_);
 
         bool check = element_cmp(pp1, pp2);
         if (check) {
@@ -257,13 +256,13 @@ namespace encryption {
                                 const std::vector<std::pair<element_s, size_t>>& decrypted) {
     element_t U;
     element_init_G1(U, this->pairing_);
-    element_set(U, std::get<0>(ciphertext));
+    element_set(U, const_cast<element_t&>(std::get<0>(ciphertext)));
 
     std::string V = std::get<1>(ciphertext);
 
     element_t W;
     element_init_G1(W, this->pairing_);
-    element_set(W, std::get<2>(ciphertext));
+    element_set(W, const_cast<element_t&>(std::get<2>(ciphertext)));
 
     element_t H;
     element_init_G1(H, this->pairing_);
