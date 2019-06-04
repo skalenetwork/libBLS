@@ -66,6 +66,6 @@ namespace encryption{
 
       const size_t n_ = 0;
 
-      const element_t generator_;
+      /*const*/ element_t generator_ = { 0 };
   };
 }  // namespace encryption
