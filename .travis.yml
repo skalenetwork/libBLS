@@ -29,7 +29,6 @@ matrix:
               - sudo python -m pip install pyopenssl ndg-httpsclient pyasn1
               - sudo python -m pip install requests[security]
               - sudo python -m pip install codecov --ignore-installed
-              - autoreconf -vif
               - echo "========================================= before_script (codecov installed)"
               - mkdir -p build
               - cd build

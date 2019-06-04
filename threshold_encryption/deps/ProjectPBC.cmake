@@ -9,7 +9,7 @@ set(PBC_INCLUDE_DIR "${PBC_PREFIX}/include/pbc")
 ExternalProject_Add( pbc
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/pbc-0.5.14
     BUILD_IN_SOURCE 1
-    CONFIGURE_COMMAND ./configure --with-pic --enable-static --disable-shared --prefix=${PBC_PREFIX}
+    CONFIGURE_COMMAND libtoolize --force && aclocal && autoheader && automake --force-missing --add-missing && autoconf && ./configure --with-pic --enable-static --disable-shared --prefix=${PBC_PREFIX}
     BUILD_COMMAND make install
 )
 
