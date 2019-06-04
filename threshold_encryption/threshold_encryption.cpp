@@ -50,7 +50,7 @@ namespace encryption {
     pairing_clear(this->pairing_);
   }
 
-  std::string TE::Hash(const element_t& Y, std::string (*hash_func)(const std::string& str)) {
+  std::string TE::Hash(element_t Y, std::string (*hash_func)(const std::string& str)) {
     mpz_t z;
     mpz_init(z);
     element_to_mpz(z, Y);

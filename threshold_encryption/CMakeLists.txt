@@ -20,8 +20,6 @@ set(PROJECT_VERSION 0.1.0)
 
 set (THIRD_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../)
 
-message( INFO "--------------- THIRD_PARTY_DIR is ${THIRD_PARTY_DIR}" )
-
 add_library(te ${sources} ${headers})
 
 include_directories(${CMAKE_BINARY_DIR})
