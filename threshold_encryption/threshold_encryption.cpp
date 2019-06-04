@@ -299,7 +299,7 @@ namespace encryption {
     for (size_t i = 0; i < this->t_; ++i) {
       element_t temp;
       element_init_G1(temp, this->pairing_);
-      element_mul(temp, lagrange_coeffs[i], &decrypted[i].first);
+      element_mul(temp, lagrange_coeffs[i], const_cast<element_t&>(decrypted[i].first));
 
       element_add(sum, sum, temp);
 
