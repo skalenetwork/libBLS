@@ -76,10 +76,10 @@ matrix:
                       - shtool
                       - libtool
           before_script:
-              - echo "=== INFO === libtool is    ... " `which glibtool`
-              - echo "=== INFO === libtoolize is ... " `which libtoolize`
-              - ln -s `which glibtool` /usr/local/libtool || true
-              - ln -s `which glibtoolize` /usr/local/libtoolize || true
+              - echo "=== INFO === libtool is    ... " $(which glibtool)
+              - echo "=== INFO === libtoolize is ... " $(which libtoolize)
+              - ln -s $(which glibtool) /usr/local/libtool || true
+              - ln -s $(which glibtoolize) /usr/local/libtoolize || true
 before_install:
     - eval "${MATRIX_EVAL}"
 script:
