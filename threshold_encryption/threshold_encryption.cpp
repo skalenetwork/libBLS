@@ -65,7 +65,7 @@ namespace encryption {
     return std::string(hash);
   }
 
-  void TE::Hash(element_t ret_val, const element_t& U, const std::string& V,
+  void TE::Hash(element_t ret_val, element_t U, const std::string& V,
                           std::string (*hash_func)(const std::string& str)) {
     mpz_t z;
     mpz_init(z);
@@ -89,7 +89,7 @@ namespace encryption {
     mpz_clear(res);
   }
 
-  Ciphertext TE::Encrypt(const std::string& message, const element_t& common_public) {
+  Ciphertext TE::Encrypt(const std::string& message, element_t common_public) {
     element_t r;
     element_init_Zr(r, this->pairing_);
     element_random(r);
@@ -147,7 +147,7 @@ namespace encryption {
     return result;
   }
 
-  void TE::Decrypt(element_t ret_val, const Ciphertext& ciphertext, const element_t& secret_key) {
+  void TE::Decrypt(element_t ret_val, Ciphertext ciphertext, element_t secret_key) {
     element_t U;
     element_init_G1(U, this->pairing_);
     element_set(U, std::get<0>(ciphertext));
@@ -190,7 +190,7 @@ namespace encryption {
     element_clear(H);
   }
 
-  bool TE::Verify(const Ciphertext& ciphertext, const element_t& decrypted, const element_t& public_key) {
+  bool TE::Verify(Ciphertext ciphertext, element_t decrypted, element_t public_key) {
     element_t U;
     element_init_G1(U, this->pairing_);
     element_set(U, std::get<0>(ciphertext));
@@ -252,8 +252,8 @@ namespace encryption {
     return ret_val;
   }
 
-  std::string TE::CombineShares(const Ciphertext& ciphertext,
-                                const std::vector<std::pair<element_s, size_t>>& decrypted) {
+  std::string TE::CombineShares(Ciphertext ciphertext,
+                                std::vector<std::pair<element_s, size_t>> decrypted) {
     element_t U;
     element_init_G1(U, this->pairing_);
     element_set(U, std::get<0>(ciphertext));

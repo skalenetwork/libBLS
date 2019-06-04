@@ -43,21 +43,21 @@ namespace encryption{
 
       ~TE();
 
-      Ciphertext Encrypt(const std::string& message, const element_t& common_public);
+      Ciphertext Encrypt(const std::string& message, element_t common_public);
 
-      void Decrypt(element_t ret_val, const Ciphertext& ciphertext, const element_t& secret_key);
+      void Decrypt(element_t ret_val, Ciphertext ciphertext, element_t secret_key);
 
-      void Hash(element_t ret_val, const element_t& U, const std::string& V,
+      void Hash(element_t ret_val, element_t U, const std::string& V,
                           std::string (*hash_func)(const std::string& str) =
                                                cryptlite::sha256::hash_hex);
 
       std::string Hash(element_t Y, std::string (*hash_func)(const std::string& str) =
                                                cryptlite::sha256::hash_hex);
 
-      bool Verify(const Ciphertext& ciphertext, const element_t& decrypted, const element_t& public_key);
+      bool Verify(Ciphertext ciphertext, element_t decrypted, element_t public_key);
 
-      std::string CombineShares(const Ciphertext& ciphertext,
-                                const std::vector<std::pair<element_s, size_t>>& decrypted);
+      std::string CombineShares(Ciphertext ciphertext,
+                                std::vector<std::pair<element_s, size_t>> decrypted);
 
       std::vector<element_t> LagrangeCoeffs(const std::vector<int>& idx);
 
@@ -66,6 +66,6 @@ namespace encryption{
 
       const size_t n_ = 0;
 
-      /*const*/ element_t generator_ = { 0 };
+      element_t generator_ = { 0 };
   };
 }  // namespace encryption
