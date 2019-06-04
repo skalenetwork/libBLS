@@ -53,7 +53,8 @@ namespace encryption {
   std::string TE::Hash(const element_t& Y, std::string (*hash_func)(const std::string& str)) {
     mpz_t z;
     mpz_init(z);
-    element_to_mpz(z, &Y[0]);
+    //element_to_mpz(z, &Y[0]);
+    element_to_mpz(z, const_cast < element_t& >( Y ) );
 
     char* tmp = mpz_get_str(NULL, 10, z);
     mpz_clear(z);
