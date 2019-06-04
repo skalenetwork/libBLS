@@ -28,6 +28,7 @@ matrix:
               - sudo python -m pip install pyopenssl ndg-httpsclient pyasn1
               - sudo python -m pip install requests[security]
               - sudo python -m pip install codecov --ignore-installed
+              - sudo apt-get install shtool
               - echo "========================================= before_script (codecov installed)"
               - mkdir -p build
               - cd build
@@ -66,7 +67,6 @@ matrix:
             - BUILDING_FOR_OS=osx
             - CMAKE_BUILD_FLAGS="-DWITH_PROCPS=OFF"
             - OPENSSL_ROOT_DIR=/usr/local/opt/openssl
-            # - WITH_PROCPS=0
           addons:
               apt:
                   packages:
