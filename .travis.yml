@@ -68,12 +68,18 @@ matrix:
             - BUILDING_FOR_OS=osx
             - CMAKE_BUILD_FLAGS="-DWITH_PROCPS=OFF"
             - OPENSSL_ROOT_DIR=/usr/local/opt/openssl
+            - LIBTOOL=glibtool
           addons:
               apt:
                   packages:
                       - boost
                       - shtool
                       - libtool
+          before_script:
+              - echo "=== INFO === libtool is    ... " `which glibtool`
+              - echo "=== INFO === libtoolize is ... " `which libtoolize`
+              - ln -s `which glibtool` /usr/local/libtool || true
+              - ln -s `which glibtoolize` /usr/local/libtoolize || true
 before_install:
     - eval "${MATRIX_EVAL}"
 script:
