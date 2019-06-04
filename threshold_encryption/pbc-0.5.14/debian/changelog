@@ -1,0 +1,137 @@
+libpbc (0.5.10) unstable; urgency=low
+
+  * GIT DIFF STAT (from 0.5.9 to 0.5.10):
+  *  NEWS                    |    4 +++
+  *  configure.ac            |    2 +-
+  *  debian/.gitignore       |    1 +
+  *  debian/changelog        |   57 +++++++++++++++++++++++++++++++++++++++++++++++
+  *  debian/control          |    8 +++---
+  *  debian/copyright        |    6 ++--
+  *  debian/mv_things.sh     |    8 +++++-
+  *  doc/Makefile            |    2 +-
+  *  doc/preface.txt         |    2 +-
+  *  ecc/pairing.c           |   14 ++++++-----
+  *  guru/prodpairing_test.c |   44 ++++++++++++++++++++++++++++++++++++
+  *  include/pbc_pairing.h   |    4 +--
+  *  makedeb.sh              |    8 ------
+  *  simple.make             |   19 ++++++++++++++-
+  *  test                    |   21 +++++++++++-----
+  *  15 files changed, 163 insertions(+), 37 deletions(-)
+
+ -- Paul Miller <jettero@cpan.org>  Sun, 24 Oct 2010 07:36:53 -0400
+
+libpbc (0.5.9) unstable; urgency=low
+
+  * GIT DIFF STAT (from 0.5.8 to 0.5.9):
+  *  NEWS                  |    5 +++++
+  *  arith/field.c         |   10 ++++++++--
+  *  configure.ac          |    2 +-
+  *  debian/.gitignore     |    1 +
+  *  debian/changelog      |   38 ++++++++++++++++++++++++++++++++++++++
+  *  debian/control        |    8 ++++----
+  *  debian/copyright      |    6 +++---
+  *  debian/mv_things.sh   |    8 ++++++--
+  *  doc/preface.txt       |    2 +-
+  *  ecc/pairing.c         |    4 +---
+  *  include/pbc_pairing.h |    4 ----
+  *  makedeb.sh            |    8 --------
+  *  12 files changed, 68 insertions(+), 28 deletions(-)
+
+ -- Paul Miller <jettero@cpan.org>  Fri, 22 Oct 2010 09:12:15 -0400
+
+libpbc (0.5.8) unstable; urgency=low
+
+  * GIT DIFF STAT (from 0.5.7-1):
+  *  COPYING         |  827 +++++++++++--------------------------------------------
+  *  NEWS            |    4 +
+  *  configure.ac    |    2 +-
+  *  doc/preface.txt |    2 +-
+  *  4 files changed, 165 insertions(+), 670 deletions(-)
+
+ -- Paul Miller <jettero@cpan.org>  Mon, 17 May 2010 20:21:34 -0400
+
+libpbc (0.5.7-1) unstable; urgency=low
+
+    * Bugfixes and speadups
+    * a couple new functions
+
+ -- Paul Miller <jettero@gmail.com>  Mon, 25 Jan 2010 08:47:00 -0500
+
+libpbc (0.5.6-1) unstable; urgency=low
+
+    * Projective coordinates for A1 pairings. Contributed by Zhang Ye.
+    * Bugfix for affine coordinates for A pairings. Contributed by Zhang Ye.
+    * Optionally suppress error messages. Based on code by Geremy Condra.
+
+ -- Paul Miller <jettero@gmail.com>  Mon,  9 Nov 2009 07:05:00 -0500
+
+libpbc (0.5.5-2) unstable; urgency=low
+
+    * Trying out the new bison/flex rules in configure.ac
+
+ -- Paul Miller <jettero@gmail.com>  Thu, 15 Aug 2009 09:41:00 -0400
+
+libpbc (0.5.5-1) unstable; urgency=low
+
+    * Bugfixes, et al
+
+ -- Paul Miller <jettero@gmail.com>  Thu, 15 Aug 2009 09:41:00 -0400
+
+libpbc (0.5.4-1) unstable; urgency=low
+
+    * * Accessors for coordinates of points and coefficients of polynomials.
+
+ -- Paul Miller <jettero@gmail.com>  Mon, 24 Aug 2009 21:27:00 -0400
+
+libpbc (0.5.3-1) unstable; urgency=low
+
+    * Revamped pairing-based calculator.
+
+ -- Paul Miller <jettero@gmail.com>  Mon, 17 Aug 2009 16:00:00 -0400
+
+libpbc (0.5.2-1) unstable; urgency=low
+
+    * Fixed pbc_param_set_str().
+    * Add DLL to Windows release.
+
+ -- Paul Miller <jettero@gmail.com>  Wed, 05 Aug 2009 14:53:00 -0400
+
+libpbc (0.5.1-2) unstable; urgency=low
+
+    * pulled in the actual 0.5.1 files for this pack job
+
+ -- Paul Miller <jettero@gmail.com>  Thu, 30 Jul 2009 13:10:00 -0400
+
+libpbc (0.5.1-1) unstable; urgency=low
+
+    * bugfixes for the new param init stuff
+
+ -- Paul Miller <jettero@gmail.com>  Wed, 29 Jul 2009 20:50:00 -0400
+
+libpbc (0.5.0-1) unstable; urgency=low
+
+    * init and pairing params changes
+    * refactored the API a bit, removed various things, exposed some things
+    * refactored to avoid symbol pollution.
+
+ -- Paul Miller <jettero@gmail.com>  Wed, 29 Jul 2009 08:57:00 -0400
+
+libpbc (0.4.19-1) unstable; urgency=low
+
+  * I decided to roll this into libpbc on gibhub.
+
+ -- Paul Miller <jettero@gmail.com>  Wed, 06 May 2009 14:43:00 -0400
+
+libpbc (0.4.18-1) unstable; urgency=low
+
+  * I have my doubts about whether this will fix the bug I've been waiting on
+    for over a year, but I might as well build the thing.
+
+ -- Paul Miller <jettero@gmail.com>  Sat, 05 Jul 2008 07:05:00 -0400
+
+libpbc (0.4.12-2) unstable; urgency=low
+
+  * yeah, I did the -1 revision totally wrong, this'll probably be 100% better.
+
+ -- Paul Miller <jettero@gmail.com>  Wed, 02 Jan 2008 07:00:03 -0500
+

@@ -1,0 +1,37 @@
+# Exercises a bug found by Zhang Ye.
+
+define test_cmp_0(initfn) {
+  initfn();
+  CHECK(random(G2) != G2(0));
+  CHECK(G2(0) != random(G2));
+  CHECK(G2(0) == G2(0));
+  CHECK(random(G1) != G1(0));
+  CHECK(G1(0) != random(G1));
+  CHECK(G1(0) == G1(0));
+}
+
+test_cmp_0(init_pairing_a);
+test_cmp_0(init_pairing_d);
+test_cmp_0(init_pairing_e);
+test_cmp_0(init_pairing_f);
+test_cmp_0(init_pairing_g);
+test_cmp_0(init_pairing_i);
+
+# Exercises a bug found by Mario Di Raimondo.
+
+define test_g2_cmp(initfn) {
+  initfn();
+  a := rnd(G2);
+  m := rnd(Zr);
+  n := rnd(Zr);
+  CHECK((a^m)^n == a^(m*n));
+  CHECK(a != a^m);
+  CHECK(a != a^n);
+}
+
+test_g2_cmp(init_pairing_a);
+test_g2_cmp(init_pairing_d);
+test_g2_cmp(init_pairing_e);
+test_g2_cmp(init_pairing_f);
+test_g2_cmp(init_pairing_g);
+test_g2_cmp(init_pairing_i);

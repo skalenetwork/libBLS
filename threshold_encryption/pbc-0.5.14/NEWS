@@ -1,0 +1,121 @@
+The PBC pairing-based cryptography library. See COPYING for license.
+
+Ben Lynn
+
+Changes between PBC version 0.5.14 and 0.5.13
+
+* Eta pairing (type I), by Homer Hsing
+
+Changes between PBC version 0.5.13 and 0.5.12
+
+* Many thanks to Homer Hsing for volunteering to maintain this library.
+* Flattened nested functions.
+* Bugfix for test script.
+
+Changes between PBC version 0.5.12 and 0.5.11
+
+* Fixed a parsing bug reported by Michael Adjedj.
+
+Changes between PBC version 0.5.11 and 0.5.10
+
+* Support native win32 compilation via autotools. Thanks to Michael Rushanan.
+
+Changes between PBC version 0.5.10 and 0.5.9
+
+* pairing_init_pbc_param() fix thanks to Michael Adjedj.
+
+Changes between PBC version 0.5.9 and 0.5.8
+
+* Bugfix thanks to Michael Adjedj.
+* Reduce high exponents for exponentiations in finite groups.
+
+Changes between PBC version 0.5.8 and 0.5.7
+
+* Changed the license to LGPL.
+
+Changes between PBC version 0.5.7 and 0.5.6
+
+* Faster multi-pairing (product of pairings) for A, A1, and D pairings.
+  Contributed by Zhang Ye.
+* New API functions element_pairing() and element_prod_pairing().
+
+Changes between PBC version 0.5.6 and 0.5.5
+
+* Projective coordinates for A1 pairings. Contributed by Zhang Ye.
+* Bugfix for affine coordinates for A pairings. Contributed by Zhang Ye.
+* Optionally suppress error messages. Based on code by Geremy Condra.
+
+Changes between PBC version 0.5.5 and 0.5.4
+
+* Fixed bug reported by Zhang Ye: comparisons with the identity element in the
+  input groups was broken.
+* Fixed bug reported by Mario Di Raimondo: comparisons in G2 for some pairing
+  types were broken. (Different representatives of the same coset are now
+  considered equal.)
+
+Changes between PBC version 0.5.4 and 0.5.3
+
+* Accessors for coordinates of points and coefficients of polynomials.
+
+Changes between PBC version 0.5.3 and 0.5.2
+
+* Revamped pairing-based calculator.
+
+Changes between PBC version 0.5.2 and 0.5.1
+
+* Fixed pbc_param_set_str().
+* Add DLL to Windows release.
+
+Changes between PBC version 0.5.1 and 0.5.0
+
+* Fixed pbc_param_t parsing bugs, and added error detection.
+* Increased buffer size in pbc_demo_pairing_init() so the sample parameters
+  actually work.
+
+== New in PBC 0.5.0 ==
+
+The largest changes involve pairing initialization and pairing parameters.
+
+For pairing initialization, supply a buffer containing pairing parameters
+instead of a `FILE *` stream. For example, rather than:
+
+  pairing_init_inp_str(pairing, stdin);
+
+write something like:
+
+  char s[1024];
+  size_t count = fread(s, 1, 1024, stdin);
+  if (!count) pbc_die("input error");
+  if (pairing_init_set_buf(pairing, s, count)) pbc_die("pairing init failed");
+
+For file reads, personally I like to use mmap() which suits
+pairing_init_set_buf().
+
+The `pbc_param_t` data type for pairing parameters replaces `a_param_t`, ...,
+`g_param_t`. Having the same data type for all pairing parameter types
+simplifies the library, though some functions had to be changed slightly.
+
+At last, one can initialize a `pairing_t` from a `pbc_param_t`:
+
+  pairing_t p;
+  pbc_param_t par;
+  pbc_param_init_a_gen(par, 160, 512);
+  pairing_init_pbc_param(p, par);
+  pbc_param_clear(par);
+
+=== Minor differences ===
+
+I trimmed the API. The file stream operations are gone. I removed the
+fetch_ops_t and tracker_t types: the standard C library already provides
+routines for reading from disk to memory.
+
+I refactored to avoid exposing `symtab_t` and `darray_t`, and undocumented
+routines such as `poly_alloc()`. I mostly preserved the headers that define
+these functions, but they are no longer included by `pbc.h`.
+
+I replaced the CMake files with `simple.make`, which I use during development,
+though I test the autotools build before release.
+
+To reduce symbol pollution, all official functions and variables of the PBC
+now start with `pbc_`, `field_`, `element_` or `pairing_`. Other names mostly
+have hidden visibility in a shared library. Watch out for renamed functions.
