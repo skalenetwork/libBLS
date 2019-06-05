@@ -75,7 +75,10 @@ ENDIF()
 include_directories(${BLS_WITH_SECP256K1_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
 link_directories(${BLS_WITH_SECP256K1_LIBRARY_DIR})
 
-set(WITH_PROCPS OFF)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	set(WITH_PROCPS OFF)
+endif()
+
 IF ((DEFINED BLS_WITH_FF_INCLUDE_DIR) AND (DEFINED BLS_WITH_FF_LIBRARY_DIR))
 	add_dependencies(bls libff)
 ELSE()
