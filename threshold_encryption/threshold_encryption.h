@@ -36,39 +36,46 @@ namespace encryption{
   typedef std::tuple<element_t, std::string, element_t> Ciphertext;
 
   class element_wrapper {
-  public:
+   public:
       element_t el_ = { 0 };
+
       void clear() {
           if( el_[0].data )
             element_clear( el_ );
       }
+
       void assign( const element_t & e ) {
           if( ((void*)(&el_)) == ((void*)(&e)) )
             return;
-          clear();
           element_init_same_as( el_, const_cast < element_t & > ( e ) );
           element_set( el_, const_cast < element_t & > ( e ) );
       }
+
       void assign( const element_wrapper & other ) {
           if( ((void*)this) == ((void*)(&other)) )
             return;
           assign( other.el_ );
       }
-      element_wrapper() {
-      }
+
+      element_wrapper() {}
+
       element_wrapper( const element_wrapper & other ) {
           assign( other );
       }
+
       element_wrapper( const element_t & e ) {
           assign( e );
       }
+
       ~element_wrapper() {
           clear();
       }
+
       element_wrapper & operator = ( const element_wrapper & other ) {
           assign( other );
           return (*this);
       }
+
       element_wrapper & operator = ( const element_t & e ) {
           assign( e );
           return (*this);

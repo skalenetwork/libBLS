@@ -101,9 +101,7 @@ BOOST_AUTO_TEST_CASE(SimpleEncryption) {
 
   std::vector<std::pair<encryption::element_wrapper, size_t>> shares;
   encryption::element_wrapper ev( decrypted );
-  shares.push_back(
-      std::make_pair( ev, size_t(0) )
-    );
+  shares.push_back(std::make_pair(ev, size_t(0)));
 
   std::string res = te_instance.CombineShares(ciphertext, shares);
 
