@@ -1,0 +1,119 @@
+[[bundlechap]]
+== Bundled programs ==
+
+Several binaries and curve parameters are bundled with the PBC library,
+such as <<pbcintro, the `pbc` program>>.
+
+The `param` subdirectory contains pairing parameters one might use in
+a real cryptosystem. Many of the test programs read the parameters
+from files such as these on standard input, for example:
+
+  $ benchmark/benchmark < param/c159.param
+  $ example/bls < param/e.param
+
+[[pbcref]]
+=== Pairing-based calculator ===
+
+The `pbc` subdirectory contains the pairing-based calculator, `pbc`,
+which is loosely based on `bc`, a well-known arbitrary precision
+calculator.
+
+See `pairing_test.pbc` for an example script. Some differences: the assignment
+operator is `:=`, and newlines are ordinary whitespace and not statement
+terminators.
+
+If started with the `-y` option, the syntax is compatible with `bc`: newlines
+are treated as statement terminators and `=` is assignment. Additionally,
+`pbc` displays a prompt. This mode may be easier for beginners.
+
+Initially, the variables G1, G2, GT and Zr are represent groups associated with
+a particular A pairing.
+
+An element is represented with a tree of integers, such as `[[1,2], 3]`, or
+`4`.
+
+Assignments such as `variable := expression;` return the value of the variable.
+
+The arithmetic operators `+, -, /, *, ^` have the standard precedence.
+The C comparison operators and ternary operator are available.
+
+Each statement should be terminated by a semicolon.
+
+Comments are the same as in (original) C, or begin with "#" and end at a
+newline.
+
+Some of the pbc functions:
+
++init_pairing_A()+::
+Set the variables G1, G2, GT and Zr to the groups in a particular A pairing:
++
+  init_pairing_A();
++
+Other sample pairings can be used by replacing `A` with one of `D, E, F, G`.
+
++rnd(+'G'+)+::
+Returns a random element of an algebraic structure 'G', e.g:
++
+  g := rnd(Zr);
++
+Synonym: `random`.
+
++pairing(+'g, h'+)+::
+Returns the pairing applied to 'g' and 'h'.
+The element 'g' must be an element of G1 and 'h' of G2, e.g:
++
+  pairing(rnd(G1), rnd(G2));
+
+'G'+(+'g'+)+::
+Maps an element 'g' to element of the field 'G', e.g:
++
+  Zr(123);
+  GT([456, 789]);
+
+=== Parameter generation ===
+
+Programs that generate pairing parameters are located in the `gen`
+subdirectory. Some of the programs are already functional enough to be used to
+find parameters for real applications. I need to write more documentation
+first; for now, read the source!
+
+*listmnt*::
+  Searches for discriminants D that lead to MNT curves with subgroups
+  of prime order.
+
+*genaparam*, *gena1param*, *gendparam*, *geneparam*, *genfparam*, *gengparam*::
+  Prints parameters for a curve suitable for computing pairings of a given type.
+  The output can be fed to some of the other test programs.  The programs
+  `gendparam` and `gengparam` should be given a discriminant as the first
+  argument.
+
+*hilbertpoly*::
+  Prints the Hilbert polynomial for a given range of discriminants. Computing
+  the Hilbert polynomial is an intermediate step when generating type D
+  parameters.
+
+=== Example cryptosystems ===
+
+In the `example` subdirectory there are various programs that read curve
+parameters on standard input and perform computations that would be required in
+a typical implementation of a pairing-based cryptosystem. Sample schemes
+include:
+
+-   Boneh-Lynn-Shacham short signatures
+-   Hess identity-based signatures
+-   Joux tripartite Diffie-Hellman
+-   Paterson identity-based signatures
+-   Yuan-Li identity-based authenticated key agreement
+-   Zhang-Kim identity-based blind/ring signatures
+-   Zhang-Safavi-Naini-Susilo signatures
+
+More work would be required to turn these programs into real applications.
+
+=== Benchmarks ===
+
+I use the programs in the `benchmark` subdirectory to measure running times of
+pairings, and also RSA decryptions.
+
+The `benchmark` program takes pairing parameters on standard input and reports
+the average running time of the pairing over 10 runs, while `timersa` estimates
+the time required to perform one 1024-bit RSA decryption.

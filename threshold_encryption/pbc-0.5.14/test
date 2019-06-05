@@ -1,0 +1,24 @@
+#!/bin/bash
+
+function show_result() {
+  red=$'\e'"[31m"
+  green=$'\e'"[32;1m"
+  normal=$'\e'"[0m"
+  if [[ $1 != 0 ]]; then
+    echo $red"[FAILED]"$normal $t
+  else
+    echo $green"[PASSED]"$normal $t
+  fi
+}
+
+make test
+make pbc/pbc
+for t in pbc/pairing_test.pbc pbc/g2_test.pbc pbc/bilinear.test ; do
+  pbc/pbc $t > /dev/null
+  show_result $?
+done
+
+for t in guru/fp_test guru/quadratic_test guru/poly_test guru/prodpairing_test guru/ternary_extension_field_test guru/eta_T_3_test ; do
+  $t > /dev/null
+  show_result $?
+done

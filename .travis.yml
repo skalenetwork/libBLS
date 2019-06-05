@@ -14,6 +14,7 @@ matrix:
                       - valgrind
                       - gawk
                       - sed
+                      - shtool
                       - libboost-all-dev
                       - libffi-dev
                       - libssl-dev
@@ -55,6 +56,7 @@ matrix:
                       - gawk
                       - sed
                       - lcov
+                      - shtool
                       - libboost-all-dev
                       - libprocps3-dev
                       - libgmp3-dev
@@ -66,11 +68,16 @@ matrix:
             - BUILDING_FOR_OS=osx
             - CMAKE_BUILD_FLAGS="-DWITH_PROCPS=OFF"
             - OPENSSL_ROOT_DIR=/usr/local/opt/openssl
-            # - WITH_PROCPS=0
+            - LIBTOOL=glibtool
           addons:
               apt:
                   packages:
                       - boost
+                      - shtool
+                      - libtool
+          before_script:
+              - ln -s $(which glibtool) /usr/local/bin/libtool || true
+              - ln -s $(which glibtoolize) /usr/local/bin/libtoolize || true
 before_install:
     - eval "${MATRIX_EVAL}"
 script:

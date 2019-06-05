@@ -17,10 +17,10 @@ if( COVERAGE )
     message( STATUS "*** COVERAGE is ON ***" )
     message( STATUS "**********************" )
     add_compile_options( -g --coverage )
-    #
+
     set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage" )
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage" )
-    #
+
     set( CMAKE_SHARED_LINKER_FLAGS "--coverage ${CMAKE_SHARED_LINKER_FLAGS}" )
     set( CMAKE_EXE_LINKER_FLAGS "--coverage ${CMAKE_EXE_LINKER_FLAGS}" )
 endif()
@@ -37,7 +37,7 @@ set(headers_bls
     dkg/dkg.h
     third_party/json.hpp
     third_party/cryptlite/sha256.h
-    third_party/cryptlite/sha1.h		
+    third_party/cryptlite/sha1.h
     third_party/cryptlite/hmac.h
     third_party/cryptlite/base64.h
 )
@@ -75,8 +75,12 @@ ENDIF()
 include_directories(${BLS_WITH_SECP256K1_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
 link_directories(${BLS_WITH_SECP256K1_LIBRARY_DIR})
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	set(WITH_PROCPS OFF)
+endif()
+
 IF ((DEFINED BLS_WITH_FF_INCLUDE_DIR) AND (DEFINED BLS_WITH_FF_LIBRARY_DIR))
-    add_dependencies(bls libff)
+	add_dependencies(bls libff)
 ELSE()
 	add_subdirectory(libff)
 	set(BLS_WITH_FF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libff)
@@ -95,13 +99,15 @@ set(BLS_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/include
 	${CMAKE_CURRENT_SOURCE_DIR}/libff
 	${BLS_WITH_FF_INCLUDE_DIR}
-	PARENT_SCOPE	
+	PARENT_SCOPE
 	)
 
 
 add_dependencies(bls gmp)
 target_include_directories(bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(bls PRIVATE ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+
+add_subdirectory(threshold_encryption)
 
 add_executable(dkg_keygen tools/dkg_key_gen.cpp)
 target_include_directories(dkg_keygen PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -135,7 +141,7 @@ if (BUILD_TESTS)
 	target_link_libraries(dkg_unit_test PRIVATE bls)
 	add_test(NAME dkg_tests COMMAND dkg_unit_test)
 
-	add_custom_target( all_bls_tests
+	add_custom_target(all_bls_tests
 		COMMAND ./bls_unit_test
 		COMMAND ./dkg_unit_test
 		DEPENDS bls_unit_test dkg_unit_test

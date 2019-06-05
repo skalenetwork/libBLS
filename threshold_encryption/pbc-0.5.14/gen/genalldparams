@@ -1,0 +1,15 @@
+#!/bin/bash
+# Generates all type D curve parameters within certain limits
+#
+# Use with the output of listmnt
+
+function myfunc {
+    until [ -z "$1" ]
+    do
+	filename=d$1-$2-$3.param
+	gen/gendparam $1 > $filename
+	shift 3
+    done
+}
+
+myfunc `awk -F, '{ if (($2 >= 80) && ($2 <= 300) && ($3 >= 80)) { print $1 $2 $3; } }'`

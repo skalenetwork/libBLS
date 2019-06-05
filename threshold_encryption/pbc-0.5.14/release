@@ -1,0 +1,96 @@
+#!/bin/bash
+# perform sanity checks, make packages
+VER=`grep AC_INIT configure.ac | sed 's/.*\[\([0-9]*\.[0-9]*\.[0-9]*\)\].*/\1/'`
+echo Preparing new release: pbc-$VER
+GREPVER=${VER//\./\\.}
+if [[ $1 == "test" ]]; then
+    echo test run
+    TESTRUN=1
+fi
+if [[ ! -z $(git diff) ]]; then
+  echo Uncommitted changes detected. Commit them first.
+  exit 1
+fi
+git log > ChangeLog
+cat ChangeLog | head -20 | grep pbc-$GREPVER > /dev/null || {
+    echo git log does not mention release
+    if [[ $TESTRUN ]]; then
+	echo test run: continuing anyway...
+    else
+	exit 1
+    fi
+}
+TMPDIR=`mktemp -d` || {
+    echo Error creating temp directory
+    exit 1
+}
+PBCDIR=$TMPDIR/pbc-$VER
+echo Running setup...
+git archive --format=tar --prefix=pbc-$VER/ HEAD | tar xvC $TMPDIR
+HERE=`pwd`
+make -f simple.make pbc/parser.tab.c pbc/lex.yy.c
+cp pbc/parser.tab.[ch] pbc/lex.yy.[ch] $PBCDIR/pbc
+cp ChangeLog $PBCDIR
+cd $PBCDIR
+grep $GREPVER NEWS > /dev/null || {
+    echo NEWS does not mention release
+    if [[ $TESTRUN ]]; then
+	echo test run: continuing anyway...
+    else
+	cd $HERE
+	rm -rf $TMPDIR
+	exit 1
+    fi
+}
+grep $GREPVER doc/preface.txt > /dev/null || {
+    echo Error: cannot find $GREPVER in doc/preface.txt.
+    if [[ $TESTRUN ]]; then
+	echo test run: continuing anyway...
+    else
+	cd $HERE
+	rm -rf $TMPDIR
+	exit 1
+    fi
+}
+./setup || {
+    echo ./setup error
+    rm -rf $TMPDIR
+    exit 1
+}
+cd $TMPDIR
+echo Creating tarball...
+rm -rf $PBCDIR/autom4te.cache
+if [[ $TESTRUN ]]; then
+    echo test run: not building tarball...
+else
+    tar cvfz $HERE/pbc-$VER.tar.gz pbc-$VER
+fi
+cd $PBCDIR
+./configure || {
+    echo ./configure error
+    rm -rf $TMPDIR
+    exit 1
+}
+echo Testing make...
+make || {
+    echo make error
+    rm -rf $TMPDIR
+    exit 1
+}
+make clean
+echo Cross compiling with simple.make...
+PLATFORM=win32 colormake -f simple.make || {
+    echo mingw cross compile error
+    rm -rf $TMPDIR
+    exit 1
+}
+if [[ $TESTRUN ]]; then
+    echo test run: not building zip...
+else
+    mkdir pbc-$VER
+    mv out/* param/* pbc-$VER
+    cp benchmark/REPORT.BAT pbc-$VER
+    zip -r $HERE/pbc-$VER-win32-bin.zip pbc-$VER
+fi
+rm -rf $TMPDIR
+echo 'Now run ./publish!'
