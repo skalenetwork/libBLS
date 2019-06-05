@@ -350,9 +350,18 @@ namespace encryption {
     element_init_Zr(w, this->pairing_);
     element_set1(w);
 
+    element_t a;
+    element_init_Zr(a, this->pairing_);
+
     for (size_t i = 0; i < this->t_; ++i) {
-      element_mul_si(w, w, idx[i]);
+      //element_mul_si(w, w, idx[i]);
+      element_mul_si(a, w, idx[i]);
+      element_clear(w);
+      element_init_Zr(w, this->pairing_);
+      element_set(w, a);
     }
+
+    element_clear(a);
 
     for (size_t i = 0; i < this->t_; ++i) {
       element_t v;
@@ -370,15 +379,38 @@ namespace encryption {
 
           element_set_si(u, idx[j] - idx[i]);
 
-          element_mul(v, v, u);
+          //element_mul(v, v, u);
+          element_init_Zr(a, this->pairing_);
+          element_mul(a, v, u);
+          element_clear(v);
+          element_init_Zr(v, this->pairing_);
+          element_set(v, a);
+
+          element_clear(a);
 
           element_clear(u);
         }
       }
 
-      element_invert(v, v);
+      //element_invert(v, v);
+      element_init_Zr(a, this->pairing_);
+      element_invert(a, v);
+      element_clear(v);
+      element_init_Zr(v, this->pairing_);
+      element_set(v, a);
 
-      element_mul(w, w, v);
+      element_clear(a);
+
+
+      //element_mul(w, w, v);
+      element_init_Zr(a, this->pairing_);
+      element_mul(a, w, v);
+      element_clear(w);
+      element_init_Zr(w, this->pairing_);
+      element_set(w, a);
+
+      element_clear(a);
+
 
       element_init_Zr(res[i].el_, this->pairing_);
       element_set(res[i].el_, w);

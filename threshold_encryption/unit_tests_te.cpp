@@ -73,39 +73,6 @@ BOOST_AUTO_TEST_CASE(PairingBillinearity) {
   BOOST_REQUIRE(!element_cmp(temp1, temp2));
 }
 
-BOOST_AUTO_TEST_CASE(Multiplying) {
-  pairing_t pairing;
-
-  pairing_init_set_str(pairing, aparam);
-
-  element_t x;
-  element_init_Zr(x, pairing);
-
-  mpz_t z;
-  mpz_init(z);
-  mpz_set_si(z, 3);
-
-  element_set_mpz(x, z);
-  mpz_clear(z);
-
-  element_t y;
-  element_init_same_as(y, x);
-  element_set(y, x);
-
-  element_t res;
-  element_init_same_as(res, y);
-
-  element_mul(res, x, y);
-
-  element_clear(x);
-  element_clear(y);
-
-  std::cout << "RES IS : ";
-  element_printf("%B\n", res);
-
-  element_clear(res);
-}
-
 BOOST_AUTO_TEST_CASE(SimpleEncryption) {
   encryption::TE te_instance = encryption::TE(1, 1);
 
