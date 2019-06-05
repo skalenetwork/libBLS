@@ -37,7 +37,7 @@ set(headers_bls
     dkg/dkg.h
     third_party/json.hpp
     third_party/cryptlite/sha256.h
-    third_party/cryptlite/sha1.h		
+    third_party/cryptlite/sha1.h
     third_party/cryptlite/hmac.h
     third_party/cryptlite/base64.h
 )
@@ -75,6 +75,7 @@ ENDIF()
 include_directories(${BLS_WITH_SECP256K1_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
 link_directories(${BLS_WITH_SECP256K1_LIBRARY_DIR})
 
+set(WITH_PROCPS OFF)
 IF ((DEFINED BLS_WITH_FF_INCLUDE_DIR) AND (DEFINED BLS_WITH_FF_LIBRARY_DIR))
 	add_dependencies(bls libff)
 ELSE()
@@ -95,7 +96,7 @@ set(BLS_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/include
 	${CMAKE_CURRENT_SOURCE_DIR}/libff
 	${BLS_WITH_FF_INCLUDE_DIR}
-	PARENT_SCOPE	
+	PARENT_SCOPE
 	)
 
 
@@ -157,4 +158,3 @@ install(TARGETS sign_bls DESTINATION bin)
 install(TARGETS bls_glue DESTINATION bin)
 
 install(TARGETS verify_bls DESTINATION bin)
-

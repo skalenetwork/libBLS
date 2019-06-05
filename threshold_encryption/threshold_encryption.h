@@ -35,6 +35,46 @@
 namespace encryption{
   typedef std::tuple<element_t, std::string, element_t> Ciphertext;
 
+  class element_wrapper {
+  public:
+      element_t el_ = { 0 };
+      void clear() {
+          if( el_[0].data )
+            element_clear( el_ );
+      }
+      void assign( const element_t & e ) {
+          if( ((void*)(&el_)) == ((void*)(&e)) )
+            return;
+          clear();
+          element_init_same_as( el_, const_cast < element_t & > ( e ) );
+          element_set( el_, const_cast < element_t & > ( e ) );
+      }
+      void assign( const element_wrapper & other ) {
+          if( ((void*)this) == ((void*)(&other)) )
+            return;
+          assign( other.el_ );
+      }
+      element_wrapper() {
+      }
+      element_wrapper( const element_wrapper & other ) {
+          assign( other );
+      }
+      element_wrapper( const element_t & e ) {
+          assign( e );
+      }
+      ~element_wrapper() {
+          clear();
+      }
+      element_wrapper & operator = ( const element_wrapper & other ) {
+          assign( other );
+          return (*this);
+      }
+      element_wrapper & operator = ( const element_t & e ) {
+          assign( e );
+          return (*this);
+      }
+  };
+
   class TE{
    public:
       pairing_t pairing_;
@@ -57,9 +97,9 @@ namespace encryption{
       bool Verify(const Ciphertext& ciphertext, const element_t& decrypted, const element_t& public_key);
 
       std::string CombineShares(const Ciphertext& ciphertext,
-                                const std::vector<std::pair<element_s, size_t>>& decrypted);
+                                const std::vector<std::pair<element_wrapper, size_t>>& decrypted);
 
-      std::vector<element_t> LagrangeCoeffs(const std::vector<int>& idx);
+      std::vector<element_wrapper> LagrangeCoeffs(const std::vector<int>& idx);
 
    private:
       const size_t t_ = 0;

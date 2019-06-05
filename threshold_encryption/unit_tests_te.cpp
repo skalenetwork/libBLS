@@ -28,7 +28,7 @@
 
 #include <boost/test/included/unit_test.hpp>
 
-static char *aparam =
+static char aparam[] =
       "type a\n"
       "q 8780710799663312522437781984754049815806883199414208211028653399266475630880222957078625179422662221423155858769582317459277713367317481324925129998224791\n"
       "h 12016012264891146079388821366740534204802954401251311822919615131047207289359704531102844802183906537786776\n"
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(PairingBillinearity) {
 BOOST_AUTO_TEST_CASE(SimpleEncryption) {
   encryption::TE te_instance = encryption::TE(1, 1);
 
-  std::string message = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!"; // message should be 64 length 
+  std::string message = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!"; // message should be 64 length
 
   element_t secret_key;
   element_init_Zr(secret_key, te_instance.pairing_);
@@ -99,8 +99,11 @@ BOOST_AUTO_TEST_CASE(SimpleEncryption) {
 
   te_instance.Verify(ciphertext, decrypted, public_key);
 
-  std::vector<std::pair<element_s, size_t>> shares;
-  shares.push_back(std::make_pair(decrypted[0], size_t(0)));
+  std::vector<std::pair<encryption::element_wrapper, size_t>> shares;
+  encryption::element_wrapper ev( decrypted );
+  shares.push_back(
+      std::make_pair( ev, size_t(0) )
+    );
 
   std::string res = te_instance.CombineShares(ciphertext, shares);
 
@@ -108,7 +111,7 @@ BOOST_AUTO_TEST_CASE(SimpleEncryption) {
   element_clear(public_key);
   element_clear(g);
   element_clear(decrypted);
-  
+
   BOOST_REQUIRE(res == message);
   std::cout << "OK\n";
 }

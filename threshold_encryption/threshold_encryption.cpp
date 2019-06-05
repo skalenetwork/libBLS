@@ -28,7 +28,7 @@
 
 namespace encryption {
 
-  static char *aparam =
+  static char aparam[] =
       "type a\n"
       "q 8780710799663312522437781984754049815806883199414208211028653399266475630880222957078625179422662221423155858769582317459277713367317481324925129998224791\n"
       "h 12016012264891146079388821366740534204802954401251311822919615131047207289359704531102844802183906537786776\n"
@@ -160,6 +160,7 @@ namespace encryption {
 
     element_t H;
     element_init_G1(H, this->pairing_);
+    element_init_G1(H, this->pairing_);
     this->Hash(H, U, V);
 
     element_t fst, snd;
@@ -253,7 +254,7 @@ namespace encryption {
   }
 
   std::string TE::CombineShares(const Ciphertext& ciphertext,
-                                const std::vector<std::pair<element_s, size_t>>& decrypted) {
+                                const std::vector<std::pair<element_wrapper, size_t>>& decrypted) {
     element_t U;
     element_init_G1(U, this->pairing_);
     element_set(U, const_cast<element_t&>(std::get<0>(ciphertext)));
@@ -291,7 +292,7 @@ namespace encryption {
     }
 
 
-    std::vector<element_t> lagrange_coeffs = this->LagrangeCoeffs(idx);
+    std::vector<element_wrapper> lagrange_coeffs = this->LagrangeCoeffs(idx);
 
     element_t sum;
     element_init_G1(sum, this->pairing_);
@@ -299,7 +300,7 @@ namespace encryption {
     for (size_t i = 0; i < this->t_; ++i) {
       element_t temp;
       element_init_G1(temp, this->pairing_);
-      element_mul(temp, lagrange_coeffs[i], & (const_cast<std::vector<std::pair<element_s, size_t>>&>(decrypted)[i].first) );
+      element_mul(temp, lagrange_coeffs[i].el_, (const_cast<std::vector<std::pair<element_wrapper, size_t>>&>(decrypted))[i].first.el_ );
 
       element_add(sum, sum, temp);
 
@@ -338,12 +339,12 @@ namespace encryption {
     return message;
   }
 
-  std::vector<element_t> TE::LagrangeCoeffs(const std::vector<int>& idx) {
+  std::vector<element_wrapper> TE::LagrangeCoeffs(const std::vector<int>& idx) {
     if (idx.size() < this->t_) {
       throw std::runtime_error("Error, not enough participants in the threshold group");
     }
 
-    std::vector<element_t> res(this->t_);
+    std::vector<element_wrapper> res(this->t_);
 
     element_t w;
     element_init_Zr(w, this->pairing_);
@@ -379,8 +380,8 @@ namespace encryption {
 
       element_mul(w, w, v);
 
-      element_init_Zr(res[i], this->pairing_);
-      element_set(res[i], w);
+      element_init_Zr(res[i].el_, this->pairing_);
+      element_set(res[i].el_, w);
 
       element_clear(v);
     }
