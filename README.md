@@ -68,7 +68,8 @@ Ensure that the required packages are installed by executing:
         libprocps-dev\
         libboost-all-dev\
         libgmp3-dev\
-        libssl-dev
+        libssl-dev \
+        libtool
 
 Configure the project build with the following commands.
 

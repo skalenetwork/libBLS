@@ -31,6 +31,11 @@ THE SOFTWARE.
 #include <third_party/cryptlite/base64.h>
 #include <boost/cstdint.hpp>
 
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wreorder"
+
+
 namespace cryptlite {
 
 #define SHA256_SHR(bits,word)      ((word) >> (bits))
@@ -1063,4 +1068,5 @@ private:
 
 }  // end of namespace
 
+#pragma GCC diagnostic pop
 #endif
