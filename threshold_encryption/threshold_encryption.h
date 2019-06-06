@@ -30,7 +30,13 @@
 
 #include <third_party/cryptlite/sha256.h>
 
+
+#pragma GCC diagnostic push
+// Suppress warnings: "unknown option after ‘#pragma GCC diagnostic’ kind [-Wpragmas]".
+// This is necessary because not all the compilers have the same warning options.
+#pragma GCC diagnostic ignored "-Wint-in-bool-context"
 #include "pbc/pbc.h"
+#pragma GCC diagnostic pop
 
 namespace encryption{
   typedef std::tuple<element_t, std::string, element_t> Ciphertext;
