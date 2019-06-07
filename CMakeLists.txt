@@ -56,7 +56,8 @@ include(deps/ProjectGMP.cmake)
 
 add_library(bls ${sourses_bls} ${headers_bls})
 
-add_compile_options(-Wall -Wextra -Werror)
+target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wno-error=unused-but-set-variable)
+
 
 find_package(Boost REQUIRED program_options system)
 
