@@ -37,7 +37,7 @@ namespace encryption{
 
   class element_wrapper {
    public:
-      element_t el_ = { {0 , nullptr}};
+      element_t el_ = { 0 };
 
       void clear() {
           if( el_[0].data )
@@ -113,6 +113,6 @@ namespace encryption{
 
       const size_t n_ = 0;
 
-      element_t generator_ = { {0, nullptr} };
+      element_t generator_ = { 0 };
   };
 }  // namespace encryption

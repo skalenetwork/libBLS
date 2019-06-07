@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_CASE(SimillarHashes) {
 
   signatures::Bls obj = signatures::Bls(1, 1);
 
-  //std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> keys = obj.KeyGeneration();
+  std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> keys = obj.KeyGeneration();
 
   const char message[5] = {104, 101, 108, 108, 111};
 
@@ -153,7 +153,7 @@ BOOST_AUTO_TEST_CASE(BlsThresholdSignatures) {
 
   auto recovered_keys = obj.KeysRecover(lagrange_coeffs, secret_keys);
 
-  // libff::alt_bn128_Fr common_sceret = recovered_keys.first;
+  libff::alt_bn128_Fr common_sceret = recovered_keys.first;
   libff::alt_bn128_G2 common_public = recovered_keys.second;
 
   BOOST_REQUIRE(public_key == common_public);
@@ -218,10 +218,10 @@ BOOST_AUTO_TEST_CASE(BlsThresholdSignaturesFalse) {
 
   std::vector<libff::alt_bn128_Fr> lagrange_coeffs = obj.LagrangeCoeffs(testing_nodes);
 
- // auto recovered_keys = obj.KeysRecover(lagrange_coeffs, secret_keys);
+  auto recovered_keys = obj.KeysRecover(lagrange_coeffs, secret_keys);
 
-  //libff::alt_bn128_Fr common_sceret = recovered_keys.first;
-  //libff::alt_bn128_G2 common_public = recovered_keys.second;
+  libff::alt_bn128_Fr common_sceret = recovered_keys.first;
+  libff::alt_bn128_G2 common_public = recovered_keys.second;
 
 
   libff::alt_bn128_G1 fst_signature = obj.Signing(hash, fst_secret);
