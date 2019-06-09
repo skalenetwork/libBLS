@@ -178,7 +178,7 @@ or
 
 4.  Verify decrypted ciphertext by running
     
-    ```c++
+    ```
     assert(te_instance.Verify(ciphertext, decrypted, public_key));
     ```
 
