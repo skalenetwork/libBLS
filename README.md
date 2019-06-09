@@ -4,7 +4,7 @@
 
 A mathematical library written in C++ that supports BLS threshold signatures, Distributed Key Generation (DKG) and Threshold Encryption (TE).
 
-This libBLS library is developed by SKALE Labs and uses SCIPR-LAB's libff and PBC library by Ben Lynn(see Libraries below).
+This libBLS library is developed by SKALE Labs and uses SCIPR-LAB's libff and PBC library by Ben Lynn (see Libraries below).
 
 ## An important note about production readiness
 
@@ -88,10 +88,14 @@ Configure the project build with the following commands.
     cmake --build build -- -j$(nproc)
 
 ### Include the library
+
 For BLS signatures:
 
+```cpp
     #include <bls/bls.h>
     #include <dkg/dkg.h>
+```
+
 For pbc library:
 
 ```cpp
@@ -100,17 +104,21 @@ For pbc library:
 
 For TE algorithm:
 
+```cpp
     #include <dkg/dkg_te.h>
     #include <threshold_encryption/threshold_encryption.h>
+```
 
 ### Run tests
 
+```bash
     ./build/dkg_unit_test                           # run all dkg unit tests
     ./build/bls_unit_test                           # run all bls unit tests
     ./build/bls_unit_test --list_content            # show all test cases
     ./build/bls_unit_test -t libBLS/<TestCaseName>  # run single test case
     ./build/threshold_encryption/dkg_te_unit_test   # run all dkg tests corresponds to the algebraic structures used in TE algroithm
     ./build/threshold_encryption/te_unit_test       # run all te tests
+```
 
 ## How to use the BLS algorithm
 
@@ -164,13 +172,13 @@ or
 ```
 
 3.  Decrypt recieved ciphertext by running
-    
+
 ```cpp
     te_instance.Decrypt(decrypted, ciphertext, secret_key); // decrypted value is stored in `decrypted`.
 ```
 
 4.  Verify decrypted ciphertext by running
-    
+
 ```cpp
     assert(te_instance.Verify(ciphertext, decrypted, public_key));
 ```
@@ -181,7 +189,6 @@ or
     std::vector<std::pair<encryption::element_wrapper, size_t>> shares;
     std::string res = te_instance.CombineShares(ciphertext, shares); // `res` is equal to `message`
 ```
-
 
 ## Libraries
 
