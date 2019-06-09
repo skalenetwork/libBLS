@@ -158,19 +158,19 @@ or
 
 1.  Create an istance of class TE with input parameters t, and n; where n is a number of participants in your group and t is a threshold number for your case.
 
-```
+```cpp
     encryption::TE te_instance = encryption::TE(t, n);
 ```
 
 2.  Encrypt a plaintext  `message`  by running
 
-```
+```cpp
     auto ciphertext = te_instance.Encrypt(message, public_key);
 ```
 
 3.  Decrypt recieved ciphertext by running
     
-```
+```cpp
     te_instance.Decrypt(decrypted, ciphertext, secret_key); // decrypted value is stored in `decrypted`.
 ```
 
