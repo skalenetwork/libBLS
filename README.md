@@ -143,7 +143,9 @@ or
 4.  Sign the hashed message by running Signing (if you are doing Threshold algorithm, you have to generate common signature by running SignatureRecover after it)
 
 
-    ```libff::alt_bn128_G1 signature = bls_instance.Signing(hash, secret_key```
+    ```
+    libff::alt_bn128_G1 signature = bls_instance.Signing(hash, secret_key
+    ```
 
 5.  Verify a signature by running the function Verification.
 
