@@ -188,7 +188,7 @@ or
     std::string res = te_instance.CombineShares(ciphertext, shares);
     ```
 
-    Then ```res``` is equal to ```message```
+    Then ```res``` is equal to ```message```.
 
 
 ## Libraries
