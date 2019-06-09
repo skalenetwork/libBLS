@@ -28,21 +28,15 @@
 
 namespace encryption {
 
-  static char aparam[] =
-      "type a\n"
-      "q 8780710799663312522437781984754049815806883199414208211028653399266475630880222957078625179422662221423155858769582317459277713367317481324925129998224791\n"
-      "h 12016012264891146079388821366740534204802954401251311822919615131047207289359704531102844802183906537786776\n"
-      "r 730750818665451621361119245571504901405976559617\n"
-      "exp2 159\n"
-      "exp1 107\n"
-      "sign1 1\n"
-      "sign0 1\n";
-
   TE::TE(const size_t t, const size_t n) : t_(t), n_(n) {
     pairing_init_set_str(this->pairing_, aparam);
 
     element_init_G1(this->generator_, this->pairing_);
+    
     element_random(this->generator_);
+    while (element_is0(this->generator_)) {
+      element_random(this->generator_);
+    }
   }
 
   TE::~TE() {
@@ -354,7 +348,6 @@ namespace encryption {
     element_init_Zr(a, this->pairing_);
 
     for (size_t i = 0; i < this->t_; ++i) {
-      //element_mul_si(w, w, idx[i]);
       element_mul_si(a, w, idx[i]);
       element_clear(w);
       element_init_Zr(w, this->pairing_);
@@ -379,7 +372,6 @@ namespace encryption {
 
           element_set_si(u, idx[j] - idx[i]);
 
-          //element_mul(v, v, u);
           element_init_Zr(a, this->pairing_);
           element_mul(a, v, u);
           element_clear(v);
@@ -392,7 +384,6 @@ namespace encryption {
         }
       }
 
-      //element_invert(v, v);
       element_init_Zr(a, this->pairing_);
       element_invert(a, v);
       element_clear(v);
@@ -402,7 +393,6 @@ namespace encryption {
       element_clear(a);
 
 
-      //element_mul(w, w, v);
       element_init_Zr(a, this->pairing_);
       element_mul(a, w, v);
       element_clear(w);
