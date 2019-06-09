@@ -117,17 +117,17 @@ For TE algorithm:
 1.  Create an instance of class Bls with input parameters t, and n; where n is a number of participants in your group and t is a threshold number for your case.
 
 
-    ```
+```
     signatures::bls bls_instance = signatures::bls(t, n);
-    ```
+```
 
 2.  Generate keys with DKG algorithm (if you want to use Threshold algorithm) or running the function KeyGeneration (if you want to use MultiSignature algorithm or singleBLS)
 
 
-    ```
+```
     libff::alt_bn128_Fr secret_key = key_generated_by_dkg;
     libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
-    ```
+```
 
 or
 
@@ -136,43 +136,43 @@ or
 3.  Create a hash of the message you want to sign by running the function Hashing (by default we use the SHA256 hash function, but you can replace this with any other hash function. Be sure to be careful with respect to security.)
 
 
-    ```
+```
     libff::alt_bn128_G1 hash = bls_instance.Hashing(message);
-    ```
+```
 
 4.  Sign the hashed message by running Signing (if you are doing Threshold algorithm, you have to generate common signature by running SignatureRecover after it)
 
 
-    ```
+```
     libff::alt_bn128_G1 signature = bls_instance.Signing(hash, secret_key
-    ```
+```
 
 5.  Verify a signature by running the function Verification.
 
 
-    ```
+```
     assert(bls_instance.Verification(message, signature, public_key) == true);
-    ```
+```
 
 ## How to use the TE algorithm
 
 1.  Create an istance of class TE with input parameters t, and n; where n is a number of participants in your group and t is a threshold number for your case.
 
-    ```
+```
     encryption::TE te_instance = encryption::TE(t, n);
-    ```
+```
 
 2.  Encrypt a plaintext  `message`  by running
 
-    ```
+```
     auto ciphertext = te_instance.Encrypt(message, public_key);
-    ```
+```
 
 3.  Decrypt recieved ciphertext by running
     
-    ```
+```
     te_instance.Decrypt(decrypted, ciphertext, secret_key);
-    ```
+```
 
     Decrypted value is stored in `decrypted`.
 
@@ -183,7 +183,6 @@ or
 ```
 
 5.  If decrypted value is verified then you can get encrypted plaintext by running
-
 
 ```
     std::vector<std::pair<encryption::element_wrapper, size_t>> shares;
