@@ -162,7 +162,7 @@ or
     encryption::TE te_instance = encryption::TE(t, n);
     ```
 
-2. Encrypt a plaintext ```message``` running
+2. Encrypt a plaintext  ```message```  running
 
     ```
     auto ciphertext = te_instance.Encrypt(message, public_key);
