@@ -162,13 +162,13 @@ or
     encryption::TE te_instance = encryption::TE(t, n);
     ```
 
-2.  Encrypt a plaintext  ```message```  running
+2.  Encrypt a plaintext  ```message```  by running
 
     ```
     auto ciphertext = te_instance.Encrypt(message, public_key);
     ```
 
-3.  Decrypt recieved ciphertext running
+3.  Decrypt recieved ciphertext by running
     
     ```
     te_instance.Decrypt(decrypted, ciphertext, secret_key);
@@ -176,7 +176,7 @@ or
 
     Decrypted value is stored in ```decrypted```.
 
-4.  Verify decrypted ciphertext running
+4.  Verify decrypted ciphertext by running
     
     ```
     assert(te_instance.Verify(ciphertext, decrypted, public_key));
@@ -188,7 +188,7 @@ or
     std::string res = te_instance.CombineShares(ciphertext, shares);
     ```
 
-    Then ```res``` is equal to ```message```.
+    Then ```res``` is equal to ```message```.   
 
 
 ## Libraries
