@@ -117,14 +117,14 @@ For TE algorithm:
 1.  Create an instance of class Bls with input parameters t, and n; where n is a number of participants in your group and t is a threshold number for your case.
 
 
-```
+```cpp
     signatures::bls bls_instance = signatures::bls(t, n);
 ```
 
 2.  Generate keys with DKG algorithm (if you want to use Threshold algorithm) or running the function KeyGeneration (if you want to use MultiSignature algorithm or singleBLS)
 
 
-```
+```cpp
     libff::alt_bn128_Fr secret_key = key_generated_by_dkg;
     libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
 ```
@@ -136,21 +136,21 @@ or
 3.  Create a hash of the message you want to sign by running the function Hashing (by default we use the SHA256 hash function, but you can replace this with any other hash function. Be sure to be careful with respect to security.)
 
 
-```
+```cpp
     libff::alt_bn128_G1 hash = bls_instance.Hashing(message);
 ```
 
 4.  Sign the hashed message by running Signing (if you are doing Threshold algorithm, you have to generate common signature by running SignatureRecover after it)
 
 
-```
+```cpp
     libff::alt_bn128_G1 signature = bls_instance.Signing(hash, secret_key
 ```
 
 5.  Verify a signature by running the function Verification.
 
 
-```
+```cpp
     assert(bls_instance.Verification(message, signature, public_key) == true);
 ```
 
