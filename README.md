@@ -171,10 +171,8 @@ or
 3.  Decrypt recieved ciphertext by running
     
 ```
-    te_instance.Decrypt(decrypted, ciphertext, secret_key);
+    te_instance.Decrypt(decrypted, ciphertext, secret_key); // decrypted value is stored in `decrypted`.
 ```
-
-    Decrypted value is stored in `decrypted`.
 
 4.  Verify decrypted ciphertext by running
     
@@ -186,10 +184,8 @@ or
 
 ```
     std::vector<std::pair<encryption::element_wrapper, size_t>> shares;
-    std::string res = te_instance.CombineShares(ciphertext, shares);
+    std::string res = te_instance.CombineShares(ciphertext, shares); // `res` is equal to `message`.
 ```
-
-    Then `res` is equal to `message`.   
 
 
 ## Libraries
