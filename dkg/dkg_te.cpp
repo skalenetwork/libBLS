@@ -67,7 +67,7 @@ namespace encryption {
     for (size_t i = 0; i < this->t_; ++i) {
       element_t tmp;
       element_init_G1(tmp, this->pairing_);
-      element_mul_zn(tmp, this->generator_, polynomial[i].el_);
+      element_mul_zn(tmp, this->generator_, const_cast<element_t&>(polynomial[i].el_));
       
       verification_vector[i] = element_wrapper(tmp);
 
@@ -88,12 +88,12 @@ namespace encryption {
     element_set1(pow);
 
     for (size_t i = 0; i < this->t_; ++i) {
-      if (i == this->t_ - 1 && element_is0(polynomial[i].el_)) {
+      if (i == this->t_ - 1 && element_is0(const_cast<element_t&>(polynomial[i].el_))) {
         throw std::runtime_error("Error, incorrect degree of a polynomial");
       }
       element_t tmp;
       element_init_Zr(tmp, this->pairing_);
-      element_mul(tmp, polynomial[i].el_, pow);
+      element_mul(tmp, const_cast<element_t&>(polynomial[i].el_), pow);
 
       element_t tmp1;
       element_init_Zr(tmp1, this->pairing_);
@@ -108,7 +108,7 @@ namespace encryption {
       element_init_Zr(tmp, this->pairing_);
       element_set(tmp, pow);
 
-      element_mul(pow, tmp, point.el_);
+      element_mul(pow, tmp, const_cast<element_t&>(point.el_));
 
       element_clear(tmp);
     }
@@ -143,7 +143,7 @@ namespace encryption {
       element_init_Zr(tmp, this->pairing_);
 
       element_set(tmp, secret_key_share);
-      element_add(secret_key_share, tmp, secret_key_contribution[i].el_);
+      element_add(secret_key_share, tmp, const_cast<element_t&>(secret_key_contribution[i].el_));
     }
 
     if (element_is0(secret_key_share)) {
@@ -173,7 +173,7 @@ namespace encryption {
 
       element_t tmp4;
       element_init_G1(tmp4, this->pairing_);
-      element_mul_zn(tmp4, verification_vector[i].el_, tmp3);
+      element_mul_zn(tmp4, const_cast<element_t&>(verification_vector[i].el_), tmp3);
 
       if (i == 0) {
         element_set(value, tmp4);
@@ -198,7 +198,7 @@ namespace encryption {
 
     element_t mul;
     element_init_G1(mul, this->pairing_);
-    element_mul_zn(mul, this->generator_, share.el_);
+    element_mul_zn(mul, this->generator_, const_cast<element_t&>(share.el_));
 
     return (element_cmp(value, mul) == 0);
   }
