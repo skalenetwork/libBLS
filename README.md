@@ -182,9 +182,9 @@ or
 
 5.  If decrypted value is verified then you can get encrypted plaintext by running
 
-```
+```cpp
     std::vector<std::pair<encryption::element_wrapper, size_t>> shares;
-    std::string res = te_instance.CombineShares(ciphertext, shares); // `res` is equal to `message`.
+    std::string res = te_instance.CombineShares(ciphertext, shares); // `res` is equal to `message`
 ```
 
 
