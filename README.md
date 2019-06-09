@@ -162,7 +162,7 @@ or
     encryption::TE te_instance = encryption::TE(t, n);
     ```
 
-2.  Encrypt a plaintext  ```message```  by running
+2.  Encrypt a plaintext  `message`  by running
 
     ```
     auto ciphertext = te_instance.Encrypt(message, public_key);
@@ -174,23 +174,23 @@ or
     te_instance.Decrypt(decrypted, ciphertext, secret_key);
     ```
 
-    Decrypted value is stored in ```decrypted```.
+    Decrypted value is stored in `decrypted`.
 
 4.  Verify decrypted ciphertext by running
     
-    ```
+```
     assert(te_instance.Verify(ciphertext, decrypted, public_key));
-    ```
+```
 
 5.  If decrypted value is verified then you can get encrypted plaintext by running
 
 
-    ```
+```
     std::vector<std::pair<encryption::element_wrapper, size_t>> shares;
     std::string res = te_instance.CombineShares(ciphertext, shares);
-    ```
+```
 
-    Then ```res``` is equal to ```message```.   
+    Then `res` is equal to `message`.   
 
 
 ## Libraries
