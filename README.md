@@ -27,10 +27,10 @@ libBLS for the most part corresponds to [BLS signature standard](https://tools.i
 
 Encryption process is running running as follows:
 
-1. Key generation
-2. Encryption
-3. Decryption
-4. Verifying and combining shares
+1.  Key generation
+2.  Encryption
+3.  Decryption
+4.  Verifying and combining shares
 
 You can learn more about the algebraic structures used in this algorithm in [Ben Lynn’s PhD Dissertation](https://crypto.stanford.edu/pbc/thesis.html). libBLS uses the TYPE A curve for symmetric billinear pairing.
 
@@ -93,9 +93,11 @@ For BLS signatures:
     #include <bls/bls.h>
     #include <dkg/dkg.h>
 For pbc library:
+
 ```
     #include "pbc/pbc.h"
 ```
+
 For TE algorithm:
 
     #include <dkg/dkg_te.h>
@@ -115,7 +117,9 @@ For TE algorithm:
 1.  Create an instance of class Bls with input parameters t, and n; where n is a number of participants in your group and t is a threshold number for your case.
 
 
-    ```signatures::bls bls_instance = signatures::bls(t, n);```
+    ```
+    signatures::bls bls_instance = signatures::bls(t, n);
+    ```
 
 2.  Generate keys with DKG algorithm (if you want to use Threshold algorithm) or running the function KeyGeneration (if you want to use MultiSignature algorithm or singleBLS)
 
@@ -132,7 +136,9 @@ or
 3.  Create a hash of the message you want to sign by running the function Hashing (by default we use the SHA256 hash function, but you can replace this with any other hash function. Be sure to be careful with respect to security.)
 
 
-    ```libff::alt_bn128_G1 hash = bls_instance.Hashing(message);```
+    ```
+    libff::alt_bn128_G1 hash = bls_instance.Hashing(message);
+    ```
 
 4.  Sign the hashed message by running Signing (if you are doing Threshold algorithm, you have to generate common signature by running SignatureRecover after it)
 
@@ -142,31 +148,43 @@ or
 5.  Verify a signature by running the function Verification.
 
 
-    ```assert(bls_instance.Verification(message, signature, public_key) == true);```
+    ```
+    assert(bls_instance.Verification(message, signature, public_key) == true);
+    ```
 
 ## How to use the TE algorithm
 
 1.  Create an istance of class TE with input parameters t, and n; where n is a number of participants in your group and t is a threshold number for your case.
 
-    ```encryption::TE te_instance = encryption::TE(t, n);```
+    ```
+    encryption::TE te_instance = encryption::TE(t, n);
+    ```
 
 2. Encrypt a plaintext ```message``` running
 
-    ```auto ciphertext = te_instance.Encrypt(message, public_key);```
+    ```
+    auto ciphertext = te_instance.Encrypt(message, public_key);
+    ```
 
 3. Decrypt recieved ciphertext running
     
-    ```  te_instance.Decrypt(decrypted, ciphertext, secret_key);```
+    ```
+    te_instance.Decrypt(decrypted, ciphertext, secret_key);
+    ```
 
     Decrypted value is stored in ```decrypted```.
 
 4. Verify decrypted ciphertext running
     
-    ```assert(te_instance.Verify(ciphertext, decrypted, public_key));```
+    ```
+    assert(te_instance.Verify(ciphertext, decrypted, public_key));
+    ```
 
 5. If decrypted value is verified then you can get encrypted plaintext by running
     
-    ```  std::string res = te_instance.CombineShares(ciphertext, shares);```
+    ```
+    std::string res = te_instance.CombineShares(ciphertext, shares);
+    ```
 
     Then ```res``` is equal to ```message```
 
