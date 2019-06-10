@@ -44,8 +44,6 @@ namespace encryption{
       "sign1 1\n"
       "sign0 1\n";
 
-  typedef std::tuple<element_t, std::string, element_t> Ciphertext;
-
   class element_wrapper {
    public:
       element_t el_ = {0};
@@ -97,9 +95,12 @@ namespace encryption{
       }
   };
 
+  typedef std::tuple<element_wrapper, std::string, element_wrapper> Ciphertext;
+
   class TE{
    public:
       pairing_t pairing_;
+      element_t generator_ = { 0 };
 
       TE(const size_t t, const size_t n);
 
@@ -127,7 +128,5 @@ namespace encryption{
       const size_t t_ = 0;
 
       const size_t n_ = 0;
-
-      element_t generator_ = { 0 };
   };
 }  // namespace encryption
