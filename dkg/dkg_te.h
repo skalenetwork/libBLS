@@ -55,7 +55,7 @@ class DkgTe {
 
   const size_t n_ = 0;
 
-  element_t generator_ = {0};
+  element_t generator_ = {0, 0};
 };
 
 }  // namespace encryption

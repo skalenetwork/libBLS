@@ -20,6 +20,8 @@ matrix:
                       - libssl-dev
                       - libprocps3-dev
                       - libgmp3-dev
+                      - flex
+                      - bison
                   sources: &sources
                       - ubuntu-toolchain-r-test
           before_script:
