@@ -95,12 +95,12 @@ class sha256 {
     return base64::encode_from_array(digest, HASH_SIZE);
   }
 
-  sha256() 
-    : computed_(false)
-    , corrupted_(false)
-    , length_low_(0)
-    , length_high_(0)
-    , message_block_index_(0)
+  sha256()
+        : length_low_(0)
+        , length_high_(0)
+        , message_block_index_(0)
+        , computed_(false)
+        , corrupted_(false)
   {
     intermediate_hash_[0] = 0x6A09E667; 
     intermediate_hash_[1] = 0xBB67AE85;

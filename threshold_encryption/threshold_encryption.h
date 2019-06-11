@@ -46,7 +46,7 @@ namespace encryption{
 
   class element_wrapper {
    public:
-      element_t el_ = {0};
+      element_t el_ = { 0, 0 };
 
       void clear() {
           if (el_[0].data)
@@ -100,7 +100,7 @@ namespace encryption{
   class TE{
    public:
       pairing_t pairing_;
-      element_t generator_ = { 0 };
+      element_t generator_ = { 0, 0 };
 
       TE(const size_t t, const size_t n);
 
@@ -128,5 +128,6 @@ namespace encryption{
       const size_t t_ = 0;
 
       const size_t n_ = 0;
+
   };
 }  // namespace encryption

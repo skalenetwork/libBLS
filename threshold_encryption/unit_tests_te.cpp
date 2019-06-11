@@ -62,8 +62,8 @@ BOOST_AUTO_TEST_CASE(PairingBillinearity) {
   element_random(secret_key);
   element_pow_zn(public_key, g, secret_key);
 
-  char* message = "abcdef";
-  element_from_hash(h, message, 6);
+  const char message[] = "abcdef";
+  element_from_hash(h, (char*)message, 6);
 
   element_pow_zn(sig, h, secret_key);
 

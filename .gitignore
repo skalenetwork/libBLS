@@ -4,3 +4,6 @@ gmp-6.1.2
 *.user
 .idea
 .vscode
+threshold_encryption/pbc-0.5.14/INSTALL
+#threshold_encryption/pbc-0.5.14/configure
+
