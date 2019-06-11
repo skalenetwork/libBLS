@@ -49,7 +49,7 @@ if (BUILD_TESTS)
 
 	add_test(NAME dkg_te_tests COMMAND dkg_te_unit_test)
 
-	add_executable(te_unit_test unit_tests_te.cpp)
+	add_executable(te_unit_test ../test/unit_tests_te.cpp)
 	target_include_directories(te_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
 	target_link_libraries(te_unit_test PRIVATE te ${PBC_LIBRARY} ${GMP_LIBRARY})
 

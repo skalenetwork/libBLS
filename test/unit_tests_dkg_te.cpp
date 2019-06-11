@@ -73,8 +73,6 @@ BOOST_AUTO_TEST_CASE(PolynomialValue) {
   }
 
   BOOST_REQUIRE(is_exception_caught);
-
-  std::cout << "OK\n";
 }
 
 BOOST_AUTO_TEST_CASE(Verification) {
@@ -101,8 +99,6 @@ BOOST_AUTO_TEST_CASE(Verification) {
   element_add(sum, rand, shared_by_snd_to_fst.el_);
 
   BOOST_REQUIRE(obj.Verify(0, sum, verification_vector_fst) == false);
-
-  std::cout << "OK\n";
 
   element_clear(sum);
   element_clear(rand);
