@@ -10,15 +10,18 @@ endif()
 
 set(sources
 	threshold_encryption.cpp
+	../dkg/dkg_te.cpp
 )
 
 set(headers
 	threshold_encryption.h
+	../dkg/dkg_te.h
 )
 
 set(PROJECT_VERSION 0.1.0)
 
 set (THIRD_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../)
+set (TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../)
 
 add_library(te ${sources} ${headers})
 
@@ -40,6 +43,12 @@ target_link_libraries(te PRIVATE ${PBC_LIBRARY})
 
 
 if (BUILD_TESTS)
+	add_executable(dkg_te_unit_test ../test/unit_tests_dkg_te.cpp)
+	target_include_directories(dkg_te_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${TEST_DIR})
+	target_link_libraries(dkg_te_unit_test PRIVATE te ${PBC_LIBRARY} ${GMP_LIBRARY})
+
+	add_test(NAME dkg_te_tests COMMAND dkg_te_unit_test)
+
 	add_executable(te_unit_test unit_tests_te.cpp)
 	target_include_directories(te_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
 	target_link_libraries(te_unit_test PRIVATE te ${PBC_LIBRARY} ${GMP_LIBRARY})

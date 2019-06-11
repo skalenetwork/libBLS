@@ -82,13 +82,9 @@ BOOST_AUTO_TEST_CASE(SimpleEncryption) {
   element_init_Zr(secret_key, te_instance.pairing_);
   element_random(secret_key);
 
-  element_t g;
-  element_init_G1(g, te_instance.pairing_);
-  element_random(g);
-
   element_t public_key;
   element_init_G1(public_key, te_instance.pairing_);
-  element_pow_zn(public_key, g, secret_key);
+  element_pow_zn(public_key, te_instance.generator_, secret_key);
 
   auto ciphertext = te_instance.Encrypt(message, public_key);
 
@@ -97,17 +93,16 @@ BOOST_AUTO_TEST_CASE(SimpleEncryption) {
 
   te_instance.Decrypt(decrypted, ciphertext, secret_key);
 
-  te_instance.Verify(ciphertext, decrypted, public_key);
+  BOOST_REQUIRE(te_instance.Verify(ciphertext, decrypted, public_key));
 
   std::vector<std::pair<encryption::element_wrapper, size_t>> shares;
-  encryption::element_wrapper ev( decrypted );
+  encryption::element_wrapper ev(decrypted);
   shares.push_back(std::make_pair(ev, size_t(1)));
 
   std::string res = te_instance.CombineShares(ciphertext, shares);
 
   element_clear(secret_key);
   element_clear(public_key);
-  element_clear(g);
   element_clear(decrypted);
 
   BOOST_REQUIRE(res == message);

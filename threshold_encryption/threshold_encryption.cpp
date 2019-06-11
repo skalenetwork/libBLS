@@ -23,26 +23,21 @@
 
 #include <string.h>
 #include <valarray>
+#include <iostream>
 
 #include <threshold_encryption.h>
 
 namespace encryption {
 
-  static char aparam[] =
-      "type a\n"
-      "q 8780710799663312522437781984754049815806883199414208211028653399266475630880222957078625179422662221423155858769582317459277713367317481324925129998224791\n"
-      "h 12016012264891146079388821366740534204802954401251311822919615131047207289359704531102844802183906537786776\n"
-      "r 730750818665451621361119245571504901405976559617\n"
-      "exp2 159\n"
-      "exp1 107\n"
-      "sign1 1\n"
-      "sign0 1\n";
-
   TE::TE(const size_t t, const size_t n) : t_(t), n_(n) {
     pairing_init_set_str(this->pairing_, aparam);
 
     element_init_G1(this->generator_, this->pairing_);
+    
     element_random(this->generator_);
+    while (element_is0(this->generator_)) {
+      element_random(this->generator_);
+    }
   }
 
   TE::~TE() {
@@ -105,8 +100,8 @@ namespace encryption {
     element_t U, Y;
     element_init_G1(U, this->pairing_);
     element_init_G1(Y, this->pairing_);
-    element_mul(U, r, g);
-    element_mul(Y, r, const_cast<element_t&>(common_public));
+    element_mul_zn(U, g, r);
+    element_mul_zn(Y, const_cast<element_t&>(common_public), r);
 
 
     std::string hash = Hash(Y);
@@ -137,12 +132,12 @@ namespace encryption {
     element_init_G1(H, this->pairing_);
 
     Hash(H, U, V);
-    element_mul(W, r, H);
+    element_mul_zn(W, H, r);
 
-    std::tuple<element_t, std::string, element_t> result;
-    std::get<0>(result)[0] = U[0];
+    std::tuple<element_wrapper, std::string, element_wrapper> result;
+    std::get<0>(result) = element_wrapper(U);
     std::get<1>(result) = V;
-    std::get<2>(result)[0] = W[0];
+    std::get<2>(result) = element_wrapper(W);
 
     return result;
   }
@@ -150,13 +145,13 @@ namespace encryption {
   void TE::Decrypt(element_t ret_val, const Ciphertext& ciphertext, const element_t& secret_key) {
     element_t U;
     element_init_G1(U, this->pairing_);
-    element_set(U, const_cast<element_t&>(std::get<0>(ciphertext)));
+    element_set(U, const_cast<element_t&>(std::get<0>(ciphertext).el_));
 
     std::string V = std::get<1>(ciphertext);
 
     element_t W;
     element_init_G1(W, this->pairing_);
-    element_set(W, const_cast<element_t&>(std::get<2>(ciphertext)));
+    element_set(W, const_cast<element_t&>(std::get<2>(ciphertext).el_));
 
     element_t H;
     element_init_G1(H, this->pairing_);
@@ -180,7 +175,7 @@ namespace encryption {
       throw std::runtime_error("cannot decrypt data");
     }
 
-    element_mul(ret_val, const_cast<element_t&>(secret_key), U);
+    element_mul_zn(ret_val, U, const_cast<element_t&>(secret_key));
 
     element_clear(g);
     element_clear(fst);
@@ -194,13 +189,13 @@ namespace encryption {
   bool TE::Verify(const Ciphertext& ciphertext, const element_t& decrypted, const element_t& public_key) {
     element_t U;
     element_init_G1(U, this->pairing_);
-    element_set(U, const_cast<element_t&>(std::get<0>(ciphertext)));
+    element_set(U, const_cast<element_t&>(std::get<0>(ciphertext).el_));
 
     std::string V = std::get<1>(ciphertext);
 
     element_t W;
     element_init_G1(W, this->pairing_);
-    element_set(W, const_cast<element_t&>(std::get<2>(ciphertext)));
+    element_set(W, const_cast<element_t&>(std::get<2>(ciphertext).el_));
 
     element_t H;
     element_init_G1(H, this->pairing_);
@@ -210,11 +205,7 @@ namespace encryption {
     element_init_GT(fst, this->pairing_);
     element_init_GT(snd, this->pairing_);
 
-    element_t g;
-    element_init_G1(g, this->pairing_);
-    element_set(g, this->generator_);
-
-    pairing_apply(fst, g, W, this->pairing_);
+    pairing_apply(fst, this->generator_, W, this->pairing_);
     pairing_apply(snd, U, H, this->pairing_);
 
     bool res = !element_cmp(fst, snd);
@@ -229,11 +220,12 @@ namespace encryption {
         element_init_GT(pp1, this->pairing_);
         element_init_GT(pp2, this->pairing_);
 
-        pairing_apply(pp1, const_cast<element_t&>(decrypted), g, this->pairing_);
+        pairing_apply(pp1, this->generator_, const_cast<element_t&>(decrypted), this->pairing_);
         pairing_apply(pp2, U, const_cast<element_t&>(public_key), this->pairing_);
 
         bool check = element_cmp(pp1, pp2);
         if (check) {
+          std::cout << "here\n";
           ret_val = false;
         }
 
@@ -242,7 +234,6 @@ namespace encryption {
       }
     }
 
-    element_clear(g);
     element_clear(fst);
     element_clear(snd);
 
@@ -257,13 +248,13 @@ namespace encryption {
                                 const std::vector<std::pair<element_wrapper, size_t>>& decrypted) {
     element_t U;
     element_init_G1(U, this->pairing_);
-    element_set(U, const_cast<element_t&>(std::get<0>(ciphertext)));
+    element_set(U, const_cast<element_t&>(std::get<0>(ciphertext).el_));
 
     std::string V = std::get<1>(ciphertext);
 
     element_t W;
     element_init_G1(W, this->pairing_);
-    element_set(W, const_cast<element_t&>(std::get<2>(ciphertext)));
+    element_set(W, const_cast<element_t&>(std::get<2>(ciphertext).el_));
 
     element_t H;
     element_init_G1(H, this->pairing_);
@@ -300,7 +291,7 @@ namespace encryption {
     for (size_t i = 0; i < this->t_; ++i) {
       element_t temp;
       element_init_G1(temp, this->pairing_);
-      element_mul(temp, lagrange_coeffs[i].el_, (const_cast<std::vector<std::pair<element_wrapper, size_t>>&>(decrypted))[i].first.el_ );
+      element_mul_zn(temp, (const_cast<std::vector<std::pair<element_wrapper, size_t>>&>(decrypted))[i].first.el_, lagrange_coeffs[i].el_);
 
       element_add(sum, sum, temp);
 
@@ -354,7 +345,6 @@ namespace encryption {
     element_init_Zr(a, this->pairing_);
 
     for (size_t i = 0; i < this->t_; ++i) {
-      //element_mul_si(w, w, idx[i]);
       element_mul_si(a, w, idx[i]);
       element_clear(w);
       element_init_Zr(w, this->pairing_);
@@ -379,7 +369,6 @@ namespace encryption {
 
           element_set_si(u, idx[j] - idx[i]);
 
-          //element_mul(v, v, u);
           element_init_Zr(a, this->pairing_);
           element_mul(a, v, u);
           element_clear(v);
@@ -392,7 +381,6 @@ namespace encryption {
         }
       }
 
-      //element_invert(v, v);
       element_init_Zr(a, this->pairing_);
       element_invert(a, v);
       element_clear(v);
@@ -402,7 +390,6 @@ namespace encryption {
       element_clear(a);
 
 
-      //element_mul(w, w, v);
       element_init_Zr(a, this->pairing_);
       element_mul(a, w, v);
       element_clear(w);
