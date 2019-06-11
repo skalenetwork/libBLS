@@ -106,7 +106,422 @@ BOOST_AUTO_TEST_CASE(SimpleEncryption) {
   element_clear(decrypted);
 
   BOOST_REQUIRE(res == message);
-  std::cout << "OK\n";
+}
+
+BOOST_AUTO_TEST_CASE(ThresholdEncryptionReal) {
+  encryption::TE obj = encryption::TE(11, 16);
+
+  std::vector<encryption::element_wrapper> coeffs(11);
+  for (auto& elem : coeffs) {
+    element_t tmp;
+    element_init_Zr(tmp, obj.pairing_);
+
+    element_random(tmp);
+
+    while (element_is0(tmp)) {
+      element_random(tmp);
+    }
+
+    elem = encryption::element_wrapper(tmp);
+  }
+
+  std::vector<encryption::element_wrapper> secret_keys(16);
+
+  for (size_t i = 0; i < 16; ++i) {
+    element_t sk;
+    element_init_Zr(sk, obj.pairing_);
+    element_set0(sk);
+
+    for (size_t j = 0; j < 11; ++j) {
+      element_t tmp1;
+      element_init_Zr(tmp1, obj.pairing_);
+      element_set_si(tmp1, i + 1);
+
+      element_t tmp2;
+      element_init_Zr(tmp2, obj.pairing_);
+      element_set_si(tmp2, j);
+
+      element_t tmp3;
+      element_init_Zr(tmp3, obj.pairing_);
+      element_pow_zn(tmp3, tmp1, tmp2);
+
+      element_t tmp4;
+      element_init_Zr(tmp4, obj.pairing_);
+      element_mul_zn(tmp4, coeffs[j].el_, tmp3);
+
+      element_clear(tmp1);
+      element_init_Zr(tmp1, obj.pairing_);
+      element_add(tmp1, sk, tmp4);
+
+      element_clear(sk);
+      element_init_Zr(sk, obj.pairing_);
+      element_set(sk, tmp1);
+
+      element_clear(tmp1);
+      element_clear(tmp2);
+      element_clear(tmp3);
+      element_clear(tmp4);
+    }
+
+    secret_keys[i] = encryption::element_wrapper(sk);
+  }
+
+  element_t common_secret;
+  element_init_Zr(common_secret, obj.pairing_);
+  element_set(common_secret, coeffs[0].el_);
+
+  element_t common_public;
+  element_init_G1(common_public, obj.pairing_);
+  element_pow_zn(common_public, obj.generator_, common_secret);
+
+  std::string message = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!"; // message should be 64 length
+
+  auto ciphertext = obj.Encrypt(message, common_public);
+
+  std::vector<std::pair<encryption::element_wrapper, size_t>> shares(11);
+
+  for (size_t i = 0; i < 11; ++i) {
+    element_t decrypted;
+    element_init_G1(decrypted, obj.pairing_);
+
+    obj.Decrypt(decrypted, ciphertext, secret_keys[i].el_);
+
+    element_t public_key;
+    element_init_G1(public_key, obj.pairing_);
+    element_pow_zn(public_key, obj.generator_, secret_keys[i].el_);
+
+    BOOST_REQUIRE(obj.Verify(ciphertext, decrypted, public_key));
+
+    shares[i].first = encryption::element_wrapper(decrypted);
+
+    element_clear(decrypted);
+    element_clear(public_key);
+
+    shares[i].second = i + 1;
+  }
+
+  std::string res = obj.CombineShares(ciphertext, shares);
+
+  element_clear(common_secret);
+  element_clear(common_public);
+
+  BOOST_REQUIRE(res == message);
+}
+
+BOOST_AUTO_TEST_CASE(ThresholdEncryptionRandomPK) {
+  encryption::TE obj = encryption::TE(11, 16);
+
+  std::vector<encryption::element_wrapper> coeffs(11);
+  for (auto& elem : coeffs) {
+    element_t tmp;
+    element_init_Zr(tmp, obj.pairing_);
+
+    element_random(tmp);
+
+    while (element_is0(tmp)) {
+      element_random(tmp);
+    }
+
+    elem = encryption::element_wrapper(tmp);
+  }
+
+  std::vector<encryption::element_wrapper> secret_keys(16);
+
+  for (size_t i = 0; i < 16; ++i) {
+    element_t sk;
+    element_init_Zr(sk, obj.pairing_);
+    element_set0(sk);
+
+    for (size_t j = 0; j < 11; ++j) {
+      element_t tmp1;
+      element_init_Zr(tmp1, obj.pairing_);
+      element_set_si(tmp1, i + 1);
+
+      element_t tmp2;
+      element_init_Zr(tmp2, obj.pairing_);
+      element_set_si(tmp2, j);
+
+      element_t tmp3;
+      element_init_Zr(tmp3, obj.pairing_);
+      element_pow_zn(tmp3, tmp1, tmp2);
+
+      element_t tmp4;
+      element_init_Zr(tmp4, obj.pairing_);
+      element_mul_zn(tmp4, coeffs[j].el_, tmp3);
+
+      element_clear(tmp1);
+      element_init_Zr(tmp1, obj.pairing_);
+      element_add(tmp1, sk, tmp4);
+
+      element_clear(sk);
+      element_init_Zr(sk, obj.pairing_);
+      element_set(sk, tmp1);
+
+      element_clear(tmp1);
+      element_clear(tmp2);
+      element_clear(tmp3);
+      element_clear(tmp4);
+    }
+
+    secret_keys[i] = encryption::element_wrapper(sk);
+  }
+
+  element_t common_secret;
+  element_init_Zr(common_secret, obj.pairing_);
+  element_set(common_secret, coeffs[0].el_);
+
+  element_t common_public;
+  element_init_G1(common_public, obj.pairing_);
+  // element_pow_zn(common_public, obj.generator_, common_secret);
+  // let common_public be a random element of G1 instead of correct one in the previous line
+  element_random(common_public);
+
+  std::string message = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!"; // message should be 64 length
+
+  auto ciphertext = obj.Encrypt(message, common_public);
+
+  std::vector<std::pair<encryption::element_wrapper, size_t>> shares(11);
+
+  for (size_t i = 0; i < 11; ++i) {
+    element_t decrypted;
+    element_init_G1(decrypted, obj.pairing_);
+
+    obj.Decrypt(decrypted, ciphertext, secret_keys[i].el_);
+
+    element_t public_key;
+    element_init_G1(public_key, obj.pairing_);
+    element_pow_zn(public_key, obj.generator_, secret_keys[i].el_);
+
+    BOOST_REQUIRE(obj.Verify(ciphertext, decrypted, public_key));
+
+    shares[i].first = encryption::element_wrapper(decrypted);
+
+    element_clear(decrypted);
+    element_clear(public_key);
+
+    shares[i].second = i + 1;
+  }
+
+  element_clear(common_secret);
+  element_clear(common_public);
+
+  std::string res = obj.CombineShares(ciphertext, shares);
+
+  BOOST_REQUIRE(res != message);
+}
+
+BOOST_AUTO_TEST_CASE(ThresholdEncryptionRandomSK) {
+  encryption::TE obj = encryption::TE(11, 16);
+
+  std::vector<encryption::element_wrapper> coeffs(11);
+  for (auto& elem : coeffs) {
+    element_t tmp;
+    element_init_Zr(tmp, obj.pairing_);
+
+    element_random(tmp);
+
+    while (element_is0(tmp)) {
+      element_random(tmp);
+    }
+
+    elem = encryption::element_wrapper(tmp);
+  }
+
+  std::vector<encryption::element_wrapper> secret_keys(16);
+
+  for (size_t i = 0; i < 16; ++i) {
+    element_t sk;
+    element_init_Zr(sk, obj.pairing_);
+    element_set0(sk);
+
+    for (size_t j = 0; j < 11; ++j) {
+      element_t tmp1;
+      element_init_Zr(tmp1, obj.pairing_);
+      element_set_si(tmp1, i + 1);
+
+      element_t tmp2;
+      element_init_Zr(tmp2, obj.pairing_);
+      element_set_si(tmp2, j);
+
+      element_t tmp3;
+      element_init_Zr(tmp3, obj.pairing_);
+      element_pow_zn(tmp3, tmp1, tmp2);
+
+      element_t tmp4;
+      element_init_Zr(tmp4, obj.pairing_);
+      element_mul_zn(tmp4, coeffs[j].el_, tmp3);
+
+      element_clear(tmp1);
+      element_init_Zr(tmp1, obj.pairing_);
+      element_add(tmp1, sk, tmp4);
+
+      element_clear(sk);
+      element_init_Zr(sk, obj.pairing_);
+      element_set(sk, tmp1);
+
+      element_clear(tmp1);
+      element_clear(tmp2);
+      element_clear(tmp3);
+      element_clear(tmp4);
+    }
+
+    // let secret_key[7] be a random generated value instead of correctly generated
+    if (i == 7) {
+      element_clear(sk);
+      element_init_Zr(sk, obj.pairing_);
+      element_random(sk);
+    }
+
+    secret_keys[i] = encryption::element_wrapper(sk);
+  }
+
+  element_t common_secret;
+  element_init_Zr(common_secret, obj.pairing_);
+  element_set(common_secret, coeffs[0].el_);
+
+  element_t common_public;
+  element_init_G1(common_public, obj.pairing_);
+  element_pow_zn(common_public, obj.generator_, common_secret);
+
+  std::string message = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!"; // message should be 64 length
+
+  auto ciphertext = obj.Encrypt(message, common_public);
+
+  std::vector<std::pair<encryption::element_wrapper, size_t>> shares(11);
+
+  for (size_t i = 0; i < 11; ++i) {
+    element_t decrypted;
+    element_init_G1(decrypted, obj.pairing_);
+
+    obj.Decrypt(decrypted, ciphertext, secret_keys[i].el_);
+
+    element_t public_key;
+    element_init_G1(public_key, obj.pairing_);
+    element_pow_zn(public_key, obj.generator_, secret_keys[i].el_);
+
+    BOOST_REQUIRE(obj.Verify(ciphertext, decrypted, public_key));
+
+    shares[i].first = encryption::element_wrapper(decrypted);
+
+    element_clear(decrypted);
+    element_clear(public_key);
+
+    shares[i].second = i + 1;
+  }
+
+  std::string res = obj.CombineShares(ciphertext, shares);
+
+  element_clear(common_secret);
+  element_clear(common_public);
+
+  BOOST_REQUIRE(res != message);
+}
+
+BOOST_AUTO_TEST_CASE(ThresholdEncryptionCorruptedCiphertext) {
+  encryption::TE obj = encryption::TE(11, 16);
+
+  std::vector<encryption::element_wrapper> coeffs(11);
+  for (auto& elem : coeffs) {
+    element_t tmp;
+    element_init_Zr(tmp, obj.pairing_);
+
+    element_random(tmp);
+
+    while (element_is0(tmp)) {
+      element_random(tmp);
+    }
+
+    elem = encryption::element_wrapper(tmp);
+  }
+
+  std::vector<encryption::element_wrapper> secret_keys(16);
+
+  for (size_t i = 0; i < 16; ++i) {
+    element_t sk;
+    element_init_Zr(sk, obj.pairing_);
+    element_set0(sk);
+
+    for (size_t j = 0; j < 11; ++j) {
+      element_t tmp1;
+      element_init_Zr(tmp1, obj.pairing_);
+      element_set_si(tmp1, i + 1);
+
+      element_t tmp2;
+      element_init_Zr(tmp2, obj.pairing_);
+      element_set_si(tmp2, j);
+
+      element_t tmp3;
+      element_init_Zr(tmp3, obj.pairing_);
+      element_pow_zn(tmp3, tmp1, tmp2);
+
+      element_t tmp4;
+      element_init_Zr(tmp4, obj.pairing_);
+      element_mul_zn(tmp4, coeffs[j].el_, tmp3);
+
+      element_clear(tmp1);
+      element_init_Zr(tmp1, obj.pairing_);
+      element_add(tmp1, sk, tmp4);
+
+      element_clear(sk);
+      element_init_Zr(sk, obj.pairing_);
+      element_set(sk, tmp1);
+
+      element_clear(tmp1);
+      element_clear(tmp2);
+      element_clear(tmp3);
+      element_clear(tmp4);
+    }
+
+    secret_keys[i] = encryption::element_wrapper(sk);
+  }
+
+  element_t common_secret;
+  element_init_Zr(common_secret, obj.pairing_);
+  element_set(common_secret, coeffs[0].el_);
+
+  element_t common_public;
+  element_init_G1(common_public, obj.pairing_);
+  element_pow_zn(common_public, obj.generator_, common_secret);
+
+  std::string message = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!"; // message should be 64 length
+
+  auto ciphertext = obj.Encrypt(message, common_public);
+
+  element_t rand;
+  element_init_G1(rand, obj.pairing_);
+  element_random(rand);
+
+  std::tuple<encryption::element_wrapper, std::string, encryption::element_wrapper> corrupted_ciphertext;
+  std::get<0>(corrupted_ciphertext) = std::get<0>(ciphertext);
+  std::get<1>(corrupted_ciphertext) = std::get<1>(ciphertext);
+  std::get<2>(corrupted_ciphertext) = encryption::element_wrapper(rand);
+
+  std::vector<std::pair<encryption::element_wrapper, size_t>> shares(11);
+
+  for (size_t i = 0; i < 11; ++i) {
+    element_t decrypted;
+    element_init_G1(decrypted, obj.pairing_);
+
+    bool is_exception_caught = false;
+    try {
+      obj.Decrypt(decrypted, corrupted_ciphertext, secret_keys[i].el_);
+    } catch (std::runtime_error&) {
+      is_exception_caught = true;
+    }
+
+    BOOST_REQUIRE(is_exception_caught);
+
+    element_clear(decrypted);
+    element_init_G1(decrypted, obj.pairing_);
+
+    obj.Decrypt(decrypted, ciphertext, secret_keys[i].el_);
+
+    element_t public_key;
+    element_init_G1(public_key, obj.pairing_);
+    element_pow_zn(public_key, obj.generator_, secret_keys[i].el_);
+
+    BOOST_REQUIRE(!obj.Verify(corrupted_ciphertext, decrypted, public_key));
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -20,10 +20,9 @@
     @author Oleh Nikolaiev
     @date 2019
 */
-
+#include <iostream>
 #include <string.h>
 #include <valarray>
-#include <iostream>
 
 #include <threshold_encryption.h>
 
@@ -46,9 +45,11 @@ namespace encryption {
   }
 
   std::string TE::Hash(const element_t& Y, std::string (*hash_func)(const std::string& str)) {
+    // assumed that Y lies in from G1
+
     mpz_t z;
     mpz_init(z);
-    element_to_mpz(z, const_cast<element_t&>(Y));
+    element_to_mpz(z, element_item(const_cast<element_t&>(Y), 1));
 
     char* tmp = mpz_get_str(NULL, 10, z);
     mpz_clear(z);
@@ -62,9 +63,11 @@ namespace encryption {
 
   void TE::Hash(element_t ret_val, const element_t& U, const std::string& V,
                           std::string (*hash_func)(const std::string& str)) {
+    // assumed that U lies in G1
+
     mpz_t z;
     mpz_init(z);
-    element_to_mpz(z, const_cast<element_t&>(U));
+    element_to_mpz(z, element_item(const_cast<element_t&>(U), 1));
 
     char* tmp = mpz_get_str(NULL, 10, z);
     mpz_clear(z);
@@ -104,7 +107,7 @@ namespace encryption {
     element_mul_zn(Y, const_cast<element_t&>(common_public), r);
 
 
-    std::string hash = Hash(Y);
+    std::string hash = this->Hash(Y);
 
     // assuming message and hash are the same size strings
     // the behaviour is undefined when the two arguments are valarrays with different sizes
@@ -131,7 +134,7 @@ namespace encryption {
     element_init_G1(W, this->pairing_);
     element_init_G1(H, this->pairing_);
 
-    Hash(H, U, V);
+    this->Hash(H, U, V);
     element_mul_zn(W, H, r);
 
     std::tuple<element_wrapper, std::string, element_wrapper> result;
@@ -225,13 +228,14 @@ namespace encryption {
 
         bool check = element_cmp(pp1, pp2);
         if (check) {
-          std::cout << "here\n";
           ret_val = false;
         }
 
         element_clear(pp1);
         element_clear(pp2);
       }
+    } else {
+      ret_val = false;
     }
 
     element_clear(fst);
@@ -264,11 +268,7 @@ namespace encryption {
     element_init_GT(fst, this->pairing_);
     element_init_GT(snd, this->pairing_);
 
-    element_t g;
-    element_init_G1(g, this->pairing_);
-    element_set(g, this->generator_);
-
-    pairing_apply(fst, g, W, this->pairing_);
+    pairing_apply(fst, this->generator_, W, this->pairing_);
     pairing_apply(snd, U, H, this->pairing_);
 
     bool res = element_cmp(fst, snd);
@@ -293,9 +293,17 @@ namespace encryption {
       element_init_G1(temp, this->pairing_);
       element_mul_zn(temp, (const_cast<std::vector<std::pair<element_wrapper, size_t>>&>(decrypted))[i].first.el_, lagrange_coeffs[i].el_);
 
-      element_add(sum, sum, temp);
+      element_t tmp1;
+      element_init_G1(tmp1, this->pairing_);
+
+      element_add(tmp1, sum, temp);
+
+      element_clear(sum);
+      element_init_G1(sum, this->pairing_);
+      element_set(sum, tmp1);
 
       element_clear(temp);
+      element_clear(tmp1);
     }
 
     std::string hash = this->Hash(sum);
@@ -319,7 +327,6 @@ namespace encryption {
 
     element_clear(sum);
 
-    element_clear(g);
     element_clear(fst);
     element_clear(snd);
 
@@ -370,7 +377,7 @@ namespace encryption {
           element_set_si(u, idx[j] - idx[i]);
 
           element_init_Zr(a, this->pairing_);
-          element_mul(a, v, u);
+          element_mul_zn(a, v, u);
           element_clear(v);
           element_init_Zr(v, this->pairing_);
           element_set(v, a);
@@ -391,16 +398,12 @@ namespace encryption {
 
 
       element_init_Zr(a, this->pairing_);
-      element_mul(a, w, v);
-      element_clear(w);
-      element_init_Zr(w, this->pairing_);
-      element_set(w, a);
-
-      element_clear(a);
-
+      element_mul_zn(a, w, v);
 
       element_init_Zr(res[i].el_, this->pairing_);
-      element_set(res[i].el_, w);
+      element_set(res[i].el_, a);
+
+      element_clear(a);
 
       element_clear(v);
     }
