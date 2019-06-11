@@ -100,6 +100,7 @@ namespace encryption{
   class TE{
    public:
       pairing_t pairing_;
+      
       element_t generator_ = { 0 };
 
       TE(const size_t t, const size_t n);

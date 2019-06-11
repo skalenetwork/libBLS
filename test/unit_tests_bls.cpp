@@ -287,11 +287,12 @@ BOOST_AUTO_TEST_CASE(BlsThresholdSignaturesReal) {
   std::vector<libff::alt_bn128_Fr> lagrange_coeffs = obj.LagrangeCoeffs(testing_nodes);
 
 
-
   auto recovered_keys = obj.KeysRecover(lagrange_coeffs, secret_keys);
 
   libff::alt_bn128_Fr common_secret = recovered_keys.first;
   libff::alt_bn128_G2 common_public = recovered_keys.second;
+
+  BOOST_REQUIRE(common_secret == coeffs[0]);
 
   BOOST_CHECK(common_public.is_well_formed());
 
