@@ -49,10 +49,18 @@ namespace encryption {
 
     mpz_t z;
     mpz_init(z);
+    element_to_mpz(z, element_item(const_cast<element_t&>(Y), 0));
+
+    std::string tmp1 = mpz_get_str(NULL, 10, z);
+    mpz_clear(z);
+
+    mpz_init(z);
     element_to_mpz(z, element_item(const_cast<element_t&>(Y), 1));
 
-    char* tmp = mpz_get_str(NULL, 10, z);
+    std::string tmp2 = mpz_get_str(NULL, 10, z);
     mpz_clear(z);
+
+    std::string tmp = tmp1 + tmp2;
 
     const std::string sha256hex = hash_func(tmp);
 
@@ -67,10 +75,18 @@ namespace encryption {
 
     mpz_t z;
     mpz_init(z);
+    element_to_mpz(z, element_item(const_cast<element_t&>(U), 0));
+
+    std::string tmp1 = mpz_get_str(NULL, 10, z);
+    mpz_clear(z);
+
+    mpz_init(z);
     element_to_mpz(z, element_item(const_cast<element_t&>(U), 1));
 
-    char* tmp = mpz_get_str(NULL, 10, z);
+    std::string tmp2 = mpz_get_str(NULL, 10, z);
     mpz_clear(z);
+
+    std::string tmp = tmp1 + tmp2;
 
     const std::string sha256hex1 = hash_func(tmp);
 
