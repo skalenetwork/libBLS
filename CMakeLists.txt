@@ -56,7 +56,7 @@ include(deps/ProjectGMP.cmake)
 add_library(bls ${sourses_bls} ${headers_bls})
 
 target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wno-error=unused-but-set-variable)
-
+add_compile_options(-fpermissive -fPIC -std=c++17 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-unused-variable -Wno-error-unused-parameter -Wno-error=int-in-bool-context)
 
 find_package(Boost REQUIRED program_options system)
 
