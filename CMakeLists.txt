@@ -46,7 +46,7 @@ set(PROJECT_VERSION 0.4.0)
 
 add_definitions(-DBLS_VERSION=${PROJECT_VERSION})
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++17 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-unused-variable -Wno-error=int-in-bool-context")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++17 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-error=-unused-variable -Wno-error=unused-parameter -Wno-error=int-in-bool-context")
 
 include_directories(${CMAKE_BINARY_DIR}/deps/include ${GMP_INCLUDE_DIR})
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
@@ -56,7 +56,7 @@ include(deps/ProjectGMP.cmake)
 add_library(bls ${sourses_bls} ${headers_bls})
 
 target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wno-error=unused-but-set-variable)
-add_compile_options(-fpermissive -fPIC -std=c++17 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-unused-variable -Wno-error=unused-parameter -Wno-error=int-in-bool-context)
+add_compile_options(-fpermissive -fPIC -std=c++17 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-error=-unused-variable -Wno-error=unused-parameter -Wno-error=int-in-bool-context)
 
 find_package(Boost REQUIRED program_options system)
 
@@ -149,14 +149,11 @@ if (BUILD_TESTS)
 		)
 endif()
 
-install(TARGETS bls DESTINATION lib)
-
-install(TARGETS dkg_keygen DESTINATION bin)
-
-install(TARGETS dkg_glue DESTINATION bin)
-
-install(TARGETS sign_bls DESTINATION bin)
-
-install(TARGETS bls_glue DESTINATION bin)
-
-install(TARGETS verify_bls DESTINATION bin)
+if (NOT SKALE_SKIP_INSTALLING_DIRECTIVES )
+	install(TARGETS bls DESTINATION lib)
+	install(TARGETS dkg_keygen DESTINATION bin)
+	install(TARGETS dkg_glue DESTINATION bin)
+	install(TARGETS sign_bls DESTINATION bin)
+	install(TARGETS bls_glue DESTINATION bin)
+	install(TARGETS verify_bls DESTINATION bin)
+endif()
