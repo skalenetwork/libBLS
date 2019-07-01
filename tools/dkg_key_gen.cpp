@@ -24,6 +24,7 @@
 
 #include <dkg/dkg.h>
 
+#include <algorithm>
 #include <fstream>
 
 #include <third_party/json.hpp>
@@ -51,7 +52,7 @@ std::string ConvertToString(T field_elem) {
 }
 
 void KeyGeneration(const size_t t, const size_t n, bool generate_all = true, int idx = -1) {
-  signatures::Dkg dkg_instance =  signatures::Dkg(t, n);
+  signatures::Dkg dkg_instance = signatures::Dkg(t, n);
   
   if (generate_all) {
     std::vector<std::vector<libff::alt_bn128_Fr>> polynomial(n);
@@ -65,21 +66,30 @@ void KeyGeneration(const size_t t, const size_t n, bool generate_all = true, int
       secret_key_contribution[i] = dkg_instance.SecretKeyContribution(polynomial[i]);
     }
 
-    // we will skip here a verification process
+    std::vector<std::vector<libff::alt_bn128_G2>> verification_vector(n);
+    for (size_t i = 0; i < n; ++i) {
+      verification_vector[i] = dkg_instance.VerificationVector(polynomial[i]);
+    }
+
+    for (size_t i = 0; i < n; ++i) {
+      for (size_t j = 0; j < n; ++j) {
+        if (!dkg_instance.Verification(j, secret_key_contribution[i][j], verification_vector[i])) {
+          throw std::runtime_error("not verified");
+        }
+      }
+    }
 
     for (size_t i = 0; i < n; ++i) {
       for (size_t j = i; j < n; ++j) {
-        secret_key_contribution[i][j] = secret_key_contribution[j][i];
+        std::swap(secret_key_contribution[j][i], secret_key_contribution[i][j]);
       }
     }
 
     std::vector<libff::alt_bn128_Fr> secret_key(n);
-    std::vector<libff::alt_bn128_G2> public_keys(n);
     libff::alt_bn128_G2 common_public_key = libff::alt_bn128_G2::zero();
     for (size_t i = 0; i < n; ++i) {
       secret_key[i] = dkg_instance.SecretKeyShareCreate(secret_key_contribution[i]);
-      public_keys[i] = polynomial[i][0] * libff::alt_bn128_G2::one();
-      common_public_key = common_public_key + public_keys[i];
+      common_public_key = common_public_key + verification_vector[i][0];
     }
 
     for (size_t i = 0; i < n; ++i) {

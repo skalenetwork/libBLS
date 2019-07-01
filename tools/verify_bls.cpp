@@ -63,7 +63,7 @@ void Verify(const size_t t, const size_t n, std::istream & sign_file) {
   public_key.Z.c0 = libff::alt_bn128_Fq(pk_in["public_key"]["Z"]["c0"].get<std::string>().c_str());
   public_key.Z.c1 = libff::alt_bn128_Fq(pk_in["public_key"]["Z"]["c1"].get<std::string>().c_str());
 
-bool bRes = bls_instance.Verification(to_be_hashed, sign, public_key);
+  bool bRes = bls_instance.Verification(to_be_hashed, sign, public_key);
   if (g_b_verbose_mode)
     std::cout << "Signature verification result: " << (bRes ? "True" : "False") << '\n';
   if (!bRes)

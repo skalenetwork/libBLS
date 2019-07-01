@@ -54,9 +54,8 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
   signatures::Bls bls_instance = signatures::Bls(t, n);
 
   std::vector<uint8_t> message_data;
-  while (!data_file.eof()) {
-    uint8_t n_byte;
-    data_file >> n_byte;
+  uint8_t n_byte;
+  while (data_file >> n_byte) {
     message_data.push_back(n_byte);
   }
 
