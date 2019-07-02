@@ -79,7 +79,7 @@ void KeyGeneration(const size_t t, const size_t n, bool generate_all = true, int
 
     for (size_t i = 0; i < n; ++i) {
       for (size_t j = 0; j < n; ++j) {
-        if (!dkg_instance.Verification(j, secret_key_contribution[j][i], verification_vector[i])) {
+        if (!dkg_instance.Verification(i, secret_key_contribution[i][j], verification_vector[j])) {
           throw std::runtime_error("not verified");
         }
       }

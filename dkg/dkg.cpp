@@ -107,7 +107,7 @@ namespace signatures {
 
   bool Dkg::Verification(size_t idx, libff::alt_bn128_Fr share,
                         const std::vector<libff::alt_bn128_G2>& verification_vector) {
-    // verifies that idx-th node is not broken
+    // idx-th node verifies that share corresponds to the verification vector
     libff::alt_bn128_G2 value = libff::alt_bn128_G2::zero();
     for (size_t i = 0; i < this->t_; ++i) {
       value = value + power(libff::alt_bn128_Fr(idx + 1), i) * verification_vector[i];
