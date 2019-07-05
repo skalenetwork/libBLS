@@ -132,9 +132,15 @@ if( BUILD_TESTS )
 	target_link_libraries( dkg_unit_test PRIVATE bls )
 	add_test( NAME dkg_tests COMMAND dkg_unit_test )
 
+	add_executable( bls_test test/test_bls.cpp )
+	target_include_directories( bls_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} )
+	target_link_libraries( bls_test PRIVATE bls )
+	add_test( NAME bls_test COMMAND bls_test )
+
 	add_custom_target( all_bls_tests
 		COMMAND ./bls_unit_test
 		COMMAND ./dkg_unit_test
+		COMMAND ./bls_test	
 		DEPENDS bls_unit_test dkg_unit_test
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		COMMENT "Run all BLS and DKG tests"
