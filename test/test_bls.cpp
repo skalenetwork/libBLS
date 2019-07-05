@@ -22,7 +22,7 @@ BOOST_AUTO_TEST_CASE(libBls){
         std::cerr << "STARTING LIBBLS TESTS";
 
         std::srand(unsigned(std::time(0)));
-        for (size_t i = 0; i < 1000; ++i) {
+        for (size_t i = 0; i < 100; ++i) {
             size_t num_all = std::rand()%50 + 1;
             size_t num_signed = std::rand()%num_all + 1;
 
@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(libBls){
 
             signatures::Bls obj = signatures::Bls(num_signed, num_all);
 
-            for (size_t i = 0; i < 1000; ++i) {
+            for (size_t i = 0; i < 10; ++i) {
                 std::string message = "";
                 size_t msg_length = std::rand() % 1000 + 2;
                 for (size_t length = 0; length < msg_length; ++length) {
