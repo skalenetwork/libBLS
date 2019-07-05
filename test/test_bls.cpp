@@ -17,6 +17,10 @@
 BOOST_AUTO_TEST_SUITE(Bls)
 
 BOOST_AUTO_TEST_CASE(libBls){
+
+
+        std::err << "STARTING LIBBLS TESTS";
+
         std::srand(unsigned(std::time(0)));
         for (size_t i = 0; i < 1000; ++i) {
             size_t num_all = std::rand()%50 + 1;
@@ -77,6 +81,9 @@ BOOST_AUTO_TEST_CASE(libBls){
                 BOOST_REQUIRE(is_exception_caught);
             }
         }
+
+        std::err << "BLS TESTS completed successfully";
+
 
 }
 
