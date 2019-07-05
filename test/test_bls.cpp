@@ -19,7 +19,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
 BOOST_AUTO_TEST_CASE(libBls){
 
 
-        std::err << "STARTING LIBBLS TESTS";
+        std::cerr << "STARTING LIBBLS TESTS";
 
         std::srand(unsigned(std::time(0)));
         for (size_t i = 0; i < 1000; ++i) {
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(libBls){
             }
         }
 
-        std::err << "BLS TESTS completed successfully";
+        std::cerr << "BLS TESTS completed successfully";
 
 
 }
