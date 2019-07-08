@@ -52,6 +52,8 @@ class Dkg {
     bool Verification(size_t idx, libff::alt_bn128_Fr share,
                         const std::vector<libff::alt_bn128_G2>& verification_vector);
 
+    libff::alt_bn128_G2 GetPublicKeyFromSecretKey(const libff::alt_bn128_Fr& secret_key);
+
  private:
     const size_t t_ = 0;
 
