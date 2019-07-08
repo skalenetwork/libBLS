@@ -2,13 +2,9 @@
 
 #include <bls/bls.h>
 #include <dkg/dkg.h>
-#include <cstdlib>
 #include <ctime>
-#include <map>
-#include <set>
 
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-#include <libff/algebra/exponentiation/exponentiation.hpp>
+#include <map>
 
 #define BOOST_TEST_MODULE
 
@@ -20,12 +16,13 @@ BOOST_AUTO_TEST_CASE(libBls){
 
 
         std::cerr << "STARTING LIBBLS TESTS";
-
-        std::srand(unsigned(std::time(0)));
         for (size_t i = 0; i < 100; ++i) {
-            size_t num_all = std::rand()%50 + 1;
-            size_t num_signed = std::rand()%num_all + 1;
 
+
+            std::srand(unsigned(std::time(0)));
+            size_t num_all = std::rand()%16 + 1;
+            size_t num_signed = std::rand()%num_all + 1;
+            nums.push_back(std::make_pair(num_signed,num_all));
             signatures::Dkg dkg_obj = signatures::Dkg( num_signed, num_all);
             const std::vector<libff::alt_bn128_Fr> pol = dkg_obj.GeneratePolynomial();
             std::vector<libff::alt_bn128_Fr> skeys = dkg_obj.SecretKeyContribution(pol);
@@ -44,10 +41,22 @@ BOOST_AUTO_TEST_CASE(libBls){
                 libff::alt_bn128_G1 hash = obj.Hashing(message);
                 for (size_t i = 0; i < num_signed; ++i) signatures[i] = obj.Signing(hash, skeys[i]);
 
-                std::vector<size_t> participants(num_signed);
-                for (size_t i = 0; i < num_signed; ++i) participants[i] = i + 1;
+                //std::vector<size_t> participants(num_signed);
+               // for (size_t i = 0; i < num_signed; ++i) participants[i] = i + 1;
 
-                std::vector<libff::alt_bn128_Fr> lagrange_coeffs = obj.LagrangeCoeffs(participants);
+                std::vector<size_t> participants(num_all);
+                for (size_t i = 0; i < num_all; ++i) participants[i] = i + 1;
+                for (size_t i = 0; i < num_all - num_signed; ++i){
+                    size_t ind4del = std::rand()%participants.size();
+                    participants.erase(participants.begin() + ind4del);
+                }
+
+                for (size_t i = 0; i < num_signed; ++i){
+                    auto pkey = skeys[i] *  libff::alt_bn128_G2::one();
+                    BOOST_REQUIRE( obj.Verification(message, signatures[i], pkey) );
+                }
+
+                    std::vector<libff::alt_bn128_Fr> lagrange_coeffs = obj.LagrangeCoeffs(participants);
                 libff::alt_bn128_G1 signature = obj.SignatureRecover(signatures, lagrange_coeffs);
 
                 auto recovered_keys = obj.KeysRecover(lagrange_coeffs, skeys);
@@ -79,7 +88,9 @@ BOOST_AUTO_TEST_CASE(libBls){
                 }
 
                 BOOST_REQUIRE(is_exception_caught);
+
             }
+
         }
 
         std::cerr << "BLS TESTS completed successfully";
