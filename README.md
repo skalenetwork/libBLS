@@ -82,7 +82,9 @@ sudo apt-get install -y cmake\
     libprocps-dev\
     libboost-all-dev\
     libgmp3-dev\
-    libssl-dev
+    libssl-dev\
+    flex\
+    bison
 ```
 
 Configure the project build with the following commands.
