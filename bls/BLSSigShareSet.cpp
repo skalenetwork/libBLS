@@ -52,7 +52,7 @@ shared_ptr< BLSSigShare > BLSSigShareSet::getSigShareByIndex( size_t _index ) {
 
     return sigShares.at( _index );
 }
-BLSSigShareSet::BLSSigShareSet( size_t _totalSigners, size_t _requiredSigners )
+BLSSigShareSet::BLSSigShareSet( size_t _requiredSigners, size_t _totalSigners )
     : totalSigners( _totalSigners ), requiredSigners( _requiredSigners ) {
     BLSSignature::checkSigners( _totalSigners, _requiredSigners );
 }

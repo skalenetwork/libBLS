@@ -25,6 +25,7 @@
 
 #include <stdlib.h>
 #include <string>
+#include <memory>
 
 #include "bls.h"
 
@@ -41,15 +42,17 @@ protected:
     size_t requiredSigners;
 
 public:
-    BLSPrivateKeyShare( const std::string& _key, size_t _totalSigners, size_t _requiredSigners );
-    std::shared_ptr< BLSSigShare > sign( std::shared_ptr< string > _msg, size_t _signerIndex );
+    BLSPrivateKeyShare( const std::string& _key, size_t _requiredSigners, size_t _totalSigners );
+    std::shared_ptr< BLSSigShare > sign( std::shared_ptr< std::string > _msg, size_t _signerIndex );
 
+    BLSPrivateKeyShare( const libff::alt_bn128_Fr, size_t _requiredSigners, size_t _totalSigners );
 
     // generate a vector of correct _totalSigners private keys that work together
 
-    //static shared_ptr< vector< shared_ptr< BLSPrivateKeyShare>>> generateSampleKeys(
-    //    size_t _totalSigners, size_t _requiredSigners );
+    static std::shared_ptr< std::vector< std::shared_ptr< BLSPrivateKeyShare>>> generateSampleKeys(
+            size_t _requiredSigners, size_t _totalSigners );
 
+    std::shared_ptr< libff::alt_bn128_Fr > getPrivateKey() const;
 
 };
 

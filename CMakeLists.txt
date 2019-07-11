@@ -27,11 +27,22 @@ endif()
 
 set( sourses_bls
 	bls/bls.cpp
+	bls/BLSPrivateKeyShare.cpp
+	bls/BLSPublicKey.cpp
+	bls/BLSSignature.cpp
+	bls/BLSSigShare.cpp
+	bls/BLSSigShareSet.cpp
+	bls/BLSutils.cpp
 	dkg/dkg.cpp
 	third_party/cryptlite/base64.cpp
 	)
 set( headers_bls
 	bls/bls.h
+	bls/BLSPrivateKeyShare.h
+	bls/BLSPublicKey.h
+	bls/BLSSignature.h
+	bls/BLSSigShare.h
+	bls/BLSSigShareSet.h
 	dkg/dkg.h
 	third_party/json.hpp
 	third_party/cryptlite/sha256.h

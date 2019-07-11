@@ -30,16 +30,16 @@ shared_ptr< libff::alt_bn128_G1 > BLSSignature::getSig() const {
     return sig;
 }
 BLSSignature::BLSSignature(
-    const shared_ptr< libff::alt_bn128_G1 >& sig, size_t _totalSigners, size_t _requiredSigners )
+    const shared_ptr< libff::alt_bn128_G1 >& sig, size_t _requiredSigners, size_t _totalSigners )
     : sig( sig ), totalSigners( _totalSigners ), requiredSigners( _requiredSigners ) {
     checkSigners( _totalSigners, _requiredSigners );
 }
 
 BLSSignature::BLSSignature(
-    shared_ptr< string > _s, size_t _totalSigners, size_t _requiredSigners ) :
+    shared_ptr< string > _s, size_t _requiredSigners, size_t _totalSigners ) :
     totalSigners( _totalSigners ), requiredSigners( _requiredSigners ) {
 
-    checkSigners( _totalSigners, _requiredSigners );
+    checkSigners( _requiredSigners, _totalSigners );
 
     if ( _s->size() > BLS_MAX_SIG_LEN ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Signature too long" ) );
@@ -91,7 +91,7 @@ shared_ptr< string > BLSSignature::toString() {
 
     return make_shared< string >( str );
 }
-void BLSSignature::checkSigners( size_t _totalSigners, size_t _requiredSigners ) {
+void BLSSignature::checkSigners( size_t _requiredSigners, size_t _totalSigners ) {
     if ( _requiredSigners > _totalSigners ) {
         BOOST_THROW_EXCEPTION( runtime_error( "_requiredSigners > _totalSigners" ) );
     }

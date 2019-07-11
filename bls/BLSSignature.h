@@ -43,15 +43,15 @@ class BLSSignature {
 
 public:
 
-    BLSSignature(std::shared_ptr<std::string> s, size_t _totalSigners, size_t _requiredSigners);
-    BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 >& sig, size_t _totalSigners,
-                  size_t _requiredSigners);;
+    BLSSignature(std::shared_ptr<std::string> s, size_t _requiredSigners, size_t _totalSigners);
+    BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 >& sig, size_t _requiredSigners, size_t _totalSigners);
     std::shared_ptr<libff::alt_bn128_G1> getSig() const;
     std::shared_ptr<std::string> toString();
 
-    static void checkSigners( size_t _totalSigners, size_t _requiredSigners);
+    static void checkSigners( size_t _requiredSigners, size_t _totalSigners );
     size_t getTotalSigners() const;
     size_t getRequiredSigners() const;
+
 };
 
 

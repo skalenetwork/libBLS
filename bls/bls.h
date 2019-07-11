@@ -35,6 +35,7 @@
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 #include <libff/algebra/curves/alt_bn128/alt_bn128_g1.hpp>
 
+
 static constexpr size_t BLS_MAX_COMPONENT_LEN = 80;
 
 static constexpr size_t BLS_MAX_SIG_LEN = 160;
@@ -68,6 +69,9 @@ class Bls {
 
     libff::alt_bn128_G1 SignatureRecover(const std::vector<libff::alt_bn128_G1>& shares,
                                           const std::vector<libff::alt_bn128_Fr>& coeffs);
+
+    //libff::alt_bn128_G1 SignatureRecover1(shared_ptr< vector< shared_ptr< BLSPrivateKeyShare>>> shares,
+                                              //const std::vector<libff::alt_bn128_Fr>& coeffs);
 
     std::vector<libff::alt_bn128_Fr> LagrangeCoeffs(const std::vector<size_t>& idx);
 
