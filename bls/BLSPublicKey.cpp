@@ -54,6 +54,17 @@ BLSPublicKey::BLSPublicKey( const string& k1, const string& k2, const string& k3
         BOOST_THROW_EXCEPTION( runtime_error( "Public Key is equal to zero or corrupt" ) );
     }
 }
+
+BLSPublicKey::BLSPublicKey(  const libff::alt_bn128_Fr& skey, size_t _totalSigners, size_t _requiredSigners )
+        : totalSigners( _totalSigners ), requiredSigners( _requiredSigners ) {
+
+    libffPublicKey = make_shared <libff::alt_bn128_G2 > (skey * libff::alt_bn128_G2::one());
+}
+
+BLSPublicKey::BLSPublicKey(  const libff::alt_bn128_G2 pkey){
+    libffPublicKey = make_shared<libff::alt_bn128_G2>(pkey);
+}
+
 shared_ptr< libff::alt_bn128_G2 >BLSPublicKey::getLibffPublicKey() const {
     return libffPublicKey;
 }
@@ -64,20 +75,33 @@ size_t BLSPublicKey::getRequiredSigners() const {
     return requiredSigners;
 }
 
-
-void BLSPublicKey::verifySig( std::shared_ptr< std::string > _msg) {
-
+bool BLSPublicKey::VerifySig ( std::shared_ptr< std::string > _msg, std::shared_ptr< BLSSignature > sign_ptr, size_t _requiredSigners, size_t _totalSigners){
     std::shared_ptr< signatures::Bls > obj;
 
-    obj = std::make_shared< signatures::Bls >( signatures::Bls( requiredSigners, totalSigners ) );
+    obj = std::make_shared< signatures::Bls >( signatures::Bls( _requiredSigners, _totalSigners ) );
 
-    libff::alt_bn128_G1 hash = obj->Hashing( *_msg );
+    bool res = obj->Verification ( *_msg, *(sign_ptr->getSig()), *libffPublicKey);
+    return res;
+}
 
+std::shared_ptr <BLSPublicKey> BLSPublicKey::gluePublicKey (std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > koefs_pkeys_map){
+    signatures::Bls obj = signatures::Bls( requiredSigners, totalSigners );
 
+    vector< size_t > participatingNodes;
+    vector< libff::alt_bn128_G1 > shares;
 
-    // verify signature here - throw runtime_error if signature does not verify
+    for ( auto&& item : koefs_pkeys_map ) {
+        participatingNodes.push_back( static_cast< uint64_t >( item.first ) );
+    }
 
-    //obj->Verification( hash, sign, public_key);
+    vector< libff::alt_bn128_Fr > lagrangeCoeffs = obj.LagrangeCoeffs( participatingNodes );
 
+    libff::alt_bn128_G2 key =  libff::alt_bn128_G2::zero();
+    size_t i = 0;
+    for (auto&& item: koefs_pkeys_map ){
+        key = key + lagrangeCoeffs.at(i) * (*item.second->getPublicKey()) ;
+        i++;
+   }
 
+   return make_shared<BLSPublicKey>(key);
 }

@@ -24,7 +24,10 @@
 #ifndef SKALED_BLSPUBLICKEY_H
 #define SKALED_BLSPUBLICKEY_H
 
+#include <map>
+
 #include "bls.h"
+#include "BLSPublicKeyShare.h"
 
 namespace libff {
 class alt_bn128_G2;
@@ -41,13 +44,21 @@ class BLSPublicKey {
 public:
     BLSPublicKey( const std::string& k1, const std::string& k2, const std::string& k3, const std::string& k4,
         size_t _totalSigners, size_t _requiredSigners );
+    BLSPublicKey(  const libff::alt_bn128_Fr& skey,
+                        size_t _totalSigners, size_t _requiredSigners );
+
+    BLSPublicKey(const  libff::alt_bn128_G2 );
 
     std::shared_ptr< libff::alt_bn128_G2 > getLibffPublicKey() const;
     size_t getTotalSigners() const;
     size_t getRequiredSigners() const;
 
 
-    void verifySig( std::shared_ptr< std::string > _msg );
+    bool VerifySig ( std::shared_ptr< std::string > _msg, std::shared_ptr< BLSSignature > sign_ptr,
+                     size_t _requiredSigners, size_t _totalSigners);
+
+    std::shared_ptr <BLSPublicKey> gluePublicKey (std::map<size_t, std::shared_ptr<BLSPublicKeyShare> >);
+
 };
 
 

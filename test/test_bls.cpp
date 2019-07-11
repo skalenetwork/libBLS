@@ -77,10 +77,10 @@ BOOST_AUTO_TEST_CASE(libBls){
                 }
 
                 libff::alt_bn128_G1 hash = obj.Hashing(message);
-                for (size_t i = 0; i < num_signed; ++i) signatures[i] = obj.Signing(hash, skeys[i]);
+                for (size_t i = 0; i < num_signed; ++i) signatures.at(i) = obj.Signing(hash, skeys[i]);
 
                 std::vector<size_t> participants(num_all);
-                for (size_t i = 0; i < num_all; ++i) participants[i] = i + 1;
+                for (size_t i = 0; i < num_all; ++i) participants.at(i) = i + 1;
                 for (size_t i = 0; i < num_all - num_signed; ++i){
                     size_t ind4del = std::rand()%participants.size();
                     participants.erase(participants.begin() + ind4del);
@@ -88,10 +88,10 @@ BOOST_AUTO_TEST_CASE(libBls){
 
                 bool is_exception_caught = false;
                 for (size_t i = 0; i < num_signed; ++i){
-                    auto pkey = skeys[i] *  libff::alt_bn128_G2::one();
-                    BOOST_REQUIRE( obj.Verification(message, signatures[i], pkey) );
+                    auto pkey = skeys.at(i) *  libff::alt_bn128_G2::one();
+                    BOOST_REQUIRE( obj.Verification(message, signatures.at(i), pkey) );
                     try{
-                         obj.Verification(message, SpoilSignature(signatures[i]), pkey);
+                         obj.Verification(message, SpoilSignature(signatures.at(i)), pkey);
                     }
                     catch (std::runtime_error){
                         is_exception_caught = true;

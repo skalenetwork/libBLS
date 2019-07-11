@@ -28,6 +28,7 @@ endif()
 set( sourses_bls
 	bls/bls.cpp
 	bls/BLSPrivateKeyShare.cpp
+	bls/BLSPublicKeyShare.cpp
 	bls/BLSPublicKey.cpp
 	bls/BLSSignature.cpp
 	bls/BLSSigShare.cpp
@@ -39,6 +40,7 @@ set( sourses_bls
 set( headers_bls
 	bls/bls.h
 	bls/BLSPrivateKeyShare.h
+	bls/BLSPublicKeyShare.h
 	bls/BLSPublicKey.h
 	bls/BLSSignature.h
 	bls/BLSSigShare.h
