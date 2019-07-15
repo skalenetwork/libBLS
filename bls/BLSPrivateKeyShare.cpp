@@ -30,12 +30,16 @@ using namespace std;
 #include "BLSSigShare.h"
 #include "BLSSignature.h"
 
-#include  "tools/bls_glue.cpp"
+#include  "BLSutils.cpp"
+
 
 BLSPrivateKeyShare::BLSPrivateKeyShare( const string& _key, size_t _requiredSigners, size_t _totalSigners )
-    : totalSigners( _totalSigners ), requiredSigners( _requiredSigners ) {
+    : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
 
+    if ( _key.empty()  ) {
+        BOOST_THROW_EXCEPTION( runtime_error( "Secret key share string is empty" ) );
+    }
 
 
     privateKey = make_shared< libff::alt_bn128_Fr >( _key.c_str() );
@@ -44,9 +48,15 @@ BLSPrivateKeyShare::BLSPrivateKeyShare( const string& _key, size_t _requiredSign
     }
 }
 
-
 shared_ptr< BLSSigShare > BLSPrivateKeyShare::sign( shared_ptr< string > _msg, size_t _signerIndex ) {
     shared_ptr< signatures::Bls > obj;
+
+    if( _msg -> empty() || !_msg ){
+        BOOST_THROW_EXCEPTION( runtime_error( "Message is empty or null" ) );
+    }
+    if ( _signerIndex == 0 ) {
+        BOOST_THROW_EXCEPTION( runtime_error( "Zero signer index" ) );
+    }
 
     obj = make_shared< signatures::Bls >( signatures::Bls( requiredSigners, totalSigners ) );
 

@@ -1,5 +1,5 @@
 /*
-     Copyright (C) 2018-2019 SKALE Labs
+    Copyright (C) 2018-2019 SKALE Labs
 
   This file is part of libBLS.
 
@@ -16,46 +16,38 @@
   You should have received a copy of the GNU Affero General Public License
   along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-    @file BLSPrivateKeyShare.h
+    @file BLSSigShare.h
     @author Stan Kladko
     @date 2019
 */
-#ifndef LIBBLS_BLSPRIVATEKEYSHARE_H
-#define LIBBLS_BLSPRIVATEKEYSHARE_H
+
+#ifndef LIBBLS_BLSPRIVATEKEY_H
+#define LIBBLS_BLSPRIVATEKEY_H
 
 #include <stdlib.h>
 #include <string>
 #include <memory>
 
 #include "bls.h"
+#include "BLSSignature.h"
+#include "BLSPrivateKeyShare.h"
 
 
-class BLSSigShare;
+class BLSPrivateKey {
 
-namespace libff {
-    class alt_bn128_fr;
-}
-
-class BLSPrivateKeyShare {
-protected:
     std::shared_ptr< libff::alt_bn128_Fr > privateKey;
     size_t totalSigners;
     size_t requiredSigners;
 
 public:
-    BLSPrivateKeyShare( const std::string& _key, size_t _requiredSigners, size_t _totalSigners );
-    std::shared_ptr< BLSSigShare > sign( std::shared_ptr< std::string > _msg, size_t _signerIndex );
+    BLSPrivateKey( const std::string& _key, size_t _requiredSigners, size_t _totalSigners );
 
-    BLSPrivateKeyShare( const libff::alt_bn128_Fr, size_t _requiredSigners, size_t _totalSigners );
-
-
-    // generate a vector of correct _totalSigners private keys that work together
-    static std::shared_ptr< std::vector< std::shared_ptr< BLSPrivateKeyShare>>> generateSampleKeys(
-            size_t _requiredSigners, size_t _totalSigners );
+    BLSPrivateKey( const std::shared_ptr< std::vector< std::shared_ptr< BLSPrivateKeyShare>>>, std::shared_ptr< std::vector< size_t >> koefs,  size_t _requiredSigners, size_t _totalSigners );
 
     std::shared_ptr< libff::alt_bn128_Fr > getPrivateKey() const;
 
 };
 
 
-#endif  // LIBBLS_BLSPRIVATEKEYSHARE_H
+#endif // LIBBLS_BLSPRIVATEKEY_H
+

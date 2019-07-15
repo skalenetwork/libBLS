@@ -20,9 +20,6 @@ bool BLSSigShareSet::addSigShare( shared_ptr< BLSSigShare > _sigShare ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Null _sigShare" ) );
     }
 
-
-    lock_guard< recursive_mutex > lock( sigSharesMutex );
-
     if ( sigShares.count( _sigShare->getSignerIndex() ) > 0 ) {
         BOOST_THROW_EXCEPTION( runtime_error(
             "Already have this index:" + to_string( _sigShare->getSignerIndex() ) ) );
@@ -35,13 +32,12 @@ bool BLSSigShareSet::addSigShare( shared_ptr< BLSSigShare > _sigShare ) {
 }
 
 size_t BLSSigShareSet::getTotalSigSharesCount() {
-    lock_guard< recursive_mutex > lock( sigSharesMutex );
+
     return sigShares.size();
 }
 shared_ptr< BLSSigShare > BLSSigShareSet::getSigShareByIndex( size_t _index ) {
-    lock_guard< recursive_mutex > lock( sigSharesMutex );
 
-    if ( _index == 0 || _index > requiredSigners ) {
+    if ( _index == 0 || _index > totalSigners ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Index out of range:" + to_string( _index ) ) );
     }
 
@@ -53,11 +49,10 @@ shared_ptr< BLSSigShare > BLSSigShareSet::getSigShareByIndex( size_t _index ) {
     return sigShares.at( _index );
 }
 BLSSigShareSet::BLSSigShareSet( size_t _requiredSigners, size_t _totalSigners )
-    : totalSigners( _totalSigners ), requiredSigners( _requiredSigners ) {
-    BLSSignature::checkSigners( _totalSigners, _requiredSigners );
+    : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
+    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
 }
 bool BLSSigShareSet::isEnough() {
-    lock_guard< recursive_mutex > lock( sigSharesMutex );
 
     return ( sigShares.size() >= requiredSigners );
 }
@@ -85,5 +80,10 @@ shared_ptr< BLSSignature > BLSSigShareSet::merge() {
 
     auto sigPtr = make_shared< libff::alt_bn128_G1 >( signature );
 
-    return make_shared< BLSSignature >( sigPtr, totalSigners, requiredSigners );
+    return make_shared< BLSSignature >( sigPtr, requiredSigners, totalSigners );
 }
+
+
+/*std::map<size_t, std::shared_ptr< BLSSigShare > > BLSSigShareSet::getSigShares(){
+    return sigShares;
+}*/

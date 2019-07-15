@@ -30,14 +30,14 @@ shared_ptr< libff::alt_bn128_G1 > BLSSignature::getSig() const {
     return sig;
 }
 BLSSignature::BLSSignature(
-    const shared_ptr< libff::alt_bn128_G1 >& sig, size_t _requiredSigners, size_t _totalSigners )
-    : sig( sig ), totalSigners( _totalSigners ), requiredSigners( _requiredSigners ) {
-    checkSigners( _totalSigners, _requiredSigners );
+    const shared_ptr< libff::alt_bn128_G1 > sig, size_t _requiredSigners, size_t _totalSigners )
+    : sig( sig ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
+    checkSigners( _requiredSigners, _totalSigners );
 }
 
 BLSSignature::BLSSignature(
     shared_ptr< string > _s, size_t _requiredSigners, size_t _totalSigners ) :
-    totalSigners( _totalSigners ), requiredSigners( _requiredSigners ) {
+    requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
 
     checkSigners( _requiredSigners, _totalSigners );
 
