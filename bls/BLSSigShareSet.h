@@ -32,6 +32,7 @@
 class BLSSignature;
 
 class BLSSigShareSet {
+    bool was_merged;
 
     size_t totalSigners;
     size_t requiredSigners;
