@@ -40,9 +40,8 @@ BLSPrivateKeyShare::BLSPrivateKeyShare( const string& _key, size_t _requiredSign
     if ( _key.empty()  ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Secret key share string is empty" ) );
     }
-
-
     privateKey = make_shared< libff::alt_bn128_Fr >( _key.c_str() );
+
     if ( *privateKey == libff::alt_bn128_Fr::zero() ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Secret key share is equal to zero or corrupt" ) );
     }
@@ -76,15 +75,18 @@ shared_ptr< BLSSigShare > BLSPrivateKeyShare::sign( shared_ptr< string > _msg, s
         BOOST_THROW_EXCEPTION( runtime_error( "Sig shares do not match" ) );
     }
 
-
     return s;
 }
 
 shared_ptr< vector< shared_ptr< BLSPrivateKeyShare>>>  BLSPrivateKeyShare:: generateSampleKeys(
         size_t _requiredSigners, size_t _totalSigners ){
+    BLSSignature::checkSigners(_requiredSigners, _totalSigners);
+
     vector< shared_ptr< BLSPrivateKeyShare>> keys;
 
+
     for (size_t i = 0; i < _requiredSigners; ++i){
+
         libff::alt_bn128_Fr cur_key = libff::alt_bn128_Fr::random_element();
 
         while (cur_key == libff::alt_bn128_Fr::zero()) {
@@ -93,8 +95,8 @@ shared_ptr< vector< shared_ptr< BLSPrivateKeyShare>>>  BLSPrivateKeyShare:: gene
 
        string key_str = ConvertToString(cur_key);
 
-         shared_ptr< BLSPrivateKeyShare> key_ptr = make_shared< BLSPrivateKeyShare>(key_str, _requiredSigners, _totalSigners );
-         keys.push_back(key_ptr);
+       shared_ptr< BLSPrivateKeyShare> key_ptr = make_shared< BLSPrivateKeyShare>(key_str, _requiredSigners, _totalSigners );
+       keys.push_back(key_ptr);
     }
 
     return make_shared< vector< shared_ptr< BLSPrivateKeyShare>>>(keys);
@@ -102,4 +104,17 @@ shared_ptr< vector< shared_ptr< BLSPrivateKeyShare>>>  BLSPrivateKeyShare:: gene
 
 std::shared_ptr< libff::alt_bn128_Fr >  BLSPrivateKeyShare::getPrivateKey() const {
     return privateKey;
+}
+
+std::shared_ptr< std::string> BLSPrivateKeyShare::toString(){
+    if ( !privateKey)
+        BOOST_THROW_EXCEPTION( runtime_error( "Secret key share is null" ) );
+    if ( *privateKey == libff::alt_bn128_Fr::zero() ) {
+        BOOST_THROW_EXCEPTION( runtime_error( "Secret key share is equal to zero or corrupt" ) );
+    }
+    std::shared_ptr< std::string> key_str = std::make_shared<std::string>(ConvertToString(*privateKey));
+
+    if ( key_str->empty() )
+       BOOST_THROW_EXCEPTION( runtime_error( "Secret key share string is empty" ) );
+    return key_str;
 }

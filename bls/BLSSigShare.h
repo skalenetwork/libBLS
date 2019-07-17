@@ -28,10 +28,6 @@
 #include <string>
 #include "bls.h"
 
-namespace libff {
-class alt_bn128_G1;
-}
-
 class BLSSigShare {
 
 private:

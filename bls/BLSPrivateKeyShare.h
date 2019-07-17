@@ -54,7 +54,7 @@ public:
             size_t _requiredSigners, size_t _totalSigners );
 
     std::shared_ptr< libff::alt_bn128_Fr > getPrivateKey() const;
-
+    std::shared_ptr< std::string> toString();
 };
 
 

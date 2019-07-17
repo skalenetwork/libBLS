@@ -47,9 +47,9 @@ shared_ptr< string > BLSSigShare::toString() {
     return make_shared< string >( str );
 }
 
-BLSSigShare::BLSSigShare( shared_ptr< string > _sigShare, size_t signerIndex, size_t _requiredSigners,
+BLSSigShare::BLSSigShare( shared_ptr< string > _sigShare, size_t _signerIndex, size_t _requiredSigners,
         size_t _totalSigners )
-    : signerIndex( signerIndex ),
+    : signerIndex( _signerIndex ),
       totalSigners( _totalSigners ),
       requiredSigners( _requiredSigners ) {
     BLSSignature::checkSigners( requiredSigners, totalSigners );
@@ -119,7 +119,6 @@ BLSSigShare::BLSSigShare( const shared_ptr< libff::alt_bn128_G1 >& _sigShare, si
       requiredSigners( _requiredSigners ) {
 
     BLSSignature::checkSigners( requiredSigners, totalSigners );
-
 
     if ( _signerIndex == 0 ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Zero signer index" ) );

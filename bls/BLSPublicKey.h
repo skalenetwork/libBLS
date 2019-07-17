@@ -38,24 +38,24 @@ class BLSPublicKey {
     size_t requiredSigners;
 
 public:
-    BLSPublicKey( const std::string& k1, const std::string& k2, const std::string& k3, const std::string& k4,
+
+    BLSPublicKey( const std::shared_ptr< std::vector<std::string> >,
                   size_t _requiredSigners, size_t _totalSigners );
     BLSPublicKey(  const libff::alt_bn128_Fr& skey,
                    size_t _requiredSigners, size_t _totalSigners );
 
-    BLSPublicKey(const  libff::alt_bn128_G2, size_t _requiredSigners, size_t _totalSigners );
-
     BLSPublicKey ( std::shared_ptr< std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > > map_pkeys_koefs,
                     size_t _requiredSigners, size_t _totalSigners);
 
-    std::shared_ptr< libff::alt_bn128_G2 > getLibffPublicKey() const;
     size_t getTotalSigners() const;
     size_t getRequiredSigners() const;
-
 
     bool VerifySig ( std::shared_ptr< std::string > _msg, std::shared_ptr< BLSSignature > sign_ptr,
                      size_t _requiredSigners, size_t _totalSigners);
 
+    std::shared_ptr< std::vector<std::string> > toString();
+
+    std::shared_ptr< libff::alt_bn128_G2 > getPublicKey() const;
 
 };
 
