@@ -39,8 +39,7 @@ class BLSPublicKeyShare {
     size_t requiredSigners;
 
 public:
-    BLSPublicKeyShare( const std::string& k1, const std::string& k2, const std::string& k3, const std::string& k4,
-                        size_t _totalSigners, size_t _requiredSigners );
+
     BLSPublicKeyShare(  const std::shared_ptr< std::vector<std::string> >,
                        size_t _totalSigners, size_t _requiredSigners );
 

@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
             std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>> Skeys = BLSPrivateKeyShare::generateSampleKeys(
                     num_signed, num_all);
 
-            signatures::Bls obj = signatures::Bls(num_signed, num_all);
+            //signatures::Bls obj = signatures::Bls(num_signed, num_all);
 
             for (size_t i = 0; i < 10; ++i) {
 
@@ -235,7 +235,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
             size_t num_all = rand_gen() % 16 + 1;
             size_t num_signed = rand_gen() % num_all + 1;
 
-            signatures::Bls obj = signatures::Bls(num_signed, num_all);
+           // signatures::Bls obj = signatures::Bls(num_signed, num_all);
             std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>> Skeys = BLSPrivateKeyShare::generateSampleKeys(
                     num_signed, num_all);
 
@@ -277,8 +277,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
             for (size_t i = 0; i < num_signed; ++i) {
                 BLSPublicKeyShare pkey_share(*Skeys->at(i)->getPrivateKey(), num_signed, num_all);
                 std::shared_ptr<std::vector<std::string>> pkey_str_vect = pkey_share.toString();
-                BLSPublicKeyShare pkey_from_str(pkey_str_vect->at(0), pkey_str_vect->at(1), pkey_str_vect->at(2),
-                                                pkey_str_vect->at(3), num_signed, num_all);
+                BLSPublicKeyShare pkey_from_str(pkey_str_vect, num_signed, num_all);
                 BOOST_REQUIRE(*pkey_share.getPublicKey() == *pkey_from_str.getPublicKey());
             }
 

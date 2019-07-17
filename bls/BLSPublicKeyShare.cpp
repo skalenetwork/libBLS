@@ -7,30 +7,6 @@
 
 using namespace std;
 
-BLSPublicKeyShare::BLSPublicKeyShare(const string &k1, const string &k2, const string &k3, const string &k4,
-                                     size_t _requiredSigners, size_t _totalSigners)
-        : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
-    BLSSignature::checkSigners(_requiredSigners, _totalSigners);
-
-
-    publicKey = make_shared<libff::alt_bn128_G2>();
-
-    publicKey->X.c0 = libff::alt_bn128_Fq(k1.c_str());
-    publicKey->X.c1 = libff::alt_bn128_Fq(k2.c_str());
-    publicKey->Y.c0 = libff::alt_bn128_Fq(k3.c_str());
-    publicKey->Y.c1 = libff::alt_bn128_Fq(k4.c_str());
-    publicKey->Z.c0 = libff::alt_bn128_Fq::one();
-    publicKey->Z.c1 = libff::alt_bn128_Fq::zero();
-
-    if (publicKey->X.c0 == libff::alt_bn128_Fq::zero() ||
-        publicKey->X.c1 == libff::alt_bn128_Fq::zero() ||
-        publicKey->Y.c0 == libff::alt_bn128_Fq::zero() ||
-        publicKey->Y.c1 == libff::alt_bn128_Fq::zero()) {
-        BOOST_THROW_EXCEPTION(runtime_error("Public Key is equal to zero or corrupt"));
-    }
-
-}
-
 BLSPublicKeyShare::BLSPublicKeyShare(const std::shared_ptr<std::vector<std::string> > pkey_str_vect,
                                      size_t _requiredSigners,
                                      size_t _totalSigners)
