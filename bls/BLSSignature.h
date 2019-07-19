@@ -28,18 +28,12 @@
 #include <string>
 #include "bls.h"
 
-namespace libff {
-    class alt_bn128_G1;
-}
 class BLSSignature {
-
 
     size_t totalSigners;
     size_t requiredSigners;
 
     std::shared_ptr<libff::alt_bn128_G1> sig;
-
-
 
 public:
 

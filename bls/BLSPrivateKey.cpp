@@ -3,9 +3,6 @@ using namespace std;
 
 
 #include "BLSPrivateKey.h"
-#include "BLSSignature.h"
-#include "BLSSignature.h"
-#include "BLSSigShare.h"
 #include "BLSutils.cpp"
 
 BLSPrivateKey::BLSPrivateKey(const string &_key, size_t _requiredSigners, size_t _totalSigners)
@@ -28,7 +25,7 @@ BLSPrivateKey::BLSPrivateKey(const std::shared_ptr<std::vector<std::shared_ptr<B
     signatures::Bls obj = signatures::Bls(_requiredSigners, _totalSigners);
     std::vector lagrange_koefs = obj.LagrangeCoeffs(*koefs);
     for (size_t i = 0; i < requiredSigners; i++) {
-        libff::alt_bn128_Fr skey = *skeys->at(i)->getPrivateKey();
+        libff::alt_bn128_Fr skey = *skeys->at(koefs->at(i) - 1)->getPrivateKey();
         *privateKey = *privateKey + lagrange_koefs.at(i) * skey;
     }
 

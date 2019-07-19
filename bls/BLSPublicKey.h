@@ -27,8 +27,9 @@
 #include <map>
 
 #include "bls.h"
-#include "BLSPublicKeyShare.h"
+#include "BLSSignature.h"
 
+class BLSPublicKeyShare;
 
 class BLSPublicKey {
     std::shared_ptr< libff::alt_bn128_G2 > libffPublicKey;

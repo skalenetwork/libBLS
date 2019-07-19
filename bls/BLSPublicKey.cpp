@@ -28,8 +28,9 @@
 using namespace std;
 
 
-#include "BLSSignature.h"
+
 #include "BLSPublicKey.h"
+#include "BLSPublicKeyShare.h"
 #include "BLSutils.cpp"
 
 

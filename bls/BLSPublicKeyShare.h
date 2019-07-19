@@ -29,8 +29,9 @@
 #include <memory>
 
 #include "bls.h"
-#include "BLSSigShare.h"
-#include "BLSPrivateKeyShare.h"
+//#include "BLSSigShare.h"
+
+class BLSSigShare;
 
 class BLSPublicKeyShare {
 
