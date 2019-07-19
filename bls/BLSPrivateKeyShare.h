@@ -43,6 +43,7 @@ protected:
     size_t requiredSigners;
 
 public:
+
     BLSPrivateKeyShare( const std::string& _key, size_t _requiredSigners, size_t _totalSigners );
     std::shared_ptr< BLSSigShare > sign( std::shared_ptr< std::string > _msg, size_t _signerIndex );
 
