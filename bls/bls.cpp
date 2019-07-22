@@ -33,6 +33,7 @@
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pairing.hpp>
 #include <libff/algebra/exponentiation/exponentiation.hpp>
 
+
 namespace signatures {
 
   Bls::Bls(const size_t t, const size_t n) : t_(t), n_(n) {
