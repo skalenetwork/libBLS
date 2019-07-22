@@ -52,8 +52,8 @@ namespace encryption {
     element_to_mpz(z, element_item(const_cast<element_t&>(Y), 0));
 
     char arr[mpz_sizeinbase (z, 10) + 2];
-    char* tmp = mpz_get_str(arr, 10, z);
-    std::string tmp1 = tmp;
+    char* tmp_c = mpz_get_str(arr, 10, z);
+    std::string tmp1 = tmp_c;
     mpz_clear(z);
 
     mpz_init(z);
@@ -80,8 +80,8 @@ namespace encryption {
     element_to_mpz(z, element_item(const_cast<element_t&>(U), 0));
 
     char arr[mpz_sizeinbase (z, 10) + 2];
-    char* tmp = mpz_get_str(arr, 10, z);
-    std::string tmp1 = tmp;
+    char* tmp_c = mpz_get_str(arr, 10, z);
+    std::string tmp1 = tmp_c;
     mpz_clear(z);
 
     mpz_init(z);
