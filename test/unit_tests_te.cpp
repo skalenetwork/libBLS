@@ -70,18 +70,7 @@ BOOST_AUTO_TEST_CASE(PairingBillinearity) {
   pairing_apply(temp1, sig, g, pairing);
   pairing_apply(temp2, h, public_key, pairing);
 
-  element_clear(g);
-  element_clear(h);
-  element_clear(public_key);
-  element_clear(secret_key);
-  element_clear(sig);
-
   BOOST_REQUIRE(!element_cmp(temp1, temp2));
-
-  element_clear(temp1);
-  element_clear(temp2);
-
-  pairing_clear(pairing);
 }
 
 BOOST_AUTO_TEST_CASE(SimpleEncryption) {
@@ -112,11 +101,11 @@ BOOST_AUTO_TEST_CASE(SimpleEncryption) {
 
   std::string res = te_instance.CombineShares(ciphertext, shares);
 
-  BOOST_REQUIRE(res == message);
-
   element_clear(secret_key);
   element_clear(public_key);
   element_clear(decrypted);
+
+  BOOST_REQUIRE(res == message);
 }
 
 BOOST_AUTO_TEST_CASE(ThresholdEncryptionReal) {
@@ -134,8 +123,6 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionReal) {
     }
 
     elem = encryption::element_wrapper(tmp);
-
-    element_clear(tmp);
   }
 
   std::vector<encryption::element_wrapper> secret_keys(16);
@@ -177,8 +164,6 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionReal) {
     }
 
     secret_keys[i] = encryption::element_wrapper(sk);
-
-    element_clear(sk);
   }
 
   element_t common_secret;
@@ -238,8 +223,6 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionRandomPK) {
     }
 
     elem = encryption::element_wrapper(tmp);
-
-    element_clear(tmp);
   }
 
   std::vector<encryption::element_wrapper> secret_keys(16);
@@ -281,8 +264,6 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionRandomPK) {
     }
 
     secret_keys[i] = encryption::element_wrapper(sk);
-
-    element_clear(sk);
   }
 
   element_t common_secret;
@@ -344,8 +325,6 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionRandomSK) {
     }
 
     elem = encryption::element_wrapper(tmp);
-
-    element_clear(tmp);
   }
 
   std::vector<encryption::element_wrapper> secret_keys(16);
@@ -394,8 +373,6 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionRandomSK) {
     }
 
     secret_keys[i] = encryption::element_wrapper(sk);
-
-    element_clear(sk);
   }
 
   element_t common_secret;
@@ -455,8 +432,6 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionCorruptedCiphertext) {
     }
 
     elem = encryption::element_wrapper(tmp);
-
-    element_clear(tmp);
   }
 
   std::vector<encryption::element_wrapper> secret_keys(16);
@@ -498,8 +473,6 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionCorruptedCiphertext) {
     }
 
     secret_keys[i] = encryption::element_wrapper(sk);
-
-    element_clear(sk);
   }
 
   element_t common_secret;
@@ -510,13 +483,9 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionCorruptedCiphertext) {
   element_init_G1(common_public, obj.pairing_);
   element_pow_zn(common_public, obj.generator_, common_secret);
 
-  element_clear(common_secret);
-
   std::string message = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!"; // message should be 64 length
 
   auto ciphertext = obj.Encrypt(message, common_public);
-
-  element_clear(common_public);
 
   element_t rand;
   element_init_G1(rand, obj.pairing_);
@@ -526,8 +495,6 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionCorruptedCiphertext) {
   std::get<0>(corrupted_ciphertext) = std::get<0>(ciphertext);
   std::get<1>(corrupted_ciphertext) = std::get<1>(ciphertext);
   std::get<2>(corrupted_ciphertext) = encryption::element_wrapper(rand);
-
-  element_clear(rand);
 
   std::vector<std::pair<encryption::element_wrapper, size_t>> shares(11);
 
@@ -554,9 +521,6 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionCorruptedCiphertext) {
     element_pow_zn(public_key, obj.generator_, secret_keys[i].el_);
 
     BOOST_REQUIRE(!obj.Verify(corrupted_ciphertext, decrypted, public_key));
-
-    element_clear(public_key);
-    element_clear(decrypted);
   }
 }
 
