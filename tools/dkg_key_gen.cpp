@@ -30,8 +30,46 @@
 
 #include <boost/program_options.hpp>
 
+#include "bls/BLSPrivateKeyShare.h"
+#include "bls/BLSPublicKeyShare.h"
+#include "bls/BLSPublicKey.h"
+
+#include "bls/BLSPrivateKey.h"
+
 #define EXPAND_AS_STR(x) __EXPAND_AS_STR__(x)
 #define __EXPAND_AS_STR__(x) #x
+
+
+
+void keys_to_json(std::shared_ptr<BLSPrivateKeyShare> skey_ptr, size_t num_signed, size_t num_all, size_t num) {
+
+    nlohmann::json keys_json;
+    keys_json["insecureBLSPrivateKey"] = *skey_ptr->toString();
+    BLSPublicKeyShare pkey(*skey_ptr->getPrivateKey(), num_signed, num_all);
+    std::shared_ptr<std::vector<std::string> > pkey_ptr = pkey.toString();
+    std::string pkey_name = "insecureBLSPublicKey";
+    for (size_t i = 1; i < 5; i++) {
+        keys_json[pkey_name + std::to_string(i)] = pkey_ptr->at(i - 1);
+    }
+
+    std::ofstream outfile("key" + std::to_string(num) + ".json");
+    outfile << std::setw(4) << keys_json << std::endl;
+    outfile.close();
+}
+
+void common_pkey_to_json(std::shared_ptr<BLSPublicKey> common_pkey_ptr,
+                         size_t num_signed, size_t num_all) {
+    nlohmann::json keys_json;
+    std::string pkey_name = "insecureCommonBLSPublicKey";
+    std::shared_ptr<std::vector<std::string> > common_pkey_str = common_pkey_ptr->toString();
+    for (size_t i = 1; i < 5; i++) {
+        keys_json[pkey_name + std::to_string(i)] = common_pkey_str->at(i - 1);
+    }
+
+    std::ofstream outfile("publickey.json");
+    outfile << std::setw(4) << keys_json << std::endl;
+    outfile.close();
+}
 
 static bool g_b_verbose_mode = false;
 
@@ -74,17 +112,25 @@ void KeyGeneration(const size_t t, const size_t n, bool generate_all = true, int
       }
     }
 
-    std::vector<libff::alt_bn128_Fr> secret_key(n);
-    std::vector<libff::alt_bn128_G2> public_keys(n);
+    //std::vector<libff::alt_bn128_Fr> secret_key(n);
+    //std::vector<libff::alt_bn128_G2> public_keys(n);
+    std::vector<std::shared_ptr<BLSPrivateKeyShare>> skeys;
     libff::alt_bn128_G2 common_public_key = libff::alt_bn128_G2::zero();
     for (size_t i = 0; i < n; ++i) {
-      secret_key[i] = dkg_instance.SecretKeyShareCreate(secret_key_contribution[i]);
-      public_keys[i] = polynomial[i][0] * libff::alt_bn128_G2::one();
-      common_public_key = common_public_key + public_keys[i];
+      //secret_key[i] = dkg_instance.SecretKeyShareCreate(secret_key_contribution[i]);
+     // public_keys[i] = polynomial[i][0] * libff::alt_bn128_G2::one();
+      common_public_key = common_public_key + polynomial[i][0] * libff::alt_bn128_G2::one(); //public_keys[i];
+
+      BLSPrivateKeyShare cur_skey(dkg_instance.SecretKeyShareCreate(secret_key_contribution[i]), t, n);
+      skeys.push_back(std::make_shared<BLSPrivateKeyShare>(cur_skey));
     }
 
+    common_pkey_to_json( std::make_shared<BLSPublicKey>(common_public_key, t, n), t , n );
+
     for (size_t i = 0; i < n; ++i) {
-      nlohmann::json secret_key_file;
+        keys_to_json(skeys.at(i), t, n , i+1);
+
+    /*  nlohmann::json secret_key_file;
 
       secret_key_file["secret_key"] = ConvertToString<libff::alt_bn128_Fr>(secret_key[i]);
 
@@ -95,10 +141,10 @@ void KeyGeneration(const size_t t, const size_t n, bool generate_all = true, int
       if (g_b_verbose_mode)
         std::cout
           << str_file_name << " file:\n"
-          << secret_key_file.dump(4) << "\n\n";
+          << secret_key_file.dump(4) << "\n\n";*/
     }
 
-    nlohmann::json public_key_json;
+   /* nlohmann::json public_key_json;
     public_key_json["public_key"]["X"]["c0"] =
                                         ConvertToString<libff::alt_bn128_Fq>(common_public_key.X.c0);
     public_key_json["public_key"]["X"]["c1"] =
@@ -113,7 +159,7 @@ void KeyGeneration(const size_t t, const size_t n, bool generate_all = true, int
                                         ConvertToString<libff::alt_bn128_Fq>(common_public_key.Z.c1);
 
     std::ofstream outfile_pk("public_key.json");
-    outfile_pk << public_key_json.dump(4) << "\n";
+    outfile_pk << public_key_json.dump(4) << "\n";*/
   } else {
     std::vector<libff::alt_bn128_Fr> polynomial = dkg_instance.GeneratePolynomial();
 
@@ -125,7 +171,8 @@ void KeyGeneration(const size_t t, const size_t n, bool generate_all = true, int
     data["idx"] = std::to_string(idx);
 
     for (size_t i = 0; i < n; ++i) {
-      data["secret_key_contribution"][std::to_string(i)] = ConvertToString<libff::alt_bn128_Fr>(secret_key_contribution[i]);
+      //data["secret_key_contribution"][std::to_string(i)] = ConvertToString<libff::alt_bn128_Fr>(secret_key_contribution[i]);
+        data["insecureBLSPrivateKey"][std::to_string(i)] = ConvertToString<libff::alt_bn128_Fr>(secret_key_contribution[i]);
     }
 
     for (size_t i = 0; i < t; ++i) {

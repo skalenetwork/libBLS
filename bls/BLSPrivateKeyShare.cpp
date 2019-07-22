@@ -30,18 +30,31 @@ using namespace std;
 #include "BLSSignature.h"
 
 
-#include  "BLSutils.cpp"
+#include  "BLSutils.h"
 #include  "dkg/dkg.h"
 
 
 BLSPrivateKeyShare::BLSPrivateKeyShare(const string &_key, size_t _requiredSigners, size_t _totalSigners)
         : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
+    libff::init_alt_bn128_params();
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
-
+    BLSutils::initBLS();
     if (_key.empty()) {
         BOOST_THROW_EXCEPTION(runtime_error("Secret key share string is empty"));
     }
     privateKey = make_shared<libff::alt_bn128_Fr>(_key.c_str());
+
+    if (*privateKey == libff::alt_bn128_Fr::zero()) {
+        BOOST_THROW_EXCEPTION(runtime_error("Secret key share is equal to zero or corrupt"));
+    }
+}
+
+BLSPrivateKeyShare::BLSPrivateKeyShare(const libff::alt_bn128_Fr& libff_skey,
+                             size_t _requiredSigners, size_t _totalSigners) :
+        requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
+    BLSSignature::checkSigners(_requiredSigners, _totalSigners);
+
+    privateKey = std::make_shared<libff::alt_bn128_Fr>(libff_skey);
 
     if (*privateKey == libff::alt_bn128_Fr::zero()) {
         BOOST_THROW_EXCEPTION(runtime_error("Secret key share is equal to zero or corrupt"));
@@ -96,7 +109,7 @@ BLSPrivateKeyShare::generateSampleKeys(
 
     for (size_t i = 0; i < _totalSigners; ++i) {
 
-        string key_str = ConvertToString(skeys.at(i));
+        string key_str = BLSutils::ConvertToString(skeys.at(i));
 
         shared_ptr <BLSPrivateKeyShare> key_ptr = make_shared<BLSPrivateKeyShare>(key_str, _requiredSigners,
                                                                                   _totalSigners);
@@ -120,7 +133,7 @@ std::shared_ptr<std::string> BLSPrivateKeyShare::toString() {
     if (*privateKey == libff::alt_bn128_Fr::zero()) {
         BOOST_THROW_EXCEPTION(runtime_error("Secret key share is equal to zero or corrupt"));
     }
-    std::shared_ptr<std::string> key_str = std::make_shared<std::string>(ConvertToString(*privateKey));
+    std::shared_ptr<std::string> key_str = std::make_shared<std::string>(BLSutils::ConvertToString(*privateKey));
 
     if (key_str->empty())
         BOOST_THROW_EXCEPTION(runtime_error("Secret key share string is empty"));

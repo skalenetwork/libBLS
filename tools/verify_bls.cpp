@@ -29,6 +29,8 @@
 
 #include <boost/program_options.hpp>
 
+#include "bls/BLSPublicKey.h"
+
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
 #define __EXPAND_AS_STR__( x ) #x
 
@@ -52,18 +54,27 @@ void Verify(const size_t t, const size_t n, std::istream & sign_file) {
   std::string to_be_hashed = hash_in["message"].get<std::string>();
 
   nlohmann::json pk_in;
-  std::ifstream pk_file("public_key.json");
+  //std::ifstream pk_file("public_key.json");
+  std::ifstream pk_file("publickey.json");
   pk_file >> pk_in;
 
-  libff::alt_bn128_G2 public_key;
+  std::vector<std::string> pkey_str;
+    for ( size_t i = 0; i < 4; i++){
+        pkey_str.push_back(pk_in["insecureCommonBLSPublicKey" + std::to_string(i+1)]);
+    }
+   BLSPublicKey common_pkey(std::make_shared<std::vector<std::string>>(pkey_str), t, n);
+
+/*  libff::alt_bn128_G2 public_key;
   public_key.X.c0 = libff::alt_bn128_Fq(pk_in["public_key"]["X"]["c0"].get<std::string>().c_str());
   public_key.X.c1 = libff::alt_bn128_Fq(pk_in["public_key"]["X"]["c1"].get<std::string>().c_str());
   public_key.Y.c0 = libff::alt_bn128_Fq(pk_in["public_key"]["Y"]["c0"].get<std::string>().c_str());
   public_key.Y.c1 = libff::alt_bn128_Fq(pk_in["public_key"]["Y"]["c1"].get<std::string>().c_str());
   public_key.Z.c0 = libff::alt_bn128_Fq(pk_in["public_key"]["Z"]["c0"].get<std::string>().c_str());
-  public_key.Z.c1 = libff::alt_bn128_Fq(pk_in["public_key"]["Z"]["c1"].get<std::string>().c_str());
+  public_key.Z.c1 = libff::alt_bn128_Fq(pk_in["public_key"]["Z"]["c1"].get<std::string>().c_str());*/
 
-bool bRes = bls_instance.Verification(to_be_hashed, sign, public_key);
+    bool bRes = bls_instance.Verification(to_be_hashed, sign, *common_pkey.getPublicKey());
+
+//bool bRes = bls_instance.Verification(to_be_hashed, sign, public_key);
   if (g_b_verbose_mode)
     std::cout << "Signature verification result: " << (bRes ? "True" : "False") << '\n';
   if (!bRes)

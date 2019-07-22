@@ -46,7 +46,7 @@ public:
 
     std::shared_ptr<BLSSigShare> sign(std::shared_ptr<std::string> _msg, size_t _signerIndex);
 
-    BLSPrivateKeyShare(const libff::alt_bn128_Fr, size_t _requiredSigners, size_t _totalSigners);
+    BLSPrivateKeyShare(const libff::alt_bn128_Fr&, size_t _requiredSigners, size_t _totalSigners);
 
 
     // generate a vector of correct _totalSigners private keys that work together

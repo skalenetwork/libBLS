@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <string>
+#include "BLSutils.h"
 
 using namespace std;
 
@@ -53,7 +54,7 @@ BLSSigShare::BLSSigShare( shared_ptr< string > _sigShare, size_t _signerIndex, s
       totalSigners( _totalSigners ),
       requiredSigners( _requiredSigners ) {
     BLSSignature::checkSigners( requiredSigners, totalSigners );
-
+    BLSutils::initBLS();
     if ( signerIndex == 0 ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Zero signer index" ) );
     }
@@ -119,7 +120,9 @@ BLSSigShare::BLSSigShare( const shared_ptr< libff::alt_bn128_G1 >& _sigShare, si
       requiredSigners( _requiredSigners ) {
 
     BLSSignature::checkSigners( requiredSigners, totalSigners );
-
+    if (  (*_sigShare).is_zero() ) {
+        BOOST_THROW_EXCEPTION( runtime_error( "Zero signature" ) );
+    }
     if ( _signerIndex == 0 ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Zero signer index" ) );
     }
