@@ -51,22 +51,24 @@ namespace encryption {
     mpz_init(z);
     element_to_mpz(z, element_item(const_cast<element_t&>(Y), 0));
 
-    std::string tmp1 = mpz_get_str(NULL, 10, z);
+    char arr[mpz_sizeinbase (z, 10) + 2];
+    char* tmp_c = mpz_get_str(arr, 10, z);
+    std::string tmp1 = tmp_c;
     mpz_clear(z);
 
     mpz_init(z);
     element_to_mpz(z, element_item(const_cast<element_t&>(Y), 1));
 
-    std::string tmp2 = mpz_get_str(NULL, 10, z);
+    char arr1[mpz_sizeinbase (z, 10) + 2];
+    char* other_tmp = mpz_get_str(arr1, 10, z);
+    std::string tmp2 = other_tmp;
     mpz_clear(z);
 
     std::string tmp = tmp1 + tmp2;
 
     const std::string sha256hex = hash_func(tmp);
 
-    const char* hash = sha256hex.c_str();
-
-    return std::string(hash);
+    return sha256hex;
   }
 
   void TE::Hash(element_t ret_val, const element_t& U, const std::string& V,
@@ -77,13 +79,17 @@ namespace encryption {
     mpz_init(z);
     element_to_mpz(z, element_item(const_cast<element_t&>(U), 0));
 
-    std::string tmp1 = mpz_get_str(NULL, 10, z);
+    char arr[mpz_sizeinbase (z, 10) + 2];
+    char* tmp_c = mpz_get_str(arr, 10, z);
+    std::string tmp1 = tmp_c;
     mpz_clear(z);
 
     mpz_init(z);
     element_to_mpz(z, element_item(const_cast<element_t&>(U), 1));
 
-    std::string tmp2 = mpz_get_str(NULL, 10, z);
+    char arr1[mpz_sizeinbase (z, 10) + 2];
+    char* other_tmp = mpz_get_str(arr1, 10, z);
+    std::string tmp2 = other_tmp;
     mpz_clear(z);
 
     std::string tmp = tmp1 + tmp2;
@@ -122,8 +128,11 @@ namespace encryption {
     element_mul_zn(U, g, r);
     element_mul_zn(Y, const_cast<element_t&>(common_public), r);
 
+    element_clear(g);
 
     std::string hash = this->Hash(Y);
+
+    element_clear(Y);
 
     // assuming message and hash are the same size strings
     // the behaviour is undefined when the two arguments are valarrays with different sizes
@@ -153,10 +162,16 @@ namespace encryption {
     this->Hash(H, U, V);
     element_mul_zn(W, H, r);
 
+    element_clear(H);
+    element_clear(r);
+
     std::tuple<element_wrapper, std::string, element_wrapper> result;
     std::get<0>(result) = element_wrapper(U);
     std::get<1>(result) = V;
     std::get<2>(result) = element_wrapper(W);
+
+    element_clear(U);
+    element_clear(W);
 
     return result;
   }
@@ -174,31 +189,28 @@ namespace encryption {
 
     element_t H;
     element_init_G1(H, this->pairing_);
-    element_init_G1(H, this->pairing_);
     this->Hash(H, U, V);
 
     element_t fst, snd;
     element_init_GT(fst, this->pairing_);
     element_init_GT(snd, this->pairing_);
 
-    element_t g;
-    element_init_G1(g, this->pairing_);
-    element_set(g, this->generator_);
-
-    pairing_apply(fst, g, W, this->pairing_);
+    pairing_apply(fst, this->generator_, W, this->pairing_);
     pairing_apply(snd, U, H, this->pairing_);
 
     bool res = element_cmp(fst, snd);
 
+    element_clear(fst);
+    element_clear(snd);
+
     if (res) {
+      element_clear(U);
+      element_clear(W);
+      element_clear(H);
       throw std::runtime_error("cannot decrypt data");
     }
 
     element_mul_zn(ret_val, U, const_cast<element_t&>(secret_key));
-
-    element_clear(g);
-    element_clear(fst);
-    element_clear(snd);
 
     element_clear(U);
     element_clear(W);
