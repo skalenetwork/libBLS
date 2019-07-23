@@ -44,8 +44,8 @@ public:
                   size_t _requiredSigners, size_t _totalSigners );
     BLSPublicKey(  const libff::alt_bn128_Fr& skey,
                    size_t _requiredSigners, size_t _totalSigners );
-   // BLSPublicKey(  const libff::alt_bn128_G2 & skey,
-                  // size_t _requiredSigners, size_t _totalSigners );
+    BLSPublicKey(  const libff::alt_bn128_G2 & skey,
+                   size_t _requiredSigners, size_t _totalSigners );
 
     BLSPublicKey ( std::shared_ptr< std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > > map_pkeys_koefs,
                     size_t _requiredSigners, size_t _totalSigners);
