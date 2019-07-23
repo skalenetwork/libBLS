@@ -47,6 +47,7 @@ set( headers_bls
 		bls/BLSSignature.h
 		bls/BLSSigShare.h
 		bls/BLSSigShareSet.h
+		bls/BLSutils.h
 		dkg/dkg.h
 		third_party/json.hpp
 		third_party/cryptlite/sha256.h
