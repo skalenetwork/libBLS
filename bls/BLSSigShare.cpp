@@ -120,7 +120,7 @@ BLSSigShare::BLSSigShare( const shared_ptr< libff::alt_bn128_G1 >& _sigShare, si
       requiredSigners( _requiredSigners ) {
 
     BLSSignature::checkSigners( requiredSigners, totalSigners );
-    if (  (*_sigShare).is_zero() ) {
+    if (  _sigShare->is_zero() ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Zero signature" ) );
     }
     if ( _signerIndex == 0 ) {

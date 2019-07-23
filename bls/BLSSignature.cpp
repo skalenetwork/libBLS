@@ -35,7 +35,7 @@ BLSSignature::BLSSignature(
     : sig( sig ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     checkSigners( _requiredSigners, _totalSigners );
     BLSSignature::checkSigners( requiredSigners, totalSigners );
-    if (  (*sig).is_zero() ) {
+    if (  sig->is_zero() ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Zero signature" ) );
     }
 }
