@@ -2,7 +2,7 @@
 #include "BLSPublicKeyShare.h"
 #include "BLSSigShare.h"
 #include "BLSSignature.h"
-#include "BLSutils.cpp"
+#include "BLSutils.h"
 #include "bls.h"
 
 using namespace std;
@@ -13,7 +13,7 @@ BLSPublicKeyShare::BLSPublicKeyShare(const std::shared_ptr<std::vector<std::stri
         : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
 
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
-
+    BLSutils::initBLS();
     publicKey = make_shared<libff::alt_bn128_G2>();
 
     publicKey->X.c0 = libff::alt_bn128_Fq(pkey_str_vect->at(0).c_str());
@@ -31,10 +31,10 @@ BLSPublicKeyShare::BLSPublicKeyShare(const std::shared_ptr<std::vector<std::stri
     }
 }
 
-BLSPublicKeyShare::BLSPublicKeyShare(const libff::alt_bn128_Fr _skey,
+BLSPublicKeyShare::BLSPublicKeyShare(const libff::alt_bn128_Fr& _skey,
                                      size_t _totalSigners, size_t _requiredSigners)
         : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
-
+    BLSutils::initBLS();
     if (_skey.is_zero()) {
         BOOST_THROW_EXCEPTION(runtime_error("Secret Key is equal to zero or corrupt"));
     }
@@ -50,10 +50,10 @@ std::shared_ptr<std::vector<std::string> > BLSPublicKeyShare::toString() {
 
     publicKey->to_affine_coordinates();
 
-    pkey_str_vect.push_back(ConvertToString(publicKey->X.c0));
-    pkey_str_vect.push_back(ConvertToString(publicKey->X.c1));
-    pkey_str_vect.push_back(ConvertToString(publicKey->Y.c0));
-    pkey_str_vect.push_back(ConvertToString(publicKey->Y.c1));
+    pkey_str_vect.push_back(BLSutils::ConvertToString(publicKey->X.c0));
+    pkey_str_vect.push_back(BLSutils::ConvertToString(publicKey->X.c1));
+    pkey_str_vect.push_back(BLSutils::ConvertToString(publicKey->Y.c0));
+    pkey_str_vect.push_back(BLSutils::ConvertToString(publicKey->Y.c1));
 
     return make_shared<vector<string>>(pkey_str_vect);
 }

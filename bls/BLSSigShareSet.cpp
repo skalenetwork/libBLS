@@ -11,7 +11,7 @@ using namespace std;
 #include "BLSSignature.h"
 #include "BLSSigShare.h"
 #include "BLSSigShareSet.h"
-
+#include "BLSutils.h"
 
 
 bool BLSSigShareSet::addSigShare( shared_ptr< BLSSigShare > _sigShare ) {

@@ -28,9 +28,9 @@
 using namespace std;
 
 
-#include "BLSSignature.h"
 #include "BLSPublicKey.h"
-#include "BLSutils.cpp"
+#include "BLSPublicKeyShare.h"
+#include "BLSutils.h"
 
 
 BLSPublicKey::BLSPublicKey(const std::shared_ptr<std::vector<std::string> > pkey_str_vect, size_t _requiredSigners,
@@ -52,6 +52,15 @@ BLSPublicKey::BLSPublicKey(const std::shared_ptr<std::vector<std::string> > pkey
         libffPublicKey->X.c1 == libff::alt_bn128_Fq::zero() ||
         libffPublicKey->Y.c0 == libff::alt_bn128_Fq::zero() ||
         libffPublicKey->Y.c1 == libff::alt_bn128_Fq::zero()) {
+        BOOST_THROW_EXCEPTION(runtime_error("Public Key is equal to zero or corrupt"));
+    }
+}
+
+BLSPublicKey::BLSPublicKey(const libff::alt_bn128_G2 &pkey, size_t _requiredSigners, size_t _totalSigners)
+             : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
+    BLSSignature::checkSigners(_requiredSigners, _totalSigners);
+    libffPublicKey = make_shared<libff::alt_bn128_G2>(pkey);
+    if (libffPublicKey->is_zero()) {
         BOOST_THROW_EXCEPTION(runtime_error("Public Key is equal to zero or corrupt"));
     }
 }
@@ -92,8 +101,11 @@ bool BLSPublicKey::VerifySig(std::shared_ptr<std::string> _msg, std::shared_ptr<
     return res;
 }
 
-BLSPublicKey::BLSPublicKey(std::shared_ptr<std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > > koefs_pkeys_map,
-                           size_t _requiredSigners, size_t _totalSigners)
+BLSPublicKey::BLSPublicKey(std::shared_ptr<std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > >
+                           koefs_pkeys_map,
+                           size_t
+                           _requiredSigners, size_t
+                           _totalSigners)
         : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
 
@@ -130,10 +142,10 @@ std::shared_ptr<std::vector<std::string> > BLSPublicKey::toString() {
 
     libffPublicKey->to_affine_coordinates();
 
-    pkey_str_vect.push_back(ConvertToString(libffPublicKey->X.c0));
-    pkey_str_vect.push_back(ConvertToString(libffPublicKey->X.c1));
-    pkey_str_vect.push_back(ConvertToString(libffPublicKey->Y.c0));
-    pkey_str_vect.push_back(ConvertToString(libffPublicKey->Y.c1));
+    pkey_str_vect.push_back(BLSutils::ConvertToString(libffPublicKey->X.c0));
+    pkey_str_vect.push_back(BLSutils::ConvertToString(libffPublicKey->X.c1));
+    pkey_str_vect.push_back(BLSutils::ConvertToString(libffPublicKey->Y.c0));
+    pkey_str_vect.push_back(BLSutils::ConvertToString(libffPublicKey->Y.c1));
 
     return make_shared<vector<string>>(pkey_str_vect);
 }

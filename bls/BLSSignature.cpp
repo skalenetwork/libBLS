@@ -23,6 +23,7 @@
 
 
 #include "BLSSignature.h"
+#include "BLSutils.h"
 
 using namespace std;
 
@@ -33,6 +34,10 @@ BLSSignature::BLSSignature(
     const shared_ptr< libff::alt_bn128_G1 > sig, size_t _requiredSigners, size_t _totalSigners )
     : sig( sig ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     checkSigners( _requiredSigners, _totalSigners );
+    BLSSignature::checkSigners( requiredSigners, totalSigners );
+    if (  sig->is_zero() ) {
+        BOOST_THROW_EXCEPTION( runtime_error( "Zero signature" ) );
+    }
 }
 
 BLSSignature::BLSSignature(
@@ -40,7 +45,7 @@ BLSSignature::BLSSignature(
     requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
 
     checkSigners( _requiredSigners, _totalSigners );
-
+    BLSutils::initBLS();
     if ( _s->size() > BLS_MAX_SIG_LEN ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Signature too long" ) );
     }

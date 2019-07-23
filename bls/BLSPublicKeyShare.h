@@ -29,8 +29,9 @@
 #include <memory>
 
 #include "bls.h"
-#include "BLSSigShare.h"
-#include "BLSPrivateKeyShare.h"
+//#include "BLSSigShare.h"
+
+class BLSSigShare;
 
 class BLSPublicKeyShare {
 
@@ -43,7 +44,7 @@ public:
     BLSPublicKeyShare(  const std::shared_ptr< std::vector<std::string> >,
                        size_t _totalSigners, size_t _requiredSigners );
 
-    BLSPublicKeyShare(  const libff::alt_bn128_Fr skey,
+    BLSPublicKeyShare(  const libff::alt_bn128_Fr& skey,
                        size_t _totalSigners, size_t _requiredSigners );
 
     std::shared_ptr< libff::alt_bn128_G2 > getPublicKey() const;

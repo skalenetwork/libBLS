@@ -27,35 +27,39 @@
 #include <string>
 #include <memory>
 
-#include "bls.h"
+#include "BLSPublicKey.h"
+
+
 
 
 class BLSSigShare;
 
-namespace libff {
-    class alt_bn128_fr;
-}
 
 class BLSPrivateKeyShare {
 protected:
-    std::shared_ptr< libff::alt_bn128_Fr > privateKey;
+    std::shared_ptr<libff::alt_bn128_Fr> privateKey;
     size_t totalSigners;
     size_t requiredSigners;
 
 public:
+    BLSPrivateKeyShare(const std::string &_key, size_t _requiredSigners, size_t _totalSigners);
 
-    BLSPrivateKeyShare( const std::string& _key, size_t _requiredSigners, size_t _totalSigners );
-    std::shared_ptr< BLSSigShare > sign( std::shared_ptr< std::string > _msg, size_t _signerIndex );
+    std::shared_ptr<BLSSigShare> sign(std::shared_ptr<std::string> _msg, size_t _signerIndex);
 
-    BLSPrivateKeyShare( const libff::alt_bn128_Fr, size_t _requiredSigners, size_t _totalSigners );
+    BLSPrivateKeyShare(const libff::alt_bn128_Fr&, size_t _requiredSigners, size_t _totalSigners);
 
 
     // generate a vector of correct _totalSigners private keys that work together
-    static std::shared_ptr< std::vector< std::shared_ptr< BLSPrivateKeyShare>>> generateSampleKeys(
-            size_t _requiredSigners, size_t _totalSigners );
+    // static std::shared_ptr< std::vector< std::shared_ptr< BLSPrivateKeyShare>>> generateSampleKeys(
+    //         size_t _requiredSigners, size_t _totalSigners );
 
-    std::shared_ptr< libff::alt_bn128_Fr > getPrivateKey() const;
-    std::shared_ptr< std::string> toString();
+    static std::shared_ptr<std::pair<std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>>, std::shared_ptr<BLSPublicKey> > >
+    generateSampleKeys(
+            size_t _requiredSigners, size_t _totalSigners);
+
+    std::shared_ptr<libff::alt_bn128_Fr> getPrivateKey() const;
+
+    std::shared_ptr<std::string> toString();
 };
 
 

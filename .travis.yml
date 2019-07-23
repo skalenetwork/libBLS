@@ -38,7 +38,9 @@ matrix:
           after_success:
               - cd build
               - echo "========================================= after_success (coverage)"
-              - make test
+              - ./bls_unit_test || travis_terminate 1
+              - ./dkg_unit_test || travis_terminate 1
+              - ./bls_test || travis_terminate 1
               - cd ..
               - ./get_code_cov
               - echo "========================================= after_success (coverage gathered to gcov files)"
