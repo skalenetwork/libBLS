@@ -36,7 +36,6 @@ using namespace std;
 
 BLSPrivateKeyShare::BLSPrivateKeyShare(const string &_key, size_t _requiredSigners, size_t _totalSigners)
         : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
-    libff::init_alt_bn128_params();
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
     BLSutils::initBLS();
     if (_key.empty()) {

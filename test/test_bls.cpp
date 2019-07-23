@@ -316,21 +316,5 @@ BOOST_AUTO_TEST_SUITE(Bls)
         std::cerr << "BLS libffObjsToString TEST END" << std::endl;
     }
 
-    BOOST_AUTO_TEST_CASE(jsonDataVerification) {
-
-        std::ifstream infile("key1.json");
-        nlohmann::json  json_keys;
-        infile >> json_keys;
-        std::string skey_str = json_keys["insecureBLSPrivateKey"];
-        BLSPrivateKeyShare skey(skey_str, 2, 3);
-        std::vector<std::string> pkey_str;
-        for ( size_t i = 0; i < 4; i++){
-            pkey_str.push_back(json_keys["insecureBLSPublicKey" + std::to_string(i+1)]);
-        }
-        BLSPublicKeyShare pkey_share(std::make_shared<std::vector<std::string>>(pkey_str), 2, 3);
-
-        BOOST_REQUIRE(*skey.getPrivateKey() * libff::alt_bn128_G2::one() == *pkey_share.getPublicKey());
-    }
-
 BOOST_AUTO_TEST_SUITE_END()
 
