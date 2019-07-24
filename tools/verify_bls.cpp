@@ -1,24 +1,24 @@
 /*
-    Copyright (C) 2018-2019 SKALE Labs
+  Copyright (C) 2018-2019 SKALE Labs
 
-    This file is part of libBLS.
+  This file is part of libBLS.
 
-    libBLS is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  libBLS is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published
+  by the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    libBLS is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
+  libBLS is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
 
-    You should have received a copy of the GNU Lesser General Public License
-    along with libBLS.  If not, see <http://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU Affero General Public License
+  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-    @file verify_bls.cpp
-    @author Oleh Nikolaiev
-    @date 2019
+  @file verify_bls.cpp
+  @author Oleh Nikolaiev
+  @date 2019
 */
 
 
@@ -28,6 +28,8 @@
 #include <third_party/json.hpp>
 
 #include <boost/program_options.hpp>
+
+#include "bls/BLSPublicKey.h"
 
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
 #define __EXPAND_AS_STR__( x ) #x
@@ -52,18 +54,27 @@ void Verify(const size_t t, const size_t n, std::istream & sign_file) {
   std::string to_be_hashed = hash_in["message"].get<std::string>();
 
   nlohmann::json pk_in;
-  std::ifstream pk_file("public_key.json");
+  //std::ifstream pk_file("public_key.json");
+  std::ifstream pk_file("publickey.json");
   pk_file >> pk_in;
 
-  libff::alt_bn128_G2 public_key;
+  std::vector<std::string> pkey_str;
+    for ( size_t i = 0; i < 4; i++){
+        pkey_str.push_back(pk_in["insecureCommonBLSPublicKey" + std::to_string(i+1)]);
+    }
+   BLSPublicKey common_pkey(std::make_shared<std::vector<std::string>>(pkey_str), t, n);
+
+/*  libff::alt_bn128_G2 public_key;
   public_key.X.c0 = libff::alt_bn128_Fq(pk_in["public_key"]["X"]["c0"].get<std::string>().c_str());
   public_key.X.c1 = libff::alt_bn128_Fq(pk_in["public_key"]["X"]["c1"].get<std::string>().c_str());
   public_key.Y.c0 = libff::alt_bn128_Fq(pk_in["public_key"]["Y"]["c0"].get<std::string>().c_str());
   public_key.Y.c1 = libff::alt_bn128_Fq(pk_in["public_key"]["Y"]["c1"].get<std::string>().c_str());
   public_key.Z.c0 = libff::alt_bn128_Fq(pk_in["public_key"]["Z"]["c0"].get<std::string>().c_str());
-  public_key.Z.c1 = libff::alt_bn128_Fq(pk_in["public_key"]["Z"]["c1"].get<std::string>().c_str());
+  public_key.Z.c1 = libff::alt_bn128_Fq(pk_in["public_key"]["Z"]["c1"].get<std::string>().c_str());*/
 
-bool bRes = bls_instance.Verification(to_be_hashed, sign, public_key);
+    bool bRes = bls_instance.Verification(to_be_hashed, sign, *common_pkey.getPublicKey());
+
+//bool bRes = bls_instance.Verification(to_be_hashed, sign, public_key);
   if (g_b_verbose_mode)
     std::cout << "Signature verification result: " << (bRes ? "True" : "False") << '\n';
   if (!bRes)
