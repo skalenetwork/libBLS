@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(PolynomialValue) {
 
   try {
     value = obj.ComputePolynomialValue(polynomial, encryption::element_wrapper(five));
-  } catch(std::runtime_error) {
+  } catch(std::runtime_error&) {
     is_exception_caught = true;
   }
 

@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(zeroSecretKey) {
     libff::alt_bn128_G1 hash = obj.Hashing(message);
     libff::alt_bn128_G1 signature = obj.Signing(hash, secret_key);
     bool res = obj.Verification(message, signature, public_key);
-  } catch (...) {
+  } catch (std::runtime_error&) {
     is_exception_caught = true;
   }
 

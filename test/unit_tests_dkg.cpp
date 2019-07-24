@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(PolynomialValue) {
 
   try {
     value = obj.PolynomialValue(polynomial, 5);
-  } catch(std::runtime_error) {
+  } catch(std::runtime_error&) {
     is_exception_caught = true;
   }
 
