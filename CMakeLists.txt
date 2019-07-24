@@ -42,7 +42,7 @@ set( headers_bls
 
 set( PROJECT_VERSION 0.4.0 )
 add_definitions( -DBLS_VERSION=${PROJECT_VERSION} )
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++17 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-error=unused-variable -Wno-error=unused-parameter -Wno-error=int-in-bool-context" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++17 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-error=unused-variable -Wno-error=unused-parameter -Wno-error=int-in-bool-context -Wno-error=unused-parameter" )
 
 include_directories( ${CMAKE_BINARY_DIR}/deps/include ${GMP_INCLUDE_DIR} )
 link_directories( ${CMAKE_BINARY_DIR}/deps/lib )
