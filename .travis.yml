@@ -19,7 +19,7 @@ matrix:
                       - libffi-dev
                       - libssl-dev
                       - libprocps3-dev
-                      - libgmp3-dev
+                      - libgmp4-dev
                       - flex
                       - bison
                   sources: &sources
