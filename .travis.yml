@@ -18,8 +18,8 @@ matrix:
                       - libboost-all-dev
                       - libffi-dev
                       - libssl-dev
-                      - libprocps3-dev
-                      - libgmp4-dev
+                      - libprocps4-dev
+                      - libgmp3-dev
                       - flex
                       - bison
                   sources: &sources
