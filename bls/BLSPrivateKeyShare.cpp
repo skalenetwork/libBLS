@@ -112,10 +112,8 @@ BLSPrivateKeyShare::generateSampleKeys(
     }
     // return ptr to pair  : first is ptr to vector of ptrs to BLSPrivateKeyShare (secret key shares), second is ptr to BLSPublicKey (common public key)
     pair < shared_ptr < vector < shared_ptr < BLSPrivateKeyShare >> > , shared_ptr < BLSPublicKey > > keys(make_shared < vector < shared_ptr < BLSPrivateKeyShare >> > (skeys_shares), pkey_ptr);
-   // return make_shared < pair < shared_ptr < vector < shared_ptr < BLSPrivateKeyShare >> > , shared_ptr < BLSPublicKey >
-     //                                                                                        > > (make_pair(
-       //     make_shared < vector < shared_ptr < BLSPrivateKeyShare >> > (skeys), pkey_ptr));
-       return make_shared <pair<shared_ptr<vector<shared_ptr<BLSPrivateKeyShare>>>, shared_ptr<BLSPublicKey> > >(keys);
+
+    return make_shared <pair<shared_ptr<vector<shared_ptr<BLSPrivateKeyShare>>>, shared_ptr<BLSPublicKey> > >(keys);
 }
 
 std::shared_ptr<libff::alt_bn128_Fr> BLSPrivateKeyShare::getPrivateKey() const {
