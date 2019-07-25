@@ -3,8 +3,6 @@
 #include <iostream>
 #include <string>
 
-#include "bls.h"
-
 #include "BLSutils.h"
 
 void BLSutils::initBLS() {

@@ -33,8 +33,6 @@
 #include <iostream>
 
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-#include <libff/algebra/curves/alt_bn128/alt_bn128_g1.hpp>
-
 
 static constexpr size_t BLS_MAX_COMPONENT_LEN = 80;
 
@@ -57,11 +55,16 @@ class Bls {
                                   std::string (*hash_func)(const std::string& str) =
                                                cryptlite::sha256::hash_hex);
 
+    libff::alt_bn128_G1 HashtoG1(std::shared_ptr< std::array< uint8_t, 32>>);
+
     libff::alt_bn128_G1 Signing(const libff::alt_bn128_G1 hash,
                                   const libff::alt_bn128_Fr secret_key);
 
     bool Verification(const std::string& to_be_hashed, const libff::alt_bn128_G1 sign,
                         const libff::alt_bn128_G2 public_key);
+
+    bool Verification(std::shared_ptr<std::array< uint8_t, 32>>, const libff::alt_bn128_G1 sign,
+                      const libff::alt_bn128_G2 public_key);
 
     std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> KeysRecover(
                                                   const std::vector<libff::alt_bn128_Fr>& coeffs,
@@ -69,9 +72,6 @@ class Bls {
 
     libff::alt_bn128_G1 SignatureRecover(const std::vector<libff::alt_bn128_G1>& shares,
                                           const std::vector<libff::alt_bn128_Fr>& coeffs);
-
-    //libff::alt_bn128_G1 SignatureRecover1(shared_ptr< vector< shared_ptr< BLSPrivateKeyShare>>> shares,
-                                              //const std::vector<libff::alt_bn128_Fr>& coeffs);
 
     std::vector<libff::alt_bn128_Fr> LagrangeCoeffs(const std::vector<size_t>& idx);
 

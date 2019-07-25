@@ -1,12 +1,12 @@
-
-#include "bls.h"
+#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 
 class BLSutils{
-  //  static bool was_initialized;
+
     public:
     template<class T>
     static std::string ConvertToString(T field_elem);
     static void initBLS();
+    static int sgn0 (libff::alt_bn128_Fq);
 };
 
 template<class T>

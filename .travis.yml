@@ -18,7 +18,7 @@ matrix:
                       - libboost-all-dev
                       - libffi-dev
                       - libssl-dev
-                      - libprocps3-dev
+                      - libprocps4-dev
                       - libgmp3-dev
                       - flex
                       - bison
@@ -62,7 +62,7 @@ matrix:
                       - lcov
                       - shtool
                       - libboost-all-dev
-                      - libprocps3-dev
+                      - libprocps4-dev
                       - libgmp3-dev
                   sources: &sources
                       - ubuntu-toolchain-r-test

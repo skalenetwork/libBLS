@@ -31,7 +31,7 @@ BLSPublicKeyShare::BLSPublicKeyShare(const std::shared_ptr<std::vector<std::stri
     }
 }
 
-BLSPublicKeyShare::BLSPublicKeyShare(const libff::alt_bn128_Fr& _skey,
+BLSPublicKeyShare::BLSPublicKeyShare(const libff::alt_bn128_Fr &_skey,
                                      size_t _totalSigners, size_t _requiredSigners)
         : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
     BLSutils::initBLS();
@@ -58,12 +58,13 @@ std::shared_ptr<std::vector<std::string> > BLSPublicKeyShare::toString() {
     return make_shared<vector<string>>(pkey_str_vect);
 }
 
-bool BLSPublicKeyShare::VerifySig(std::shared_ptr<std::string> _msg, std::shared_ptr<BLSSigShare> sign_ptr,
-                                  size_t _requiredSigners, size_t _totalSigners) {
+bool
+BLSPublicKeyShare::VerifySig(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr, std::shared_ptr<BLSSigShare> sign_ptr,
+                             size_t _requiredSigners, size_t _totalSigners) {
     std::shared_ptr<signatures::Bls> obj;
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
-    if (_msg->empty() || !_msg) {
-        BOOST_THROW_EXCEPTION(runtime_error("Message is empty or null"));
+    if (!hash_ptr) {
+        BOOST_THROW_EXCEPTION(runtime_error("hash is null"));
     }
     if (!sign_ptr || sign_ptr->getSigShare()->is_zero()) {
         BOOST_THROW_EXCEPTION(runtime_error("Sig share is equal to zero or corrupt"));
@@ -71,6 +72,6 @@ bool BLSPublicKeyShare::VerifySig(std::shared_ptr<std::string> _msg, std::shared
 
     obj = std::make_shared<signatures::Bls>(signatures::Bls(_requiredSigners, _totalSigners));
 
-    bool res = obj->Verification(*_msg, *(sign_ptr->getSigShare()), *publicKey);
+    bool res = obj->Verification(hash_ptr, *(sign_ptr->getSigShare()), *publicKey);
     return res;
 }

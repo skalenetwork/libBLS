@@ -44,14 +44,12 @@ protected:
 public:
     BLSPrivateKeyShare(const std::string &_key, size_t _requiredSigners, size_t _totalSigners);
 
-    std::shared_ptr<BLSSigShare> sign(std::shared_ptr<std::string> _msg, size_t _signerIndex);
+    std::shared_ptr<BLSSigShare> sign(std::shared_ptr<std::array< uint8_t, 32>>, size_t _signerIndex);
 
     BLSPrivateKeyShare(const libff::alt_bn128_Fr&, size_t _requiredSigners, size_t _totalSigners);
 
 
-    // generate a vector of correct _totalSigners private keys that work together
-    // static std::shared_ptr< std::vector< std::shared_ptr< BLSPrivateKeyShare>>> generateSampleKeys(
-    //         size_t _requiredSigners, size_t _totalSigners );
+    // generate a vector of correct _totalSigners private keys that work together and common public key
 
     static std::shared_ptr<std::pair<std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>>, std::shared_ptr<BLSPublicKey> > >
     generateSampleKeys(
