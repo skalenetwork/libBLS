@@ -82,22 +82,20 @@ size_t BLSPublicKey::getRequiredSigners() const {
     return requiredSigners;
 }
 
-bool BLSPublicKey::VerifySig(std::shared_ptr<std::string> _msg, std::shared_ptr<BLSSignature> sign_ptr,
+bool BLSPublicKey::VerifySig(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr, std::shared_ptr<BLSSignature> sign_ptr,
                              size_t _requiredSigners, size_t _totalSigners) {
-
-    BLSSignature::checkSigners(_requiredSigners, _totalSigners);
-    if (_msg->empty() || !_msg) {
-        BOOST_THROW_EXCEPTION(runtime_error("Message is empty or null"));
-    }
-    if (!sign_ptr) {
-        BOOST_THROW_EXCEPTION(runtime_error("Sognature is null"));
-    }
-
     std::shared_ptr<signatures::Bls> obj;
+    BLSSignature::checkSigners(_requiredSigners, _totalSigners);
+    if (!hash_ptr) {
+        BOOST_THROW_EXCEPTION(runtime_error("hash is null"));
+    }
+    if (!sign_ptr || sign_ptr->getSig()->is_zero()) {
+        BOOST_THROW_EXCEPTION(runtime_error("Sig share is equal to zero or corrupt"));
+    }
 
     obj = std::make_shared<signatures::Bls>(signatures::Bls(_requiredSigners, _totalSigners));
 
-    bool res = obj->Verification(*_msg, *(sign_ptr->getSig()), *libffPublicKey);
+    bool res = obj->Verification(hash_ptr, *(sign_ptr->getSig()), *libffPublicKey);
     return res;
 }
 

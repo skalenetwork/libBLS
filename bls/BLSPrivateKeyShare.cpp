@@ -60,19 +60,16 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(const libff::alt_bn128_Fr& libff_skey,
     }
 }
 
-shared_ptr<BLSSigShare> BLSPrivateKeyShare::sign(shared_ptr<string> _msg, size_t _signerIndex) {
+std::shared_ptr<BLSSigShare> BLSPrivateKeyShare::sign(std::shared_ptr<std::array< uint8_t, 32>> hash_byte_arr, size_t _signerIndex){
     shared_ptr <signatures::Bls> obj;
 
-    if (_msg->empty() || !_msg) {
-        BOOST_THROW_EXCEPTION(runtime_error("Message is empty or null"));
-    }
     if (_signerIndex == 0) {
         BOOST_THROW_EXCEPTION(runtime_error("Zero signer index"));
     }
 
     obj = make_shared<signatures::Bls>(signatures::Bls(requiredSigners, totalSigners));
 
-    libff::alt_bn128_G1 hash = obj->Hashing(*_msg);
+    libff::alt_bn128_G1 hash = obj->HashtoG1(hash_byte_arr);
 
     auto ss = make_shared<libff::alt_bn128_G1>(obj->Signing(hash, *privateKey));
 
@@ -87,7 +84,6 @@ shared_ptr<BLSSigShare> BLSPrivateKeyShare::sign(shared_ptr<string> _msg, size_t
     if (*s->getSigShare() != *sig2->getSigShare()) {
         BOOST_THROW_EXCEPTION(runtime_error("Sig shares do not match"));
     }
-
     return s;
 }
 
