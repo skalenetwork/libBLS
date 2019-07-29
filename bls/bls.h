@@ -36,7 +36,7 @@
 
 static constexpr size_t BLS_MAX_COMPONENT_LEN = 80;
 
-static constexpr size_t BLS_MAX_SIG_LEN = 160;
+static constexpr size_t BLS_MAX_SIG_LEN = 240;
 
 
 namespace signatures {
@@ -56,6 +56,8 @@ class Bls {
                                                cryptlite::sha256::hash_hex);
 
     libff::alt_bn128_G1 HashtoG1(std::shared_ptr< std::array< uint8_t, 32>>);
+
+    std::pair<libff::alt_bn128_G1, std::string> HashtoG1withHint(std::shared_ptr< std::array< uint8_t, 32>>);
 
     libff::alt_bn128_G1 Signing(const libff::alt_bn128_G1 hash,
                                   const libff::alt_bn128_Fr secret_key);

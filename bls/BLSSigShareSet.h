@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2018-2019 SKALE Labs
+  Copyright (C) 2018-2019 SKALE Labs
 
   This file is part of libBLS.
 
@@ -16,9 +16,9 @@
   You should have received a copy of the GNU Affero General Public License
   along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-    @file BLSSigShare.h
-    @author Stan Kladko
-    @date 2019
+  @file BLSSigShareSet.h
+  @author Stan Kladko, Sveta Rogova
+  @date 2019
 */
 
 #ifndef LIBBLS_BLSSIGSHARESET_H
