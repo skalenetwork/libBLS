@@ -1,3 +1,25 @@
+/*
+  Copyright (C) 2018-2019 SKALE Labs
+
+  This file is part of libBLS.
+
+  libBLS is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published
+  by the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  libBLS is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+
+  @file BLSPublicKeyShare.cpp
+  @author Stan Kladko, Sveta Rogova
+  @date 2019
+*/
 
 #include "BLSPublicKeyShare.h"
 #include "BLSSigShare.h"
@@ -74,4 +96,44 @@ BLSPublicKeyShare::VerifySig(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr,
 
     bool res = obj->Verification(hash_ptr, *(sign_ptr->getSigShare()), *publicKey);
     return res;
+}
+
+bool BLSPublicKeyShare::VerifySigWithHint(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr, std::shared_ptr<BLSSigShare> sign_ptr,
+                                          size_t _requiredSigners, size_t _totalSigners) {
+    std::shared_ptr<signatures::Bls> obj;
+    BLSSignature::checkSigners(_requiredSigners, _totalSigners);
+    if (!hash_ptr) {
+        BOOST_THROW_EXCEPTION(runtime_error("hash is null"));
+    }
+    if (!sign_ptr || sign_ptr->getSigShare()->is_zero()) {
+        BOOST_THROW_EXCEPTION(runtime_error("Sig share is equal to zero or corrupt"));
+    }
+
+    std::string hint = sign_ptr -> getHint();
+
+    std::pair <libff::alt_bn128_Fq , libff::alt_bn128_Fq > y_shift_x = BLSutils::ParseHint(hint);
+
+    libff::alt_bn128_Fq x = BLSutils::HashToFq(hash_ptr);
+    x = x + y_shift_x.second;
+
+    libff::alt_bn128_Fq y_sqr = y_shift_x.first ^ 2;
+    libff::alt_bn128_Fq x3B = x ^ 3;
+    x3B = x3B + libff::alt_bn128_coeff_b;
+
+    if ( y_sqr != x3B) {
+        std::cerr<< "NOT G1" << std::endl;
+        std::cerr << " X: ";
+        x.print();
+        std::cerr << " Y: ";
+        y_shift_x.first.print();
+        std::cerr << "counter:";
+        y_shift_x.second.print();
+
+                return false;
+    }
+
+    libff::alt_bn128_G1 hash(x, y_shift_x.first, libff::alt_bn128_Fq::one());
+
+    return (libff::alt_bn128_ate_reduced_pairing(*sign_ptr->getSigShare(), libff::alt_bn128_G2::one()) ==
+            libff::alt_bn128_ate_reduced_pairing(hash, *publicKey));
 }

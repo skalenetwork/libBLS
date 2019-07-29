@@ -76,27 +76,10 @@ namespace signatures {
 
     libff::alt_bn128_G1 Bls::HashtoG1(std::shared_ptr<std::array< uint8_t, 32>> hash_byte_arr) {
 
-        std::string hash_str;
-        for ( size_t i = 0; i < 32; i++) {
-            std::string cur_byte_str = std::bitset<8>(hash_byte_arr->at(i)).to_string();
-            hash_str += cur_byte_str;
-        }
-
-        mpz_t hash;
-        mpz_init(hash);
-        mpz_set_str(hash, hash_str.c_str(), 2);
-
-        mpz_t q;
-        mpz_init(q);
-        libff::alt_bn128_modulus_q.to_mpz(q);
-
-        mpz_t rem;     // rem = hash mod p
-        mpz_init(rem);
-        mpz_mod(rem, hash, q);
+        libff::alt_bn128_Fq x1 (BLSutils::HashToFq(hash_byte_arr));
 
         libff::alt_bn128_G1 result;
 
-        libff::alt_bn128_Fq x1(rem);
         while  (true) {
             libff::alt_bn128_Fq y1_sqr = x1^3;
             y1_sqr = y1_sqr + libff::alt_bn128_coeff_b;
@@ -114,6 +97,32 @@ namespace signatures {
         result.Z = libff::alt_bn128_Fq::one();
 
         return result;
+    }
+
+    std::pair<libff::alt_bn128_G1, std::string> Bls::HashtoG1withHint(std::shared_ptr< std::array< uint8_t, 32>> hash_byte_arr){
+
+        libff::alt_bn128_G1 point;
+        libff::alt_bn128_Fq counter = libff::alt_bn128_Fq::zero();
+
+        libff::alt_bn128_Fq x1(BLSutils::HashToFq(hash_byte_arr));
+        while  (true) {
+            libff::alt_bn128_Fq y1_sqr = x1^3;
+            y1_sqr = y1_sqr + libff::alt_bn128_coeff_b;
+
+            libff::alt_bn128_Fq euler = y1_sqr ^ libff::alt_bn128_Fq::euler;
+
+            if (euler == libff::alt_bn128_Fq::one() || euler == libff::alt_bn128_Fq::zero()) {  // if y1_sqr is a square
+                point.X = x1;
+                point.Y = y1_sqr.sqrt();
+                break;
+            } else {
+                counter = counter + libff::alt_bn128_Fq::one();
+                x1 = x1 + libff::alt_bn128_Fq::one();
+            }
+        }
+        point.Z = libff::alt_bn128_Fq::one();
+
+        return std::make_pair(point, BLSutils::ConvertToString(counter) );
     }
 
     libff::alt_bn128_G1 Bls::HashBytes(const char *raw_bytes, size_t length,
@@ -185,7 +194,6 @@ namespace signatures {
                 libff::alt_bn128_ate_reduced_pairing(hash, public_key));
         // there are several types of pairing, it does not matter which one is chosen for verification
     }
-
 
     std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> Bls::KeysRecover(
             const std::vector<libff::alt_bn128_Fr> &coeffs,

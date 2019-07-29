@@ -1,24 +1,24 @@
 /*
-    Copyright (C) 2019 SKALE Labs
+  Copyright (C) 2018-2019 SKALE Labs
 
-    This file is part of skale-consensus.
+  This file is part of libBLS.
 
-    skale-consensus is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as published
-    by the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  libBLS is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published
+  by the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    skale-consensus is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
+  libBLS is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
 
-    You should have received a copy of the GNU Affero General Public License
-    along with skale-consensus.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU Affero General Public License
+  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-    @file BLSPrivateKeyShare.cpp
-    @author Stan Kladko
-    @date 2019
+  @file BLSPrivateKeyShare.cpp
+  @author Stan Kladko, Sveta Rogova
+  @date 2019
 */
 
 
@@ -75,15 +75,48 @@ std::shared_ptr<BLSSigShare> BLSPrivateKeyShare::sign(std::shared_ptr<std::array
 
     ss->to_affine_coordinates();
 
-    auto s = make_shared<BLSSigShare>(ss, _signerIndex, requiredSigners, totalSigners);
+    std::pair<libff::alt_bn128_G1, std::string> hash_with_hint = obj-> HashtoG1withHint(hash_byte_arr);
+    std::string hint = BLSutils::ConvertToString(hash_with_hint.first.Y) + ":" + hash_with_hint.second;
 
-    auto ts = s->toString();
+    auto s = make_shared<BLSSigShare>(ss, hint, _signerIndex, requiredSigners, totalSigners);
+
+
+   /* auto ts = s->toString();
 
     auto sig2 = make_shared<BLSSigShare>(ts, _signerIndex, requiredSigners, totalSigners);
 
     if (*s->getSigShare() != *sig2->getSigShare()) {
         BOOST_THROW_EXCEPTION(runtime_error("Sig shares do not match"));
+    }*/
+    return s;
+}
+
+std::shared_ptr<BLSSigShare>  BLSPrivateKeyShare::signWithHint(std::shared_ptr<std::array< uint8_t, 32>> hash_byte_arr, size_t _signerIndex){
+    shared_ptr <signatures::Bls> obj;
+
+    if (_signerIndex == 0) {
+        BOOST_THROW_EXCEPTION(runtime_error("Zero signer index"));
     }
+
+    obj = make_shared<signatures::Bls>(signatures::Bls(requiredSigners, totalSigners));
+
+    std::pair<libff::alt_bn128_G1, std::string> hash_with_hint = obj-> HashtoG1withHint(hash_byte_arr);
+
+    auto ss = make_shared<libff::alt_bn128_G1>(obj->Signing(hash_with_hint.first, *privateKey));
+
+    ss->to_affine_coordinates();
+
+    std::string hint = BLSutils::ConvertToString(hash_with_hint.first.Y) + ":" + hash_with_hint.second;
+
+    auto s = make_shared<BLSSigShare>(ss, hint, _signerIndex, requiredSigners, totalSigners);
+
+    /*auto ts = s->toString();
+
+    auto sig2 = make_shared<BLSSigShare>(ts, hint,  _signerIndex, requiredSigners, totalSigners);
+
+    if (*s->getSigShare() != *sig2->getSigShare()) {
+        BOOST_THROW_EXCEPTION(runtime_error("Sig shares do not match"));
+    }*/
     return s;
 }
 

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2018-2019 SKALE Labs
+  Copyright (C) 2018-2019 SKALE Labs
 
   This file is part of libBLS.
 
@@ -14,11 +14,11 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/
+  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-    @file BLSSignature.h
-    @author Stan Kladko
-    @date 2019
+  @file BLSSignature.h
+  @author Stan Kladko, Sveta Rogova
+  @date 2019
 */
 
 #ifndef LIBBLS_BLSSIGNATURE_H
@@ -32,17 +32,18 @@ class BLSSignature {
 
     size_t totalSigners;
     size_t requiredSigners;
-
+    std::string hint;
     std::shared_ptr<libff::alt_bn128_G1> sig;
 
 public:
 
     BLSSignature(std::shared_ptr<std::string> s, size_t _requiredSigners, size_t _totalSigners);
-    BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, size_t _requiredSigners, size_t _totalSigners);
+    BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, std::string & _hint, size_t _requiredSigners, size_t _totalSigners);
     std::shared_ptr<libff::alt_bn128_G1> getSig() const;
     std::shared_ptr<std::string> toString();
 
     static void checkSigners( size_t _requiredSigners, size_t _totalSigners );
+    std::string getHint() const;
     size_t getTotalSigners() const;
     size_t getRequiredSigners() const;
 

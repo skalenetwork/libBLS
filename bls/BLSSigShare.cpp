@@ -1,24 +1,24 @@
 /*
-    Copyright (C) 2019 SKALE Labs
+  Copyright (C) 2018-2019 SKALE Labs
 
-    This file is part of skale-consensus.
+  This file is part of libBLS.
 
-    skale-consensus is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as published
-    by the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  libBLS is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published
+  by the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    skale-consensus is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
+  libBLS is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
 
-    You should have received a copy of the GNU Affero General Public License
-    along with skale-consensus.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU Affero General Public License
+  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-    @file BLSSigShare.cpp
-    @author Stan Kladko
-    @date 2019
+  @file BLSSigShare.cpp
+  @author Stan Kladko, Sveta Rogova
+  @date 2019
 */
 
 #include <stdlib.h>
@@ -42,8 +42,10 @@ size_t BLSSigShare::getSignerIndex() const {
 shared_ptr< string > BLSSigShare::toString() {
     char str[512];
 
-    gmp_sprintf( str, "%Nd:%Nd", sigShare->X.as_bigint().data, libff::alt_bn128_Fq::num_limbs,
-        sigShare->Y.as_bigint().data, libff::alt_bn128_Fq::num_limbs );
+    sigShare->to_affine_coordinates();
+
+    gmp_sprintf( str, "%Nd:%Nd:%s", sigShare->X.as_bigint().data, libff::alt_bn128_Fq::num_limbs,
+        sigShare->Y.as_bigint().data, libff::alt_bn128_Fq::num_limbs, hint.c_str() );
 
     return make_shared< string >( str );
 }
@@ -74,7 +76,7 @@ BLSSigShare::BLSSigShare( shared_ptr< string > _sigShare, size_t _signerIndex, s
             runtime_error( "Signature too long:" + to_string( _sigShare->size() ) ) );
     }
 
-    auto position = _sigShare->find( ":" );
+  /*  auto position = _sigShare->find( ":" );
 
     if ( position == string::npos ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Misformatted sig:" + *_sigShare ) );
@@ -83,38 +85,31 @@ BLSSigShare::BLSSigShare( shared_ptr< string > _sigShare, size_t _signerIndex, s
     if ( position >= BLS_MAX_COMPONENT_LEN ||
          _sigShare->size() - position > BLS_MAX_COMPONENT_LEN ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Misformatted sig:" + *_sigShare ) );
-    }
+    }*/
 
-
-    auto component1 = _sigShare->substr( 0, position );
-    auto component2 = _sigShare->substr( position + 1 );
-
-
-    for ( char& c : component1 ) {
-        if ( !( c >= '0' && c <= '9' ) ) {
-            BOOST_THROW_EXCEPTION( runtime_error(
-                "Misformatted char:" + to_string( ( int ) c ) + " in component 1:" + component1 ) );
+    std::shared_ptr<std::vector<std::string>> result = BLSutils::SplitString( _sigShare, ":");
+    if ( result->size() != 4 )
+        BOOST_THROW_EXCEPTION( runtime_error("Misformatted signature"));
+    for ( auto && str : *result){
+        for ( char& c : str ) {
+            if ( !( c >= '0' && c <= '9' ) ) {
+                BOOST_THROW_EXCEPTION( std::runtime_error(
+                                               "Misformatted char:" + to_string( ( int ) c ) + " in component " +  str ) );
+            }
         }
     }
 
+    libff::alt_bn128_Fq X(result->at(0).c_str());
+    libff::alt_bn128_Fq Y(result->at(1).c_str());
 
-    for ( char& c : component2 ) {
-        if ( !( c >= '0' && c <= '9' ) ) {
-            BOOST_THROW_EXCEPTION( runtime_error(
-                "Misformatted char:" + to_string( ( int ) c ) + " in component 2:" + component2 ) );
-        }
-    }
-
-
-    libff::bigint< 4 > X( component1.c_str() );
-    libff::bigint< 4 > Y( component2.c_str() );
-    libff::bigint< 4 > Z( "1" );
-
-    sigShare = make_shared< libff::alt_bn128_G1 >( X, Y, Z );
+    sigShare = make_shared< libff::alt_bn128_G1 >( X, Y,libff::alt_bn128_Fq::one());
+    hint = result->at(2) + ":" + result->at(3);
 }
-BLSSigShare::BLSSigShare( const shared_ptr< libff::alt_bn128_G1 >& _sigShare, size_t _signerIndex,
+
+BLSSigShare::BLSSigShare( const shared_ptr< libff::alt_bn128_G1 >& _sigShare, std::string & _hint,  size_t _signerIndex,
                           size_t _requiredSigners, size_t _totalSigners )
     : sigShare( _sigShare ),
+      hint (_hint),
       signerIndex( _signerIndex ),
       totalSigners( _totalSigners ),
       requiredSigners( _requiredSigners ) {
@@ -136,4 +131,8 @@ size_t BLSSigShare::getTotalSigners() const {
 }
 size_t BLSSigShare::getRequiredSigners() const {
     return requiredSigners;
+}
+
+std::string BLSSigShare::getHint() const {
+    return hint;
 }

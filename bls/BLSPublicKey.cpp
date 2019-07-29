@@ -1,26 +1,25 @@
 /*
-    Copyright (C) 2019 SKALE Labs
+  Copyright (C) 2018-2019 SKALE Labs
 
-    This file is part of skale-consensus.
+  This file is part of libBLS.
 
-    skale-consensus is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as published
-    by the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  libBLS is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published
+  by the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    skale-consensus is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
+  libBLS is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
 
-    You should have received a copy of the GNU Affero General Public License
-    along with skale-consensus.  If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU Affero General Public License
+  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-    @file BLSPublicKey.cpp
-    @author Stan Kladko
-    @date 2019
+  @file BLSPublicKey.cpp
+  @author Sveta Rogova
+  @date 2019
 */
-
 
 #include <stdint.h>
 #include <string>
@@ -97,6 +96,36 @@ bool BLSPublicKey::VerifySig(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr,
 
     bool res = obj->Verification(hash_ptr, *(sign_ptr->getSig()), *libffPublicKey);
     return res;
+}
+
+bool BLSPublicKey::VerifySigWithHint(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr, std::shared_ptr<BLSSignature> sign_ptr,
+                             size_t _requiredSigners, size_t _totalSigners) {
+    std::shared_ptr<signatures::Bls> obj;
+    BLSSignature::checkSigners(_requiredSigners, _totalSigners);
+    if (!hash_ptr) {
+        BOOST_THROW_EXCEPTION(runtime_error("hash is null"));
+    }
+    if (!sign_ptr || sign_ptr->getSig()->is_zero()) {
+        BOOST_THROW_EXCEPTION(runtime_error("Sig share is equal to zero or corrupt"));
+    }
+
+    std::string hint = sign_ptr -> getHint();
+
+    std::pair <libff::alt_bn128_Fq , libff::alt_bn128_Fq > y_shift_x = BLSutils::ParseHint(hint);
+
+    libff::alt_bn128_Fq x = BLSutils::HashToFq(hash_ptr);
+    x = x + y_shift_x.second;
+
+    libff::alt_bn128_Fq y_sqr = y_shift_x.first ^ 2;
+    libff::alt_bn128_Fq x3B = x ^ 3;
+    x3B = x3B + libff::alt_bn128_coeff_b;
+
+    if ( y_sqr != x3B) return false;
+
+    libff::alt_bn128_G1 hash(x, y_shift_x.first, libff::alt_bn128_Fq::one());
+
+    return (libff::alt_bn128_ate_reduced_pairing(*sign_ptr->getSig(), libff::alt_bn128_G2::one()) ==
+            libff::alt_bn128_ate_reduced_pairing(hash, *libffPublicKey));
 }
 
 BLSPublicKey::BLSPublicKey(std::shared_ptr<std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > >

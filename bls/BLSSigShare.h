@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2018-2019 SKALE Labs
+  Copyright (C) 2018-2019 SKALE Labs
 
   This file is part of libBLS.
 
@@ -16,10 +16,11 @@
   You should have received a copy of the GNU Affero General Public License
   along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-    @file BLSSigShare.h
-    @author Stan Kladko
-    @date 2019
+  @file BLSSigShare.h
+  @author Stan Kladko, Sveta Rogova
+  @date 2019
 */
+
 #ifndef LIBBLS_BLSSIGSHARE_H
 #define LIBBLS_BLSSIGSHARE_H
 
@@ -33,13 +34,14 @@ class BLSSigShare {
 private:
     std::shared_ptr< libff::alt_bn128_G1 > sigShare;
     size_t signerIndex;
+    std::string hint;
     size_t totalSigners;
     size_t requiredSigners;
 
 public:
 
 
-    BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& sigShare, size_t signerIndex,
+    BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& sigShare, std::string & hint, size_t signerIndex,
                  size_t _requiredSigners, size_t _totalSigners );
 
     BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t signerIndex,
@@ -48,6 +50,8 @@ public:
     std::shared_ptr< libff::alt_bn128_G1 > getSigShare() const;
 
     size_t getSignerIndex() const;
+
+    std::string getHint() const;
 
     std::shared_ptr< std::string > toString();
     size_t getTotalSigners() const;
