@@ -95,4 +95,5 @@ BOOST_AUTO_TEST_SUITE(DkgAlgorithm)
     std::default_random_engine rand_gen((unsigned int) time(0));
 
 
+
 BOOST_AUTO_TEST_SUITE_END()
