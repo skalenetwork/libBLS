@@ -282,8 +282,10 @@ BOOST_AUTO_TEST_SUITE(Bls)
                                                                                                participants.at(i),
                                                                                                num_signed, num_all);
 
-
                 BOOST_REQUIRE(*sigShare->getSigShare() == *sigShare_from_str->getSigShare());
+                BOOST_REQUIRE(sigShare->getHint() == sigShare_from_str->getHint());
+                BOOST_REQUIRE(sigShare->getRequiredSigners() == sigShare_from_str->getRequiredSigners());
+                BOOST_REQUIRE(sigShare->getTotalSigners() == sigShare_from_str->getTotalSigners());
                 sigSet.addSigShare(sigShare);
             }
 
@@ -300,6 +302,12 @@ BOOST_AUTO_TEST_SUITE(Bls)
             std::shared_ptr<std::string> common_skey_str = common_skey.toString();
             BLSPrivateKey common_skey_from_str(*common_skey_str, num_signed, num_all);
             BOOST_REQUIRE(*common_skey_from_str.getPrivateKey() == *common_skey.getPrivateKey());
+
+            BLSSignature common_sig_from_str(common_sig_ptr->toString(), num_signed, num_all);
+            BOOST_REQUIRE(*common_sig_from_str.getSig() == *common_sig_ptr->getSig());
+            BOOST_REQUIRE(common_sig_from_str.getHint() == common_sig_ptr->getHint());
+            BOOST_REQUIRE(common_sig_from_str.getRequiredSigners() == common_sig_ptr->getRequiredSigners());
+            BOOST_REQUIRE(common_sig_from_str.getTotalSigners() == common_sig_ptr->getTotalSigners());
 
             BLSPublicKey common_pkey(*(common_skey.getPrivateKey()), num_signed, num_all);
             std::shared_ptr<std::vector<std::string>> common_pkey_str_vect = common_pkey.toString();

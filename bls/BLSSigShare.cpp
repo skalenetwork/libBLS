@@ -42,6 +42,8 @@ size_t BLSSigShare::getSignerIndex() const {
 shared_ptr< string > BLSSigShare::toString() {
     char str[512];
 
+    sigShare->to_affine_coordinates();
+
     gmp_sprintf( str, "%Nd:%Nd:%s", sigShare->X.as_bigint().data, libff::alt_bn128_Fq::num_limbs,
         sigShare->Y.as_bigint().data, libff::alt_bn128_Fq::num_limbs, hint.c_str() );
 
