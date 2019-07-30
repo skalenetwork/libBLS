@@ -1,4 +1,25 @@
+/*
+  Copyright (C) 2018-2019 SKALE Labs
 
+  This file is part of libBLS.
+
+  libBLS is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published
+  by the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  libBLS is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+
+  @file test_bls.cpp
+  @author Sveta Rogova
+  @date 2019
+*/
 
 #include <bls/bls.h>
 #include <dkg/dkg.h>
@@ -195,9 +216,10 @@ BOOST_AUTO_TEST_SUITE(Bls)
                                                  num_all);
                     std::shared_ptr<BLSSigShare> sig_share_ptr = sigSet.getSigShareByIndex(participants.at(i));
                     BOOST_REQUIRE(pkey_share.VerifySig(hash_ptr, sig_share_ptr, num_signed, num_all));
-                 /*   try {
-                        libff::alt_bn128_G1 bad_sig = SpoilSignature(*sig_share_ptr->getSigShare());
-                        BLSSigShare bad_sig_share(std::make_shared<libff::alt_bn128_G1>(bad_sig), sig_share_ptr->getHint(), participants.at(i),
+                    try {
+                        std::shared_ptr<libff::alt_bn128_G1> bad_sig = std::make_shared<libff::alt_bn128_G1>(SpoilSignature(*sig_share_ptr->getSigShare()));
+                        std::string hint = sig_share_ptr->getHint();
+                        BLSSigShare bad_sig_share(bad_sig, hint, participants.at(i),
                                                   num_signed, num_all);
                         pkey_share.VerifySig(hash_ptr, std::make_shared<BLSSigShare>(bad_sig_share), num_signed,
                                              num_all);
@@ -205,7 +227,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
                     catch (std::runtime_error &) {
                         is_exception_caught = true;
                     }
-                    BOOST_REQUIRE(is_exception_caught);*/
+                    BOOST_REQUIRE(is_exception_caught);
                 }
 
                 std::shared_ptr<BLSSignature> common_sig_ptr = sigSet.merge();                                                //// verifying signature
@@ -214,16 +236,16 @@ BOOST_AUTO_TEST_SUITE(Bls)
                 BLSPublicKey common_pkey(*(common_skey.getPrivateKey()), num_signed, num_all);
                 BOOST_REQUIRE(common_pkey.VerifySig(hash_ptr, common_sig_ptr, num_signed, num_all));
                 is_exception_caught = false;
-              /*  try {
-                    BLSSignature bad_sign(
-                            std::make_shared<libff::alt_bn128_G1>(SpoilSignature(*common_sig_ptr->getSig())), common_sig_ptr->getHint(),
-                            num_signed, num_all);
+                try {
+                    std::shared_ptr<libff::alt_bn128_G1> bad_sig = std::make_shared<libff::alt_bn128_G1>(SpoilSignature(*common_sig_ptr->getSig()));
+                    std::string hint = common_sig_ptr->getHint();
+                    BLSSignature bad_sign(bad_sig, hint, num_signed, num_all);
                     common_pkey.VerifySig(hash_ptr, std::make_shared<BLSSignature>(bad_sign), num_signed, num_all);
                 }
                 catch (std::runtime_error &) {
                     is_exception_caught = true;
                 }
-                BOOST_REQUIRE(is_exception_caught);*/
+                BOOST_REQUIRE(is_exception_caught);
 
                 std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > pkeys_map;
                 for (size_t i = 0; i < num_signed; ++i) {
