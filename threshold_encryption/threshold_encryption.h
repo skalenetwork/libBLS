@@ -110,7 +110,7 @@ namespace encryption{
 
       void Decrypt(element_t ret_val, const Ciphertext& ciphertext, const element_t& secret_key);
 
-      void Hash(element_t ret_val, const element_t& U, const std::string& V,
+      void HashToGroup(element_t ret_val, const element_t& U, const std::string& V,
                           std::string (*hash_func)(const std::string& str) =
                                                cryptlite::sha256::hash_hex);
 

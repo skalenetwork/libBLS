@@ -11,11 +11,13 @@ endif()
 set(sources
 	threshold_encryption.cpp
 	../dkg/dkg_te.cpp
+	utils.cpp
 )
 
 set(headers
 	threshold_encryption.h
 	../dkg/dkg_te.h
+	utils.h
 )
 
 set(PROJECT_VERSION 0.1.0)

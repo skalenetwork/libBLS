@@ -24,6 +24,7 @@
 #include <string.h>
 #include <valarray>
 
+#include <threshold_encryption/utils.h>
 #include <threshold_encryption.h>
 
 namespace encryption {
@@ -71,42 +72,106 @@ namespace encryption {
     return sha256hex;
   }
 
-  void TE::Hash(element_t ret_val, const element_t& U, const std::string& V,
+  void TE::HashToGroup(element_t ret_val, const element_t& U, const std::string& V,
                           std::string (*hash_func)(const std::string& str)) {
     // assumed that U lies in G1
 
-    mpz_t z;
-    mpz_init(z);
-    element_to_mpz(z, element_item(const_cast<element_t&>(U), 0));
+    const std::string sha256hex = hash_func(V);
 
-    char arr[mpz_sizeinbase (z, 10) + 2];
-    char* tmp_c = mpz_get_str(arr, 10, z);
-    std::string tmp1 = tmp_c;
-    mpz_clear(z);
+    mpz_t hex;
+    mpz_init(hex);
+    mpz_set_str(hex, sha256hex.c_str(), 16);
 
-    mpz_init(z);
-    element_to_mpz(z, element_item(const_cast<element_t&>(U), 1));
+    mpz_t modulus_q;
+    mpz_init(modulus_q);
+    mpz_set_str(modulus_q, "8780710799663312522437781984754049815806883199414208211028653399266475630880222957078625179422662221423155858769582317459277713367317481324925129998224791", 10);
 
-    char arr1[mpz_sizeinbase (z, 10) + 2];
-    char* other_tmp = mpz_get_str(arr1, 10, z);
-    std::string tmp2 = other_tmp;
-    mpz_clear(z);
+    mpz_t rem;
+    mpz_init(rem);
+    mpz_mod(rem, hex, modulus_q);
 
-    std::string tmp = tmp1 + tmp2;
+    mpz_clear(hex);
 
-    const std::string sha256hex1 = hash_func(tmp);
+    mpz_t x_coord;
+    mpz_init(x_coord);
+    element_to_mpz(x_coord, element_item(const_cast<element_t&>(U), 0));
 
-    const std::string sha256hex2 = hash_func(V.c_str());
+    mpz_t sum;
+    mpz_init(sum);
+    mpz_add(sum, x_coord, rem);
 
-    const std::string hash = sha256hex1 + sha256hex2;
+    mpz_clear(rem);
 
-    mpz_t res;
-    mpz_init(res);
-    mpz_set_str(res, hash.c_str(), 16);
+    mpz_t new_x_coord;
+    mpz_init(new_x_coord);
+    mpz_mod(new_x_coord, sum, modulus_q);
 
-    element_set_mpz(ret_val, res);
+    mpz_clear(sum);
+    mpz_clear(x_coord);
 
-    mpz_clear(res);
+    mpz_t y_coord;
+    mpz_init(y_coord);
+
+    while (true) {
+      mpz_t x_cubed;
+      mpz_init(x_cubed);
+
+      mpz_t temp;
+      mpz_init(temp);
+      mpz_set(temp, new_x_coord);
+
+      mpz_clear(new_x_coord);
+      mpz_pow_ui(x_cubed, temp, 3);
+
+      mpz_clear(temp);
+
+      mpz_init(new_x_coord);
+      mpz_mod(new_x_coord, x_cubed, modulus_q);
+
+      mpz_init(sum);
+      mpz_add_ui(sum, x_cubed, 3);
+
+      mpz_t y_squared;
+      mpz_init(y_squared);
+      mpz_mod(y_squared, sum, modulus_q);
+
+      int is_square = mpz_legendre(y_squared, modulus_q);
+
+      if (is_square == -1 || is_square == 0) {
+        mpz_init(x_coord);
+        mpz_add_ui(x_coord, new_x_coord, 1);
+
+        mpz_clear(new_x_coord);
+
+        mpz_init(new_x_coord);
+        mpz_set(new_x_coord, x_coord);
+
+        mpz_clear(x_coord);
+        mpz_clear(x_cubed);
+      } else {
+        MpzSquareRoot(y_coord, y_squared);
+
+        mpz_clear(modulus_q);
+        mpz_clear(sum);
+        mpz_clear(x_cubed);
+        mpz_clear(y_squared);
+
+        break;
+      }
+    }
+
+    char arr1[mpz_sizeinbase (new_x_coord, 10) + 2];
+    char* coord_x = mpz_get_str(arr1, 10, new_x_coord);
+
+    char arr2[mpz_sizeinbase (y_coord, 10) + 2];
+    char* coord_y = mpz_get_str(arr2, 10, y_coord);
+
+    std::string coords_str = '[' + std::string(coord_x) + ',' + std::string(coord_y) + ']';
+
+    element_set_str(ret_val, coords_str.c_str(), 10);
+
+    mpz_clear(new_x_coord);
+    mpz_clear(y_coord);
   }
 
   Ciphertext TE::Encrypt(const std::string& message, const element_t& common_public) {
@@ -159,7 +224,7 @@ namespace encryption {
     element_init_G1(W, this->pairing_);
     element_init_G1(H, this->pairing_);
 
-    this->Hash(H, U, V);
+    this->HashToGroup(H, U, V);
     element_mul_zn(W, H, r);
 
     element_clear(H);
@@ -189,7 +254,7 @@ namespace encryption {
 
     element_t H;
     element_init_G1(H, this->pairing_);
-    this->Hash(H, U, V);
+    this->HashToGroup(H, U, V);
 
     element_t fst, snd;
     element_init_GT(fst, this->pairing_);
@@ -230,7 +295,7 @@ namespace encryption {
 
     element_t H;
     element_init_G1(H, this->pairing_);
-    this->Hash(H, U, V);
+    this->HashToGroup(H, U, V);
 
     element_t fst, snd;
     element_init_GT(fst, this->pairing_);
@@ -290,7 +355,7 @@ namespace encryption {
 
     element_t H;
     element_init_G1(H, this->pairing_);
-    this->Hash(H, U, V);
+    this->HashToGroup(H, U, V);
 
     element_t fst, snd;
     element_init_GT(fst, this->pairing_);
