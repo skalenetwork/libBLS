@@ -1,24 +1,24 @@
 /*
-    Copyright (C) 2018-2019 SKALE Labs
+  Copyright (C) 2018-2019 SKALE Labs
 
-    This file is part of libBLS.
+  This file is part of libBLS.
 
-    libBLS is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  libBLS is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published
+  by the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    libBLS is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
+  libBLS is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
 
-    You should have received a copy of the GNU Lesser General Public License
-    along with libBLS.  If not, see <http://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU Affero General Public License
+  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-    @file sign_bls.cpp
-    @author Oleh Nikolaiev
-    @date 2019
+  @file sign_bls.cpp
+  @author Oleh Nikolaiev
+  @date 2019
 */
 
 #include <bls/bls.h>
@@ -41,7 +41,8 @@ std::string ConvertToString(T field_elem) {
 
   field_elem.as_bigint().to_mpz(t);
 
-  char * tmp = mpz_get_str(NULL, 10, t);
+  char arr[mpz_sizeinbase (t, 10) + 2];
+  char * tmp = mpz_get_str(arr, 10, t);
   mpz_clear(t);
 
   std::string output = tmp;
@@ -73,10 +74,12 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
     for (size_t i = 0; i < n; ++i) {
       nlohmann::json secret_key_file;
 
-      std::ifstream infile(key + std::to_string(i) + ".json");
+      //std::ifstream infile(key + std::to_string(i) + ".json");
+      std::ifstream infile(key + std::to_string(i+1) + ".json");
       infile >> secret_key_file;
 
-      secret_key[i] = libff::alt_bn128_Fr(secret_key_file["secret_key"].get<std::string>().c_str());
+      //secret_key[i] = libff::alt_bn128_Fr(secret_key_file["secret_key"].get<std::string>().c_str());
+        secret_key[i] = libff::alt_bn128_Fr(secret_key_file["insecureBLSPrivateKey"].get<std::string>().c_str());
     }
 
     std::vector<libff::alt_bn128_G1> signature_shares(n);
@@ -100,7 +103,8 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
     std::ifstream infile(key + std::to_string(idx) + ".json");
     infile >> secret_key_file;
 
-    secret_key = libff::alt_bn128_Fr(secret_key_file["secret_key"].get<std::string>().c_str());
+    //secret_key = libff::alt_bn128_Fr(secret_key_file["secret_key"].get<std::string>().c_str());
+     secret_key = libff::alt_bn128_Fr(secret_key_file["insecureBLSPrivateKey"].get<std::string>().c_str());
 
     common_signature = bls_instance.Signing(hash, secret_key);
   }

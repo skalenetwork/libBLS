@@ -1,34 +1,35 @@
 /*
-    Copyright (C) 2018-2019 SKALE Labs
+  Copyright (C) 2018-2019 SKALE Labs
 
-    This file is part of libBLS.
+  This file is part of libBLS.
 
-    libBLS is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  libBLS is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published
+  by the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    libBLS is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-    GNU Lesser General Public License for more details.
+  libBLS is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
 
-    You should have received a copy of the GNU Lesser General Public License
-    along with libBLS. If not, see <https://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU Affero General Public License
+  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-    @file utils.h
-    @author Oleh Nikolaiev
-    @date 2019
+  @file utils.h
+  @author Oleh Nikolaiev
+  @date 2019
  */
 
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
+#pragma once
 
-#include <utility>
+#include <libff/algebra/fields/fp.hpp>
 
-class G2;
+const mp_size_t bitcount = 512;
+const mp_size_t num_limbs = (bitcount + GMP_NUMB_BITS - 1) / GMP_NUMB_BITS;
 
-libff::alt_bn128_Fq CurveEquation(const libff::alt_bn128_Fq& field_elem);
+extern libff::bigint<num_limbs> modulus;
 
-bool IsQuadraticResidue(const libff::alt_bn128_Fq& field_elem);
+using type_a_Fq = libff::Fp_model<num_limbs, modulus>;
 
-libff::alt_bn128_Fq SquareRoot(const libff::alt_bn128_Fq& field_elem);
+void MpzSquareRoot(mpz_t ret_val, mpz_t x);

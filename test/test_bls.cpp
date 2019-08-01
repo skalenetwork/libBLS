@@ -1,4 +1,25 @@
+/*
+  Copyright (C) 2018-2019 SKALE Labs
 
+  This file is part of libBLS.
+
+  libBLS is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published
+  by the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  libBLS is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+
+  @file test_bls.cpp
+  @author Sveta Rogova
+  @date 2019
+*/
 
 #include <bls/bls.h>
 #include <dkg/dkg.h>
@@ -7,13 +28,18 @@
 
 #include <map>
 
+
 #include "bls/BLSPrivateKeyShare.h"
+#include "bls/BLSPrivateKey.h"
 #include "bls/BLSSigShareSet.h"
+#include "bls/BLSSigShare.h"
 #include "bls/BLSSignature.h"
 #include "bls/BLSPublicKey.h"
-#include "bls/BLSPrivateKey.h"
+#include "bls/BLSPublicKeyShare.h"
 #include "bls/BLSutils.cpp"
 
+#include <fstream>
+#include <third_party/json.hpp>
 
 #define BOOST_TEST_MODULE
 
@@ -64,6 +90,14 @@ BOOST_AUTO_TEST_SUITE(Bls)
         return bad_sign;
     }
 
+    std::array<uint8_t, 32> GenerateRandHash(){
+        std::array<uint8_t, 32> hash_byte_arr;
+        for ( size_t i = 0; i < 32 ; i++){
+            hash_byte_arr.at(i) = rand_gen() % 255;
+        }
+        return hash_byte_arr;
+    }
+
     BOOST_AUTO_TEST_CASE(libBls) {
         libff::inhibit_profiling_info = true;
         std::cerr << "STARTING LIBBLS TESTS" << std::endl;
@@ -81,14 +115,17 @@ BOOST_AUTO_TEST_SUITE(Bls)
             signatures::Bls obj = signatures::Bls(num_signed, num_all);
 
             for (size_t i = 0; i < 10; ++i) {
-                std::string message;
+               /* std::string message;
                 size_t msg_length = rand_gen() % 1000 + 2;
                 for (size_t length = 0; length < msg_length; ++length) {
                     message += char(rand_gen() % 128);
-                }
+                }*/
 
-                libff::alt_bn128_G1 hash = obj.Hashing(message);
-                for (size_t i = 0; i < num_signed; ++i) signatures.at(i) = obj.Signing(hash, skeys[i]);
+                //libff::alt_bn128_G1 hash = obj.Hashing(message);
+                std::shared_ptr< std::array<uint8_t, 32> > hash_ptr = std::make_shared< std::array<uint8_t, 32> >(GenerateRandHash());
+                libff::alt_bn128_G1 hash = obj.HashtoG1(hash_ptr);
+
+                for (size_t i = 0; i < num_signed; ++i) signatures.at(i) = obj.Signing(hash, skeys.at(i));
 
                 std::vector<size_t> participants(num_all);
                 for (size_t i = 0; i < num_all; ++i) participants.at(i) = i + 1;
@@ -100,9 +137,9 @@ BOOST_AUTO_TEST_SUITE(Bls)
                 bool is_exception_caught = false;
                 for (size_t i = 0; i < num_signed; ++i) {
                     auto pkey = skeys.at(i) * libff::alt_bn128_G2::one();
-                    BOOST_REQUIRE(obj.Verification(message, signatures.at(i), pkey));
+                    BOOST_REQUIRE(obj.Verification(hash_ptr, signatures.at(i), pkey));
                     try {
-                        obj.Verification(message, SpoilSignature(signatures.at(i)), pkey);
+                        obj.Verification(hash_ptr, SpoilSignature(signatures.at(i)), pkey);
                     }
                     catch (std::runtime_error&) {
                         is_exception_caught = true;
@@ -114,11 +151,11 @@ BOOST_AUTO_TEST_SUITE(Bls)
                 libff::alt_bn128_G1 signature = obj.SignatureRecover(signatures, lagrange_coeffs);
 
                 auto recovered_keys = obj.KeysRecover(lagrange_coeffs, skeys);
-                BOOST_REQUIRE(obj.Verification(message, signature, recovered_keys.second));
+                BOOST_REQUIRE(obj.Verification(hash_ptr, signature, recovered_keys.second));
 
                 is_exception_caught = false;
                 try {
-                    obj.Verification(message, SpoilSignature(signature), recovered_keys.second);
+                    obj.Verification(hash_ptr, SpoilSignature(signature), recovered_keys.second);
                 }
                 catch (std::runtime_error&) {
                     is_exception_caught = true;
@@ -144,20 +181,18 @@ BOOST_AUTO_TEST_SUITE(Bls)
             size_t num_signed = rand_gen() % num_all + 1;
 
             std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>> Skeys = BLSPrivateKeyShare::generateSampleKeys(
-                    num_signed, num_all);
-
-            //signatures::Bls obj = signatures::Bls(num_signed, num_all);
+                    num_signed, num_all)->first;
 
             for (size_t i = 0; i < 10; ++i) {
 
                 BLSSigShareSet sigSet(num_signed, num_all);
 
-                std::string message;
+               /* std::string message;
                 size_t msg_length = rand_gen() % 1000 + 2;
                 for (size_t length = 0; length < msg_length; ++length) {
                     message += char(rand_gen() % 128);
                 }
-                std::shared_ptr<std::string> msg_ptr = std::make_shared<std::string>(message);
+                std::shared_ptr<std::string> msg_ptr = std::make_shared<std::string>(message);*/
 
                 std::vector<size_t> participants(num_all);                          ////choosing random participants
                 for (size_t i = 0; i < num_all; ++i) participants.at(i) = i + 1;
@@ -166,25 +201,30 @@ BOOST_AUTO_TEST_SUITE(Bls)
                     participants.erase(participants.begin() + ind4del);
                 }
 
+                std::shared_ptr< std::array<uint8_t, 32> > hash_ptr = std::make_shared< std::array<uint8_t, 32> >(GenerateRandHash());
+
                 for (size_t i = 0; i < num_signed; ++i) {
-                    std::shared_ptr<BLSPrivateKeyShare> skey = Skeys->at(i);
-                    std::shared_ptr<BLSSigShare> sigShare = skey->sign(msg_ptr, participants.at(i));
+                    std::shared_ptr<BLSPrivateKeyShare> skey = Skeys->at(participants.at(i) - 1);
+                    //std::shared_ptr<BLSSigShare> sigShare = skey->sign(msg_ptr, participants.at(i));
+                    std::shared_ptr<BLSSigShare> sigShare = skey->sign(hash_ptr, participants.at(i));
                     sigSet.addSigShare(sigShare);
                 }
 
                 bool is_exception_caught = false;               //// verifying sigShare
                 for (size_t i = 0; i < num_signed; ++i) {
-                    BLSPublicKeyShare pkey_share(*Skeys->at(i)->getPrivateKey(), num_signed, num_all);
+                    BLSPublicKeyShare pkey_share(*Skeys->at(participants.at(i) - 1)->getPrivateKey(), num_signed,
+                                                 num_all);
                     std::shared_ptr<BLSSigShare> sig_share_ptr = sigSet.getSigShareByIndex(participants.at(i));
-                    BOOST_REQUIRE(pkey_share.VerifySig(msg_ptr, sig_share_ptr, num_signed, num_all));
+                    BOOST_REQUIRE(pkey_share.VerifySig(hash_ptr, sig_share_ptr, num_signed, num_all));
                     try {
-                        libff::alt_bn128_G1 bad_sig = SpoilSignature(*sig_share_ptr->getSigShare());
-                        BLSSigShare bad_sig_share(std::make_shared<libff::alt_bn128_G1>(bad_sig), participants.at(i),
+                        std::shared_ptr<libff::alt_bn128_G1> bad_sig = std::make_shared<libff::alt_bn128_G1>(SpoilSignature(*sig_share_ptr->getSigShare()));
+                        std::string hint = sig_share_ptr->getHint();
+                        BLSSigShare bad_sig_share(bad_sig, hint, participants.at(i),
                                                   num_signed, num_all);
-                        pkey_share.VerifySig(msg_ptr, std::make_shared<BLSSigShare>(bad_sig_share), num_signed,
+                        pkey_share.VerifySig(hash_ptr, std::make_shared<BLSSigShare>(bad_sig_share), num_signed,
                                              num_all);
                     }
-                    catch (std::runtime_error) {
+                    catch (std::runtime_error &) {
                         is_exception_caught = true;
                     }
                     BOOST_REQUIRE(is_exception_caught);
@@ -194,22 +234,23 @@ BOOST_AUTO_TEST_SUITE(Bls)
                 BLSPrivateKey common_skey(Skeys, std::make_shared<std::vector<size_t >>(participants), num_signed,
                                           num_all);
                 BLSPublicKey common_pkey(*(common_skey.getPrivateKey()), num_signed, num_all);
-                BOOST_REQUIRE(common_pkey.VerifySig(msg_ptr, common_sig_ptr, num_signed, num_all));
+                BOOST_REQUIRE(common_pkey.VerifySig(hash_ptr, common_sig_ptr, num_signed, num_all));
                 is_exception_caught = false;
                 try {
-                    BLSSignature bad_sign(
-                            std::make_shared<libff::alt_bn128_G1>(SpoilSignature(*common_sig_ptr->getSig())),
-                            num_signed, num_all);
-                    common_pkey.VerifySig(msg_ptr, std::make_shared<BLSSignature>(bad_sign), num_signed, num_all);
+                    std::shared_ptr<libff::alt_bn128_G1> bad_sig = std::make_shared<libff::alt_bn128_G1>(SpoilSignature(*common_sig_ptr->getSig()));
+                    std::string hint = common_sig_ptr->getHint();
+                    BLSSignature bad_sign(bad_sig, hint, num_signed, num_all);
+                    common_pkey.VerifySig(hash_ptr, std::make_shared<BLSSignature>(bad_sign), num_signed, num_all);
                 }
-                catch (std::runtime_error) {
+                catch (std::runtime_error &) {
                     is_exception_caught = true;
                 }
                 BOOST_REQUIRE(is_exception_caught);
 
                 std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > pkeys_map;
                 for (size_t i = 0; i < num_signed; ++i) {
-                    BLSPublicKeyShare cur_pkey(*Skeys->at(i)->getPrivateKey(), num_signed, num_all);
+                    BLSPublicKeyShare cur_pkey(*Skeys->at(participants.at(i) - 1)->getPrivateKey(), num_signed,
+                                               num_all);
                     pkeys_map[participants.at(i)] = std::make_shared<BLSPublicKeyShare>(cur_pkey);
                 }
 
@@ -217,7 +258,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
                         std::make_shared<std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > >(pkeys_map), num_signed,
                         num_all);
 
-                BOOST_REQUIRE(common_pkey1.VerifySig(msg_ptr, common_sig_ptr, num_signed, num_all));
+                BOOST_REQUIRE(common_pkey1.VerifySig(hash_ptr, common_sig_ptr, num_signed, num_all));
 
             }
 
@@ -235,19 +276,12 @@ BOOST_AUTO_TEST_SUITE(Bls)
             size_t num_all = rand_gen() % 16 + 1;
             size_t num_signed = rand_gen() % num_all + 1;
 
-           // signatures::Bls obj = signatures::Bls(num_signed, num_all);
             std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>> Skeys = BLSPrivateKeyShare::generateSampleKeys(
-                    num_signed, num_all);
+                    num_signed, num_all)->first;
+
+            std::shared_ptr< std::array<uint8_t, 32> > hash_ptr = std::make_shared< std::array<uint8_t, 32> >(GenerateRandHash());
 
             BLSSigShareSet sigSet(num_signed, num_all);
-
-            std::string message;
-            size_t msg_length = rand_gen() % 1000 + 2;
-            for (size_t length = 0; length < msg_length; ++length) {
-                message += char(rand_gen() % 128);
-            }
-            std::shared_ptr<std::string> msg_ptr = std::make_shared<std::string>(message);
-
 
             std::vector<size_t> participants(num_all);                          ////choosing random participants
             for (size_t i = 0; i < num_all; ++i) participants.at(i) = i + 1;
@@ -257,28 +291,32 @@ BOOST_AUTO_TEST_SUITE(Bls)
             }
 
             for (size_t i = 0; i < num_signed; ++i) {
-                std::shared_ptr<BLSPrivateKeyShare> skey = Skeys->at(i);
+                std::shared_ptr<BLSPrivateKeyShare> skey = Skeys->at(participants.at(i) - 1);
                 std::shared_ptr<std::string> skey_str_ptr = skey->toString();
                 std::shared_ptr<BLSPrivateKeyShare> skey_from_str = std::make_shared<BLSPrivateKeyShare>(*skey_str_ptr,
                                                                                                          num_signed,
                                                                                                          num_all);
                 BOOST_REQUIRE(*skey_from_str->getPrivateKey() == *skey->getPrivateKey());
 
-                std::shared_ptr<BLSSigShare> sigShare = skey->sign(msg_ptr, participants.at(i));
+                std::shared_ptr<BLSSigShare> sigShare = skey->signWithHint(hash_ptr, participants.at(i));
                 std::shared_ptr<std::string> sig_str_ptr = sigShare->toString();
                 std::shared_ptr<BLSSigShare> sigShare_from_str = std::make_shared<BLSSigShare>(sig_str_ptr,
                                                                                                participants.at(i),
                                                                                                num_signed, num_all);
+
                 BOOST_REQUIRE(*sigShare->getSigShare() == *sigShare_from_str->getSigShare());
+                BOOST_REQUIRE(sigShare->getHint() == sigShare_from_str->getHint());
+                BOOST_REQUIRE(sigShare->getRequiredSigners() == sigShare_from_str->getRequiredSigners());
+                BOOST_REQUIRE(sigShare->getTotalSigners() == sigShare_from_str->getTotalSigners());
                 sigSet.addSigShare(sigShare);
             }
 
-
-            for (size_t i = 0; i < num_signed; ++i) {
-                BLSPublicKeyShare pkey_share(*Skeys->at(i)->getPrivateKey(), num_signed, num_all);
+            for (size_t i = 0; i < num_signed ; ++i) {
+                BLSPublicKeyShare pkey_share(*Skeys->at(participants.at(i) - 1)->getPrivateKey(), num_signed, num_all);
                 std::shared_ptr<std::vector<std::string>> pkey_str_vect = pkey_share.toString();
                 BLSPublicKeyShare pkey_from_str(pkey_str_vect, num_signed, num_all);
                 BOOST_REQUIRE(*pkey_share.getPublicKey() == *pkey_from_str.getPublicKey());
+                BOOST_REQUIRE( pkey_share.VerifySigWithHint(hash_ptr, sigSet.getSigShareByIndex(participants.at(i)), num_signed, num_all) );
             }
 
             std::shared_ptr<BLSSignature> common_sig_ptr = sigSet.merge();
@@ -287,16 +325,21 @@ BOOST_AUTO_TEST_SUITE(Bls)
             BLSPrivateKey common_skey_from_str(*common_skey_str, num_signed, num_all);
             BOOST_REQUIRE(*common_skey_from_str.getPrivateKey() == *common_skey.getPrivateKey());
 
+            BLSSignature common_sig_from_str(common_sig_ptr->toString(), num_signed, num_all);
+            BOOST_REQUIRE(*common_sig_from_str.getSig() == *common_sig_ptr->getSig());
+            BOOST_REQUIRE(common_sig_from_str.getHint() == common_sig_ptr->getHint());
+            BOOST_REQUIRE(common_sig_from_str.getRequiredSigners() == common_sig_ptr->getRequiredSigners());
+            BOOST_REQUIRE(common_sig_from_str.getTotalSigners() == common_sig_ptr->getTotalSigners());
 
             BLSPublicKey common_pkey(*(common_skey.getPrivateKey()), num_signed, num_all);
             std::shared_ptr<std::vector<std::string>> common_pkey_str_vect = common_pkey.toString();
             BLSPublicKey common_pkey_from_str(common_pkey_str_vect, num_signed, num_all);
             BOOST_REQUIRE(*common_pkey.getPublicKey() == *common_pkey_from_str.getPublicKey());
-
+            BOOST_REQUIRE( common_pkey.VerifySigWithHint(hash_ptr, common_sig_ptr, num_signed, num_all) );
 
             std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > pkeys_map;
             for (size_t i = 0; i < num_signed; ++i) {
-                BLSPublicKeyShare cur_pkey(*Skeys->at(i)->getPrivateKey(), num_signed, num_all);
+                BLSPublicKeyShare cur_pkey(*Skeys->at(participants[i] - 1)->getPrivateKey(), num_signed, num_all);
                 pkeys_map[participants.at(i)] = std::make_shared<BLSPublicKeyShare>(cur_pkey);
             }
 
@@ -305,12 +348,112 @@ BOOST_AUTO_TEST_SUITE(Bls)
                     num_all);
             std::shared_ptr<std::vector<std::string>> common_pkey_str_vect1 = common_pkey.toString();
             BLSPublicKey common_pkey_from_str1(common_pkey_str_vect1, num_signed, num_all);
+
             BOOST_REQUIRE(*common_pkey1.getPublicKey() == *common_pkey_from_str1.getPublicKey());
             BOOST_REQUIRE(*common_pkey1.getPublicKey() == *common_pkey.getPublicKey());
+        }
+       std::cerr << "BLS libffObjsToString TEST END" << std::endl;
+    }
 
+    std::shared_ptr<std::vector<size_t> > choose_rand_signers(size_t num_signed, size_t num_all) {
+        std::vector<size_t> participants(num_all);
+        for (size_t i = 0; i < num_all; ++i) participants.at(i) = i + 1;
+        for (size_t i = 0; i < num_all - num_signed; ++i) {
+            size_t ind4del = rand_gen() % participants.size();
+            participants.erase(participants.begin() + ind4del);
+        }
+        return std::make_shared<std::vector<size_t>>(participants);
+    }
+
+    BOOST_AUTO_TEST_CASE(threshold_signs_equality) {
+
+        for (size_t i = 0; i < 100; ++i) {
+            size_t num_all = rand_gen() % 15 + 2;
+            size_t num_signed = rand_gen() % (num_all - 1) + 1;
+
+            std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>> Skeys = BLSPrivateKeyShare::generateSampleKeys(
+                    num_signed, num_all)->first;
+
+            std::shared_ptr< std::array<uint8_t, 32> > hash_ptr = std::make_shared< std::array<uint8_t, 32> >(GenerateRandHash());
+
+            BLSSigShareSet sigSet(num_signed, num_all);
+            BLSSigShareSet sigSet1(num_signed, num_all);
+
+            std::string message;
+            size_t msg_length = rand_gen() % 1000 + 2;
+            for (size_t length = 0; length < msg_length; ++length) {
+                message += char(rand_gen() % 128);
+            }
+            std::shared_ptr<std::string> msg_ptr = std::make_shared<std::string>(message);
+
+            std::shared_ptr<std::vector<size_t> > participants = choose_rand_signers(num_signed, num_all);
+            std::shared_ptr<std::vector<size_t> > participants1 = choose_rand_signers(num_signed, num_all);
+
+            for (size_t i = 0; i < num_signed; ++i) {
+                std::shared_ptr<BLSPrivateKeyShare> skey = Skeys->at(participants->at(i) - 1);
+                std::shared_ptr<BLSSigShare> sigShare = skey->sign(hash_ptr, participants->at(i));
+                sigSet.addSigShare(sigShare);
+
+                std::shared_ptr<BLSPrivateKeyShare> skey1 = Skeys->at(participants1->at(i) - 1);
+                std::shared_ptr<BLSSigShare> sigShare1 = skey1->sign(hash_ptr, participants1->at(i));
+                sigSet1.addSigShare(sigShare1);
+            }
+
+            std::shared_ptr<BLSSignature> common_sig_ptr = sigSet.merge();
+            std::shared_ptr<BLSSignature> common_sig_ptr1 = sigSet1.merge();
+
+            BOOST_REQUIRE(*common_sig_ptr->getSig() == *common_sig_ptr1->getSig());
         }
 
-        std::cerr << "BLS libffObjsToString TEST END" << std::endl;
+    }
+
+    BOOST_AUTO_TEST_CASE(private_keys_equality) {
+
+        for (size_t i = 0; i < 100; ++i) {
+            size_t num_all = rand_gen() % 15 + 2;
+            size_t num_signed = rand_gen() % (num_all - 1) + 1;
+
+            signatures::Dkg dkg_obj = signatures::Dkg(num_signed, num_all);
+            const std::vector<libff::alt_bn128_Fr> pol = dkg_obj.GeneratePolynomial();
+            std::vector<libff::alt_bn128_Fr> skeys = dkg_obj.SecretKeyContribution(pol);
+
+            std::shared_ptr<std::vector<size_t> > participants = choose_rand_signers(num_signed, num_all);
+
+            signatures::Bls bls_obj = signatures::Bls(num_signed, num_all);
+            std::vector<libff::alt_bn128_Fr> lagrange_koefs = bls_obj.LagrangeCoeffs(*participants);
+            libff::alt_bn128_Fr common_skey = libff::alt_bn128_Fr::zero();
+            for (size_t i = 0; i < num_signed; ++i) {
+                common_skey = common_skey + lagrange_koefs.at(i) * skeys.at(participants->at(i) - 1);
+            }
+
+            BOOST_REQUIRE(common_skey == pol.at(0));
+        }
+
+    }
+
+    BOOST_AUTO_TEST_CASE(public_keys_equality) {
+
+        for (size_t i = 0; i < 100; ++i) {
+            size_t num_all = rand_gen() % 15 + 2;
+            size_t num_signed = rand_gen() % (num_all - 1) + 1;
+
+            signatures::Dkg dkg_obj = signatures::Dkg(num_signed, num_all);
+            const std::vector<libff::alt_bn128_Fr> pol = dkg_obj.GeneratePolynomial();
+            std::vector<libff::alt_bn128_Fr> skeys = dkg_obj.SecretKeyContribution(pol);
+            libff::alt_bn128_G2 common_pkey = pol.at(0) * libff::alt_bn128_G2::one();
+
+            std::shared_ptr<std::vector<size_t> > participants = choose_rand_signers(num_signed, num_all);
+
+            signatures::Bls bls_obj = signatures::Bls(num_signed, num_all);
+            std::vector<libff::alt_bn128_Fr> lagrange_koefs = bls_obj.LagrangeCoeffs(*participants);
+            libff::alt_bn128_G2 common_pkey1 = libff::alt_bn128_G2::zero();
+            for (size_t i = 0; i < num_signed; ++i) {
+                common_pkey1 = common_pkey1 +
+                               lagrange_koefs.at(i) * skeys.at(participants->at(i) - 1) * libff::alt_bn128_G2::one();
+            }
+            BOOST_REQUIRE(common_pkey == common_pkey1);
+        }
+
     }
 
 BOOST_AUTO_TEST_SUITE_END()

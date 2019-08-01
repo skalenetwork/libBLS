@@ -1,24 +1,24 @@
 /*
-    Copyright (C) 2018-2019 SKALE Labs
+  Copyright (C) 2018-2019 SKALE Labs
 
-    This file is part of libBLS.
+  This file is part of libBLS.
 
-    libBLS is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+  libBLS is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published
+  by the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
 
-    libBLS is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
+  libBLS is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
 
-    You should have received a copy of the GNU Lesser General Public License
-    along with libBLS.  If not, see <http://www.gnu.org/licenses/>.
+  You should have received a copy of the GNU Affero General Public License
+  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-    @file bls.h
-    @author Oleh Nikolaiev
-    @date 2018
+  @file bls.h
+  @author Oleh Nikolaiev
+  @date 2018
 */
 
 
@@ -29,9 +29,14 @@
 #include <string>
 #include <vector>
 #include <utility>
-
+#include <memory>
+#include <iostream>
 
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
+
+static constexpr size_t BLS_MAX_COMPONENT_LEN = 80;
+
+static constexpr size_t BLS_MAX_SIG_LEN = 240;
 
 
 namespace signatures {
@@ -50,11 +55,18 @@ class Bls {
                                   std::string (*hash_func)(const std::string& str) =
                                                cryptlite::sha256::hash_hex);
 
+    libff::alt_bn128_G1 HashtoG1(std::shared_ptr< std::array< uint8_t, 32>>);
+
+    std::pair<libff::alt_bn128_G1, std::string> HashtoG1withHint(std::shared_ptr< std::array< uint8_t, 32>>);
+
     libff::alt_bn128_G1 Signing(const libff::alt_bn128_G1 hash,
                                   const libff::alt_bn128_Fr secret_key);
 
     bool Verification(const std::string& to_be_hashed, const libff::alt_bn128_G1 sign,
                         const libff::alt_bn128_G2 public_key);
+
+    bool Verification(std::shared_ptr<std::array< uint8_t, 32>>, const libff::alt_bn128_G1 sign,
+                      const libff::alt_bn128_G2 public_key);
 
     std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> KeysRecover(
                                                   const std::vector<libff::alt_bn128_Fr>& coeffs,
