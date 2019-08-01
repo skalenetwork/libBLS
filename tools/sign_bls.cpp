@@ -41,7 +41,8 @@ std::string ConvertToString(T field_elem) {
 
   field_elem.as_bigint().to_mpz(t);
 
-  char * tmp = mpz_get_str(NULL, 10, t);
+  char arr[mpz_sizeinbase (t, 10) + 2];
+  char * tmp = mpz_get_str(arr, 10, t);
   mpz_clear(t);
 
   std::string output = tmp;
@@ -74,10 +75,12 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
     for (size_t i = 0; i < n; ++i) {
       nlohmann::json secret_key_file;
 
-      std::ifstream infile(key + std::to_string(i) + ".json");
+      //std::ifstream infile(key + std::to_string(i) + ".json");
+      std::ifstream infile(key + std::to_string(i+1) + ".json");
       infile >> secret_key_file;
 
-      secret_key[i] = libff::alt_bn128_Fr(secret_key_file["secret_key"].get<std::string>().c_str());
+      //secret_key[i] = libff::alt_bn128_Fr(secret_key_file["secret_key"].get<std::string>().c_str());
+        secret_key[i] = libff::alt_bn128_Fr(secret_key_file["insecureBLSPrivateKey"].get<std::string>().c_str());
     }
 
     std::vector<libff::alt_bn128_G1> signature_shares(n);
@@ -101,7 +104,8 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
     std::ifstream infile(key + std::to_string(idx) + ".json");
     infile >> secret_key_file;
 
-    secret_key = libff::alt_bn128_Fr(secret_key_file["secret_key"].get<std::string>().c_str());
+    //secret_key = libff::alt_bn128_Fr(secret_key_file["secret_key"].get<std::string>().c_str());
+     secret_key = libff::alt_bn128_Fr(secret_key_file["insecureBLSPrivateKey"].get<std::string>().c_str());
 
     common_signature = bls_instance.Signing(hash, secret_key);
   }
