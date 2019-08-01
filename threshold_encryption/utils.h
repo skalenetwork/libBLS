@@ -21,14 +21,15 @@
   @date 2019
  */
 
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
+#pragma once
 
-#include <utility>
+#include <libff/algebra/fields/fp.hpp>
 
-class G2;
+const mp_size_t bitcount = 512;
+const mp_size_t num_limbs = (bitcount + GMP_NUMB_BITS - 1) / GMP_NUMB_BITS;
 
-libff::alt_bn128_Fq CurveEquation(const libff::alt_bn128_Fq& field_elem);
+extern libff::bigint<num_limbs> modulus;
 
-bool IsQuadraticResidue(const libff::alt_bn128_Fq& field_elem);
+using type_a_Fq = libff::Fp_model<num_limbs, modulus>;
 
-libff::alt_bn128_Fq SquareRoot(const libff::alt_bn128_Fq& field_elem);
+void MpzSquareRoot(mpz_t ret_val, mpz_t x);
