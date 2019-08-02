@@ -15,6 +15,7 @@ set(sources
         TEPublicKey.cpp
         ../test/test_TE_wrappers.cpp
 	../dkg/dkg_te.cpp
+	utils.cpp
 )
 
 set(headers
@@ -23,6 +24,7 @@ set(headers
         TEPrivateKeyShare.h
         TEPublicKey.h
 	../dkg/dkg_te.h
+	utils.h
 )
 
 set(PROJECT_VERSION 0.1.0)
