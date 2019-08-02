@@ -25,18 +25,17 @@
 
 #include <boost/program_options.hpp>
 
-#include "bls/BLSPrivateKeyShare.h"
-#include "bls/BLSPublicKeyShare.h"
-#include "bls/BLSPublicKey.h"
+#include <bls/BLSPrivateKeyShare.h>
+#include <bls/BLSPublicKeyShare.h>
+#include <bls/BLSPublicKey.h>
 
-#include "bls/BLSPrivateKey.h"
+#include <bls/BLSPrivateKey.h>
 
 #define EXPAND_AS_STR(x) __EXPAND_AS_STR__(x)
 #define __EXPAND_AS_STR__(x) #x
 
 
-
-void keys_to_json(std::shared_ptr<BLSPrivateKeyShare> skey_ptr, size_t num_signed, size_t num_all, size_t num) {
+void KeysToJson(std::shared_ptr<BLSPrivateKeyShare> skey_ptr, size_t num_signed, size_t num_all, size_t num) {
   nlohmann::json keys_json;
   keys_json["insecureBLSPrivateKey"] = *skey_ptr->toString();
   BLSPublicKeyShare pkey(*skey_ptr->getPrivateKey(), num_signed, num_all);
@@ -51,7 +50,7 @@ void keys_to_json(std::shared_ptr<BLSPrivateKeyShare> skey_ptr, size_t num_signe
   outfile.close();
 }
 
-void common_pkey_to_json(std::shared_ptr<BLSPublicKey> common_pkey_ptr,
+void CommonPkeyToJson(std::shared_ptr<BLSPublicKey> common_pkey_ptr,
                          size_t num_signed, size_t num_all) {
   nlohmann::json keys_json;
   std::string pkey_name = "insecureCommonBLSPublicKey";
@@ -125,10 +124,10 @@ void KeyGeneration(const size_t t, const size_t n, bool generate_all = true, int
       skeys.push_back(std::make_shared<BLSPrivateKeyShare>(cur_skey));
     }
 
-    common_pkey_to_json( std::make_shared<BLSPublicKey>(common_public_key, t, n), t , n );
+    CommonPkeyToJson( std::make_shared<BLSPublicKey>(common_public_key, t, n), t , n );
 
     for (size_t i = 0; i < n; ++i) {
-      keys_to_json(skeys.at(i), t, n , i);
+      KeysToJson(skeys.at(i), t, n , i);
     }
 
   } else {
