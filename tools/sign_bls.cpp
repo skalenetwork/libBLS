@@ -74,11 +74,9 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
     for (size_t i = 0; i < n; ++i) {
       nlohmann::json secret_key_file;
 
-      //std::ifstream infile(key + std::to_string(i) + ".json");
-      std::ifstream infile(key + std::to_string(i+1) + ".json");
+      std::ifstream infile(key + std::to_string(i) + ".json");
       infile >> secret_key_file;
 
-      //secret_key[i] = libff::alt_bn128_Fr(secret_key_file["secret_key"].get<std::string>().c_str());
         secret_key[i] = libff::alt_bn128_Fr(secret_key_file["insecureBLSPrivateKey"].get<std::string>().c_str());
     }
 
@@ -103,11 +101,12 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
     std::ifstream infile(key + std::to_string(idx) + ".json");
     infile >> secret_key_file;
 
-    //secret_key = libff::alt_bn128_Fr(secret_key_file["secret_key"].get<std::string>().c_str());
      secret_key = libff::alt_bn128_Fr(secret_key_file["insecureBLSPrivateKey"].get<std::string>().c_str());
 
     common_signature = bls_instance.Signing(hash, secret_key);
   }
+
+  common_signature.to_affine_coordinates();
 
   nlohmann::json signature;
   if (idx >= 0) {
@@ -116,7 +115,6 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
 
   signature["signature"]["X"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.X);
   signature["signature"]["Y"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.Y);
-  signature["signature"]["Z"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.Z);
 
   std::ofstream outfile_h("hash.json");
   outfile_h << hash_json.dump(4) << "\n";

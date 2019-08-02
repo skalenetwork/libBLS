@@ -1,21 +1,16 @@
 /*
   Copyright (C) 2018-2019 SKALE Labs
-
   This file is part of libBLS.
-
   libBLS is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published
   by the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-
   libBLS is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU Affero General Public License for more details.
-
   You should have received a copy of the GNU Affero General Public License
   along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
-
   @file dkg_key_gen.cpp
   @author Oleh Nikolaiev
   @date 2019
@@ -42,33 +37,32 @@
 
 
 void keys_to_json(std::shared_ptr<BLSPrivateKeyShare> skey_ptr, size_t num_signed, size_t num_all, size_t num) {
+  nlohmann::json keys_json;
+  keys_json["insecureBLSPrivateKey"] = *skey_ptr->toString();
+  BLSPublicKeyShare pkey(*skey_ptr->getPrivateKey(), num_signed, num_all);
+  std::shared_ptr<std::vector<std::string> > pkey_ptr = pkey.toString();
+  std::string pkey_name = "insecureBLSPublicKey";
+  for (size_t i = 1; i < 5; i++) {
+    keys_json[pkey_name + std::to_string(i)] = pkey_ptr->at(i - 1);
+  }
 
-    nlohmann::json keys_json;
-    keys_json["insecureBLSPrivateKey"] = *skey_ptr->toString();
-    BLSPublicKeyShare pkey(*skey_ptr->getPrivateKey(), num_signed, num_all);
-    std::shared_ptr<std::vector<std::string> > pkey_ptr = pkey.toString();
-    std::string pkey_name = "insecureBLSPublicKey";
-    for (size_t i = 1; i < 5; i++) {
-        keys_json[pkey_name + std::to_string(i)] = pkey_ptr->at(i - 1);
-    }
-
-    std::ofstream outfile("key" + std::to_string(num) + ".json");
-    outfile << std::setw(4) << keys_json << std::endl;
-    outfile.close();
+  std::ofstream outfile("BLS_keys" + std::to_string(num) + ".json");
+  outfile << std::setw(4) << keys_json << std::endl;
+  outfile.close();
 }
 
 void common_pkey_to_json(std::shared_ptr<BLSPublicKey> common_pkey_ptr,
                          size_t num_signed, size_t num_all) {
-    nlohmann::json keys_json;
-    std::string pkey_name = "insecureCommonBLSPublicKey";
-    std::shared_ptr<std::vector<std::string> > common_pkey_str = common_pkey_ptr->toString();
-    for (size_t i = 1; i < 5; i++) {
-        keys_json[pkey_name + std::to_string(i)] = common_pkey_str->at(i - 1);
-    }
+  nlohmann::json keys_json;
+  std::string pkey_name = "insecureCommonBLSPublicKey";
+  std::shared_ptr<std::vector<std::string> > common_pkey_str = common_pkey_ptr->toString();
+  for (size_t i = 0; i < 4; ++i) {
+    keys_json[pkey_name + std::to_string(i)] = common_pkey_str->at(i);
+  }
 
-    std::ofstream outfile("publickey.json");
-    outfile << std::setw(4) << keys_json << std::endl;
-    outfile.close();
+  std::ofstream outfile("common_public_key.json");
+  outfile << std::setw(4) << keys_json << std::endl;
+  outfile.close();
 }
 
 static bool g_b_verbose_mode = false;
@@ -81,7 +75,7 @@ std::string ConvertToString(T field_elem) {
   field_elem.as_bigint().to_mpz(t);
 
   char arr[mpz_sizeinbase (t, 10) + 2];
-  char * tmp = mpz_get_str(arr, 10, t);
+  char* tmp = mpz_get_str(arr, 10, t);
   mpz_clear(t);
 
   std::string output = tmp;
@@ -90,7 +84,7 @@ std::string ConvertToString(T field_elem) {
 }
 
 void KeyGeneration(const size_t t, const size_t n, bool generate_all = true, int idx = -1) {
-  signatures::Dkg dkg_instance = signatures::Dkg(t, n);
+  signatures::Dkg dkg_instance =  signatures::Dkg(t, n);
   
   if (generate_all) {
     std::vector<std::vector<libff::alt_bn128_Fr>> polynomial(n);
@@ -104,11 +98,22 @@ void KeyGeneration(const size_t t, const size_t n, bool generate_all = true, int
       secret_key_contribution[i] = dkg_instance.SecretKeyContribution(polynomial[i]);
     }
 
-    // we will skip here a verification process
+    std::vector<std::vector<libff::alt_bn128_G2>> verification_vector(n);
+    for (size_t i = 0; i < n; ++i) {
+      verification_vector[i] = dkg_instance.VerificationVector(polynomial[i]);
+    }
 
     for (size_t i = 0; i < n; ++i) {
       for (size_t j = i; j < n; ++j) {
         std::swap(secret_key_contribution[j][i], secret_key_contribution[i][j]);
+      }
+    }
+
+    for (size_t i = 0; i < n; ++i) {
+      for (size_t j = 0; j < n; ++j) {
+        if (!dkg_instance.Verification(i, secret_key_contribution[i][j], verification_vector[j])) {
+          throw std::runtime_error("not verified");
+        }
       }
     }
 
@@ -123,36 +128,9 @@ void KeyGeneration(const size_t t, const size_t n, bool generate_all = true, int
     common_pkey_to_json( std::make_shared<BLSPublicKey>(common_public_key, t, n), t , n );
 
     for (size_t i = 0; i < n; ++i) {
-        keys_to_json(skeys.at(i), t, n , i+1);
-
-      secret_key_file["secret_key"] = ConvertToString<libff::alt_bn128_Fr>(secret_key[i]);
-
-      std::string str_file_name = "secret_key" + std::to_string(i) + ".json";
-      std::ofstream out(str_file_name.c_str());
-      out << secret_key_file.dump(4) << "\n";
-
-      if (g_b_verbose_mode)
-        std::cout
-          << str_file_name << " file:\n"
-          << secret_key_file.dump(4) << "\n\n";
+      keys_to_json(skeys.at(i), t, n , i);
     }
 
-    nlohmann::json public_key_json;
-    public_key_json["public_key"]["X"]["c0"] =
-                                        ConvertToString<libff::alt_bn128_Fq>(common_public_key.X.c0);
-    public_key_json["public_key"]["X"]["c1"] =
-                                        ConvertToString<libff::alt_bn128_Fq>(common_public_key.X.c1);
-    public_key_json["public_key"]["Y"]["c0"] =
-                                        ConvertToString<libff::alt_bn128_Fq>(common_public_key.Y.c0);
-    public_key_json["public_key"]["Y"]["c1"] =
-                                        ConvertToString<libff::alt_bn128_Fq>(common_public_key.Y.c1);
-    public_key_json["public_key"]["Z"]["c0"] =
-                                        ConvertToString<libff::alt_bn128_Fq>(common_public_key.Z.c0);
-    public_key_json["public_key"]["Z"]["c1"] =
-                                        ConvertToString<libff::alt_bn128_Fq>(common_public_key.Z.c1);
-
-    std::ofstream outfile_pk("public_key.json");
-    outfile_pk << public_key_json.dump(4) << "\n";
   } else {
     std::vector<libff::alt_bn128_Fr> polynomial = dkg_instance.GeneratePolynomial();
 

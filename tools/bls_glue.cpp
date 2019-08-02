@@ -68,7 +68,7 @@ void RecoverSignature(const size_t t, const size_t n, const std::vector<std::str
     libff::alt_bn128_G1 signature_share;
     signature_share.X = libff::alt_bn128_Fq(signature["signature"]["X"].get<std::string>().c_str());
     signature_share.Y = libff::alt_bn128_Fq(signature["signature"]["Y"].get<std::string>().c_str());
-    signature_share.Z = libff::alt_bn128_Fq(signature["signature"]["Z"].get<std::string>().c_str());
+    signature_share.Z = libff::alt_bn128_Fq::one();
 
     signature_shares[i] = signature_share;
   }
@@ -81,7 +81,6 @@ void RecoverSignature(const size_t t, const size_t n, const std::vector<std::str
 
   outdata["signature"]["X"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.X);
   outdata["signature"]["Y"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.Y);
-  outdata["signature"]["Z"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.Z);
 
   std::cout << outdata.dump(4) << '\n';
 }
