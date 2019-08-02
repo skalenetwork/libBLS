@@ -111,7 +111,7 @@ namespace signatures {
 
             libff::alt_bn128_Fq euler = y1_sqr ^ libff::alt_bn128_Fq::euler;
 
-            if (euler == libff::alt_bn128_Fq::one() || euler == libff::alt_bn128_Fq::zero()) {  // if y1_sqr is a square
+            if ( (euler == libff::alt_bn128_Fq::one() || euler == libff::alt_bn128_Fq::zero()) && !x1.is_zero() ) {  // if y1_sqr is a square
                 point.X = x1;
                 point.Y = y1_sqr.sqrt();
                 break;
