@@ -50,6 +50,8 @@ class DkgTe {
     bool Verify(size_t idx, const element_wrapper& share, 
                 const std::vector<element_wrapper>& verification_vector);
 
+    element_wrapper GetGenerator() const;
+
  private:
   const size_t t_ = 0;
 

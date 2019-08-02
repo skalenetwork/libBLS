@@ -30,7 +30,7 @@ std::string TEDecryptSet::merge(const encryption::Ciphertext& ciphertext){
     encryption::TE te (requiredSigners, totalSigners);
     std::vector<std::pair<encryption::element_wrapper, size_t>> decrypted;
     for (auto&& item: decrypts){
-        std::pair<encryption::element_wrapper, size_t> encr = std::make_pair(*item.second,item.first);
+        std::pair<encryption::element_wrapper, size_t> encr = std::make_pair(*item.second, item.first);
         decrypted.push_back(encr);
     }
 

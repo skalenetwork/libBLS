@@ -34,6 +34,8 @@ class TEPublicKey {
 public:
     TEPublicKey ( std::shared_ptr<std::string> _key_str, size_t  _requiredSigners, size_t _totalSigners );
 
+    TEPublicKey ( element_t _pkey, size_t  _requiredSigners, size_t _totalSigners );
+
     encryption::Ciphertext encrypt(const std::shared_ptr<std::string> message);
 
     ~TEPublicKey();

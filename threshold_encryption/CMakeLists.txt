@@ -13,6 +13,7 @@ set(sources
         TEDecryptSet.cpp
         TEPrivateKeyShare.cpp
         TEPublicKey.cpp
+        ../test/test_TE_wrappers.cpp
 	../dkg/dkg_te.cpp
 )
 

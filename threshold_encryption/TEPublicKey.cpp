@@ -35,6 +35,14 @@ TEPublicKey::TEPublicKey(std::shared_ptr<std::string> _key_str, size_t _required
     element_set_str(PublicKey, _key_str->c_str(), 10);
 }
 
+TEPublicKey:: TEPublicKey ( element_t _pkey, size_t  _requiredSigners, size_t _totalSigners )
+    : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
+
+    encryption::TE te(_requiredSigners, _totalSigners);
+    element_init_G1(PublicKey, te.pairing_);
+    element_init_same_as(PublicKey, _pkey);
+}
+
 encryption::Ciphertext TEPublicKey::encrypt(const std::shared_ptr<std::string> message){
     encryption::TE te(requiredSigners, totalSigners);
     return te.Encrypt( *message, PublicKey);

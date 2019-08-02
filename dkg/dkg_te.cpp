@@ -40,6 +40,10 @@ namespace encryption {
     }
   }
 
+  element_wrapper DkgTe::GetGenerator() const {
+      return element_wrapper(generator_);
+  }
+
   Polynomial DkgTe::GeneratePolynomial() {
     Polynomial pol(this->t_);
 
@@ -203,4 +207,8 @@ namespace encryption {
     return (element_cmp(value, mul) == 0);
   }
 
-}  // namespace encryption
+}
+
+
+
+// namespace encryption

@@ -17,7 +17,7 @@ class TEDecryptSet {
 public:
     TEDecryptSet(size_t _requiredSigners, size_t _totalSigners);
 
-    void addDecrypt (  size_t _signerIndex, std::shared_ptr< encryption::element_wrapper>& _el);
+    void addDecrypt ( size_t _signerIndex, std::shared_ptr< encryption::element_wrapper>& _el);
 
     std::string merge(const encryption::Ciphertext& ciphertext);
 };

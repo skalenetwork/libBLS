@@ -29,9 +29,16 @@ TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr<std::string> _key_str, siz
         throw std::runtime_error("private key share is null");
 
     encryption::TE te(_requiredSigners, _totalSigners);
-
     element_init_Zr(privateKey, te.pairing_);
     element_set_str(privateKey, _key_str->c_str(), 10);
+}
+
+TEPrivateKeyShare::TEPrivateKeyShare( element_t _skey_share, size_t _signerIndex, size_t  _requiredSigners, size_t _totalSigners )
+    : signerIndex(_signerIndex), requiredSigners(_requiredSigners), totalSigners(_totalSigners){
+
+    encryption::TE te(_requiredSigners, _totalSigners);
+    element_init_Zr(privateKey, te.pairing_);
+    element_init_same_as(privateKey, _skey_share);
 }
 
 encryption::element_wrapper TEPrivateKeyShare::decrypt(encryption::Ciphertext& cipher){
