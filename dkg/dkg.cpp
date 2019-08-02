@@ -116,7 +116,7 @@ namespace signatures {
     return (value == share * libff::alt_bn128_G2::one());
   }
 
-  libff::alt_bn128_G2 GetPublicKeyFromSecretKey(const libff::alt_bn128_Fr& secret_key) {
+  libff::alt_bn128_G2 Dkg::GetPublicKeyFromSecretKey(const libff::alt_bn128_Fr& secret_key) {
     libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
 
     return public_key;

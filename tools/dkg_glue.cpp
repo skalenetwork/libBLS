@@ -123,33 +123,40 @@ void GenerateSecretKeys(const size_t t, const size_t n, const std::vector<std::s
   }
 
   for (size_t i = 0; i < n; ++i) {
-    nlohmann::json secret_key_file;
+    nlohmann::json BLS_key_file;
 
-    secret_key_file["secret_key"] = ConvertToString<libff::alt_bn128_Fr>(secret_key[i]);
+     BLS_key_file["insecureBLSPrivateKey"] = ConvertToString<libff::alt_bn128_Fr>(secret_key[i]);
 
-    std::string str_file_name = "secret_key" + std::to_string(i) + ".json";
+    std::string str_file_name = "BLS_keys" + std::to_string(i) + ".json";
     std::ofstream out(str_file_name.c_str());
-    out << secret_key_file.dump(4) << "\n";
+    out <<  BLS_key_file.dump(4) << "\n";
+
+    libff::alt_bn128_G2 publ_key = dkg_instance.GetPublicKeyFromSecretKey(secret_key[i]);
+    publ_key.to_affine_coordinates();
+     BLS_key_file["insecureBLSPublicKey1"] =
+        ConvertToString<libff::alt_bn128_Fq>(publ_key.X.c0);
+     BLS_key_file["insecureBLSPublicKey2"] =
+        ConvertToString<libff::alt_bn128_Fq>(publ_key.X.c1);
+     BLS_key_file["insecureBLSPublicKey3"] =
+        ConvertToString<libff::alt_bn128_Fq>(publ_key.Y.c0);
+     BLS_key_file["insecureBLSPublicKey4"] =
+        ConvertToString<libff::alt_bn128_Fq>(publ_key.Y.c1);
 
     if (g_b_verbose_mode)
       std::cout
         << str_file_name << " file:\n"
-        << secret_key_file.dump(4) << "\n\n";
+        << BLS_key_file.dump(4) << "\n\n";
   }
-
+  common_public_key.to_affine_coordinates();
   nlohmann::json public_key_json;
-  public_key_json["public_key"]["X"]["c0"] =
+  public_key_json["insecureCommonBLSPublicKey1"] =
                                       ConvertToString<libff::alt_bn128_Fq>(common_public_key.X.c0);
-  public_key_json["public_key"]["X"]["c1"] =
+  public_key_json["insecureCommonBLSPublicKey2"] =
                                       ConvertToString<libff::alt_bn128_Fq>(common_public_key.X.c1);
-  public_key_json["public_key"]["Y"]["c0"] =
+  public_key_json["insecureCommonBLSPublicKey3"] =
                                       ConvertToString<libff::alt_bn128_Fq>(common_public_key.Y.c0);
-  public_key_json["public_key"]["Y"]["c1"] =
+  public_key_json["insecureCommonBLSPublicKey4"] =
                                       ConvertToString<libff::alt_bn128_Fq>(common_public_key.Y.c1);
-  public_key_json["public_key"]["Z"]["c0"] =
-                                      ConvertToString<libff::alt_bn128_Fq>(common_public_key.Z.c0);
-  public_key_json["public_key"]["Z"]["c1"] =
-                                      ConvertToString<libff::alt_bn128_Fq>(common_public_key.Z.c1);
 
   std::ofstream outfile_pk("public_key.json");
   outfile_pk << public_key_json.dump(4) << "\n";
