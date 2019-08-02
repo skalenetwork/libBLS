@@ -54,14 +54,20 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
           std::ostream& outfile, const std::string& key, bool sign_all = true, int idx = -1) {
   signatures::Bls bls_instance = signatures::Bls(t, n);
 
-  std::vector<uint8_t> message_data;
+  std::vector<uint8_t> message_data;  
   uint8_t n_byte;
   while (data_file >> n_byte) {
     message_data.push_back(n_byte);
   }
 
   std::string message(message_data.cbegin(), message_data.cend());
-  libff::alt_bn128_G1 hash = bls_instance.Hashing(message);
+  std::string hash_str = cryptlite::sha256::hash_hex(message);
+  std::array< uint8_t, 32>hash_bytes_arr;
+  for (size_t i = 0; i < 32; i++ ){
+      hash_bytes_arr.at(i) = static_cast<uint8_t>(hash_str[i]);
+  }
+
+  libff::alt_bn128_G1 hash = bls_instance.HashtoG1(std::make_shared<std::array< uint8_t, 32>>(hash_bytes_arr));
 
   nlohmann::json hash_json;
   hash_json["message"] = message;

@@ -54,6 +54,11 @@ void Verify(const size_t t, const size_t n, std::istream& sign_file) {
   hash_file >> hash_in;
 
   std::string to_be_hashed = hash_in["message"].get<std::string>();
+  std::string hash_str = cryptlite::sha256::hash_hex(to_be_hashed);
+  std::array< uint8_t, 32> hash_bytes_arr;
+  for (size_t i = 0; i < 32; i++ ){
+      hash_bytes_arr.at(i) = static_cast<uint8_t>(hash_str[i]);
+  }
 
   nlohmann::json pk_in;
   std::ifstream pk_file("common_public_key.json");
@@ -65,7 +70,7 @@ void Verify(const size_t t, const size_t n, std::istream& sign_file) {
   }
   BLSPublicKey common_pkey(std::make_shared<std::vector<std::string>>(pkey_str), t, n);
 
-  bool bRes = bls_instance.Verification(to_be_hashed, sign, *common_pkey.getPublicKey());
+  bool bRes = bls_instance.Verification( std::make_shared<std::array< uint8_t, 32>>(hash_bytes_arr) , sign, *common_pkey.getPublicKey());
 
   if (g_b_verbose_mode)
     std::cout << "Signature verification result: " << (bRes ? "True" : "False") << '\n';
