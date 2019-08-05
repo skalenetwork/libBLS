@@ -27,18 +27,18 @@
 #include "threshold_encryption.h"
 
 class TEPublicKey {
-  element_t PublicKey;
+  encryption::element_wrapper PublicKey;
 
   size_t totalSigners;
   size_t requiredSigners;
 public:
     TEPublicKey ( std::shared_ptr<std::string> _key_str, size_t  _requiredSigners, size_t _totalSigners );
 
-    TEPublicKey ( element_t _pkey, size_t  _requiredSigners, size_t _totalSigners );
+    TEPublicKey ( encryption::element_wrapper _pkey, size_t  _requiredSigners, size_t _totalSigners );
 
     encryption::Ciphertext encrypt(const std::shared_ptr<std::string> message);
 
-    ~TEPublicKey();
+    encryption::element_wrapper getPublicKey() const;
 };
 
 

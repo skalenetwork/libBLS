@@ -23,6 +23,7 @@
 
 #include "TEPublicKey.h"
 
+#include <iostream>
 
 TEPublicKey::TEPublicKey(std::shared_ptr<std::string> _key_str, size_t _requiredSigners, size_t _totalSigners)
         : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
@@ -30,24 +31,25 @@ TEPublicKey::TEPublicKey(std::shared_ptr<std::string> _key_str, size_t _required
         throw std::runtime_error("public key is null");
 
     encryption::TE te(_requiredSigners, _totalSigners);
-
-    element_init_G1(PublicKey, te.pairing_);
-    element_set_str(PublicKey, _key_str->c_str(), 10);
+    element_t pkey;
+    element_init_G1(pkey, te.pairing_);
+    element_set_str(pkey, _key_str->c_str(), 10);
+    PublicKey = pkey;
+    element_clear(pkey);
 }
 
-TEPublicKey:: TEPublicKey ( element_t _pkey, size_t  _requiredSigners, size_t _totalSigners )
-    : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
+TEPublicKey:: TEPublicKey ( encryption::element_wrapper _pkey, size_t  _requiredSigners, size_t _totalSigners )
+    : requiredSigners(_requiredSigners), totalSigners(_totalSigners), PublicKey(_pkey) {
 
-    encryption::TE te(_requiredSigners, _totalSigners);
-    element_init_G1(PublicKey, te.pairing_);
-    element_init_same_as(PublicKey, _pkey);
 }
 
 encryption::Ciphertext TEPublicKey::encrypt(const std::shared_ptr<std::string> message){
     encryption::TE te(requiredSigners, totalSigners);
-    return te.Encrypt( *message, PublicKey);
+    if (element_is0(PublicKey.el_))
+        std::runtime_error("Public key is zero");
+    return te.Encrypt( *message, PublicKey.el_);
 }
 
-TEPublicKey::~TEPublicKey(){
-    element_clear(PublicKey);
+encryption::element_wrapper TEPublicKey::getPublicKey() const{
+    return PublicKey;
 }

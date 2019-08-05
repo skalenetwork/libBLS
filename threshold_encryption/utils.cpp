@@ -29,12 +29,17 @@ void MpzSquareRoot(mpz_t ret_val, mpz_t x) {
   type_a_Fq::s = 1;
   type_a_Fq::t = libff::bigint<num_limbs>("4390355399831656261218890992377024907903441599707104105514326699633237815440111478539312589711331110711577929384791158729638856683658740662462564999112395");
   type_a_Fq::t_minus_1_over_2 = libff::bigint<num_limbs>("4390355399831656261218890992377024907903441599707104105514326699633237815440111478539312589711331110711577929384791158729638856683658740662462564999112394");
-  type_a_Fq::nqr = long(11);
+  type_a_Fq::nqr = 11;
   type_a_Fq::nqr_to_t = type_a_Fq::nqr ^ type_a_Fq::t;
 
-  type_a_Fq to_find_square_root = type_a_Fq(libff::bigint<num_limbs>(x));
+  libff::bigint<num_limbs> to_find_square_root = libff::bigint<num_limbs>("2195177699915828130609445496188512453951720799853552052757163349816618907720055739269656294855665555355788964692395579364819428341829370331231282499556198"); //type_a_Fq(libff::bigint<num_limbs>(x));
 
-  type_a_Fq root = type_a_Fq(libff::bigint<num_limbs>(x)).sqrt();
+  libff::bigint<num_limbs> new_x = libff::bigint<num_limbs>(x);
+  type_a_Fq base(new_x);
+  type_a_Fq root = base ^ to_find_square_root;
+
+  std::cerr << "BASE VALUE IS : " << type_a_Fq::nqr << '\n';
+  std::cerr << "ROOT VALUE IS : " << root << '\n';
 
   root.as_bigint().to_mpz(ret_val);
 }

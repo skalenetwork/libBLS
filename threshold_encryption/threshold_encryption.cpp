@@ -150,6 +150,7 @@ namespace encryption {
         mpz_clear(x_cubed);
       } else {
         MpzSquareRoot(y_coord, y_squared);
+        element_printf("Y_COORD IS : %B\n", y_coord);
 
         mpz_clear(modulus_q);
         mpz_clear(sum);
@@ -167,6 +168,7 @@ namespace encryption {
     char* coord_y = mpz_get_str(arr2, 10, y_coord);
 
     std::string coords_str = '[' + std::string(coord_x) + ',' + std::string(coord_y) + ']';
+    std::cerr << coords_str << '\n';
 
     element_set_str(ret_val, coords_str.c_str(), 10);
 
@@ -202,6 +204,7 @@ namespace encryption {
     // assuming message and hash are the same size strings
     // the behaviour is undefined when the two arguments are valarrays with different sizes
 
+    std::cerr << "HASH SIZE IS " << hash.size() << std::endl;
     std::valarray<uint8_t> lhs_to_hash(hash.size());
     for (size_t i = 0; i < hash.size(); ++i) {
       lhs_to_hash[i] = static_cast<uint8_t>(hash[i]);
@@ -211,7 +214,6 @@ namespace encryption {
     for (size_t i = 0; i < message.size(); ++i) {
       rhs_to_hash[i] = static_cast<uint8_t>(message[i]);
     }
-
 
     std::valarray<uint8_t> res = lhs_to_hash ^ rhs_to_hash;
 
@@ -234,6 +236,9 @@ namespace encryption {
     std::get<0>(result) = element_wrapper(U);
     std::get<1>(result) = V;
     std::get<2>(result) = element_wrapper(W);
+
+    element_printf("CYPHER[0] is  %B\n", std::get<0>(result).el_);
+    element_printf("CYPHER[2] is  %B\n", std::get<2>(result).el_);
 
     element_clear(U);
     element_clear(W);
