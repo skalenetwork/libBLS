@@ -169,7 +169,7 @@ libff::alt_bn128_G1 signature = bls_instance.Signing(hash, secret_key
 assert(bls_instance.Verification(message, signature, public_key) == true);
 ```
 
-Also, see [README](libBLS/tools/README.md) for more details about how generate sample secret keys and signatures and how verify them.
+Also, see [README](/skalenetwork/libBLS/blob/SKALE-1387-add-readme-for-libBLS/tools/tools/README.md) for more details about how generate sample secret keys and signatures and how verify them.
 
 ## How to use the TE algorithm
 
