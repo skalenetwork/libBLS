@@ -25,6 +25,7 @@
 #include <fstream>
 
 #include <bls/bls.h>
+
 #include <third_party/json.hpp>
 
 #include <boost/program_options.hpp>
@@ -70,7 +71,11 @@ void Verify(const size_t t, const size_t n, std::istream& sign_file) {
   }
   BLSPublicKey common_pkey(std::make_shared<std::vector<std::string>>(pkey_str), t, n);
 
-  bool bRes = bls_instance.Verification( std::make_shared<std::array< uint8_t, 32>>(hash_bytes_arr) , sign, *common_pkey.getPublicKey());
+  if (!sign.is_well_formed()) {
+    std::cerr << "PORAZKA\n";
+  }
+
+  bool bRes = bls_instance.Verification(std::make_shared<std::array< uint8_t, 32>>(hash_bytes_arr) , sign, *common_pkey.getPublicKey());
 
   if (g_b_verbose_mode)
     std::cout << "Signature verification result: " << (bRes ? "True" : "False") << '\n';
@@ -88,7 +93,7 @@ int main(int argc, const char *argv[]) {
       ("version", "Show version number")
       ("t", boost::program_options::value<size_t>(), "Threshold")
       ("n", boost::program_options::value<size_t>(), "Number of participants")
-      ("input", boost::program_options::value<std::string>(), "Input file path; if not specified then use standard input")
+      ("input", boost::program_options::value<std::string>(), "Input file path with BLS signature; if not specified then use standard input")
       ("v", "Verbose mode (optional)")
       ;
 

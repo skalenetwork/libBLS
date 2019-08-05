@@ -28,8 +28,9 @@
 #include <bls/BLSPrivateKeyShare.h>
 #include <bls/BLSPublicKeyShare.h>
 #include <bls/BLSPublicKey.h>
-
 #include <bls/BLSPrivateKey.h>
+#include <bls/BLSutils.h>
+
 
 #define EXPAND_AS_STR(x) __EXPAND_AS_STR__(x)
 #define __EXPAND_AS_STR__(x) #x
@@ -65,22 +66,6 @@ void CommonPkeyToJson(std::shared_ptr<BLSPublicKey> common_pkey_ptr,
 }
 
 static bool g_b_verbose_mode = false;
-
-template<class T>
-std::string ConvertToString(T field_elem) {
-  mpz_t t;
-  mpz_init(t);
-
-  field_elem.as_bigint().to_mpz(t);
-
-  char arr[mpz_sizeinbase (t, 10) + 2];
-  char* tmp = mpz_get_str(arr, 10, t);
-  mpz_clear(t);
-
-  std::string output = tmp;
-
-  return output;
-}
 
 void KeyGeneration(const size_t t, const size_t n, bool generate_all = true, int idx = -1) {
   signatures::Dkg dkg_instance =  signatures::Dkg(t, n);
@@ -141,22 +126,23 @@ void KeyGeneration(const size_t t, const size_t n, bool generate_all = true, int
     data["idx"] = std::to_string(idx);
 
     for (size_t i = 0; i < n; ++i) {
-        data["insecureBLSPrivateKey"][std::to_string(i)] = ConvertToString<libff::alt_bn128_Fr>(secret_key_contribution[i]);
+        data["secret_key_contribution"][std::to_string(i)] = BLSutils::ConvertToString<libff::alt_bn128_Fr>(secret_key_contribution[i]);
     }
+
 
     for (size_t i = 0; i < t; ++i) {
       data["verification_vector"][std::to_string(i)]["X"]["c0"] = 
-                                ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].X.c0);
+                                BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].X.c0);
       data["verification_vector"][std::to_string(i)]["X"]["c1"] =
-                                ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].X.c1);
+                                BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].X.c1);
       data["verification_vector"][std::to_string(i)]["Y"]["c0"] =
-                                ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].Y.c0);
+                                BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].Y.c0);
       data["verification_vector"][std::to_string(i)]["Y"]["c1"] =
-                                ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].Y.c1);
+                                BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].Y.c1);
       data["verification_vector"][std::to_string(i)]["Z"]["c0"] =
-                                ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].Z.c0);
+                                BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].Z.c0);
       data["verification_vector"][std::to_string(i)]["Z"]["c1"] =
-                                ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].Z.c1);
+                                BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].Z.c1);
     }
 
     std::ofstream outfile("data_for_" + std::to_string(idx) + "-th_participant.json");
@@ -202,8 +188,9 @@ int main(int argc, const char *argv[]) {
     int j = -1;
     if (vm.count("j")) {
       j = vm["j"].as<int>();
-      if( g_b_verbose_mode )
+      if(g_b_verbose_mode) {
         std::cout << "j = " << j << '\n';
+      }
     }
 
     if (vm.count("v"))

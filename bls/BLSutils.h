@@ -30,9 +30,9 @@ class BLSutils{
     public:
     template<class T>
     static std::string ConvertToString(T field_elem);
-    static std::pair<libff::alt_bn128_Fq , libff::alt_bn128_Fq  > ParseHint (std::string &);
+    static std::pair<libff::alt_bn128_Fq , libff::alt_bn128_Fq> ParseHint (std::string &);
     static libff::alt_bn128_Fq HashToFq (std::shared_ptr<std::array< uint8_t, 32>>);
-    static std::shared_ptr<std::vector<std::string>> SplitString( const std::shared_ptr< std::string >, const std::string& delim);
+    static std::shared_ptr<std::vector<std::string>> SplitString(const std::shared_ptr<std::string>, const std::string& delim);
     static void initBLS();
 };
 
