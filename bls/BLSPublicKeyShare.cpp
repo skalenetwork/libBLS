@@ -129,7 +129,7 @@ bool BLSPublicKeyShare::VerifySigWithHint(std::shared_ptr<std::array<uint8_t, 32
         std::cerr << "counter:";
         y_shift_x.second.print();
 
-                return false;
+        return false;
     }
 
     libff::alt_bn128_G1 hash(x, y_shift_x.first, libff::alt_bn128_Fq::one());

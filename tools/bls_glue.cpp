@@ -25,6 +25,8 @@
 #include <fstream>
 
 #include <bls/bls.h>
+#include <bls/BLSutils.h>
+
 #include <third_party/json.hpp>
 
 #include <boost/program_options.hpp>
@@ -33,22 +35,6 @@
 #define __EXPAND_AS_STR__( x ) #x
 
 static bool g_b_verbose_mode = false;
-
-template<class T>
-std::string ConvertToString(T field_elem) {
-  mpz_t t;
-  mpz_init(t);
-
-  field_elem.as_bigint().to_mpz(t);
-
-  char arr[mpz_sizeinbase (t, 10) + 2];
-  char * tmp = mpz_get_str(arr, 10, t);
-  mpz_clear(t);
-
-  std::string output = tmp;
-
-  return output;
-}
 
 void RecoverSignature(const size_t t, const size_t n, const std::vector<std::string>& input) {
   signatures::Bls bls_instance = signatures::Bls(t, n);
@@ -68,7 +54,7 @@ void RecoverSignature(const size_t t, const size_t n, const std::vector<std::str
     libff::alt_bn128_G1 signature_share;
     signature_share.X = libff::alt_bn128_Fq(signature["signature"]["X"].get<std::string>().c_str());
     signature_share.Y = libff::alt_bn128_Fq(signature["signature"]["Y"].get<std::string>().c_str());
-    signature_share.Z = libff::alt_bn128_Fq(signature["signature"]["Z"].get<std::string>().c_str());
+    signature_share.Z = libff::alt_bn128_Fq::one();
 
     signature_shares[i] = signature_share;
   }
@@ -76,12 +62,12 @@ void RecoverSignature(const size_t t, const size_t n, const std::vector<std::str
   std::vector<libff::alt_bn128_Fr> lagrange_coeffs = bls_instance.LagrangeCoeffs(idx);
 
   libff::alt_bn128_G1 common_signature = bls_instance.SignatureRecover(signature_shares, lagrange_coeffs);
+  common_signature.to_affine_coordinates();
 
   nlohmann::json outdata;
 
-  outdata["signature"]["X"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.X);
-  outdata["signature"]["Y"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.Y);
-  outdata["signature"]["Z"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.Z);
+  outdata["signature"]["X"] = BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_signature.X);
+  outdata["signature"]["Y"] = BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_signature.Y);
 
   std::cout << outdata.dump(4) << '\n';
 }

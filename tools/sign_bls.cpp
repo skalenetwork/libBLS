@@ -22,6 +22,7 @@
 */
 
 #include <bls/bls.h>
+#include <bls/BLSutils.h>
 
 #include <fstream>
 
@@ -34,35 +35,25 @@
 
 static bool g_b_verbose_mode = false;
 
-template<class T>
-std::string ConvertToString(T field_elem) {
-  mpz_t t;
-  mpz_init(t);
-
-  field_elem.as_bigint().to_mpz(t);
-
-  char arr[mpz_sizeinbase (t, 10) + 2];
-  char * tmp = mpz_get_str(arr, 10, t);
-  mpz_clear(t);
-
-  std::string output = tmp;
-
-  return output;
-}
 
 void Sign(const size_t t, const size_t n, std::istream& data_file,
           std::ostream& outfile, const std::string& key, bool sign_all = true, int idx = -1) {
   signatures::Bls bls_instance = signatures::Bls(t, n);
 
-  std::vector<uint8_t> message_data;
-  while (!data_file.eof()) {
-    uint8_t n_byte;
-    data_file >> n_byte;
+  std::vector<uint8_t> message_data;  
+  uint8_t n_byte;
+  while (data_file >> n_byte) {
     message_data.push_back(n_byte);
   }
 
   std::string message(message_data.cbegin(), message_data.cend());
-  libff::alt_bn128_G1 hash = bls_instance.Hashing(message);
+  std::string hash_str = cryptlite::sha256::hash_hex(message);
+  std::array< uint8_t, 32>hash_bytes_arr;
+  for (size_t i = 0; i < 32; i++ ){
+      hash_bytes_arr.at(i) = static_cast<uint8_t>(hash_str[i]);
+  }
+
+  libff::alt_bn128_G1 hash = bls_instance.HashtoG1(std::make_shared<std::array< uint8_t, 32>>(hash_bytes_arr));
 
   nlohmann::json hash_json;
   hash_json["message"] = message;
@@ -75,11 +66,9 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
     for (size_t i = 0; i < n; ++i) {
       nlohmann::json secret_key_file;
 
-      //std::ifstream infile(key + std::to_string(i) + ".json");
-      std::ifstream infile(key + std::to_string(i+1) + ".json");
+      std::ifstream infile(key + std::to_string(i) + ".json");
       infile >> secret_key_file;
 
-      //secret_key[i] = libff::alt_bn128_Fr(secret_key_file["secret_key"].get<std::string>().c_str());
         secret_key[i] = libff::alt_bn128_Fr(secret_key_file["insecureBLSPrivateKey"].get<std::string>().c_str());
     }
 
@@ -104,20 +93,20 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
     std::ifstream infile(key + std::to_string(idx) + ".json");
     infile >> secret_key_file;
 
-    //secret_key = libff::alt_bn128_Fr(secret_key_file["secret_key"].get<std::string>().c_str());
-     secret_key = libff::alt_bn128_Fr(secret_key_file["insecureBLSPrivateKey"].get<std::string>().c_str());
+    secret_key = libff::alt_bn128_Fr(secret_key_file["insecureBLSPrivateKey"].get<std::string>().c_str());
 
     common_signature = bls_instance.Signing(hash, secret_key);
   }
+
+  common_signature.to_affine_coordinates();
 
   nlohmann::json signature;
   if (idx >= 0) {
     signature["index"] = std::to_string(idx);
   }
 
-  signature["signature"]["X"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.X);
-  signature["signature"]["Y"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.Y);
-  signature["signature"]["Z"] = ConvertToString<libff::alt_bn128_Fq>(common_signature.Z);
+  signature["signature"]["X"] = BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_signature.X);
+  signature["signature"]["Y"] = BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_signature.Y);
 
   std::ofstream outfile_h("hash.json");
   outfile_h << hash_json.dump(4) << "\n";
@@ -137,13 +126,13 @@ int main(int argc, const char *argv[]) {
       ("t", boost::program_options::value<size_t>(), "Threshold")
       ("n", boost::program_options::value<size_t>(), "Number of participants")
       ("input", boost::program_options::value<std::string>(),
-                                      "Input file path; if not specified then use standard input")
+                                      "Input file path with containing message to sign; if not specified then use standard input")
       ("j", boost::program_options::value<int>(),
                             "Index of participant to sign; if not specified then all participants")
       ("key", boost::program_options::value<std::string>(),
-                                        "Directory with secret keys which are secret_key<j>.json ")
+                                        "Directory with secret keys which are BLS_keys<j>.json ")
       ("output", boost::program_options::value<std::string>(),
-                "Output file path to save signature to; if not specified then use standard output")
+                "Output file path to save signature to; if not specified for common signature then use standard output;")
       ("v", "Verbose mode (optional)");
 
     boost::program_options::variables_map vm;
