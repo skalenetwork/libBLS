@@ -169,6 +169,8 @@ libff::alt_bn128_G1 signature = bls_instance.Signing(hash, secret_key
 assert(bls_instance.Verification(message, signature, public_key) == true);
 ```
 
+Also, see [README](libBLS/tools/README.md) for more details about how generate sample secret keys and signatures and how verify them.
+
 ## How to use the TE algorithm
 
 1.  Create an istance of class TE with input parameters t, and n; where n is a number of participants in your group and t is a threshold number for your case.
