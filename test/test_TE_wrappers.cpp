@@ -20,39 +20,49 @@ std::default_random_engine rand_gen((unsigned int) time(0));
 BOOST_AUTO_TEST_SUITE(ThresholdEncryptionWrappers)
 
     BOOST_AUTO_TEST_CASE(testSqrt){
-        size_t num_all = rand_gen() % 16 + 1;
-        size_t num_signed = rand_gen() % num_all + 1;
+        mpz_t rand;
+        mpz_init(rand);
 
-        encryption::TE te_obj(num_signed, num_all);
-
-        element_t rand_el;
-        element_init_G1(rand_el, te_obj.pairing_);
-        element_random(rand_el);
-
-        element_t sqr_el;
-        element_init_G1(sqr_el, te_obj.pairing_);
-        element_square (sqr_el, rand_el);
+        mpz_random(rand, num_limbs);
 
         mpz_t mpz_sqr;
         mpz_init(mpz_sqr);
-        element_to_mpz(mpz_sqr,sqr_el);
+        mpz_mul(mpz_sqr, rand, rand);
+
+        mpz_t modulus_q;
+        mpz_init(modulus_q);
+        mpz_set_str(modulus_q, "8780710799663312522437781984754049815806883199414208211028653399266475630880222957078625179422662221423155858769582317459277713367317481324925129998224791", 10);
+
+        mpz_t sqr_mod;
+        mpz_init(sqr_mod);
+        mpz_mod(sqr_mod, mpz_sqr, modulus_q);
 
         mpz_t mpz_sqrt0;
         mpz_init(mpz_sqrt0);
-        element_to_mpz(mpz_sqrt0,rand_el);
+        mpz_mod(mpz_sqrt0, rand, modulus_q);
+
+        mpz_clear(rand);
 
         mpz_t mpz_sqrt;
         mpz_init(mpz_sqrt);
 
-        MpzSquareRoot(mpz_sqrt, mpz_sqr);
+        gmp_printf ("%s is %Zd\n", "SQR", sqr_mod);
+        gmp_printf ("%s is %Zd\n", "SQRT BEFORE FUNC", mpz_sqrt0);
 
-        BOOST_REQUIRE(mpz_sqrt0 == mpz_sqrt);
+        MpzSquareRoot(mpz_sqrt, sqr_mod);
 
-        mpz_clears(mpz_sqr,mpz_sqrt,0);
-        element_clear(rand_el);
-        element_clear(sqr_el);
+        gmp_printf ("%s is %Zd\n", "SQRT AFTER FUNC", mpz_sqrt);
 
+        mpz_t sum;
+        mpz_init(sum);
 
+        mpz_add(sum, mpz_sqrt0, mpz_sqrt);
+
+        gmp_printf ("%s is %Zd\n", "SUM", sum);
+
+        BOOST_REQUIRE(mpz_sqrt0 == mpz_sqrt || sum == modulus_q || mpz_cmp_ui(sum, 0) == 0);
+
+        mpz_clears(mpz_sqr,mpz_sqrt, sqr_mod, 0);
     }
 
     BOOST_AUTO_TEST_CASE(test1){
