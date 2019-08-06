@@ -224,6 +224,9 @@ namespace encryption {
     element_init_G1(W, this->pairing_);
     element_init_G1(H, this->pairing_);
 
+    element_printf("U is  %B\n", U);
+    std::cerr << " V is " << V << std::endl;
+
     this->HashToGroup(H, U, V);
     element_mul_zn(W, H, r);
 

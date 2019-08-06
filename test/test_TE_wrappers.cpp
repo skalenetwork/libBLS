@@ -11,13 +11,52 @@
 #include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/TEPrivateKeyShare.h>
 #include <threshold_encryption/threshold_encryption.h>
+#include <threshold_encryption/utils.h>
 
 #include <random>
 
 std::default_random_engine rand_gen((unsigned int) time(0));
 
 BOOST_AUTO_TEST_SUITE(ThresholdEncryptionWrappers)
+
+    BOOST_AUTO_TEST_CASE(testSqrt){
+        size_t num_all = rand_gen() % 16 + 1;
+        size_t num_signed = rand_gen() % num_all + 1;
+
+        encryption::TE te_obj(num_signed, num_all);
+
+        element_t rand_el;
+        element_init_G1(rand_el, te_obj.pairing_);
+        element_random(rand_el);
+
+        element_t sqr_el;
+        element_init_G1(sqr_el, te_obj.pairing_);
+        element_square (sqr_el, rand_el);
+
+        mpz_t mpz_sqr;
+        mpz_init(mpz_sqr);
+        element_to_mpz(mpz_sqr,sqr_el);
+
+        mpz_t mpz_sqrt0;
+        mpz_init(mpz_sqrt0);
+        element_to_mpz(mpz_sqrt0,rand_el);
+
+        mpz_t mpz_sqrt;
+        mpz_init(mpz_sqrt);
+
+        MpzSquareRoot(mpz_sqrt, mpz_sqr);
+
+        BOOST_REQUIRE(mpz_sqrt0 == mpz_sqrt);
+
+        mpz_clears(mpz_sqr,mpz_sqrt,0);
+        element_clear(rand_el);
+        element_clear(sqr_el);
+
+
+    }
+
     BOOST_AUTO_TEST_CASE(test1){
+      for (size_t i = 0; i < 0; i++) {
         size_t num_all = rand_gen() % 16 + 1;
         size_t num_signed = rand_gen() % num_all + 1;
         //encryption::TE te_obj(num_signed, num_all);
@@ -50,6 +89,9 @@ BOOST_AUTO_TEST_SUITE(ThresholdEncryptionWrappers)
         TEPublicKey common_public(common_pkey, num_signed, num_all);
         std::shared_ptr msg_ptr = std::make_shared<std::string>(message);
         encryption::Ciphertext cypher = common_public.encrypt(msg_ptr);
+        std::cerr << "CYPHER[1] is " <<  std::get<1>(cypher) <<std::endl;
+        element_printf("CYPHER[0] is  %B\n", std::get<0>(cypher).el_);
+         element_printf("CYPHER[3] is  %B\n", std::get<0>(cypher).el_);
 
         std::vector<encryption::element_wrapper> skeys = dkg_te.CreateSecretKeyContribution(poly);
         std::vector<TEPrivateKeyShare> skey_shares;
@@ -76,7 +118,7 @@ BOOST_AUTO_TEST_SUITE(ThresholdEncryptionWrappers)
         std::string message_decrypted = decr_set.merge(cypher);
         BOOST_REQUIRE(message == message_decrypted);
     }
-
+    }
 
 
 BOOST_AUTO_TEST_SUITE_END()
