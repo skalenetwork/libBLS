@@ -25,17 +25,13 @@ BOOST_AUTO_TEST_SUITE(ThresholdEncryptionWrappers)
 
         mpz_random(rand, num_limbs);
 
-        mpz_t mpz_sqr;
-        mpz_init(mpz_sqr);
-        mpz_mul(mpz_sqr, rand, rand);
-
         mpz_t modulus_q;
         mpz_init(modulus_q);
         mpz_set_str(modulus_q, "8780710799663312522437781984754049815806883199414208211028653399266475630880222957078625179422662221423155858769582317459277713367317481324925129998224791", 10);
 
         mpz_t sqr_mod;
         mpz_init(sqr_mod);
-        mpz_mod(sqr_mod, mpz_sqr, modulus_q);
+        mpz_powm_ui(sqr_mod, rand, 2,  modulus_q);
 
         mpz_t mpz_sqrt0;
         mpz_init(mpz_sqrt0);
@@ -60,9 +56,9 @@ BOOST_AUTO_TEST_SUITE(ThresholdEncryptionWrappers)
 
         gmp_printf ("%s is %Zd\n", "SUM", sum);
 
-        BOOST_REQUIRE(mpz_sqrt0 == mpz_sqrt || sum == modulus_q || mpz_cmp_ui(sum, 0) == 0);
+        BOOST_REQUIRE(mpz_cmp(mpz_sqrt0, mpz_sqrt) || mpz_cmp(sum, modulus_q) == 0);
 
-        mpz_clears(mpz_sqr,mpz_sqrt, sqr_mod, 0);
+        mpz_clears(mpz_sqrt0, mpz_sqrt, sqr_mod, sum, modulus_q, 0);
     }
 
     BOOST_AUTO_TEST_CASE(test1){

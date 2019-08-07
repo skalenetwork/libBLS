@@ -30,27 +30,43 @@ void MpzSquareRoot(mpz_t ret_val, mpz_t x) {
   type_a_Fq::Rsquared = libff::bigint<num_limbs>("7908377253245679686309230217487816474209105348333109471752408628253287194295204727324253215849716283310453246501640191319592635974636605685978512739837527");
   type_a_Fq::Rcubed = libff::bigint<num_limbs>("7852932988661878723775242768845432675513004110346433075808894336018985633290560702487151366204515158699758717961115825050580193491630542543472251086224684");
   type_a_Fq::inv = 0xc1fC53896318fdd9;
+  //type_a_Fq::inv = 13978139192989384153;
   type_a_Fq::num_bits = 512;
   type_a_Fq::euler = libff::bigint<num_limbs>("4390355399831656261218890992377024907903441599707104105514326699633237815440111478539312589711331110711577929384791158729638856683658740662462564999112395");
   type_a_Fq::s = 1;
   type_a_Fq::t = libff::bigint<num_limbs>("4390355399831656261218890992377024907903441599707104105514326699633237815440111478539312589711331110711577929384791158729638856683658740662462564999112395");
   type_a_Fq::t_minus_1_over_2 = libff::bigint<num_limbs>("2195177699915828130609445496188512453951720799853552052757163349816618907720055739269656294855665555355788964692395579364819428341829370331231282499556197");
   type_a_Fq::multiplicative_generator = type_a_Fq("11");
-  type_a_Fq::root_of_unity = type_a_Fq::multiplicative_generator ^ type_a_Fq::t;
+  //type_a_Fq::root_of_unity = type_a_Fq::multiplicative_generator ^ type_a_Fq::t;
   type_a_Fq::nqr = type_a_Fq("11");
-  type_a_Fq::nqr_to_t =  type_a_Fq::nqr ^ type_a_Fq::t;
+  //type_a_Fq::nqr_to_t =  type_a_Fq::nqr ^ type_a_Fq::t;
 
   libff::bigint<num_limbs> to_find_square_root = libff::bigint<num_limbs>("2195177699915828130609445496188512453951720799853552052757163349816618907720055739269656294855665555355788964692395579364819428341829370331231282499556198"); //type_a_Fq(libff::bigint<num_limbs>(x));
 
+//  for (size_t i = 0; i < num_limbs; ++i) {
+//    gmp_printf ("limb array %Mu\n", modulus.data[i], num_limbs);
+//  }
   libff::bigint<num_limbs> new_x = libff::bigint<num_limbs>(x);
-  //type_a_Fq base(new_x);
-  type_a_Fq base("2582249878086908589655919172003011874329705792829223513219972236523273196072392350741138816993191950739660392195885545121");
-  type_a_Fq root = base ^ to_find_square_root;
+  type_a_Fq base(new_x);
+  //type_a_Fq root = base ^ to_find_square_root;
+  //type_a_Fq root = type_a_Fq("1306496017242772172743264447276527112501750362327928440722559572994619766769639623457450192156124916040769111470258706639743561430669385023580620797552756");
 
-  assert(root * root == base);
 
-  std::cerr << "BASE VALUE IS : " << base << '\n';
-  std::cerr << "ROOT VALUE IS : " << root << '\n';
+  mpz_t deg;
+  mpz_init(deg);
+  to_find_square_root.to_mpz(deg);
+  mpz_t mode;
+  mpz_init(mode);
+  modulus.to_mpz(mode);
 
-  root.as_bigint().to_mpz(ret_val);
+  mpz_powm(ret_val, x, deg, mode);
+
+
+ // assert(root * root == base);
+
+
+ // std::cerr << "BASE VALUE IS : " << base << '\n';
+ // std::cerr << "ROOT VALUE IS : " << root << '\n';
+
+  //root.as_bigint().to_mpz(ret_val);
 }
