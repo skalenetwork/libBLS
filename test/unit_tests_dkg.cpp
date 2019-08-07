@@ -21,7 +21,12 @@
   @date 2019
 */
 
-
+#include <bls/BLSPrivateKeyShare.h>
+#include <bls/BLSSigShareSet.h>
+#include <bls/BLSSignature.h>
+#include <bls/BLSPublicKey.h>
+#include <bls/BLSPrivateKey.h>
+#include <bls/BLSutils.cpp>
 #include <dkg/dkg.h>
 
 #include <cstdlib>
@@ -31,13 +36,6 @@
 
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 #include <libff/algebra/exponentiation/exponentiation.hpp>
-
-#include "bls/BLSPrivateKeyShare.h"
-#include "bls/BLSSigShareSet.h"
-#include "bls/BLSSignature.h"
-#include "bls/BLSPublicKey.h"
-#include "bls/BLSPrivateKey.h"
-#include "bls/BLSutils.cpp"
 
 #define BOOST_TEST_MODULE
 
@@ -117,9 +115,9 @@ BOOST_AUTO_TEST_SUITE(DkgAlgorithm)
 
             bool is_exception_caught = false;
             try {
-                   libff::alt_bn128_Fr secret = dkg_obj.SecretKeyShareCreate(pol);
+                libff::alt_bn128_Fr secret = dkg_obj.SecretKeyShareCreate(pol);
             }
-            catch (std::runtime_error &) {
+            catch (std::runtime_error&) {
                     is_exception_caught = true;
             }
             BOOST_REQUIRE(is_exception_caught);
