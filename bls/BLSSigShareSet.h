@@ -24,10 +24,10 @@
 #ifndef LIBBLS_BLSSIGSHARESET_H
 #define LIBBLS_BLSSIGSHARESET_H
 
+#include <bls/bls.h>
 
 #include <stdlib.h>
 #include <string>
-#include "bls.h"
 
 class BLSSignature;
 
@@ -37,21 +37,19 @@ class BLSSigShareSet {
     size_t totalSigners;
     size_t requiredSigners;
 
-    std::map<size_t, std::shared_ptr< BLSSigShare > > sigShares;
+    std::map<size_t, std::shared_ptr<BLSSigShare>> sigShares;
 
 public:
 
-    BLSSigShareSet( size_t requiredSigners, size_t totalSigners );
+    BLSSigShareSet(size_t requiredSigners, size_t totalSigners);
 
     bool isEnough();
 
-    bool addSigShare( std::shared_ptr< BLSSigShare > _sigShare);
+    bool addSigShare(std::shared_ptr<BLSSigShare> _sigShare);
 
     unsigned long getTotalSigSharesCount();
-    std::shared_ptr< BLSSigShare > getSigShareByIndex(size_t _index);
+    std::shared_ptr<BLSSigShare> getSigShareByIndex(size_t _index);
     std::shared_ptr<BLSSignature> merge();
-
-    //std::map<size_t, std::shared_ptr< BLSSigShare > > getSigShares();
 };
 
 

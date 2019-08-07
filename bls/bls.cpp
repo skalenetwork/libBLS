@@ -75,7 +75,6 @@ namespace signatures {
     }
 
     libff::alt_bn128_G1 Bls::HashtoG1(std::shared_ptr<std::array< uint8_t, 32>> hash_byte_arr) {
-
         libff::alt_bn128_Fq x1 (BLSutils::HashToFq(hash_byte_arr));
 
         libff::alt_bn128_G1 result;
@@ -100,7 +99,6 @@ namespace signatures {
     }
 
     std::pair<libff::alt_bn128_G1, std::string> Bls::HashtoG1withHint(std::shared_ptr< std::array< uint8_t, 32>> hash_byte_arr){
-
         libff::alt_bn128_G1 point;
         libff::alt_bn128_Fq counter = libff::alt_bn128_Fq::zero();
 

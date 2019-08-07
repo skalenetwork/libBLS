@@ -21,19 +21,16 @@
   @date 2019
 */
 
-using namespace std;
+#include <bls/BLSPrivateKey.h>
+#include <bls/BLSutils.h>
 
-
-#include "BLSPrivateKey.h"
-#include "BLSutils.h"
-
-BLSPrivateKey::BLSPrivateKey(const string &_key, size_t _requiredSigners, size_t _totalSigners)
+BLSPrivateKey::BLSPrivateKey(const std::string &_key, size_t _requiredSigners, size_t _totalSigners)
         : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
     BLSutils::initBLS();
-    privateKey = make_shared<libff::alt_bn128_Fr>(_key.c_str());
+    privateKey = std::make_shared<libff::alt_bn128_Fr>(_key.c_str());
     if (*privateKey == libff::alt_bn128_Fr::zero()) {
-        BOOST_THROW_EXCEPTION(runtime_error("Secret key share is equal to zero or corrupt"));
+        BOOST_THROW_EXCEPTION(std::runtime_error("Secret key share is equal to zero or corrupt"));
     }
 }
 
@@ -51,7 +48,7 @@ BLSPrivateKey::BLSPrivateKey(const std::shared_ptr<std::vector<std::shared_ptr<B
     }
 
     if (*privateKey == libff::alt_bn128_Fr::zero()) {
-        BOOST_THROW_EXCEPTION(runtime_error("Secret key share is equal to zero or corrupt"));
+        BOOST_THROW_EXCEPTION(std::runtime_error("Secret key share is equal to zero or corrupt"));
     }
 }
 
@@ -61,13 +58,13 @@ std::shared_ptr<libff::alt_bn128_Fr> BLSPrivateKey::getPrivateKey() const {
 
 std::shared_ptr<std::string> BLSPrivateKey::toString() {
     if (!privateKey)
-        BOOST_THROW_EXCEPTION(runtime_error("Secret key share is null"));
+        BOOST_THROW_EXCEPTION(std::runtime_error("Secret key share is null"));
     if (*privateKey == libff::alt_bn128_Fr::zero()) {
-        BOOST_THROW_EXCEPTION(runtime_error("Secret key share is equal to zero or corrupt"));
+        BOOST_THROW_EXCEPTION(std::runtime_error("Secret key share is equal to zero or corrupt"));
     }
     std::shared_ptr<std::string> key_str = std::make_shared<std::string>(BLSutils::ConvertToString(*privateKey));
 
     if (key_str->empty())
-        BOOST_THROW_EXCEPTION(runtime_error("Secret key share string is empty"));
+        BOOST_THROW_EXCEPTION(std::runtime_error("Secret key share string is empty"));
     return key_str;
 }

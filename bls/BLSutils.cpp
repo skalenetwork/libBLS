@@ -21,11 +21,12 @@
   @date 2019
 */
 
+#include <bls/BLSutils.h>
+
+#include <bitset>
 #include <iostream>
 #include <string>
-#include <bitset>
 
-#include "BLSutils.h"
 
 void BLSutils::initBLS() {
     static bool is_initialized = false;
@@ -35,17 +36,15 @@ void BLSutils::initBLS() {
     }
 }
 
-std::pair<libff::alt_bn128_Fq , libff::alt_bn128_Fq  > BLSutils::ParseHint (std::string & _hint){
-
-
+std::pair<libff::alt_bn128_Fq, libff::alt_bn128_Fq> BLSutils::ParseHint(std::string& _hint){
     auto position = _hint.find( ":" );
 
-    if ( position == std::string::npos ) {
+    if (position == std::string::npos) {
        throw std::runtime_error( "Misformatted hint" ) ;
     }
 
-    libff::alt_bn128_Fq y (_hint.substr( 0, position ).c_str());
-    libff::alt_bn128_Fq shift_x( _hint.substr( position + 1 ).c_str());
+    libff::alt_bn128_Fq y (_hint.substr(0, position).c_str());
+    libff::alt_bn128_Fq shift_x(_hint.substr(position + 1).c_str());
 
     return std::make_pair(y, shift_x);
 }
@@ -65,7 +64,7 @@ libff::alt_bn128_Fq BLSutils::HashToFq (std::shared_ptr<std::array< uint8_t, 32>
     mpz_init(q);
     libff::alt_bn128_modulus_q.to_mpz(q);
 
-    mpz_t rem;     // rem = hash mod q
+    mpz_t rem;  // rem = hash mod q
     mpz_init(rem);
     mpz_mod(rem, hash, q);
 
@@ -79,14 +78,17 @@ std::shared_ptr<std::vector<std::string>> BLSutils::SplitString(std::shared_ptr<
     do
     {
         pos = str->find(delim, prev);
-        if (pos == std::string::npos) pos = str->length();
+        if (pos == std::string::npos) {
+            pos = str->length();
+        }
         std::string token = str->substr(prev, pos-prev);
-        if (!token.empty()) tokens.push_back(token);
+        if (!token.empty()) {
+            tokens.push_back(token);
+        }
         prev = pos + delim.length();
-    }
-    while (pos < str->length() && prev < str->length());
+    } while (pos < str->length() && prev < str->length());
 
-    return std::make_shared< std::vector<std::string>>(tokens);
+    return std::make_shared<std::vector<std::string>>(tokens);
 }
 
 

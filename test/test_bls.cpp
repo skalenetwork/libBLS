@@ -23,23 +23,21 @@
 
 #include <bls/bls.h>
 #include <dkg/dkg.h>
-#include <ctime>
 
+#include <bls/BLSPrivateKeyShare.h>
+#include <bls/BLSPrivateKey.h>
+#include <bls/BLSSigShareSet.h>
+#include <bls/BLSSigShare.h>
+#include <bls/BLSSignature.h>
+#include <bls/BLSPublicKey.h>
+#include <bls/BLSPublicKeyShare.h>
+#include <bls/BLSutils.cpp>
 
-#include <map>
-
-
-#include "bls/BLSPrivateKeyShare.h"
-#include "bls/BLSPrivateKey.h"
-#include "bls/BLSSigShareSet.h"
-#include "bls/BLSSigShare.h"
-#include "bls/BLSSignature.h"
-#include "bls/BLSPublicKey.h"
-#include "bls/BLSPublicKeyShare.h"
-#include "bls/BLSutils.cpp"
-
-#include <fstream>
 #include <third_party/json.hpp>
+
+#include <ctime>
+#include <fstream>
+#include <map>
 
 #define BOOST_TEST_MODULE
 
@@ -115,13 +113,6 @@ BOOST_AUTO_TEST_SUITE(Bls)
             signatures::Bls obj = signatures::Bls(num_signed, num_all);
 
             for (size_t i = 0; i < 10; ++i) {
-               /* std::string message;
-                size_t msg_length = rand_gen() % 1000 + 2;
-                for (size_t length = 0; length < msg_length; ++length) {
-                    message += char(rand_gen() % 128);
-                }*/
-
-                //libff::alt_bn128_G1 hash = obj.Hashing(message);
                 std::shared_ptr< std::array<uint8_t, 32> > hash_ptr = std::make_shared< std::array<uint8_t, 32> >(GenerateRandHash());
                 libff::alt_bn128_G1 hash = obj.HashtoG1(hash_ptr);
 
@@ -173,8 +164,6 @@ BOOST_AUTO_TEST_SUITE(Bls)
     }
 
     BOOST_AUTO_TEST_CASE(libBlsAPI) {
-
-        //std::default_random_engine rand_gen((unsigned int) time(0));
         for (size_t i = 0; i < 10; ++i) {
 
             size_t num_all = rand_gen() % 16 + 1;
@@ -187,14 +176,8 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
                 BLSSigShareSet sigSet(num_signed, num_all);
 
-               /* std::string message;
-                size_t msg_length = rand_gen() % 1000 + 2;
-                for (size_t length = 0; length < msg_length; ++length) {
-                    message += char(rand_gen() % 128);
-                }
-                std::shared_ptr<std::string> msg_ptr = std::make_shared<std::string>(message);*/
-
-                std::vector<size_t> participants(num_all);                          ////choosing random participants
+                // choosing random participants
+                std::vector<size_t> participants(num_all);
                 for (size_t i = 0; i < num_all; ++i) participants.at(i) = i + 1;
                 for (size_t i = 0; i < num_all - num_signed; ++i) {
                     size_t ind4del = rand_gen() % participants.size();
@@ -205,7 +188,6 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
                 for (size_t i = 0; i < num_signed; ++i) {
                     std::shared_ptr<BLSPrivateKeyShare> skey = Skeys->at(participants.at(i) - 1);
-                    //std::shared_ptr<BLSSigShare> sigShare = skey->sign(msg_ptr, participants.at(i));
                     std::shared_ptr<BLSSigShare> sigShare = skey->sign(hash_ptr, participants.at(i));
                     sigSet.addSigShare(sigShare);
                 }
@@ -268,9 +250,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
     }
 
     BOOST_AUTO_TEST_CASE(libffObjsToString) {
-
         libff::inhibit_profiling_info = true;
-
         for (size_t i = 0; i < 100; ++i) {
 
             size_t num_all = rand_gen() % 16 + 1;
@@ -283,7 +263,8 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
             BLSSigShareSet sigSet(num_signed, num_all);
 
-            std::vector<size_t> participants(num_all);                          ////choosing random participants
+            // choosing random participants
+            std::vector<size_t> participants(num_all);
             for (size_t i = 0; i < num_all; ++i) participants.at(i) = i + 1;
             for (size_t i = 0; i < num_all - num_signed; ++i) {
                 size_t ind4del = rand_gen() % participants.size();

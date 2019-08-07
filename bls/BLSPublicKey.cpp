@@ -24,21 +24,18 @@
 #include <stdint.h>
 #include <string>
 
-using namespace std;
+#include <bls/BLSPublicKey.h>
+#include <bls/BLSPublicKeyShare.h>
+#include <bls/BLSutils.h>
 
 
-#include "BLSPublicKey.h"
-#include "BLSPublicKeyShare.h"
-#include "BLSutils.h"
-
-
-BLSPublicKey::BLSPublicKey(const std::shared_ptr<std::vector<std::string> > pkey_str_vect, size_t _requiredSigners,
+BLSPublicKey::BLSPublicKey(const std::shared_ptr<std::vector<std::string>> pkey_str_vect, size_t _requiredSigners,
                            size_t _totalSigners)
         : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
 
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
 
-    libffPublicKey = make_shared<libff::alt_bn128_G2>();
+    libffPublicKey = std::make_shared<libff::alt_bn128_G2>();
 
     libffPublicKey->X.c0 = libff::alt_bn128_Fq(pkey_str_vect->at(0).c_str());
     libffPublicKey->X.c1 = libff::alt_bn128_Fq(pkey_str_vect->at(1).c_str());
@@ -51,25 +48,25 @@ BLSPublicKey::BLSPublicKey(const std::shared_ptr<std::vector<std::string> > pkey
         libffPublicKey->X.c1 == libff::alt_bn128_Fq::zero() ||
         libffPublicKey->Y.c0 == libff::alt_bn128_Fq::zero() ||
         libffPublicKey->Y.c1 == libff::alt_bn128_Fq::zero()) {
-        BOOST_THROW_EXCEPTION(runtime_error("Public Key is equal to zero or corrupt"));
+        BOOST_THROW_EXCEPTION(std::runtime_error("Public Key is equal to zero or corrupt"));
     }
 }
 
 BLSPublicKey::BLSPublicKey(const libff::alt_bn128_G2 &pkey, size_t _requiredSigners, size_t _totalSigners)
              : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
-    libffPublicKey = make_shared<libff::alt_bn128_G2>(pkey);
+    libffPublicKey = std::make_shared<libff::alt_bn128_G2>(pkey);
     if (libffPublicKey->is_zero()) {
-        BOOST_THROW_EXCEPTION(runtime_error("Public Key is equal to zero or corrupt"));
+        BOOST_THROW_EXCEPTION(std::runtime_error("Public Key is equal to zero or corrupt"));
     }
 }
 
 BLSPublicKey::BLSPublicKey(const libff::alt_bn128_Fr &skey, size_t _requiredSigners, size_t _totalSigners)
         : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
-    libffPublicKey = make_shared<libff::alt_bn128_G2>(skey * libff::alt_bn128_G2::one());
+    libffPublicKey = std::make_shared<libff::alt_bn128_G2>(skey * libff::alt_bn128_G2::one());
     if (libffPublicKey->is_zero()) {
-        BOOST_THROW_EXCEPTION(runtime_error("Public Key is equal to zero or corrupt"));
+        BOOST_THROW_EXCEPTION(std::runtime_error("Public Key is equal to zero or corrupt"));
     }
 }
 
@@ -86,10 +83,10 @@ bool BLSPublicKey::VerifySig(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr,
     std::shared_ptr<signatures::Bls> obj;
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
     if (!hash_ptr) {
-        BOOST_THROW_EXCEPTION(runtime_error("hash is null"));
+        BOOST_THROW_EXCEPTION(std::runtime_error("hash is null"));
     }
     if (!sign_ptr || sign_ptr->getSig()->is_zero()) {
-        BOOST_THROW_EXCEPTION(runtime_error("Sig share is equal to zero or corrupt"));
+        BOOST_THROW_EXCEPTION(std::runtime_error("Sig share is equal to zero or corrupt"));
     }
 
     obj = std::make_shared<signatures::Bls>(signatures::Bls(_requiredSigners, _totalSigners));
@@ -103,15 +100,15 @@ bool BLSPublicKey::VerifySigWithHint(std::shared_ptr<std::array<uint8_t, 32> > h
     std::shared_ptr<signatures::Bls> obj;
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
     if (!hash_ptr) {
-        BOOST_THROW_EXCEPTION(runtime_error("hash is null"));
+        BOOST_THROW_EXCEPTION(std::runtime_error("hash is null"));
     }
     if (!sign_ptr || sign_ptr->getSig()->is_zero()) {
-        BOOST_THROW_EXCEPTION(runtime_error("Sig share is equal to zero or corrupt"));
+        BOOST_THROW_EXCEPTION(std::runtime_error("Sig share is equal to zero or corrupt"));
     }
 
     std::string hint = sign_ptr -> getHint();
 
-    std::pair <libff::alt_bn128_Fq , libff::alt_bn128_Fq > y_shift_x = BLSutils::ParseHint(hint);
+    std::pair<libff::alt_bn128_Fq, libff::alt_bn128_Fq> y_shift_x = BLSutils::ParseHint(hint);
 
     libff::alt_bn128_Fq x = BLSutils::HashToFq(hash_ptr);
     x = x + y_shift_x.second;
@@ -128,7 +125,7 @@ bool BLSPublicKey::VerifySigWithHint(std::shared_ptr<std::array<uint8_t, 32> > h
             libff::alt_bn128_ate_reduced_pairing(hash, *libffPublicKey));
 }
 
-BLSPublicKey::BLSPublicKey(std::shared_ptr<std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > >
+BLSPublicKey::BLSPublicKey(std::shared_ptr<std::map<size_t, std::shared_ptr<BLSPublicKeyShare>>>
                            koefs_pkeys_map,
                            size_t
                            _requiredSigners, size_t
@@ -138,17 +135,17 @@ BLSPublicKey::BLSPublicKey(std::shared_ptr<std::map<size_t, std::shared_ptr<BLSP
 
     signatures::Bls obj = signatures::Bls(requiredSigners, totalSigners);
     if (!koefs_pkeys_map) {
-        BOOST_THROW_EXCEPTION(runtime_error("map is null"));
+        BOOST_THROW_EXCEPTION(std::runtime_error("map is null"));
     }
 
-    vector<size_t> participatingNodes;
-    vector<libff::alt_bn128_G1> shares;
+    std::vector<size_t> participatingNodes;
+    std::vector<libff::alt_bn128_G1> shares;
 
     for (auto &&item : *koefs_pkeys_map) {
-        participatingNodes.push_back(static_cast< uint64_t >( item.first ));
+        participatingNodes.push_back(static_cast<uint64_t>(item.first));
     }
 
-    vector<libff::alt_bn128_Fr> lagrangeCoeffs = obj.LagrangeCoeffs(participatingNodes);
+    std::vector<libff::alt_bn128_Fr> lagrangeCoeffs = obj.LagrangeCoeffs(participatingNodes);
 
     libff::alt_bn128_G2 key = libff::alt_bn128_G2::zero();
     size_t i = 0;
@@ -157,9 +154,9 @@ BLSPublicKey::BLSPublicKey(std::shared_ptr<std::map<size_t, std::shared_ptr<BLSP
         i++;
     }
 
-    libffPublicKey = make_shared<libff::alt_bn128_G2>(key);
+    libffPublicKey = std::make_shared<libff::alt_bn128_G2>(key);
     if (libffPublicKey->is_zero()) {
-        BOOST_THROW_EXCEPTION(runtime_error("Public Key is equal to zero or corrupt"));
+        BOOST_THROW_EXCEPTION(std::runtime_error("Public Key is equal to zero or corrupt"));
     }
 
 }
@@ -174,7 +171,7 @@ std::shared_ptr<std::vector<std::string> > BLSPublicKey::toString() {
     pkey_str_vect.push_back(BLSutils::ConvertToString(libffPublicKey->Y.c0));
     pkey_str_vect.push_back(BLSutils::ConvertToString(libffPublicKey->Y.c1));
 
-    return make_shared<vector<string>>(pkey_str_vect);
+    return std::make_shared<std::vector<std::string>>(pkey_str_vect);
 }
 
 std::shared_ptr<libff::alt_bn128_G2> BLSPublicKey::getPublicKey() const {

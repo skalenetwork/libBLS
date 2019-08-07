@@ -21,9 +21,10 @@
   @date 2019
 */
 
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-#include <memory>
 #include <array>
+#include <memory>
+
+#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 
 class BLSutils{
 
@@ -45,7 +46,7 @@ std::string BLSutils::ConvertToString(T field_elem) {
 
     char arr[mpz_sizeinbase (t, 10) + 2];
 
-    char * tmp = mpz_get_str(arr, 10, t);
+    char* tmp = mpz_get_str(arr, 10, t);
     mpz_clear(t);
 
     std::string output = tmp;

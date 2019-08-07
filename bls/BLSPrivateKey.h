@@ -28,9 +28,9 @@
 #include <string>
 #include <memory>
 
-#include "bls.h"
-#include "BLSSignature.h"
-#include "BLSPrivateKeyShare.h"
+#include <bls/bls.h>
+#include <bls/BLSSignature.h>
+#include <bls/BLSPrivateKeyShare.h>
 
 
 class BLSPrivateKey {

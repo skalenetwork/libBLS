@@ -24,11 +24,11 @@
 #ifndef LIBBLS_BLSPRIVATEKEYSHARE_H
 #define LIBBLS_BLSPRIVATEKEYSHARE_H
 
+#include <memory>
 #include <stdlib.h>
 #include <string>
-#include <memory>
 
-#include "BLSPublicKey.h"
+#include <bls/BLSPublicKey.h>
 
 
 class BLSSigShare;
