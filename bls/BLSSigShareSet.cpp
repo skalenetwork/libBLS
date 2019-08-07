@@ -30,72 +30,74 @@
 #include <bls/BLSutils.h>
 
 bool BLSSigShareSet::addSigShare(std::shared_ptr<BLSSigShare> _sigShare) {
-    if (was_merged) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Invalid state"));
-    }
+  if (was_merged) {
+    BOOST_THROW_EXCEPTION(std::runtime_error("Invalid state"));
+  }
 
-    if (!_sigShare) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Null _sigShare"));
-    }
+  if (!_sigShare) {
+    BOOST_THROW_EXCEPTION(std::runtime_error("Null _sigShare"));
+  }
 
-    if (sigShares.count(_sigShare->getSignerIndex()) > 0) {
-        BOOST_THROW_EXCEPTION(std::runtime_error(
-            "Already have this index:" + std::to_string(_sigShare->getSignerIndex())));
-        return false;
-    }
-    sigShares[_sigShare->getSignerIndex()] = _sigShare;
+  if (sigShares.count(_sigShare->getSignerIndex()) > 0) {
+    BOOST_THROW_EXCEPTION(std::runtime_error(
+        "Already have this index:" + std::to_string(_sigShare->getSignerIndex())));
+    return false;
+  }
+  sigShares[_sigShare->getSignerIndex()] = _sigShare;
 
-    return true;
+  return true;
 }
 
 size_t BLSSigShareSet::getTotalSigSharesCount() {
-    return sigShares.size();
+  return sigShares.size();
 }
 
 std::shared_ptr<BLSSigShare> BLSSigShareSet::getSigShareByIndex(size_t _index) {
-    if (_index == 0 || _index > totalSigners) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Index out of range:" + std::to_string(_index)));
-    }
+  if (_index == 0 || _index > totalSigners) {
+    BOOST_THROW_EXCEPTION(std::runtime_error("Index out of range:" + std::to_string(_index)));
+  }
 
 
-    if (sigShares.count(_index) == 0) {
-        return nullptr;
-    }
+  if (sigShares.count(_index) == 0) {
+    return nullptr;
+  }
 
-    return sigShares.at(_index);
+  return sigShares.at(_index);
 }
+
 BLSSigShareSet::BLSSigShareSet(size_t _requiredSigners, size_t _totalSigners)
     : requiredSigners(_requiredSigners), totalSigners(_totalSigners), was_merged(false) {
-    BLSSignature::checkSigners(_requiredSigners, _totalSigners);
+  BLSSignature::checkSigners(_requiredSigners, _totalSigners);
 }
+
 bool BLSSigShareSet::isEnough() {
-    return (sigShares.size() >= requiredSigners);
+  return (sigShares.size() >= requiredSigners);
 }
 
 
 std::shared_ptr<BLSSignature> BLSSigShareSet::merge() {
-    if (!isEnough()) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Not enough shares to create signature"));
-    }
+  if (!isEnough()) {
+    BOOST_THROW_EXCEPTION(std::runtime_error("Not enough shares to create signature"));
+  }
 
-    was_merged = true;
-    signatures::Bls obj = signatures::Bls(requiredSigners, totalSigners);
+  was_merged = true;
+  signatures::Bls obj = signatures::Bls(requiredSigners, totalSigners);
 
-    std::vector<size_t> participatingNodes;
-    std::vector<libff::alt_bn128_G1> shares;
+  std::vector<size_t> participatingNodes;
+  std::vector<libff::alt_bn128_G1> shares;
 
-    for (auto&& item : sigShares) {
-        participatingNodes.push_back(static_cast<uint64_t>(item.first));
-        shares.push_back(*item.second->getSigShare());
-    }
+  for (auto&& item : sigShares) {
+    participatingNodes.push_back(static_cast<uint64_t>(item.first));
+    shares.push_back(*item.second->getSigShare());
+  }
 
-    std::vector<libff::alt_bn128_Fr> lagrangeCoeffs = obj.LagrangeCoeffs(participatingNodes);
+  std::vector<libff::alt_bn128_Fr> lagrangeCoeffs = obj.LagrangeCoeffs(participatingNodes);
 
-    libff::alt_bn128_G1 signature = obj.SignatureRecover(shares, lagrangeCoeffs);
+  libff::alt_bn128_G1 signature = obj.SignatureRecover(shares, lagrangeCoeffs);
 
-    auto sigPtr = std::make_shared<libff::alt_bn128_G1>(signature);
+  auto sigPtr = std::make_shared<libff::alt_bn128_G1>(signature);
 
-    std::string hint = sigShares[participatingNodes.at(0)]->getHint();
+  std::string hint = sigShares[participatingNodes.at(0)]->getHint();
 
-    return std::make_shared<BLSSignature>(sigPtr, hint, requiredSigners, totalSigners);
+  return std::make_shared<BLSSignature>(sigPtr, hint, requiredSigners, totalSigners);
 }

@@ -29,14 +29,13 @@
 #include <bls/bls.h>
 
 class BLSSignature {
-
+ private:
     size_t totalSigners;
     size_t requiredSigners;
     std::string hint;
     std::shared_ptr<libff::alt_bn128_G1> sig;
 
 public:
-
     BLSSignature(std::shared_ptr<std::string> s, size_t _requiredSigners, size_t _totalSigners);
     BLSSignature(const std::shared_ptr< libff::alt_bn128_G1 > sig, std::string & _hint, size_t _requiredSigners, size_t _totalSigners);
     std::shared_ptr<libff::alt_bn128_G1> getSig() const;
@@ -46,7 +45,6 @@ public:
     std::string getHint() const;
     size_t getTotalSigners() const;
     size_t getRequiredSigners() const;
-
 };
 
 

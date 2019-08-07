@@ -30,85 +30,84 @@ std::shared_ptr<libff::alt_bn128_G1> BLSSignature::getSig() const {
 BLSSignature::BLSSignature(
     const std::shared_ptr<libff::alt_bn128_G1> sig, std::string& _hint, size_t _requiredSigners, size_t _totalSigners)
     : sig(sig), hint(_hint), requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
-    checkSigners(_requiredSigners, _totalSigners);
-    BLSSignature::checkSigners(requiredSigners, totalSigners);
-    if (sig->is_zero()) {
-        BOOST_THROW_EXCEPTION(std::runtime_error( "Zero signature"));
-    }
+  checkSigners(_requiredSigners, _totalSigners);
+  BLSSignature::checkSigners(requiredSigners, totalSigners);
+  if (sig->is_zero()) {
+    BOOST_THROW_EXCEPTION(std::runtime_error( "Zero signature"));
+  }
 }
 
 BLSSignature::BLSSignature(std::shared_ptr<std::string> _sig, size_t _requiredSigners, size_t _totalSigners)
         : totalSigners(_totalSigners),
           requiredSigners(_requiredSigners) {
-    BLSSignature::checkSigners(requiredSigners, totalSigners);
-    BLSutils::initBLS();
+  BLSSignature::checkSigners(requiredSigners, totalSigners);
+  BLSutils::initBLS();
 
-    if (!_sig) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Null _sigShare"));
-    }
+  if (!_sig) {
+    BOOST_THROW_EXCEPTION(std::runtime_error("Null _sigShare"));
+  }
 
-    if (_sig->size() < 10) {
-        BOOST_THROW_EXCEPTION(
-                std::runtime_error("Signature too short:" + std::to_string(_sig->size())));
-    }
+  if (_sig->size() < 10) {
+    BOOST_THROW_EXCEPTION(
+            std::runtime_error("Signature too short:" + std::to_string(_sig->size())));
+  }
 
-    if (_sig->size() > BLS_MAX_SIG_LEN) {
-        BOOST_THROW_EXCEPTION(
-                std::runtime_error("Signature too long:" + std::to_string(_sig->size())));
-    }
+  if (_sig->size() > BLS_MAX_SIG_LEN) {
+    BOOST_THROW_EXCEPTION(
+            std::runtime_error("Signature too long:" + std::to_string(_sig->size())));
+  }
 
-    auto position = _sig->find(":");
+  auto position = _sig->find(":");
 
-    if (position == std::string::npos) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Misformatted sig:" + *_sig));
-    }
+  if (position == std::string::npos) {
+    BOOST_THROW_EXCEPTION(std::runtime_error("Misformatted sig:" + *_sig));
+  }
 
-    std::shared_ptr<std::vector<std::string>> result = BLSutils::SplitString(_sig, ":");
-    if (result->size() != 4) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Misformatted signature"));
+  std::shared_ptr<std::vector<std::string>> result = BLSutils::SplitString(_sig, ":");
+  if (result->size() != 4) {
+    BOOST_THROW_EXCEPTION(std::runtime_error("Misformatted signature"));
+  }
+  for (auto && str : *result){
+    for (char& c : str) {
+      if (!( c >= '0' && c <= '9')) {
+        BOOST_THROW_EXCEPTION(std::runtime_error(
+                                      "Misformatted char:" + std::to_string((int)c) + " in component " + str));
+      }
     }
-    for (auto && str : *result){
-        for (char& c : str) {
-            if (!( c >= '0' && c <= '9')) {
-                BOOST_THROW_EXCEPTION(std::runtime_error(
-                                               "Misformatted char:" + std::to_string((int)c) + " in component " + str));
-            }
-        }
-    }
-    libff::alt_bn128_Fq X(result->at(0).c_str());
-    libff::alt_bn128_Fq Y(result->at(1).c_str());
-    sig = std::make_shared<libff::alt_bn128_G1>( X, Y,libff::alt_bn128_Fq::one());
-    hint = result->at(2) + ":" + result->at(3);
+  }
+  libff::alt_bn128_Fq X(result->at(0).c_str());
+  libff::alt_bn128_Fq Y(result->at(1).c_str());
+  sig = std::make_shared<libff::alt_bn128_G1>( X, Y,libff::alt_bn128_Fq::one());
+  hint = result->at(2) + ":" + result->at(3);
 }
 
 std::shared_ptr<std::string> BLSSignature::toString() {
-    char str[512];
+  char str[512];
 
-    sig->to_affine_coordinates();
+  sig->to_affine_coordinates();
 
-    gmp_sprintf(str, "%Nd:%Nd:%s", sig->X.as_bigint().data, libff::alt_bn128_Fq::num_limbs,
-        sig->Y.as_bigint().data, libff::alt_bn128_Fq::num_limbs, hint.c_str());
+  gmp_sprintf(str, "%Nd:%Nd:%s", sig->X.as_bigint().data, libff::alt_bn128_Fq::num_limbs,
+      sig->Y.as_bigint().data, libff::alt_bn128_Fq::num_limbs, hint.c_str());
 
-    return std::make_shared<std::string>(str);
+  return std::make_shared<std::string>(str);
 }
 void BLSSignature::checkSigners(size_t _requiredSigners, size_t _totalSigners) {
-    if (_requiredSigners > _totalSigners) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("_requiredSigners > _totalSigners"));
-    }
+  if (_requiredSigners > _totalSigners) {
+    BOOST_THROW_EXCEPTION(std::runtime_error("_requiredSigners > _totalSigners"));
+  }
 
-
-    if (_totalSigners == 0) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("_totalSigners == 0"));
-    }
+  if (_totalSigners == 0) {
+    BOOST_THROW_EXCEPTION(std::runtime_error("_totalSigners == 0"));
+  }
 }
 
 std::string BLSSignature::getHint() const{
-    return hint;
+  return hint;
 }
 
 size_t BLSSignature::getTotalSigners() const {
-    return totalSigners;
+  return totalSigners;
 }
 size_t BLSSignature::getRequiredSigners() const {
-    return requiredSigners;
+  return requiredSigners;
 }

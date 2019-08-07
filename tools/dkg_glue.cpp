@@ -56,27 +56,27 @@ void GenerateSecretKeys(const size_t t, const size_t n, const std::vector<std::s
     secret_key_contribution[idx].resize(n);
     for (size_t i = 0; i < n; ++i) {
       secret_key_contribution[idx][i] = libff::alt_bn128_Fr(
-                      data["secret_key_contribution"][std::to_string(i)].get<std::string>().c_str());
+                                        data["secret_key_contribution"][std::to_string(i)].get<std::string>().c_str());
     }
 
     verification_vector[idx].resize(t);
     for (size_t i = 0; i < t; ++i) {
       libff::alt_bn128_Fq first_coord_x = libff::alt_bn128_Fq(
-              data["verification_vector"][std::to_string(i)]["X"]["c0"].get<std::string>().c_str());
+        data["verification_vector"][std::to_string(i)]["X"]["c0"].get<std::string>().c_str());
       libff::alt_bn128_Fq first_coord_y = libff::alt_bn128_Fq(
-              data["verification_vector"][std::to_string(i)]["X"]["c1"].get<std::string>().c_str());
+        data["verification_vector"][std::to_string(i)]["X"]["c1"].get<std::string>().c_str());
       libff::alt_bn128_Fq2 first_coord = libff::alt_bn128_Fq2(first_coord_x, first_coord_y);
 
       libff::alt_bn128_Fq second_coord_x = libff::alt_bn128_Fq(
-              data["verification_vector"][std::to_string(i)]["Y"]["c0"].get<std::string>().c_str());
+        data["verification_vector"][std::to_string(i)]["Y"]["c0"].get<std::string>().c_str());
       libff::alt_bn128_Fq second_coord_y = libff::alt_bn128_Fq(
-              data["verification_vector"][std::to_string(i)]["Y"]["c1"].get<std::string>().c_str());
+        data["verification_vector"][std::to_string(i)]["Y"]["c1"].get<std::string>().c_str());
       libff::alt_bn128_Fq2 second_coord = libff::alt_bn128_Fq2(second_coord_x, second_coord_y);
 
       libff::alt_bn128_Fq third_coord_x = libff::alt_bn128_Fq(
-              data["verification_vector"][std::to_string(i)]["Z"]["c0"].get<std::string>().c_str());
+        data["verification_vector"][std::to_string(i)]["Z"]["c0"].get<std::string>().c_str());
       libff::alt_bn128_Fq third_coord_y = libff::alt_bn128_Fq(
-              data["verification_vector"][std::to_string(i)]["Z"]["c1"].get<std::string>().c_str());
+        data["verification_vector"][std::to_string(i)]["Z"]["c1"].get<std::string>().c_str());
       libff::alt_bn128_Fq2 third_coord = libff::alt_bn128_Fq2(third_coord_x, third_coord_y);
 
 
@@ -95,7 +95,7 @@ void GenerateSecretKeys(const size_t t, const size_t n, const std::vector<std::s
     for (size_t j = 0; j < n; ++j) {
       if (!dkg_instance.Verification(i, secret_key_contribution[i][j], verification_vector[j])) {
         throw std::runtime_error(std::to_string(j) + "-th node was not verified by " +
-                                  std::to_string(i) + "-th node");
+                                                        std::to_string(i) + "-th node");
       }
     }
   }
@@ -111,7 +111,7 @@ void GenerateSecretKeys(const size_t t, const size_t n, const std::vector<std::s
   for (size_t i = 0; i < n; ++i) {
     nlohmann::json BLS_key_file;
 
-     BLS_key_file["insecureBLSPrivateKey"] = BLSutils::ConvertToString<libff::alt_bn128_Fr>(secret_key[i]);
+    BLS_key_file["insecureBLSPrivateKey"] = BLSutils::ConvertToString<libff::alt_bn128_Fr>(secret_key[i]);
 
     std::string str_file_name = "BLS_keys" + std::to_string(i) + ".json";
     std::ofstream out(str_file_name.c_str());
@@ -119,30 +119,31 @@ void GenerateSecretKeys(const size_t t, const size_t n, const std::vector<std::s
 
     libff::alt_bn128_G2 publ_key = dkg_instance.GetPublicKeyFromSecretKey(secret_key[i]);
     publ_key.to_affine_coordinates();
-     BLS_key_file["insecureBLSPublicKey0"] =
-        BLSutils::ConvertToString<libff::alt_bn128_Fq>(publ_key.X.c0);
-     BLS_key_file["insecureBLSPublicKey1"] =
-        BLSutils::ConvertToString<libff::alt_bn128_Fq>(publ_key.X.c1);
-     BLS_key_file["insecureBLSPublicKey2"] =
-        BLSutils::ConvertToString<libff::alt_bn128_Fq>(publ_key.Y.c0);
-     BLS_key_file["insecureBLSPublicKey3"] =
-        BLSutils::ConvertToString<libff::alt_bn128_Fq>(publ_key.Y.c1);
+    BLS_key_file["insecureBLSPublicKey0"] =
+    BLSutils::ConvertToString<libff::alt_bn128_Fq>(publ_key.X.c0);
+    BLS_key_file["insecureBLSPublicKey1"] =
+    BLSutils::ConvertToString<libff::alt_bn128_Fq>(publ_key.X.c1);
+    BLS_key_file["insecureBLSPublicKey2"] =
+    BLSutils::ConvertToString<libff::alt_bn128_Fq>(publ_key.Y.c0);
+    BLS_key_file["insecureBLSPublicKey3"] =
+    BLSutils::ConvertToString<libff::alt_bn128_Fq>(publ_key.Y.c1);
 
-    if (g_b_verbose_mode)
-      std::cout
-        << str_file_name << " file:\n"
-        << BLS_key_file.dump(4) << "\n\n";
+    if (g_b_verbose_mode) {
+      std::cout << str_file_name << " file:\n"
+                << BLS_key_file.dump(4) << "\n\n";
+    }
   }
+  
   common_public_key.to_affine_coordinates();
   nlohmann::json public_key_json;
   public_key_json["insecureCommonBLSPublicKey0"] =
-                                      BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_public_key.X.c0);
+  BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_public_key.X.c0);
   public_key_json["insecureCommonBLSPublicKey1"] =
-                                      BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_public_key.X.c1);
+  BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_public_key.X.c1);
   public_key_json["insecureCommonBLSPublicKey2"] =
-                                      BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_public_key.Y.c0);
+  BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_public_key.Y.c0);
   public_key_json["insecureCommonBLSPublicKey3"] =
-                                      BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_public_key.Y.c1);
+  BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_public_key.Y.c1);
 
   std::ofstream outfile_pk("common_public_key.json");
   outfile_pk << public_key_json.dump(4) << "\n";
@@ -153,12 +154,12 @@ int main(int argc, const char *argv[]) {
   try {
     boost::program_options::options_description desc("Options");
     desc.add_options()
-      ("help", "Show this help screen")
-      ("version", "Show version number")
-      ("t", boost::program_options::value<size_t>(), "Threshold")
-      ("n", boost::program_options::value<size_t>(), "Number of participants")
-      ("input", boost::program_options::value<std::vector<std::string>>(), "Input file path with participants' data to create secret keys")
-      ("v", "Verbose mode (optional)");
+    ("help", "Show this help screen")
+    ("version", "Show version number")
+    ("t", boost::program_options::value<size_t>(), "Threshold")
+    ("n", boost::program_options::value<size_t>(), "Number of participants")
+    ("input", boost::program_options::value<std::vector<std::string>>(), "Input file path with participants' data to create secret keys")
+    ("v", "Verbose mode (optional)");
 
     boost::program_options::variables_map vm;
     boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
@@ -166,11 +167,11 @@ int main(int argc, const char *argv[]) {
 
     if (vm.count("help") || argc <= 1) {
       std::cout
-        << "Distributed key generator, version " << EXPAND_AS_STR(BLS_VERSION) << '\n'
-        << "Usage:\n"
-        << "   " << argv[0] << " --t <threshold> --n <num_participants> [--input <path>] [--v]" << '\n'
-        << desc
-        << "Output is set of secret_key<j>.json files where 0 <= j < n.\n";
+      << "Distributed key generator, version " << EXPAND_AS_STR(BLS_VERSION) << '\n'
+      << "Usage:\n"
+      << "   " << argv[0] << " --t <threshold> --n <num_participants> [--input <path>] [--v]" << '\n'
+      << desc
+      << "Output is set of secret_key<j>.json files where 0 <= j < n.\n";
       return 0;
     }
     if (vm.count("version")) {
@@ -190,9 +191,9 @@ int main(int argc, const char *argv[]) {
     size_t n = vm["n"].as<size_t>();
     if (g_b_verbose_mode)
       std::cout
-        << "t = " << t << '\n'
-        << "n = " << n << '\n'
-        << '\n';
+    << "t = " << t << '\n'
+    << "n = " << n << '\n'
+    << '\n';
 
     std::vector<std::string> input;
     if (vm.count("input")) {

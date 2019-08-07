@@ -77,13 +77,13 @@ int main(int argc, const char *argv[]) {
   try {
     boost::program_options::options_description desc("Options");
     desc.add_options()
-      ("help", "Show this help screen")
-      ("version", "Show version number")
-      ("t", boost::program_options::value<size_t>(), "Threshold")
-      ("n", boost::program_options::value<size_t>(), "Number of participants")
-      ("input", boost::program_options::value<std::vector<std::string>>(), "Input file path; if not specified then use standard input")
-      ("v", "Verbose mode (optional)")
-      ;
+    ("help", "Show this help screen")
+    ("version", "Show version number")
+    ("t", boost::program_options::value<size_t>(), "Threshold")
+    ("n", boost::program_options::value<size_t>(), "Number of participants")
+    ("input", boost::program_options::value<std::vector<std::string>>(), "Input file path; if not specified then use standard input")
+    ("v", "Verbose mode (optional)")
+    ;
 
     boost::program_options::variables_map vm;
     boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
@@ -91,38 +91,43 @@ int main(int argc, const char *argv[]) {
 
     if (vm.count("help") || argc <= 1) {
       std::cout
-        << "BLS signature verification tool, version " << EXPAND_AS_STR( BLS_VERSION ) << '\n'
-        << "Usage:\n"
-        << "   " << argv[0] << " --t <threshold> --n <num_participants> [--input <path>] [--v]" << '\n'
-        << desc << '\n';
+      << "BLS signature verification tool, version " << EXPAND_AS_STR( BLS_VERSION ) << '\n'
+      << "Usage:\n"
+      << "   " << argv[0] << " --t <threshold> --n <num_participants> [--input <path>] [--v]" << '\n'
+      << desc << '\n';
       return 0;
     }
     if (vm.count("version")) {
       std::cout
-        << EXPAND_AS_STR( BLS_VERSION ) << '\n';
+      << EXPAND_AS_STR( BLS_VERSION ) << '\n';
       return 0;
     }
 
-    if (vm.count("t") == 0)
+    if (vm.count("t") == 0) {
       throw std::runtime_error( "--t is missing (see --help)" );
-    if (vm.count("n") == 0)
-      throw std::runtime_error( "--n is missing (see --help)" );
+    }
 
-    if (vm.count("v"))
+    if (vm.count("n") == 0) {
+      throw std::runtime_error( "--n is missing (see --help)" );
+    }
+
+    if (vm.count("v")) {
       g_b_verbose_mode = true;
+    }
 
     size_t t = vm["t"].as<size_t>();
     size_t n = vm["n"].as<size_t>();
-    if( g_b_verbose_mode )
-      std::cout
-        << "t = " << t << '\n'
-        << "n = " << n << '\n'
-        << '\n';
+    
+    if (g_b_verbose_mode) {
+      std::cout << "t = " << t << '\n'
+                << "n = " << n << '\n'
+                << '\n';
+    }
 
     std::vector<std::string> input;
-    if( vm.count("input") ) {
+    if (vm.count("input")) {
       input = vm["input"].as<std::vector<std::string>>();
-      if( g_b_verbose_mode ) {
+      if (g_b_verbose_mode) {
         std::cout << "input =\n";
         for(auto& elem : input)
           std::cout << elem << '\n';

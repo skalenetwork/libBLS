@@ -34,12 +34,12 @@
 
 
 class BLSPrivateKey {
-
+ private:
     std::shared_ptr<libff::alt_bn128_Fr> privateKey;
     size_t totalSigners;
     size_t requiredSigners;
 
-public:
+ public:
     BLSPrivateKey(const std::string &_key, size_t _requiredSigners, size_t _totalSigners);
 
     BLSPrivateKey(const std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>>,

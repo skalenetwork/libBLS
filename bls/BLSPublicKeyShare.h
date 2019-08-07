@@ -33,13 +33,12 @@
 class BLSSigShare;
 
 class BLSPublicKeyShare {
-
+ private:
     std::shared_ptr<libff::alt_bn128_G2> publicKey;
     size_t totalSigners;
     size_t requiredSigners;
 
 public:
-
     BLSPublicKeyShare(const std::shared_ptr< std::vector<std::string> >,
                        size_t _totalSigners, size_t _requiredSigners);
 
@@ -54,8 +53,7 @@ public:
     bool VerifySigWithHint(std::shared_ptr<std::array<uint8_t, 32>>hash_ptr, std::shared_ptr<BLSSigShare> sign_ptr,
                    size_t _requiredSigners, size_t _totalSigners);
 
-    std::shared_ptr< std::vector<std::string> > toString();
-
+    std::shared_ptr<std::vector<std::string>> toString();
 };
 
 #endif // LIBBLS_BLSPUBLICKEYSHARE_H
