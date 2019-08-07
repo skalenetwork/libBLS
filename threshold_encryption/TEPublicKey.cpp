@@ -25,15 +25,15 @@
 
 #include <iostream>
 
-TEPublicKey::TEPublicKey(std::shared_ptr<std::string> _key_str, size_t _requiredSigners, size_t _totalSigners)
+TEPublicKey::TEPublicKey(std::shared_ptr<std::vector<std::string>> _key_str_ptr, size_t _requiredSigners, size_t _totalSigners)
         : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
-    if (!_key_str)
+    if (!_key_str_ptr)
         throw std::runtime_error("public key is null");
-
+    std::string key_str = '[' + _key_str_ptr->at(0) + ',' + _key_str_ptr->at(1) + ']';
     encryption::TE te(_requiredSigners, _totalSigners);
     element_t pkey;
     element_init_G1(pkey, te.pairing_);
-    element_set_str(pkey, _key_str->c_str(), 10);
+    element_set_str(pkey, key_str.c_str(), 10);
     PublicKey = pkey;
     element_clear(pkey);
 }

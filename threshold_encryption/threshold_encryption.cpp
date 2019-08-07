@@ -100,6 +100,7 @@ namespace encryption {
     mpz_init(sum);
     mpz_add(sum, x_coord, rem);
 
+    mpz_clear(x_coord);
     mpz_clear(rem);
 
     mpz_t new_x_coord;
@@ -107,7 +108,6 @@ namespace encryption {
     mpz_mod(new_x_coord, sum, modulus_q);
 
     mpz_clear(sum);
-    mpz_clear(x_coord);
 
     mpz_t y_coord;
     mpz_init(y_coord);
@@ -121,15 +121,15 @@ namespace encryption {
       mpz_set(temp, new_x_coord);
 
       mpz_clear(new_x_coord);
-      mpz_pow_ui(x_cubed, temp, 3);
 
-      mpz_clear(temp);
+      mpz_pow_ui(x_cubed, temp, 3);
 
       mpz_init(new_x_coord);
       mpz_mod(new_x_coord, x_cubed, modulus_q);
 
       mpz_init(sum);
-      mpz_add_ui(sum, x_cubed, 3);
+      mpz_add(sum, new_x_coord, temp);
+      mpz_clear(temp);
 
       mpz_t y_squared;
       mpz_init(y_squared);
@@ -167,9 +167,15 @@ namespace encryption {
     char arr2[mpz_sizeinbase (y_coord, 10) + 2];
     char* coord_y = mpz_get_str(arr2, 10, y_coord);
 
-    std::string coords_str = '[' + std::string(coord_x) + ',' + std::string(coord_y) + ']';
+    std::string coords_str = "[" + std::string(coord_x) + "," + std::string(coord_y) + "]";
 
-    element_set_str(ret_val, coords_str.c_str(), 10);
+    element_printf("U is  %B\n", U);
+
+    int num = element_set_str(ret_val, coords_str.c_str(), 10);
+    std::cerr << "NUM CHARACTERS READ : " << num << '\n';
+    std::cerr<<"HASH TO GROUP RESULT STR"<< coords_str << '\n';
+    std::cerr<<"HASH TO GROUP RESULT ";
+    element_printf(" is  %B\n", ret_val);
 
     mpz_clear(new_x_coord);
     mpz_clear(y_coord);
@@ -223,9 +229,6 @@ namespace encryption {
     element_t W, H;
     element_init_G1(W, this->pairing_);
     element_init_G1(H, this->pairing_);
-
-    element_printf("U is  %B\n", U);
-    std::cerr << " V is " << V << std::endl;
 
     this->HashToGroup(H, U, V);
     element_mul_zn(W, H, r);

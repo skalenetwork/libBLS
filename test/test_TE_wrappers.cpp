@@ -20,6 +20,10 @@ std::default_random_engine rand_gen((unsigned int) time(0));
 BOOST_AUTO_TEST_SUITE(ThresholdEncryptionWrappers)
 
     BOOST_AUTO_TEST_CASE(testSqrt){
+      for (size_t i = 0; i < 1; i++) {
+        gmp_randstate_t state;
+        gmp_randinit_default(state);
+
         mpz_t rand;
         mpz_init(rand);
 
@@ -54,15 +58,16 @@ BOOST_AUTO_TEST_SUITE(ThresholdEncryptionWrappers)
 
         mpz_add(sum, mpz_sqrt0, mpz_sqrt);
 
-        gmp_printf ("%s is %Zd\n", "SUM", sum);
+        gmp_printf ("%s is %Zd\n\n", "SUM", sum);
 
-        BOOST_REQUIRE(mpz_cmp(mpz_sqrt0, mpz_sqrt) || mpz_cmp(sum, modulus_q) == 0);
+        BOOST_REQUIRE(mpz_cmp(mpz_sqrt0, mpz_sqrt) == 0 || mpz_cmp(sum, modulus_q) == 0);
 
         mpz_clears(mpz_sqrt0, mpz_sqrt, sqr_mod, sum, modulus_q, 0);
+      }
     }
 
     BOOST_AUTO_TEST_CASE(test1){
-      for (size_t i = 0; i < 0; i++) {
+      for (size_t i = 0; i < 1; i++) {
         size_t num_all = rand_gen() % 16 + 1;
         size_t num_signed = rand_gen() % num_all + 1;
         //encryption::TE te_obj(num_signed, num_all);
@@ -85,9 +90,8 @@ BOOST_AUTO_TEST_SUITE(ThresholdEncryptionWrappers)
         element_mul(common_pkey, common_skey.el_, g);
         element_clear(g);
 
-
         std::string message;
-        size_t msg_length = 64; //rand_gen() % 1000 + 2;
+        size_t msg_length = 64;
         for (size_t length = 0; length < msg_length; ++length) {
              message += char(rand_gen() % 128);
         }       
@@ -95,9 +99,10 @@ BOOST_AUTO_TEST_SUITE(ThresholdEncryptionWrappers)
         TEPublicKey common_public(common_pkey, num_signed, num_all);
         std::shared_ptr msg_ptr = std::make_shared<std::string>(message);
         encryption::Ciphertext cypher = common_public.encrypt(msg_ptr);
-        std::cerr << "CYPHER[1] is " <<  std::get<1>(cypher) <<std::endl;
-        element_printf("CYPHER[0] is  %B\n", std::get<0>(cypher).el_);
-         element_printf("CYPHER[3] is  %B\n", std::get<0>(cypher).el_);
+       // std::cerr << "NEW CYPHER[1] is " <<  std::get<1>(cypher) <<std::endl;
+      //  element_printf("CYPHER[0] is  %B\n", std::get<0>(cypher).el_);
+       //  element_printf("CYPHER[2] is  %B\n", std::get<2>(cypher).el_);
+       //  element_printf("CYPHER[2] FROM FUNC is  %B\n", std::get<2>(common_public.encrypt(msg_ptr)).el_);
 
         std::vector<encryption::element_wrapper> skeys = dkg_te.CreateSecretKeyContribution(poly);
         std::vector<TEPrivateKeyShare> skey_shares;

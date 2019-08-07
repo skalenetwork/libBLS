@@ -32,13 +32,14 @@ class TEPublicKey {
   size_t totalSigners;
   size_t requiredSigners;
 public:
-    TEPublicKey ( std::shared_ptr<std::string> _key_str, size_t  _requiredSigners, size_t _totalSigners );
+    TEPublicKey ( std::shared_ptr<std::vector<std::string>> _key_str_ptr, size_t  _requiredSigners, size_t _totalSigners );
 
     TEPublicKey ( encryption::element_wrapper _pkey, size_t  _requiredSigners, size_t _totalSigners );
 
     encryption::Ciphertext encrypt(const std::shared_ptr<std::string> message);
 
     encryption::element_wrapper getPublicKey() const;
+
 };
 
 
