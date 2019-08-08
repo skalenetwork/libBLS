@@ -1,31 +1,43 @@
-cmake_minimum_required( VERSION 3.5.1 )
+cmake_minimum_required(VERSION 3.5.1)
 
-project( libBLS )
+project(libBLS)
 
-set( HUNTER_ENABLED OFF )
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+		if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.0)
+    		message(FATAL_ERROR "Require at least gcc-7.0")
+		endif()
+endif()
 
-option( BUILD_TESTS "Build tests" ON )
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+    message(STATUS "*** Have SIZEOF void * = 8, so 64-bit")
+else ()
+    message(FATAL_ERROR "*** SIZEOF void * != 8, so not 64-bit - libBLS supports only 64-bit")
+endif ()
 
-if( BUILD_TESTS )
+set(HUNTER_ENABLED OFF)
+
+option(BUILD_TESTS "Build tests" ON)
+
+if(BUILD_TESTS)
 	enable_testing()
 endif()
 
-option( COVERAGE "Build with code coverage support" OFF )
-if( COVERAGE )
-	message( STATUS "**********************" )
-	message( STATUS "*** COVERAGE is ON ***" )
-	message( STATUS "**********************" )
-	add_compile_options( -g --coverage )
+option(COVERAGE "Build with code coverage support" OFF)
+if(COVERAGE)
+	message(STATUS "**********************")
+	message(STATUS "*** COVERAGE is ON ***")
+	message(STATUS "**********************")
+	add_compile_options(-g --coverage)
 
-	set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage" )
-	set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage" )
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fprofile-arcs -ftest-coverage")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
 
-	set( CMAKE_SHARED_LINKER_FLAGS "--coverage ${CMAKE_SHARED_LINKER_FLAGS}" )
-	set( CMAKE_EXE_LINKER_FLAGS "--coverage ${CMAKE_EXE_LINKER_FLAGS}" )
+	set(CMAKE_SHARED_LINKER_FLAGS "--coverage ${CMAKE_SHARED_LINKER_FLAGS}")
+	set(CMAKE_EXE_LINKER_FLAGS "--coverage ${CMAKE_EXE_LINKER_FLAGS}")
 endif()
 
 
-set( sourses_bls
+set(sourses_bls
 		bls/bls.cpp
 		bls/BLSPrivateKeyShare.cpp
 		bls/BLSPrivateKey.cpp
@@ -38,7 +50,7 @@ set( sourses_bls
 		dkg/dkg.cpp
 		third_party/cryptlite/base64.cpp
 		)
-set( headers_bls
+set(headers_bls
 		bls/bls.h
 		bls/BLSPrivateKeyShare.h
 		bls/BLSPrivateKey.h
@@ -66,9 +78,9 @@ link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 include(deps/ProjectGMP.cmake)
 
 add_library(bls ${sourses_bls} ${headers_bls})
-target_compile_options( bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wno-error=unused-but-set-variable )
+target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wno-error=unused-but-set-variable)
 
-find_package( Boost REQUIRED program_options system )
+find_package(Boost REQUIRED program_options system)
 find_package(OpenSSL REQUIRED)
 
 if ((DEFINED BLS_WITH_SECP256K1_INCLUDE_DIR) AND (DEFINED BLS_WITH_SECP256K1_LIBRARY_DIR))
@@ -124,34 +136,34 @@ add_executable(dkg_glue tools/dkg_glue.cpp)
 target_include_directories(dkg_glue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(dkg_glue PRIVATE bls Boost::program_options)
 
-add_executable( sign_bls tools/sign_bls.cpp )
-target_include_directories( sign_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} )
-target_link_libraries( sign_bls PRIVATE bls Boost::program_options )
+add_executable(sign_bls tools/sign_bls.cpp)
+target_include_directories(sign_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(sign_bls PRIVATE bls Boost::program_options)
 
-add_executable( bls_glue tools/bls_glue.cpp )
-target_include_directories( bls_glue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} )
-target_link_libraries( bls_glue PRIVATE bls Boost::program_options )
+add_executable(bls_glue tools/bls_glue.cpp)
+target_include_directories(bls_glue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(bls_glue PRIVATE bls Boost::program_options)
 
-add_executable( verify_bls tools/verify_bls.cpp )
-target_include_directories( verify_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} )
-target_link_libraries( verify_bls PRIVATE bls Boost::program_options )
+add_executable(verify_bls tools/verify_bls.cpp)
+target_include_directories(verify_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(verify_bls PRIVATE bls Boost::program_options)
 
-if( BUILD_TESTS )
-	add_executable( bls_unit_test test/unit_tests_bls.cpp )
-	target_include_directories( bls_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} )
-	target_link_libraries( bls_unit_test PRIVATE bls )
+if(BUILD_TESTS)
+	add_executable(bls_unit_test test/unit_tests_bls.cpp)
+	target_include_directories(bls_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+	target_link_libraries(bls_unit_test PRIVATE bls)
 
-	add_test( NAME bls_tests COMMAND bls_unit_test )
+	add_test(NAME bls_tests COMMAND bls_unit_test)
 
-	add_executable( dkg_unit_test test/unit_tests_dkg.cpp )
-	target_include_directories( dkg_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} )
-	target_link_libraries( dkg_unit_test PRIVATE bls )
-	add_test( NAME dkg_tests COMMAND dkg_unit_test )
+	add_executable(dkg_unit_test test/unit_tests_dkg.cpp)
+	target_include_directories(dkg_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+	target_link_libraries(dkg_unit_test PRIVATE bls)
+	add_test(NAME dkg_tests COMMAND dkg_unit_test)
 
-	add_executable( bls_test test/test_bls.cpp )
-	target_include_directories( bls_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} )
-	target_link_libraries( bls_test PRIVATE bls )
-	add_test( NAME bls_test COMMAND bls_test )
+	add_executable(bls_test test/test_bls.cpp)
+	target_include_directories(bls_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+	target_link_libraries(bls_test PRIVATE bls)
+	add_test(NAME bls_test COMMAND bls_test)
 
 	add_custom_target(all_bls_tests
 			COMMAND ./bls_unit_test
