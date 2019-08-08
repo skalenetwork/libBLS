@@ -8,4 +8,4 @@
 
 [submodule "pbc"]
 	path = pbc
-	url = https://github.com/blynn/pbc.git
+	url = https://github.com/blynn/pbc
