@@ -117,7 +117,8 @@ namespace encryption{
       std::string Hash(const element_t& Y, std::string (*hash_func)(const std::string& str) =
                                                cryptlite::sha256::hash_hex);
 
-      bool Verify(const Ciphertext& ciphertext, const element_t& decrypted, const element_t& public_key);
+      bool Verify(const Ciphertext& ciphertext, const element_t& decrypted,
+                                                const element_t& public_key);
 
       std::string CombineShares(const Ciphertext& ciphertext,
                                 const std::vector<std::pair<element_wrapper, size_t>>& decrypted);

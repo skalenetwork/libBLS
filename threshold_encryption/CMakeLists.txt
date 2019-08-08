@@ -40,7 +40,8 @@ include_directories(${CMAKE_BINARY_DIR}/deps/include ${PBC_INCLUDE_DIR})
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 
 add_dependencies(te pbc)
-target_include_directories(te PRIVATE ${PBC_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
+target_include_directories(te PRIVATE ${PBC_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}
+																													${THIRD_PARTY_DIR})
 target_link_libraries(te PRIVATE ${PBC_LIBRARY})
 
 

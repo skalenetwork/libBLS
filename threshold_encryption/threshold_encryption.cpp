@@ -33,7 +33,7 @@ namespace encryption {
     pairing_init_set_str(this->pairing_, aparam);
 
     element_init_G1(this->generator_, this->pairing_);
-    
+
     element_random(this->generator_);
     while (element_is0(this->generator_)) {
       element_random(this->generator_);
@@ -282,7 +282,8 @@ namespace encryption {
     element_clear(H);
   }
 
-  bool TE::Verify(const Ciphertext& ciphertext, const element_t& decrypted, const element_t& public_key) {
+  bool TE::Verify(const Ciphertext& ciphertext, const element_t& decrypted,
+                  const element_t& public_key) {
     element_t U;
     element_init_G1(U, this->pairing_);
     element_set(U, const_cast<element_t&>(std::get<0>(ciphertext).el_));
@@ -384,7 +385,8 @@ namespace encryption {
     for (size_t i = 0; i < this->t_; ++i) {
       element_t temp;
       element_init_G1(temp, this->pairing_);
-      element_mul_zn(temp, (const_cast<std::vector<std::pair<element_wrapper, size_t>>&>(decrypted))[i].first.el_, lagrange_coeffs[i].el_);
+      element_mul_zn(temp, (const_cast<std::vector<std::pair<element_wrapper, size_t>>&>(decrypted))[i].first.el_,
+                                                                            lagrange_coeffs[i].el_);
 
       element_t tmp1;
       element_init_G1(tmp1, this->pairing_);
@@ -461,7 +463,8 @@ namespace encryption {
       for (size_t j = 0; j < this->t_; ++j) {
         if (j != i) {
           if (idx[i] == idx[j]) {
-            throw std::runtime_error("Error during the interpolation, have same indexes in the list of indexes");
+            throw std::runtime_error("Error during the interpolation,
+                                      have same indexes in the list of indexes");
           }
 
           element_t u;

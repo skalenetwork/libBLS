@@ -70,7 +70,9 @@ set(headers_bls
 
 set(PROJECT_VERSION 0.4.0)
 add_definitions(-DBLS_VERSION=${PROJECT_VERSION})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++17 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-error=unused-variable -Wno-error=unused-parameter -Wno-error=int-in-bool-context")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++17 -Wno-error=parentheses
+		-Wno-error=char-subscripts -Wno-error=unused-variable
+		-Wno-error=unused-parameter -Wno-error=int-in-bool-context")
 
 include_directories(${CMAKE_BINARY_DIR}/deps/include ${GMP_INCLUDE_DIR})
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
@@ -78,7 +80,8 @@ link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 include(deps/ProjectGMP.cmake)
 
 add_library(bls ${sourses_bls} ${headers_bls})
-target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wno-error=unused-but-set-variable)
+target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder
+																													-Wno-error=unused-but-set-variable)
 
 find_package(Boost REQUIRED program_options system)
 find_package(OpenSSL REQUIRED)
