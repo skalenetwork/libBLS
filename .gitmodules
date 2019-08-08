@@ -5,3 +5,7 @@
 [submodule "mpir"]
 	path = mpir
 	url = https://github.com/chfast/mpir.git
+
+[submodule "pbc"]
+	path = pbc
+	url = https://github.com/blynn/pbc.git
