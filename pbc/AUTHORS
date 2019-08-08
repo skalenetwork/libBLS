@@ -1,0 +1,37 @@
+PBC library credits
+
+If your name should be here but you don't see it please contact me as I
+may have forgotten to update this file.
+
+Ben Lynn <blynn at cs dot stanford dot edu> (Original author)
+
+Homer Hsing
+    Maintainer
+
+Hovav Shacham
+    Multiexponentiation
+    Sliding windows exponentiaion
+    Makefile
+    BBS optimizations
+
+Joseph Cooley 
+    Autotools
+    Mac OS X build (via xcode, fink)
+    Pairings can be read from memory buffer
+    Removed many compile-time warnings
+    Miscellaneous improvements
+    
+Rob Figueiredo, Roger Khazan
+    Windows build (via mingw)
+
+Dmitry Kosolapov
+    Manual corrections
+    Several example cryptosystems
+
+John Bethencourt
+    Patches including fixes for 64-bit platforms
+
+Paul Miller
+    Bug reports
+    Manual corrections
+    Debian build files
