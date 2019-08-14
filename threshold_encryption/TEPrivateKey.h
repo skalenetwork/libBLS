@@ -16,40 +16,34 @@
   You should have received a copy of the GNU Affero General Public License
   along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-  @file TEPrivateKeyShare.h
+  @file TEPublicKey.h
   @author Sveta Rogova
   @date 2019
 */
 
-#ifndef LIBBLS_TEPRIVATEKEYSHARE_H
-#define LIBBLS_TEPRIVATEKEYSHARE_H
+#ifndef LIBBLS_TEPRIVATEKEY_H
+#define LIBBLS_TEPRIVATEKEY_H
 
-#include "TEDataSingleton.h"
 #include <threshold_encryption/threshold_encryption.h>
+#include "TEDataSingleton.h"
 
-class TEPrivateKeyShare {
+class TEPrivateKey {
 
     encryption::element_wrapper  privateKey;
 
     size_t totalSigners;
     size_t requiredSigners;
-    size_t signerIndex;
 
 public:
-    TEPrivateKeyShare( std::shared_ptr<std::string> _key_str_ptr, size_t _signerIndex, size_t  _requiredSigners, size_t _totalSigners );
 
-    TEPrivateKeyShare( encryption::element_wrapper _skey_share, size_t _signerIndex, size_t  _requiredSigners, size_t _totalSigners );
+    TEPrivateKey( std::shared_ptr<std::string> _key_str_ptr, size_t _requiredSigners, size_t _totalSigners );
 
-    encryption::element_wrapper decrypt(encryption::Ciphertext& cipher);
+    TEPrivateKey( encryption::element_wrapper _skey, size_t  _requiredSigners, size_t _totalSigners );
 
     std::string toString();
 
-    size_t getSignerIndex() const;
-
     encryption::element_wrapper getPrivateKey() const;
-
-    ~TEPrivateKeyShare();
 };
 
 
-#endif //LIBBLS_TEPRIVATEKEYSHARE_H
+#endif //LIBBLS_TEPRIVATEKEY_H

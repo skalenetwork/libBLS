@@ -24,12 +24,12 @@
 #pragma once
 
 #include <threshold_encryption.h>
+#include <TEDataSingleton.h>
 
 namespace encryption {
 
 class DkgTe {
  public:
-    pairing_t pairing_;
 
     DkgTe(const size_t t, const size_t n);
 

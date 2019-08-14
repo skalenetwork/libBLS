@@ -878,7 +878,7 @@ void element_multi_add(element_t n[], element_t a[],element_t b[], int m) {
 }
 
 element_ptr element_new(field_ptr f) {
-  element_ptr e = pbc_malloc(sizeof(*e));
+  element_ptr e = pbc_calloc(1, sizeof(*e));//pbc_malloc(sizeof(*e));////
   element_init(e, f);
   return e;
 }

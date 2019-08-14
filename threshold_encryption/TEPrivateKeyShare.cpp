@@ -22,15 +22,18 @@
 */
 
 #include "TEPrivateKeyShare.h"
+#include <threshold_encryption/utils.h>
 
 TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr<std::string> _key_str, size_t _signerIndex,  size_t  _requiredSigners, size_t _totalSigners )
         : signerIndex(_signerIndex), requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
+
+    TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
+
     if (!_key_str)
         throw std::runtime_error("private key share is null");
 
-    encryption::TE te(_requiredSigners, _totalSigners);
     element_t pkey;
-    element_init_Zr(pkey, te.pairing_);
+    element_init_Zr(pkey, TEDataSingleton::getData().pairing_);
     element_set_str(pkey, _key_str->c_str(), 10);
     privateKey = pkey;
     element_clear(pkey);
@@ -39,16 +42,34 @@ TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr<std::string> _key_str, siz
 TEPrivateKeyShare::TEPrivateKeyShare( encryption::element_wrapper _skey_share, size_t _signerIndex, size_t  _requiredSigners, size_t _totalSigners )
     : signerIndex(_signerIndex), requiredSigners(_requiredSigners), totalSigners(_totalSigners), privateKey(_skey_share) {
 
+    TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
+
+    if (_signerIndex > _totalSigners)
+        throw std::runtime_error ( " Wrong _signerIndex ");
 }
 
-encryption::element_wrapper TEPrivateKeyShare::decrypt(encryption::Ciphertext& cipher){
+encryption::element_wrapper TEPrivateKeyShare::decrypt(encryption::Ciphertext& cypher){
+
+    if ( element_is0( std::get<0>(cypher).el_ )  ||  element_is0( std::get<2>(cypher).el_)  )
+        throw std::runtime_error("zero element in cyphertext");
+
     encryption::TE te(requiredSigners, totalSigners);
+
     element_t  decrypt;
-    element_init_G1(decrypt, te.pairing_);
-    te.Decrypt(decrypt, cipher, privateKey.el_);
+    element_init_G1(decrypt, TEDataSingleton::getData().pairing_);
+
+    te.Decrypt(decrypt, cypher, privateKey.el_);
     encryption::element_wrapper decrypted (decrypt);
+
+    if ( element_is0(decrypt)){
+        std::runtime_error ("zero decrypt");
+    }
     element_clear(decrypt);
     return decrypted;
+}
+
+std::string TEPrivateKeyShare::toString(){
+    return ElementZrToString(privateKey.el_);
 }
 
 size_t TEPrivateKeyShare::getSignerIndex() const {
@@ -57,4 +78,8 @@ size_t TEPrivateKeyShare::getSignerIndex() const {
 
 encryption::element_wrapper  TEPrivateKeyShare::getPrivateKey() const{
     return privateKey;
+}
+
+TEPrivateKeyShare::~TEPrivateKeyShare(){
+
 }

@@ -31,6 +31,7 @@
 #include <third_party/cryptlite/sha256.h>
 
 #include "pbc/pbc.h"
+#include "TEDataSingleton.h"
 
 namespace encryption{
 
@@ -46,18 +47,19 @@ namespace encryption{
 
   class element_wrapper {
    public:
-      element_t el_ = { 0, 0 };
+      element_t el_ = {0, 0};
 
       void clear() {
           if (el_[0].data)
             element_clear(el_);
       }
 
-      void assign(const element_t& e) {
+     void assign(const element_t& e) {
           if (((void*)(&el_)) == ((void*)(&e))) {
             return;
           }
 
+          clear();
           element_init_same_as(el_, const_cast<element_t&>(e));
           element_set(el_, const_cast<element_t&>(e));
       }
@@ -97,10 +99,10 @@ namespace encryption{
 
   typedef std::tuple<element_wrapper, std::string, element_wrapper> Ciphertext;
 
-  class TE{
+  class TE {
    public:
-      pairing_t pairing_;
-      element_t generator_ = { 0, 0 };
+      //pairing_t pairing ;
+     // element_t generator_ = { 0, 0 };
 
       TE(const size_t t, const size_t n);
 

@@ -16,40 +16,36 @@
   You should have received a copy of the GNU Affero General Public License
   along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-  @file TEPrivateKeyShare.h
+  @file TEPublicKey.h
   @author Sveta Rogova
   @date 2019
 */
 
-#ifndef LIBBLS_TEPRIVATEKEYSHARE_H
-#define LIBBLS_TEPRIVATEKEYSHARE_H
+#ifndef LIBBLS_TEPUBLICKEYSHARE_H
+#define LIBBLS_TEPUBLICKEYSHARE_H
 
-#include "TEDataSingleton.h"
 #include <threshold_encryption/threshold_encryption.h>
+#include <threshold_encryption/TEPrivateKeyShare.h>
 
-class TEPrivateKeyShare {
-
-    encryption::element_wrapper  privateKey;
+class TEPublicKeyShare {
+    encryption::element_wrapper PublicKey;
 
     size_t totalSigners;
     size_t requiredSigners;
     size_t signerIndex;
 
 public:
-    TEPrivateKeyShare( std::shared_ptr<std::string> _key_str_ptr, size_t _signerIndex, size_t  _requiredSigners, size_t _totalSigners );
+    TEPublicKeyShare ( std::shared_ptr<std::vector<std::string>> _key_str_ptr, size_t signerIndex, size_t  _requiredSigners, size_t _totalSigners );
 
-    TEPrivateKeyShare( encryption::element_wrapper _skey_share, size_t _signerIndex, size_t  _requiredSigners, size_t _totalSigners );
+    TEPublicKeyShare ( TEPrivateKeyShare _p_key, size_t  _requiredSigners, size_t _totalSigners );
 
-    encryption::element_wrapper decrypt(encryption::Ciphertext& cipher);
+    bool Verify(const encryption::Ciphertext& ciphertext, const element_t& decrypted);
 
-    std::string toString();
+    std::shared_ptr<std::vector<std::string>> toString();
 
-    size_t getSignerIndex() const;
+    encryption::element_wrapper getPublicKey() const;
 
-    encryption::element_wrapper getPrivateKey() const;
-
-    ~TEPrivateKeyShare();
 };
 
 
-#endif //LIBBLS_TEPRIVATEKEYSHARE_H
+#endif //LIBBLS_TEPUBLICKEYSHARE_H

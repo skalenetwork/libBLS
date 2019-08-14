@@ -12,7 +12,10 @@ set(sources
 	threshold_encryption.cpp
         TEDecryptSet.cpp
         TEPrivateKeyShare.cpp
-        TEPublicKey.cpp        
+		TEPrivateKey.cpp
+        TEPublicKey.cpp
+		TEPublicKeyShare.cpp
+		TEDataSingleton.h
         ../dkg/dkg_te.cpp
 	utils.cpp
 )
@@ -21,7 +24,10 @@ set(headers
 	threshold_encryption.h
         TEDecryptSet.h
         TEPrivateKeyShare.h
+		TEPrivateKey.h
         TEPublicKey.h
+		TEPublicKeyShare.h
+		TEDataSingleton.cpp
         ../dkg/dkg_te.h
 	utils.h
 )

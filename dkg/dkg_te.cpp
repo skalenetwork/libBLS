@@ -30,14 +30,16 @@ namespace encryption {
   typedef std::vector<element_wrapper> Polynomial;
 
   DkgTe::DkgTe(const size_t t, const size_t n) : t_(t), n_(n) {
-    pairing_init_set_str(this->pairing_, aparam);
+
+
+   /* pairing_init_set_str(this->pairing_, aparam);
 
     element_init_G1(this->generator_, this->pairing_);
     
     element_random(this->generator_);
     while (element_is0(this->generator_)) {
       element_random(this->generator_);
-    }
+    }*/
   }
 
   element_wrapper DkgTe::GetGenerator() const {
@@ -49,12 +51,13 @@ namespace encryption {
 
     for (size_t i = 0; i < this->t_; ++i) {
       element_t g;
-      element_init_Zr(g, this->pairing_);
+      element_init_Zr(g, TEDataSingleton::getData().pairing_);
       element_random(g);
-      
+
       while (i == this->t_ - 1 && element_is0(g)) {
-        element_random(g);
+          element_random(g);
       }
+
 
       pol[i] = element_wrapper(g);
 
@@ -70,8 +73,8 @@ namespace encryption {
 
     for (size_t i = 0; i < this->t_; ++i) {
       element_t tmp;
-      element_init_G1(tmp, this->pairing_);
-      element_mul_zn(tmp, this->generator_, const_cast<element_t&>(polynomial[i].el_));
+      element_init_G1(tmp,  TEDataSingleton::getData().pairing_);
+      element_mul_zn(tmp,  TEDataSingleton::getData().generator_, const_cast<element_t&>(polynomial[i].el_));
       
       verification_vector[i] = element_wrapper(tmp);
 
@@ -84,24 +87,31 @@ namespace encryption {
   element_wrapper DkgTe::ComputePolynomialValue(const std::vector<element_wrapper>& polynomial,
                                     const element_wrapper& point) {
     element_t value;
-    element_init_Zr(value, this->pairing_);
+    element_init_Zr(value, TEDataSingleton::getData().pairing_);
     element_set0(value);
 
     element_t pow;
-    element_init_Zr(pow, this->pairing_);
+    element_init_Zr(pow, TEDataSingleton::getData().pairing_);
     element_set1(pow);
 
     for (size_t i = 0; i < this->t_; ++i) {
       if (i == this->t_ - 1 && element_is0(const_cast<element_t&>(polynomial[i].el_))) {
+        element_clear(value);
+        element_clear(pow);
         throw std::runtime_error("Error, incorrect degree of a polynomial");
       }
+
       element_t tmp;
-      element_init_Zr(tmp, this->pairing_);
+      element_init_Zr(tmp,  TEDataSingleton::getData().pairing_);
       element_mul(tmp, const_cast<element_t&>(polynomial[i].el_), pow);
 
       element_t tmp1;
-      element_init_Zr(tmp1, this->pairing_);
+      element_init_Zr(tmp1, TEDataSingleton::getData().pairing_);
       element_set(tmp1, value);
+
+      element_clear(value);
+
+      element_init_Zr(value, TEDataSingleton::getData().pairing_);
 
       element_add(value, tmp1, tmp);
 
@@ -109,8 +119,11 @@ namespace encryption {
 
       element_clear(tmp);
 
-      element_init_Zr(tmp, this->pairing_);
+      element_init_Zr(tmp, TEDataSingleton::getData().pairing_);
       element_set(tmp, pow);
+
+      element_clear(pow);
+      element_init_Zr(pow, TEDataSingleton::getData().pairing_);
 
       element_mul(pow, tmp, const_cast<element_t&>(point.el_));
 
@@ -119,7 +132,10 @@ namespace encryption {
 
     element_clear(pow);
 
-    return element_wrapper(value);
+    element_wrapper ret_val = element_wrapper(value);
+    element_clear(value);
+
+    return ret_val;
   }
 
   std::vector<element_wrapper> DkgTe::CreateSecretKeyContribution(
@@ -127,10 +143,12 @@ namespace encryption {
     std::vector<element_wrapper> secret_key_contribution(this->n_);
     for (size_t i = 0; i < this->n_; ++i) {
       element_t point;
-      element_init_Zr(point, this->pairing_);
+      element_init_Zr(point,  TEDataSingleton::getData().pairing_);
       element_set_si(point, i + 1);
 
       secret_key_contribution[i] = ComputePolynomialValue(polynomial, point);
+
+      element_clear(point);
     }
 
     return secret_key_contribution;
@@ -139,12 +157,12 @@ namespace encryption {
   element_wrapper DkgTe::CreateSecretKeyShare(
                               const std::vector<element_wrapper>& secret_key_contribution) {
     element_t secret_key_share;
-    element_init_Zr(secret_key_share, this->pairing_);
+    element_init_Zr(secret_key_share,  TEDataSingleton::getData().pairing_);
     element_set0(secret_key_share);
 
     for (size_t i = 0; i < this->n_; ++i) {
       element_t tmp;
-      element_init_Zr(tmp, this->pairing_);
+      element_init_Zr(tmp,  TEDataSingleton::getData().pairing_);
 
       element_set(tmp, secret_key_share);
       element_add(secret_key_share, tmp, const_cast<element_t&>(secret_key_contribution[i].el_));
@@ -160,34 +178,34 @@ namespace encryption {
   bool DkgTe::Verify(size_t idx, const element_wrapper& share, 
                 const std::vector<element_wrapper>& verification_vector) {
     element_t value;
-    element_init_G1(value, this->pairing_);
+    element_init_G1(value,  TEDataSingleton::getData().pairing_);
 
     for (size_t i = 0; i < this->t_; ++i) {
       element_t tmp1;
-      element_init_Zr(tmp1, this->pairing_);
+      element_init_Zr(tmp1,  TEDataSingleton::getData().pairing_);
       element_set_si(tmp1, idx + 1);
 
       element_t tmp2;
-      element_init_Zr(tmp2, this->pairing_);
+      element_init_Zr(tmp2,  TEDataSingleton::getData().pairing_);
       element_set_si(tmp2, i);
 
       element_t tmp3;
-      element_init_Zr(tmp3, this->pairing_);
+      element_init_Zr(tmp3,  TEDataSingleton::getData().pairing_);
       element_pow_zn(tmp3, tmp1, tmp2);
 
       element_t tmp4;
-      element_init_G1(tmp4, this->pairing_);
+      element_init_G1(tmp4,  TEDataSingleton::getData().pairing_);
       element_mul_zn(tmp4, const_cast<element_t&>(verification_vector[i].el_), tmp3);
 
       if (i == 0) {
         element_set(value, tmp4);
       } else {
         element_t tmp;
-        element_init_G1(tmp, this->pairing_);
+        element_init_G1(tmp,  TEDataSingleton::getData().pairing_);
         element_set(tmp, value);
 
         element_clear(value);
-        element_init_G1(value, this->pairing_);
+        element_init_G1(value,  TEDataSingleton::getData().pairing_);
 
         element_add(value, tmp, tmp4);
 
@@ -201,10 +219,15 @@ namespace encryption {
     }
 
     element_t mul;
-    element_init_G1(mul, this->pairing_);
-    element_mul_zn(mul, this->generator_, const_cast<element_t&>(share.el_));
+    element_init_G1(mul,  TEDataSingleton::getData().pairing_);
+    element_mul_zn(mul,  TEDataSingleton::getData().generator_, const_cast<element_t&>(share.el_));
 
-    return (element_cmp(value, mul) == 0);
+    bool ret_val = (element_cmp(value, mul) == 0);
+
+    element_clear(value);
+    element_clear(mul);
+
+    return ret_val;
   }
 
 }
