@@ -34,7 +34,7 @@
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pairing.hpp>
 #include <libff/algebra/exponentiation/exponentiation.hpp>
 
-#include "BLSutils.h"
+#include <bls/BLSutils.h>
 
 namespace signatures {
 

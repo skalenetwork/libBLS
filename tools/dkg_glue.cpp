@@ -23,6 +23,7 @@
 
 
 #include <dkg/dkg.h>
+#include <bls/BLSutils.h>
 
 #include <fstream>
 
@@ -34,22 +35,6 @@
 #define __EXPAND_AS_STR__(x) #x
 
 static bool g_b_verbose_mode = false;
-
-template<class T>
-std::string ConvertToString(T field_elem) {
-  mpz_t t;
-  mpz_init(t);
-
-  field_elem.as_bigint().to_mpz(t);
-
-  char arr[mpz_sizeinbase (t, 10) + 2];
-  char * tmp = mpz_get_str(arr, 10, t);
-  mpz_clear(t);
-
-  std::string output = tmp;
-
-  return output;
-}
 
 
 void GenerateSecretKeys(const size_t t, const size_t n, const std::vector<std::string>& input) {
@@ -66,6 +51,7 @@ void GenerateSecretKeys(const size_t t, const size_t n, const std::vector<std::s
     infile >> data;
 
     size_t idx = stoi(data["idx"].get<std::string>());
+
 
     secret_key_contribution[idx].resize(n);
     for (size_t i = 0; i < n; ++i) {
@@ -97,20 +83,20 @@ void GenerateSecretKeys(const size_t t, const size_t n, const std::vector<std::s
       verification_vector[idx][i] = libff::alt_bn128_G2(first_coord, second_coord, third_coord);
     }
   }
-  
-  std::vector<libff::alt_bn128_Fr> secret_key(n, libff::alt_bn128_Fr::zero());
-  for (size_t i = 0; i < n; ++i) {
-    for (size_t j = i; j < n; ++j) {
-      if (!dkg_instance.Verification(j, secret_key_contribution[j][i], verification_vector[j])) {
-        throw std::runtime_error(std::to_string(j) + "-th node was not verified by " +
-                                  std::to_string(i) + "-th node");
-      }
-    }
-  }
 
   for (size_t i = 0; i < n; ++i) {
     for (size_t j = i; j < n; ++j) {
-      secret_key_contribution[i][j] = secret_key_contribution[j][i];
+      std::swap(secret_key_contribution[j][i], secret_key_contribution[i][j]);
+    }
+  }
+  
+  std::vector<libff::alt_bn128_Fr> secret_key(n, libff::alt_bn128_Fr::zero());
+  for (size_t i = 0; i < n; ++i) {
+    for (size_t j = 0; j < n; ++j) {
+      if (!dkg_instance.Verification(i, secret_key_contribution[i][j], verification_vector[j])) {
+        throw std::runtime_error(std::to_string(j) + "-th node was not verified by " +
+                                  std::to_string(i) + "-th node");
+      }
     }
   }
 
@@ -123,35 +109,42 @@ void GenerateSecretKeys(const size_t t, const size_t n, const std::vector<std::s
   }
 
   for (size_t i = 0; i < n; ++i) {
-    nlohmann::json secret_key_file;
+    nlohmann::json BLS_key_file;
 
-    secret_key_file["secret_key"] = ConvertToString<libff::alt_bn128_Fr>(secret_key[i]);
+     BLS_key_file["insecureBLSPrivateKey"] = BLSutils::ConvertToString<libff::alt_bn128_Fr>(secret_key[i]);
 
-    std::string str_file_name = "secret_key" + std::to_string(i) + ".json";
+    std::string str_file_name = "BLS_keys" + std::to_string(i) + ".json";
     std::ofstream out(str_file_name.c_str());
-    out << secret_key_file.dump(4) << "\n";
+    out <<  BLS_key_file.dump(4) << "\n";
+
+    libff::alt_bn128_G2 publ_key = dkg_instance.GetPublicKeyFromSecretKey(secret_key[i]);
+    publ_key.to_affine_coordinates();
+     BLS_key_file["insecureBLSPublicKey0"] =
+        BLSutils::ConvertToString<libff::alt_bn128_Fq>(publ_key.X.c0);
+     BLS_key_file["insecureBLSPublicKey1"] =
+        BLSutils::ConvertToString<libff::alt_bn128_Fq>(publ_key.X.c1);
+     BLS_key_file["insecureBLSPublicKey2"] =
+        BLSutils::ConvertToString<libff::alt_bn128_Fq>(publ_key.Y.c0);
+     BLS_key_file["insecureBLSPublicKey3"] =
+        BLSutils::ConvertToString<libff::alt_bn128_Fq>(publ_key.Y.c1);
 
     if (g_b_verbose_mode)
       std::cout
         << str_file_name << " file:\n"
-        << secret_key_file.dump(4) << "\n\n";
+        << BLS_key_file.dump(4) << "\n\n";
   }
-
+  common_public_key.to_affine_coordinates();
   nlohmann::json public_key_json;
-  public_key_json["public_key"]["X"]["c0"] =
-                                      ConvertToString<libff::alt_bn128_Fq>(common_public_key.X.c0);
-  public_key_json["public_key"]["X"]["c1"] =
-                                      ConvertToString<libff::alt_bn128_Fq>(common_public_key.X.c1);
-  public_key_json["public_key"]["Y"]["c0"] =
-                                      ConvertToString<libff::alt_bn128_Fq>(common_public_key.Y.c0);
-  public_key_json["public_key"]["Y"]["c1"] =
-                                      ConvertToString<libff::alt_bn128_Fq>(common_public_key.Y.c1);
-  public_key_json["public_key"]["Z"]["c0"] =
-                                      ConvertToString<libff::alt_bn128_Fq>(common_public_key.Z.c0);
-  public_key_json["public_key"]["Z"]["c1"] =
-                                      ConvertToString<libff::alt_bn128_Fq>(common_public_key.Z.c1);
+  public_key_json["insecureCommonBLSPublicKey0"] =
+                                      BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_public_key.X.c0);
+  public_key_json["insecureCommonBLSPublicKey1"] =
+                                      BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_public_key.X.c1);
+  public_key_json["insecureCommonBLSPublicKey2"] =
+                                      BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_public_key.Y.c0);
+  public_key_json["insecureCommonBLSPublicKey3"] =
+                                      BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_public_key.Y.c1);
 
-  std::ofstream outfile_pk("public_key.json");
+  std::ofstream outfile_pk("common_public_key.json");
   outfile_pk << public_key_json.dump(4) << "\n";
 }
 
@@ -164,7 +157,7 @@ int main(int argc, const char *argv[]) {
       ("version", "Show version number")
       ("t", boost::program_options::value<size_t>(), "Threshold")
       ("n", boost::program_options::value<size_t>(), "Number of participants")
-      ("input", boost::program_options::value<std::vector<std::string>>(), "Input file path; if not specified then use standard input")
+      ("input", boost::program_options::value<std::vector<std::string>>(), "Input file path with participants' data to create secret keys")
       ("v", "Verbose mode (optional)");
 
     boost::program_options::variables_map vm;
