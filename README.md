@@ -21,7 +21,7 @@ The signature process proceeds in 4 steps:
 3.  Signing
 4.  Verification
 
-libBLS uses the alt_bn128 (Barreto-Naehrig curve) elliptic curve to be compatible with [Ethereum's cryptography](https://ethereum.github.io/yellowpaper/paper.pdf) and provides 128 bits of security. Also, it provides opportunity to generate secret keys with DKG algorithm that supports the same curve. 
+libBLS uses the alt_bn128 (Barreto-Naehrig curve) elliptic curve to be compatible with [Ethereum's cryptography](https://ethereum.github.io/yellowpaper/paper.pdf) and provides 128 bits of security. Also, it provides opportunity to generate secret keys with DKG algorithm that supports the same curve.
 
 libBLS for the most part corresponds to [BLS signature standard](https://tools.ietf.org/html/draft-boneh-bls-signature-00). This work is still in progress and is going to be improved in the next couple of months.
 
@@ -160,7 +160,7 @@ libff::alt_bn128_G1 hash = bls_instance.Hashing(message);
 4.  Sign the hashed message by running Signing (if you are doing Threshold algorithm, you have to generate common signature by running SignatureRecover after it)
 
 ```cpp
-libff::alt_bn128_G1 signature = bls_instance.Signing(hash, secret_key
+libff::alt_bn128_G1 signature = bls_instance.Signing(hash, secret_key)
 ```
 
 5.  Verify a signature by running the function Verification.
