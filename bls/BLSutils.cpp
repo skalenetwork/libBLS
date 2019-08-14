@@ -73,7 +73,7 @@ libff::alt_bn128_Fq BLSutils::HashToFq (std::shared_ptr<std::array< uint8_t, 32>
     return x;
 }
 
-std::shared_ptr<std::vector<std::string>> BLSutils::SplitString( std::shared_ptr< std::string > str, const std::string& delim){
+std::shared_ptr<std::vector<std::string>> BLSutils::SplitString(std::shared_ptr<std::string> str, const std::string& delim){
     std::vector<std::string> tokens;
     size_t prev = 0, pos = 0;
     do
