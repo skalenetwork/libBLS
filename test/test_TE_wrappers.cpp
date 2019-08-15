@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(TEProcessWithWrappers){
     std::get<1>(bad_cypher) = spoilMessage(std::get<1>(cypher));
     bool is_exception_caught = false;
     try {
-      std::string bad_message_decrypted = decr_set.merge(bad_cypher);
+      decr_set.merge(bad_cypher);
     }
     catch (std::runtime_error&) {
       is_exception_caught = true;
