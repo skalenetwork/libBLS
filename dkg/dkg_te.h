@@ -24,12 +24,12 @@
 #pragma once
 
 #include <threshold_encryption.h>
+#include <TEDataSingleton.h>
 
 namespace encryption {
 
 class DkgTe {
  public:
-    pairing_t pairing_;
 
     DkgTe(const size_t t, const size_t n);
 
@@ -47,15 +47,13 @@ class DkgTe {
     element_wrapper CreateSecretKeyShare(
                                     const std::vector<element_wrapper>& secret_key_contribution);
 
-    bool Verify(size_t idx, const element_wrapper& share, 
+    bool Verify(size_t idx, const element_wrapper& share,
                 const std::vector<element_wrapper>& verification_vector);
 
  private:
   const size_t t_ = 0;
 
   const size_t n_ = 0;
-
-  element_t generator_ = {0, 0};
 };
 
 }  // namespace encryption

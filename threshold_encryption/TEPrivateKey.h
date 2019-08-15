@@ -16,26 +16,33 @@
   You should have received a copy of the GNU Affero General Public License
   along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-  @file utils.h
-  @author Oleh Nikolaiev
+  @file TEPublicKey.h
+  @author Sveta Rogova
   @date 2019
- */
+*/
 
-#pragma once
+#ifndef LIBBLS_TEPRIVATEKEY_H
+#define LIBBLS_TEPRIVATEKEY_H
 
-#include <libff/algebra/fields/fp.hpp>
-#include <pbc/pbc.h>
-#include <memory>
+#include <threshold_encryption/threshold_encryption.h>
+#include <threshold_encryption/TEDataSingleton.h>
 
-const mp_size_t bitcount = 512;
-const mp_size_t num_limbs = (bitcount + GMP_NUMB_BITS - 1) / GMP_NUMB_BITS;
+class TEPrivateKey {
+ private:
+    encryption::element_wrapper  privateKey;
 
-extern libff::bigint<num_limbs> modulus;
+    size_t totalSigners;
+    size_t requiredSigners;
 
-using type_a_Fq = libff::Fp_model<num_limbs, modulus>;
+ public:
+    TEPrivateKey(std::shared_ptr<std::string> _key_str_ptr, size_t _requiredSigners, size_t _totalSigners);
 
-void MpzSquareRoot(mpz_t ret_val, mpz_t x);
+    TEPrivateKey(encryption::element_wrapper _skey, size_t _requiredSigners, size_t _totalSigners);
 
-std::string ElementZrToString(element_t el);
+    std::string toString();
 
-std::shared_ptr<std::vector<std::string>> ElementG1ToString(element_t el);
+    encryption::element_wrapper getPrivateKey() const;
+};
+
+
+#endif //LIBBLS_TEPRIVATEKEY_H

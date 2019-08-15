@@ -10,13 +10,25 @@ endif()
 
 set(sources
 	threshold_encryption.cpp
-	../dkg/dkg_te.cpp
+  TEDecryptSet.cpp
+  TEPrivateKeyShare.cpp
+	TEPrivateKey.cpp
+  TEPublicKey.cpp
+	TEPublicKeyShare.cpp
+	TEDataSingleton.h
+  ../dkg/dkg_te.cpp
 	utils.cpp
 )
 
 set(headers
 	threshold_encryption.h
-	../dkg/dkg_te.h
+  TEDecryptSet.h
+  TEPrivateKeyShare.h
+	TEPrivateKey.h
+  TEPublicKey.h
+	TEPublicKeyShare.h
+	TEDataSingleton.cpp
+  ../dkg/dkg_te.h
 	utils.h
 )
 
@@ -57,8 +69,15 @@ if (BUILD_TESTS)
 
 	add_test(NAME te_tests COMMAND te_unit_test)
 
+  add_executable(te_test ../test/test_TE_wrappers.cpp)
+  target_include_directories(te_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
+  target_link_libraries(te_test PRIVATE te ${PBC_LIBRARY} ${GMP_LIBRARY})
+
+  add_test(NAME te_wrap_tests COMMAND te_unit_test)
+
 	add_custom_target(all_te_tests
 		COMMAND ./te_unit_test
+                COMMAND ./te_test
 		DEPENDS te_unit_test
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		COMMENT "Run all TE tests"

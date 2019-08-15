@@ -16,26 +16,34 @@
   You should have received a copy of the GNU Affero General Public License
   along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-  @file utils.h
-  @author Oleh Nikolaiev
+  @file TEPublicKey.h
+  @author Sveta Rogova
   @date 2019
- */
+*/
 
-#pragma once
-
-#include <libff/algebra/fields/fp.hpp>
 #include <pbc/pbc.h>
-#include <memory>
 
-const mp_size_t bitcount = 512;
-const mp_size_t num_limbs = (bitcount + GMP_NUMB_BITS - 1) / GMP_NUMB_BITS;
+#ifndef LIBBLS_TEBASEWRAPPER_H
+#define LIBBLS_TEBASEWRAPPER_H
 
-extern libff::bigint<num_limbs> modulus;
 
-using type_a_Fq = libff::Fp_model<num_limbs, modulus>;
+class TEDataSingleton {
+ private:
+   TEDataSingleton();
 
-void MpzSquareRoot(mpz_t ret_val, mpz_t x);
+ public:
+    pairing_t pairing_;
+    element_t generator_;
 
-std::string ElementZrToString(element_t el);
+    static TEDataSingleton& getData(){
+      static TEDataSingleton data;
+      return data;
+    }
 
-std::shared_ptr<std::vector<std::string>> ElementG1ToString(element_t el);
+    static void checkSigners(size_t _requiredSigners, size_t _totalSigners );
+
+    ~TEDataSingleton();
+};
+
+
+#endif //LIBBLS_TEBASEWRAPPER_H
