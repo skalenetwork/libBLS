@@ -1,25 +1,25 @@
 /*
-  Copyright (C) 2018-2019 SKALE Labs
+Copyright (C) 2018-2019 SKALE Labs
 
-  This file is part of libBLS.
+This file is part of libBLS.
 
-  libBLS is free software: you can redistribute it and/or modify
-  it under the terms of the GNU Affero General Public License as published
-  by the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+libBLS is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-  libBLS is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU Affero General Public License for more details.
+libBLS is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
 
-  You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public License
+along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-  @file dkg_te.cpp
-  @author Oleh Nikolaiev
-  @date 2019
- */
+@file dkg_te.cpp
+@author Oleh Nikolaiev
+@date 2019
+*/
 
 #include <dkg/dkg_te.h>
 
@@ -29,22 +29,7 @@ namespace encryption {
 
   typedef std::vector<element_wrapper> Polynomial;
 
-  DkgTe::DkgTe(const size_t t, const size_t n) : t_(t), n_(n) {
-
-
-   /* pairing_init_set_str(this->pairing_, aparam);
-
-    element_init_G1(this->generator_, this->pairing_);
-    
-    element_random(this->generator_);
-    while (element_is0(this->generator_)) {
-      element_random(this->generator_);
-    }*/
-  }
-
-  element_wrapper DkgTe::GetGenerator() const {
-      return element_wrapper(generator_);
-  }
+  DkgTe::DkgTe(const size_t t, const size_t n) : t_(t), n_(n) {}
 
   Polynomial DkgTe::GeneratePolynomial() {
     Polynomial pol(this->t_);
@@ -55,9 +40,8 @@ namespace encryption {
       element_random(g);
 
       while (i == this->t_ - 1 && element_is0(g)) {
-          element_random(g);
+        element_random(g);
       }
-
 
       pol[i] = element_wrapper(g);
 
@@ -68,14 +52,14 @@ namespace encryption {
   }
 
   std::vector<element_wrapper> DkgTe::CreateVerificationVector(
-                                        const std::vector<element_wrapper>& polynomial) {
+                                                  const std::vector<element_wrapper>& polynomial) {
     std::vector<element_wrapper> verification_vector(this->t_);
 
     for (size_t i = 0; i < this->t_; ++i) {
       element_t tmp;
       element_init_G1(tmp,  TEDataSingleton::getData().pairing_);
       element_mul_zn(tmp,  TEDataSingleton::getData().generator_, const_cast<element_t&>(polynomial[i].el_));
-      
+
       verification_vector[i] = element_wrapper(tmp);
 
       element_clear(tmp);
@@ -84,8 +68,8 @@ namespace encryption {
     return verification_vector;
   }
 
-  element_wrapper DkgTe::ComputePolynomialValue(const std::vector<element_wrapper>& polynomial,
-                                    const element_wrapper& point) {
+element_wrapper DkgTe::ComputePolynomialValue(const std::vector<element_wrapper>& polynomial,
+                                                                const element_wrapper& point) {
     element_t value;
     element_init_Zr(value, TEDataSingleton::getData().pairing_);
     element_set0(value);
@@ -139,7 +123,7 @@ namespace encryption {
   }
 
   std::vector<element_wrapper> DkgTe::CreateSecretKeyContribution(
-                                                const std::vector<element_wrapper>& polynomial) {
+                                                  const std::vector<element_wrapper>& polynomial) {
     std::vector<element_wrapper> secret_key_contribution(this->n_);
     for (size_t i = 0; i < this->n_; ++i) {
       element_t point;
@@ -155,7 +139,7 @@ namespace encryption {
   }
 
   element_wrapper DkgTe::CreateSecretKeyShare(
-                              const std::vector<element_wrapper>& secret_key_contribution) {
+                                const std::vector<element_wrapper>& secret_key_contribution) {
     element_t secret_key_share;
     element_init_Zr(secret_key_share,  TEDataSingleton::getData().pairing_);
     element_set0(secret_key_share);
@@ -175,8 +159,8 @@ namespace encryption {
     return secret_key_share;
   }
 
-  bool DkgTe::Verify(size_t idx, const element_wrapper& share, 
-                const std::vector<element_wrapper>& verification_vector) {
+  bool DkgTe::Verify(size_t idx, const element_wrapper& share,
+                                          const std::vector<element_wrapper>& verification_vector) {
     element_t value;
     element_init_G1(value,  TEDataSingleton::getData().pairing_);
 
@@ -229,9 +213,4 @@ namespace encryption {
 
     return ret_val;
   }
-
-}
-
-
-
-// namespace encryption
+}  // namespace encryption

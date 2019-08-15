@@ -20,6 +20,7 @@
   @author Oleh Nikolaiev
   @date 2019
 */
+
 #include <iostream>
 #include <string.h>
 #include <valarray>
@@ -29,22 +30,9 @@
 
 namespace encryption {
 
-  TE::TE(const size_t t, const size_t n) : t_(t), n_(n) {
+  TE::TE(const size_t t, const size_t n) : t_(t), n_(n) {}
 
-    /*pairing_init_set_str(this->pairing_, aparam);
-
-    element_init_G1(this->generator_, this->pairing_);
-    
-    element_random(this->generator_);
-    while (element_is0(this->generator_)) {
-      element_random(this->generator_);
-    }*/
-  }
-
-  TE::~TE() {
-   // element_clear(this->generator_);
-   // pairing_clear(this->pairing_);
-  }
+  TE::~TE() {}
 
   std::string TE::Hash(const element_t& Y, std::string (*hash_func)(const std::string& str)) {
     // assumed that Y lies in from G1
@@ -120,7 +108,7 @@ namespace encryption {
 
       int is_square = mpz_legendre(y_squared, modulus_q);
 
-      if (is_square == -1 || is_square == 0) {        
+      if (is_square == -1 || is_square == 0) {
         mpz_addmul_ui(x_coord, one, 1);
         mpz_clear(y_squared);
 
@@ -215,8 +203,6 @@ namespace encryption {
 
     element_clear(U);
     element_clear(W);
-
-    //element_printf("in encrypt CYPHER[0] is  %B\n", std::get<0>(result).el_);
 
     return result;
   }
