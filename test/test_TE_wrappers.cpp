@@ -170,10 +170,9 @@ BOOST_AUTO_TEST_CASE(TEProcessWithWrappers){
     element_init_G1(rand_el, TEDataSingleton::getData().pairing_);
     std::get<0>(bad_cypher) = rand_el;
 
-    std::string bad_message_decrypted;
     is_exception_caught = false;
     try {
-      bad_message_decrypted = decr_set.merge(bad_cypher);
+      decr_set.merge(bad_cypher);
     }
     catch (std::runtime_error &) {
       is_exception_caught = true;
@@ -186,7 +185,7 @@ BOOST_AUTO_TEST_CASE(TEProcessWithWrappers){
     std::get<2>(bad_cypher) = rand_el2;
     is_exception_caught = false;
     try {
-      bad_message_decrypted = decr_set.merge(bad_cypher);
+      decr_set.merge(bad_cypher);
     }
     catch (std::runtime_error &) {
       is_exception_caught = true;
