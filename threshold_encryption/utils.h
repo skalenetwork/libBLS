@@ -36,6 +36,6 @@ using type_a_Fq = libff::Fp_model<num_limbs, modulus>;
 
 void MpzSquareRoot(mpz_t ret_val, mpz_t x);
 
-std::string ElementZrToString(element_t el );
+std::string ElementZrToString(element_t el);
 
-std::shared_ptr<std::vector<std::string>> ElementG1ToString(element_t el );
+std::shared_ptr<std::vector<std::string>> ElementG1ToString(element_t el);

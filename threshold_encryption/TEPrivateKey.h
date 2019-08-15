@@ -25,20 +25,19 @@
 #define LIBBLS_TEPRIVATEKEY_H
 
 #include <threshold_encryption/threshold_encryption.h>
-#include "TEDataSingleton.h"
+#include <threshold_encryption/TEDataSingleton.h>
 
 class TEPrivateKey {
-
+ private:
     encryption::element_wrapper  privateKey;
 
     size_t totalSigners;
     size_t requiredSigners;
 
-public:
+ public:
+    TEPrivateKey(std::shared_ptr<std::string> _key_str_ptr, size_t _requiredSigners, size_t _totalSigners);
 
-    TEPrivateKey( std::shared_ptr<std::string> _key_str_ptr, size_t _requiredSigners, size_t _totalSigners );
-
-    TEPrivateKey( encryption::element_wrapper _skey, size_t  _requiredSigners, size_t _totalSigners );
+    TEPrivateKey(encryption::element_wrapper _skey, size_t _requiredSigners, size_t _totalSigners);
 
     std::string toString();
 

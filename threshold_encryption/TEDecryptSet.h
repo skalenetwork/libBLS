@@ -25,18 +25,19 @@
 #define LIBBLS_TEDECRYPTSET_H
 
 #include <map>
-#include "threshold_encryption.h"
+#include <threshold_encryption/threshold_encryption.h>
 
 class TEDecryptSet {
+ private:
     size_t requiredSigners;
     size_t totalSigners;
 
     std::map<size_t, std::shared_ptr< encryption::element_wrapper>> decrypts;
 
-public:
+ public:
     TEDecryptSet(size_t _requiredSigners, size_t _totalSigners);
 
-    void addDecrypt ( size_t _signerIndex, std::shared_ptr< encryption::element_wrapper>& _el);
+    void addDecrypt(size_t _signerIndex, std::shared_ptr< encryption::element_wrapper>& _el);
 
     std::string merge(const encryption::Ciphertext& ciphertext);
 };

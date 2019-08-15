@@ -28,23 +28,23 @@
 #include <threshold_encryption/TEPrivateKeyShare.h>
 
 class TEPublicKeyShare {
+ private:
     encryption::element_wrapper PublicKey;
 
     size_t totalSigners;
     size_t requiredSigners;
     size_t signerIndex;
 
-public:
-    TEPublicKeyShare ( std::shared_ptr<std::vector<std::string>> _key_str_ptr, size_t signerIndex, size_t  _requiredSigners, size_t _totalSigners );
+ public:
+    TEPublicKeyShare(std::shared_ptr<std::vector<std::string>> _key_str_ptr, size_t signerIndex, size_t  _requiredSigners, size_t _totalSigners);
 
-    TEPublicKeyShare ( TEPrivateKeyShare _p_key, size_t  _requiredSigners, size_t _totalSigners );
+    TEPublicKeyShare(TEPrivateKeyShare _p_key, size_t  _requiredSigners, size_t _totalSigners);
 
     bool Verify(const encryption::Ciphertext& ciphertext, const element_t& decrypted);
 
     std::shared_ptr<std::vector<std::string>> toString();
 
     encryption::element_wrapper getPublicKey() const;
-
 };
 
 

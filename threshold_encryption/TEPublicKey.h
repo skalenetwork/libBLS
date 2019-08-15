@@ -25,21 +25,21 @@
 #define LIBBLS_TEPUBLICKEY_H
 
 #include <threshold_encryption/threshold_encryption.h>
-#include "TEPrivateKey.h"
+#include <threshold_encryption/TEPrivateKey.h>
 
 class TEPublicKey {
-
+ private:
   encryption::element_wrapper PublicKey;
 
   size_t totalSigners;
   size_t requiredSigners;
 
-public:
-    TEPublicKey ( std::shared_ptr<std::vector<std::string>> _key_str_ptr, size_t  _requiredSigners, size_t _totalSigners );
+ public:
+    TEPublicKey(std::shared_ptr<std::vector<std::string>> _key_str_ptr, size_t  _requiredSigners, size_t _totalSigners);
 
-    TEPublicKey ( encryption::element_wrapper _pkey, size_t  _requiredSigners, size_t _totalSigners );
+    TEPublicKey(encryption::element_wrapper _pkey, size_t  _requiredSigners, size_t _totalSigners);
 
-    TEPublicKey ( TEPrivateKey _comon_private, size_t  _requiredSigners, size_t _totalSigners );
+    TEPublicKey(TEPrivateKey _comon_private, size_t  _requiredSigners, size_t _totalSigners);
 
     std::shared_ptr<std::vector<std::string>> toString();
 

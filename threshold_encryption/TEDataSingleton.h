@@ -21,33 +21,29 @@
   @date 2019
 */
 
-#include "pbc/pbc.h"
+#include <pbc/pbc.h>
 
 #ifndef LIBBLS_TEBASEWRAPPER_H
 #define LIBBLS_TEBASEWRAPPER_H
 
 
 class TEDataSingleton {
-
+ private:
    TEDataSingleton();
 
-
-public:
-
+ public:
     pairing_t pairing_;
     element_t generator_;
 
     static TEDataSingleton& getData(){
-        static TEDataSingleton data;
-        return data;
+      static TEDataSingleton data;
+      return data;
     }
 
     static void checkSigners(size_t _requiredSigners, size_t _totalSigners );
 
     ~TEDataSingleton();
 };
-
-
 
 
 #endif //LIBBLS_TEBASEWRAPPER_H
