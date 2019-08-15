@@ -243,8 +243,8 @@ namespace signatures {
     libff::alt_bn128_Fr w = libff::alt_bn128_Fr::one();
 
     for (size_t i = 0; i < this->t_; ++i) {
+      w *= libff::alt_bn128_Fr(idx[i]);
     }
-    w *= libff::alt_bn128_Fr(idx[i]);
 
     for (size_t i = 0; i < this->t_; ++i) {
       libff::alt_bn128_Fr v = libff::alt_bn128_Fr(idx[i]);
