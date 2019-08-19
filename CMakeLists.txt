@@ -36,6 +36,8 @@ set( sourses_bls
 		bls/BLSSigShareSet.cpp
 		bls/BLSutils.cpp
 		dkg/dkg.cpp
+		dkg/DKGBLSWrapper.cpp
+		dkg/DKGBLSSecret.cpp
 		third_party/cryptlite/base64.cpp
 		)
 set( headers_bls
@@ -49,6 +51,8 @@ set( headers_bls
 		bls/BLSSigShareSet.h
 		bls/BLSutils.h
 		dkg/dkg.h
+		dkg/DKGBLSWrapper.h
+		dkg/DKGBLSSecret.h
 		third_party/json.hpp
 		third_party/cryptlite/sha256.h
 		third_party/cryptlite/sha1.h

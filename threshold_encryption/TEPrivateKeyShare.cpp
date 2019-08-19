@@ -48,6 +48,9 @@ TEPrivateKeyShare::TEPrivateKeyShare(encryption::element_wrapper _skey_share, si
   if (_signerIndex > _totalSigners) {
     throw std::runtime_error ("Wrong _signerIndex");
   }
+  if (element_is0(_skey_share.el_)) {
+    throw std::runtime_error ("Zero secret key share");
+  }
 }
 
 encryption::element_wrapper TEPrivateKeyShare::decrypt(encryption::Ciphertext& cypher){
