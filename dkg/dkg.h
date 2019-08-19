@@ -54,6 +54,10 @@ class Dkg {
 
     libff::alt_bn128_G2 GetPublicKeyFromSecretKey(const libff::alt_bn128_Fr& secret_key);
 
+    size_t GetT() const;
+
+    size_t GetN() const;
+
  private:
     const size_t t_ = 0;
 

@@ -122,4 +122,12 @@ namespace signatures {
     return public_key;
   }
 
+  size_t Dkg::GetT() const {
+    return this->t_;
+  }
+
+  size_t Dkg::GetN() const {
+    return this->n_;
+  }
+
 }  // namespace signatures
