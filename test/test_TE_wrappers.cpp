@@ -272,8 +272,8 @@ BOOST_AUTO_TEST_CASE(WrappersFromString){
 
 BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
 
-      size_t num_all = 2;//rand_gen() % 16 + 1;
-      size_t num_signed = 2;//rand_gen() % num_all + 1;
+      size_t num_all = rand_gen() % 16 + 1;
+      size_t num_signed = rand_gen() % (num_all/3) + num_all*2/3;
       std::vector< std::vector<encryption::element_wrapper>> secret_shares_all;
       std::vector< std::vector<encryption::element_wrapper>> public_shares_all;
       std::vector<DKGTEWrapper> dkgs;
@@ -287,14 +287,31 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
         std::shared_ptr<std::vector<encryption::element_wrapper>> public_shares_ptr = dkg_wrap.createDKGPublicShares();
         secret_shares_all.push_back(*secret_shares_ptr);
         public_shares_all.push_back(*public_shares_ptr);
-        TEPrivateKeyShare pkey_share = dkg_wrap.CreateTEPrivateKeyShare(i+1, secret_shares_ptr);
-        skeys.push_back(pkey_share);
-        pkeys.push_back(TEPublicKeyShare(pkey_share,num_signed,num_all));
       }
 
       for ( size_t i = 0; i < num_all; i++)
-        for (size_t j = 0; j < num_signed; j++){
-          BOOST_REQUIRE( dkgs.at(i).VerifyDKGShare( j , secret_shares_all.at(i).at(j), public_shares_all.at(i) ));
+        for (size_t j = 0; j < num_all; j++) {
+          BOOST_REQUIRE(dkgs.at(i).VerifyDKGShare(j, secret_shares_all.at(i).at(j), public_shares_all.at(i)));
+      }
+
+      std::vector< std::vector<encryption::element_wrapper>> secret_key_shares;
+
+      for ( size_t i = 0; i < num_all; i++) {
+        std::vector < encryption::element_wrapper> secret_key_contribution;
+        for (size_t j = 0; j < num_all; j++) {
+           secret_key_contribution.push_back(secret_shares_all.at(j).at(i));
+        }
+        secret_key_shares.push_back(secret_key_contribution);
+      }
+
+     for ( size_t i = 0; i < num_all; i++){
+       /* element_t s;
+        element_init_Zr(s, TEDataSingleton::getData().pairing_);
+        encryption::element_wrapper sum = VectorElementsSum(secret_key_shares.at(i) );
+        TEPrivateKeyShare pkey_share( sum, i+1, num_signed, num_all);*/
+        TEPrivateKeyShare pkey_share =  dkgs.at(i).CreateTEPrivateKeyShare(i+1, std::make_shared<std::vector<encryption::element_wrapper>>(secret_key_shares.at(i)));
+        skeys.push_back(pkey_share);
+        pkeys.push_back(TEPublicKeyShare(pkey_share, num_signed, num_all));
       }
 
       element_t public_key;
@@ -323,49 +340,17 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
       TEPublicKey common_public(encryption::element_wrapper(public_key), num_signed, num_all);
       element_clear(public_key);
 
-      element_t secret_key;
-      element_init_G1(secret_key, TEDataSingleton::getData().pairing_);
-      element_set0(secret_key);
-
-      for ( size_t i = 0; i < num_all; i++){
-
-        element_t temp;
-        element_init_Zr(temp, TEDataSingleton::getData().pairing_);
-        element_set(temp, dkgs.at(i).getValueAt0().el_);
-
-        element_t value;
-        element_init_G1(value, TEDataSingleton::getData().pairing_);
-        element_add(value, secret_key, temp );
-
-        element_clear(temp);
-        element_clear(secret_key);
-        element_init_G1(secret_key, TEDataSingleton::getData().pairing_);
-
-        element_set( secret_key, value);
-
-        element_clear(value);
-      }
-      element_t test_pkey;
-      element_init_G1(test_pkey, TEDataSingleton::getData().pairing_);
-      element_mul_zn(test_pkey, TEDataSingleton::getData().generator_, secret_key);
-      element_clear(secret_key);
-
-      BOOST_REQUIRE( element_cmp(public_key, test_pkey) == 0);
-
-
-
 
       std::string message;
-      /*size_t msg_length = 64;
+      size_t msg_length = 64;
       for (size_t length = 0; length < msg_length; ++length) {
         message += char(rand_gen() % 128);
-      }*/
-      message = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
+      }
 
       std::shared_ptr msg_ptr = std::make_shared<std::string>(message);
       encryption::Ciphertext cypher = common_public.encrypt(msg_ptr);
 
-     /* for (size_t i = 0; i < num_all - num_signed; ++i) {
+     for (size_t i = 0; i < num_all - num_signed; ++i) {
         size_t ind4del = rand_gen() % secret_shares_all.size();
         auto pos4del = secret_shares_all.begin();
         advance(pos4del, ind4del);
@@ -373,7 +358,7 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
         auto pos2 = public_shares_all.begin();
         advance(pos2, ind4del);
         public_shares_all.erase(pos2);
-      }*/
+      }
 
       TEDecryptSet decr_set(num_signed, num_all);
       for (size_t i = 0; i < num_signed; i++){
@@ -384,8 +369,6 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
       }
 
       std::string message_decrypted = decr_set.merge(cypher);
-      std::cerr << "MESSAGE: " << message << std::endl;
-      std::cerr << "MESSAGE DECRYPTED: " << message_decrypted << std::endl;
       BOOST_REQUIRE(message == message_decrypted);
 }
 

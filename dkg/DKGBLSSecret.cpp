@@ -5,17 +5,18 @@
 #include "DKGBLSSecret.h"
 
 #include <dkg/dkg.h>
+#include <bls/BLSSignature.h>
 
-DKGTESecret::DKGTESecret(size_t _requiredSigners, size_t _totalSigners) : requiredSigners(_requiredSigners),
+DKGBLSSecret::DKGBLSSecret(size_t _requiredSigners, size_t _totalSigners) : requiredSigners(_requiredSigners),
                                                                           totalSigners(_totalSigners) {
 
-  TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
+  BLSSignature::checkSigners(_requiredSigners, _totalSigners);
 
-  encryption::Dkg dkg(requiredSigners, totalSigners);
+  signatures::Dkg dkg(requiredSigners, totalSigners);
   poly = dkg.GeneratePolynomial();
 }
 
-std::vector <libff::alt_bn128_Fr> DKGTESecret::setPoly(std::vector <libff::alt_bn128_Fr> _poly){
+std::vector <libff::alt_bn128_Fr> DKGBLSSecret::setPoly(std::vector <libff::alt_bn128_Fr> _poly){
   if (_poly.size() != totalSigners){
     std::runtime_error("Wrong size of vector");
   }
@@ -23,15 +24,15 @@ std::vector <libff::alt_bn128_Fr> DKGTESecret::setPoly(std::vector <libff::alt_b
 }
 
 std::vector <libff::alt_bn128_Fr> DKGBLSSecret::getDKGBLSSecretShares(){
-  encryption::DkgTe dkg(requiredSigners, totalSigners);
+  signatures::Dkg dkg(requiredSigners, totalSigners);
   return dkg.SecretKeyContribution(poly);
 }
 
 std::vector < libff::alt_bn128_G2> DKGBLSSecret::getDKGBLSPublicShares(){
-  encryption::Dkg dkg(requiredSigners, totalSigners);
+  signatures::Dkg dkg(requiredSigners, totalSigners);
   return dkg.VerificationVector(poly);
 }
 
-libff::alt_bn128_Fr DKGTESecret::getValueAt0(){
+libff::alt_bn128_Fr DKGBLSSecret::getValueAt0(){
   return poly.at(0);
 }

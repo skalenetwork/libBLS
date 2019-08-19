@@ -37,6 +37,7 @@
 #include "bls/BLSPublicKey.h"
 #include "bls/BLSPublicKeyShare.h"
 #include "bls/BLSutils.cpp"
+#include <dkg/DKGBLSWrapper.h>
 
 #include <fstream>
 #include <third_party/json.hpp>
@@ -455,6 +456,38 @@ BOOST_AUTO_TEST_SUITE(Bls)
         }
 
     }
+
+    BOOST_AUTO_TEST_CASE(BLSWITHDKG) {
+
+      for (size_t i = 0; i < 100; ++i) {
+        size_t num_all = rand_gen() % 15 + 2;
+        size_t num_signed = rand_gen() % (num_all - 1) + 1;
+
+        std::vector< std::vector<libff::alt_bn128_Fr>> secret_shares_all;
+        std::vector< std::vector<libff::alt_bn128_G2>> public_shares_all;
+        std::vector<DKGBLSWrapper> dkgs;
+        std::vector<BLSPrivateKeyShare> skeys;
+        std::vector<BLSPublicKeyShare> pkeys;
+
+        for ( size_t i = 0; i < num_all; i++) {
+          DKGBLSWrapper dkg_wrap(num_signed, num_all);
+          dkgs.push_back(dkg_wrap);
+          std::shared_ptr<std::vector<libff::alt_bn128_Fr>> secret_shares_ptr = dkg_wrap.createDKGSecretShares();
+          std::shared_ptr<std::vector<libff::alt_bn128_G2>> public_shares_ptr = dkg_wrap.createDKGPublicShares();
+          secret_shares_all.push_back(*secret_shares_ptr);
+          public_shares_all.push_back(*public_shares_ptr);
+          BLSPrivateKeyShare pkey_share = dkg_wrap.CreateBLSPrivateKeyShare(secret_shares_ptr);
+          skeys.push_back(pkey_share);
+          pkeys.push_back(BLSPublicKeyShare(*pkey_share.getPrivateKey(), num_signed, num_all));
+        }
+
+        for ( size_t i = 0; i < num_all; i++)
+          for (size_t j = 0; j < num_signed; j++){
+            BOOST_REQUIRE( dkgs.at(i).VerifyDKGShare( j , secret_shares_all.at(i).at(j), public_shares_all.at(i) ));
+          }
+
+
+      }
 
 BOOST_AUTO_TEST_SUITE_END()
 

@@ -5,6 +5,7 @@
 #ifndef LIBBLS_DKGBLSSECRET_H
 #define LIBBLS_DKGBLSSECRET_H
 
+#include <bls/bls.h>
 
 class DKGBLSSecret {
 private:
@@ -15,7 +16,7 @@ public:
     DKGBLSSecret(size_t _requiredSigners, size_t _totalSigners);
     std::vector <libff::alt_bn128_Fr> setPoly(std::vector <libff::alt_bn128_Fr> _poly);
     std::vector <libff::alt_bn128_Fr> getDKGBLSSecretShares();
-    std::vector <libff::alt_bn128_Fr> getDKGBLSPublicShares();
+    std::vector <libff::alt_bn128_G2> getDKGBLSPublicShares();
     libff::alt_bn128_Fr getValueAt0();
 };
 

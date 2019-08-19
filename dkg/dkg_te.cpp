@@ -150,13 +150,18 @@ element_wrapper DkgTe::ComputePolynomialValue(const std::vector<element_wrapper>
 
       element_set(tmp, secret_key_share);
       element_add(secret_key_share, tmp, const_cast<element_t&>(secret_key_contribution[i].el_));
+
+      element_clear(tmp);
     }
 
     if (element_is0(secret_key_share)) {
       throw std::runtime_error("Error, at least one secret key share is equal to zero");
     }
 
-    return secret_key_share;
+    element_wrapper skey_share(secret_key_share);
+    element_clear(secret_key_share);
+
+    return skey_share;
   }
 
   bool DkgTe::Verify(size_t idx, const element_wrapper& share,

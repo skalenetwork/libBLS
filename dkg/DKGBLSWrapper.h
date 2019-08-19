@@ -6,6 +6,7 @@
 #define LIBBLS_DKGBLSWRAPPER_H
 
 #include <bls/BLSPrivateKeyShare.h>
+#include <dkg/DKGBLSSecret.h>
 
 
 class DKGBLSWrapper {
@@ -16,9 +17,9 @@ class DKGBLSWrapper {
     std::shared_ptr<DKGBLSSecret> dkg_secret_ptr = NULL;
 
   public:
-    DKGBLSSWrapper(size_t _requiredSigners, size_t _totalSigners);
+    DKGBLSWrapper(size_t _requiredSigners, size_t _totalSigners);
 
-    bool VerifyDKGShare( size_t signerIndex, const elibff::alt_bn128_Fr& share,
+    bool VerifyDKGShare( size_t signerIndex, const libff::alt_bn128_Fr& share,
                          const std::vector<libff::alt_bn128_G2>& verification_vector);
 
     void setDKGSecret(std::shared_ptr<std::vector< libff::alt_bn128_Fr>> _poly_ptr);
