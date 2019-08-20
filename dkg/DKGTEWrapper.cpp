@@ -1,6 +1,26 @@
-//
-// Created by stan on 15.08.19.
-//
+/*
+  Copyright (C) 2018-2019 SKALE Labs
+
+  This file is part of libBLS.
+
+  libBLS is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published
+  by the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  libBLS is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+
+  @file TEPrivateKeyShare.h
+  @author Sveta Rogova
+  @date 2019
+*/
+
 
 #include "DKGTEWrapper.h"
 
@@ -17,7 +37,7 @@ DKGTEWrapper::DKGTEWrapper(size_t _requiredSigners, size_t _totalSigners)
 
 bool DKGTEWrapper::VerifyDKGShare( size_t _signerIndex, const encryption::element_wrapper& _share,
              const std::vector<encryption::element_wrapper>& _verification_vector){
-  if ( element_is0(_share.el_))
+  if ( element_is0(const_cast<element_t&>(_share.el_)))
     throw std::runtime_error(" Zero secret share");
   encryption::DkgTe dkg_te(requiredSigners, totalSigners);
   return dkg_te.Verify(_signerIndex, _share, _verification_vector);
