@@ -38,9 +38,8 @@ BLSPrivateKey::BLSPrivateKey(const string &_key, size_t _requiredSigners, size_t
 }
 
 BLSPrivateKey::BLSPrivateKey(const std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>> skeys,
-                             std::shared_ptr<std::vector<size_t >> koefs,
-                             size_t _requiredSigners, size_t _totalSigners) :
-        requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
+                             std::shared_ptr<std::vector<size_t >> koefs, size_t _requiredSigners, size_t _totalSigners)
+                             : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
     signatures::Bls obj = signatures::Bls(_requiredSigners, _totalSigners);
     std::vector lagrange_koefs = obj.LagrangeCoeffs(*koefs);
