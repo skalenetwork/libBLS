@@ -272,7 +272,7 @@ BOOST_AUTO_TEST_CASE(WrappersFromString){
 
 BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
     for ( size_t i = 0; i < 10; i++ ) {
-      
+
       size_t num_all = rand_gen() % 15 + 2;
       size_t num_signed = rand_gen() % num_all + 1;
       std::vector<std::vector<encryption::element_wrapper>> secret_shares_all;

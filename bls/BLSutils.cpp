@@ -70,6 +70,8 @@ libff::alt_bn128_Fq BLSutils::HashToFq (std::shared_ptr<std::array< uint8_t, 32>
     mpz_mod(rem, hash, q);
 
     libff::alt_bn128_Fq x(rem);
+    mpz_clears(hash, rem, q, 0);
+
     return x;
 }
 
