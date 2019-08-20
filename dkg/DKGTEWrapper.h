@@ -51,7 +51,6 @@ private:
 
     TEPrivateKeyShare CreateTEPrivateKeyShare( size_t signerIndex_, std::shared_ptr<std::vector<encryption::element_wrapper>> secret_shares_ptr);
 
-    encryption::element_wrapper getValueAt0();
 };
 
 

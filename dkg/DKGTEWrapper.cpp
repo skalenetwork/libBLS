@@ -73,7 +73,4 @@ TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare( size_t signerIndex_, st
   return TEPrivateKeyShare(skey_share, signerIndex_, requiredSigners, totalSigners);
 }
 
-encryption::element_wrapper DKGTEWrapper::getValueAt0(){
-  return dkg_secret_ptr->getValueAt0();
-}
 

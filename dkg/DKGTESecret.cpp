@@ -53,7 +53,3 @@ std::vector <encryption::element_wrapper> DKGTESecret::getDKGTEPublicShares(){
   encryption::DkgTe dkg_te(requiredSigners, totalSigners);
   return dkg_te.CreateVerificationVector(poly);
 }
-
-encryption::element_wrapper DKGTESecret::getValueAt0(){
-  return poly.at(0);
-}

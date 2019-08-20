@@ -457,6 +457,6 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
     }
 
-   
+
 BOOST_AUTO_TEST_SUITE_END()
 

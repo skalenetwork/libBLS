@@ -37,7 +37,6 @@ class DKGTESecret {
     std::vector <encryption::element_wrapper> setPoly(std::vector <encryption::element_wrapper> _poly);
     std::vector <encryption::element_wrapper> getDKGTESecretShares();
     std::vector <encryption::element_wrapper> getDKGTEPublicShares();
-    encryption::element_wrapper getValueAt0();
 };
 
 
