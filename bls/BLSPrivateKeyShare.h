@@ -54,8 +54,7 @@ public:
     // generate a vector of correct _totalSigners private keys that work together and common public key
 
     static std::shared_ptr<std::pair<std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>>, std::shared_ptr<BLSPublicKey> > >
-    generateSampleKeys(
-            size_t _requiredSigners, size_t _totalSigners);
+    generateSampleKeys(size_t _requiredSigners, size_t _totalSigners);
 
     std::shared_ptr<libff::alt_bn128_Fr> getPrivateKey() const;
 

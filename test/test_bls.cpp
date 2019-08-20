@@ -37,6 +37,7 @@
 #include "bls/BLSPublicKey.h"
 #include "bls/BLSPublicKeyShare.h"
 #include "bls/BLSutils.cpp"
+#include <dkg/DKGBLSWrapper.h>
 
 #include <fstream>
 #include <third_party/json.hpp>
@@ -455,6 +456,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
         }
 
     }
+
 
 BOOST_AUTO_TEST_SUITE_END()
 
