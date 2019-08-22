@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
     BOOST_AUTO_TEST_CASE(libBlsAPI) {
 
         //std::default_random_engine rand_gen((unsigned int) time(0));
-        for (size_t i = 0; i < 0; ++i) {
+        for (size_t i = 0; i < 10; ++i) {
 
             size_t num_all = rand_gen() % 16 + 1;
             size_t num_signed = rand_gen() % num_all + 1;
@@ -272,7 +272,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
         libff::inhibit_profiling_info = true;
 
-        for (size_t i = 0; i < 0; ++i) {
+        for (size_t i = 0; i < 100; ++i) {
 
             size_t num_all = rand_gen() % 16 + 1;
             size_t num_signed = rand_gen() % num_all + 1;
@@ -368,7 +368,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
     BOOST_AUTO_TEST_CASE(threshold_signs_equality) {
 
-        for (size_t i = 0; i < 0; ++i) {
+        for (size_t i = 0; i < 100; ++i) {
             size_t num_all = rand_gen() % 15 + 2;
             size_t num_signed = rand_gen() % (num_all - 1) + 1;
 
@@ -410,7 +410,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
     BOOST_AUTO_TEST_CASE(private_keys_equality) {
 
-        for (size_t i = 0; i < 0; ++i) {
+        for (size_t i = 0; i < 100; ++i) {
             size_t num_all = rand_gen() % 15 + 2;
             size_t num_signed = rand_gen() % (num_all - 1) + 1;
 
@@ -434,7 +434,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
     BOOST_AUTO_TEST_CASE(public_keys_equality) {
 
-        for (size_t i = 0; i < 0; ++i) {
+        for (size_t i = 0; i < 100; ++i) {
             size_t num_all = rand_gen() % 15 + 2;
             size_t num_signed = rand_gen() % (num_all - 1) + 1;
 
@@ -459,7 +459,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
     BOOST_AUTO_TEST_CASE(BLSWITHDKG) {
 
-      for (size_t i = 0; i < 0; ++i) {
+      for (size_t i = 0; i < 100; ++i) {
         size_t num_all = rand_gen() % 15 + 2;
         size_t num_signed = rand_gen() % (num_all - 1) + 1;
 
