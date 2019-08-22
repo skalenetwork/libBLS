@@ -66,6 +66,10 @@ std::shared_ptr<BLSSigShare> BLSPrivateKeyShare::sign(std::shared_ptr<std::array
     if (_signerIndex == 0) {
         BOOST_THROW_EXCEPTION(runtime_error("Zero signer index"));
     }
+    if ( hash_byte_arr == nullptr)
+    {
+      BOOST_THROW_EXCEPTION(runtime_error("Hash is null"));
+    }
 
     obj = make_shared<signatures::Bls>(signatures::Bls(requiredSigners, totalSigners));
 
@@ -96,6 +100,10 @@ std::shared_ptr<BLSSigShare>  BLSPrivateKeyShare::signWithHint(std::shared_ptr<s
 
     if (_signerIndex == 0) {
         BOOST_THROW_EXCEPTION(runtime_error("Zero signer index"));
+    }
+    if ( hash_byte_arr == nullptr)
+    {
+      BOOST_THROW_EXCEPTION(runtime_error("Hash is null"));
     }
 
     obj = make_shared<signatures::Bls>(signatures::Bls(requiredSigners, totalSigners));

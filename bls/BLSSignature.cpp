@@ -34,8 +34,12 @@ BLSSignature::BLSSignature(
     : sig( sig ), hint( _hint ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     checkSigners( _requiredSigners, _totalSigners );
     BLSSignature::checkSigners( requiredSigners, totalSigners );
-    if (  sig->is_zero() ) {
-        BOOST_THROW_EXCEPTION( runtime_error( "Zero signature" ) );
+    if ( sig == nullptr || sig->is_zero() ) {
+        BOOST_THROW_EXCEPTION( runtime_error( "Zero or null signature" ) );
+    }
+    if ( hint.length() == 0 )
+    {
+      BOOST_THROW_EXCEPTION( runtime_error( "Empty or misformatted hint" ) );
     }
 }
 
@@ -46,7 +50,7 @@ BLSSignature::BLSSignature( shared_ptr< string > _sig,  size_t _requiredSigners,
     BLSutils::initBLS();
 
     if ( !_sig ) {
-        BOOST_THROW_EXCEPTION( runtime_error( "Null _sigShare" ) );
+        BOOST_THROW_EXCEPTION( runtime_error( "Null signature" ) );
     }
 
     if ( _sig->size() < 10 ) {
@@ -61,9 +65,9 @@ BLSSignature::BLSSignature( shared_ptr< string > _sig,  size_t _requiredSigners,
 
     auto position = _sig->find( ":" );
 
-    if ( position == string::npos ) {
+  /*  if ( position == string::npos ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Misformatted sig:" + *_sig ) );
-    }
+    }*/
 
    /* if ( position >= BLS_MAX_COMPONENT_LEN ||
          _sig->size() - position > BLS_MAX_COMPONENT_LEN ) {
@@ -85,6 +89,9 @@ BLSSignature::BLSSignature( shared_ptr< string > _sig,  size_t _requiredSigners,
     libff::alt_bn128_Fq Y(result->at(1).c_str());
     sig = make_shared< libff::alt_bn128_G1 >( X, Y,libff::alt_bn128_Fq::one());
     hint = result->at(2) + ":" + result->at(3);
+
+    if ( !(*sig).is_well_formed() )
+     BOOST_THROW_EXCEPTION( runtime_error("signature is not from G1"));
 }
 
 shared_ptr< string > BLSSignature::toString() {

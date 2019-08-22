@@ -38,6 +38,10 @@ BLSPublicKey::BLSPublicKey(const std::shared_ptr<std::vector<std::string> > pkey
 
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
 
+    if (pkey_str_vect == nullptr) {
+      BOOST_THROW_EXCEPTION(runtime_error("Public Key ptr is null"));
+    }
+
     libffPublicKey = make_shared<libff::alt_bn128_G2>();
 
     libffPublicKey->X.c0 = libff::alt_bn128_Fq(pkey_str_vect->at(0).c_str());
@@ -47,10 +51,7 @@ BLSPublicKey::BLSPublicKey(const std::shared_ptr<std::vector<std::string> > pkey
     libffPublicKey->Z.c0 = libff::alt_bn128_Fq::one();
     libffPublicKey->Z.c1 = libff::alt_bn128_Fq::zero();
 
-    if (libffPublicKey->X.c0 == libff::alt_bn128_Fq::zero() ||
-        libffPublicKey->X.c1 == libff::alt_bn128_Fq::zero() ||
-        libffPublicKey->Y.c0 == libff::alt_bn128_Fq::zero() ||
-        libffPublicKey->Y.c1 == libff::alt_bn128_Fq::zero()) {
+    if ( libffPublicKey->is_zero()  || !(libffPublicKey->is_well_formed()) )  {
         BOOST_THROW_EXCEPTION(runtime_error("Public Key is equal to zero or corrupt"));
     }
 }

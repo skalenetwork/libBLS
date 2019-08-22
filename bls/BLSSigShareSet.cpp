@@ -58,10 +58,9 @@ size_t BLSSigShareSet::getTotalSigSharesCount() {
 }
 shared_ptr< BLSSigShare > BLSSigShareSet::getSigShareByIndex( size_t _index ) {
 
-    if ( _index == 0 || _index > totalSigners ) {
+    if ( _index == 0 ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Index out of range:" + to_string( _index ) ) );
     }
-
 
     if ( sigShares.count( _index ) == 0 ) {
         return nullptr;
@@ -73,6 +72,7 @@ BLSSigShareSet::BLSSigShareSet( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ), was_merged(false) {
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
 }
+
 bool BLSSigShareSet::isEnough() {
 
     return ( sigShares.size() >= requiredSigners );

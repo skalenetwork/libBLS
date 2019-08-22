@@ -50,7 +50,6 @@ public:
 
     BLSPrivateKeyShare(const libff::alt_bn128_Fr &, size_t _requiredSigners, size_t _totalSigners);
 
-
     // generate a vector of correct _totalSigners private keys that work together and common public key
 
     static std::shared_ptr<std::pair<std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>>, std::shared_ptr<BLSPublicKey> > >
