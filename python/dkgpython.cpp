@@ -397,7 +397,7 @@ static struct PyModuleDef dkgpython_definition = {
   dkgpython_methods
 };
 
-PyMODINIT_FUNC PyInit_libdkgpython() {
+PyMODINIT_FUNC PyInit_dkgpython() {
   Py_Initialize();
 
   if (PyType_Ready(&PyDkgType) < 0) {
