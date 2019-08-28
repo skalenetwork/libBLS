@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
             signatures::Bls obj = signatures::Bls(num_signed, num_all);
 
-            for (size_t i = 0; i < 0; ++i) {
+            for (size_t i = 0; i < 10; ++i) {
                /* std::string message;
                 size_t msg_length = rand_gen() % 1000 + 2;
                 for (size_t length = 0; length < msg_length; ++length) {
@@ -272,7 +272,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
         libff::inhibit_profiling_info = true;
 
-        for (size_t i = 0; i < 100; ++i) {
+        for (size_t i = 0; i < 10; ++i) {
 
             size_t num_all = rand_gen() % 16 + 1;
             size_t num_signed = rand_gen() % num_all + 1;
@@ -459,7 +459,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
     BOOST_AUTO_TEST_CASE(BLSWITHDKG) {
 
-      for (size_t i = 0; i < 100; ++i) {
+      for (size_t i = 0; i < 0; ++i) {
         size_t num_all = rand_gen() % 15 + 2;
         size_t num_signed = rand_gen() % (num_all - 1) + 1;
 
@@ -1026,9 +1026,75 @@ BOOST_AUTO_TEST_SUITE(Bls)
       }
       BOOST_REQUIRE(is_exception_caught);
 
-
-
       std::cerr << "EXCEPTIONS TEST FINISHED" << std::endl;
+    }
+
+    BOOST_AUTO_TEST_CASE(DKGWrappersExceptions) {
+      size_t num_all = rand_gen() % 15 + 2;
+      size_t num_signed = rand_gen() % (num_all - 1) + 1;
+
+      bool is_exception_caught = false;  // zero share
+      try {
+        DKGBLSWrapper dkg_wrap(num_signed, num_all);
+        dkg_wrap.VerifyDKGShare(1, libff::alt_bn128_Fr::zero(), {libff::alt_bn128_G2::random_element()});
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;  // wrong vector size
+      try {
+        DKGBLSWrapper dkg_wrap(num_signed, num_all);
+        dkg_wrap.VerifyDKGShare(1, libff::alt_bn128_Fr::random_element(), {libff::alt_bn128_G2::random_element()});
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;  // set null poly
+      try {
+        DKGBLSWrapper dkg_wrap(num_signed, num_all);
+        dkg_wrap.setDKGSecret(nullptr);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;  // set wrong size poly
+      try {
+        DKGBLSWrapper dkg_wrap(num_signed, num_all);
+        std::vector <libff::alt_bn128_Fr> poly;
+        dkg_wrap.setDKGSecret( std::make_shared<std::vector <libff::alt_bn128_Fr>>(poly));
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;  // set null secret shares
+      try {
+        DKGBLSWrapper dkg_wrap(num_signed, num_all);
+        dkg_wrap.CreateBLSPrivateKeyShare(nullptr);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;  // set wrong size secret shares
+      try {
+        DKGBLSWrapper dkg_wrap(num_signed, num_all);
+        std::vector <libff::alt_bn128_Fr> shares;
+        dkg_wrap.CreateBLSPrivateKeyShare(std::make_shared<std::vector <libff::alt_bn128_Fr>>(shares));
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
     }
 BOOST_AUTO_TEST_SUITE_END()
 

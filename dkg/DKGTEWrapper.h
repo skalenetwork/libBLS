@@ -43,7 +43,7 @@ private:
     bool VerifyDKGShare( size_t signerIndex, const encryption::element_wrapper& share,
                  const std::vector<encryption::element_wrapper>& verification_vector);
 
-    void setDKGSecret(std::shared_ptr<std::vector< encryption::element_wrapper>> _poly_ptr);
+    void setDKGSecret(std::shared_ptr<std::vector< encryption::element_wrapper>>& _poly_ptr);
 
     std::shared_ptr < std::vector < encryption::element_wrapper>> createDKGSecretShares();
 

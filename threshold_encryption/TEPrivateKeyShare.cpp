@@ -36,13 +36,12 @@ TEPrivateKeyShare::TEPrivateKeyShare(std::shared_ptr<std::string> _key_str, size
   element_t pkey;
   element_init_Zr(pkey, TEDataSingleton::getData().pairing_);
   element_set_str(pkey, _key_str->c_str(), 10);
-  privateKey = pkey;
+  privateKey = encryption::element_wrapper(pkey);
+  element_clear(pkey);
 
-  if (element_is0(pkey)) {
+  if (element_is0(privateKey.el_)) {
     throw std::runtime_error ("Zero private key share");
   }
-
-  element_clear(pkey);
 }
 
 TEPrivateKeyShare::TEPrivateKeyShare(encryption::element_wrapper _skey_share, size_t _signerIndex, size_t  _requiredSigners, size_t _totalSigners)

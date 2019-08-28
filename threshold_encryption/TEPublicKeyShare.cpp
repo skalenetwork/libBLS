@@ -45,13 +45,12 @@ TEPublicKeyShare::TEPublicKeyShare(std::shared_ptr<std::vector<std::string>> _ke
     element_t pkey;
     element_init_G1(pkey, TEDataSingleton::getData().pairing_);
     element_set_str(pkey, key_str.c_str(), 10);
+    PublicKey = encryption::element_wrapper(pkey);
+    element_clear(pkey);
 
-    if ( isG1Element0(pkey) ) {
+    if ( isG1Element0(PublicKey.el_) ) {
       throw std::runtime_error("corrupted string or zero public key share");
     }
-
-    PublicKey = pkey;
-    element_clear(pkey);
   }
 
   TEPublicKeyShare::TEPublicKeyShare(TEPrivateKeyShare _p_key, size_t _requiredSigners, size_t _totalSigners)

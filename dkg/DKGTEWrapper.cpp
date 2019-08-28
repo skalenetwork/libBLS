@@ -38,32 +38,32 @@ DKGTEWrapper::DKGTEWrapper(size_t _requiredSigners, size_t _totalSigners)
 bool DKGTEWrapper::VerifyDKGShare( size_t _signerIndex, const encryption::element_wrapper& _share,
              const std::vector<encryption::element_wrapper>& _verification_vector){
   if ( element_is0(const_cast<element_t&>(_share.el_)))
-    throw std::runtime_error(" Zero secret share");
+    throw std::runtime_error("Zero secret share");
+  if (_verification_vector.size() != requiredSigners)
+    throw std::runtime_error("Wrong size of verification vector");
   encryption::DkgTe dkg_te(requiredSigners, totalSigners);
   return dkg_te.Verify(_signerIndex, _share, _verification_vector);
 }
 
-void  DKGTEWrapper::setDKGSecret(std::shared_ptr < std::vector< encryption::element_wrapper>> _poly_ptr){
+void  DKGTEWrapper::setDKGSecret(std::shared_ptr < std::vector< encryption::element_wrapper>>& _poly_ptr){
   if (_poly_ptr == nullptr)
     throw std::runtime_error("Null polynomial ptr");
   dkg_secret_ptr->setPoly(*_poly_ptr);
 }
 
 std::shared_ptr < std::vector < encryption::element_wrapper>> DKGTEWrapper::createDKGSecretShares(){
-  if (dkg_secret_ptr == nullptr)
-    throw std::runtime_error("Null DKG secret");
   return std::make_shared<std::vector< encryption::element_wrapper>>(dkg_secret_ptr->getDKGTESecretShares());
 }
 
 std::shared_ptr < std::vector <encryption::element_wrapper>> DKGTEWrapper::createDKGPublicShares(){
-  if (dkg_secret_ptr == nullptr)
-    throw std::runtime_error("Null DKG secret");
   return std::make_shared<std::vector< encryption::element_wrapper>>(dkg_secret_ptr->getDKGTEPublicShares());
 }
 
 TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare( size_t signerIndex_, std::shared_ptr<std::vector<encryption::element_wrapper>> secret_shares_ptr){
 
-  if ((*secret_shares_ptr).size() != totalSigners)
+  if (secret_shares_ptr == nullptr)
+    throw std::runtime_error("Null secret_shares_ptr ");
+  if (secret_shares_ptr->size() != totalSigners)
     throw std::runtime_error("Wrong number of secret key parts ");
 
   encryption::DkgTe dkg_te(requiredSigners, totalSigners);

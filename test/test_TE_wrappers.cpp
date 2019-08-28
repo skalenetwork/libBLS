@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE(TEProcessWithWrappers){
 }
 
 BOOST_AUTO_TEST_CASE(WrappersFromString){
-  for ( size_t i = 0; i < 100; i++ ) {
+  for ( size_t i = 0; i < 1; i++ ) {
 
     size_t num_all = rand_gen() % 16 + 1;
     size_t num_signed = rand_gen() % num_all + 1;
@@ -263,7 +263,7 @@ BOOST_AUTO_TEST_CASE(WrappersFromString){
                                                   pr_key_share_from_str.getPrivateKey().el_) == 0);
 
     TEPublicKeyShare pkey(pr_key_share, num_signed, num_all);
-    TEPublicKeyShare pkey_from_str(pkey.toString(), signer, num_signed, num_all);
+    TEPublicKeyShare pkey_from_str(pkey.toString(), pr_key_share.getSignerIndex(), num_signed, num_all);
     BOOST_REQUIRE(element_cmp(pkey.getPublicKey().el_, pkey_from_str.getPublicKey().el_) == 0);
 
   }
@@ -427,7 +427,10 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
           element_t el;
           element_init_Zr(el, TEDataSingleton::getData().pairing_);
           element_random(el);
-          TEPublicKeyShare pkey(TEPrivateKeyShare(encryption::element_wrapper(el), 1,  num_signed, num_all), num_signed, num_all);
+          encryption::element_wrapper el_wrap(el);
+          element_clear(el);
+          TEPublicKeyShare pkey(TEPrivateKeyShare(el_wrap, 1,  num_signed, num_all), num_signed, num_all);
+
           element_t U;
           element_init_G1(U, TEDataSingleton::getData().pairing_);
           element_set_str(U, "[0, 0]", 10);
@@ -443,7 +446,7 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
 
           pkey.Verify(cypher, el);
 
-          element_clear(el);
+
           element_clear(U);
           element_clear(W);
 
@@ -459,7 +462,10 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
           element_t el;
           element_init_Zr(el, TEDataSingleton::getData().pairing_);
           element_random(el);
-          TEPublicKeyShare pkey(TEPrivateKeyShare(encryption::element_wrapper(el), 1,  num_signed, num_all), num_signed, num_all);
+          encryption::element_wrapper el_wrap(el);
+          element_clear(el);
+
+          TEPublicKeyShare pkey(TEPrivateKeyShare(el_wrap, 1,  num_signed, num_all), num_signed, num_all);
           element_t U;
           element_init_G1(U, TEDataSingleton::getData().pairing_);
           element_random(U);
@@ -475,7 +481,7 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
 
           pkey.Verify(cypher, el);
 
-          element_clear(el);
+
           element_clear(U);
           element_clear(W);
         }
@@ -796,10 +802,82 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
           is_exception_caught = true;
         }
         BOOST_REQUIRE(is_exception_caught);
-
-
-
       }
 
     }
-BOOST_AUTO_TEST_SUITE_END()
+
+    BOOST_AUTO_TEST_CASE(ExceptionsDKGWrappersTest) {
+      size_t num_all = rand_gen() % 15 + 2;
+      size_t num_signed = rand_gen() % num_all + 1;
+
+      bool is_exception_caught = false;
+      try {
+        DKGTEWrapper dkg_te(num_signed, num_all);
+
+        element_t el1;
+        element_init_Zr(el1, TEDataSingleton::getData().pairing_);
+        element_set0(el1);
+
+        dkg_te.VerifyDKGShare(1, el1, *dkg_te.createDKGPublicShares());
+        element_clear(el1);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;
+      try {
+        DKGTEWrapper dkg_te(num_signed, num_all);
+
+        element_t el1;
+        element_init_Zr(el1, TEDataSingleton::getData().pairing_);
+        element_random(el1);
+
+        std::vector<encryption::element_wrapper> pub_shares = *dkg_te.createDKGPublicShares();
+        pub_shares.erase(pub_shares.begin());
+
+        dkg_te.VerifyDKGShare(1, el1, pub_shares);
+        element_clear(el1);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;
+      try {
+        DKGTEWrapper dkg_te(num_signed, num_all);
+        std::shared_ptr<std::vector<encryption::element_wrapper>> shares = dkg_te.createDKGSecretShares();
+        shares = nullptr;
+        dkg_te.setDKGSecret(shares);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;
+      try {
+        DKGTEWrapper dkg_te(num_signed, num_all);
+        dkg_te.CreateTEPrivateKeyShare(1, nullptr);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;
+      try {
+        DKGTEWrapper dkg_te(num_signed, num_all);
+        std::shared_ptr<std::vector<encryption::element_wrapper>> shares = dkg_te.createDKGSecretShares();
+        dkg_te.setDKGSecret(shares);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+     }
+
+ BOOST_AUTO_TEST_SUITE_END()
