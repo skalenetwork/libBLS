@@ -12,7 +12,7 @@ os.environ["LD" ] = "ld" + strCompilerCommonFlagsSuffix
 dkgpython_module = Extension('dkgpython',
                              sources = ['dkgpython.cpp'],
                              include_dirs = ['..', '../bls', '../dkg', '../third_party',
-                             '../libff', '../deps/include', '../mpir'],
+                             '../libff', '../mpir'],
                              library_dirs = ['../build', '../deps/lib', '../build/deps/lib',
                              '../build/libff/libff'],
                              libraries = ['bls', 'ff', 'gmpxx', 'gmp']

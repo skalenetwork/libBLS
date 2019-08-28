@@ -25,7 +25,7 @@ if (BUILD_WITH_FPIC)
               -DCMAKE_CXX_FLAGS=-fPIC -Wno-pedantic
               -DCMAKE_CPP_FLAGS=-fPIC -Wno-pedantic
       SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gmp-6.1.2
-      CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/gmp-6.1.2/configure --enable-cxx --enable-static --disable-shared --disable-hardening --prefix=${prefix}
+      CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/gmp-6.1.2/configure --enable-cxx --enable-static --enable-shared --prefix=${prefix}
       BUILD_COMMAND ${MAKE}
   )
 else()
