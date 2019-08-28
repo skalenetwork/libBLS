@@ -24,8 +24,7 @@
 #pragma once
 
 #include <libff/algebra/fields/fp.hpp>
-#include <pbc/pbc.h>
-#include <memory>
+#include <threshold_encryption.h>
 
 const mp_size_t bitcount = 512;
 const mp_size_t num_limbs = (bitcount + GMP_NUMB_BITS - 1) / GMP_NUMB_BITS;
@@ -38,4 +37,10 @@ void MpzSquareRoot(mpz_t ret_val, mpz_t x);
 
 std::string ElementZrToString(element_t el);
 
-std::shared_ptr<std::vector<std::string>> ElementG1ToString(element_t el);
+std::shared_ptr<std::vector<std::string>> ElementG1ToString(element_t& el);
+
+bool isStringNumber (std::string& str);
+
+bool isG1Element0(element_t& el);
+
+void checkCypher( const encryption::Ciphertext& cypher);
