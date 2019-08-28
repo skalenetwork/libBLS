@@ -18,7 +18,7 @@ dkgpython_module = Extension('dkgpython',
                              libraries = ['bls', 'ff', 'gmpxx', 'gmp']
                              )
 
-setup(name = 'dkgpython',
+setup(name = 'libdkgpython',
       version = '0.1.0',
       description = 'dkgpython module written in C++',
       ext_modules = [dkgpython_module]
