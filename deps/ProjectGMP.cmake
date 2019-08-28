@@ -22,6 +22,8 @@ if (BUILD_WITH_FPIC)
       URL_HASH SHA256=87b565e89a9a684fe4ebeeddb8399dce2599f9c9049854ca8c0dfbdea0e21912
       CMAKE_ARGS
               -DCMAKE_C_FLAGS=-fPIC -Wno-pedantic
+              -DCMAKE_CXX_FLAGS=-fPIC -Wno-pedantic
+              -DCMAKE_CPP_FLAGS=-fPIC -Wno-pedantic
       SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gmp-6.1.2
       CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/gmp-6.1.2/configure --enable-cxx --enable-static --disable-shared --disable-hardening --prefix=${prefix}
       BUILD_COMMAND ${MAKE}
