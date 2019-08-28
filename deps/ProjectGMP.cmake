@@ -21,9 +21,9 @@ if (BUILD_WITH_FPIC)
       URL https://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz
       URL_HASH SHA256=87b565e89a9a684fe4ebeeddb8399dce2599f9c9049854ca8c0dfbdea0e21912
       CMAKE_ARGS
-              -DCMAKE_C_FLAGS=-Wno-pedantic
+              -DCMAKE_C_FLAGS=-fPIC -Wno-pedantic
       SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gmp-6.1.2
-      CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/gmp-6.1.2/configure --enable-cxx -fPIC --enable-static --disable-shared --prefix=${prefix}
+      CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/gmp-6.1.2/configure --enable-cxx --enable-static --disable-shared --prefix=${prefix}
       BUILD_COMMAND ${MAKE}
   )
 else()
