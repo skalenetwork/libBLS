@@ -34,7 +34,7 @@ along with libBLS.  If not, see <http://www.gnu.org/licenses/>.
 //////////////////////////
 
 static int IsPythonString(const PyObject* obj) {
-// check for when an object is sent as an arg
+  // check for when an object is sent as an arg
 #if PY_MAJOR_VERSION >= 3
   return PyUnicode_Check(obj) || PyBytes_Check(obj);
 #else
