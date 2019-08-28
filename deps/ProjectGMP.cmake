@@ -23,7 +23,7 @@ if (BUILD_WITH_FPIC)
       CMAKE_ARGS
               -DCMAKE_C_FLAGS=-Wno-pedantic
       SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gmp-6.1.2
-      CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/gmp-6.1.2/configure --enable-cxx --enable-static --disable-shared --prefix=${prefix}
+      CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/gmp-6.1.2/configure --enable-cxx --fPIC --enable-static --disable-shared --prefix=${prefix}
       BUILD_COMMAND ${MAKE}
   )
 else()
@@ -36,7 +36,7 @@ else()
       CMAKE_ARGS
               -DCMAKE_C_FLAGS=-Wno-pedantic
       SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/gmp-6.1.2
-      CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/gmp-6.1.2/configure --enable-cxx --fPIC --enable-static --disable-shared --prefix=${prefix}
+      CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/gmp-6.1.2/configure --enable-cxx --enable-static --disable-shared --prefix=${prefix}
       BUILD_COMMAND ${MAKE}
   )
 endif()
