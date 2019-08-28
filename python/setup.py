@@ -21,8 +21,5 @@ dkgpython_module = Extension('dkgpython',
 setup(name = 'dkgpython',
       version = '0.1.0',
       description = 'dkgpython module written in C++',
-      #include_dirs = [ '..', '../bls', '../dkg', '../third_party', '../deps/include' ],
-      #library_dirs = [ '../deps/lib' ],
-      #libraries = [ 'bls', 'dkg' ],
       ext_modules = [dkgpython_module]
       )
