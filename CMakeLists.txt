@@ -1,12 +1,13 @@
-cmake_minimum_required( VERSION 3.5.1 )
+cmake_minimum_required(VERSION 3.5.1)
 
-project( libBLS )
+project(libBLS)
 
-set( HUNTER_ENABLED OFF )
+set(HUNTER_ENABLED OFF)
 
-option( BUILD_TESTS "Build tests" ON )
+option(BUILD_TESTS "Build tests" ON)
+option(BUILD_WITH_FPIC "Build with -fPIC" OFF)
 
-if( BUILD_TESTS )
+if (BUILD_TESTS)
 	enable_testing()
 endif()
 
