@@ -580,11 +580,11 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionCorruptedCiphertext) {
 
       is_exception_caught = false;
       try {
-        encryption::TE obj(num_signed, num_all);
+        encryption::TE obj(num_signed , num_all );
         std::vector<int> vect;
         for (size_t i = 0; i < num_signed; i++)
           vect.push_back(i + 1);
-        vect.at(1) = 2;
+        vect.at(1) = vect.at(0);
         obj.LagrangeCoeffs(vect);
       }
       catch (std::runtime_error &) {

@@ -272,7 +272,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
         libff::inhibit_profiling_info = true;
 
-        for (size_t i = 0; i < 10; ++i) {
+        for (size_t i = 0; i < 100; ++i) {
 
             size_t num_all = rand_gen() % 16 + 1;
             size_t num_signed = rand_gen() % num_all + 1;
@@ -459,7 +459,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
     BOOST_AUTO_TEST_CASE(BLSWITHDKG) {
 
-      for (size_t i = 0; i < 0; ++i) {
+      for (size_t i = 0; i < 10; ++i) {
         size_t num_all = rand_gen() % 15 + 2;
         size_t num_signed = rand_gen() % (num_all - 1) + 1;
 
@@ -1045,7 +1045,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
       is_exception_caught = false;  // wrong vector size
       try {
-        DKGBLSWrapper dkg_wrap(num_signed, num_all);
+        DKGBLSWrapper dkg_wrap(num_signed + 1, num_all + 1);
         dkg_wrap.VerifyDKGShare(1, libff::alt_bn128_Fr::random_element(), {libff::alt_bn128_G2::random_element()});
       }
       catch (std::runtime_error &) {

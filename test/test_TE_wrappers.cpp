@@ -434,21 +434,22 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
           element_t U;
           element_init_G1(U, TEDataSingleton::getData().pairing_);
           element_set_str(U, "[0, 0]", 10);
+          encryption::element_wrapper U_wrap(U);
+          element_clear(U);
+
 
           element_t W;
           element_init_G1(W, TEDataSingleton::getData().pairing_);
           element_random(W);
+          encryption::element_wrapper W_wrap(W);
+          element_clear(W);
 
           encryption::Ciphertext cypher;
-          std::get<0>(cypher) = encryption::element_wrapper(U);
+          std::get<0>(cypher) = U_wrap;
           std::get<1>(cypher) = "tra-la-la";
-          std::get<2>(cypher) = encryption::element_wrapper(W);
+          std::get<2>(cypher) = W_wrap;
 
           pkey.Verify(cypher, el);
-
-
-          element_clear(U);
-          element_clear(W);
 
         }
         catch (std::runtime_error &) {
@@ -479,11 +480,10 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
           std::get<1>(cypher) = "tra-la-la";
           std::get<2>(cypher) = encryption::element_wrapper(W);
 
-          pkey.Verify(cypher, el);
-
-
           element_clear(U);
           element_clear(W);
+
+          pkey.Verify(cypher, el);
         }
         catch (std::runtime_error &) {
           is_exception_caught = true;
@@ -513,13 +513,16 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
           element_t decr;
           element_init_G1(decr, TEDataSingleton::getData().pairing_);
           element_set_str(decr, "[0, 0]", 10);
-
-          pkey.Verify(cypher, decr);
+          encryption::element_wrapper decrypt(decr);
+          element_clear(decr);
 
           element_clear(el);
           element_clear(U);
           element_clear(W);
-          element_clear(decr);
+
+          pkey.Verify(cypher, decrypt.el_);
+
+
         }
         catch (std::runtime_error &) {
           is_exception_caught = true;
@@ -550,8 +553,10 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
           element_t el;
           element_init_Zr(el, TEDataSingleton::getData().pairing_);
           element_set0(el);
-          TEPrivateKeyShare(el, 1, num_signed, num_all);
+          encryption::element_wrapper el_wrap(el);
           element_clear(el);
+          TEPrivateKeyShare(el_wrap, 1, num_signed, num_all);
+
         }
         catch (std::runtime_error &) {
           is_exception_caught = true;
@@ -581,10 +586,11 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
         try {
           element_t el;
           element_init_Zr(el, TEDataSingleton::getData().pairing_);
-          element_set_si(el,0);
-
-          TEPublicKey pkey(TEPrivateKey(encryption::element_wrapper(el), num_signed, num_all), num_signed, num_all);
+          element_set_si(el, 0);
+          encryption::element_wrapper el_wrap(el);
           element_clear(el);
+          TEPublicKey pkey(TEPrivateKey(el_wrap, num_signed, num_all), num_signed, num_all);
+
         }
         catch (std::runtime_error &) {
           is_exception_caught = true;
@@ -596,9 +602,9 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
           element_t el;
           element_init_G1(el, TEDataSingleton::getData().pairing_);
           element_set_str(el, "[0, 0]", 10);
-
-          TEPublicKey pkey(el, num_signed, num_all);
+          encryption::element_wrapper el_wrap(el);
           element_clear(el);
+          TEPublicKey pkey(el_wrap, num_signed, num_all);
         }
         catch (std::runtime_error &) {
           is_exception_caught = true;
@@ -661,8 +667,9 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
             element_t el;
             element_init_Zr(el, TEDataSingleton::getData().pairing_);
             element_set0(el);
-            TEPrivateKey(el, num_signed, num_all);
+            encryption::element_wrapper el_wrap(el);
             element_clear(el);
+            TEPrivateKey(el_wrap, num_signed, num_all);
         }
         catch (std::runtime_error &) {
           is_exception_caught = true;
@@ -726,10 +733,12 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
           element_t el1;
           element_init_G1(el1, TEDataSingleton::getData().pairing_);
           element_set_str(el1, "[0, 0]", 10);
-          std::shared_ptr el_ptr1 = std::make_shared<encryption::element_wrapper>(el1);
+          encryption::element_wrapper el_wrap(el1);
+          std::shared_ptr el_ptr1 = std::make_shared<encryption::element_wrapper>(el_wrap);
           el_ptr1 = nullptr;
-          decr_set.addDecrypt(1, el_ptr1);
           element_clear(el1);
+          decr_set.addDecrypt(1, el_ptr1);
+
         }
         catch (std::runtime_error &) {
             is_exception_caught = true;
@@ -742,27 +751,29 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
           element_t el1;
           element_init_G1(el1, TEDataSingleton::getData().pairing_);
           element_random(el1);
-          std::shared_ptr el_ptr1 = std::make_shared<encryption::element_wrapper>(el1);
+          encryption::element_wrapper el_wrap(el1);
+          element_clear(el1);
+          std::shared_ptr el_ptr1 = std::make_shared<encryption::element_wrapper>(el_wrap);
           decr_set.addDecrypt(1, el_ptr1);
 
           element_t U;
           element_init_G1(U, TEDataSingleton::getData().pairing_);
           element_random(U);
+          encryption::element_wrapper U_wrap(U);
+          element_clear(U);
 
           element_t W;
           element_init_G1(W, TEDataSingleton::getData().pairing_);
           element_random(W);
+          encryption::element_wrapper W_wrap(W);
+          element_clear(W);
 
           encryption::Ciphertext cypher;
-          std::get<0>(cypher) = encryption::element_wrapper(U);
+          std::get<0>(cypher) = U_wrap;
           std::get<1>(cypher) = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
-          std::get<2>(cypher) = encryption::element_wrapper(W);
+          std::get<2>(cypher) = W_wrap;
 
           decr_set.merge(cypher);
-
-          element_clear(U);
-          element_clear(W);
-          element_clear(el1);
         }
         catch (std::runtime_error &) {
           is_exception_caught = true;
@@ -776,29 +787,28 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
           element_init_G1(el1, TEDataSingleton::getData().pairing_);
           element_random(el1);
           std::shared_ptr el_ptr1 = std::make_shared<encryption::element_wrapper>(el1);
+          element_clear(el1);
           decr_set.addDecrypt(1, el_ptr1);
 
           element_t U;
           element_init_G1(U, TEDataSingleton::getData().pairing_);
           element_random(U);
+          encryption::element_wrapper U_wrap(U);
+          element_clear(U);
 
           element_t W;
           element_init_G1(W, TEDataSingleton::getData().pairing_);
           element_random(W);
+          encryption::element_wrapper W_wrap(W);
+          element_clear(W);
 
           encryption::Ciphertext cypher;
-          std::get<0>(cypher) = encryption::element_wrapper(U);
+          std::get<0>(cypher) = U_wrap;
           std::get<1>(cypher) = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
-          std::get<2>(cypher) = encryption::element_wrapper(W);
+          std::get<2>(cypher) = W_wrap;
 
           decr_set.merge(cypher);
-
-          element_clear(U);
-          element_clear(W);
-          element_clear(el1);
-
-        }
-        catch (std::runtime_error &) {
+          } catch (std::runtime_error &) {
           is_exception_caught = true;
         }
         BOOST_REQUIRE(is_exception_caught);
@@ -817,8 +827,10 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
         element_t el1;
         element_init_Zr(el1, TEDataSingleton::getData().pairing_);
         element_set0(el1);
+        encryption::element_wrapper el_wrap(el1);
+        element_clear(el1);
 
-        dkg_te.VerifyDKGShare(1, el1, *dkg_te.createDKGPublicShares());
+        dkg_te.VerifyDKGShare(1, el_wrap, *dkg_te.createDKGPublicShares());
         element_clear(el1);
       }
       catch (std::runtime_error &) {
@@ -833,12 +845,14 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
         element_t el1;
         element_init_Zr(el1, TEDataSingleton::getData().pairing_);
         element_random(el1);
+        encryption::element_wrapper el_wrap(el1);
+        element_clear(el1);
 
         std::vector<encryption::element_wrapper> pub_shares = *dkg_te.createDKGPublicShares();
         pub_shares.erase(pub_shares.begin());
 
-        dkg_te.VerifyDKGShare(1, el1, pub_shares);
-        element_clear(el1);
+        dkg_te.VerifyDKGShare(1, el_wrap, pub_shares);
+
       }
       catch (std::runtime_error &) {
         is_exception_caught = true;
