@@ -24,9 +24,6 @@
 #ifndef LIBBLS_BLSSIGSHARE_H
 #define LIBBLS_BLSSIGSHARE_H
 
-
-#include <stdlib.h>
-#include <string>
 #include "bls.h"
 
 class BLSSigShare {

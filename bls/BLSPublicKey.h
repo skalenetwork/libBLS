@@ -24,8 +24,6 @@
 #ifndef LIBBLS_BLSPUBLICKEY_H
 #define LIBBLS_BLSPUBLICKEY_H
 
-#include <map>
-
 #include "bls.h"
 #include "BLSSignature.h"
 

@@ -202,6 +202,63 @@ std::vector<std::pair<encryption::element_wrapper, size_t>> shares;
 std::string res = te_instance.CombineShares(ciphertext, shares); // `res` is equal to `message`
 ```
 
+## How to use threshold BLS signatures
+
+There are following classes for BLS threshold signatures:
+
+**BLSPrivateKeyShare** - class for private key for each participant. Has methods sign and signWithHelper to sign hashed message.
+
+**BLSPrivateKey** - class for common private key
+
+**BLSPublicKeyShare** - class for public key for each participant. Has methods VerifySig and VerifySigWithHelper to Verify piece of signature.
+
+**BLSPublicKey** - class for common public key. Has method VerifySig for verifying common signature.
+
+**BLSSigShare** - class for piece of common signature.
+
+**BLSSigShareSet** - class for set of pieces of signature. Has methods Add (to add a piece of signature) and merge ( to get common signature, if enough pieces of signature added)
+
+**BLSSignature** - class for common signature.
+
+All these classes (except BLSSigShareSet) can be created from shared_ptr to string(or to vector of strings)  and converted to shared_ptr to string(or to vector of strings) with the method toString().
+
+1. Choose total number of participants in your group, give index to each participant and choose a threshold number for your case
+
+2. Generate private keys. You may use DKG.
+   For test you can use
+
+```cpp
+std::shared_ptr<std::pair<std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>> keys = BLSPrivateKeyShare::generateSampleKeys(t, n);
+```
+
+3. Hash the message you want to sign. Hash should be ```cpp std::array<uint8_t, 32> ```
+
+4. Sign the hashed message with each private key(which is an instance of PrivateKeyShare). You will get piece of signature (shared_ptr to BLSSigShare instance)
+
+If you need to be compatible with Ethereum
+
+```cpp
+ std::shared_ptr<BLSSigShare> sigShare_ptr = key.signWithHelper(hash_ptr, signer_index);
+```
+where hash_ptr is shared_ptr to std::array<uint8_t, 32>, signer index is an index of a participant whose key is used to sign
+
+If you are not using Ethereum then for each key call
+
+```cpp
+std::shared_ptr<BLSSigShare> sigShare_ptr = key.sign(hash_ptr, signer_index)
+```
+where hash_ptr is shared_ptr to std::array<uint8_t, 32>, signer index is an index of a participant whose key is used to sign
+
+5. Create an instance of BLSSigShareSet. Add pieces of signature ( BLSSigShare instances ) to BLSSigShareSet. If you have enough pieces you will be able to merge them and to get common signature(shared_ptr to BLSSignature instance)
+
+```cpp
+BLSSigShareSet SigSet(t,n);
+SigSet.add(sigShare_ptr1);
+SigSet.add(sigShare_ptr2);
+std::shared_ptr<BLSSignature> signature_ptr = SigSet.merge();
+```
+6. Verify common signature with common public key
+
 ## Libraries
 
 -   [libff by SCIPR-LAB](http://www.scipr-lab.org/)

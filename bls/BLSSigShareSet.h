@@ -24,9 +24,6 @@
 #ifndef LIBBLS_BLSSIGSHARESET_H
 #define LIBBLS_BLSSIGSHARESET_H
 
-
-#include <stdlib.h>
-#include <string>
 #include "bls.h"
 
 class BLSSignature;

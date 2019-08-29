@@ -24,10 +24,6 @@
 #ifndef LIBBLS_BLSPRIVATEKEY_H
 #define LIBBLS_BLSPRIVATEKEY_H
 
-#include <stdlib.h>
-#include <string>
-#include <memory>
-
 #include "bls.h"
 #include "BLSSignature.h"
 #include "BLSPrivateKeyShare.h"
@@ -40,7 +36,7 @@ class BLSPrivateKey {
     size_t requiredSigners;
 
 public:
-    BLSPrivateKey(const std::string &_key, size_t _requiredSigners, size_t _totalSigners);
+    BLSPrivateKey(const std::shared_ptr<std::string> &_key, size_t _requiredSigners, size_t _totalSigners);
 
     BLSPrivateKey(const std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>>,
                   std::shared_ptr<std::vector<size_t >> koefs, size_t _requiredSigners, size_t _totalSigners);

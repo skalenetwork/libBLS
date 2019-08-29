@@ -24,8 +24,6 @@
 #ifndef LIBBLS_BLSSIGNATURE_H
 #define LIBBLS_BLSSIGNATURE_H
 
-#include <stdlib.h>
-#include <string>
 #include "bls.h"
 
 class BLSSignature {

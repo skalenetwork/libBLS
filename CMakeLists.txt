@@ -41,6 +41,7 @@ set( sourses_bls
 		third_party/cryptlite/base64.cpp
 		)
 set( headers_bls
+		libBLS.h
 		bls/bls.h
 		bls/BLSPrivateKeyShare.h
 		bls/BLSPrivateKey.h

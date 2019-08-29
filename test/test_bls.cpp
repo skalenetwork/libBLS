@@ -299,7 +299,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
                                                                                                          num_all);
                 BOOST_REQUIRE(*skey_from_str->getPrivateKey() == *skey->getPrivateKey());
 
-                std::shared_ptr<BLSSigShare> sigShare = skey->signWithHint(hash_ptr, participants.at(i));
+                std::shared_ptr<BLSSigShare> sigShare = skey->signWithHelper(hash_ptr, participants.at(i));
                 std::shared_ptr<std::string> sig_str_ptr = sigShare->toString();
                 std::shared_ptr<BLSSigShare> sigShare_from_str = std::make_shared<BLSSigShare>(sig_str_ptr,
                                                                                                participants.at(i),
@@ -317,13 +317,14 @@ BOOST_AUTO_TEST_SUITE(Bls)
                 std::shared_ptr<std::vector<std::string>> pkey_str_vect = pkey_share.toString();
                 BLSPublicKeyShare pkey_from_str(pkey_str_vect, num_signed, num_all);
                 BOOST_REQUIRE(*pkey_share.getPublicKey() == *pkey_from_str.getPublicKey());
-                BOOST_REQUIRE( pkey_share.VerifySigWithHint(hash_ptr, sigSet.getSigShareByIndex(participants.at(i)), num_signed, num_all) );
+                BOOST_REQUIRE(pkey_share.VerifySigWithHelper(hash_ptr, sigSet.getSigShareByIndex(participants.at(i)),
+                                                             num_signed, num_all) );
             }
 
             std::shared_ptr<BLSSignature> common_sig_ptr = sigSet.merge();
             BLSPrivateKey common_skey(Skeys, std::make_shared<std::vector<size_t >>(participants), num_signed, num_all);
             std::shared_ptr<std::string> common_skey_str = common_skey.toString();
-            BLSPrivateKey common_skey_from_str(*common_skey_str, num_signed, num_all);
+            BLSPrivateKey common_skey_from_str(common_skey_str, num_signed, num_all);
             BOOST_REQUIRE(*common_skey_from_str.getPrivateKey() == *common_skey.getPrivateKey());
 
             BLSSignature common_sig_from_str(common_sig_ptr->toString(), num_signed, num_all);
@@ -539,7 +540,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
         std::shared_ptr<BLSSignature> common_sig_ptr = sigSet.merge();                //// verifying signature
 
         std::string common_secret_str = BLSutils::ConvertToString(common_secret);
-        BLSPrivateKey common_skey(common_secret_str, num_signed, num_all);
+        BLSPrivateKey common_skey( std::make_shared<std::string>(common_secret_str), num_signed, num_all);
 
         BLSPrivateKey common_skey2(std::make_shared<std::vector<std::shared_ptr<BLSPrivateKeyShare>>>(ptr_skeys),
                 std::make_shared<std::vector<size_t >>(participants), num_signed, num_all);
@@ -574,7 +575,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
       bool is_exception_caught = false;                  // Empty private key
       try {
-        BLSPrivateKey pkey("", num_signed, num_all );
+        BLSPrivateKey pkey(std::make_shared<std::string>(""), num_signed, num_all );
       }
       catch (std::runtime_error &) {
         is_exception_caught = true;
@@ -583,7 +584,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
       is_exception_caught = false;                     // Zero private key
       try {
-        BLSPrivateKey skey("0", num_signed, num_all );
+        BLSPrivateKey skey(std::make_shared<std::string>("0"), num_signed, num_all );
       }
       catch (std::runtime_error &) {
         is_exception_caught = true;
@@ -592,7 +593,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
       is_exception_caught = false;                   // NULL private key shares
       try {
-        BLSPrivateKey skey(NULL, std::make_shared<std::vector<size_t>>(participants), num_signed, num_all );
+        BLSPrivateKey skey(nullptr, std::make_shared<std::vector<size_t>>(participants), num_signed, num_all );
       }
       catch (std::runtime_error &) {
         is_exception_caught = true;
@@ -658,7 +659,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
       is_exception_caught = false;
       try {
         BLSPrivateKeyShare skey(libff::alt_bn128_Fr::random_element(), num_signed, num_all ); // Zero signer index
-        skey.signWithHint(std::make_shared<std::array<uint8_t, 32>>(GenerateRandHash()), 0);
+        skey.signWithHelper(std::make_shared<std::array<uint8_t, 32>>(GenerateRandHash()), 0);
       }
       catch (std::runtime_error &) {
         is_exception_caught = true;
@@ -668,7 +669,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
       is_exception_caught = false;
       try {
         BLSPrivateKeyShare skey(libff::alt_bn128_Fr::random_element(), num_signed, num_all ); // Null hash
-        skey.signWithHint(NULL, 1);
+        skey.signWithHelper(NULL, 1);
       }
       catch (std::runtime_error &) {
         is_exception_caught = true;
@@ -748,7 +749,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
         BLSPublicKeyShare pkey(libff::alt_bn128_Fr::random_element(), num_signed, num_all);
         std::string hint = "123:1";
         BLSSigShare rand_sig( std::make_shared<libff::alt_bn128_G1>(libff::alt_bn128_G1::random_element()), hint, 1, num_signed, num_all);
-        pkey.VerifySigWithHint(nullptr,  std::make_shared<BLSSigShare>(rand_sig), num_signed, num_all);
+        pkey.VerifySigWithHelper(nullptr, std::make_shared<BLSSigShare>(rand_sig), num_signed, num_all);
       }
       catch (std::runtime_error &) {
         is_exception_caught = true;
@@ -758,7 +759,8 @@ BOOST_AUTO_TEST_SUITE(Bls)
       is_exception_caught = false;   // Null signature in Verify SigShare
       try {
         BLSPublicKeyShare pkey(libff::alt_bn128_Fr::random_element(), num_signed, num_all);
-        pkey.VerifySigWithHint(std::make_shared< std::array<uint8_t, 32> >(GenerateRandHash()), nullptr, num_signed, num_all);
+        pkey.VerifySigWithHelper(std::make_shared<std::array<uint8_t, 32> >(GenerateRandHash()), nullptr, num_signed,
+                                 num_all);
       }
       catch (std::runtime_error &) {
         is_exception_caught = true;

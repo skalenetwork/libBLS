@@ -99,8 +99,9 @@ BLSPublicKeyShare::VerifySig(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr,
     return res;
 }
 
-bool BLSPublicKeyShare::VerifySigWithHint(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr, std::shared_ptr<BLSSigShare> sign_ptr,
-                                          size_t _requiredSigners, size_t _totalSigners) {
+bool BLSPublicKeyShare::VerifySigWithHelper(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr,
+                                            std::shared_ptr<BLSSigShare> sign_ptr,
+                                            size_t _requiredSigners, size_t _totalSigners) {
     std::shared_ptr<signatures::Bls> obj;
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
     if (!hash_ptr) {
