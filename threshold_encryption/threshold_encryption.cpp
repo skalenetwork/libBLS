@@ -431,6 +431,7 @@ namespace encryption {
       for (size_t j = 0; j < this->t_; ++j) {
         if (j != i) {
           if (idx[i] == idx[j]) {
+            element_clear(w);
             throw std::runtime_error("Error during the interpolation, have same indexes in the list of indexes");
           }
 
