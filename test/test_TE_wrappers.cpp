@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(testSqrt){
 }
 
 BOOST_AUTO_TEST_CASE(TEProcessWithWrappers){
-  for (size_t i = 0; i < 1; i++) {
+  for (size_t i = 0; i < 10; i++) {
     size_t num_all = rand_gen() % 16 + 1;
     size_t num_signed = rand_gen() % num_all + 1;
 
@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE(TEProcessWithWrappers){
 }
 
 BOOST_AUTO_TEST_CASE(WrappersFromString){
-  for ( size_t i = 0; i < 1; i++ ) {
+  for ( size_t i = 0; i < 100; i++ ) {
 
     size_t num_all = rand_gen() % 16 + 1;
     size_t num_signed = rand_gen() % num_all + 1;
@@ -884,7 +884,7 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
       is_exception_caught = false;
       try {
         DKGTEWrapper dkg_te(num_signed, num_all);
-        std::shared_ptr<std::vector<encryption::element_wrapper>> shares = dkg_te.createDKGSecretShares();
+        std::shared_ptr<std::vector<encryption::element_wrapper>> shares;
         dkg_te.setDKGSecret(shares);
       }
       catch (std::runtime_error &) {
