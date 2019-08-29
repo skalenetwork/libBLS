@@ -22,12 +22,13 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <threshold_encryption/TEDecryptSet.h>
+#include <threshold_encryption/utils.h>
 #include <utility>
 #include <pbc/pbc.h>
 
 
 TEDecryptSet::TEDecryptSet(size_t _requiredSigners, size_t _totalSigners) : requiredSigners(_requiredSigners),
-totalSigners(_totalSigners) {
+totalSigners(_totalSigners), was_merged(false) {
   TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
 }
 
@@ -35,19 +36,26 @@ void TEDecryptSet::addDecrypt(size_t _signerIndex, std::shared_ptr<encryption::e
   if (decrypts.count( _signerIndex) > 0 ) {
     throw std::runtime_error("Already have this index:" + std::to_string( _signerIndex));
   }
+
+  if (was_merged){
+    throw std::runtime_error("Invalid state");
+  }
   
   if (!_el) {
-    throw std::runtime_error("Null _element");
+    throw std::runtime_error("try to add Null _element to decrypt set");
+  }
+
+  if (isG1Element0(_el->el_)){
+    throw std::runtime_error("try to add zero _element to decrypt set");
   }
 
   decrypts[_signerIndex] = _el;
 }
 
 std::string TEDecryptSet::merge(const encryption::Ciphertext& cyphertext) {
-  if (element_is0(const_cast<element_t&>(std::get<0>(cyphertext).el_)) ||
-  element_is0(const_cast<element_t&>(std::get<2>(cyphertext).el_))) {
-    throw std::runtime_error("zero element in cyphertext");
-  }
+  checkCypher(cyphertext);
+
+  was_merged = true;
 
   if (decrypts.size() < requiredSigners) {
     throw std::runtime_error("Not enough elements to decrypt message");

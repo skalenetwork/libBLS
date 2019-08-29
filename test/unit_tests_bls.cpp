@@ -33,6 +33,7 @@
 #include <libff/algebra/exponentiation/exponentiation.hpp>
 
 
+
 #define BOOST_TEST_MODULE
 
 #include <boost/test/included/unit_test.hpp>
@@ -558,6 +559,125 @@ BOOST_AUTO_TEST_CASE(RandomPolynomial) {
   libff::alt_bn128_Fr value_at_zero_point = pol[0];
 
   BOOST_REQUIRE(value_at_zero_point == obj.KeysRecover(coeffs, values).first);
+}
+
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(Exceptions)
+
+
+BOOST_AUTO_TEST_CASE(SignVerification) {
+
+  std::default_random_engine rand_gen((unsigned int) time(0));
+  size_t num_all = rand_gen() % 15 + 2;
+  size_t num_signed = rand_gen() % (num_all - 1) + 2;
+  signatures::Bls obj (num_signed, num_all);
+  signatures::Bls obj_2_2 (2, 2);
+
+  bool is_exception_caught = false;     // sign is not from G1
+  try {
+    libff::alt_bn128_G1 sign;
+    sign.X = libff::alt_bn128_Fq("123");
+    sign.Y = libff::alt_bn128_Fq("234");
+    sign.Z = libff::alt_bn128_Fq("345");
+    obj.Verification("bla-bla-bla", sign, libff::alt_bn128_G2::random_element());
+  }
+  catch (std::runtime_error &) {
+    is_exception_caught = true;
+  }
+  BOOST_REQUIRE(is_exception_caught);
+
+  is_exception_caught = false;    // public key is not from G1
+  try {
+    libff::alt_bn128_G2 pkey = libff::alt_bn128_G2::random_element();
+    pkey.X.c1 = 123;
+    obj.Verification("bla-bla-bla", libff::alt_bn128_G1::random_element(), pkey);
+  }
+  catch (std::runtime_error &) {
+    is_exception_caught = true;
+  }
+  BOOST_REQUIRE(is_exception_caught);
+
+  is_exception_caught = false;       // not enough participants
+  try {
+    std::vector<libff::alt_bn128_Fr> coeffs;
+    coeffs.push_back(libff::alt_bn128_Fr::random_element());
+    std::vector<libff::alt_bn128_Fr> shares;
+    shares.push_back(libff::alt_bn128_Fr::random_element());
+    obj.KeysRecover(coeffs, shares);
+  }
+  catch (std::runtime_error &) {
+    is_exception_caught = true;
+  }
+  BOOST_REQUIRE(is_exception_caught);
+
+  is_exception_caught = false;      // one share is zero
+  try {
+    std::vector<libff::alt_bn128_Fr> coeffs;
+    coeffs.push_back(libff::alt_bn128_Fr::random_element());
+    coeffs.push_back(libff::alt_bn128_Fr::random_element());
+    std::vector<libff::alt_bn128_Fr> shares;
+    shares.push_back(libff::alt_bn128_Fr::random_element());
+    shares.push_back(libff::alt_bn128_Fr::zero());
+    obj_2_2.KeysRecover(coeffs, shares);
+  }
+  catch (std::runtime_error &) {
+    is_exception_caught = true;
+  }
+  BOOST_REQUIRE(is_exception_caught);
+
+  is_exception_caught = false;       // not enough participants
+  try {
+    std::vector<libff::alt_bn128_Fr> coeffs;
+    coeffs.push_back(libff::alt_bn128_Fr::random_element());
+    std::vector<libff::alt_bn128_G1> shares;
+    shares.push_back(libff::alt_bn128_G1::random_element());
+    obj.SignatureRecover(shares, coeffs);
+  }
+  catch (std::runtime_error &) {
+    is_exception_caught = true;
+  }
+  BOOST_REQUIRE(is_exception_caught);
+
+  is_exception_caught = false;      // one share is not from G1
+  try {
+    std::vector<libff::alt_bn128_Fr> coeffs;
+    coeffs.push_back(libff::alt_bn128_Fr::random_element());
+    coeffs.push_back(libff::alt_bn128_Fr::random_element());
+    std::vector<libff::alt_bn128_G1> shares;
+    shares.push_back(libff::alt_bn128_G1::random_element());
+    libff::alt_bn128_G1 g1_spoiled = libff::alt_bn128_G1::random_element();
+    g1_spoiled.Y = 257;
+    shares.push_back(g1_spoiled);
+    obj_2_2.SignatureRecover(shares, coeffs);
+  }
+  catch (std::runtime_error &) {
+    is_exception_caught = true;
+  }
+  BOOST_REQUIRE(is_exception_caught);
+
+  is_exception_caught = false;
+  try {
+       std::vector<size_t> idx = {1};
+       obj.LagrangeCoeffs(idx);
+  }
+  catch (std::runtime_error &) {
+       is_exception_caught = true;
+  }
+  BOOST_REQUIRE(is_exception_caught);
+
+  is_exception_caught = false;
+  try {
+    std::vector<size_t> idx = {1,1};
+    obj_2_2.LagrangeCoeffs(idx);
+  }
+  catch (std::runtime_error &) {
+    is_exception_caught = true;
+  }
+  BOOST_REQUIRE(is_exception_caught);
+
+  std::cerr << "Exceptions test passed" << std::endl;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

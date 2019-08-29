@@ -29,6 +29,8 @@
 
 class TEDecryptSet {
  private:
+    bool was_merged;
+
     size_t requiredSigners;
     size_t totalSigners;
 

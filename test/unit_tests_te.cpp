@@ -21,7 +21,7 @@
   @date 2019
  */
 
-
+#include <random>
 #include <threshold_encryption.h>
 
 #define BOOST_TEST_MODULE
@@ -557,6 +557,43 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionCorruptedCiphertext) {
     element_clear(decrypted);
     element_clear(public_key);
   }
+
+}
+
+ BOOST_AUTO_TEST_CASE(LagrangeInterpolationExceptions) {
+    for (size_t i = 0; i < 100; i++) {
+      std::default_random_engine rand_gen((unsigned int) time(0));
+      size_t num_all = rand_gen() % 15 + 2;
+      size_t num_signed = rand_gen() % (num_all - 1) + 2;
+
+      bool is_exception_caught = false;
+      try {
+        encryption::TE obj(num_signed, num_all);
+        std::vector<int> vect;
+        for (size_t i = 0; i < num_signed - 1; i++)
+          vect.push_back(i + 1);
+        obj.LagrangeCoeffs(vect);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;
+      try {
+        encryption::TE obj(num_signed, num_all);
+        std::vector<int> vect;
+        for (size_t i = 0; i < num_signed; i++) {
+          vect.push_back(i + 1);
+        }
+        vect.at(1) = vect.at(0);
+        obj.LagrangeCoeffs(vect);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

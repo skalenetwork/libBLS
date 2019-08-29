@@ -43,13 +43,12 @@ TEPublicKey::TEPublicKey(std::shared_ptr<std::vector<std::string>> _key_str_ptr,
   element_t pkey;
   element_init_G1(pkey, TEDataSingleton::getData().pairing_);
   element_set_str(pkey, key_str.c_str(), 10);
-
-  if (element_is0(pkey)) {
-    throw std::runtime_error("corrupted string for public key");
-  }
-
-  PublicKey = pkey;
+  PublicKey = encryption::element_wrapper(pkey);
   element_clear(pkey);
+
+  if (isG1Element0(PublicKey.el_)) {
+    throw std::runtime_error("corrupted string or zero public key");
+  }
 }
 
 TEPublicKey::TEPublicKey (TEPrivateKey _comon_private, size_t  _requiredSigners, size_t _totalSigners)
@@ -57,13 +56,13 @@ TEPublicKey::TEPublicKey (TEPrivateKey _comon_private, size_t  _requiredSigners,
 
   TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
 
+  if (element_is0(_comon_private.getPrivateKey().el_)) {
+    throw std::runtime_error("zero key");
+  }
+
   element_t pkey;
   element_init_G1(pkey, TEDataSingleton::getData().pairing_);
   element_mul_zn(pkey, TEDataSingleton::getData().generator_, _comon_private.getPrivateKey().el_);
-
-  if (element_is0(pkey)) {
-    throw std::runtime_error("zero public key");
-  }
 
   PublicKey = pkey;
   element_clear(pkey);
@@ -74,7 +73,7 @@ TEPublicKey:: TEPublicKey (encryption::element_wrapper _pkey, size_t  _requiredS
 
   TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
 
-  if (element_is0(_pkey.el_)) {
+  if (isG1Element0(_pkey.el_)) {
     throw std::runtime_error("zero public key");
   }
 }
@@ -82,10 +81,6 @@ TEPublicKey:: TEPublicKey (encryption::element_wrapper _pkey, size_t  _requiredS
 encryption::Ciphertext TEPublicKey::encrypt(const std::shared_ptr<std::string>& mes_ptr) {
 
   encryption::TE te(requiredSigners, totalSigners);
-
-  if (element_is0(PublicKey.el_)) {
-    throw std::runtime_error("Public key is zero");
-  }
 
   if (mes_ptr == nullptr) {
     throw std::runtime_error("Message is null");
@@ -96,21 +91,22 @@ encryption::Ciphertext TEPublicKey::encrypt(const std::shared_ptr<std::string>& 
   }
 
   encryption::Ciphertext cypher = te.Encrypt(*mes_ptr, PublicKey.el_);
+  checkCypher(cypher);
 
   element_t U;
   element_init_G1(U, TEDataSingleton::getData().pairing_);
   element_set(U, std::get<0>(cypher).el_);
   encryption::element_wrapper U_wrap(U);
-  if (element_item_count(U) == 0 ) {
+  /*if (element_item_count(U) == 0 ) {
     throw std::runtime_error("U is zero");
-  }
+  }*/
 
   element_t W;
   element_init_G1(W, TEDataSingleton::getData().pairing_);
   element_set(W, std::get<2>(cypher).el_);
-  if (element_item_count(W) == 0) {
+  /*if (element_item_count(W) == 0) {
     throw std::runtime_error("W is zero");
-  }
+  }*/
   encryption::element_wrapper W_wrap(W);
   element_clear(W);
 

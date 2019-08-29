@@ -208,6 +208,10 @@ namespace encryption {
   }
 
   void TE::Decrypt(element_t ret_val, const Ciphertext& ciphertext, const element_t& secret_key) {
+    checkCypher(ciphertext);
+    if (element_is0(const_cast<element_t &>(secret_key)))
+      throw std::runtime_error("zero secret key");
+
     element_t U;
     element_init_G1(U, TEDataSingleton::getData().pairing_);
     element_set(U, const_cast<element_t&>(std::get<0>(ciphertext).el_));
@@ -275,7 +279,7 @@ namespace encryption {
     bool ret_val = true;
 
     if (res) {
-      if (element_is0(const_cast<element_t&>(decrypted))) {
+      if (isG1Element0(const_cast<element_t&>(decrypted))) {
         ret_val = false;
       } else {
         element_t pp1, pp2;
@@ -427,6 +431,8 @@ namespace encryption {
       for (size_t j = 0; j < this->t_; ++j) {
         if (j != i) {
           if (idx[i] == idx[j]) {
+            element_clear(w);
+            element_clear(v);
             throw std::runtime_error("Error during the interpolation, have same indexes in the list of indexes");
           }
 

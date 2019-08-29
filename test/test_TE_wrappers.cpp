@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(testSqrt){
 }
 
 BOOST_AUTO_TEST_CASE(TEProcessWithWrappers){
-  for (size_t i = 0; i < 1; i++) {
+  for (size_t i = 0; i < 10; i++) {
     size_t num_all = rand_gen() % 16 + 1;
     size_t num_signed = rand_gen() % num_all + 1;
 
@@ -263,7 +263,7 @@ BOOST_AUTO_TEST_CASE(WrappersFromString){
                                                   pr_key_share_from_str.getPrivateKey().el_) == 0);
 
     TEPublicKeyShare pkey(pr_key_share, num_signed, num_all);
-    TEPublicKeyShare pkey_from_str(pkey.toString(), signer, num_signed, num_all);
+    TEPublicKeyShare pkey_from_str(pkey.toString(), pr_key_share.getSignerIndex(), num_signed, num_all);
     BOOST_REQUIRE(element_cmp(pkey.getPublicKey().el_, pkey_from_str.getPublicKey().el_) == 0);
 
   }
@@ -377,5 +377,521 @@ BOOST_AUTO_TEST_CASE(ThresholdEncryptionWithDKG){
     }
 }
 
+    BOOST_AUTO_TEST_CASE(ExceptionsTest) {
+      for (size_t i = 0; i < 1; i++) {
 
-BOOST_AUTO_TEST_SUITE_END()
+        size_t num_all = rand_gen() % 15 + 2;
+        size_t num_signed = rand_gen() % num_all + 1;
+
+        bool is_exception_caught = false;                 //null public key share
+        try {
+          TEPublicKeyShare(nullptr, 1, num_signed, num_all);
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 //1 coord of public key share is not digit
+        try {
+          std::vector<std::string> pkey_str({"123","abc"});
+          TEPublicKeyShare(std::make_shared<std::vector<std::string>>(pkey_str), 1, num_signed, num_all);
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 //zero public key share
+        try {
+          std::vector<std::string> pkey_str({"0","0"});
+          TEPublicKeyShare(std::make_shared<std::vector<std::string>>(pkey_str), 1, num_signed, num_all);
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 // one component public key share
+        try {
+          std::vector<std::string> pkey_str({"1232450"});
+          TEPublicKeyShare(std::make_shared<std::vector<std::string>>(pkey_str), 1, num_signed, num_all);
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 // one zero component in cypher
+        try {
+          element_t el;
+          element_init_Zr(el, TEDataSingleton::getData().pairing_);
+          element_random(el);
+          encryption::element_wrapper el_wrap(el);
+          element_clear(el);
+          TEPublicKeyShare pkey(TEPrivateKeyShare(el_wrap, 1,  num_signed, num_all), num_signed, num_all);
+
+          element_t U;
+          element_init_G1(U, TEDataSingleton::getData().pairing_);
+          element_set_str(U, "[0, 0]", 10);
+          encryption::element_wrapper U_wrap(U);
+          element_clear(U);
+
+
+          element_t W;
+          element_init_G1(W, TEDataSingleton::getData().pairing_);
+          element_random(W);
+          encryption::element_wrapper W_wrap(W);
+          element_clear(W);
+
+          encryption::Ciphertext cypher;
+          std::get<0>(cypher) = U_wrap;
+          std::get<1>(cypher) = "tra-la-la";
+          std::get<2>(cypher) = W_wrap;
+
+          pkey.Verify(cypher, el);
+
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+
+        is_exception_caught = false;                 // wrong string length in cypher
+        try {
+          element_t el;
+          element_init_Zr(el, TEDataSingleton::getData().pairing_);
+          element_random(el);
+          encryption::element_wrapper el_wrap(el);
+          element_clear(el);
+
+          TEPublicKeyShare pkey(TEPrivateKeyShare(el_wrap, 1,  num_signed, num_all), num_signed, num_all);
+          element_t U;
+          element_init_G1(U, TEDataSingleton::getData().pairing_);
+          element_random(U);
+
+          element_t W;
+          element_init_G1(W, TEDataSingleton::getData().pairing_);
+          element_random(W);
+
+          encryption::Ciphertext cypher;
+          std::get<0>(cypher) = encryption::element_wrapper(U);
+          std::get<1>(cypher) = "tra-la-la";
+          std::get<2>(cypher) = encryption::element_wrapper(W);
+
+          element_clear(U);
+          element_clear(W);
+
+          pkey.Verify(cypher, el);
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 // zero decrypted
+        try {
+          element_t el;
+          element_init_Zr(el, TEDataSingleton::getData().pairing_);
+          element_random(el);
+          TEPublicKeyShare pkey(TEPrivateKeyShare(encryption::element_wrapper(el), 1,  num_signed, num_all), num_signed, num_all);
+
+          element_t U;
+          element_init_G1(U, TEDataSingleton::getData().pairing_);
+          element_random(U);
+
+          element_t W;
+          element_init_G1(W, TEDataSingleton::getData().pairing_);
+          element_random(W);
+
+          encryption::Ciphertext cypher;
+          std::get<0>(cypher) = encryption::element_wrapper(U);
+          std::get<1>(cypher) = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
+          std::get<2>(cypher) = encryption::element_wrapper(W);
+
+          element_t decr;
+          element_init_G1(decr, TEDataSingleton::getData().pairing_);
+          element_set_str(decr, "[0, 0]", 10);
+          encryption::element_wrapper decrypt(decr);
+          element_clear(decr);
+
+          element_clear(el);
+          element_clear(U);
+          element_clear(W);
+
+          pkey.Verify(cypher, decrypt.el_);
+
+
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 //null private key share
+        try {
+          TEPrivateKeyShare(nullptr, 1, num_signed, num_all);
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 //zero private key share
+        try {
+          std::string zero_str = "0";
+          TEPrivateKeyShare(std::make_shared<std::string>(zero_str), 1, num_signed, num_all);
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 //zero private key share
+        try {
+          element_t el;
+          element_init_Zr(el, TEDataSingleton::getData().pairing_);
+          element_set0(el);
+          encryption::element_wrapper el_wrap(el);
+          element_clear(el);
+          TEPrivateKeyShare(el_wrap, 1, num_signed, num_all);
+
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 //null public key
+        try {
+          TEPublicKey(nullptr, num_signed, num_all);
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 //zero public key
+        try {
+          std::vector<std::string> pkey_str({"0","0"});
+          TEPublicKey(std::make_shared<std::vector<std::string>>(pkey_str), num_signed, num_all);
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 //zero public key
+        try {
+          element_t el;
+          element_init_Zr(el, TEDataSingleton::getData().pairing_);
+          element_set_si(el, 0);
+          encryption::element_wrapper el_wrap(el);
+          element_clear(el);
+          TEPublicKey pkey(TEPrivateKey(el_wrap, num_signed, num_all), num_signed, num_all);
+
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 //zero public key
+        try {
+          element_t el;
+          element_init_G1(el, TEDataSingleton::getData().pairing_);
+          element_set_str(el, "[0, 0]", 10);
+          encryption::element_wrapper el_wrap(el);
+          element_clear(el);
+          TEPublicKey pkey(el_wrap, num_signed, num_all);
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 //null message
+        try {
+          element_t el;
+          element_init_G1(el, TEDataSingleton::getData().pairing_);
+          element_random(el);
+
+          TEPublicKey pkey(el, num_signed, num_all);
+          element_clear(el);
+
+          pkey.encrypt(nullptr);
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 // message length is not 64
+        try {
+          element_t el;
+          element_init_G1(el, TEDataSingleton::getData().pairing_);
+          element_random(el);
+
+          TEPublicKey pkey(el, num_signed, num_all);
+          element_clear(el);
+
+          pkey.encrypt(std::make_shared<std::string>("tra-la-la"));
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 //null private key
+        try {
+          TEPrivateKey(nullptr, num_signed, num_all);
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 //zero private key
+        try {
+          std::string zero_str = "0";
+          TEPrivateKey(std::make_shared<std::string>(zero_str), num_signed, num_all);
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;                 //zero private key
+        try {
+            element_t el;
+            element_init_Zr(el, TEDataSingleton::getData().pairing_);
+            element_set0(el);
+            encryption::element_wrapper el_wrap(el);
+            element_clear(el);
+            TEPrivateKey(el_wrap, num_signed, num_all);
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;
+        try {
+          TEDecryptSet decr_set(num_all + 1, num_signed);  //_requiredSigners > _totalSigners
+        }
+        catch (std::runtime_error &) {
+           is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;
+        try {
+          TEDecryptSet decr_set(num_signed, num_all);  // same indices in decrypt set
+
+          element_t el1;
+          element_init_G1(el1, TEDataSingleton::getData().pairing_);
+          element_random(el1);
+          std::shared_ptr el_ptr1 = std::make_shared<encryption::element_wrapper>(el1);
+          element_clear(el1);
+
+          element_t el2;
+          element_init_G1(el2, TEDataSingleton::getData().pairing_);
+          element_random(el2);
+          std::shared_ptr el_ptr2 = std::make_shared<encryption::element_wrapper>(el2);
+          element_clear(el2);
+
+          decr_set.addDecrypt(1, el_ptr1);
+          decr_set.addDecrypt(1, el_ptr2);
+
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;
+        try {
+          TEDecryptSet decr_set(num_signed, num_all);  // zero element in decrypt set
+
+          element_t el1;
+          element_init_G1(el1, TEDataSingleton::getData().pairing_);
+          element_set_str(el1, "[0, 0]", 10);
+          std::shared_ptr el_ptr1 = std::make_shared<encryption::element_wrapper>(el1);
+          element_clear(el1);
+
+          decr_set.addDecrypt(1, el_ptr1);
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;
+        try {
+          TEDecryptSet decr_set(num_signed, num_all);  // null element in decrypt set
+          element_t el1;
+          element_init_G1(el1, TEDataSingleton::getData().pairing_);
+          element_set_str(el1, "[0, 0]", 10);
+          encryption::element_wrapper el_wrap(el1);
+          std::shared_ptr el_ptr1 = std::make_shared<encryption::element_wrapper>(el_wrap);
+          el_ptr1 = nullptr;
+          element_clear(el1);
+          decr_set.addDecrypt(1, el_ptr1);
+
+        }
+        catch (std::runtime_error &) {
+            is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;
+        try {
+          TEDecryptSet decr_set(num_signed, num_all);  //not enough elements in decrypt set
+          element_t el1;
+          element_init_G1(el1, TEDataSingleton::getData().pairing_);
+          element_random(el1);
+          encryption::element_wrapper el_wrap(el1);
+          element_clear(el1);
+          std::shared_ptr el_ptr1 = std::make_shared<encryption::element_wrapper>(el_wrap);
+          decr_set.addDecrypt(1, el_ptr1);
+
+          element_t U;
+          element_init_G1(U, TEDataSingleton::getData().pairing_);
+          element_random(U);
+          encryption::element_wrapper U_wrap(U);
+          element_clear(U);
+
+          element_t W;
+          element_init_G1(W, TEDataSingleton::getData().pairing_);
+          element_random(W);
+          encryption::element_wrapper W_wrap(W);
+          element_clear(W);
+
+          encryption::Ciphertext cypher;
+          std::get<0>(cypher) = U_wrap;
+          std::get<1>(cypher) = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
+          std::get<2>(cypher) = W_wrap;
+
+          decr_set.merge(cypher);
+        }
+        catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+
+        is_exception_caught = false;
+        try {
+          TEDecryptSet decr_set(1, 1);  // cannot combine shares
+          element_t el1;
+          element_init_G1(el1, TEDataSingleton::getData().pairing_);
+          element_random(el1);
+          std::shared_ptr el_ptr1 = std::make_shared<encryption::element_wrapper>(el1);
+          element_clear(el1);
+          decr_set.addDecrypt(1, el_ptr1);
+
+          element_t U;
+          element_init_G1(U, TEDataSingleton::getData().pairing_);
+          element_random(U);
+          encryption::element_wrapper U_wrap(U);
+          element_clear(U);
+
+          element_t W;
+          element_init_G1(W, TEDataSingleton::getData().pairing_);
+          element_random(W);
+          encryption::element_wrapper W_wrap(W);
+          element_clear(W);
+
+          encryption::Ciphertext cypher;
+          std::get<0>(cypher) = U_wrap;
+          std::get<1>(cypher) = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
+          std::get<2>(cypher) = W_wrap;
+
+          decr_set.merge(cypher);
+          } catch (std::runtime_error &) {
+          is_exception_caught = true;
+        }
+        BOOST_REQUIRE(is_exception_caught);
+      }
+
+    }
+
+    BOOST_AUTO_TEST_CASE(ExceptionsDKGWrappersTest) {
+      size_t num_all = rand_gen() % 15 + 2;
+      size_t num_signed = rand_gen() % num_all + 1;
+
+      bool is_exception_caught = false;
+      try {
+        DKGTEWrapper dkg_te(num_signed, num_all);
+
+        element_t el1;
+        element_init_Zr(el1, TEDataSingleton::getData().pairing_);
+        element_set0(el1);
+        encryption::element_wrapper el_wrap(el1);
+        element_clear(el1);
+
+        dkg_te.VerifyDKGShare(1, el_wrap, *dkg_te.createDKGPublicShares());
+        element_clear(el1);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;
+      try {
+        DKGTEWrapper dkg_te(num_signed, num_all);
+
+        element_t el1;
+        element_init_Zr(el1, TEDataSingleton::getData().pairing_);
+        element_random(el1);
+        encryption::element_wrapper el_wrap(el1);
+        element_clear(el1);
+
+        std::vector<encryption::element_wrapper> pub_shares = *dkg_te.createDKGPublicShares();
+        pub_shares.erase(pub_shares.begin());
+
+        dkg_te.VerifyDKGShare(1, el_wrap, pub_shares);
+
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;
+      try {
+        DKGTEWrapper dkg_te(num_signed, num_all);
+        std::shared_ptr<std::vector<encryption::element_wrapper>> shares = dkg_te.createDKGSecretShares();
+        shares = nullptr;
+        dkg_te.setDKGSecret(shares);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;
+      try {
+        DKGTEWrapper dkg_te(num_signed, num_all);
+        dkg_te.CreateTEPrivateKeyShare(1, nullptr);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;
+      try {
+        DKGTEWrapper dkg_te(num_signed, num_all);
+        std::shared_ptr<std::vector<encryption::element_wrapper>> shares;
+        dkg_te.setDKGSecret(shares);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+     }
+
+ BOOST_AUTO_TEST_SUITE_END()

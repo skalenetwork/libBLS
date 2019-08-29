@@ -36,8 +36,12 @@ TEPrivateKeyShare::TEPrivateKeyShare(std::shared_ptr<std::string> _key_str, size
   element_t pkey;
   element_init_Zr(pkey, TEDataSingleton::getData().pairing_);
   element_set_str(pkey, _key_str->c_str(), 10);
-  privateKey = pkey;
+  privateKey = encryption::element_wrapper(pkey);
   element_clear(pkey);
+
+  if (element_is0(privateKey.el_)) {
+    throw std::runtime_error ("Zero private key share");
+  }
 }
 
 TEPrivateKeyShare::TEPrivateKeyShare(encryption::element_wrapper _skey_share, size_t _signerIndex, size_t  _requiredSigners, size_t _totalSigners)
@@ -45,18 +49,16 @@ TEPrivateKeyShare::TEPrivateKeyShare(encryption::element_wrapper _skey_share, si
 
   TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
 
-  if (_signerIndex > _totalSigners) {
+ /* if (_signerIndex > _totalSigners) {
     throw std::runtime_error ("Wrong _signerIndex");
-  }
+  }*/
   if (element_is0(_skey_share.el_)) {
-    throw std::runtime_error ("Zero secret key share");
+    throw std::runtime_error ("Zero private key share");
   }
 }
 
 encryption::element_wrapper TEPrivateKeyShare::decrypt(encryption::Ciphertext& cypher){
-  if (element_is0(std::get<0>(cypher).el_) || element_is0(std::get<2>(cypher).el_)) {
-    throw std::runtime_error("zero element in cyphertext");
-  }
+  checkCypher(cypher);
 
   encryption::TE te(requiredSigners, totalSigners);
 
@@ -66,7 +68,7 @@ encryption::element_wrapper TEPrivateKeyShare::decrypt(encryption::Ciphertext& c
   te.Decrypt(decrypt, cypher, privateKey.el_);
   encryption::element_wrapper decrypted (decrypt);
 
-  if (element_is0(decrypt)) {
+  if (isG1Element0(decrypt)) {
     std::runtime_error ("zero decrypt");
   }
   element_clear(decrypt);
