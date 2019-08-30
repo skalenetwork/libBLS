@@ -11,7 +11,7 @@ matrix:
               apt:
                   sources: &sources
                       - ubuntu-toolchain-r-test
-                      - libboost-latest
+                      - sourceline: 'ppa:mhier/libboost-latest'
                   packages:
                       - gcc-9
                       - g++-9
