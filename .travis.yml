@@ -6,11 +6,14 @@ matrix:
           env:
             - BUILDING_FOR_OS=linux
             - CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
-            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+            - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9"
           addons:
               apt:
+                  sources: &sources
+                      - ubuntu-toolchain-r-test
                   packages:
-                      - g++-7
+                      - gcc-9
+                      - g++-9
                       - valgrind
                       - gawk
                       - sed
@@ -22,8 +25,6 @@ matrix:
                       - libgmp3-dev
                       - flex
                       - bison
-                  sources: &sources
-                      - ubuntu-toolchain-r-test
           before_script:
               - echo "========================================= before_script (coverage)"
               - sudo apt-get update -qq
@@ -54,11 +55,11 @@ matrix:
           env:
             - BUILDING_FOR_OS=linux
             - CMAKE_BUILD_FLAGS=""
-            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+            - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9"
           addons:
               apt:
                   packages:
-                      - g++-7
+                      - g++-9
                       - valgrind
                       - gawk
                       - sed
