@@ -19,7 +19,7 @@ matrix:
                       - gawk
                       - sed
                       - shtool
-                      - libboost-all-dev
+                      - boost1.69
                       - libffi-dev
                       - libssl-dev
                       - libprocps4-dev
