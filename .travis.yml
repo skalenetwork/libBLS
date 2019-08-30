@@ -11,7 +11,7 @@ matrix:
               apt:
                   sources: &sources
                       - ubuntu-toolchain-r-test
-                      - boost-latest
+                      - libboost-latest
                   packages:
                       - gcc-9
                       - g++-9
