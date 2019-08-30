@@ -30,7 +30,7 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 #include <thread>
 #include <bitset>
 
-//#include <boost/multiprecision/cpp_int.hpp>
+#include <boost/multiprecision/cpp_int.hpp>
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pairing.hpp>
 #include <libff/algebra/exponentiation/exponentiation.hpp>
 
