@@ -337,7 +337,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
             std::shared_ptr<std::vector<std::string>> common_pkey_str_vect = common_pkey.toString();
             BLSPublicKey common_pkey_from_str(common_pkey_str_vect, num_signed, num_all);
             BOOST_REQUIRE(*common_pkey.getPublicKey() == *common_pkey_from_str.getPublicKey());
-            BOOST_REQUIRE( common_pkey.VerifySigWithHint(hash_ptr, common_sig_ptr, num_signed, num_all) );
+            BOOST_REQUIRE(common_pkey.VerifySigWithHelper(hash_ptr, common_sig_ptr, num_signed, num_all) );
 
             std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > pkeys_map;
             for (size_t i = 0; i < num_signed; ++i) {
@@ -709,7 +709,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
         BLSPublicKey pkey(libff::alt_bn128_Fr::random_element(), num_signed, num_all);
         std::string hint = "123:1";
         BLSSignature rand_sig( std::make_shared<libff::alt_bn128_G1>(libff::alt_bn128_G1::random_element()), hint, num_signed, num_all);
-        pkey.VerifySigWithHint(nullptr,  std::make_shared<BLSSignature>(rand_sig), num_signed, num_all);
+        pkey.VerifySigWithHelper(nullptr, std::make_shared<BLSSignature>(rand_sig), num_signed, num_all);
       }
       catch (std::runtime_error &) {
         is_exception_caught = true;
@@ -719,7 +719,8 @@ BOOST_AUTO_TEST_SUITE(Bls)
       is_exception_caught = false;   // Null signature in Verify Signature
       try {
         BLSPublicKey pkey(libff::alt_bn128_Fr::random_element(), num_signed, num_all);
-        pkey.VerifySigWithHint(std::make_shared< std::array<uint8_t, 32> >(GenerateRandHash()), nullptr, num_signed, num_all);
+        pkey.VerifySigWithHelper(std::make_shared<std::array<uint8_t, 32> >(GenerateRandHash()), nullptr, num_signed,
+                                 num_all);
       }
       catch (std::runtime_error &) {
         is_exception_caught = true;
