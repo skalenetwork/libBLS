@@ -41,7 +41,7 @@ private:
     DKGTEWrapper(size_t _requiredSigners, size_t _totalSigners);
 
     bool VerifyDKGShare( size_t signerIndex, const encryption::element_wrapper& share,
-                 const std::vector<encryption::element_wrapper>& verification_vector);
+                  const std::shared_ptr<std::vector<encryption::element_wrapper>>& verification_vector);
 
     void setDKGSecret(std::shared_ptr<std::vector< encryption::element_wrapper>>& _poly_ptr);
 
@@ -50,6 +50,8 @@ private:
     std::shared_ptr < std::vector <encryption::element_wrapper>> createDKGPublicShares();
 
     TEPrivateKeyShare CreateTEPrivateKeyShare( size_t signerIndex_, std::shared_ptr<std::vector<encryption::element_wrapper>> secret_shares_ptr);
+
+    static TEPublicKey CreateTEPublicKey(std::shared_ptr< std::vector<std::vector<encryption::element_wrapper>>> public_shares_all, size_t _requiredSigners, size_t _totalSigners);
 
 };
 

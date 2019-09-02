@@ -29,6 +29,11 @@
 #include <bls/BLSPublicKeyShare.h>
 
 #include <dkg/DKGBLSWrapper.h>
+#include <dkg/DKGTEWrapper.h>
+
+#include <threshold_encryption/TEPublicKeyShare.h>
+#include <threshold_encryption/TEPublicKey.h>
+#include <threshold_encryption/TEDataSingleton.h>
 
 
 #endif //LIBBLS_LIBBLS_H

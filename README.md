@@ -99,107 +99,20 @@ cmake --build build -- -j$(nproc)
 
 ### Include the library
 
-For BLS signatures:
-
 ```cpp
-#include <bls/bls.h>
-#include <dkg/dkg.h>
-```
-
-For pbc library:
-
-```cpp
-#include "pbc/pbc.h"
-```
-
-For TE algorithm:
-
-```cpp
-#include <dkg/dkg_te.h>
-#include <threshold_encryption/threshold_encryption.h>
-```
+#include <libBLS.h>```
 
 ### Run tests
 
 ```bash
 ./build/dkg_unit_test                           # run all dkg unit tests
+./build/bls_test                                # run all bls tests
 ./build/bls_unit_test                           # run all bls unit tests
 ./build/bls_unit_test --list_content            # show all test cases
 ./build/bls_unit_test -t libBLS/<TestCaseName>  # run single test case
 ./build/threshold_encryption/dkg_te_unit_test   # run all dkg tests corresponds to the algebraic structures used in TE algroithm
-./build/threshold_encryption/te_unit_test       # run all te tests
-```
-
-## How to use the BLS algorithm
-
-1.  Create an instance of class Bls with input parameters t, and n; where n is a number of participants in your group and t is a threshold number for your case.
-
-```cpp
-signatures::bls bls_instance = signatures::bls(t, n);
-```
-
-2.  Generate keys with DKG algorithm (if you want to use Threshold algorithm) or running the function KeyGeneration (if you want to use MultiSignature algorithm or singleBLS)
-
-```cpp
-libff::alt_bn128_Fr secret_key = key_generated_by_dkg;
-libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
-```
-
-or
-
-```cpp
-std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> keys = bls_instance.KeyGeneration();
-```
-
-3.  Create a hash of the message you want to sign by running the function Hashing (by default we use the SHA256 hash function, but you can replace this with any other hash function. Be sure to be careful with respect to security.)
-
-```cpp
-libff::alt_bn128_G1 hash = bls_instance.Hashing(message);
-```
-
-4.  Sign the hashed message by running Signing (if you are doing Threshold algorithm, you have to generate common signature by running SignatureRecover after it)
-
-```cpp
-libff::alt_bn128_G1 signature = bls_instance.Signing(hash, secret_key
-```
-
-5.  Verify a signature by running the function Verification.
-
-```cpp
-assert(bls_instance.Verification(message, signature, public_key) == true);
-```
-
-## How to use the TE algorithm
-
-1.  Create an istance of class TE with input parameters t, and n; where n is a number of participants in your group and t is a threshold number for your case.
-
-```cpp
-encryption::TE te_instance = encryption::TE(t, n);
-```
-
-2.  Encrypt a plaintext  `message`  by running
-
-```cpp
-auto ciphertext = te_instance.Encrypt(message, public_key);
-```
-
-3.  Decrypt recieved ciphertext by running
-
-```cpp
-te_instance.Decrypt(decrypted, ciphertext, secret_key); // decrypted value is stored in `decrypted`.
-```
-
-4.  Verify decrypted ciphertext by running
-
-```cpp
-assert(te_instance.Verify(ciphertext, decrypted, public_key));
-```
-
-5.  If decrypted value is verified then you can get encrypted plaintext by running
-
-```cpp
-std::vector<std::pair<encryption::element_wrapper, size_t>> shares;
-std::string res = te_instance.CombineShares(ciphertext, shares); // `res` is equal to `message`
+./build/threshold_encryption/te_unit_test       # run all te unit tests
+./build/threshold_encryption/te_test            # run all te tests
 ```
 
 ## Classes for BLS threshold signatures
@@ -224,7 +137,7 @@ All these classes (except BLSSigShareSet) can be created from shared_ptr to stri
 
 1. Choose total number of participants in your group (n), give index to each participant and choose a threshold number (t) for your case. (t <= n).
 
-2. Generate private keys. You may use DKG.
+2. Generate private keys. Create common public key. You may use DKG.
    For test you can use
 
 ```cpp
@@ -309,22 +222,95 @@ Here is an example of BLS threshold signatures algorithm with t = 3, n = 4.
   assert(common_pkey.VerifySig(hash_ptr, common_sig_ptr, num_signed, num_all));    // verify common signature with common public key
 ```
 
-## [DKG](https://doi.org/10.1007%2F3-540-48910-X_21) for BLS threshold signatures algorithm
+## Classes for Threshold Encryption
+
+**TEPrivateKey** - class for common private key
+
+**TEPublicKey** - class for common public key. Has method _encrypt_ to encrypt message. (Message length should be 64) .
+
+*TEPrivateKeyShare** - class for private key for each participant. Has method _decrypt_ to decrypt CipherText and to get part of decrypted message.
+
+**TEPublicKeyShare** - class for public key for each participant. Has methods _Verify_ to verify if given CipherText matches given dectypted piece of message.
+
+**TEDecryptSet** - class for set of decrypted pieces of message. Has methods _addDecrypt_ (to add a piece of decrypted message) and _merge_ to get decrypted message ( if enough pieces are added).
+
+All these classes (except TEDecryptSet) can be created from shared_ptr to string(or to vector of strings)  and converted to shared_ptr to string(or to vector of strings) with the method _toString()_.
+
+## How to use  Threshold encryption
 
 1. Choose total number of participants in your group (n), give index to each participant and choose a threshold number (t) for your case. (t <= n).
 
-2. Each participant of DKG creates an instance of DKGBLSWrapper class with parameters t and n;
+2. Generate private key for each participant. Create common public key. You may use DKG.
+For test you can use
+
+```cpp
+std::pair<std::shared_ptr<std::vector<std::shared_ptr<TEPrivateKeyShare>>>, std::shared_ptr<TEPublicKey> > keys =TEPrivateKeyShare::generateSampleKeys(t, n);
+```
+You will get a pair, which first component is shared_ptr to vector of private keys, and second component is shared_ptr to common public key;
+
+3. Create public key from private key for each participant.
+```cpp
+ TEPrivateKeyShare privateKeyShare = *keys.first->at(i);
+ TEPublicKeyShare publicKeyShare ( privateKeyShare, t, n);
+```
+where i is index of participant.
+
+ ```
+4. Decrypt message with common public key. Message length should be 64.
+ ```cpp
+ TEPublic publicKey = *keys.second;
+ encryption::Ciphertext cipher = publicKey.encrypt(message_ptr);
+ ```
+ Where message_ptr is shared_ptr to string, cipher is encrypted message.
+
+5. Get pieces of decrypted message with private key of each participant and cipher got in step 4. Verify every piece with public key of corresponding participant.
+ ```cpp
+  encryption::element_wrapper piece = privateKey.decrypt(cipher);
+  assert ( publicKeyShare.Verify(cipher, piece) ) ;
+  ```
+6. Create DecryptSet and add to it each piece of decrypted message.
+ ```cpp
+   TEDecryptSet decrSet(t, n);
+   decrSet.addDecrypt(signerIndex, piece_ptr);
+```
+where piece_ptr is shared_ptr to piece, signerIndex is an index of a participant, which created this piece.
+
+7. If you have enough pieces you will be able to merge them and to get decrypted message.
+```cpp
+std::string message = decrSet.merge();
+```
+
+## [DKG](https://doi.org/10.1007%2F3-540-48910-X_21) algorithm for BLS threshold signatures  and Threshols Encryption
+
+1. Choose total number of participants in your group (n), give index to each participant and choose a threshold number (t) for your case. (t <= n).
+
+2. Each participant of DKG creates an instance of dkg class with parameters t and n;
+For BLS
 ```cpp
  DKGBLSWrapper dkg_obj(t, n);
 ```
-When created DKGBLSWrapper generates secret polynomial, but if you want you can set your own one with the method _setDKGSecret_
+For TE
+```cpp
+ DKGTEWrapper dkg_obj(t, n);
+```
+When created dkg_obj generates secret polynomial, but if you want you can set your own one with the method _setDKGSecret_
 
 3. Each participant generates a vector of public shares coefficients and broadcasts it.
+For BLS
+```cpp
+std::shared_ptr < std::vector <libff::alt_bn128_G2>>  public_shares = dkg_obj.createDKGPublicShares();
+```
+For TE
 ```cpp
 std::shared_ptr < std::vector <encryption::element_wrapper>>  public_shares = dkg_obj.createDKGPublicShares();
 ```
 
-4.  Each participant generates vector of secret shares coefficients. And sends to j-th participant j-th component of secret shares coefficients vector.
+4.  Each participant generates vector of secret shares coefficients. And sends to j-th participant j-th component of secret shares coefficients vector. ( j = 1 .. n and not equal to current participant index).
+For BLS
+```cpp
+ std::shared_ptr < std::vector <libff::alt_bn128_Fr>>  private_shares = dkg_obj.createDKGSecretShares();
+```
+For TE
 ```cpp
  std::shared_ptr < std::vector <encryption::element_wrapper>>  private_shares = dkg_obj.createDKGSecretShares();
 ```
@@ -336,8 +322,93 @@ std::shared_ptr < std::vector <encryption::element_wrapper>>  public_shares = dk
 where public_shares_vector is shared_ptr to vector of public shares, signerIndex is index of participant from which secret and public shares were recieved.
 
 6. If verification passed each participant may create private key from secret shares that it recieved
+For BLS
 ```cpp
    BLSPrivateKeyShare privateKeyShare = dkg_obj.CreateBLSPrivateKeyShare(secret_shares_vector);
+```
+For TE
+```cpp
+   TEPrivateKeyShare privateKeyShare = dkg_obj.CreateTEPrivateKeyShare(secret_shares_vector);
+```
+Also in DKGTEWrapper there is a static function that creates common public key
+```cpp
+   TEPublicKey publicKey = DKGTEWrapper::CreateTEPublicKey( public_shares_all, t, n);
+```
+where public_shares_all is shared_ptr to matrix of all public shares ( its type is std::shared_ptr<std::vector<std::vector<encryption::element_wrapper>>>).
+
+Here is an example of Threshold Encryption algorythm with DKG simulation
+```cpp
+        size_t num_signed = 3;
+        size_t num_all = 4;
+        std::vector<std::vector<encryption::element_wrapper>> secret_shares_all; // matrix of all secret shares
+        std::vector<std::vector<encryption::element_wrapper>> public_shares_all; //// matrix of all public shares
+        std::vector<DKGTEWrapper> dkgs; // instances of DKGTEWrapper for each participant
+        std::vector<TEPrivateKeyShare> skeys; // private keys of participants
+        std::vector<TEPublicKeyShare> pkeys;  // public keys of participants
+
+        for (size_t i = 0; i < num_all; i++) {
+          DKGTEWrapper dkg_wrap(num_signed, num_all);
+          dkgs.push_back(dkg_wrap);
+          std::shared_ptr<std::vector<encryption::element_wrapper>> secret_shares_ptr = dkg_wrap.createDKGSecretShares(); // create secret shares for each participant
+          std::shared_ptr<std::vector<encryption::element_wrapper>> public_shares_ptr = dkg_wrap.createDKGPublicShares(); // create pulic shares for each participant
+          secret_shares_all.push_back(*secret_shares_ptr);
+          public_shares_all.push_back(*public_shares_ptr);
+        }
+
+
+        for (size_t i = 0; i < num_all; i++)      // Verifying shares for each participant
+          for (size_t j = 0; j < num_all; j++) {
+            BOOST_REQUIRE(dkgs.at(i).VerifyDKGShare(j, secret_shares_all.at(i).at(j),
+                    std::make_shared<std::vector<encryption::element_wrapper>>( public_shares_all.at(i))));
+          }
+
+        std::vector<std::vector<encryption::element_wrapper>> secret_key_shares;
+
+        for (size_t i = 0; i < num_all; i++) {          // collect got secret shares in a vector
+          std::vector<encryption::element_wrapper> secret_key_contribution;
+          for (size_t j = 0; j < num_all; j++) {
+            secret_key_contribution.push_back(secret_shares_all.at(j).at(i));
+          }
+          secret_key_shares.push_back(secret_key_contribution);
+        }
+
+        for (size_t i = 0; i < num_all; i++) {
+          TEPrivateKeyShare pkey_share = dkgs.at(i).CreateTEPrivateKeyShare(i + 1,
+                                                                            std::make_shared<std::vector<encryption::element_wrapper>>(
+                                                                                    secret_key_shares.at(i)));
+          skeys.push_back(pkey_share);
+          pkeys.push_back(TEPublicKeyShare(pkey_share, num_signed, num_all));
+        }
+
+        TEPublicKey common_public = DKGTEWrapper::CreateTEPublicKey(std::make_shared< std::vector<std::vector<encryption::element_wrapper>>>(public_shares_all), num_signed, num_all);
+
+        std::string message;    // Generating random message
+        size_t msg_length = 64;
+        for (size_t length = 0; length < msg_length; ++length) {
+          message += char(rand_gen() % 128);
+        }
+
+        std::shared_ptr msg_ptr = std::make_shared<std::string>(message);
+        encryption::Ciphertext cypher = common_public.encrypt(msg_ptr);
+
+        size_t ind4del = rand_gen() % secret_shares_all.size(); // removing 1 random participant ( because only 3 of 4 will participate)
+        auto pos4del = secret_shares_all.begin();
+        advance(pos4del, ind4del);
+        secret_shares_all.erase(pos4del);
+        auto pos2 = public_shares_all.begin();
+        advance(pos2, ind4del);
+        public_shares_all.erase(pos2);
+
+        TEDecryptSet decr_set(num_signed, num_all);
+        for (size_t i = 0; i < num_signed; i++) {
+          encryption::element_wrapper decrypt = skeys.at(i).decrypt(cypher);
+          assert(pkeys.at(i).Verify(cypher, decrypt.el_));
+          std::shared_ptr decr_ptr = std::make_shared<encryption::element_wrapper>(decrypt);
+          decr_set.addDecrypt(skeys.at(i).getSignerIndex(), decr_ptr);
+        }
+
+        std::string message_decrypted = decr_set.merge(cypher);
+      }
 ```
 
 ## Libraries
