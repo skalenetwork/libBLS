@@ -409,9 +409,9 @@ for (size_t i = 0; i < num_all; i++)      // Verifying shares for each participa
  }
 
  TEPublicKey common_public = DKGTEWrapper::CreateTEPublicKey(
-                   std::make_shared< std::vector<std::vector<encryption::element_wrapper>>>(public_shares_all),
-                   num_signed,
-                   num_all);
+               std::make_shared< std::vector<std::vector<encryption::element_wrapper>>>(public_shares_all),
+               num_signed,
+               num_all);
 
  std::string message;    // Generating random message
  size_t msg_length = 64;
