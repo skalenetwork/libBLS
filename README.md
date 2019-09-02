@@ -111,7 +111,8 @@ cmake --build build -- -j$(nproc)
 ./build/bls_unit_test                           # run all bls unit tests
 ./build/bls_unit_test --list_content            # show all test cases
 ./build/bls_unit_test -t libBLS/<TestCaseName>  # run single test case
-./build/threshold_encryption/dkg_te_unit_test   # run all dkg tests corresponds to the algebraic structures used in TE algroithm
+./build/threshold_encryption/dkg_te_unit_test   # run all dkg tests corresponds to the algebraic
+                                                # structures used in TE algroithm
 ./build/threshold_encryption/te_unit_test       # run all te unit tests
 ./build/threshold_encryption/te_test            # run all te tests
 ```
@@ -122,7 +123,7 @@ cmake --build build -- -j$(nproc)
 
 **BLSPrivateKey** - class for common private key
 
-**BLSPublicKeyShare** - class for public key for each participant. Has methods _VerifySig_ and _VerifySigWithHelper_ to Verify piece of signature.
+**BLSPublicKeyShare** - class for public key for each participant. Has methods _VerifySig_ and _VerifySigWithHelper_ to Verify a piece of signature.
 
 **BLSPublicKey** - class for common public key. Has method _VerifySig_ for verifying common signature.
 
@@ -136,19 +137,21 @@ All these classes (except BLSSigShareSet) can be created from shared_ptr to stri
 
 ## How to use BLS threshold signatures
 
-1. Choose total number of participants in your group (n), give index to each participant and choose a threshold number (t) for your case. (t <= n).
+1.  Choose total number of participants in your group (n), give index to each participant and choose a threshold number (t) for your case. (t <= n).
 
-2. Generate private keys. Create common public key. You may use DKG.
+2.  Generate private keys. Create common public key. You may use DKG.
    For test you can use
 
 ```cpp
-std::shared_ptr<std::pair<std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>> std::shared_ptr<BLSPublicKey> > > keys = BLSPrivateKeyShare::generateSampleKeys(t, n);
+std::shared_ptr<std::pair
+<std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>> std::shared_ptr<BLSPublicKey>>> keys =
+                                                                       BLSPrivateKeyShare::generateSampleKeys(t, n);
 ```
 You will get a pair, which first component is shared_ptr to vector of private keys, and second component is shared_ptr to common public key;
 
-3. Hash the message you want to sign. Hash should be ```std::array<uint8_t, 32> ```
+3.  Hash the message you want to sign. Hash should be ```std::array<uint8_t, 32> ```
 
-4. Sign the hashed message with each private key(which is an instance of PrivateKeyShare). You will get piece of signature (shared_ptr to BLSSigShare instance)
+4.  Sign the hashed message with each private key(which is an instance of PrivateKeyShare). You will get piece of signature (shared_ptr to BLSSigShare instance)
 
 If you need to be compatible with Ethereum
 
@@ -164,7 +167,7 @@ std::shared_ptr<BLSSigShare> sigShare_ptr = key.sign(hash_ptr, signer_index)
 ```
 where key is an instance of BLSPrivateKeyShare, hash_ptr is shared_ptr to std::array<uint8_t, 32>, signer index is an index of a participant whose key is used to sign
 
-5. Create an instance of BLSSigShareSet.
+5.  Create an instance of BLSSigShareSet.
 ```cpp
 BLSSigShareSet SigSet(t,n);
 ```
@@ -177,7 +180,7 @@ If you have enough pieces you will be able to merge them and to get common signa
 std::shared_ptr<BLSSignature> signature_ptr = SigSet.merge();
 ```
 
-6. Verify common signature with common public key
+6.  Verify common signature with common public key
 
 If you need to be compatible with Ethereum
 ```cpp
@@ -198,8 +201,8 @@ Here is an example of BLS threshold signatures algorithm with t = 3, n = 4.
   std::vector<size_t> participants(num_all);
   for (size_t i = 0; i < num_signed; ++i) participants.at(i) = i + 1; //set participants indices 1,2,3
 
-  std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>> Skeys = BLSPrivateKeyShare::generateSampleKeys(
-  num_signed, num_all)->first;
+  std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>> Skeys =
+                                                    BLSPrivateKeyShare::generateSampleKeys(num_signed, num_all)->first;
 
   std::default_random_engine rand_gen((unsigned int) time(0));
   std::array<uint8_t, 32> hash_byte_arr;
@@ -212,15 +215,19 @@ Here is an example of BLS threshold signatures algorithm with t = 3, n = 4.
 
   for (size_t i = 0; i < num_signed; ++i) {
     std::shared_ptr<BLSPrivateKeyShare> skey = Skeys->at(i);
-    std::shared_ptr<BLSSigShare> sigShare = skey->sign(hash_ptr, participants.at(i)); // sign with private key of each participant
+    std::shared_ptr<BLSSigShare> sigShare = skey->sign(hash_ptr, participants.at(i)); // sign with private key
+                                                                                     //  of each participant
     sigSet.addSigShare(sigShare);
   }
 
-  std::shared_ptr<BLSSignature> common_sig_ptr = sigSet.merge();                                                //create common signature
-  BLSPrivateKey common_skey(Skeys, std::make_shared<std::vector<size_t >>(participants), num_signed,
-                                          num_all);                                          //create common private key from private keys of each participant
-  BLSPublicKey common_pkey(*(common_skey.getPrivateKey()), num_signed, num_all);   //create common public key from common private key
-  assert(common_pkey.VerifySig(hash_ptr, common_sig_ptr, num_signed, num_all));    // verify common signature with common public key
+  std::shared_ptr<BLSSignature> common_sig_ptr = sigSet.merge();                           //create common signature
+  BLSPrivateKey common_skey
+   (Skeys, std::make_shared<std::vector<size_t>>(participants), num_signed, num_all);    //create common private key
+                                                                              //from private keys of each participant
+  BLSPublicKey common_pkey(*(common_skey.getPrivateKey()), num_signed, num_all);   //create common public key
+                                                                                  //from common private key
+  assert(common_pkey.VerifySig(hash_ptr, common_sig_ptr, num_signed, num_all));    // verify common signature
+                                                                                  //with common public key
 ```
 
 ## Classes for Threshold Encryption
@@ -229,7 +236,7 @@ Here is an example of BLS threshold signatures algorithm with t = 3, n = 4.
 
 **TEPublicKey** - class for common public key. Has method _encrypt_ to encrypt message. (Message length should be 64) .
 
-*TEPrivateKeyShare** - class for private key for each participant. Has method _decrypt_ to decrypt CipherText and to get part of decrypted message.
+**TEPrivateKeyShare** - class for private key for each participant. Has method _decrypt_ to decrypt CipherText and to get part of decrypted message.
 
 **TEPublicKeyShare** - class for public key for each participant. Has methods _Verify_ to verify if given CipherText matches given dectypted piece of message.
 
@@ -239,17 +246,18 @@ All these classes (except TEDecryptSet) can be created from shared_ptr to string
 
 ## How to use  Threshold encryption
 
-1. Choose total number of participants in your group (n), give index to each participant and choose a threshold number (t) for your case. (t <= n).
+1.  Choose total number of participants in your group (n), give index to each participant and choose a threshold number (t) for your case. (t <= n).
 
-2. Generate private key for each participant. Create common public key. You may use DKG.
+2.  Generate private key for each participant. Create common public key. You may use DKG.
 For test you can use
 
 ```cpp
-std::pair<std::shared_ptr<std::vector<std::shared_ptr<TEPrivateKeyShare>>>, std::shared_ptr<TEPublicKey>> keys =TEPrivateKeyShare::generateSampleKeys(t, n);
+std::pair<std::shared_ptr<std::vector<std::shared_ptr<TEPrivateKeyShare>>>, std::shared_ptr<TEPublicKey>> keys =
+                                                                       TEPrivateKeyShare::generateSampleKeys(t, n);
 ```
 You will get a pair, which first component is shared_ptr to vector of private keys, and second component is shared_ptr to common public key;
 
-3. Create public key from private key for each participant.
+3.  Create public key from private key for each participant.
 ```cpp
  TEPrivateKeyShare privateKeyShare = *keys.first->at(i);
  TEPublicKeyShare publicKeyShare ( privateKeyShare, t, n);
@@ -257,19 +265,19 @@ You will get a pair, which first component is shared_ptr to vector of private ke
 where i is index of participant.
 
  ```
-4. Decrypt message with common public key. Message length should be 64.
- ```cpp
+4.  Decrypt message with common public key. Message length should be 64.
+```cpp
  TEPublic publicKey = *keys.second;
  encryption::Ciphertext cipher = publicKey.encrypt(message_ptr);
 ```
  Where message_ptr is shared_ptr to string, cipher is encrypted message.
 
-5. Get pieces of decrypted message with private key of each participant and cipher got in step 4. Verify every piece with public key of corresponding participant.
+5.  Get pieces of decrypted message with private key of each participant and cipher got in step 4. Verify every piece with public key of corresponding participant.
  ```cpp
   encryption::element_wrapper piece = privateKey.decrypt(cipher);
   assert ( publicKeyShare.Verify(cipher, piece) ) ;
   ```
-6. Create DecryptSet and add to it each piece of decrypted message.
+6.  Create DecryptSet and add to it each piece of decrypted message.
  ```cpp
    TEDecryptSet decrSet(t, n);
    decrSet.addDecrypt(signerIndex, piece_ptr);
@@ -340,7 +348,7 @@ Also in DKGTEWrapper there is a static function that creates common public key
 ```
 where public_shares_all is shared_ptr to matrix of all public shares ( its type is std::shared_ptr<std::vector<std::vector<encryption::element_wrapper>>>).
 
-Here is an example of Threshold Encryption algorythm with DKG simulation for t = 3, n =4
+Here is an example of Threshold Encryption algorythm with DKG simulation for t = 3, n = 4.
 ```cpp
         size_t num_signed = 3;
         size_t num_all = 4;
@@ -353,8 +361,10 @@ Here is an example of Threshold Encryption algorythm with DKG simulation for t =
         for (size_t i = 0; i < num_all; i++) {
           DKGTEWrapper dkg_wrap(num_signed, num_all);
           dkgs.push_back(dkg_wrap);
-          std::shared_ptr<std::vector<encryption::element_wrapper>> secret_shares_ptr = dkg_wrap.createDKGSecretShares(); // create secret shares for each participant
-          std::shared_ptr<std::vector<encryption::element_wrapper>> public_shares_ptr = dkg_wrap.createDKGPublicShares(); // create pulic shares for each participant
+          std::shared_ptr<std::vector<encryption::element_wrapper>> secret_shares_ptr =
+                                     dkg_wrap.createDKGSecretShares(); // create secret shares for each participant
+          std::shared_ptr<std::vector<encryption::element_wrapper>> public_shares_ptr = dkg_wrap.createDKGPublicShares();
+                                                                        // create public shares for each participant
           secret_shares_all.push_back(*secret_shares_ptr);
           public_shares_all.push_back(*public_shares_ptr);
         }
@@ -377,14 +387,18 @@ Here is an example of Threshold Encryption algorythm with DKG simulation for t =
         }
 
         for (size_t i = 0; i < num_all; i++) {
-          TEPrivateKeyShare pkey_share = dkgs.at(i).CreateTEPrivateKeyShare(i + 1,
-                                                                            std::make_shared<std::vector<encryption::element_wrapper>>(
-                                                                                    secret_key_shares.at(i)));
+          TEPrivateKeyShare pkey_share = dkgs.at(i).
+                               CreateTEPrivateKeyShare(i + 1,
+                                                       std::make_shared<std::vector<encryption::element_wrapper>>(
+                                                       secret_key_shares.at(i)));
           skeys.push_back(pkey_share);
           pkeys.push_back(TEPublicKeyShare(pkey_share, num_signed, num_all));
         }
 
-        TEPublicKey common_public = DKGTEWrapper::CreateTEPublicKey(std::make_shared< std::vector<std::vector<encryption::element_wrapper>>>(public_shares_all), num_signed, num_all);
+        TEPublicKey common_public = DKGTEWrapper::CreateTEPublicKey(
+                           std::make_shared< std::vector<std::vector<encryption::element_wrapper>>>(public_shares_all),
+                           num_signed,
+                           num_all);
 
         std::string message;    // Generating random message
         size_t msg_length = 64;
