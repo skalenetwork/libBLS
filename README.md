@@ -145,7 +145,7 @@ All these classes (except BLSSigShareSet) can be created from shared_ptr to stri
 ```cpp
 std::shared_ptr<std::pair
 <std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>> std::shared_ptr<BLSPublicKey>>> keys =
-                                                               BLSPrivateKeyShare::generateSampleKeys(t, n);
+                                                             BLSPrivateKeyShare::generateSampleKeys(t, n);
 ```
 You will get a pair, which first component is shared_ptr to vector of private keys, and second component is shared_ptr to common public key;
 
@@ -216,8 +216,10 @@ Here is an example of BLS threshold signatures algorithm with t = 3, n = 4.
 
   for (size_t i = 0; i < num_signed; ++i) {
     std::shared_ptr<BLSPrivateKeyShare> skey = Skeys->at(i);
-    std::shared_ptr<BLSSigShare> sigShare = skey->sign(hash_ptr, participants.at(i));// sign with private
-                                                                                //key of each participant
+
+    // sign with private key of each participant
+    std::shared_ptr<BLSSigShare> sigShare = skey->sign(hash_ptr, participants.at(i));
+
     sigSet.addSigShare(sigShare);
   }
 
@@ -297,9 +299,9 @@ std::string message = decrSet.merge();
 
 ## [DKG](https://doi.org/10.1007%2F3-540-48910-X_21) algorithm for BLS threshold signatures  and Threshols Encryption
 
-1. Choose total number of participants in your group (n), give index to each participant and choose a threshold number (t) for your case. (t <= n).
+1.  Choose total number of participants in your group (n), give index to each participant and choose a threshold number (t) for your case. (t <= n).
 
-2. Each participant of DKG creates an instance of dkg class with parameters t and n;
+2.  Each participant of DKG creates an instance of dkg class with parameters t and n;
 For BLS
 ```cpp
  DKGBLSWrapper dkg_obj(t, n);
@@ -310,7 +312,7 @@ For TE
 ```
 When created dkg_obj generates secret polynomial, but if you want you can set your own one with the method _setDKGSecret_
 
-3. Each participant generates a vector of public shares coefficients and broadcasts it.
+3.  Each participant generates a vector of public shares coefficients and broadcasts it.
 
 For BLS
 ```cpp
@@ -318,18 +320,20 @@ std::shared_ptr < std::vector <libff::alt_bn128_G2>>  public_shares = dkg_obj.cr
 ```
 For TE
 ```cpp
-std::shared_ptr < std::vector <encryption::element_wrapper>>  public_shares = dkg_obj.createDKGPublicShares();
+std::shared_ptr <std::vector <encryption::element_wrapper>>  public_shares =
+                                                                      dkg_obj.createDKGPublicShares();
 ```
 
 4.  Each participant generates vector of secret shares coefficients. And sends to j-th participant j-th component of secret shares coefficients vector. ( j = 1 .. n and not equal to current participant index).
 
 For BLS
 ```cpp
- std::shared_ptr < std::vector <libff::alt_bn128_Fr>>  private_shares = dkg_obj.createDKGSecretShares();
+ std::shared_ptr <std::vector <libff::alt_bn128_Fr>>  private_shares = dkg_obj.createDKGSecretShares();
 ```
 For TE
 ```cpp
- std::shared_ptr < std::vector <encryption::element_wrapper>>  private_shares = dkg_obj.createDKGSecretShares();
+ std::shared_ptr < std::vector <encryption::element_wrapper>>  private_shares =
+                                                                       dkg_obj.createDKGSecretShares();
 ```
 
 5. Each participant verifies that for data recieved other participants  secret share matches vector of public shares
@@ -369,10 +373,12 @@ for (size_t i = 0; i < num_all; i++) {
   dkgs.push_back(dkg_wrap);
 
   // create secret shares for each participant
-  std::shared_ptr<std::vector<encryption::element_wrapper>> secret_shares_ptr = dkg_wrap.createDKGSecretShares();
+  std::shared_ptr<std::vector<encryption::element_wrapper>> secret_shares_ptr =
+                                                                      dkg_wrap.createDKGSecretShares();
 
  // create public shares for each participant
- std::shared_ptr<std::vector<encryption::element_wrapper>> public_shares_ptr = dkg_wrap.createDKGPublicShares();
+ std::shared_ptr<std::vector<encryption::element_wrapper>> public_shares_ptr =
+                                                                      dkg_wrap.createDKGPublicShares();
 
  secret_shares_all.push_back(*secret_shares_ptr);
  public_shares_all.push_back(*public_shares_ptr);
@@ -381,7 +387,7 @@ for (size_t i = 0; i < num_all; i++) {
 for (size_t i = 0; i < num_all; i++)      // Verifying shares for each participant
  for (size_t j = 0; j < num_all; j++) {
    assert(dkgs.at(i).VerifyDKGShare(j, secret_shares_all.at(i).at(j),
-                    std::make_shared<std::vector<encryption::element_wrapper>>( public_shares_all.at(i))));
+                    std::make_shared<std::vector<encryption::element_wrapper>>(public_shares_all.at(i))));
  }
  std::vector<std::vector<encryption::element_wrapper>> secret_key_shares;
 
@@ -394,18 +400,18 @@ for (size_t i = 0; i < num_all; i++)      // Verifying shares for each participa
  }
 
  for (size_t i = 0; i < num_all; i++) {
-   TEPrivateKeyShare pkey_share = dkgs.at(i). CreateTEPrivateKeyShare(
-                                                       i + 1,
-                                                       std::make_shared<std::vector<encryption::element_wrapper>>(
-                                                       secret_key_shares.at(i)));
+   TEPrivateKeyShare pkey_share = dkgs.at(i).CreateTEPrivateKeyShare(
+                                             i + 1,
+                                             std::make_shared<std::vector<encryption::element_wrapper>>(
+                                             secret_key_shares.at(i)));
    skeys.push_back(pkey_share);
    pkeys.push_back(TEPublicKeyShare(pkey_share, num_signed, num_all));
  }
 
  TEPublicKey common_public = DKGTEWrapper::CreateTEPublicKey(
-                           std::make_shared< std::vector<std::vector<encryption::element_wrapper>>>(public_shares_all),
-                           num_signed,
-                           num_all);
+                   std::make_shared< std::vector<std::vector<encryption::element_wrapper>>>(public_shares_all),
+                   num_signed,
+                   num_all);
 
  std::string message;    // Generating random message
  size_t msg_length = 64;
@@ -416,7 +422,8 @@ for (size_t i = 0; i < num_all; i++)      // Verifying shares for each participa
  std::shared_ptr msg_ptr = std::make_shared<std::string>(message);
  encryption::Ciphertext cypher = common_public.encrypt(msg_ptr);
 
- size_t ind4del = rand_gen() % secret_shares_all.size(); // removing 1 random participant ( because only 3 of 4 will participate)
+// removing 1 random participant ( because only 3 of 4 will participate)
+ size_t ind4del = rand_gen() % secret_shares_all.size();
  auto pos4del = secret_shares_all.begin();
  advance(pos4del, ind4del);
  secret_shares_all.erase(pos4del);
