@@ -484,8 +484,8 @@ BOOST_AUTO_TEST_SUITE(Bls)
         BLSPublicKey dkg_common_pkey(common_public, num_signed, num_all);
 
         for ( size_t i = 0; i < num_all; i++)
-          for (size_t j = 0; j < num_signed; j++){
-            BOOST_REQUIRE( dkgs.at(i).VerifyDKGShare( j , secret_shares_all.at(i).at(j), public_shares_all.at(i) ));
+          for (size_t j = 0; j < num_all; j++){
+            BOOST_REQUIRE( dkgs.at(i).VerifyDKGShare( j , secret_shares_all.at(i).at(j), std::make_shared<std::vector<libff::alt_bn128_G2>>(public_shares_all.at(i)) ));
         }
 
         std::vector< std::vector<libff::alt_bn128_Fr>> secret_key_shares;
@@ -1039,7 +1039,18 @@ BOOST_AUTO_TEST_SUITE(Bls)
       bool is_exception_caught = false;  // zero share
       try {
         DKGBLSWrapper dkg_wrap(num_signed, num_all);
-        dkg_wrap.VerifyDKGShare(1, libff::alt_bn128_Fr::zero(), {libff::alt_bn128_G2::random_element()});
+        std::vector<libff::alt_bn128_G2> vect = {libff::alt_bn128_G2::random_element()};
+        dkg_wrap.VerifyDKGShare(1, libff::alt_bn128_Fr::zero(), std::make_shared<std::vector<libff::alt_bn128_G2>>(vect));
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;  // null verification vector
+      try {
+        DKGBLSWrapper dkg_wrap(num_signed, num_all);
+        dkg_wrap.VerifyDKGShare(1, libff::alt_bn128_Fr::zero(), nullptr);
       }
       catch (std::runtime_error &) {
         is_exception_caught = true;
@@ -1049,7 +1060,8 @@ BOOST_AUTO_TEST_SUITE(Bls)
       is_exception_caught = false;  // wrong vector size
       try {
         DKGBLSWrapper dkg_wrap(num_signed + 1, num_all + 1);
-        dkg_wrap.VerifyDKGShare(1, libff::alt_bn128_Fr::random_element(), {libff::alt_bn128_G2::random_element()});
+        std::vector<libff::alt_bn128_G2> vect = {libff::alt_bn128_G2::random_element()};
+        dkg_wrap.VerifyDKGShare(1, libff::alt_bn128_Fr::random_element(), std::make_shared<std::vector<libff::alt_bn128_G2>>(vect));
       }
       catch (std::runtime_error &) {
         is_exception_caught = true;

@@ -36,13 +36,16 @@ DKGBLSWrapper::DKGBLSWrapper(size_t _requiredSigners, size_t _totalSigners)
 }
 
 bool DKGBLSWrapper::VerifyDKGShare( size_t _signerIndex, const libff::alt_bn128_Fr& _share,
-                                   const std::vector<libff::alt_bn128_G2>& _verification_vector){
+                                   const std::shared_ptr<std::vector<libff::alt_bn128_G2>>& _verification_vector){
   if ( _share.is_zero())
     throw std::runtime_error(" Zero secret share");
-  if ( _verification_vector.size() != requiredSigners)
+  if ( _verification_vector == nullptr){
+    throw std::runtime_error(" Null verification vector");
+  }
+  if ( _verification_vector->size() != requiredSigners)
     throw std::runtime_error("Wrong vector size");
   signatures::Dkg dkg(requiredSigners, totalSigners);
-  return dkg.Verification(_signerIndex, _share, _verification_vector);
+  return dkg.Verification(_signerIndex, _share, *_verification_vector);
 }
 
 void  DKGBLSWrapper::setDKGSecret(std::shared_ptr < std::vector< libff::alt_bn128_Fr >> _poly_ptr){
