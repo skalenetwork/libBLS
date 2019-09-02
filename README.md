@@ -100,7 +100,8 @@ cmake --build build -- -j$(nproc)
 ### Include the library
 
 ```cpp
-#include <libBLS.h>```
+#include <libBLS.h>
+```
 
 ### Run tests
 
@@ -244,7 +245,7 @@ All these classes (except TEDecryptSet) can be created from shared_ptr to string
 For test you can use
 
 ```cpp
-std::pair<std::shared_ptr<std::vector<std::shared_ptr<TEPrivateKeyShare>>>, std::shared_ptr<TEPublicKey> > keys =TEPrivateKeyShare::generateSampleKeys(t, n);
+std::pair<std::shared_ptr<std::vector<std::shared_ptr<TEPrivateKeyShare>>>, std::shared_ptr<TEPublicKey>> keys =TEPrivateKeyShare::generateSampleKeys(t, n);
 ```
 You will get a pair, which first component is shared_ptr to vector of private keys, and second component is shared_ptr to common public key;
 
@@ -260,7 +261,7 @@ where i is index of participant.
  ```cpp
  TEPublic publicKey = *keys.second;
  encryption::Ciphertext cipher = publicKey.encrypt(message_ptr);
- ```
+```
  Where message_ptr is shared_ptr to string, cipher is encrypted message.
 
 5. Get pieces of decrypted message with private key of each participant and cipher got in step 4. Verify every piece with public key of corresponding participant.
@@ -296,6 +297,7 @@ For TE
 When created dkg_obj generates secret polynomial, but if you want you can set your own one with the method _setDKGSecret_
 
 3. Each participant generates a vector of public shares coefficients and broadcasts it.
+
 For BLS
 ```cpp
 std::shared_ptr < std::vector <libff::alt_bn128_G2>>  public_shares = dkg_obj.createDKGPublicShares();
@@ -306,6 +308,7 @@ std::shared_ptr < std::vector <encryption::element_wrapper>>  public_shares = dk
 ```
 
 4.  Each participant generates vector of secret shares coefficients. And sends to j-th participant j-th component of secret shares coefficients vector. ( j = 1 .. n and not equal to current participant index).
+
 For BLS
 ```cpp
  std::shared_ptr < std::vector <libff::alt_bn128_Fr>>  private_shares = dkg_obj.createDKGSecretShares();
@@ -322,6 +325,7 @@ For TE
 where public_shares_vector is shared_ptr to vector of public shares, signerIndex is index of participant from which secret and public shares were recieved.
 
 6. If verification passed each participant may create private key from secret shares that it recieved
+
 For BLS
 ```cpp
    BLSPrivateKeyShare privateKeyShare = dkg_obj.CreateBLSPrivateKeyShare(secret_shares_vector);
@@ -336,7 +340,7 @@ Also in DKGTEWrapper there is a static function that creates common public key
 ```
 where public_shares_all is shared_ptr to matrix of all public shares ( its type is std::shared_ptr<std::vector<std::vector<encryption::element_wrapper>>>).
 
-Here is an example of Threshold Encryption algorythm with DKG simulation
+Here is an example of Threshold Encryption algorythm with DKG simulation for t = 3, n =4
 ```cpp
         size_t num_signed = 3;
         size_t num_all = 4;
