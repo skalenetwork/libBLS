@@ -44,8 +44,7 @@ BLSSignature::BLSSignature(
 }
 
 BLSSignature::BLSSignature( shared_ptr< string > _sig,  size_t _requiredSigners,  size_t _totalSigners )
-        : totalSigners( _totalSigners ),
-          requiredSigners( _requiredSigners ) {
+        : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     BLSSignature::checkSigners( requiredSigners, totalSigners );
     BLSutils::initBLS();
 
@@ -63,12 +62,9 @@ BLSSignature::BLSSignature( shared_ptr< string > _sig,  size_t _requiredSigners,
                 runtime_error( "Signature too long:" + to_string( _sig->size() ) ) );
     }
 
-    auto position = _sig->find( ":" );
+  /*  auto position = _sig->find( ":" );
 
-  /*  if ( position == string::npos ) {
-        BOOST_THROW_EXCEPTION( runtime_error( "Misformatted sig:" + *_sig ) );
-    }*/
-
+ C
    /* if ( position >= BLS_MAX_COMPONENT_LEN ||
          _sig->size() - position > BLS_MAX_COMPONENT_LEN ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Misformatted sig:" + *_sig ) );

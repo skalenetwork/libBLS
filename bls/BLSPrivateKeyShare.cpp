@@ -29,7 +29,6 @@ using namespace std;
 #include "BLSSigShare.h"
 #include "BLSSignature.h"
 
-
 #include  "BLSutils.h"
 #include  "dkg/dkg.h"
 
@@ -95,7 +94,8 @@ std::shared_ptr<BLSSigShare> BLSPrivateKeyShare::sign(std::shared_ptr<std::array
     return s;
 }
 
-std::shared_ptr<BLSSigShare>  BLSPrivateKeyShare::signWithHint(std::shared_ptr<std::array< uint8_t, 32>> hash_byte_arr, size_t _signerIndex){
+std::shared_ptr<BLSSigShare>  BLSPrivateKeyShare::signWithHelper(std::shared_ptr<std::array<uint8_t, 32>> hash_byte_arr,
+                                                                 size_t _signerIndex){
     shared_ptr <signatures::Bls> obj;
 
     if (_signerIndex == 0) {

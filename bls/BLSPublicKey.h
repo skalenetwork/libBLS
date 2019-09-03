@@ -24,8 +24,6 @@
 #ifndef LIBBLS_BLSPUBLICKEY_H
 #define LIBBLS_BLSPUBLICKEY_H
 
-#include <map>
-
 #include "bls.h"
 #include "BLSSignature.h"
 
@@ -34,9 +32,8 @@ class BLSPublicKeyShare;
 class BLSPublicKey {
     std::shared_ptr< libff::alt_bn128_G2 > libffPublicKey;
 
-
-    size_t totalSigners;
     size_t requiredSigners;
+    size_t totalSigners;
 
 public:
 
@@ -56,8 +53,8 @@ public:
     bool VerifySig(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr, std::shared_ptr<BLSSignature> sign_ptr,
                                  size_t _requiredSigners, size_t _totalSigners);
 
-    bool VerifySigWithHint(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr, std::shared_ptr<BLSSignature> sign_ptr,
-                   size_t _requiredSigners, size_t _totalSigners);
+    bool VerifySigWithHelper(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr, std::shared_ptr<BLSSignature> sign_ptr,
+                             size_t _requiredSigners, size_t _totalSigners);
 
     std::shared_ptr< std::vector<std::string> > toString();
 

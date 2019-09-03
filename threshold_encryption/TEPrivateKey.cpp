@@ -45,7 +45,7 @@ TEPrivateKey::TEPrivateKey(std::shared_ptr<std::string> _key_str, size_t  _requi
 }
 
 TEPrivateKey::TEPrivateKey( encryption::element_wrapper _skey, size_t  _requiredSigners, size_t _totalSigners)
-: requiredSigners(_requiredSigners), totalSigners(_totalSigners), privateKey(_skey) {
+: privateKey(_skey), requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
 
   TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
 

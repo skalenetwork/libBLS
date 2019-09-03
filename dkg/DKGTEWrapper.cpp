@@ -36,13 +36,15 @@ DKGTEWrapper::DKGTEWrapper(size_t _requiredSigners, size_t _totalSigners)
 }
 
 bool DKGTEWrapper::VerifyDKGShare( size_t _signerIndex, const encryption::element_wrapper& _share,
-             const std::vector<encryption::element_wrapper>& _verification_vector){
+                                   const std::shared_ptr<std::vector<encryption::element_wrapper>>& _verification_vector){
   if ( element_is0(const_cast<element_t&>(_share.el_)))
     throw std::runtime_error("Zero secret share");
-  if (_verification_vector.size() != requiredSigners)
+  if (_verification_vector == nullptr)
+    throw std::runtime_error("Null verification vector");
+  if (_verification_vector->size() != requiredSigners)
     throw std::runtime_error("Wrong size of verification vector");
   encryption::DkgTe dkg_te(requiredSigners, totalSigners);
-  return dkg_te.Verify(_signerIndex, _share, _verification_vector);
+  return dkg_te.Verify(_signerIndex, _share, *_verification_vector);
 }
 
 void  DKGTEWrapper::setDKGSecret(std::shared_ptr < std::vector< encryption::element_wrapper>>& _poly_ptr){
@@ -71,6 +73,40 @@ TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare( size_t signerIndex_, st
   encryption::element_wrapper skey_share = dkg_te.CreateSecretKeyShare(*secret_shares_ptr);
 
   return TEPrivateKeyShare(skey_share, signerIndex_, requiredSigners, totalSigners);
+}
+
+TEPublicKey DKGTEWrapper::CreateTEPublicKey(std::shared_ptr< std::vector<std::vector<encryption::element_wrapper>>> public_shares_all, size_t _requiredSigners, size_t _totalSigners){
+  TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
+
+  if (public_shares_all == nullptr)
+    throw std::runtime_error("Null public shares all");
+
+  element_t public_key;
+  element_init_G1(public_key, TEDataSingleton::getData().pairing_);
+  element_set0(public_key);
+
+  for (size_t i = 0; i < _totalSigners; i++) {
+
+    element_t temp;
+    element_init_G1(temp, TEDataSingleton::getData().pairing_);
+    element_set(temp, public_shares_all->at(i).at(0).el_);
+
+    element_t value;
+    element_init_G1(value, TEDataSingleton::getData().pairing_);
+    element_add(value, public_key, temp);
+
+    element_clear(temp);
+    element_clear(public_key);
+    element_init_G1(public_key, TEDataSingleton::getData().pairing_);
+
+    element_set(public_key, value);
+
+    element_clear(value);
+  }
+
+  TEPublicKey common_public(encryption::element_wrapper(public_key), _requiredSigners, _totalSigners);
+  element_clear(public_key);
+  return common_public;
 }
 
 

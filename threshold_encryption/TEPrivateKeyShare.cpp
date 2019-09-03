@@ -23,6 +23,7 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <threshold_encryption/TEPrivateKeyShare.h>
 #include <threshold_encryption/utils.h>
+#include <dkg/dkg_te.h>
 
 TEPrivateKeyShare::TEPrivateKeyShare(std::shared_ptr<std::string> _key_str, size_t _signerIndex,  size_t  _requiredSigners, size_t _totalSigners)
 : signerIndex(_signerIndex), requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
@@ -45,7 +46,7 @@ TEPrivateKeyShare::TEPrivateKeyShare(std::shared_ptr<std::string> _key_str, size
 }
 
 TEPrivateKeyShare::TEPrivateKeyShare(encryption::element_wrapper _skey_share, size_t _signerIndex, size_t  _requiredSigners, size_t _totalSigners)
-: signerIndex(_signerIndex), requiredSigners(_requiredSigners), totalSigners(_totalSigners), privateKey(_skey_share) {
+: privateKey(_skey_share), signerIndex(_signerIndex), requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
 
   TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
 
@@ -87,4 +88,31 @@ encryption::element_wrapper TEPrivateKeyShare::getPrivateKey() const {
   return privateKey;
 }
 
-TEPrivateKeyShare::~TEPrivateKeyShare() {}
+std::pair<std::shared_ptr<std::vector<std::shared_ptr<TEPrivateKeyShare>>>, std::shared_ptr<TEPublicKey> >
+TEPrivateKeyShare::generateSampleKeys(size_t _requiredSigners, size_t _totalSigners){
+  encryption::DkgTe dkg_te (_requiredSigners, _totalSigners);
+
+  std::vector<encryption::element_wrapper> poly = dkg_te.GeneratePolynomial();
+  element_t zero;
+  element_init_Zr(zero, TEDataSingleton::getData().pairing_);
+  element_set0(zero);
+  encryption::element_wrapper zero_el(zero);
+
+  element_clear(zero);
+
+  encryption::element_wrapper common_skey = dkg_te.ComputePolynomialValue(poly, zero_el);
+  TEPrivateKey common_private(common_skey, _requiredSigners, _totalSigners);
+  TEPublicKey common_public(common_private, _requiredSigners, _totalSigners);
+
+  std::vector<encryption::element_wrapper> skeys = dkg_te.CreateSecretKeyContribution(poly);
+
+  std::vector<std::shared_ptr<TEPrivateKeyShare>> skey_shares;
+
+  for ( size_t i = 0; i < _totalSigners; i++) {
+    TEPrivateKeyShare skey(skeys[i].el_, i + 1, _requiredSigners, _totalSigners);
+    skey_shares.emplace_back(std::make_shared<TEPrivateKeyShare>(skey));
+  }
+
+  std::pair keys = std::make_pair(std::make_shared<std::vector<std::shared_ptr<TEPrivateKeyShare>>> (skey_shares), std::make_shared<TEPublicKey>(common_public));
+  return keys;
+}

@@ -24,16 +24,14 @@
 #ifndef LIBBLS_BLSSIGNATURE_H
 #define LIBBLS_BLSSIGNATURE_H
 
-#include <stdlib.h>
-#include <string>
 #include "bls.h"
 
 class BLSSignature {
-
-    size_t totalSigners;
-    size_t requiredSigners;
-    std::string hint;
     std::shared_ptr<libff::alt_bn128_G1> sig;
+    std::string hint;
+
+    size_t requiredSigners;
+    size_t totalSigners;
 
 public:
 
