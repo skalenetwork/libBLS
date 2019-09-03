@@ -150,7 +150,6 @@ std::shared_ptr<std::pair
 You will get a pair, which first component is shared_ptr to vector of private keys, and second component is shared_ptr to common public key;
 
 3.  Hash the message you want to sign. Hash should be ```std::array<uint8_t, 32> ```
-
 4.  Sign the hashed message with each private key(which is an instance of PrivateKeyShare). You will get a piece of signature (shared_ptr to BLSSigShare instance)
 
 If you need to be compatible with Ethereum
@@ -270,9 +269,8 @@ You will get a pair, which first component is shared_ptr to a vector of private 
  TEPrivateKeyShare privateKeyShare = *keys.first->at(i);
  TEPublicKeyShare publicKeyShare ( privateKeyShare, t, n);
 ```
-where i is index of participant.
+where i is an index of a participant.
 
- ```
 4.  Decrypt message with common public key. Message length should be 64.
 ```cpp
  TEPublic publicKey = *keys.second;
@@ -285,6 +283,7 @@ where i is index of participant.
   encryption::element_wrapper piece = privateKey.decrypt(cipher);
   assert ( publicKeyShare.Verify(cipher, piece) ) ;
   ```
+
 6.  Create DecryptSet and add to it each piece of decrypted message.
  ```cpp
    TEDecryptSet decrSet(t, n);
@@ -336,13 +335,13 @@ For TE
                                                                        dkg_obj.createDKGSecretShares();
 ```
 
-5. Each participant verifies that for data recieved other participants  secret share matches vector of public shares
+5.  Each participant verifies that for data recieved other participants  secret share matches vector of public shares
 ```cpp
   assert(dkg_obj. VerifyDKGShare( signerIndex, secret_share, public_shares_vector));
 ```
 where public_shares_vector is shared_ptr to vector of public shares, signerIndex is index of participant from which secret and public shares were recieved.
 
-6. If verification passed each participant may create private key from secret shares that it recieved
+6.  If verification passed each participant may create private key from secret shares that it recieved
 
 For BLS
 ```cpp
