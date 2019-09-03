@@ -285,7 +285,7 @@ where i is an index of a participant.
   ```
 
 6.  Create DecryptSet and add to it each piece of decrypted message.
- ```cpp
+```cpp
    TEDecryptSet decrSet(t, n);
    decrSet.addDecrypt(signerIndex, piece_ptr);
 ```
@@ -296,7 +296,7 @@ where piece_ptr is shared_ptr to piece, signerIndex is an index of a participant
 std::string message = decrSet.merge();
 ```
 
-## [DKG](https://doi.org/10.1007%2F3-540-48910-X_21) algorithm for BLS threshold signatures  and Threshols Encryption
+## [DKG](https://doi.org/10.1007%2F3-540-48910-X_21) algorithm for BLS threshold signatures  and Threshold Encryption
 
 1.  Choose total number of participants in your group (n), give index to each participant and choose a threshold number (t) for your case. (t <= n).
 
@@ -341,7 +341,7 @@ For TE
 ```
 where public_shares_vector is shared_ptr to vector of public shares, signerIndex is index of participant from which secret and public shares were recieved.
 
-6.  If verification passed each participant may create private key from secret shares that it recieved
+6.  If verification passed each participant may create private key from secret shares that it received
 
 For BLS
 ```cpp
@@ -357,7 +357,7 @@ Also in DKGTEWrapper there is a static function that creates common public key
 ```
 where public_shares_all is shared_ptr to matrix of all public shares ( its type is std::shared_ptr<std::vector<std::vector<encryption::element_wrapper>>>).
 
-Here is an example of Threshold Encryption algorythm with DKG simulation for t = 3, n = 4.
+Here is an example of Threshold Encryption algorithm with DKG simulation for t = 3, n = 4.
 ```cpp
 size_t num_signed = 3;
 size_t num_all = 4;
@@ -408,9 +408,9 @@ for (size_t i = 0; i < num_all; i++)      // Verifying shares for each participa
  }
 
  TEPublicKey common_public = DKGTEWrapper::CreateTEPublicKey(
-               std::make_shared< std::vector<std::vector<encryption::element_wrapper>>>(public_shares_all),
-               num_signed,
-               num_all);
+             std::make_shared< std::vector<std::vector<encryption::element_wrapper>>>(public_shares_all),
+             num_signed,
+             num_all);
 
  std::string message;    // Generating random message
  size_t msg_length = 64;

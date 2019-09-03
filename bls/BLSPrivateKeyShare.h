@@ -33,8 +33,9 @@ class BLSSigShare;
 class BLSPrivateKeyShare {
 protected:
     std::shared_ptr<libff::alt_bn128_Fr> privateKey;
-    size_t totalSigners;
+
     size_t requiredSigners;
+    size_t totalSigners;
 
 public:
     BLSPrivateKeyShare(const std::string &_key, size_t _requiredSigners, size_t _totalSigners);

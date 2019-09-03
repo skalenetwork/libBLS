@@ -36,7 +36,7 @@ DKGTESecret::DKGTESecret(size_t _requiredSigners, size_t _totalSigners) : requir
   poly = dkg_te.GeneratePolynomial();
 }
 
-std::vector <encryption::element_wrapper> DKGTESecret::setPoly(std::vector <encryption::element_wrapper>& _poly){
+void DKGTESecret::setPoly(std::vector <encryption::element_wrapper>& _poly){
   if (_poly.size() != requiredSigners){
     throw std::runtime_error("Wrong size of vector");
   }

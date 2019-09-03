@@ -69,7 +69,7 @@ TEPublicKey::TEPublicKey (TEPrivateKey _comon_private, size_t  _requiredSigners,
 }
 
 TEPublicKey:: TEPublicKey (encryption::element_wrapper _pkey, size_t  _requiredSigners, size_t _totalSigners)
-: requiredSigners(_requiredSigners), totalSigners(_totalSigners), PublicKey(_pkey) {
+: PublicKey(_pkey), requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
 
   TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
 

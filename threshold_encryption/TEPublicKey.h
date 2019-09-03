@@ -31,8 +31,9 @@ class TEPublicKey {
  private:
   encryption::element_wrapper PublicKey;
 
-  size_t totalSigners;
   size_t requiredSigners;
+  size_t totalSigners;
+
 
  public:
     TEPublicKey(std::shared_ptr<std::vector<std::string>> _key_str_ptr, size_t  _requiredSigners, size_t _totalSigners);

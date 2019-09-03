@@ -53,8 +53,9 @@ shared_ptr< string > BLSSigShare::toString() {
 BLSSigShare::BLSSigShare( shared_ptr< string > _sigShare, size_t _signerIndex, size_t _requiredSigners,
         size_t _totalSigners )
     : signerIndex( _signerIndex ),
-      totalSigners( _totalSigners ),
-      requiredSigners( _requiredSigners ) {
+      requiredSigners( _requiredSigners ),
+      totalSigners( _totalSigners )
+      {
     BLSSignature::checkSigners( requiredSigners, totalSigners );
     BLSutils::initBLS();
     if ( signerIndex == 0 ) {
@@ -114,8 +115,8 @@ BLSSigShare::BLSSigShare( const shared_ptr< libff::alt_bn128_G1 >& _sigShare, st
     : sigShare( _sigShare ),
       hint (_hint),
       signerIndex( _signerIndex ),
-      totalSigners( _totalSigners ),
-      requiredSigners( _requiredSigners ) {
+      requiredSigners( _requiredSigners ),
+      totalSigners( _totalSigners ) {
 
     BLSSignature::checkSigners( requiredSigners, totalSigners );
     if (  _sigShare->is_zero() ) {

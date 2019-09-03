@@ -29,10 +29,11 @@
 class BLSSignature;
 
 class BLSSigShareSet {
-    bool was_merged;
 
-    size_t totalSigners;
     size_t requiredSigners;
+    size_t totalSigners;
+
+    bool was_merged;
 
     std::map<size_t, std::shared_ptr< BLSSigShare > > sigShares;
 

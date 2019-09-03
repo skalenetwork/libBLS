@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_SUITE(DkgAlgorithm)
 
             bool is_exception_caught = false;
             try {
-                   libff::alt_bn128_Fr secret = dkg_obj.SecretKeyShareCreate(pol);
+                   dkg_obj.SecretKeyShareCreate(pol);
             }
             catch (std::runtime_error &) {
                     is_exception_caught = true;

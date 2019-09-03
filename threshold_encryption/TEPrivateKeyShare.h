@@ -32,9 +32,9 @@ class TEPrivateKeyShare {
  private:
     encryption::element_wrapper  privateKey;
 
-    size_t totalSigners;
-    size_t requiredSigners;
     size_t signerIndex;
+    size_t requiredSigners;
+    size_t totalSigners;
 
  public:
     TEPrivateKeyShare(std::shared_ptr<std::string> _key_str_ptr, size_t _signerIndex, size_t  _requiredSigners, size_t _totalSigners);

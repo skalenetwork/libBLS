@@ -29,10 +29,11 @@
 
 class TEDecryptSet {
  private:
-    bool was_merged;
 
     size_t requiredSigners;
     size_t totalSigners;
+
+    bool was_merged;
 
     std::map<size_t, std::shared_ptr< encryption::element_wrapper>> decrypts;
 
