@@ -1,6 +1,8 @@
 # libBLS: a C++ library for BLS Threshold Signatures
 
-[![Build Status](https://travis-ci.com/skalenetwork/libBLS.svg?token=GpDGXHqy9kTj5H5cyHGS&branch=develop)](https://travis-ci.com/skalenetwork/libBLS) [![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
+[![Build Status](https://travis-ci.com/skalenetwork/libBLS.svg?token=GpDGXHqy9kTj5H5cyHGS&branch=develop)](https://travis-ci.com/skalenetwork/libBLS)
+[![codecov](https://codecov.io/gh/skalenetwork/libBLS/branch/develop/graph/badge.svg)](https://codecov.io/gh/skalenetwork/libBLS)
+[![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
 
 A mathematical library written in C++ that supports BLS threshold signatures, Distributed Key Generation (DKG) and Threshold Encryption (TE).
 
