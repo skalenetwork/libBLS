@@ -145,7 +145,6 @@ int main(int argc, const char *argv[]) {
 
     RecoverSignature(t, n, input, *p_out);
     r = 0;
-
   } catch (std::exception& ex) {
     r = 1;
     std::string str_what = ex.what();
@@ -158,5 +157,9 @@ int main(int argc, const char *argv[]) {
     std::cerr << "unknown exception\n";
   }
 
+  if (p_out != &std::cout) {
+    delete (std::ofstream*)p_out;
+  }
+  
   return r;
 }

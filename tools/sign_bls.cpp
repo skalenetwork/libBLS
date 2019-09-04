@@ -193,18 +193,20 @@ int main(int argc, const char *argv[]) {
       }
       p_in = new std::ifstream( vm["input"].as<std::string>().c_str(), std::ifstream::binary);
     }
-    
+
     if (vm.count("output")) {
       if (g_b_verbose_mode) {
         std::cout << "output = " << vm["output"].as<std::string>() << '\n';
       }
-      p_out = new std::ofstream( vm["output"].as<std::string>().c_str(), std::ofstream::binary);
+      p_out = new std::ofstream(vm["output"].as<std::string>().c_str(), std::ofstream::binary);
     }
 
-    if (j < 0)
+    if (j < 0) {
       Sign(t, n, *p_in, *p_out, key);
-    else
-      Sign(t, n, *p_in, *p_out, key, false, j);
+    }
+    else {
+      Sign(t, n, *p_in, *p_out, key, false, j);  
+    }
     r = 0;  // success
   } catch (std::exception& ex) {
     r = 1;
