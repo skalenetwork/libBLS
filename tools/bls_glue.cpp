@@ -36,7 +36,8 @@
 
 static bool g_b_verbose_mode = false;
 
-void RecoverSignature(const size_t t, const size_t n, const std::vector<std::string>& input) {
+void RecoverSignature(const size_t t, const size_t n, const std::vector<std::string>& input,
+                                                                            std::ostream& outfile) {
   signatures::Bls bls_instance = signatures::Bls(t, n);
 
   std::vector<size_t> idx(t);
@@ -69,10 +70,11 @@ void RecoverSignature(const size_t t, const size_t n, const std::vector<std::str
   outdata["signature"]["X"] = BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_signature.X);
   outdata["signature"]["Y"] = BLSutils::ConvertToString<libff::alt_bn128_Fq>(common_signature.Y);
 
-  std::cout << outdata.dump(4) << '\n';
+  outfile << outdata.dump(4) << '\n';
 }
 
 int main(int argc, const char *argv[]) {
+  std::ostream* p_out = &std::cout;
   int r = 1;
   try {
     boost::program_options::options_description desc("Options");
@@ -81,7 +83,8 @@ int main(int argc, const char *argv[]) {
     ("version", "Show version number")
     ("t", boost::program_options::value<size_t>(), "Threshold")
     ("n", boost::program_options::value<size_t>(), "Number of participants")
-    ("input", boost::program_options::value<std::vector<std::string>>(), "Input file path; if not specified then use standard input")
+    ("input", boost::program_options::value<std::vector<std::string>>(), "Input file path (required)")
+    ("output", boost::program_options::value<std::string>(), "Output file path; if not specified then use standard output")
     ("v", "Verbose mode (optional)")
     ;
 
@@ -98,8 +101,7 @@ int main(int argc, const char *argv[]) {
       return 0;
     }
     if (vm.count("version")) {
-      std::cout
-      << EXPAND_AS_STR( BLS_VERSION ) << '\n';
+      std::cout << EXPAND_AS_STR( BLS_VERSION ) << '\n';
       return 0;
     }
 
@@ -117,11 +119,9 @@ int main(int argc, const char *argv[]) {
 
     size_t t = vm["t"].as<size_t>();
     size_t n = vm["n"].as<size_t>();
-    
+
     if (g_b_verbose_mode) {
-      std::cout << "t = " << t << '\n'
-                << "n = " << n << '\n'
-                << '\n';
+      std::cout << "t = " << t << '\n' << "n = " << n << '\n' << '\n';
     }
 
     std::vector<std::string> input;
@@ -134,14 +134,24 @@ int main(int argc, const char *argv[]) {
       }
     }
 
-    RecoverSignature(t, n, input);
+    std::string output;
+    if (vm.count("output")) {
+      output = vm["output"].as<std::string>();
+      if (g_b_verbose_mode) {
+        std::cout << "output = " << output << '\n';
+      }
+      p_out = new std::ofstream(output, std::ofstream::binary);
+    }
+
+    RecoverSignature(t, n, input, *p_out);
     r = 0;
 
-  } catch ( std::exception & ex ) {
+  } catch (std::exception& ex) {
     r = 1;
     std::string str_what = ex.what();
-    if( str_what.empty() )
+    if (str_what.empty()) {
       str_what = "exception without description";
+    }
     std::cerr << "exception: " << str_what << "\n";
   } catch (...) {
     r = 2;

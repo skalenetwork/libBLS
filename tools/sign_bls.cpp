@@ -40,7 +40,7 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
           std::ostream& outfile, const std::string& key, bool sign_all = true, int idx = -1) {
   signatures::Bls bls_instance = signatures::Bls(t, n);
 
-  std::vector<uint8_t> message_data;  
+  std::vector<uint8_t> message_data;
   uint8_t n_byte;
   while (data_file >> n_byte) {
     message_data.push_back(n_byte);
@@ -148,49 +148,56 @@ int main(int argc, const char *argv[]) {
       return 0;
     }
     if (vm.count("version")) {
-      std::cout
-      << EXPAND_AS_STR(BLS_VERSION) << '\n';
+      std::cout << EXPAND_AS_STR(BLS_VERSION) << '\n';
       return 0;
     }
 
-    if (vm.count("t") == 0)
+    if (vm.count("t") == 0) {
       throw std::runtime_error("--t is missing (see --help)");
-    if (vm.count("n") == 0)
+    }
+
+    if (vm.count("n") == 0) {
       throw std::runtime_error("--n is missing (see --help)");
+    }
 
-    if (vm.count("key") == 0)
+    if (vm.count("key") == 0) {
       throw std::runtime_error("--key is missing (see --help)");
+    }
 
-    if (vm.count("v"))
+    if (vm.count("v")) {
       g_b_verbose_mode = true;
+    }
 
     size_t t = vm["t"].as<size_t>();
     size_t n = vm["n"].as<size_t>();
-    if (g_b_verbose_mode)
-      std::cout
-    << "t = " << t << '\n'
-    << "n = " << n << '\n'
-    << '\n';
+    if (g_b_verbose_mode) {
+      std::cout << "t = " << t << '\n' << "n = " << n << '\n' << '\n';
+    }
 
     int j = -1;
     if (vm.count("j")) {
       j = vm["j"].as<int>();
-      if (g_b_verbose_mode)
+      if (g_b_verbose_mode) {
         std::cout << "j = " << j << '\n';
+      }
     }
 
     std::string key = vm["key"].as<std::string>();
-    if (g_b_verbose_mode)
+    if (g_b_verbose_mode) {
       std::cout << "key = " << key << '\n';
+    }
 
     if (vm.count("input")) {
-      if (g_b_verbose_mode)
+      if (g_b_verbose_mode) {
         std::cout << "input = " << vm["input"].as<std::string>() << '\n';
+      }
       p_in = new std::ifstream( vm["input"].as<std::string>().c_str(), std::ifstream::binary);
     }
+    
     if (vm.count("output")) {
-      if (g_b_verbose_mode)
+      if (g_b_verbose_mode) {
         std::cout << "output = " << vm["output"].as<std::string>() << '\n';
+      }
       p_out = new std::ofstream( vm["output"].as<std::string>().c_str(), std::ofstream::binary);
     }
 
