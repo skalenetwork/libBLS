@@ -143,7 +143,7 @@ int main(int argc, const char *argv[]) {
       std::cout
       << "BLS sign tool, version " << EXPAND_AS_STR(BLS_VERSION) << '\n'
       << "Usage:\n"
-      << "   " << argv[0] << "--t <threshold> --n <num_participants> [--j <participant>] [--input <path>] [--output <path>] [--key <path>] [--v]" << '\n'
+      << "   " << argv[0] << " --t <threshold> --n <num_participants> [--j <participant>] [--input <path>] [--output <path>] [--key <path>] [--v]" << '\n'
       << desc << '\n';
       return 0;
     }
