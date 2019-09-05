@@ -25,7 +25,6 @@
 #define LIBBLS_BLSSIGSHARESET_H
 
 #include <bls/bls.h>
-
 class BLSSignature;
 
 class BLSSigShareSet {

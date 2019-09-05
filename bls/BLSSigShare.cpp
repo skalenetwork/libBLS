@@ -68,18 +68,18 @@ BLSSigShare::BLSSigShare(std::shared_ptr<std::string> _sigShare, size_t _signerI
   }
 
   if ( _sigShare->size() > BLS_MAX_SIG_LEN ) {
-    BOOST_THROW_EXCEPTION(std::runtime_error( "Signature too long:" + to_string( _sigShare->size() ) ) );
+    BOOST_THROW_EXCEPTION(std::runtime_error( "Signature too long:" + std::to_string( _sigShare->size() ) ) );
   }
 
 
   std::shared_ptr<std::vector<std::string>> result = BLSutils::SplitString( _sigShare, ":");
   if ( result->size() != 4 )
-      BOOST_THROW_EXCEPTION( runtime_error("Misformatted signature"));
+      BOOST_THROW_EXCEPTION(std::runtime_error("Misformatted signature"));
   for ( auto && str : *result){
       for ( char& c : str ) {
           if ( !( c >= '0' && c <= '9' ) ) {
-              BOOST_THROW_EXCEPTION( std::runtime_error(
-                                             "Misformatted char:" + to_string( ( int ) c ) + " in component " +  str ) );
+              BOOST_THROW_EXCEPTION(std::runtime_error(
+                                             "Misformatted char:" + std::to_string( ( int ) c ) + " in component " +  str ) );
           }
       }
   }
@@ -87,14 +87,14 @@ BLSSigShare::BLSSigShare(std::shared_ptr<std::string> _sigShare, size_t _signerI
     libff::alt_bn128_Fq X(result->at(0).c_str());
     libff::alt_bn128_Fq Y(result->at(1).c_str());
 
-    sigShare = make_shared< libff::alt_bn128_G1 >( X, Y,libff::alt_bn128_Fq::one());
+    sigShare = std::make_shared< libff::alt_bn128_G1 >( X, Y,libff::alt_bn128_Fq::one());
     hint = result->at(2) + ":" + result->at(3);
 
     if ( !(*sigShare).is_well_formed() )
       BOOST_THROW_EXCEPTION(std::runtime_error("signature is not from G1"));
 }
 
-BLSSigShare::BLSSigShare( const shared_ptr< libff::alt_bn128_G1 >& _sigShare, std::string & _hint,  size_t _signerIndex,
+BLSSigShare::BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& _sigShare, std::string & _hint,  size_t _signerIndex,
                           size_t _requiredSigners, size_t _totalSigners )
     : sigShare( _sigShare ),
       hint (_hint),
@@ -104,18 +104,17 @@ BLSSigShare::BLSSigShare( const shared_ptr< libff::alt_bn128_G1 >& _sigShare, st
 
     BLSSignature::checkSigners( requiredSigners, totalSigners );
     if (  _sigShare->is_zero() ) {
-        BOOST_THROW_EXCEPTION( runtime_error( "Zero signature" ) );
+        BOOST_THROW_EXCEPTION(std::runtime_error( "Zero signature" ) );
     }
     if ( _signerIndex == 0 ) {
-        BOOST_THROW_EXCEPTION( runtime_error( "Zero signer index" ) );
+      BOOST_THROW_EXCEPTION(std::runtime_error( "Zero signer index" ) );
     }
 
     if ( !_sigShare ) {
-        BOOST_THROW_EXCEPTION( runtime_error( "Null _s" ) );
+        BOOST_THROW_EXCEPTION(std::runtime_error( "Null _s" ) );
     }
-    if ( hint.length() == 0 )
-    {
-      BOOST_THROW_EXCEPTION( runtime_error( "Empty or misformatted hint" ) );
+    if ( hint.length() == 0 ) {
+      BOOST_THROW_EXCEPTION(std::runtime_error( "Empty or misformatted hint" ) );
     }
 }
 
