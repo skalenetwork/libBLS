@@ -34,7 +34,7 @@ BLSPublicKey::BLSPublicKey(const std::shared_ptr<std::vector<std::string>> pkey_
   BLSSignature::checkSigners(_requiredSigners, _totalSigners);
 
   if (pkey_str_vect == nullptr) {
-    BOOST_THROW_EXCEPTION(runtime_error("Public Key ptr is null"));
+    BOOST_THROW_EXCEPTION(std::runtime_error("Public Key ptr is null"));
   }
 
   libffPublicKey = std::make_shared<libff::alt_bn128_G2>();
@@ -47,7 +47,7 @@ BLSPublicKey::BLSPublicKey(const std::shared_ptr<std::vector<std::string>> pkey_
   libffPublicKey->Z.c1 = libff::alt_bn128_Fq::zero();
 
     if ( libffPublicKey->is_zero()  || !(libffPublicKey->is_well_formed()) )  {
-        BOOST_THROW_EXCEPTION(runtime_error("Public Key is equal to zero or corrupt"));
+        BOOST_THROW_EXCEPTION(std::runtime_error("Public Key is equal to zero or corrupt"));
     }
 }
 
@@ -94,7 +94,7 @@ bool BLSPublicKey::VerifySig(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr,
   return res;
 }
 
-bool BLSPublicKey::VerifySigWithHint(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr, std::shared_ptr<BLSSignature> sign_ptr,
+bool BLSPublicKey::VerifySigWithHelper(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr, std::shared_ptr<BLSSignature> sign_ptr,
                              size_t _requiredSigners, size_t _totalSigners) {
   std::shared_ptr<signatures::Bls> obj;
   BLSSignature::checkSigners(_requiredSigners, _totalSigners);
