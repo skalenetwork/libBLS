@@ -21,25 +21,22 @@
   @date 2019
 */
 
-#include "BLSSignature.h"
-#include "BLSutils.h"
+#include <bls/BLSSignature.h>
+#include <bls/BLSutils.h>
 
-using namespace std;
-
-shared_ptr< libff::alt_bn128_G1 > BLSSignature::getSig() const {
+std::shared_ptr<libff::alt_bn128_G1> BLSSignature::getSig() const {
     return sig;
 }
 BLSSignature::BLSSignature(
-    const shared_ptr< libff::alt_bn128_G1 > sig, std::string & _hint, size_t _requiredSigners, size_t _totalSigners )
+    const std::shared_ptr< libff::alt_bn128_G1 > sig, std::string & _hint, size_t _requiredSigners, size_t _totalSigners )
     : sig( sig ), hint( _hint ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     checkSigners( _requiredSigners, _totalSigners );
     BLSSignature::checkSigners( requiredSigners, totalSigners );
     if ( sig == nullptr || sig->is_zero() ) {
-        BOOST_THROW_EXCEPTION( runtime_error( "Zero or null signature" ) );
+        BOOST_THROW_EXCEPTION(std::runtime_error( "Zero or null signature" ) );
     }
-    if ( hint.length() == 0 )
-    {
-      BOOST_THROW_EXCEPTION( runtime_error( "Empty or misformatted hint" ) );
+    if ( hint.length() == 0 ) {
+      BOOST_THROW_EXCEPTION(std::runtime_error( "Empty or misformatted hint" ) );
     }
 }
 
@@ -62,14 +59,6 @@ BLSSignature::BLSSignature( shared_ptr< string > _sig,  size_t _requiredSigners,
                 runtime_error( "Signature too long:" + to_string( _sig->size() ) ) );
     }
 
-  /*  auto position = _sig->find( ":" );
-
- C
-   /* if ( position >= BLS_MAX_COMPONENT_LEN ||
-         _sig->size() - position > BLS_MAX_COMPONENT_LEN ) {
-        BOOST_THROW_EXCEPTION( runtime_error( "Misformatted sig:" + *_sig ) );
-    }*/
-
     std::shared_ptr<std::vector<std::string>> result = BLSutils::SplitString( _sig, ":");
     if ( result->size() != 4 )
         BOOST_THROW_EXCEPTION( runtime_error("Misformatted signature"));
@@ -87,7 +76,7 @@ BLSSignature::BLSSignature( shared_ptr< string > _sig,  size_t _requiredSigners,
     hint = result->at(2) + ":" + result->at(3);
 
     if ( !(*sig).is_well_formed() )
-     BOOST_THROW_EXCEPTION( runtime_error("signature is not from G1"));
+     BOOST_THROW_EXCEPTION(std::runtime_error("signature is not from G1"));
 }
 
 shared_ptr< string > BLSSignature::toString() {

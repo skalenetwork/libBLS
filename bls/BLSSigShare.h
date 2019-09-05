@@ -24,7 +24,7 @@
 #ifndef LIBBLS_BLSSIGSHARE_H
 #define LIBBLS_BLSSIGSHARE_H
 
-#include "bls.h"
+#include <bls/bls.h>
 
 class BLSSigShare {
 
@@ -38,12 +38,10 @@ private:
     size_t requiredSigners;
     size_t totalSigners;
 
+ public:
+    BLSSigShare(const std::shared_ptr<libff::alt_bn128_G1>& sigShare, std::string& hint, size_t signerIndex,
+                 size_t _requiredSigners, size_t _totalSigners);
 
-public:
-
-
-    BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& sigShare, std::string & hint, size_t signerIndex,
-                 size_t _requiredSigners, size_t _totalSigners );
 
     BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t signerIndex,
                  size_t _requiredSigners, size_t _totalSigners );
@@ -54,7 +52,7 @@ public:
 
     std::string getHint() const;
 
-    std::shared_ptr< std::string > toString();
+    std::shared_ptr<std::string> toString();
     size_t getTotalSigners() const;
     size_t getRequiredSigners() const;
 };

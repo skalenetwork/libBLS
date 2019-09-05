@@ -24,19 +24,19 @@
 #ifndef LIBBLS_BLSPUBLICKEYSHARE_H
 #define LIBBLS_BLSPUBLICKEYSHARE_H
 
-#include "bls.h"
-
+#include <bls/bls.h>
 
 class BLSSigShare;
 
 class BLSPublicKeyShare {
-
-    std::shared_ptr< libff::alt_bn128_G2 > publicKey;
-
+ private:
+    std::shared_ptr<libff::alt_bn128_G2> publicKey;
     size_t requiredSigners;
     size_t totalSigners;
 
 public:
+    BLSPublicKeyShare(const std::shared_ptr< std::vector<std::string> >,
+                       size_t _totalSigners, size_t _requiredSigners);
 
     BLSPublicKeyShare(  const std::shared_ptr< std::vector<std::string> >,
                        size_t _totalSigners, size_t _requiredSigners );

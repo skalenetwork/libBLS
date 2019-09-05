@@ -21,11 +21,9 @@
   @date 2019
 */
 
-using namespace std;
+#include <bls/BLSPrivateKey.h>
+#include <bls/BLSutils.h>
 
-
-#include "BLSPrivateKey.h"
-#include "BLSutils.h"
 
 BLSPrivateKey::BLSPrivateKey(const std::shared_ptr<std::string> &_key, size_t _requiredSigners, size_t _totalSigners)
         : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {

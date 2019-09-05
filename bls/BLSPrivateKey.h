@@ -24,12 +24,14 @@
 #ifndef LIBBLS_BLSPRIVATEKEY_H
 #define LIBBLS_BLSPRIVATEKEY_H
 
-#include "bls.h"
-#include "BLSSignature.h"
-#include "BLSPrivateKeyShare.h"
+
+#include <bls/bls.h>
+#include <bls/BLSSignature.h>
+#include <bls/BLSPrivateKeyShare.h>
 
 
 class BLSPrivateKey {
+ private:
     size_t requiredSigners;
     size_t totalSigners;
 

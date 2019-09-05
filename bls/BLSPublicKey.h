@@ -24,42 +24,43 @@
 #ifndef LIBBLS_BLSPUBLICKEY_H
 #define LIBBLS_BLSPUBLICKEY_H
 
-#include "bls.h"
-#include "BLSSignature.h"
+
+#include <bls/bls.h>
+#include <bls/BLSSignature.h>
 
 class BLSPublicKeyShare;
 
 class BLSPublicKey {
-    std::shared_ptr< libff::alt_bn128_G2 > libffPublicKey;
+ private:
+    std::shared_ptr<libff::alt_bn128_G2> libffPublicKey;
 
     size_t requiredSigners;
     size_t totalSigners;
 
-public:
+ public:
 
-    BLSPublicKey( const std::shared_ptr< std::vector<std::string> >,
-                  size_t _requiredSigners, size_t _totalSigners );
-    BLSPublicKey(  const libff::alt_bn128_Fr& skey,
-                   size_t _requiredSigners, size_t _totalSigners );
-    BLSPublicKey(  const libff::alt_bn128_G2 & skey,
-                   size_t _requiredSigners, size_t _totalSigners );
+    BLSPublicKey(const std::shared_ptr< std::vector<std::string>>,
+                  size_t _requiredSigners, size_t _totalSigners);
+    BLSPublicKey(const libff::alt_bn128_Fr& skey,
+                   size_t _requiredSigners, size_t _totalSigners);
+    BLSPublicKey(const libff::alt_bn128_G2 & skey,
+                   size_t _requiredSigners, size_t _totalSigners);
 
-    BLSPublicKey ( std::shared_ptr< std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > > map_pkeys_koefs,
+    BLSPublicKey (std::shared_ptr<std::map<size_t, std::shared_ptr<BLSPublicKeyShare>>> map_pkeys_koefs,
                     size_t _requiredSigners, size_t _totalSigners);
 
     size_t getTotalSigners() const;
     size_t getRequiredSigners() const;
 
-    bool VerifySig(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr, std::shared_ptr<BLSSignature> sign_ptr,
+    bool VerifySig(std::shared_ptr<std::array<uint8_t, 32>> hash_ptr, std::shared_ptr<BLSSignature> sign_ptr,
                                  size_t _requiredSigners, size_t _totalSigners);
 
     bool VerifySigWithHelper(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr, std::shared_ptr<BLSSignature> sign_ptr,
                              size_t _requiredSigners, size_t _totalSigners);
 
-    std::shared_ptr< std::vector<std::string> > toString();
+    std::shared_ptr<std::vector<std::string>> toString();
 
-    std::shared_ptr< libff::alt_bn128_G2 > getPublicKey() const;
-
+    std::shared_ptr<libff::alt_bn128_G2> getPublicKey() const;
 };
 
 

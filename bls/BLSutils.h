@@ -21,13 +21,13 @@
   @date 2019
 */
 
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-#include <memory>
 #include <array>
+#include <memory>
+
+#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 
 class BLSutils{
-
-    public:
+ public:
     template<class T>
     static std::string ConvertToString(T field_elem);
     static std::pair<libff::alt_bn128_Fq , libff::alt_bn128_Fq> ParseHint (std::string &);
@@ -38,17 +38,17 @@ class BLSutils{
 
 template<class T>
 std::string BLSutils::ConvertToString(T field_elem) {
-    mpz_t t;
-    mpz_init(t);
+  mpz_t t;
+  mpz_init(t);
 
-    field_elem.as_bigint().to_mpz(t);
+  field_elem.as_bigint().to_mpz(t);
 
-    char arr[mpz_sizeinbase (t, 10) + 2];
+  char arr[mpz_sizeinbase (t, 10) + 2];
 
-    char * tmp = mpz_get_str(arr, 10, t);
-    mpz_clear(t);
+  char* tmp = mpz_get_str(arr, 10, t);
+  mpz_clear(t);
 
-    std::string output = tmp;
+  std::string output = tmp;
 
-    return output;
+  return output;
 }

@@ -179,6 +179,7 @@ namespace encryption {
       rhs_to_hash[i] = static_cast<uint8_t>(message[i]);
     }
 
+
     std::valarray<uint8_t> res = lhs_to_hash ^ rhs_to_hash;
 
     std::string V = "";

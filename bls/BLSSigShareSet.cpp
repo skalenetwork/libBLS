@@ -24,13 +24,12 @@
 #include <stdint.h>
 #include <string>
 
-using namespace std;
+#include <bls/BLSSignature.h>
+#include <bls/BLSSigShare.h>
+#include <bls/BLSSigShareSet.h>
+#include <bls/BLSutils.h>
 
 
-#include "BLSSignature.h"
-#include "BLSSigShare.h"
-#include "BLSSigShareSet.h"
-#include "BLSutils.h"
 
 
 bool BLSSigShareSet::addSigShare( shared_ptr< BLSSigShare > _sigShare ) {
@@ -61,6 +60,7 @@ shared_ptr< BLSSigShare > BLSSigShareSet::getSigShareByIndex( size_t _index ) {
     if ( _index == 0 ) {
         BOOST_THROW_EXCEPTION( runtime_error( "Index out of range:" + to_string( _index ) ) );
     }
+
 
     if ( sigShares.count( _index ) == 0 ) {
         return nullptr;
@@ -105,8 +105,3 @@ shared_ptr< BLSSignature > BLSSigShareSet::merge() {
 
     return make_shared< BLSSignature >( sigPtr, hint , requiredSigners, totalSigners );
 }
-
-
-/*std::map<size_t, std::shared_ptr< BLSSigShare > > BLSSigShareSet::getSigShares(){
-    return sigShares;
-}*/

@@ -24,14 +24,15 @@
 #ifndef LIBBLS_BLSPRIVATEKEYSHARE_H
 #define LIBBLS_BLSPRIVATEKEYSHARE_H
 
-#include "BLSPublicKey.h"
+
+#include <bls/BLSPublicKey.h>
 
 
 class BLSSigShare;
 
 
 class BLSPrivateKeyShare {
-protected:
+ protected:
     std::shared_ptr<libff::alt_bn128_Fr> privateKey;
 
     size_t requiredSigners;

@@ -52,7 +52,7 @@ void KeysToJson(std::shared_ptr<BLSPrivateKeyShare> skey_ptr, size_t num_signed,
 }
 
 void CommonPkeyToJson(std::shared_ptr<BLSPublicKey> common_pkey_ptr,
-                         size_t num_signed, size_t num_all) {
+ size_t num_signed, size_t num_all) {
   nlohmann::json keys_json;
   std::string pkey_name = "insecureCommonBLSPublicKey";
   std::shared_ptr<std::vector<std::string> > common_pkey_str = common_pkey_ptr->toString();
@@ -126,23 +126,23 @@ void KeyGeneration(const size_t t, const size_t n, bool generate_all = true, int
     data["idx"] = std::to_string(idx);
 
     for (size_t i = 0; i < n; ++i) {
-        data["secret_key_contribution"][std::to_string(i)] = BLSutils::ConvertToString<libff::alt_bn128_Fr>(secret_key_contribution[i]);
+      data["secret_key_contribution"][std::to_string(i)] = BLSutils::ConvertToString<libff::alt_bn128_Fr>(secret_key_contribution[i]);
     }
 
 
     for (size_t i = 0; i < t; ++i) {
       data["verification_vector"][std::to_string(i)]["X"]["c0"] = 
-                                BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].X.c0);
+      BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].X.c0);
       data["verification_vector"][std::to_string(i)]["X"]["c1"] =
-                                BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].X.c1);
+      BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].X.c1);
       data["verification_vector"][std::to_string(i)]["Y"]["c0"] =
-                                BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].Y.c0);
+      BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].Y.c0);
       data["verification_vector"][std::to_string(i)]["Y"]["c1"] =
-                                BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].Y.c1);
+      BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].Y.c1);
       data["verification_vector"][std::to_string(i)]["Z"]["c0"] =
-                                BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].Z.c0);
+      BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].Z.c0);
       data["verification_vector"][std::to_string(i)]["Z"]["c1"] =
-                                BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].Z.c1);
+      BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_vector[i].Z.c1);
     }
 
     std::ofstream outfile("data_for_" + std::to_string(idx) + "-th_participant.json");
@@ -154,12 +154,12 @@ int main(int argc, const char *argv[]) {
   try {
     boost::program_options::options_description desc("Options");
     desc.add_options()
-      ("help", "Show this help screen")
-      ("version", "Show version number")
-      ("t", boost::program_options::value<size_t>(), "Threshold")
-      ("n", boost::program_options::value<size_t>(), "Number of participants")
-      ("j", boost::program_options::value<int>(), "Index of participant to generate data to create secret key; if not specified then all participants")
-      ("v", "Verbose mode (optional)");
+    ("help", "Show this help screen")
+    ("version", "Show version number")
+    ("t", boost::program_options::value<size_t>(), "Threshold")
+    ("n", boost::program_options::value<size_t>(), "Number of participants")
+    ("j", boost::program_options::value<int>(), "Index of participant to generate data to create secret key; if not specified then all participants")
+    ("v", "Verbose mode (optional)");
 
     boost::program_options::variables_map vm;
     boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
@@ -167,16 +167,16 @@ int main(int argc, const char *argv[]) {
 
     if (vm.count("help") || argc <= 1) {
       std::cout
-        << "Distributed key generator, version " << EXPAND_AS_STR(BLS_VERSION) << '\n'
-        << "Usage:\n"
-        << "   " << argv[0] << " --t <threshold> --n <num_participants> [--j <participant>] [--v]" << '\n'
-        << desc
-        << "Output is set of secret_key<j>.json files where 0 <= j < n or generated data to start key creation process.\n";
+      << "Distributed key generator, version " << EXPAND_AS_STR(BLS_VERSION) << '\n'
+      << "Usage:\n"
+      << "   " << argv[0] << " --t <threshold> --n <num_participants> [--j <participant>] [--v]" << '\n'
+      << desc
+      << "Output is set of secret_key<j>.json files where 0 <= j < n or generated data to start key creation process.\n";
       return 0;
     }
     if (vm.count("version")) {
       std::cout
-        << EXPAND_AS_STR(BLS_VERSION) << '\n';
+      << EXPAND_AS_STR(BLS_VERSION) << '\n';
       return 0;
     }
 
@@ -200,9 +200,9 @@ int main(int argc, const char *argv[]) {
     size_t n = vm["n"].as<size_t>();
     if (g_b_verbose_mode)
       std::cout
-        << "t = " << t << '\n'
-        << "n = " << n << '\n'
-        << '\n';
+    << "t = " << t << '\n'
+    << "n = " << n << '\n'
+    << '\n';
 
     if (j < 0) {
       KeyGeneration(t, n);

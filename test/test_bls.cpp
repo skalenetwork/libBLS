@@ -25,18 +25,17 @@
 #include <dkg/dkg.h>
 #include <ctime>
 
+#include <bls/BLSPrivateKeyShare.h>
+#include <bls/BLSPrivateKey.h>
+#include <bls/BLSSigShareSet.h>
+#include <bls/BLSSigShare.h>
+#include <bls/BLSSignature.h>
+#include <bls/BLSPublicKey.h>
+#include <bls/BLSPublicKeyShare.h>
+#include <bls/BLSutils.cpp>
 
 #include <map>
 
-
-#include "bls/BLSPrivateKeyShare.h"
-#include "bls/BLSPrivateKey.h"
-#include "bls/BLSSigShareSet.h"
-#include "bls/BLSSigShare.h"
-#include "bls/BLSSignature.h"
-#include "bls/BLSPublicKey.h"
-#include "bls/BLSPublicKeyShare.h"
-#include "bls/BLSutils.h"
 #include <dkg/DKGBLSWrapper.h>
 
 #include <fstream>

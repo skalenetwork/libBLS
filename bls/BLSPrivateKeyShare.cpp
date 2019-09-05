@@ -21,16 +21,14 @@
   @date 2019
 */
 
+#include <bls/BLSPrivateKeyShare.h>
+#include <bls/BLSSigShare.h>
+#include <bls/BLSSignature.h>
 
-using namespace std;
+#include  <bls/BLSutils.h>
+#include  <dkg/dkg.h>
 
 
-#include "BLSPrivateKeyShare.h"
-#include "BLSSigShare.h"
-#include "BLSSignature.h"
-
-#include  "BLSutils.h"
-#include  "dkg/dkg.h"
 
 
 BLSPrivateKeyShare::BLSPrivateKeyShare(const string &_key, size_t _requiredSigners, size_t _totalSigners)
