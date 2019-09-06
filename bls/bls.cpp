@@ -79,15 +79,34 @@ namespace signatures {
 
     libff::alt_bn128_G1 result;
 
-    while  (true) {
-      libff::alt_bn128_Fq y1_sqr = x1^3;
+    while (true) {
+      libff::alt_bn128_Fq y1_sqr = x1 ^ 3;
       y1_sqr = y1_sqr + libff::alt_bn128_coeff_b;
 
       libff::alt_bn128_Fq euler = y1_sqr ^ libff::alt_bn128_Fq::euler;
 
       if (euler == libff::alt_bn128_Fq::one() || euler == libff::alt_bn128_Fq::zero()) {  // if y1_sqr is a square
         result.X = x1;
-        result.Y = y1_sqr.sqrt();
+        libff::alt_bn128_Fq temp_y = y1_sqr.sqrt();
+
+        mpz_t pos_y;
+        mpz_init(pos_y);
+
+        temp_y.as_bigint().to_mpz(pos_y);
+
+        mpz_t neg_y;
+        mpz_init(neg_y);
+
+        temp_y.as_bigint().to_mpz(neg_y);
+
+        if (mpz_cmp(pos_y, neg_y) < 0) {
+          temp_y = -temp_y;
+        }
+
+        mpz_clear(pos_y);
+        mpz_clear(neg_y);
+
+        result.Y = temp_y;
         break;
       } else {
         x1 = x1 + 1;
