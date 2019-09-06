@@ -97,7 +97,7 @@ namespace signatures {
         mpz_t neg_y;
         mpz_init(neg_y);
 
-        temp_y.as_bigint().to_mpz(neg_y);
+        (-temp_y).as_bigint().to_mpz(neg_y);
 
         if (mpz_cmp(pos_y, neg_y) < 0) {
           temp_y = -temp_y;
@@ -130,7 +130,26 @@ namespace signatures {
 
       if (euler == libff::alt_bn128_Fq::one() || euler == libff::alt_bn128_Fq::zero()) {  // if y1_sqr is a square
         point.X = x1;
-        point.Y = y1_sqr.sqrt();
+        libff::alt_bn128_Fq temp_y = y1_sqr.sqrt();
+
+        mpz_t pos_y;
+        mpz_init(pos_y);
+
+        temp_y.as_bigint().to_mpz(pos_y);
+
+        mpz_t neg_y;
+        mpz_init(neg_y);
+
+        (-temp_y).as_bigint().to_mpz(neg_y);
+
+        if (mpz_cmp(pos_y, neg_y) < 0) {
+          temp_y = -temp_y;
+        }
+
+        mpz_clear(pos_y);
+        mpz_clear(neg_y);
+
+        point.Y = temp_y;
         break;
       } else {
         counter = counter + libff::alt_bn128_Fq::one();
