@@ -279,15 +279,9 @@ static PyObject* PyDkgObject_GetPublicKeyFromSecretKey(struct PyDkgObject* self,
     return -1;
   }
 
-  std::cout << 1 << '\n';
-
   libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr(incoming_data.c_str());
 
-  std::cout << 2 << '\n';
-
   libff::alt_bn128_G2 public_key = self->pDKG->GetPublicKeyFromSecretKey(secret_key);
-
-  std::cout << 3 << '\n';
 
   PyObject* pFirstCoord = PyTuple_New(2);
   PyObject* pSecondCoord = PyTuple_New(2);
@@ -299,6 +293,8 @@ static PyObject* PyDkgObject_GetPublicKeyFromSecretKey(struct PyDkgObject* self,
   PyTuple_SET_ITEM(pSecondCoord, 1, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(public_key.Y.c1).c_str()));
   PyTuple_SET_ITEM(pThirdCoord,  0, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(public_key.Z.c0).c_str()));
   PyTuple_SET_ITEM(pThirdCoord,  1, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(public_key.Z.c1).c_str()));
+
+  std::cout << 1 << '\n';
 
   PyObject* pyPublicKey = PyList_New(3);
   PyList_SetItem(pyPublicKey, 0, pFirstCoord);
