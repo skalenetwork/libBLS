@@ -10,25 +10,29 @@ endif()
 
 set(sources
 	threshold_encryption.cpp
-  TEDecryptSet.cpp
-  TEPrivateKeyShare.cpp
+    TEDecryptSet.cpp
+    TEPrivateKeyShare.cpp
 	TEPrivateKey.cpp
-  TEPublicKey.cpp
+    TEPublicKey.cpp
 	TEPublicKeyShare.cpp
 	TEDataSingleton.h
-  ../dkg/dkg_te.cpp
+    ../dkg/dkg_te.cpp
+	../dkg/DKGTEWrapper.cpp
+	../dkg/DKGTESecret.cpp
 	utils.cpp
 )
 
 set(headers
 	threshold_encryption.h
-  TEDecryptSet.h
-  TEPrivateKeyShare.h
+    TEDecryptSet.h
+    TEPrivateKeyShare.h
 	TEPrivateKey.h
-  TEPublicKey.h
+    TEPublicKey.h
 	TEPublicKeyShare.h
 	TEDataSingleton.cpp
-  ../dkg/dkg_te.h
+    ../dkg/dkg_te.h
+	../dkg/DKGTEWrapper.h
+	../dkg/DKGTESecret.h
 	utils.h
 )
 
@@ -52,7 +56,8 @@ include_directories(${CMAKE_BINARY_DIR}/deps/include ${PBC_INCLUDE_DIR})
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 
 add_dependencies(te pbc)
-target_include_directories(te PRIVATE ${PBC_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
+target_include_directories(te PRIVATE ${PBC_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}
+																													${THIRD_PARTY_DIR})
 target_link_libraries(te PRIVATE ${PBC_LIBRARY})
 
 

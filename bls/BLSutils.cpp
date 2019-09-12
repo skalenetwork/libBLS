@@ -21,11 +21,9 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 @date 2019
 */
 
-#include <iostream>
-#include <string>
-#include <bitset>
-
 #include <bls/BLSutils.h>
+
+#include <bitset>
 
 void BLSutils::initBLS() {
   static bool is_initialized = false;
@@ -35,22 +33,22 @@ void BLSutils::initBLS() {
   }
 }
 
-std::pair<libff::alt_bn128_Fq , libff::alt_bn128_Fq> BLSutils::ParseHint(std::string& _hint){
+std::pair<libff::alt_bn128_Fq, libff::alt_bn128_Fq> BLSutils::ParseHint(std::string& _hint){
   auto position = _hint.find( ":" );
 
   if (position == std::string::npos) {
-    throw std::runtime_error("Misformatted hint");
+    throw std::runtime_error( "Misformatted hint" ) ;
   }
 
-  libff::alt_bn128_Fq y (_hint.substr( 0, position ).c_str());
+  libff::alt_bn128_Fq y (_hint.substr(0, position).c_str());
   libff::alt_bn128_Fq shift_x(_hint.substr(position + 1).c_str());
 
   return std::make_pair(y, shift_x);
 }
 
-libff::alt_bn128_Fq BLSutils::HashToFq(std::shared_ptr<std::array< uint8_t, 32>> hash_byte_arr){
+libff::alt_bn128_Fq BLSutils::HashToFq (std::shared_ptr<std::array< uint8_t, 32>> hash_byte_arr){
   std::string hash_str;
-  for (size_t i = 0; i < 32; i++) {
+  for ( size_t i = 0; i < 32; i++) {
     std::string cur_byte_str = std::bitset<8>(hash_byte_arr->at(i)).to_string();
     hash_str += cur_byte_str;
   }

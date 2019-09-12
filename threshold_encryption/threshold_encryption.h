@@ -40,8 +40,9 @@ class element_wrapper {
     element_t el_ = {0, 0};
 
     void clear() {
-      if (el_[0].data)
-      element_clear(el_);
+      if (el_[0].data) {
+        element_clear(el_);
+      }
     }
 
     void assign(const element_t& e) {

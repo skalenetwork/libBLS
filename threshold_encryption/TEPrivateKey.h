@@ -31,8 +31,8 @@ class TEPrivateKey {
  private:
     encryption::element_wrapper  privateKey;
 
-    size_t totalSigners;
     size_t requiredSigners;
+    size_t totalSigners;
 
  public:
     TEPrivateKey(std::shared_ptr<std::string> _key_str_ptr, size_t _requiredSigners, size_t _totalSigners);

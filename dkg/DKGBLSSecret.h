@@ -16,38 +16,28 @@
   You should have received a copy of the GNU Affero General Public License
   along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-  @file BLSSignature.h
-  @author Stan Kladko, Sveta Rogova
+  @file TEPrivateKeyShare.h
+  @author Sveta Rogova
   @date 2019
 */
 
-#ifndef LIBBLS_BLSSIGNATURE_H
-#define LIBBLS_BLSSIGNATURE_H
+#ifndef LIBBLS_DKGBLSSECRET_H
+#define LIBBLS_DKGBLSSECRET_H
 
 #include <bls/bls.h>
 
-class BLSSignature {
- private:
-    std::shared_ptr<libff::alt_bn128_G1> sig;
-    std::string hint;
-
+class DKGBLSSecret {
+private:
     size_t requiredSigners;
     size_t totalSigners;
-
+    std::vector<libff::alt_bn128_Fr> poly;
 public:
-
-    BLSSignature(std::shared_ptr<std::string> s, size_t _requiredSigners, size_t _totalSigners);
-    BLSSignature(const std::shared_ptr< libff::alt_bn128_G1 > sig, std::string & _hint, size_t _requiredSigners, size_t _totalSigners);
-    std::shared_ptr<libff::alt_bn128_G1> getSig() const;
-    std::shared_ptr<std::string> toString();
-
-    static void checkSigners(size_t _requiredSigners, size_t _totalSigners);
-    std::string getHint() const;
-    size_t getTotalSigners() const;
-    size_t getRequiredSigners() const;
-
+    DKGBLSSecret(size_t _requiredSigners, size_t _totalSigners);
+    void setPoly(std::vector <libff::alt_bn128_Fr> _poly);
+    std::vector <libff::alt_bn128_Fr> getDKGBLSSecretShares();
+    std::vector <libff::alt_bn128_G2> getDKGBLSPublicShares();
+    libff::alt_bn128_Fr getValueAt0();
 };
 
 
-
-#endif //LIBBLS_BLSSIGNATURE_H
+#endif //LIBBLS_DKGBLSSECRET_H

@@ -31,21 +31,26 @@ TEPublicKeyShare::TEPublicKeyShare(std::shared_ptr<std::vector<std::string>> _ke
     TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
 
     if (!_key_str_ptr) {
-      throw std::runtime_error("public key is null");
+      throw std::runtime_error("public key share is null");
     }
+
+    if (_key_str_ptr->size() != 2)
+      throw std::runtime_error("wrong number of components in public key share");
+
+    if( !isStringNumber(_key_str_ptr->at(0)) || !isStringNumber(_key_str_ptr->at(1)))
+      throw std::runtime_error("non-digit symbol or first zero in non-zero public key share");
 
     std::string key_str = "[" + _key_str_ptr->at(0) + "," + _key_str_ptr->at(1) + "]";
 
     element_t pkey;
     element_init_G1(pkey, TEDataSingleton::getData().pairing_);
     element_set_str(pkey, key_str.c_str(), 10);
-
-    if (element_is0(pkey)) {
-      throw std::runtime_error("corrupted string for public key");
-    }
-
-    PublicKey = pkey;
+    PublicKey = encryption::element_wrapper(pkey);
     element_clear(pkey);
+
+    if ( isG1Element0(PublicKey.el_) ) {
+      throw std::runtime_error("corrupted string or zero public key share");
+    }
   }
 
   TEPublicKeyShare::TEPublicKeyShare(TEPrivateKeyShare _p_key, size_t _requiredSigners, size_t _totalSigners)
@@ -56,22 +61,15 @@ TEPublicKeyShare::TEPublicKeyShare(std::shared_ptr<std::vector<std::string>> _ke
     element_init_G1(pkey, TEDataSingleton::getData().pairing_);
     element_mul_zn(pkey, TEDataSingleton::getData().generator_, _p_key.getPrivateKey().el_);
 
-    if (element_is0(pkey)) {
-      throw std::runtime_error("zero public key");
-    }
-
     PublicKey = pkey;
     signerIndex = _p_key.getSignerIndex();
     element_clear(pkey);
   }
 
   bool TEPublicKeyShare::Verify(const encryption::Ciphertext &cyphertext, const element_t &decrypted) {
-    if (element_is0(const_cast<element_t &>(std::get<0>(cyphertext).el_)) ||
-    element_is0(const_cast<element_t &>(std::get<2>(cyphertext).el_)))
-    throw std::runtime_error("zero element in cyphertext");
-
-    if (element_is0(const_cast<element_t &>(decrypted))) {
-      throw std::runtime_error("zero element in cyphertext");
+    checkCypher(cyphertext);
+    if ( isG1Element0(const_cast<element_t &>(decrypted)) ) {
+      throw std::runtime_error("zero decrypt");
     }
 
     encryption::TE te(requiredSigners, totalSigners);

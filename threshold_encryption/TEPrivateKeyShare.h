@@ -24,6 +24,7 @@
 #ifndef LIBBLS_TEPRIVATEKEYSHARE_H
 #define LIBBLS_TEPRIVATEKEYSHARE_H
 
+#include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/TEDataSingleton.h>
 #include <threshold_encryption/threshold_encryption.h>
 
@@ -31,9 +32,9 @@ class TEPrivateKeyShare {
  private:
     encryption::element_wrapper  privateKey;
 
-    size_t totalSigners;
-    size_t requiredSigners;
     size_t signerIndex;
+    size_t requiredSigners;
+    size_t totalSigners;
 
  public:
     TEPrivateKeyShare(std::shared_ptr<std::string> _key_str_ptr, size_t _signerIndex, size_t  _requiredSigners, size_t _totalSigners);
@@ -42,13 +43,14 @@ class TEPrivateKeyShare {
 
     encryption::element_wrapper decrypt(encryption::Ciphertext& cipher);
 
+    static std::pair<std::shared_ptr<std::vector<std::shared_ptr<TEPrivateKeyShare>>>, std::shared_ptr<TEPublicKey> >
+    generateSampleKeys(size_t _requiredSigners, size_t _totalSigners);
+
     std::string toString();
 
     size_t getSignerIndex() const;
 
     encryption::element_wrapper getPrivateKey() const;
-
-    ~TEPrivateKeyShare();
 };
 
 

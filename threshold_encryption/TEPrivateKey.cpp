@@ -30,20 +30,27 @@ TEPrivateKey::TEPrivateKey(std::shared_ptr<std::string> _key_str, size_t  _requi
   TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
 
   if (!_key_str) {
-    throw std::runtime_error("private key share is null");
+    throw std::runtime_error("private key is null");
   }
 
   element_t pkey;
   element_init_Zr(pkey,  TEDataSingleton::getData().pairing_);
   element_set_str(pkey, _key_str->c_str(), 10);
-  privateKey = pkey;
+  privateKey = encryption::element_wrapper(pkey);
   element_clear(pkey);
+
+  if (element_is0(privateKey.el_)) {
+    throw std::runtime_error(" private key is zero");
+  }
 }
 
 TEPrivateKey::TEPrivateKey( encryption::element_wrapper _skey, size_t  _requiredSigners, size_t _totalSigners)
-: requiredSigners(_requiredSigners), totalSigners(_totalSigners), privateKey(_skey) {
+: privateKey(_skey), requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
 
   TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
+
+  if (element_is0(_skey.el_))
+    throw std::runtime_error(" private key is zero");
 }
 
 std::string TEPrivateKey::toString() {

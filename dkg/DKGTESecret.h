@@ -16,34 +16,28 @@
   You should have received a copy of the GNU Affero General Public License
   along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-  @file TEPublicKey.h
+  @file TEPrivateKeyShare.h
   @author Sveta Rogova
   @date 2019
 */
 
-#ifndef LIBBLS_TEDECRYPTSET_H
-#define LIBBLS_TEDECRYPTSET_H
 
-#include <map>
+#ifndef LIBBLS_DKGTESECRET_H
+#define LIBBLS_DKGTESECRET_H
+
 #include <threshold_encryption/threshold_encryption.h>
 
-class TEDecryptSet {
+class DKGTESecret {
  private:
-
     size_t requiredSigners;
     size_t totalSigners;
-
-    bool was_merged;
-
-    std::map<size_t, std::shared_ptr< encryption::element_wrapper>> decrypts;
-
+    std::vector<encryption::element_wrapper> poly;
  public:
-    TEDecryptSet(size_t _requiredSigners, size_t _totalSigners);
-
-    void addDecrypt(size_t _signerIndex, std::shared_ptr< encryption::element_wrapper>& _el);
-
-    std::string merge(const encryption::Ciphertext& ciphertext);
+    DKGTESecret(size_t _requiredSigners, size_t _totalSigners);
+    void setPoly(std::vector <encryption::element_wrapper>& _poly);
+    std::vector <encryption::element_wrapper> getDKGTESecretShares();
+    std::vector <encryption::element_wrapper> getDKGTEPublicShares();
 };
 
 
-#endif //LIBBLS_TEDECRYPTSET_H
+#endif //LIBBLS_DKGTESECRET_H

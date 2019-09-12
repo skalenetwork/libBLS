@@ -25,18 +25,18 @@
 #include <dkg/dkg.h>
 #include <ctime>
 
+#include <bls/BLSPrivateKeyShare.h>
+#include <bls/BLSPrivateKey.h>
+#include <bls/BLSSigShareSet.h>
+#include <bls/BLSSigShare.h>
+#include <bls/BLSSignature.h>
+#include <bls/BLSPublicKey.h>
+#include <bls/BLSPublicKeyShare.h>
+#include <bls/BLSutils.cpp>
 
 #include <map>
 
-
-#include "bls/BLSPrivateKeyShare.h"
-#include "bls/BLSPrivateKey.h"
-#include "bls/BLSSigShareSet.h"
-#include "bls/BLSSigShare.h"
-#include "bls/BLSSignature.h"
-#include "bls/BLSPublicKey.h"
-#include "bls/BLSPublicKeyShare.h"
-#include "bls/BLSutils.cpp"
+#include <dkg/DKGBLSWrapper.h>
 
 #include <fstream>
 #include <third_party/json.hpp>
@@ -298,7 +298,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
                                                                                                          num_all);
                 BOOST_REQUIRE(*skey_from_str->getPrivateKey() == *skey->getPrivateKey());
 
-                std::shared_ptr<BLSSigShare> sigShare = skey->signWithHint(hash_ptr, participants.at(i));
+                std::shared_ptr<BLSSigShare> sigShare = skey->signWithHelper(hash_ptr, participants.at(i));
                 std::shared_ptr<std::string> sig_str_ptr = sigShare->toString();
                 std::shared_ptr<BLSSigShare> sigShare_from_str = std::make_shared<BLSSigShare>(sig_str_ptr,
                                                                                                participants.at(i),
@@ -316,13 +316,14 @@ BOOST_AUTO_TEST_SUITE(Bls)
                 std::shared_ptr<std::vector<std::string>> pkey_str_vect = pkey_share.toString();
                 BLSPublicKeyShare pkey_from_str(pkey_str_vect, num_signed, num_all);
                 BOOST_REQUIRE(*pkey_share.getPublicKey() == *pkey_from_str.getPublicKey());
-                BOOST_REQUIRE( pkey_share.VerifySigWithHint(hash_ptr, sigSet.getSigShareByIndex(participants.at(i)), num_signed, num_all) );
+                BOOST_REQUIRE(pkey_share.VerifySigWithHelper(hash_ptr, sigSet.getSigShareByIndex(participants.at(i)),
+                                                             num_signed, num_all) );
             }
 
             std::shared_ptr<BLSSignature> common_sig_ptr = sigSet.merge();
             BLSPrivateKey common_skey(Skeys, std::make_shared<std::vector<size_t >>(participants), num_signed, num_all);
             std::shared_ptr<std::string> common_skey_str = common_skey.toString();
-            BLSPrivateKey common_skey_from_str(*common_skey_str, num_signed, num_all);
+            BLSPrivateKey common_skey_from_str(common_skey_str, num_signed, num_all);
             BOOST_REQUIRE(*common_skey_from_str.getPrivateKey() == *common_skey.getPrivateKey());
 
             BLSSignature common_sig_from_str(common_sig_ptr->toString(), num_signed, num_all);
@@ -335,7 +336,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
             std::shared_ptr<std::vector<std::string>> common_pkey_str_vect = common_pkey.toString();
             BLSPublicKey common_pkey_from_str(common_pkey_str_vect, num_signed, num_all);
             BOOST_REQUIRE(*common_pkey.getPublicKey() == *common_pkey_from_str.getPublicKey());
-            BOOST_REQUIRE( common_pkey.VerifySigWithHint(hash_ptr, common_sig_ptr, num_signed, num_all) );
+            BOOST_REQUIRE(common_pkey.VerifySigWithHelper(hash_ptr, common_sig_ptr, num_signed, num_all) );
 
             std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > pkeys_map;
             for (size_t i = 0; i < num_signed; ++i) {
@@ -456,5 +457,658 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
     }
 
+    BOOST_AUTO_TEST_CASE(BLSWITHDKG) {
+
+      for (size_t i = 0; i < 10; ++i) {
+        size_t num_all = rand_gen() % 15 + 2;
+        size_t num_signed = rand_gen() % (num_all - 1) + 1;
+
+        std::vector< std::vector<libff::alt_bn128_Fr>> secret_shares_all;
+        std::vector< std::vector<libff::alt_bn128_G2>> public_shares_all;
+        std::vector<DKGBLSWrapper> dkgs;
+        std::vector<BLSPrivateKeyShare> skeys;
+
+        libff::alt_bn128_G2 common_public = libff::alt_bn128_G2::zero();
+
+        for ( size_t i = 0; i < num_all; i++) {
+          DKGBLSWrapper dkg_wrap(num_signed, num_all);
+          dkgs.push_back(dkg_wrap);
+          std::shared_ptr<std::vector<libff::alt_bn128_Fr>> secret_shares_ptr = dkg_wrap.createDKGSecretShares();
+          std::shared_ptr<std::vector<libff::alt_bn128_G2>> public_shares_ptr = dkg_wrap.createDKGPublicShares();
+          common_public = common_public + public_shares_ptr->at(0);
+          secret_shares_all.push_back(*secret_shares_ptr);
+          public_shares_all.push_back(*public_shares_ptr);
+        }
+
+        BLSPublicKey dkg_common_pkey(common_public, num_signed, num_all);
+
+        for ( size_t i = 0; i < num_all; i++)
+          for (size_t j = 0; j < num_all; j++){
+            BOOST_REQUIRE( dkgs.at(i).VerifyDKGShare( j , secret_shares_all.at(i).at(j), std::make_shared<std::vector<libff::alt_bn128_G2>>(public_shares_all.at(i)) ));
+        }
+
+        std::vector< std::vector<libff::alt_bn128_Fr>> secret_key_shares;
+
+        for ( size_t i = 0; i < num_all; i++) {
+          std::vector < libff::alt_bn128_Fr> secret_key_contribution;
+          for (size_t j = 0; j < num_all; j++) {
+            secret_key_contribution.push_back(secret_shares_all.at(j).at(i));
+          }
+          secret_key_shares.push_back(secret_key_contribution);
+        }
+
+        for ( size_t i = 0; i < num_all; i++){
+          BLSPrivateKeyShare pkey_share =  dkgs.at(i).CreateBLSPrivateKeyShare(std::make_shared<std::vector<libff::alt_bn128_Fr>>(secret_key_shares.at(i)));
+          skeys.push_back(pkey_share);
+        }
+
+        std::vector<size_t> participants(num_all);                          ////choosing random participants
+        for (size_t i = 0; i < num_all; ++i) participants.at(i) = i + 1;
+        for (size_t i = 0; i < num_all - num_signed; ++i) {
+          size_t ind4del = rand_gen() % participants.size();
+          participants.erase(participants.begin() + ind4del);
+        }
+
+        std::shared_ptr< std::array<uint8_t, 32> > hash_ptr = std::make_shared< std::array<uint8_t, 32> >(GenerateRandHash());
+
+        BLSSigShareSet sigSet(num_signed, num_all);
+
+        for (size_t i = 0; i < num_signed; ++i) {
+          BLSPrivateKeyShare skey = skeys.at(participants.at(i) - 1);
+          std::shared_ptr<BLSSigShare> sigShare = skey.sign(hash_ptr, participants.at(i));
+          sigSet.addSigShare(sigShare);
+        }
+
+        for (size_t i = 0; i < num_signed; ++i) {
+          BLSPublicKeyShare pkey_share(*skeys.at(participants.at(i) - 1).getPrivateKey(), num_signed, num_all);
+         // BLSPublicKeyShare pkey_share(*skeys.at(i).getPrivateKey(), num_signed, num_all);
+          std::shared_ptr<BLSSigShare> sig_share_ptr = sigSet.getSigShareByIndex(participants.at(i));
+          BOOST_REQUIRE(pkey_share.VerifySig(hash_ptr, sig_share_ptr, num_signed, num_all));
+        }
+
+        std::vector<std::shared_ptr<BLSPrivateKeyShare>> ptr_skeys;
+        for ( size_t i = 0; i < num_all; i++){
+          ptr_skeys.push_back(std::make_shared<BLSPrivateKeyShare>(skeys.at(i)));
+        }
+
+        libff::alt_bn128_Fr common_secret = libff::alt_bn128_Fr::zero();
+        for ( size_t i = 0; i < num_all; i++){
+          common_secret = common_secret + dkgs.at(i).getValueAt0();
+        }
+
+        std::shared_ptr<BLSSignature> common_sig_ptr = sigSet.merge();                //// verifying signature
+
+        std::string common_secret_str = BLSutils::ConvertToString(common_secret);
+        BLSPrivateKey common_skey( std::make_shared<std::string>(common_secret_str), num_signed, num_all);
+
+        BLSPrivateKey common_skey2(std::make_shared<std::vector<std::shared_ptr<BLSPrivateKeyShare>>>(ptr_skeys),
+                std::make_shared<std::vector<size_t >>(participants), num_signed, num_all);
+        BOOST_REQUIRE(*common_skey.getPrivateKey() == *common_skey2.getPrivateKey());
+        BOOST_REQUIRE(common_secret * libff::alt_bn128_G2::one() == common_public);
+        BLSPublicKey common_pkey(*(common_skey2.getPrivateKey()), num_signed, num_all);
+        BOOST_REQUIRE(*common_pkey.getPublicKey() == *dkg_common_pkey.getPublicKey());
+        BOOST_REQUIRE(common_pkey.VerifySig(hash_ptr, common_sig_ptr, num_signed, num_all));
+
+        std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > pkeys_map;
+        for (size_t i = 0; i < num_signed; ++i) {
+          BLSPublicKeyShare cur_pkey(*skeys.at(participants.at(i) - 1).getPrivateKey(), num_signed,
+                                     num_all);
+          pkeys_map[participants.at(i)] = std::make_shared<BLSPublicKeyShare>(cur_pkey);
+        }
+
+        BLSPublicKey common_pkey1(
+                std::make_shared<std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > >(pkeys_map), num_signed,
+                num_all);
+
+        BOOST_REQUIRE(common_pkey1.VerifySig(hash_ptr, common_sig_ptr, num_signed, num_all));
+      }
+      std::cerr<< "BLS WITH DKG TEST FINISHED" << std::endl;
+    }
+
+    BOOST_AUTO_TEST_CASE(Exceptions) {
+      size_t num_all = rand_gen() % 15 + 2;
+      size_t num_signed = rand_gen() % (num_all - 1) + 1;
+
+      std::vector<size_t> participants(num_all);
+      for (size_t i = 0; i < num_all; ++i) participants.at(i) = i + 1;
+
+      bool is_exception_caught = false;                  // Empty private key
+      try {
+        BLSPrivateKey pkey(std::make_shared<std::string>(""), num_signed, num_all );
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;                     // Zero private key
+      try {
+        BLSPrivateKey skey(std::make_shared<std::string>("0"), num_signed, num_all );
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;                   // NULL private key shares
+      try {
+        BLSPrivateKey skey(nullptr, std::make_shared<std::vector<size_t>>(participants), num_signed, num_all );
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;                   // NULL signers indices
+      try {
+        BLSPrivateKey skey(BLSPrivateKeyShare::generateSampleKeys(num_signed, num_all)->first, NULL, num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;                  // Empty private key share
+      try {
+        BLSPrivateKeyShare skey("", num_signed, num_all );
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;                     // Zero private key share
+      try {
+        BLSPrivateKeyShare skey("0", num_signed, num_all );
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;                     // Zero private key share
+      try {
+        BLSPrivateKeyShare skey(libff::alt_bn128_Fr::zero(), num_signed, num_all );
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;
+      try {
+        BLSPrivateKeyShare skey(libff::alt_bn128_Fr::random_element(), num_signed, num_all ); // Zero signer index
+        skey.sign(std::make_shared<std::array<uint8_t, 32>>(GenerateRandHash()), 0);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;
+      try {
+        BLSPrivateKeyShare skey(libff::alt_bn128_Fr::random_element(), num_signed, num_all ); // Null hash
+        skey.sign(NULL, 1);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;
+      try {
+        BLSPrivateKeyShare skey(libff::alt_bn128_Fr::random_element(), num_signed, num_all ); // Zero signer index
+        skey.signWithHelper(std::make_shared<std::array<uint8_t, 32>>(GenerateRandHash()), 0);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;
+      try {
+        BLSPrivateKeyShare skey(libff::alt_bn128_Fr::random_element(), num_signed, num_all ); // Null hash
+        skey.signWithHelper(NULL, 1);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // Null public key
+      try {
+        const std::shared_ptr< std::vector<std::string> > null_vect = nullptr;
+        BLSPublicKey pkey(null_vect, num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // Zero public key
+      try {
+        BLSPublicKey pkey(libff::alt_bn128_G2::zero(), num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;   // Zero public key
+      try {
+        BLSPublicKey pkey(libff::alt_bn128_Fr::zero(), num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+       is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;   // Null hash in Verify Signature
+      try {
+        BLSPublicKey pkey(libff::alt_bn128_Fr::random_element(), num_signed, num_all);
+        std::string hint = "123:1";
+        BLSSignature rand_sig( std::make_shared<libff::alt_bn128_G1>(libff::alt_bn128_G1::random_element()), hint, num_signed, num_all);
+        pkey.VerifySigWithHelper(nullptr, std::make_shared<BLSSignature>(rand_sig), num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;   // Null signature in Verify Signature
+      try {
+        BLSPublicKey pkey(libff::alt_bn128_Fr::random_element(), num_signed, num_all);
+        pkey.VerifySigWithHelper(std::make_shared<std::array<uint8_t, 32> >(GenerateRandHash()), nullptr, num_signed,
+                                 num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;   // Zero public key share
+      try {
+        BLSPublicKeyShare pkey(libff::alt_bn128_Fr::zero(), num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // Null public key share
+      try {
+        BLSPublicKeyShare pkey(nullptr, num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;   // Null hash in Verify SigShare
+      try {
+        BLSPublicKeyShare pkey(libff::alt_bn128_Fr::random_element(), num_signed, num_all);
+        std::string hint = "123:1";
+        BLSSigShare rand_sig( std::make_shared<libff::alt_bn128_G1>(libff::alt_bn128_G1::random_element()), hint, 1, num_signed, num_all);
+        pkey.VerifySigWithHelper(nullptr, std::make_shared<BLSSigShare>(rand_sig), num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;   // Null signature in Verify SigShare
+      try {
+        BLSPublicKeyShare pkey(libff::alt_bn128_Fr::random_element(), num_signed, num_all);
+        pkey.VerifySigWithHelper(std::make_shared<std::array<uint8_t, 32> >(GenerateRandHash()), nullptr, num_signed,
+                                 num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // Null Signature
+      try {
+        BLSSignature(nullptr, num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // Null Signature
+      try {
+        std::string hint = "123:1";
+        BLSSignature(nullptr, hint, num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // empty_hint
+      try {
+        std::string empty_hint = "";
+        BLSSignature(std::make_shared< libff::alt_bn128_G1 >(libff::alt_bn128_G1::random_element()), empty_hint, num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // short signature
+      try {
+        std::string short_sig = "1:1:1:1";
+        BLSSignature(std::make_shared< std::string >(short_sig), num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // long signature
+      try {
+        std::string long_sig;
+        for (size_t j = 0; j < 3; j++)
+          for (size_t i = 0; i < 100; i++ ){
+            long_sig += std::to_string(rand_gen()%10);
+            if (i == 99 && j!=2 ) long_sig += ":";
+        }
+        BLSSignature(std::make_shared< std::string >(long_sig), num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // misformatted signature
+      try {
+        std::string long_sig;
+        for (size_t j = 0; j < 3; j++)
+          for (size_t i = 0; i < 20; i++ ){
+            long_sig += std::to_string(rand_gen()%10);
+            if (i == 19 && j < 2 ) long_sig += ":";
+          }
+        BLSSignature(std::make_shared< std::string >(long_sig), num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // rand signature (not from G1)
+      try {
+        std::string long_sig;
+        for (size_t j = 0; j < 4; j++)
+          for (size_t i = 0; i < 20; i++ ){
+            long_sig += std::to_string(rand_gen()%10);
+            if (i == 19 && j != 3 ) long_sig += ":";          }
+
+        BLSSignature(std::make_shared< std::string >(long_sig), num_signed, num_all);
+     }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; //  signature with  not digit
+      try {
+        std::string long_sig;
+        for (size_t j = 0; j < 4; j++)
+          for (size_t i = 0; i < 20; i++ ){
+            long_sig += std::to_string(rand_gen()%10);
+            if (i == 19 && j != 3 ) long_sig += ":";
+          }
+        long_sig[25] = 'a';
+        BLSSignature(std::make_shared< std::string >(long_sig), num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // Null SigShare
+      try {
+        BLSSigShare(nullptr, 1, num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // Null Signer
+      try {
+        std::string hint = "123:1";
+        BLSSigShare( std::make_shared<libff::alt_bn128_G1>(libff::alt_bn128_G1::random_element()), hint, 0, num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // empty_hint in SigShare
+      try {
+        std::string empty_hint = "";
+        BLSSigShare(std::make_shared< libff::alt_bn128_G1 >(libff::alt_bn128_G1::random_element()), empty_hint, 1, num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // short sigShare
+      try {
+        std::string short_sig = "1:1:1:1";
+        BLSSigShare(std::make_shared< std::string >(short_sig), 1, num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // long sigShare
+      try {
+        std::string long_sig;
+        for (size_t j = 0; j < 3; j++)
+          for (size_t i = 0; i < 100; i++ ){
+            long_sig += std::to_string(rand_gen()%10);
+            if (i == 99 && j!=2 ) long_sig += ":";
+          }
+        BLSSigShare(std::make_shared< std::string >(long_sig), 1, num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // misformatted sigShare
+      try {
+        std::string long_sig;
+        for (size_t j = 0; j < 3; j++)
+          for (size_t i = 0; i < 20; i++ ){
+            long_sig += std::to_string(rand_gen()%10);
+            if (i == 19 && j < 2 ) long_sig += ":";
+          }
+        BLSSigShare(std::make_shared< std::string >(long_sig), 1, num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // rand signature (not from G1)
+      try {
+        std::string long_sig;
+        for (size_t j = 0; j < 4; j++)
+          for (size_t i = 0; i < 20; i++ ){
+            long_sig += std::to_string(rand_gen()%10);
+            if (i == 19 && j != 3 ) long_sig += ":";          }
+
+        BLSSigShare(std::make_shared< std::string >(long_sig), 1, num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; //  sigShsare with  not digit
+      try {
+        std::string long_sig;
+        for (size_t j = 0; j < 4; j++)
+          for (size_t i = 0; i < 20; i++ ){
+            long_sig += std::to_string(rand_gen()%10);
+            if (i == 19 && j != 3 ) long_sig += ":";
+          }
+        long_sig[25] = 'a';
+        BLSSigShare(std::make_shared< std::string >(long_sig), 1, num_signed, num_all);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+
+      is_exception_caught = false; // add null sigShare to sigSet
+      try {
+        BLSSigShareSet sig_set(num_signed, num_all);
+        sig_set.addSigShare(nullptr);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // add signers with same index
+      try {
+        std::string hint = "123:1";
+        BLSSigShare sigShare1( std::make_shared<libff::alt_bn128_G1>(libff::alt_bn128_G1::random_element()), hint, 1, num_signed, num_all);
+        BLSSigShare sigShare2 = sigShare1;
+        BLSSigShareSet sig_set(num_signed, num_all);
+        sig_set.addSigShare( std::make_shared<BLSSigShare>(sigShare1));
+        sig_set.addSigShare( std::make_shared<BLSSigShare>(sigShare2));
+       }
+      catch (std::runtime_error &) {
+         is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; // add sigShare after merge
+      try {
+        std::string hint = "123:1";
+        BLSSigShare sigShare1( std::make_shared<libff::alt_bn128_G1>(libff::alt_bn128_G1::random_element()), hint, 1, num_signed, num_all);
+        BLSSigShareSet sig_set(1, 1);
+        sig_set.addSigShare( std::make_shared<BLSSigShare>(sigShare1));
+        sig_set.merge();
+        sig_set.addSigShare( std::make_shared<BLSSigShare>(sigShare1));
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; //  merge sigShareSet with not enough sigShares
+      try {
+        BLSSigShareSet sig_set(num_signed, num_all);
+        sig_set.merge();
+
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false; //  get signer with 0 index in sigShareSet
+      try {
+        BLSSigShareSet sig_set(num_signed, num_all);
+        sig_set.getSigShareByIndex(0);
+
+      }
+      catch (std::runtime_error &) {
+         is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      std::cerr << "EXCEPTIONS TEST FINISHED" << std::endl;
+    }
+
+    BOOST_AUTO_TEST_CASE(DKGWrappersExceptions) {
+      size_t num_all = rand_gen() % 15 + 2;
+      size_t num_signed = rand_gen() % (num_all - 1) + 1;
+
+      bool is_exception_caught = false;  // zero share
+      try {
+        DKGBLSWrapper dkg_wrap(num_signed, num_all);
+        std::vector<libff::alt_bn128_G2> vect = {libff::alt_bn128_G2::random_element()};
+        dkg_wrap.VerifyDKGShare(1, libff::alt_bn128_Fr::zero(), std::make_shared<std::vector<libff::alt_bn128_G2>>(vect));
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;  // null verification vector
+      try {
+        DKGBLSWrapper dkg_wrap(num_signed, num_all);
+        dkg_wrap.VerifyDKGShare(1, libff::alt_bn128_Fr::zero(), nullptr);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;  // wrong vector size
+      try {
+        DKGBLSWrapper dkg_wrap(num_signed + 1, num_all + 1);
+        std::vector<libff::alt_bn128_G2> vect = {libff::alt_bn128_G2::random_element()};
+        dkg_wrap.VerifyDKGShare(1, libff::alt_bn128_Fr::random_element(), std::make_shared<std::vector<libff::alt_bn128_G2>>(vect));
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;  // set null poly
+      try {
+        DKGBLSWrapper dkg_wrap(num_signed, num_all);
+        dkg_wrap.setDKGSecret(nullptr);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;  // set wrong size poly
+      try {
+        DKGBLSWrapper dkg_wrap(num_signed, num_all);
+        std::vector <libff::alt_bn128_Fr> poly;
+        dkg_wrap.setDKGSecret( std::make_shared<std::vector <libff::alt_bn128_Fr>>(poly));
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;  // set null secret shares
+      try {
+        DKGBLSWrapper dkg_wrap(num_signed, num_all);
+        dkg_wrap.CreateBLSPrivateKeyShare(nullptr);
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+      is_exception_caught = false;  // set wrong size secret shares
+      try {
+        DKGBLSWrapper dkg_wrap(num_signed, num_all);
+        std::vector <libff::alt_bn128_Fr> shares;
+        dkg_wrap.CreateBLSPrivateKeyShare(std::make_shared<std::vector <libff::alt_bn128_Fr>>(shares));
+      }
+      catch (std::runtime_error &) {
+        is_exception_caught = true;
+      }
+      BOOST_REQUIRE(is_exception_caught);
+
+    }
 BOOST_AUTO_TEST_SUITE_END()
 

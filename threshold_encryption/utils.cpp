@@ -62,12 +62,41 @@ std::string ElementZrToString(element_t el ) {
   return str;
 }
 
-std::shared_ptr<std::vector<std::string>> ElementG1ToString(element_t el ) {
+std::shared_ptr<std::vector<std::string>> ElementG1ToString(element_t& el ) {
   std::vector<std::string> res_str;
 
   for ( int i = 0;  i < element_item_count(el); ++i) {
-    res_str.push_back(ElementZrToString(element_item(el,i)));
+    res_str.push_back(ElementZrToString(element_item(el, i)));
   }
   
   return std::make_shared<std::vector<std::string>>(res_str);
+}
+
+bool isStringNumber(std::string& str){
+    if (str.at(0) == '0' && str.length() > 1)
+      return false;
+    for ( char& c : str ) {
+      if (!(c >= '0' && c <= '9')) {
+        return false;
+      }
+    }
+    return true;
+}
+
+bool isG1Element0(element_t& el){
+ if ( element_item_count(el) != 2 )
+   throw std::runtime_error( "not 2 component element ");
+ if (element_is0(element_item(el, 0)) && element_is0(element_item(el, 1)))
+   return true;
+ else
+   return false;
+}
+
+void checkCypher(const encryption::Ciphertext& cyphertext){
+  if (isG1Element0(const_cast<element_t &>(std::get<0>(cyphertext).el_)) ||
+      isG1Element0(const_cast<element_t &>(std::get<2>(cyphertext).el_)))
+    throw std::runtime_error("zero element in cyphertext");
+
+  if ( std::get<1>(cyphertext).length() != 64 )
+    throw std::runtime_error("wrong string length in cyphertext");
 }
