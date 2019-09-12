@@ -273,18 +273,15 @@ static PyObject* PyDkgObject_Verification(struct PyDkgObject* self, PyObject* ar
 }
 
 static PyObject* PyDkgObject_GetPublicKeyFromSecretKey(struct PyDkgObject* self, PyObject* args, PyObject* kwds) {
-  std::string incoming_data;
+  char* pyShare = nullptr;
 
-  if (!PyArg_ParseTuple(args, (char*)"s", &incoming_data)) {
+  if (!PyArg_ParseTuple(args, (char*)"s", &pyShare)) {
     return -1;
   }
 
-  libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr(incoming_data.c_str());
-  std::cerr << "SECRET KEY : " << secret_key << '\n';
+  libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr(pyShare);
 
   libff::alt_bn128_G2 public_key = self->pDKG->GetPublicKeyFromSecretKey(secret_key);
-  std::cerr << "PUBLIC KEY : ";
-  public_key.print_coordinates();
 
   PyObject* pFirstCoord = PyTuple_New(2);
   PyObject* pSecondCoord = PyTuple_New(2);
