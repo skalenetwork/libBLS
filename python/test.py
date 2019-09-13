@@ -4,9 +4,7 @@
 import sys
 sys.path.insert( 0, './build/lib.linux-x86_64-3.6' )
 
-import libdkgpythond as dkgpython
-from dkgpython import dkg
-
+from libdkgpython import dkg
 
 d = dkg(1, 2)
 
