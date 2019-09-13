@@ -17,6 +17,7 @@ endif ()
 set(HUNTER_ENABLED OFF)
 
 option(BUILD_TESTS "Build tests" ON)
+option(BUILD_WITH_FPIC "Build with -fPIC" OFF)
 
 if(BUILD_TESTS)
 	enable_testing()
@@ -83,8 +84,7 @@ link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 include(deps/ProjectGMP.cmake)
 
 add_library(bls ${sourses_bls} ${headers_bls})
-target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder
-																													-Wno-error=unused-but-set-variable)
+target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wno-error=unused-but-set-variable)
 
 find_package(Boost REQUIRED program_options system)
 find_package(OpenSSL REQUIRED)

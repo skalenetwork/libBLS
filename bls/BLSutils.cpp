@@ -1,30 +1,29 @@
 /*
-  Copyright (C) 2018-2019 SKALE Labs
+Copyright (C) 2018-2019 SKALE Labs
 
-  This file is part of libBLS.
+This file is part of libBLS.
 
-  libBLS is free software: you can redistribute it and/or modify
-  it under the terms of the GNU Affero General Public License as published
-  by the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
+libBLS is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-  libBLS is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU Affero General Public License for more details.
+libBLS is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
 
-  You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public License
+along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-  @file BLSUtils.cpp
-  @author Sveta Rogova
-  @date 2019
+@file BLSUtils.cpp
+@author Sveta Rogova
+@date 2019
 */
 
 #include <bls/BLSutils.h>
 
 #include <bitset>
-
 
 void BLSutils::initBLS() {
   static bool is_initialized = false;
@@ -71,20 +70,15 @@ libff::alt_bn128_Fq BLSutils::HashToFq (std::shared_ptr<std::array< uint8_t, 32>
 }
 
 std::shared_ptr<std::vector<std::string>> BLSutils::SplitString(std::shared_ptr<std::string> str, const std::string& delim){
-    std::vector<std::string> tokens;
-    size_t prev = 0, pos = 0;
-    do
-    {
-        pos = str->find(delim, prev);
-        if (pos == std::string::npos) pos = str->length();
-        std::string token = str->substr(prev, pos-prev);
-        if (!token.empty()) tokens.push_back(token);
-        prev = pos + delim.length();
-    }
-    while (pos < str->length() && prev < str->length());
+  std::vector<std::string> tokens;
+  size_t prev = 0, pos = 0;
+  do {
+    pos = str->find(delim, prev);
+    if (pos == std::string::npos) pos = str->length();
+    std::string token = str->substr(prev, pos-prev);
+    if (!token.empty()) tokens.push_back(token);
+    prev = pos + delim.length();
+  } while (pos < str->length() && prev < str->length());
 
-  return std::make_shared<std::vector<std::string>>(tokens);
+  return std::make_shared< std::vector<std::string>>(tokens);
 }
-
-
-
