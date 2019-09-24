@@ -21,6 +21,8 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 @date 2019
 */
 
+#include <algorithm>
+#include <boost/multiprecision/cpp_int.hpp>
 #include <bls/BLSutils.h>
 
 #include <bitset>
@@ -48,25 +50,40 @@ std::pair<libff::alt_bn128_Fq, libff::alt_bn128_Fq> BLSutils::ParseHint(std::str
 
 libff::alt_bn128_Fq BLSutils::HashToFq (std::shared_ptr<std::array< uint8_t, 32>> hash_byte_arr){
   std::string hash_str;
-  for ( size_t i = 0; i < 32; i++) {
-    std::string cur_byte_str = std::bitset<8>(hash_byte_arr->at(i)).to_string();
+  for (size_t i = 0; i < 32; ++i) {
+    char sym = static_cast<int>(hash_byte_arr->at(i)) % 16 > 9 ?
+                static_cast<char>(static_cast<int>(hash_byte_arr->at(i)) % 16 + 87) :
+                static_cast<char>(static_cast<int>(hash_byte_arr->at(i)) % 16 + 48);
+
+    char sym1 = static_cast<int>(hash_byte_arr->at(i)) / 16 > 9 ?
+                static_cast<char>(static_cast<int>(hash_byte_arr->at(i)) / 16 + 87) :
+                static_cast<char>(static_cast<int>(hash_byte_arr->at(i)) / 16 + 48);
+
+    std::string cur_byte_str = "00";
+    cur_byte_str[0] = sym1;
+    cur_byte_str[1] = sym;
     hash_str += cur_byte_str;
   }
 
-  mpz_t hash;
-  mpz_init(hash);
-  mpz_set_str(hash, hash_str.c_str(), 2);
+  mpz_t modulus_q;
+  mpz_init(modulus_q);
+  mpz_set_str(modulus_q, "21888242871839275222246405745257275088696311157297823662689037894645226208583", 10);
 
-  mpz_t q;
-  mpz_init(q);
-  libff::alt_bn128_modulus_q.to_mpz(q);
+  mpz_t from_hex;
+  mpz_init(from_hex);
+  mpz_set_str(from_hex, hash_str.c_str(), 16);
 
-  mpz_t rem;  // rem = hash mod q
-  mpz_init(rem);
-  mpz_mod(rem, hash, q);
+  mpz_t ret;
+  mpz_init(ret);
+  mpz_mod(ret, from_hex, modulus_q);
 
-  libff::alt_bn128_Fq x(rem);
-  return x;
+  libff::alt_bn128_Fq ret_val(ret);
+
+  mpz_clear(from_hex);
+  mpz_clear(modulus_q);
+  mpz_clear(ret);
+
+  return ret_val;
 }
 
 std::shared_ptr<std::vector<std::string>> BLSutils::SplitString(std::shared_ptr<std::string> str, const std::string& delim){
