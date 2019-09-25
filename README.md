@@ -146,7 +146,7 @@ All these classes (except BLSSigShareSet) can be created from shared_ptr to stri
 
 ```cpp
 std::shared_ptr<std::pair
-<std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>>std::shared_ptr<BLSPublicKey>>> keys =
+<std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>>, std::shared_ptr<BLSPublicKey>>> keys =
                                                             BLSPrivateKeyShare::generateSampleKeys(t, n);
 ```
 You will get a pair, which first component is shared_ptr to vector of private keys, and second component is shared_ptr to common public key;
