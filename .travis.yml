@@ -1,4 +1,4 @@
-language: cpp, python
+language: cpp
 sudo: required
 matrix:
     include:
@@ -87,7 +87,9 @@ matrix:
                       - libboost-all-dev
                       - libprocps4-dev
                       - libgmp3-dev
+                      - python3.6
                   sources: &sources
+                      - deadsnakes/ppa
                       - ubuntu-toolchain-r-test
           after_success:
               - cd python
