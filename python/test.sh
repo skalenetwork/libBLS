@@ -6,5 +6,5 @@ set -e
 
 for i in {1..1000}
 do
-  python3.6 $CWD/test.py
+  python3 $CWD/test.py
 done

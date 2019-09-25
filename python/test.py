@@ -107,7 +107,7 @@ class DKGClient:
             sent_public_keys.append(cur[-65:])
             cur = cur[:-65]
             incoming_secret_key_contribution.append(cur)
-        ecdh_key = coincurve.keys.PrivateKey.from_hex(self.wallet["private_key"][2:]).ecdh(sent_public_keys[self.node_id])
+        ecdh_key = coincurve.keys.PrivateKey.from_hex(self.wallet["insecure_private_key"][2:]).ecdh(sent_public_keys[self.node_id])
         incoming_secret_key_contribution[self.node_id] = decrypt(incoming_secret_key_contribution[self.node_id], ecdh_key)
         self.incoming_secret_key_contribution[fromNode] = incoming_secret_key_contribution[self.node_id]
 
@@ -118,8 +118,8 @@ class DKGClient:
         self.secret_key_share = self.dkg_instance.SecretKeyShareCreate(self.incoming_secret_key_contribution)
         self.public_key = self.dkg_instance.GetPublicKeyFromSecretKey(self.secret_key_share)
 
-local_wallet_0 = {"address": "0x7E6CE355Ca303EAe3a858c172c3cD4CeB23701bc", "private_key": "0xa15c19da241e5b1db20d8dd8ca4b5eeaee01c709b49ec57aa78c2133d3c1b3c9"}
-local_wallet_1 = {"address": "0xF64ADc0A4462E30381Be09E42EB7DcB816de2803", "private_key": "0xe7af72d241d4dd77bc080ce9234d742f6b22e35b3a660e8c197517b909f63ca8"}
+local_wallet_0 = {"address": "0x7E6CE355Ca303EAe3a858c172c3cD4CeB23701bc", "insecure_private_key": "0xa15c19da241e5b1db20d8dd8ca4b5eeaee01c709b49ec57aa78c2133d3c1b3c9"}
+local_wallet_1 = {"address": "0xF64ADc0A4462E30381Be09E42EB7DcB816de2803", "insecure_private_key": "0xe7af72d241d4dd77bc080ce9234d742f6b22e35b3a660e8c197517b909f63ca8"}
 public_keys = [coincurve.PublicKey(bytes.fromhex("048f163316925bf2e12a30832dee812f6ff60bf872171a84d9091672dd3848be9fc0b7bd257fbb038019c41f055e81736d8116b83e9ac59a1407aa6ea804ec88a8")), coincurve.PublicKey(bytes.fromhex("04307654b2716eb09f01f33115173867611d403424586357226515ae6a92774b10d168ab741e8f7650116d0677fddc1aea8dc86a00747e7224d2bf36e0ea3dd62c"))]
 
 
