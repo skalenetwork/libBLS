@@ -89,7 +89,7 @@ matrix:
                       - libgmp3-dev
                       - python3.6
                   sources: &sources
-                      - deadsnakes/ppa
+                      - deadsnakes
                       - ubuntu-toolchain-r-test
           after_success:
               - cd python
