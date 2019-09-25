@@ -69,6 +69,7 @@ matrix:
                       - libgmp3-dev
                   sources: &sources
                       - ubuntu-toolchain-r-test
+        - python: 3.6
         - os: linux
           env:
             - BUILDING_FOR_OS=linux
