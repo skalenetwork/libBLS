@@ -1,2 +1,10 @@
 #!/bin/bash
-python3 test.py
+
+CWD="$(cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+
+set -e
+
+for i in {1..1000}
+do
+  python3 $CWD/test.py
+done

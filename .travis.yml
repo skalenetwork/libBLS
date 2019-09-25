@@ -69,6 +69,31 @@ matrix:
                       - libgmp3-dev
                   sources: &sources
                       - ubuntu-toolchain-r-test
+        - os: linux
+          env:
+            - BUILDING_FOR_OS=linux
+            - CMAKE_BUILD_FLAGS="-DBUILD_WITH_FPIC=ON"
+            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+          addons:
+              apt:
+                  packages:
+                      - g++-7
+                      - valgrind
+                      - gawk
+                      - sed
+                      - lcov
+                      - shtool
+                      - libboost-all-dev
+                      - libprocps4-dev
+                      - libgmp3-dev
+                  sources: &sources
+                      - ubuntu-toolchain-r-test
+          after_success:
+              - cd python
+              - echo "========================================= after_success (dkg)"
+              - bash setup.sh || travis terminate 1
+              - bash test.sh || travis terminate 1
+              - cd ..
         - os: osx
           osx_image: xcode10.1
           env:
