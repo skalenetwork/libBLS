@@ -133,21 +133,24 @@ static PyObject* PyDkgObject_VerificationVector(struct PyDkgObject* self, PyObje
   PyObject* pRetVal = PyList_New(self->pDKG->GetT());
 
   for (size_t i = 0; i < self->pDKG->GetT(); ++i) {
+    ret_Val[i].to_affine_coordinates();
+
     PyObject* pFirstCoord = PyTuple_New(2);
     PyObject* pSecondCoord = PyTuple_New(2);
-    PyObject* pThirdCoord = PyTuple_New(2);
+    //PyObject* pThirdCoord = PyTuple_New(2);
 
     PyTuple_SET_ITEM(pFirstCoord,  0, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(ret_Val[i].X.c0).c_str()));
     PyTuple_SET_ITEM(pFirstCoord,  1, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(ret_Val[i].X.c1).c_str()));
     PyTuple_SET_ITEM(pSecondCoord, 0, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(ret_Val[i].Y.c0).c_str()));
     PyTuple_SET_ITEM(pSecondCoord, 1, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(ret_Val[i].Y.c1).c_str()));
-    PyTuple_SET_ITEM(pThirdCoord,  0, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(ret_Val[i].Z.c0).c_str()));
-    PyTuple_SET_ITEM(pThirdCoord,  1, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(ret_Val[i].Z.c1).c_str()));
+    /*PyTuple_SET_ITEM(pThirdCoord,  0, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(ret_Val[i].Z.c0).c_str()));
+    PyTuple_SET_ITEM(pThirdCoord,  1, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(ret_Val[i].Z.c1).c_str()));*/
 
-    PyObject* pyPublicKey = PyList_New(3);
+    //PyObject* pyPublicKey = PyList_New(3);
+    PyObject* pyPublicKey = PyList_New(2);
     PyList_SetItem(pyPublicKey, 0, pFirstCoord);
     PyList_SetItem(pyPublicKey, 1, pSecondCoord);
-    PyList_SetItem(pyPublicKey, 2, pThirdCoord);
+    //PyList_SetItem(pyPublicKey, 2, pThirdCoord);
 
     PyList_SetItem(pRetVal, i, pyPublicKey);
   }
@@ -259,8 +262,9 @@ static PyObject* PyDkgObject_Verification(struct PyDkgObject* self, PyObject* ar
     libff::alt_bn128_Fq(PyBytes_AsString(PyUnicode_AsUTF8String(PyTuple_GetItem(PyList_GetItem(value, 0), 1)))));
     item.Y = libff::alt_bn128_Fq2(libff::alt_bn128_Fq(PyBytes_AsString(PyUnicode_AsUTF8String(PyTuple_GetItem(PyList_GetItem(value, 1), 0)))),
     libff::alt_bn128_Fq(PyBytes_AsString(PyUnicode_AsUTF8String(PyTuple_GetItem(PyList_GetItem(value, 1), 1)))));
-    item.Z = libff::alt_bn128_Fq2(libff::alt_bn128_Fq(PyBytes_AsString(PyUnicode_AsUTF8String(PyTuple_GetItem(PyList_GetItem(value, 2), 0)))),
-    libff::alt_bn128_Fq(PyBytes_AsString(PyUnicode_AsUTF8String(PyTuple_GetItem(PyList_GetItem(value, 2), 1)))));
+    // item.Z = libff::alt_bn128_Fq2(libff::alt_bn128_Fq(PyBytes_AsString(PyUnicode_AsUTF8String(PyTuple_GetItem(PyList_GetItem(value, 2), 0)))),
+    // libff::alt_bn128_Fq(PyBytes_AsString(PyUnicode_AsUTF8String(PyTuple_GetItem(PyList_GetItem(value, 2), 1)))));
+    item.Z = libff::alt_bn128_Fq2::one();
 
     verification_vector[i] = item;
   }
