@@ -1,4 +1,6 @@
 language: cpp
+python:
+  - "3.6"
 sudo: required
 matrix:
     include:
@@ -95,8 +97,8 @@ matrix:
           after_success:
               - cd python
               - echo "========================================= after_success (dkg)"
-              - bash setup.sh || travis terminate 1
-              - bash test.sh || travis terminate 1
+              - ./setup.sh || travis terminate 1
+              - ./test.sh || travis terminate 1
               - cd ..
         - os: osx
           osx_image: xcode10.1
