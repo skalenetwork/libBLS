@@ -97,6 +97,7 @@ matrix:
               - sudo apt-get install python3.6
               - sudo apt-get install python3-pip
               - sudo apt-get install python3-setuptools
+              - python3.6 -m pip install coincurve
           after_success:
               - cd python
               - echo "========================================= after_success (dkg)"
@@ -120,13 +121,8 @@ matrix:
               - ln -s $(which glibtool) /usr/local/bin/libtool || true
               - ln -s $(which glibtoolize) /usr/local/bin/libtoolize || true
 before_install:
-    - sudo apt-get update
-    - sudo apt-get install python3.6
-    - sudo apt-get install python3-pip
-    - sudo apt-get install python3-setuptools
     - eval "${MATRIX_EVAL}"
 script:
-    - python3.6 -m pip install coincurve
     - echo "========================================= script (1)"
     - echo "CMAKE_BUILD_FLAGS=$CMAKE_BUILD_FLAGS"
     - mkdir -p build
