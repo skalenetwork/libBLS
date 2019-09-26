@@ -98,6 +98,11 @@ matrix:
                   sources: &sources
                       - deadsnakes
                       - ubuntu-toolchain-r-test
+          before_script:
+              - sudo apt-get update
+              - sudo apt-get install python3.6
+              - sudo apt-get install python3-pip
+              - sudo apt-get install python3-setuptools
           after_success:
               - cd python
               - echo "========================================= after_success (dkg)"
@@ -117,8 +122,6 @@ matrix:
                       - boost
                       - shtool
                       - libtool
-                      - python3.6
-                      - python3.6-dev
           before_script:
               - ln -s $(which glibtool) /usr/local/bin/libtool || true
               - ln -s $(which glibtoolize) /usr/local/bin/libtoolize || true
