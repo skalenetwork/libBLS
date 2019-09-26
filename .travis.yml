@@ -118,7 +118,7 @@ before_install:
     - sudo apt-get update
     - sudo apt-get install python3.6
     - sudo apt-get install python3-pip
-    - pip3 install --upgrade pip3
+    - pip3 install --upgrade pip
     - eval "${MATRIX_EVAL}"
 script:
     - pip3 install coincurve
