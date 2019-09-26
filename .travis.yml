@@ -20,6 +20,8 @@ matrix:
                       - libssl-dev
                       - libprocps4-dev
                       - libgmp3-dev
+                      - python3.6
+                      - python3.6-dev
                       - flex
                       - bison
                   sources: &sources
@@ -67,6 +69,8 @@ matrix:
                       - libboost-all-dev
                       - libprocps4-dev
                       - libgmp3-dev
+                      - python3.6
+                      - python3.6-dev
                   sources: &sources
                       - ubuntu-toolchain-r-test
         - os: linux
@@ -111,6 +115,8 @@ matrix:
                       - boost
                       - shtool
                       - libtool
+                      - python3.6
+                      - python3.6-dev
           before_script:
               - ln -s $(which glibtool) /usr/local/bin/libtool || true
               - ln -s $(which glibtoolize) /usr/local/bin/libtoolize || true
