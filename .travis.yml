@@ -121,7 +121,7 @@ before_install:
     - sudo apt-get install python3-setuptools
     - eval "${MATRIX_EVAL}"
 script:
-    - python3.6 -m pip install
+    - python3.6 -m pip install coincurve
     - echo "========================================= script (1)"
     - echo "CMAKE_BUILD_FLAGS=$CMAKE_BUILD_FLAGS"
     - mkdir -p build
