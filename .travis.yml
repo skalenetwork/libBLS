@@ -117,9 +117,10 @@ matrix:
 before_install:
     - sudo apt-get update
     - sudo apt-get install python3.6
+    - sudo apt-get install python3-pip
     - eval "${MATRIX_EVAL}"
 script:
-    - pip install coincurve
+    - pip3 install coincurve
     - echo "========================================= script (1)"
     - echo "CMAKE_BUILD_FLAGS=$CMAKE_BUILD_FLAGS"
     - mkdir -p build
