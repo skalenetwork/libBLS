@@ -119,7 +119,7 @@ matrix:
 before_install:
     - eval "${MATRIX_EVAL}"
 script:
-    - pip3.6.7 install coincurve
+    - pip3 install coincurve
     - echo "========================================= script (1)"
     - echo "CMAKE_BUILD_FLAGS=$CMAKE_BUILD_FLAGS"
     - mkdir -p build
