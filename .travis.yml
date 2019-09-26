@@ -4,6 +4,7 @@ matrix:
     include:
         - os: linux
           env:
+            - PYTHON=3.6
             - BUILDING_FOR_OS=linux
             - CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
             - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
@@ -54,6 +55,7 @@ matrix:
               - echo "========================================= after_success (coverage end)"
         - os: linux
           env:
+            - PYTHON=3.6
             - BUILDING_FOR_OS=linux
             - CMAKE_BUILD_FLAGS=""
             - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
