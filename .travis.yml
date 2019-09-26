@@ -115,7 +115,6 @@ matrix:
               - ln -s $(which glibtool) /usr/local/bin/libtool || true
               - ln -s $(which glibtoolize) /usr/local/bin/libtoolize || true
 before_install:
-    - sudo apt-get update
     - sudo apt-get install python3.6
     - sudo apt-get install python3-pip
     - sudo apt-get install python3-setuptools
