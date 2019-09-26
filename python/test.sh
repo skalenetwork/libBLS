@@ -7,4 +7,6 @@ set -e
 for i in {1..1000}
 do
   python3.6 $CWD/test.py
+  if [[ $? -ne 0 ]] ; then
+    exit 1
 done
