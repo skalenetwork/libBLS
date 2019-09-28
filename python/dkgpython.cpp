@@ -293,7 +293,6 @@ static PyObject* PyDkgObject_GetPublicKeyFromSecretKey(struct PyDkgObject* self,
 
 
   PyObject* pyPublicKey = PyList_New(3);
-  std::cout << 1 << '\n';
   PyList_SetItem(pyPublicKey, 0, pFirstCoord);
   PyList_SetItem(pyPublicKey, 1, pSecondCoord);
   PyList_SetItem(pyPublicKey, 2, pThirdCoord);
