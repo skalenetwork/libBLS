@@ -28,6 +28,20 @@ def decrypt(ciphertext, secret_key):
     ret_val = binascii.hexlify(xor_val)
     return str(int(ret_val.decode(), 16))
 
+def convert_g2_point_to_bytes(data):
+    data_hexed = "0x"
+    for coord in data:
+        for elem in coord:
+            temp = hex(int(elem[0]))[2:]
+            while (len(temp) < 64):
+                temp = '0' + temp
+            data_hexed += temp
+            temp = hex(int(elem[1]))[2:]
+            while len(temp) < 64 :
+                temp = '0' + temp
+            data_hexed += temp
+    return data_hexed
+
 class DkgVerificationError(Exception):
     def __init__(self, msg):
         super().__init__(msg)
@@ -52,22 +66,12 @@ class DKGClient:
     def VerificationVector(self, polynom):
         verification_vector = self.dkg_instance.VerificationVector(polynom)
         self.incoming_verification_vector[self.node_id] = verification_vector
-        verification_vector_hexed = "0x"
-        for coord in verification_vector:
-            for elem in coord:
-                temp = hex(int(elem[0]))[2:]
-                while (len(temp) < 64):
-                    temp = '0' + temp
-                verification_vector_hexed += temp
-                temp = hex(int(elem[1]))[2:]
-                while len(temp) < 64 :
-                    temp = '0' + temp
-                verification_vector_hexed += temp
+        verification_vector_hexed = convert_g2_point_to_bytes(verification_vector)
         return verification_vector_hexed
 
     def SecretKeyContribution(self, polynom):
-        self.secret_key_contribution = self.dkg_instance.SecretKeyContribution(polynom)
-        secret_key_contribution = self.dkg_instance.SecretKeyContribution(polynom)
+        self.sent_secret_key_contribution = self.dkg_instance.SecretKeyContribution(polynom)
+        secret_key_contribution = self.sent_secret_key_contribution
         self.incoming_secret_key_contribution[self.node_id] = secret_key_contribution[self.node_id]
         to_broadcast = bytes('', 'utf-8')
         for i in range(self.n):
