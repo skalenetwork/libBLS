@@ -319,8 +319,7 @@ static PyObject* PyDkgObject_ComputeVerificationValue(struct PyDkgObject* self, 
   PyTuple_SET_ITEM(pSecondCoord, 0, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_value.Y.c0).c_str()));
   PyTuple_SET_ITEM(pSecondCoord, 1, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_value.Y.c1).c_str()));
 
-
-  PyObject* pyVerificationValue = PyList_New(3);
+  PyObject* pyVerificationValue = PyList_New(2);
   PyList_SetItem(pyVerificationValue, 0, pFirstCoord);
   PyList_SetItem(pyVerificationValue, 1, pSecondCoord);
 
