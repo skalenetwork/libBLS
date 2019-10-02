@@ -53,7 +53,7 @@ cd libBLS
 
 ⚠️ Note: Because this repository depends on an additional submodule, it is important to pass`--recurse-submodules` to the `git clone` command to automatically initialize and update the submodule.
 
-If you have already cloned the repository and forgot to pass `--recurse-submodules`, then simply execute `git submodule update --init`.
+If you have already cloned the repository and forgot to pass `--recurse-submodules`, then simply execute `git submodule update --init --recursive`
 
 ## Building from source on Mac
 
