@@ -69,6 +69,41 @@ matrix:
                       - libgmp3-dev
                   sources: &sources
                       - ubuntu-toolchain-r-test
+        - os: linux
+          env:
+            - PYTHON=3.6
+            - BUILDING_FOR_OS=linux
+            - CMAKE_BUILD_FLAGS="-DBUILD_WITH_FPIC=ON"
+            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+          addons:
+              apt:
+                  packages:
+                      - g++-7
+                      - valgrind
+                      - gawk
+                      - sed
+                      - lcov
+                      - shtool
+                      - libboost-all-dev
+                      - libprocps4-dev
+                      - libgmp3-dev
+                      - python3.6
+                      - python3.6-dev
+                  sources: &sources
+                      - deadsnakes
+                      - ubuntu-toolchain-r-test
+          before_script:
+              - sudo apt-get update
+              - sudo apt-get install python3.6
+              - sudo apt-get install python3-pip
+              - sudo apt-get install python3-setuptools
+              - python3.6 -m pip install coincurve
+          after_success:
+              - cd python
+              - echo "========================================= after_success (dkg)"
+              - ./setup.sh || travis terminate 1
+              - ./test.sh || travis terminate 1
+              - cd ..
         - os: osx
           osx_image: xcode10.1
           env:

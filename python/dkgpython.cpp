@@ -133,21 +133,19 @@ static PyObject* PyDkgObject_VerificationVector(struct PyDkgObject* self, PyObje
   PyObject* pRetVal = PyList_New(self->pDKG->GetT());
 
   for (size_t i = 0; i < self->pDKG->GetT(); ++i) {
+    ret_Val[i].to_affine_coordinates();
+
     PyObject* pFirstCoord = PyTuple_New(2);
     PyObject* pSecondCoord = PyTuple_New(2);
-    PyObject* pThirdCoord = PyTuple_New(2);
 
     PyTuple_SET_ITEM(pFirstCoord,  0, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(ret_Val[i].X.c0).c_str()));
     PyTuple_SET_ITEM(pFirstCoord,  1, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(ret_Val[i].X.c1).c_str()));
     PyTuple_SET_ITEM(pSecondCoord, 0, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(ret_Val[i].Y.c0).c_str()));
     PyTuple_SET_ITEM(pSecondCoord, 1, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(ret_Val[i].Y.c1).c_str()));
-    PyTuple_SET_ITEM(pThirdCoord,  0, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(ret_Val[i].Z.c0).c_str()));
-    PyTuple_SET_ITEM(pThirdCoord,  1, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(ret_Val[i].Z.c1).c_str()));
 
-    PyObject* pyPublicKey = PyList_New(3);
+    PyObject* pyPublicKey = PyList_New(2);
     PyList_SetItem(pyPublicKey, 0, pFirstCoord);
     PyList_SetItem(pyPublicKey, 1, pSecondCoord);
-    PyList_SetItem(pyPublicKey, 2, pThirdCoord);
 
     PyList_SetItem(pRetVal, i, pyPublicKey);
   }
@@ -259,8 +257,7 @@ static PyObject* PyDkgObject_Verification(struct PyDkgObject* self, PyObject* ar
     libff::alt_bn128_Fq(PyBytes_AsString(PyUnicode_AsUTF8String(PyTuple_GetItem(PyList_GetItem(value, 0), 1)))));
     item.Y = libff::alt_bn128_Fq2(libff::alt_bn128_Fq(PyBytes_AsString(PyUnicode_AsUTF8String(PyTuple_GetItem(PyList_GetItem(value, 1), 0)))),
     libff::alt_bn128_Fq(PyBytes_AsString(PyUnicode_AsUTF8String(PyTuple_GetItem(PyList_GetItem(value, 1), 1)))));
-    item.Z = libff::alt_bn128_Fq2(libff::alt_bn128_Fq(PyBytes_AsString(PyUnicode_AsUTF8String(PyTuple_GetItem(PyList_GetItem(value, 2), 0)))),
-    libff::alt_bn128_Fq(PyBytes_AsString(PyUnicode_AsUTF8String(PyTuple_GetItem(PyList_GetItem(value, 2), 1)))));
+    item.Z = libff::alt_bn128_Fq2::one();
 
     verification_vector[i] = item;
   }
@@ -296,12 +293,37 @@ static PyObject* PyDkgObject_GetPublicKeyFromSecretKey(struct PyDkgObject* self,
 
 
   PyObject* pyPublicKey = PyList_New(3);
-  std::cout << 1 << '\n';
   PyList_SetItem(pyPublicKey, 0, pFirstCoord);
   PyList_SetItem(pyPublicKey, 1, pSecondCoord);
   PyList_SetItem(pyPublicKey, 2, pThirdCoord);
 
   return pyPublicKey;
+}
+
+static PyObject* PyDkgObject_ComputeVerificationValue(struct PyDkgObject* self, PyObject* args, PyObject* kwds) {
+  char* pyShare = nullptr;
+
+  if (!PyArg_ParseTuple(args, (char*)"s", &pyShare)) {
+    return -1;
+  }
+
+  libff::alt_bn128_Fr share = libff::alt_bn128_Fr(pyShare);
+
+  libff::alt_bn128_G2 verification_value = self->pDKG->ComputeVerificationValue(share);
+
+  PyObject* pFirstCoord = PyTuple_New(2);
+  PyObject* pSecondCoord = PyTuple_New(2);
+
+  PyTuple_SET_ITEM(pFirstCoord,  0, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_value.X.c0).c_str()));
+  PyTuple_SET_ITEM(pFirstCoord,  1, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_value.X.c1).c_str()));
+  PyTuple_SET_ITEM(pSecondCoord, 0, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_value.Y.c0).c_str()));
+  PyTuple_SET_ITEM(pSecondCoord, 1, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(verification_value.Y.c1).c_str()));
+
+  PyObject* pyVerificationValue = PyList_New(2);
+  PyList_SetItem(pyVerificationValue, 0, pFirstCoord);
+  PyList_SetItem(pyVerificationValue, 1, pSecondCoord);
+
+  return pyVerificationValue;
 }
 
 
@@ -313,6 +335,7 @@ static PyMethodDef PyDkgObject_methods[] = {
   { "SecretKeyShareCreate",      (PyCFunction)PyDkgObject_SecretKeyShareCreate,      METH_VARARGS,  "get a secret key from pieces"    },
   { "Verification",              (PyCFunction)PyDkgObject_Verification,              METH_VARARGS,  "verify recieved data"            },
   { "GetPublicKeyFromSecretKey", (PyCFunction)PyDkgObject_GetPublicKeyFromSecretKey, METH_VARARGS,  "get public key from secret key"  },
+  { "ComputeVerificationValue",  (PyCFunction)PyDkgObject_ComputeVerificationValue,  METH_VARARGS,  "compute verification value"      },
   { nullptr }
 };
 
