@@ -122,7 +122,7 @@ namespace signatures {
     libff::alt_bn128_Fq counter = libff::alt_bn128_Fq::zero();
 
     libff::alt_bn128_Fq x1(BLSutils::HashToFq(hash_byte_arr));
-    while  (true) {
+    while (true) {
       libff::alt_bn128_Fq y1_sqr = x1^3;
       y1_sqr = y1_sqr + libff::alt_bn128_coeff_b;
 

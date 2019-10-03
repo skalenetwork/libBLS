@@ -24,11 +24,14 @@
 
 #include <fstream>
 
+#include <boost/program_options.hpp>
+
+#include <libff/common/profiling.hpp>
+
 #include <bls/bls.h>
 
 #include <third_party/json.hpp>
 
-#include <boost/program_options.hpp>
 
 #include <bls/BLSPublicKey.h>
 
@@ -37,7 +40,38 @@
 
 static bool g_b_verbose_mode = false;
 
+static bool g_b_rehash = false;
+
+int char2int(char _input) {
+  if (_input >= '0' && _input <= '9')
+    return _input - '0';
+  if (_input >= 'A' && _input <= 'F')
+    return _input - 'A' + 10;
+  if (_input >= 'a' && _input <= 'f')
+    return _input - 'a' + 10;
+  return -1;
+}
+
+bool hex2carray(const char * _hex, uint64_t  *_bin_len,
+               uint8_t* _bin ) {
+  int len = strnlen(_hex, 2 * 1024);
+
+  if (len == 0 && len % 2 == 1)
+    return false;
+  *_bin_len = len / 2;
+  for (int i = 0; i < len / 2; i++) {
+    int high = char2int((char)_hex[i * 2]);
+    int low = char2int((char)_hex[i * 2 + 1]);
+    if (high < 0 || low < 0) {
+      return false;
+    }
+    _bin[i] = (unsigned char) (high * 16 + low);
+    }
+  return true;
+}
+
 void Verify(const size_t t, const size_t n, std::istream& sign_file) {
+  libff::inhibit_profiling_info = true;
   signatures::Bls bls_instance = signatures::Bls(t ,n);
 
   nlohmann::json signature;
@@ -55,10 +89,16 @@ void Verify(const size_t t, const size_t n, std::istream& sign_file) {
   hash_file >> hash_in;
 
   std::string to_be_hashed = hash_in["message"].get<std::string>();
-  std::string hash_str = cryptlite::sha256::hash_hex(to_be_hashed);
-  std::array< uint8_t, 32> hash_bytes_arr;
-  for (size_t i = 0; i < 32; i++ ){
-    hash_bytes_arr.at(i) = static_cast<uint8_t>(hash_str[i]);
+
+  auto hash_bytes_arr = std::make_shared<std::array<uint8_t, 32>>();
+  if (g_b_rehash) {
+    std::string hash_str = cryptlite::sha256::hash_hex(to_be_hashed);
+    for (size_t i = 0; i < 32; i++ ){
+      hash_bytes_arr->at(i) = static_cast<uint8_t>(hash_str[i]);
+    }
+  } else {
+    uint64_t bin_len;
+    hex2carray(to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data());
   }
 
   nlohmann::json pk_in;
@@ -72,10 +112,12 @@ void Verify(const size_t t, const size_t n, std::istream& sign_file) {
   BLSPublicKey common_pkey(std::make_shared<std::vector<std::string>>(pkey_str), t, n);
 
   if (!sign.is_well_formed()) {
-    std::cerr << "PORAZKA\n";
+    std::cout << "Bad value, signature was not verified\n";
+  } else {
+    std::cout << "Signature was verified\n";
   }
 
-  bool bRes = bls_instance.Verification(std::make_shared<std::array< uint8_t, 32>>(hash_bytes_arr) , sign, *common_pkey.getPublicKey());
+  bool bRes = bls_instance.Verification(hash_bytes_arr , sign, *common_pkey.getPublicKey());
 
   if (g_b_verbose_mode)
     std::cout << "Signature verification result: " << (bRes ? "True" : "False") << '\n';
@@ -95,7 +137,7 @@ int main(int argc, const char *argv[]) {
     ("n", boost::program_options::value<size_t>(), "Number of participants")
     ("input", boost::program_options::value<std::string>(), "Input file path with BLS signature; if not specified then use standard input")
     ("v", "Verbose mode (optional)")
-    ;
+    ("rehash", boost::program_options::value<bool>(), "if not specified, then do not hash input message");
 
     boost::program_options::variables_map vm;
     boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
@@ -115,13 +157,21 @@ int main(int argc, const char *argv[]) {
       return 0;
     }
 
-    if (vm.count("t") == 0)
-      throw std::runtime_error( "--t is missing (see --help)" );
-    if (vm.count("n") == 0)
-      throw std::runtime_error( "--n is missing (see --help)" );
+    if (vm.count("t") == 0) {
+      throw std::runtime_error("--t is missing (see --help)");
+    }
 
-    if (vm.count("v"))
+    if (vm.count("n") == 0) {
+      throw std::runtime_error("--n is missing (see --help)");
+    }
+
+    if (vm.count("v")) {
       g_b_verbose_mode = true;
+    }
+
+    if (vm.count("rehash")) {
+      g_b_verbose_mode = true;
+    }
 
     size_t t = vm["t"].as<size_t>();
     size_t n = vm["n"].as<size_t>();
@@ -132,7 +182,7 @@ int main(int argc, const char *argv[]) {
     << '\n';
 
     if( vm.count("input") ) {
-      if( g_b_verbose_mode ) 
+      if( g_b_verbose_mode )
         std::cout << "input = " << vm["input"].as<std::string>() << '\n';
       p_in = new std::ifstream( vm["input"].as<std::string>().c_str(), std::ifstream::binary);
     }
