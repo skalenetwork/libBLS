@@ -11,3 +11,5 @@ do
     exit 1
   fi
 done
+
+echo ================ test passed successfully ===============
