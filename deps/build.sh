@@ -107,11 +107,10 @@ simple_find_tool_program () { # program_name, var_name_to_export_full_path, is_o
 	exit -1
 }
 
-# MUST HAVE: make, git, cmake, autogen, automake, autopoint, pkg-config, aclocal, autoconf, autoheader, bison, flex, libtoolize
+# MUST HAVE: make, git, cmake, automake, pkg-config, aclocal, autoconf, autoheader, bison, flex, libtoolize
 
 simple_find_tool_program "aclocal" "ACLOCAL" "no"
 simple_find_tool_program "autoconf" "AUTOCONF" "no"
-#simple_find_tool_program "autogen" "AUTOGEN" "no"
 simple_find_tool_program "autoheader" "AUTOHEADER" "no"
 simple_find_tool_program "automake" "AUTOMAKE" "no"
 simple_find_tool_program "bison" "BISON" "no"
@@ -398,7 +397,7 @@ then
 	exit -1
 fi
 export CMAKE="$CMAKE -DUSE_LLVM=$USE_LLVM -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_LINKER=$LD -DCMAKE_AR=$AR -DCMAKE_OBJCOPY=$OBJCOPY -DCMAKE_OBJDUMP=$OBJDUMP -DCMAKE_RANLIB=$RANLIB -DCMAKE_NM=$NM"
-#
+
 echo -e "${COLOR_VAR_NAME}WORKING_DIR_OLD${COLOR_DOTS}........${COLOR_VAR_DESC}Started in directory${COLOR_DOTS}...................${COLOR_VAR_VAL}$WORKING_DIR_OLD${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WORKING_DIR_NEW${COLOR_DOTS}........${COLOR_VAR_DESC}Switched to directory${COLOR_DOTS}..................${COLOR_VAR_VAL}$WORKING_DIR_NEW${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}UNIX_SYSTEM_NAME${COLOR_DOTS}.......${COLOR_VAR_DESC}Building on host${COLOR_DOTS}.......................${COLOR_VAR_VAL}$UNIX_SYSTEM_NAME${COLOR_RESET}"
@@ -449,7 +448,6 @@ then
 	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}BOOST${COLOR_SEPARATOR} ========================================${COLOR_RESET}"
 	if [ ! -f "$INSTALL_ROOT/lib/libboost_system.a" ];
 	then
-		#####https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz
 		env_restore
 		cd $SOURCES_ROOT
 		if [ ! -d "boost_1_68_0" ];
@@ -465,7 +463,7 @@ then
 		cd boost_1_68_0
 		echo -e "${COLOR_INFO}configuring and building it${COLOR_DOTS}...${COLOR_RESET}"
 
-		./bootstrap.sh --prefix=$INSTALL_ROOT --with-libraries=system,thread,filesystem,regex,atomic
+		./bootstrap.sh --prefix=$INSTALL_ROOT --with-libraries=system,thread,filesystem,regex,atomic,program_options
 
 	if [ ${ARCH} = "arm" ]
 	then
