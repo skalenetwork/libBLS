@@ -111,7 +111,7 @@ simple_find_tool_program () { # program_name, var_name_to_export_full_path, is_o
 
 simple_find_tool_program "aclocal" "ACLOCAL" "no"
 simple_find_tool_program "autoconf" "AUTOCONF" "no"
-simple_find_tool_program "autogen" "AUTOGEN" "no"
+#simple_find_tool_program "autogen" "AUTOGEN" "no"
 simple_find_tool_program "autoheader" "AUTOHEADER" "no"
 simple_find_tool_program "automake" "AUTOMAKE" "no"
 simple_find_tool_program "bison" "BISON" "no"

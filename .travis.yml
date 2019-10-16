@@ -29,9 +29,6 @@ matrix:
               - sudo python -m pip install requests[security]
               - sudo python -m pip install codecov --ignore-installed
               - echo "========================================= before_script (codecov installed)"
-              - cd deps
-              - ./build.sh PARALLEL_COUNT=$(nproc)
-              - cd ..
               - mkdir -p build
               - cd build
               - cd ..
@@ -121,6 +118,9 @@ before_install:
 script:
     - echo "========================================= script (1)"
     - echo "CMAKE_BUILD_FLAGS=$CMAKE_BUILD_FLAGS"
+    - cd deps
+    - ./build.sh PARALLEL_COUNT=$(nproc)
+    - cd ..
     - mkdir -p build
     - cd build
     - cmake $CMAKE_BUILD_FLAGS ..
