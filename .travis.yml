@@ -97,22 +97,22 @@ matrix:
               - ./setup.sh || travis terminate 1
               - ./test.sh || travis terminate 1
               - cd ..
-        # - os: osx
-        #   osx_image: xcode10.1
-        #   env:
-        #     - BUILDING_FOR_OS=osx
-        #     - CMAKE_BUILD_FLAGS="-DWITH_PROCPS=OFF"
-        #     - OPENSSL_ROOT_DIR=/usr/local/opt/openssl
-        #     - LIBTOOL=glibtool
-        #   addons:
-        #       apt:
-        #           packages:
-        #               - boost
-        #               - shtool
-        #               - libtool
-        #   before_script:
-        #       - ln -s $(which glibtool) /usr/local/bin/libtool || true
-        #       - ln -s $(which glibtoolize) /usr/local/bin/libtoolize || true
+        - os: osx
+          osx_image: xcode10.1
+          env:
+            - BUILDING_FOR_OS=osx
+            - CMAKE_BUILD_FLAGS="-DWITH_PROCPS=OFF"
+            - OPENSSL_ROOT_DIR=/usr/local/opt/openssl
+            - LIBTOOL=glibtool
+          addons:
+              apt:
+                  packages:
+                      - boost
+                      - shtool
+                      - libtool
+          before_script:
+              - ln -s $(which glibtool) /usr/local/bin/libtool || true
+              - ln -s $(which glibtoolize) /usr/local/bin/libtoolize || true
 before_install:
     - eval "${MATRIX_EVAL}"
 script:
