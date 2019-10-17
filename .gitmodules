@@ -1,10 +1,11 @@
-[submodule "libff"]
-	path = libff
-	url = https://github.com/scipr-lab/libff.git
+ [submodule "libff"]
+ 	path = libff
+ 	url = https://github.com/scipr-lab/libff.git
 
-[submodule "mpir"]
-	path = mpir
-	url = https://github.com/chfast/mpir.git
-[submodule "SKALE_PBC"]
-	path = pbc
-	url = https://github.com/skalenetwork/pbc.git
+ [submodule "mpir"]
+ 	path = mpir
+ 	url = https://github.com/chfast/mpir.git
+
+ [submodule "SKALE_PBC"]
+ 	path = pbc
+ 	url = https://github.com/skalenetwork/pbc.git

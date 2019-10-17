@@ -14,6 +14,15 @@ else ()
     message(FATAL_ERROR "*** SIZEOF void * != 8, so not 64-bit - libBLS supports only 64-bit")
 endif ()
 
+set( DEPS_SOURCES_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/deps" )
+set( DEPS_INSTALL_ROOT "${DEPS_SOURCES_ROOT}/deps_inst/x86_or_x64" )
+include_directories( "${DEPS_INSTALL_ROOT}/include" ${CMAKE_BINARY_DIR}/deps/include )
+link_directories( "${DEPS_INSTALL_ROOT}/lib" )
+set( CMAKE_PREFIX_PATH "${DEPS_INSTALL_ROOT}" )
+
+find_library( GMP_LIBRARY NAMES "gmp" PATHS "${DEPS_INSTALL_ROOT}/lib" )
+find_library( GMPXX_LIBRARY NAMES "gmpxx" PATHS "${DEPS_INSTALL_ROOT}/lib" )
+
 set(HUNTER_ENABLED OFF)
 
 option(BUILD_TESTS "Build tests" ON)
@@ -53,7 +62,8 @@ set(sourses_bls
 		dkg/DKGBLSSecret.cpp
 		third_party/cryptlite/base64.cpp
 		)
-set( headers_bls
+
+set(headers_bls
 		libBLS.h
 		bls/bls.h
 		bls/BLSPrivateKeyShare.h
@@ -78,40 +88,19 @@ set(PROJECT_VERSION 0.4.0)
 add_definitions(-DBLS_VERSION=${PROJECT_VERSION})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++17 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-error=unused-variable -Wno-error=unused-parameter -Wno-error=int-in-bool-context")
 
-include_directories(${CMAKE_BINARY_DIR}/deps/include ${GMP_INCLUDE_DIR})
+include_directories(${CMAKE_BINARY_DIR}/deps/include)
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
-
-include(deps/ProjectGMP.cmake)
 
 add_library(bls ${sourses_bls} ${headers_bls})
 target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wno-error=unused-but-set-variable)
 
-find_package(Boost REQUIRED program_options system)
-find_package(OpenSSL REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
 
-if ((DEFINED BLS_WITH_SECP256K1_INCLUDE_DIR) AND (DEFINED BLS_WITH_SECP256K1_LIBRARY_DIR))
-	add_dependencies(bls secp256k1)
-else()
-	include(deps/ProjectSecp256k1.cmake)
-	set(BLS_WITH_SECP256K1_INCLUDE_DIR ${CMAKE_BINARY_DIR}/deps/include)
-	set(BLS_WITH_SECP256K1_LIBRARY_DIR ${CMAKE_BINARY_DIR}/deps/lib)
-	add_dependencies(bls secp256k1)
-endif()
-
-include_directories(${BLS_WITH_SECP256K1_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
-link_directories(${BLS_WITH_SECP256K1_LIBRARY_DIR})
+set (PROCPS procps)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(WITH_PROCPS OFF)
-endif()
-
-if( (DEFINED BLS_WITH_FF_INCLUDE_DIR) AND (DEFINED BLS_WITH_FF_LIBRARY_DIR))
-	add_dependencies(bls libff)
-else()
-	add_subdirectory(libff)
-	set(BLS_WITH_FF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libff)
-	set(BLS_WITH_FF_LIBRARY_DIR ${CMAKE_BINARY_DIR}/libff/libff)
-	add_dependencies(bls ff)
+  set(PROCPS )
 endif()
 
 message(INFO " - Using final BLS INC=${BLS_WITH_FF_INCLUDE_DIR}")
@@ -119,16 +108,15 @@ message(INFO " - Using final BLS LIB=${BLS_WITH_FF_LIBRARY_DIR}")
 include_directories(${BLS_WITH_FF_INCLUDE_DIR})
 link_directories(${BLS_WITH_FF_LIBRARY_DIR})
 
-set(BLS_INCLUDE_DIRS
-		${CMAKE_CURRENT_SOURCE_DIR}
-		${CMAKE_CURRENT_SOURCE_DIR}/bls
-		${CMAKE_CURRENT_SOURCE_DIR}/deps/include
-		${CMAKE_CURRENT_SOURCE_DIR}/libff
-		${BLS_WITH_FF_INCLUDE_DIR}
-		PARENT_SCOPE
-		)
+#set(BLS_INCLUDE_DIRS
+#		${CMAKE_CURRENT_SOURCE_DIR}
+#		${CMAKE_CURRENT_SOURCE_DIR}/bls
+#		${CMAKE_CURRENT_SOURCE_DIR}/deps/include
+#		${CMAKE_CURRENT_SOURCE_DIR}/libff
+#		${BLS_WITH_FF_INCLUDE_DIR}
+#		PARENT_SCOPE
+#		)
 
-add_dependencies(bls gmp)
 target_include_directories(bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(bls PRIVATE ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
@@ -136,39 +124,39 @@ add_subdirectory(threshold_encryption)
 
 add_executable(dkg_keygen tools/dkg_key_gen.cpp)
 target_include_directories(dkg_keygen PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(dkg_keygen PRIVATE bls Boost::program_options)
+target_link_libraries(dkg_keygen PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS})
 
 add_executable(dkg_glue tools/dkg_glue.cpp)
 target_include_directories(dkg_glue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(dkg_glue PRIVATE bls Boost::program_options)
+target_link_libraries(dkg_glue PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS})
 
 add_executable(sign_bls tools/sign_bls.cpp)
 target_include_directories(sign_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(sign_bls PRIVATE bls Boost::program_options)
+target_link_libraries(sign_bls PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS})
 
 add_executable(bls_glue tools/bls_glue.cpp)
 target_include_directories(bls_glue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(bls_glue PRIVATE bls Boost::program_options)
+target_link_libraries(bls_glue PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS})
 
 add_executable(verify_bls tools/verify_bls.cpp)
 target_include_directories(verify_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(verify_bls PRIVATE bls Boost::program_options)
+target_link_libraries(verify_bls PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS} )
 
 if(BUILD_TESTS)
 	add_executable(bls_unit_test test/unit_tests_bls.cpp)
 	target_include_directories(bls_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-	target_link_libraries(bls_unit_test PRIVATE bls)
+	target_link_libraries(bls_unit_test PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS})
 
 	add_test(NAME bls_tests COMMAND bls_unit_test)
 
 	add_executable(dkg_unit_test test/unit_tests_dkg.cpp)
 	target_include_directories(dkg_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-	target_link_libraries(dkg_unit_test PRIVATE bls)
+	target_link_libraries(dkg_unit_test PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS})
 	add_test(NAME dkg_tests COMMAND dkg_unit_test)
 
 	add_executable(bls_test test/test_bls.cpp)
 	target_include_directories(bls_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-	target_link_libraries(bls_test PRIVATE bls)
+	target_link_libraries(bls_test PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS})
 	add_test(NAME bls_test COMMAND bls_test)
 
 	add_custom_target(all_bls_tests

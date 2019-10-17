@@ -8,6 +8,8 @@ if(BUILD_TESTS)
 	enable_testing()
 endif()
 
+find_library( PBC_LIBRARY NAMES "pbc" PATHS "${DEPS_INSTALL_ROOT}/lib" )
+
 set(sources
 	threshold_encryption.cpp
     TEDecryptSet.cpp
@@ -46,16 +48,13 @@ add_library(te ${sources} ${headers})
 include_directories(${CMAKE_BINARY_DIR})
 link_directories(${CMAKE_BINARY_DIR})
 
-add_dependencies(te gmp)
 target_include_directories(te PRIVATE ${GMP_INCLUDE_DIR})
 target_link_libraries(te PRIVATE ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
-include(deps/ProjectPBC.cmake)
 
-include_directories(${CMAKE_BINARY_DIR}/deps/include ${PBC_INCLUDE_DIR})
+include_directories(${CMAKE_BINARY_DIR}/deps/include )
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 
-add_dependencies(te pbc)
 target_include_directories(te PRIVATE ${PBC_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}
 																													${THIRD_PARTY_DIR})
 target_link_libraries(te PRIVATE ${PBC_LIBRARY})
@@ -64,7 +63,7 @@ target_link_libraries(te PRIVATE ${PBC_LIBRARY})
 if (BUILD_TESTS)
 	add_executable(dkg_te_unit_test ../test/unit_tests_dkg_te.cpp)
 	target_include_directories(dkg_te_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${TEST_DIR})
-	target_link_libraries(dkg_te_unit_test PRIVATE te ${PBC_LIBRARY} ${GMP_LIBRARY})
+	target_link_libraries(dkg_te_unit_test PRIVATE te ${PBC_LIBRARY} ${GMP_LIBRARY} ${GMPXX_LIBRARY})
 
 	add_test(NAME dkg_te_tests COMMAND dkg_te_unit_test)
 
