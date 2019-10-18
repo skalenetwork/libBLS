@@ -119,6 +119,10 @@ simple_find_tool_program "flex" "FLEX" "no"
 simple_find_tool_program "make" "MAKE" "no"
 simple_find_tool_program "libtoolize" "LIBTOOLIZE" "no"
 simple_find_tool_program "pkg-config" "PKG_CONFIG" "no"
+if [ ! "$UNIX_SYSTEM_NAME" = "Darwin" ];
+then
+  simple_find_tool_program "yasm" "YASM" "no"
+fi
 simple_find_tool_program "wget" "WGET" "no"
 
 echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}PREPARE BUILD${COLOR_SEPARATOR} ================================${COLOR_RESET}"
@@ -530,64 +534,34 @@ then
 	fi
 fi
 
-# if [ "$WITH_GMP" = "yes" ];
-# then
-#   echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}GMP${COLOR_SEPARATOR} =========================================${COLOR_RESET}"
-#   if [ ! -f "$INSTALL_ROOT/lib/libgmp.a" ] || [ ! -f "$INSTALL_ROOT/lib/libgmpxx.a" ] || [ ! -f "$INSTALL_ROOT/lib/libgmp.la" ] || [ ! -f "$INSTALL_ROOT/lib/libgmpxx.la" ];
-# 	then
-#     # requiired for libff and pbc
-#     env_restore
-#     cd $SOURCES_ROOT
-#     if [ ! -d "gmp-6.1.2" ];
-#     then
-#       if [ ! -f "gmp-6.1.2.tar.xz" ];
-# 			then
-#         echo -e "${COLOR_INFO}getting it from gmp website${COLOR_DOTS}...${COLOR_RESET}"
-#         $WGET https://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz
-#       else
-#         echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
-#         tar -xf gmp-6.1.2.tar.xz
-#       fi
-#       echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-#       cd gmp-6.1.2
-#       ./configure $CONF_CROSSCOMPILING_OPTS_GENERIC $CONF_DEBUG_OPTIONS --enable-cxx --enable-static --disable-shared --prefix=$INSTALL_ROOT
-#       cd ..
-#     fi
-#     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-#     cd gmp-6.1.2
-#     $MAKE $PARALLEL_MAKE_OPTIONS
-#     $MAKE $PARALLEL_MAKE_OPTIONS install
-#     cd ..
-#     cd $SOURCES_ROOT
-#   else
-# 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
-#   fi
-# fi
-
 if [ "$WITH_GMP" = "yes" ];
 then
   echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}GMP${COLOR_SEPARATOR} =========================================${COLOR_RESET}"
-  if [ ! -f "$INSTALL_ROOT/lib/libmpir.a" ] || [ ! -f "$INSTALL_ROOT/lib/libmpirxx.a" ] || [ ! -f "$INSTALL_ROOT/lib/libmpir.la" ] || [ ! -f "$INSTALL_ROOT/lib/libmpirxx.la" ];
-  then
+  if [ ! -f "$INSTALL_ROOT/lib/libgmp.a" ] || [ ! -f "$INSTALL_ROOT/lib/libgmpxx.a" ] || [ ! -f "$INSTALL_ROOT/lib/libgmp.la" ] || [ ! -f "$INSTALL_ROOT/lib/libgmpxx.la" ];
+	then
+    # requiired for libff and pbc
     env_restore
-		cd $SOURCES_ROOT
-		if [ ! -d "mpir" ];
-		then
-			echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
-			git clone https://github.com/wbhart/mpir.git --recursive # gmp
-			echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-      cd mpir
-       ./autogen.sh && ./configure $CONF_CROSSCOMPILING_OPTS_GENERIC $CONF_DEBUG_OPTIONS --enable-cxx --enable-static --disable-shared --prefix=$INSTALL_ROOT
-    else
-      cd mpir
-		fi
+    cd $SOURCES_ROOT
+    if [ ! -d "gmp-6.1.2" ];
+    then
+      if [ ! -f "gmp-6.1.2.tar.xz" ];
+			then
+        echo -e "${COLOR_INFO}getting it from gmp website${COLOR_DOTS}...${COLOR_RESET}"
+        $WGET https://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz
+      fi
+      echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
+      tar -xf gmp-6.1.2.tar.xz
+    fi
+    cd gmp-6.1.2
+    echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+    ./configure $CONF_CROSSCOMPILING_OPTS_GENERIC $CONF_DEBUG_OPTIONS --enable-cxx --enable-static --disable-shared --prefix=$INSTALL_ROOT
     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-		$MAKE $PARALLEL_MAKE_OPTIONS
-		$MAKE $PARALLEL_MAKE_OPTIONS check
+    $MAKE $PARALLEL_MAKE_OPTIONS
     $MAKE $PARALLEL_MAKE_OPTIONS install
-		cd $SOURCES_ROOT
+    cd ..
+    cd $SOURCES_ROOT
   else
-    echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
   fi
 fi
 
@@ -602,22 +576,18 @@ then
 		then
 			echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
 			git clone https://github.com/scipr-lab/libff.git --recursive # libff
-			echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-      cd libff
-      mkdir -p build
-      cd build
-      if [ "$OSTYPE" == "darwin" ];
-      then
-        $CMAKE $CMAKE_CROSSCOMPILING_OPTS -DCMAKE_INSTALL_PREFIX=$INSTALL_ROOT -DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE .. -DWITH_PROCPS=OFF
-      else
-        $CMAKE $CMAKE_CROSSCOMPILING_OPTS -DCMAKE_INSTALL_PREFIX=$INSTALL_ROOT -DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE .. -DWITH_PROCPS=OFF
-      fi
-      cd ..
-    else
-      cd libff
 		fi
+    cd libff
+    echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+    mkdir -p build
+    cd build
+    if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
+    then
+      $CMAKE $CMAKE_CROSSCOMPILING_OPTS -DCMAKE_INSTALL_PREFIX=$INSTALL_ROOT -DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE .. -DWITH_PROCPS=OFF
+    else
+      $CMAKE $CMAKE_CROSSCOMPILING_OPTS -DCMAKE_INSTALL_PREFIX=$INSTALL_ROOT -DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE ..
+    fi
     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-		cd build
 		$MAKE $PARALLEL_MAKE_OPTIONS
 		$MAKE $PARALLEL_MAKE_OPTIONS install
 		cd $SOURCES_ROOT
@@ -640,10 +610,16 @@ then
 		fi
     echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
     cd pbc
-    libtoolize --force && aclocal && autoheader && automake --force-missing \
-                      --add-missing && autoconf && \
-                       ./configure --with-pic --enable-static \
-                      --disable-shared --prefix=$INSTALL_ROOT
+    export CFLAGS="$CFLAGS -I${INSTALL_ROOT}/include"
+    export CXXFLAGS="$CXXFLAGS -I${INSTALL_ROOT}/include"
+    export CPPFLAGS="$CPPFLAGS -I${INSTALL_ROOT}/include"
+    export LDFLAGS="$LDFLAGS -L${INSTALL_ROOT}/lib"
+    echo "    CFLAGS   = $CFLAGS"
+    echo "    CXXFLAGS = $CXXFLAGS"
+    echo "    CPPFLAGS = $CPPFLAGS"
+    echo "    LDFLAGS  = $LDFLAGS"
+    libtoolize --force && aclocal && autoheader && automake --force-missing --add-missing && autoconf
+    ./configure $CONF_CROSSCOMPILING_OPTS_GENERIC $CONF_DEBUG_OPTIONS --with-pic --enable-static --disable-shared --prefix=$INSTALL_ROOT
     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 		$MAKE $PARALLEL_MAKE_OPTIONS
 		$MAKE $PARALLEL_MAKE_OPTIONS install

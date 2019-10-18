@@ -140,7 +140,7 @@ target_link_libraries(bls_glue PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} bo
 
 add_executable(verify_bls tools/verify_bls.cpp)
 target_include_directories(verify_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(verify_bls PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS} )
+target_link_libraries(verify_bls PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS})
 
 if(BUILD_TESTS)
 	add_executable(bls_unit_test test/unit_tests_bls.cpp)
