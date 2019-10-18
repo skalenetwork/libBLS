@@ -134,7 +134,8 @@ script:
     - echo "========================================= script (1)"
     - echo "CMAKE_BUILD_FLAGS=$CMAKE_BUILD_FLAGS"
     - cd deps
-    - travis_wait ./build.sh PARALLEL_COUNT=$CPU_COUNT &> ./log_of_deps_build.txt || (cat ./log_of_deps_build.txt && travis_terminate 1)
+    - "watch -n 300 date &"
+    - ./build.sh PARALLEL_COUNT=$CPU_COUNT &> ./log_of_deps_build.txt || (cat ./log_of_deps_build.txt && travis_terminate 1)
     - cd ..
     - mkdir -p build
     - cd build
