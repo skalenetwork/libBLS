@@ -581,7 +581,7 @@ then
     echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
     mkdir -p build
     cd build
-    if [ "$OSTYPE" == "darwin" ];
+    if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
     then
       $CMAKE $CMAKE_CROSSCOMPILING_OPTS -DCMAKE_INSTALL_PREFIX=$INSTALL_ROOT -DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE .. -DWITH_PROCPS=OFF
     else
