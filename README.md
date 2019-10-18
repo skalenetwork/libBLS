@@ -48,22 +48,23 @@ libBLS has been built and tested on Ubuntu and Mac.
 GitHub is used to maintain this source code. Clone this repository by:
 
 ```bash
-git clone --recurse-submodules https://github.com/skalenetwork/libBLS.git
+git clone https://github.com/skalenetwork/libBLS.git
 cd libBLS
 ```
 
-⚠️ Note: Because this repository depends on an additional submodule, it is important to pass`--recurse-submodules` to the `git clone` command to automatically initialize and update the submodule.
+## Building Dependencies
 
-If you have already cloned the repository and forgot to pass `--recurse-submodules`, then simply execute `git submodule update --init --recursive`
+Ensure that required packages listed below are installed.
+
+Build libBLS's dependencies by:
+
+```bash
+cd deps
+bash ./build.sh
+cd ..
+```
 
 ## Building from source on Mac
-
-Ensure that the following required packages are installed:
-
--   Boost version >= 1.65.1
--   OpenSSL version >= 1.1.1
-
-Configure the project build with the following commands.
 
 ```bash
 # Configure the project and create a build directory.
@@ -79,15 +80,8 @@ Ensure that the required packages are installed by executing:
 
 ```bash
 sudo apt-get update
-sudo apt-get install -y cmake\
-    build-essential\
-    automake\
-    libprocps-dev\
-    libboost-all-dev\
-    libgmp3-dev\
-    libssl-dev\
-    flex\
-    bison
+sudo apt-get install -y automake cmake build-essential libprocps-dev libtool\
+                        pkg-config yasm texinfo autoconf flex bison
 ```
 
 Configure the project build with the following commands.
