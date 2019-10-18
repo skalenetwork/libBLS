@@ -612,9 +612,11 @@ then
     cd pbc
     export CFLAGS="$CFLAGS -I${INSTALL_ROOT}/include"
     export CXXFLAGS="$CXXFLAGS -I${INSTALL_ROOT}/include"
+    export CPPFLAGS="$CPPFLAGS -I${INSTALL_ROOT}/include"
     export LDFLAGS="$LDFLAGS -L${INSTALL_ROOT}/lib"
     echo "    CFLAGS   = $CFLAGS"
     echo "    CXXFLAGS = $CXXFLAGS"
+    echo "    CPPFLAGS = $CPPFLAGS"
     echo "    LDFLAGS  = $LDFLAGS"
     libtoolize --force && aclocal && autoheader && automake --force-missing --add-missing && autoconf
     ./configure $CONF_CROSSCOMPILING_OPTS_GENERIC $CONF_DEBUG_OPTIONS --with-pic --enable-static --disable-shared --prefix=$INSTALL_ROOT
