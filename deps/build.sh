@@ -119,7 +119,6 @@ simple_find_tool_program "flex" "FLEX" "no"
 simple_find_tool_program "make" "MAKE" "no"
 simple_find_tool_program "libtoolize" "LIBTOOLIZE" "no"
 simple_find_tool_program "pkg-config" "PKG_CONFIG" "no"
-simple_find_tool_program "texinfo" "TEXINFO" "no"
 simple_find_tool_program "yasm" "YASM" "no"
 simple_find_tool_program "wget" "WGET" "no"
 
@@ -532,64 +531,34 @@ then
 	fi
 fi
 
-# if [ "$WITH_GMP" = "yes" ];
-# then
-#   echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}GMP${COLOR_SEPARATOR} =========================================${COLOR_RESET}"
-#   if [ ! -f "$INSTALL_ROOT/lib/libgmp.a" ] || [ ! -f "$INSTALL_ROOT/lib/libgmpxx.a" ] || [ ! -f "$INSTALL_ROOT/lib/libgmp.la" ] || [ ! -f "$INSTALL_ROOT/lib/libgmpxx.la" ];
-# 	then
-#     # requiired for libff and pbc
-#     env_restore
-#     cd $SOURCES_ROOT
-#     if [ ! -d "gmp-6.1.2" ];
-#     then
-#       if [ ! -f "gmp-6.1.2.tar.xz" ];
-# 			then
-#         echo -e "${COLOR_INFO}getting it from gmp website${COLOR_DOTS}...${COLOR_RESET}"
-#         $WGET https://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz
-#       else
-#         echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
-#         tar -xf gmp-6.1.2.tar.xz
-#       fi
-#       echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-#       cd gmp-6.1.2
-#       ./configure $CONF_CROSSCOMPILING_OPTS_GENERIC $CONF_DEBUG_OPTIONS --enable-cxx --enable-static --disable-shared --prefix=$INSTALL_ROOT
-#       cd ..
-#     fi
-#     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-#     cd gmp-6.1.2
-#     $MAKE $PARALLEL_MAKE_OPTIONS
-#     $MAKE $PARALLEL_MAKE_OPTIONS install
-#     cd ..
-#     cd $SOURCES_ROOT
-#   else
-# 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
-#   fi
-# fi
-
 if [ "$WITH_GMP" = "yes" ];
 then
   echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}GMP${COLOR_SEPARATOR} =========================================${COLOR_RESET}"
-  if [ ! -f "$INSTALL_ROOT/lib/libmpir.a" ] || [ ! -f "$INSTALL_ROOT/lib/libmpirxx.a" ] || [ ! -f "$INSTALL_ROOT/lib/libmpir.la" ] || [ ! -f "$INSTALL_ROOT/lib/libmpirxx.la" ];
-  then
+  if [ ! -f "$INSTALL_ROOT/lib/libgmp.a" ] || [ ! -f "$INSTALL_ROOT/lib/libgmpxx.a" ] || [ ! -f "$INSTALL_ROOT/lib/libgmp.la" ] || [ ! -f "$INSTALL_ROOT/lib/libgmpxx.la" ];
+	then
+    # requiired for libff and pbc
     env_restore
-		cd $SOURCES_ROOT
-		if [ ! -d "mpir" ];
-		then
-			echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
-			git clone https://github.com/wbhart/mpir.git --recursive # gmp
-			echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-      cd mpir
-       ./autogen.sh && ./configure $CONF_CROSSCOMPILING_OPTS_GENERIC $CONF_DEBUG_OPTIONS --enable-cxx --enable-static --disable-shared --prefix=$INSTALL_ROOT
-    else
-      cd mpir
-		fi
+    cd $SOURCES_ROOT
+    if [ ! -d "gmp-6.1.2" ];
+    then
+      if [ ! -f "gmp-6.1.2.tar.xz" ];
+			then
+        echo -e "${COLOR_INFO}getting it from gmp website${COLOR_DOTS}...${COLOR_RESET}"
+        $WGET https://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz
+      fi
+      echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
+      tar -xf gmp-6.1.2.tar.xz
+    fi
+    cd gmp-6.1.2
+    echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+    ./configure $CONF_CROSSCOMPILING_OPTS_GENERIC $CONF_DEBUG_OPTIONS --enable-cxx --enable-static --disable-shared --prefix=$INSTALL_ROOT
     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-		$MAKE $PARALLEL_MAKE_OPTIONS
-		$MAKE $PARALLEL_MAKE_OPTIONS check
+    $MAKE $PARALLEL_MAKE_OPTIONS
     $MAKE $PARALLEL_MAKE_OPTIONS install
-		cd $SOURCES_ROOT
+    cd ..
+    cd $SOURCES_ROOT
   else
-    echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
   fi
 fi
 
