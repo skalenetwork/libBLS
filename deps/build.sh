@@ -576,22 +576,18 @@ then
 		then
 			echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
 			git clone https://github.com/scipr-lab/libff.git --recursive # libff
-			echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-      cd libff
-      mkdir -p build
-      cd build
-      if [ "$OSTYPE" == "darwin" ];
-      then
-        $CMAKE $CMAKE_CROSSCOMPILING_OPTS -DCMAKE_INSTALL_PREFIX=$INSTALL_ROOT -DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE .. -DWITH_PROCPS=OFF
-      else
-        $CMAKE $CMAKE_CROSSCOMPILING_OPTS -DCMAKE_INSTALL_PREFIX=$INSTALL_ROOT -DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE .. -DWITH_PROCPS=OFF
-      fi
-      cd ..
-    else
-      cd libff
 		fi
+    cd libff
+    echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+    mkdir -p build
+    cd build
+    if [ "$OSTYPE" == "darwin" ];
+    then
+      $CMAKE $CMAKE_CROSSCOMPILING_OPTS -DCMAKE_INSTALL_PREFIX=$INSTALL_ROOT -DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE .. -DWITH_PROCPS=OFF
+    else
+      $CMAKE $CMAKE_CROSSCOMPILING_OPTS -DCMAKE_INSTALL_PREFIX=$INSTALL_ROOT -DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE ..
+    fi
     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-		cd build
 		$MAKE $PARALLEL_MAKE_OPTIONS
 		$MAKE $PARALLEL_MAKE_OPTIONS install
 		cd $SOURCES_ROOT
@@ -616,6 +612,7 @@ then
     cd pbc
     libtoolize --force && aclocal && autoheader && automake --force-missing \
                       --add-missing && autoconf && \
+                       env CPPFLAGS='-I/${SOURCES_ROOT}/deps_inst/${ARCH}/include' LDFLAGS='-L/${SOURCES_ROOT}/deps_inst/${ARCH}/lib' \
                        ./configure --with-pic --enable-static \
                       --disable-shared --prefix=$INSTALL_ROOT
     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
