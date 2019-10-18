@@ -610,10 +610,14 @@ then
 		fi
     echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
     cd pbc
-    export CFLAGS='-I/${SOURCES_ROOT}/deps_inst/${ARCH}/include'
-    export LDFLAGS='-L/${SOURCES_ROOT}/deps_inst/${ARCH}/lib'
-    libtoolize --force && aclocal && autoheader && automake --force-missing --add-missing && autoconf && \
-                       ./configure --with-pic --enable-static --disable-shared --prefix=$INSTALL_ROOT
+    export CFLAGS="$CFLAGS -I${INSTALL_ROOT}/include"
+    export CXXFLAGS="$CXXFLAGS -I${INSTALL_ROOT}/include"
+    export LDFLAGS="$LDFLAGS -L${INSTALL_ROOT}/lib"
+    echo "    CFLAGS   = $CFLAGS"
+    echo "    CXXFLAGS = $CXXFLAGS"
+    echo "    LDFLAGS  = $LDFLAGS"
+    libtoolize --force && aclocal && autoheader && automake --force-missing --add-missing && autoconf
+    ./configure $CONF_CROSSCOMPILING_OPTS_GENERIC $CONF_DEBUG_OPTIONS --with-pic --enable-static --disable-shared --prefix=$INSTALL_ROOT
     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 		$MAKE $PARALLEL_MAKE_OPTIONS
 		$MAKE $PARALLEL_MAKE_OPTIONS install
