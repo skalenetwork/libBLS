@@ -119,6 +119,8 @@ simple_find_tool_program "flex" "FLEX" "no"
 simple_find_tool_program "make" "MAKE" "no"
 simple_find_tool_program "libtoolize" "LIBTOOLIZE" "no"
 simple_find_tool_program "pkg-config" "PKG_CONFIG" "no"
+simple_find_tool_program "texinfo" "TEXINFO" "no"
+simple_find_tool_program "yasm" "YASM" "no"
 simple_find_tool_program "wget" "WGET" "no"
 
 echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}PREPARE BUILD${COLOR_SEPARATOR} ================================${COLOR_RESET}"

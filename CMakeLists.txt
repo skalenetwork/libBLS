@@ -20,8 +20,8 @@ include_directories( "${DEPS_INSTALL_ROOT}/include" ${CMAKE_BINARY_DIR}/deps/inc
 link_directories( "${DEPS_INSTALL_ROOT}/lib" )
 set( CMAKE_PREFIX_PATH "${DEPS_INSTALL_ROOT}" )
 
-find_library( GMP_LIBRARY NAMES "gmp" PATHS "${DEPS_INSTALL_ROOT}/lib" )
-find_library( GMPXX_LIBRARY NAMES "gmpxx" PATHS "${DEPS_INSTALL_ROOT}/lib" )
+find_library( GMP_LIBRARY NAMES "mpir" PATHS "${DEPS_INSTALL_ROOT}/lib" )
+find_library( GMPXX_LIBRARY NAMES "mpirxx" PATHS "${DEPS_INSTALL_ROOT}/lib" )
 
 set(HUNTER_ENABLED OFF)
 
