@@ -14,6 +14,9 @@ else ()
     message(FATAL_ERROR "*** SIZEOF void * != 8, so not 64-bit - libBLS supports only 64-bit")
 endif ()
 
+set( BLS_DEPS_SOURCES_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/deps")
+set( BLS_DEPS_INSTALL_ROOT "${BLS_DEPS_SOURCES_ROOT}/deps_inst/x86_or_x64" PARENT_SCOPE)
+
 set( DEPS_SOURCES_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/deps" )
 set( DEPS_INSTALL_ROOT "${DEPS_SOURCES_ROOT}/deps_inst/x86_or_x64" )
 include_directories( "${DEPS_INSTALL_ROOT}/include" ${CMAKE_BINARY_DIR}/deps/include )
@@ -100,22 +103,17 @@ set (PROCPS procps)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(WITH_PROCPS OFF)
-  set(PROCPS )
+  	set(PROCPS )
 endif()
 
-message(INFO " - Using final BLS INC=${BLS_WITH_FF_INCLUDE_DIR}")
-message(INFO " - Using final BLS LIB=${BLS_WITH_FF_LIBRARY_DIR}")
-include_directories(${BLS_WITH_FF_INCLUDE_DIR})
-link_directories(${BLS_WITH_FF_LIBRARY_DIR})
-
-#set(BLS_INCLUDE_DIRS
-#		${CMAKE_CURRENT_SOURCE_DIR}
-#		${CMAKE_CURRENT_SOURCE_DIR}/bls
-#		${CMAKE_CURRENT_SOURCE_DIR}/deps/include
-#		${CMAKE_CURRENT_SOURCE_DIR}/libff
-#		${BLS_WITH_FF_INCLUDE_DIR}
-#		PARENT_SCOPE
-#		)
+set(BLS_INCLUDE_DIRS
+		${CMAKE_CURRENT_SOURCE_DIR}
+		${CMAKE_CURRENT_SOURCE_DIR}/bls
+		${DEPS_SOURCES_ROOT}
+		${DEPS_INSTALL_ROOT}
+		${CMAKE_CURRENT_SOURCE_DIR}/deps/include
+		PARENT_SCOPE
+		)
 
 target_include_directories(bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(bls PRIVATE ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
