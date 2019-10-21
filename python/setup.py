@@ -16,9 +16,9 @@ dkgpython_module = Extension('dkgpython',
                              '../deps/deps_inst/x86_or_x64/include/libff'],
 
                              library_dirs = ['../build', '../deps/deps_inst/x86_or_x64/lib',
-                             '../deps/deps_inst/x86_or_x64/lib/libff', '/usr/lib'],
+                             '../deps/deps_inst/x86_or_x64/lib/libff'],
 
-                             libraries = ['bls', 'ff', 'gmpxx', 'gmp', 'libprocps.a']
+                             libraries = ['bls', 'ff', 'gmpxx', 'gmp']
                              )
 
 setup(name = 'dkgpython',
