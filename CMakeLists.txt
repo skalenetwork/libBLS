@@ -99,12 +99,6 @@ target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wn
 
 include_directories(${Boost_INCLUDE_DIRS})
 
-set (PROCPS procps)
-
-if (WITH_PROCPS OFF)
-  set(PROCPS )
-endif()
-
 set(BLS_INCLUDE_DIRS
 		${CMAKE_CURRENT_SOURCE_DIR}
 		${CMAKE_CURRENT_SOURCE_DIR}/bls
@@ -121,43 +115,39 @@ add_subdirectory(threshold_encryption)
 
 add_executable(dkg_keygen tools/dkg_key_gen.cpp)
 target_include_directories(dkg_keygen PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(dkg_keygen PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS})
+target_link_libraries(dkg_keygen PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options)
 
 add_executable(dkg_glue tools/dkg_glue.cpp)
 target_include_directories(dkg_glue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(dkg_glue PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS})
+target_link_libraries(dkg_glue PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options)
 
 add_executable(sign_bls tools/sign_bls.cpp)
 target_include_directories(sign_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(sign_bls PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS})
+target_link_libraries(sign_bls PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options)
 
 add_executable(bls_glue tools/bls_glue.cpp)
 target_include_directories(bls_glue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(bls_glue PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS})
-
-add_executable(hash_g1 tools/hash_g1.cpp)
-target_include_directories(hash_g1 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(hash_g1 PRIVATE bls ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} boost_program_options ${PROCPS})
+target_link_libraries(bls_glue PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options)
 
 add_executable(verify_bls tools/verify_bls.cpp)
 target_include_directories(verify_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(verify_bls PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS})
+target_link_libraries(verify_bls PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options)
 
 if(BUILD_TESTS)
 	add_executable(bls_unit_test test/unit_tests_bls.cpp)
 	target_include_directories(bls_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-	target_link_libraries(bls_unit_test PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS})
+	target_link_libraries(bls_unit_test PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options)
 
 	add_test(NAME bls_tests COMMAND bls_unit_test)
 
 	add_executable(dkg_unit_test test/unit_tests_dkg.cpp)
 	target_include_directories(dkg_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-	target_link_libraries(dkg_unit_test PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS})
+	target_link_libraries(dkg_unit_test PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options)
 	add_test(NAME dkg_tests COMMAND dkg_unit_test)
 
 	add_executable(bls_test test/test_bls.cpp)
 	target_include_directories(bls_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-	target_link_libraries(bls_test PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${PROCPS})
+	target_link_libraries(bls_test PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options)
 	add_test(NAME bls_test COMMAND bls_test)
 
 	add_custom_target(all_bls_tests
