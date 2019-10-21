@@ -101,9 +101,8 @@ include_directories(${Boost_INCLUDE_DIRS})
 
 set (PROCPS procps)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	set(WITH_PROCPS OFF)
-  	set(PROCPS )
+if (WITH_PROCPS OFF)
+  set(PROCPS )
 endif()
 
 set(BLS_INCLUDE_DIRS
