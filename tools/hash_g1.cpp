@@ -92,7 +92,7 @@ void hash_g1( const size_t t, const size_t n ) {
     joG1["g1"] = nlohmann::json::object();
     joG1["g1"]["hashPoint"] = nlohmann::json::object();
     joG1["g1"]["hashPoint"]["X"] = BLSutils::ConvertToString( p2vals.first.X );
-    joG1["g1"]["hashPoint"]["Y"] = BLSutils::ConvertToString( p2vals.first.X );
+    joG1["g1"]["hashPoint"]["Y"] = BLSutils::ConvertToString( p2vals.first.Y );
     joG1["g1"]["hint"] = p2vals.second;
 
     std::ofstream g1_file( "g1.json" );
