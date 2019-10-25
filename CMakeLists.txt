@@ -16,7 +16,7 @@ endif ()
 
 if( NOT DEFINED DEPS_INSTALL_ROOT )
     set( DEPS_SOURCES_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/deps")
-    set( DEPS_INSTALL_ROOT "${DEPS_SOURCES_ROOT}/deps_inst/x86_or_x64" PARENT_SCOPE)
+    set( DEPS_INSTALL_ROOT "${DEPS_SOURCES_ROOT}/deps_inst/x86_or_x64")
 endif()
 message(INFO "---- DEPS_INSTALL_ROOT in BLS is: ${DEPS_INSTALL_ROOT}")
 
