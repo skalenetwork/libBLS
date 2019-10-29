@@ -42,8 +42,8 @@ void KeysToJson(std::shared_ptr<BLSPrivateKeyShare> skey_ptr, size_t num_signed,
   BLSPublicKeyShare pkey(*skey_ptr->getPrivateKey(), num_signed, num_all);
   std::shared_ptr<std::vector<std::string> > pkey_ptr = pkey.toString();
   std::string pkey_name = "insecureBLSPublicKey";
-  for (size_t i = 1; i < 5; i++) {
-    keys_json[pkey_name + std::to_string(i)] = pkey_ptr->at(i - 1);
+  for (size_t i = 0; i < 4; i++) {
+    keys_json[pkey_name + std::to_string(i)] = pkey_ptr->at(i);
   }
 
   std::ofstream outfile("BLS_keys" + std::to_string(num) + ".json");

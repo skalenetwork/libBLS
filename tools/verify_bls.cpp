@@ -42,6 +42,8 @@ static bool g_b_verbose_mode = false;
 
 static bool g_b_rehash = false;
 
+static bool g_b_common = true;
+
 int char2int(char _input) {
   if (_input >= '0' && _input <= '9')
     return _input - '0';
@@ -70,7 +72,7 @@ bool hex2carray(const char * _hex, uint64_t  *_bin_len,
   return true;
 }
 
-void Verify(const size_t t, const size_t n, std::istream& sign_file) {
+void Verify(const size_t t, const size_t n, std::istream& sign_file, int j = -1) {
   libff::inhibit_profiling_info = true;
   signatures::Bls bls_instance = signatures::Bls(t ,n);
 
@@ -102,27 +104,38 @@ void Verify(const size_t t, const size_t n, std::istream& sign_file) {
   }
 
   nlohmann::json pk_in;
-  std::ifstream pk_file("common_public_key.json");
-  pk_file >> pk_in;
-
   std::vector<std::string> pkey_str;
-  for ( size_t i = 0; i < 4; i++){
-    pkey_str.push_back(pk_in["insecureCommonBLSPublicKey" + std::to_string(i)]);
+  if (g_b_common) {
+    std::ifstream pk_file("common_public_key.json");
+    pk_file >> pk_in;
+
+    for ( size_t i = 0; i < 4; i++){
+      pkey_str.push_back(pk_in["insecureCommonBLSPublicKey" + std::to_string(i)]);
+    }
+  } else {
+    std::ifstream pk_file("BLS_keys" + std::to_string(j) + ".json");
+    pk_file >> pk_in;
+
+    for ( size_t i = 0; i < 4; i++){
+      pkey_str.push_back(pk_in["insecureBLSPublicKey" + std::to_string(i)]);
+    }
   }
-  BLSPublicKey common_pkey(std::make_shared<std::vector<std::string>>(pkey_str), t, n);
+
+  BLSPublicKey pkey(std::make_shared<std::vector<std::string>>(pkey_str), t, n);
 
   if (!sign.is_well_formed()) {
     std::cout << "Bad value, signature was not verified\n";
-  } else {
-    std::cout << "Signature was verified\n";
   }
 
-  bool bRes = bls_instance.Verification(hash_bytes_arr , sign, *common_pkey.getPublicKey());
+  bool bRes = bls_instance.Verification(hash_bytes_arr , sign, *pkey.getPublicKey());
 
-  if (g_b_verbose_mode)
+  if (g_b_verbose_mode) {
     std::cout << "Signature verification result: " << (bRes ? "True" : "False") << '\n';
-  if (!bRes)
+  }
+  
+  if (!bRes) {
     throw std::runtime_error("Signature verification failed");
+  }
 }
 
 int main(int argc, const char *argv[]) {
@@ -136,8 +149,9 @@ int main(int argc, const char *argv[]) {
     ("t", boost::program_options::value<size_t>(), "Threshold")
     ("n", boost::program_options::value<size_t>(), "Number of participants")
     ("input", boost::program_options::value<std::string>(), "Input file path with BLS signature; if not specified then use standard input")
+    ("j", boost::program_options::value<size_t>(), "if not specified then common public key will be verified, otherwise - single public key from j-th node (optional)")
     ("v", "Verbose mode (optional)")
-    ("rehash", boost::program_options::value<bool>(), "if not specified, then do not hash input message");
+    ("rehash", "if not specified, then do not hash input message");
 
     boost::program_options::variables_map vm;
     boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
@@ -182,12 +196,28 @@ int main(int argc, const char *argv[]) {
     << '\n';
 
     if( vm.count("input") ) {
-      if( g_b_verbose_mode )
+      if( g_b_verbose_mode ) {
         std::cout << "input = " << vm["input"].as<std::string>() << '\n';
+      }
       p_in = new std::ifstream( vm["input"].as<std::string>().c_str(), std::ifstream::binary);
     }
 
-    Verify(t, n, *p_in);
+    size_t j = 0;
+    if (vm.count("j")) {
+      g_b_common = false;
+      j = vm["j"].as<size_t>();
+
+      if (g_b_verbose_mode) {
+        std::cout << "signature from " << j << "-th node is going to be verified" << '\n';
+      }
+    }
+
+    if (!g_b_common) {
+      Verify(t, n, *p_in, j);
+    } else {
+      Verify(t, n, *p_in);
+    }
+
     r = 0; // success
   } catch ( std::exception & ex ) {
     r = 1;
