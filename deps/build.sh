@@ -116,7 +116,7 @@ simple_find_tool_program "bison" "BISON" "no"
 simple_find_tool_program "cmake" "CMAKE" "no"
 simple_find_tool_program "flex" "FLEX" "no"
 simple_find_tool_program "make" "MAKE" "no"
-if [ ! "$UNIX_SYSTEM_NAME" = "Darwin"];
+if [ ! "$UNIX_SYSTEM_NAME" = "Darwin" ];
 then
 	simple_find_tool_program "libtoolize" "LIBTOOLIZE" "no"
 else
