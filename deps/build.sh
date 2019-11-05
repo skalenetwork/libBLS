@@ -108,7 +108,6 @@ simple_find_tool_program () { # program_name, var_name_to_export_full_path, is_o
 }
 
 # MUST HAVE: make, git, cmake, automake, pkg-config, aclocal, autoconf, autoheader, bison, flex, libtoolize, yasm, texinfo
-
 simple_find_tool_program "aclocal" "ACLOCAL" "no"
 simple_find_tool_program "autoconf" "AUTOCONF" "no"
 simple_find_tool_program "autoheader" "AUTOHEADER" "no"
