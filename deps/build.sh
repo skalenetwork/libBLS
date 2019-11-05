@@ -108,7 +108,6 @@ simple_find_tool_program () { # program_name, var_name_to_export_full_path, is_o
 }
 
 # MUST HAVE: make, git, cmake, automake, pkg-config, aclocal, autoconf, autoheader, bison, flex, libtoolize, yasm, texinfo
-
 simple_find_tool_program "aclocal" "ACLOCAL" "no"
 simple_find_tool_program "autoconf" "AUTOCONF" "no"
 simple_find_tool_program "autoheader" "AUTOHEADER" "no"
@@ -117,7 +116,12 @@ simple_find_tool_program "bison" "BISON" "no"
 simple_find_tool_program "cmake" "CMAKE" "no"
 simple_find_tool_program "flex" "FLEX" "no"
 simple_find_tool_program "make" "MAKE" "no"
-simple_find_tool_program "libtoolize" "LIBTOOLIZE" "no"
+if [ ! "$UNIX_SYSTEM_NAME" = "Darwin" ];
+then
+	simple_find_tool_program "libtoolize" "LIBTOOLIZE" "no"
+else
+	simple_find_tool_program "glibtoolize" "LIBTOOLIZE" "no"
+fi
 simple_find_tool_program "pkg-config" "PKG_CONFIG" "no"
 if [ ! "$UNIX_SYSTEM_NAME" = "Darwin" ];
 then
@@ -415,6 +419,7 @@ echo -e "${COLOR_VAR_NAME}PREDOWNLOADED_ROOT${COLOR_DOTS}.....${COLOR_VAR_DESC}P
 echo -e "${COLOR_VAR_NAME}INSTALL_ROOT${COLOR_DOTS}...........${COLOR_VAR_DESC}Install directory(prefix)${COLOR_DOTS}..............${COLOR_VAR_VAL}$INSTALL_ROOT${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}PARALLEL_COUNT${COLOR_DOTS}................................................${COLOR_VAR_VAL}$PARALLEL_COUNT${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}PARALLEL_MAKE_OPTIONS${COLOR_DOTS}.........................................${COLOR_VAR_VAL}$PARALLEL_MAKE_OPTIONS${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}LIBTOOLIZE${COLOR_DOTS}....................................................${COLOR_VAR_VAL}$LIBTOOLIZE${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}CC${COLOR_DOTS}............................................................${COLOR_VAR_VAL}$CC${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}CXX${COLOR_DOTS}...........................................................${COLOR_VAR_VAL}$CXX${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}MAKE${COLOR_DOTS}..........................................................${COLOR_VAR_VAL}$MAKE${COLOR_RESET}"
@@ -613,7 +618,7 @@ then
     echo "    CXXFLAGS = $CXXFLAGS"
     echo "    CPPFLAGS = $CPPFLAGS"
     echo "    LDFLAGS  = $LDFLAGS"
-    libtoolize --force && aclocal && autoheader && automake --force-missing --add-missing && autoconf
+    $LIBTOOLIZE --force && aclocal && autoheader && automake --force-missing --add-missing && autoconf
     ./configure $CONF_CROSSCOMPILING_OPTS_GENERIC $CONF_DEBUG_OPTIONS --with-pic --enable-static --disable-shared --prefix=$INSTALL_ROOT
     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 		$MAKE $PARALLEL_MAKE_OPTIONS
