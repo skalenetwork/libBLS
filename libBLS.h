@@ -16,7 +16,7 @@
   You should have received a copy of the GNU Affero General Public License
   along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-  @file TEPrivateKeyShare.h
+  @file libBLS.h
   @author Sveta Rogova
   @date 2019
 */

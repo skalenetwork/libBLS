@@ -35,7 +35,7 @@ Encryption process is running running as follows:
 3.  Decryption
 4.  Verifying and combining shares
 
-You can learn more about the algebraic structures used in this algorithm in [Ben Lynn’s PhD Dissertation](https://crypto.stanford.edu/pbc/thesis.html). libBLS uses the TYPE A curve for symmetric billinear pairing.
+You can learn more about the algebraic structures used in this algorithm in [Ben Lynn’s PhD Dissertation](https://crypto.stanford.edu/pbc/thesis.html). libBLS uses a modified [Ben Lynn's pbc library](https://github.com/skalenetwork/pbc) with memory corruption bug fixed and the TYPE A curve for symmetric billinear pairing.
 
 ## Perfomance Specifications
 
@@ -67,6 +67,7 @@ cd ..
 ## Building from source on Mac
 
 ```bash
+brew install flex bison glibtool automake cmake pkg-config yasm
 # Configure the project and create a build directory.
 cmake -H. -Bbuild
 
@@ -442,7 +443,7 @@ for (size_t i = 0; i < num_all; i++)      // Verifying shares for each participa
 ## Libraries
 
 -   [libff by SCIPR-LAB](http://www.scipr-lab.org/)
--   [pbc by Ben Lynn](https://crypto.stanford.edu/pbc/)
+-   [pbc by Ben Lynn](https://crypto.stanford.edu/pbc/) with modifications from SKALE Labs
 
 ## Contributing
 
