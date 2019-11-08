@@ -282,20 +282,16 @@ static PyObject* PyDkgObject_GetPublicKeyFromSecretKey(struct PyDkgObject* self,
 
   PyObject* pFirstCoord = PyTuple_New(2);
   PyObject* pSecondCoord = PyTuple_New(2);
-  PyObject* pThirdCoord = PyTuple_New(2);
 
   PyTuple_SET_ITEM(pFirstCoord,  0, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(public_key.X.c0).c_str()));
   PyTuple_SET_ITEM(pFirstCoord,  1, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(public_key.X.c1).c_str()));
   PyTuple_SET_ITEM(pSecondCoord, 0, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(public_key.Y.c0).c_str()));
   PyTuple_SET_ITEM(pSecondCoord, 1, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(public_key.Y.c1).c_str()));
-  PyTuple_SET_ITEM(pThirdCoord,  0, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(public_key.Z.c0).c_str()));
-  PyTuple_SET_ITEM(pThirdCoord,  1, MakePythonString(BLSutils::ConvertToString<libff::alt_bn128_Fq>(public_key.Z.c1).c_str()));
 
 
-  PyObject* pyPublicKey = PyList_New(3);
+  PyObject* pyPublicKey = PyList_New(2);
   PyList_SetItem(pyPublicKey, 0, pFirstCoord);
   PyList_SetItem(pyPublicKey, 1, pSecondCoord);
-  PyList_SetItem(pyPublicKey, 2, pThirdCoord);
 
   return pyPublicKey;
 }
