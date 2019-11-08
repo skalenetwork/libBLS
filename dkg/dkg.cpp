@@ -118,6 +118,7 @@ namespace signatures {
 
   libff::alt_bn128_G2 Dkg::GetPublicKeyFromSecretKey(const libff::alt_bn128_Fr& secret_key) {
     libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
+    public_key.to_affine_coordinates();
 
     return public_key;
   }
