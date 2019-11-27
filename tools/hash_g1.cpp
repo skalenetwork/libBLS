@@ -82,7 +82,9 @@ void hash_g1( const size_t t, const size_t n ) {
         }
     } else {
         uint64_t bin_len;
-        hex2carray( to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data() );
+        if (!hex2carray( to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data() )){
+            throw std::runtime_error("Invalid hash");
+        }
     }
 
     std::pair< libff::alt_bn128_G1, std::string > p2vals;
@@ -112,7 +114,7 @@ int main( int argc, const char* argv[] ) {
         desc.add_options()( "help", "Show this help screen" )( "version", "Show version number" )(
             "t", boost::program_options::value< size_t >(), "Threshold" )(
             "n", boost::program_options::value< size_t >(), "Number of participants" )(
-            "v", "Verbose mode (optional)" )( "rehash", boost::program_options::value< bool >(),
+            "v", "Verbose mode (optional)" )( "rehash",
             "if not specified, then do not hash input message" );
 
         boost::program_options::variables_map vm;
@@ -147,7 +149,7 @@ int main( int argc, const char* argv[] ) {
         }
 
         if ( vm.count( "rehash" ) ) {
-            g_b_verbose_mode = true;
+            g_b_rehash = true;
         }
 
         size_t t = vm["t"].as< size_t >();
