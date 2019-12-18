@@ -167,7 +167,7 @@ namespace signatures {
 
     std::cout << from_bytes << '\n';
 
-    libff::alt_bn128_G1 hash = this->Hashing(from_bytes, *hash_func);
+    libff::alt_bn128_G1 hash = Hashing(from_bytes, *hash_func);
 
     return hash;
   }
@@ -205,14 +205,14 @@ namespace signatures {
       throw std::runtime_error("Error, signature is invalid");
     }
 
-    libff::alt_bn128_G1 hash = this->Hashing(to_be_hashed);
+    libff::alt_bn128_G1 hash = Hashing(to_be_hashed);
 
     return (libff::alt_bn128_ate_reduced_pairing(sign, libff::alt_bn128_G2::one()) ==
       libff::alt_bn128_ate_reduced_pairing(hash, public_key));
         // there are several types of pairing, it does not matter which one is chosen for verification
   }
 
-  bool Bls::Verification(std::shared_ptr< std::array< uint8_t, 32>> hash_byte_arr, const libff::alt_bn128_G1 sign,
+  bool Bls::Verification(std::shared_ptr< std::array< uint8_t, 32> > hash_byte_arr, const libff::alt_bn128_G1 sign,
    const libff::alt_bn128_G2 public_key) {
         // verifies that a given signature corresponds to given public key
 
@@ -224,7 +224,7 @@ namespace signatures {
       throw std::runtime_error("Error, signature is invalid");
     }
 
-    libff::alt_bn128_G1 hash = this->HashtoG1(hash_byte_arr);
+    libff::alt_bn128_G1 hash = HashtoG1(hash_byte_arr);
 
     return (libff::alt_bn128_ate_reduced_pairing(sign, libff::alt_bn128_G2::one()) ==
       libff::alt_bn128_ate_reduced_pairing(hash, public_key));

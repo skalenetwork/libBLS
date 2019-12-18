@@ -100,7 +100,9 @@ void Verify(const size_t t, const size_t n, std::istream& sign_file, int j = -1)
     }
   } else {
     uint64_t bin_len;
-    hex2carray(to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data());
+    if (!hex2carray(to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data())) {
+      throw std::runtime_error("Invalid hash");
+    }
   }
 
   nlohmann::json pk_in;
@@ -135,6 +137,8 @@ void Verify(const size_t t, const size_t n, std::istream& sign_file, int j = -1)
   
   if (!bRes) {
     throw std::runtime_error("Signature verification failed");
+  } else {
+    std::cout << "Verification passed\n";
   }
 }
 
@@ -184,7 +188,7 @@ int main(int argc, const char *argv[]) {
     }
 
     if (vm.count("rehash")) {
-      g_b_verbose_mode = true;
+      g_b_rehash = true;
     }
 
     size_t t = vm["t"].as<size_t>();

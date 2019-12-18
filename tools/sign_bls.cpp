@@ -84,7 +84,9 @@ void Sign(const size_t t, const size_t n, std::istream& data_file,
     }
   } else {
     uint64_t bin_len;
-    hex2carray(message.c_str(), &bin_len, hash_bytes_arr->data());
+    if (!hex2carray(message.c_str(), &bin_len, hash_bytes_arr->data())) {
+      throw std::runtime_error("Invalid hash");
+    }
   }
 
   libff::alt_bn128_G1 hash = bls_instance.HashtoG1(hash_bytes_arr);
@@ -168,7 +170,7 @@ int main(int argc, const char *argv[]) {
     ("output", boost::program_options::value<std::string>(),
       "Output file path to save signature to; if not specified for common signature then use standard output;")
     ("v", "Verbose mode (optional)")
-    ("rehash", boost::program_options::value<bool>(), "if not specified, then do not hash input message");
+    ("rehash", "if not specified, then do not hash input message");
 
     boost::program_options::variables_map vm;
     boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
@@ -204,7 +206,7 @@ int main(int argc, const char *argv[]) {
     }
 
     if (vm.count("rehash")) {
-      g_b_verbose_mode = true;
+      g_b_rehash = true;
     }
 
     size_t t = vm["t"].as<size_t>();

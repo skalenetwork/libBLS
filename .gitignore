@@ -6,3 +6,6 @@ gmp-6.1.2
 *.user
 .idea
 .vscode
+
+deps/*
+!deps/build.sh
