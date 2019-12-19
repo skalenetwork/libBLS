@@ -49,39 +49,17 @@ std::pair<libff::alt_bn128_Fq, libff::alt_bn128_Fq> BLSutils::ParseHint(std::str
 }
 
 libff::alt_bn128_Fq BLSutils::HashToFq (std::shared_ptr<std::array< uint8_t, 32>> hash_byte_arr){
-  std::string hash_str;
+  libff::bigint<libff::alt_bn128_q_limbs> from_hex;
+  
+  unsigned char* hex = new unsigned char [64];
   for (size_t i = 0; i < 32; ++i) {
-    char sym = static_cast<int>(hash_byte_arr->at(i)) % 16 > 9 ?
-                static_cast<char>(static_cast<int>(hash_byte_arr->at(i)) % 16 + 87) :
-                static_cast<char>(static_cast<int>(hash_byte_arr->at(i)) % 16 + 48);
-
-    char sym1 = static_cast<int>(hash_byte_arr->at(i)) / 16 > 9 ?
-                static_cast<char>(static_cast<int>(hash_byte_arr->at(i)) / 16 + 87) :
-                static_cast<char>(static_cast<int>(hash_byte_arr->at(i)) / 16 + 48);
-
-    std::string cur_byte_str = "00";
-    cur_byte_str[0] = sym1;
-    cur_byte_str[1] = sym;
-    hash_str += cur_byte_str;
+    hex[2 * i] = static_cast<int>(hash_byte_arr->at(i)) / 16;
+    hex[2 * i + 1] = static_cast<int>(hash_byte_arr->at(i)) % 16;
   }
+  mpn_set_str(from_hex.data, hex, 64, 16);
+  delete[] hex;
 
-  mpz_t modulus_q;
-  mpz_init(modulus_q);
-  mpz_set_str(modulus_q, "21888242871839275222246405745257275088696311157297823662689037894645226208583", 10);
-
-  mpz_t from_hex;
-  mpz_init(from_hex);
-  mpz_set_str(from_hex, hash_str.c_str(), 16);
-
-  mpz_t ret;
-  mpz_init(ret);
-  mpz_mod(ret, from_hex, modulus_q);
-
-  libff::alt_bn128_Fq ret_val(ret);
-
-  mpz_clear(from_hex);
-  mpz_clear(modulus_q);
-  mpz_clear(ret);
+  libff::alt_bn128_Fq ret_val(from_hex);
 
   return ret_val;
 }
