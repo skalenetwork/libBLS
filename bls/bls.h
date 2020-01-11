@@ -42,7 +42,43 @@ static constexpr size_t BLS_MAX_SIG_LEN = 240;
 namespace signatures {
 
 class Bls {
+ private:
+    class BlsException : std::exception {
+      protected:
+         std::string what_str;
+      
+      public:
+         BlsException(const std::string& err_str) {
+            what_str = err_str;
+         }
+
+         virtual const char* what() const noexcept override { return what_str.c_str(); }
+       
+    };
+
  public:
+    class IsNotWellFormed : public BlsException {
+       public:
+         IsNotWellFormed(const std::string& err_str) : BlsException(err_str) {
+            what_str = "IsNotWellFormedData : " + err_str;
+         }
+    };
+
+    class ZeroSecretKey : public BlsException {
+       public:
+         ZeroSecretKey(const std::string& err_str) : BlsException(err_str) {
+            what_str = "Secret key is equal to zero : " + err_str;
+         }
+    };
+
+    class IncorrectInput : public BlsException {
+       public:
+         IncorrectInput(const std::string& err_str) : BlsException(err_str) {
+            what_str = "Failed to proceed data : " + err_str;
+         }
+    };
+
+
     Bls(const size_t t, const size_t n);
 
     std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> KeyGeneration();

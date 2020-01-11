@@ -50,16 +50,9 @@ BOOST_AUTO_TEST_CASE(zeroSecretKey) {
 
   std::string message = "Waiting for exception";
 
-  bool is_exception_caught = false;
-  try {
-    libff::alt_bn128_G1 hash = obj.Hashing(message);
-    libff::alt_bn128_G1 signature = obj.Signing(hash, secret_key);
-    obj.Verification(message, signature, public_key);
-  } catch (std::runtime_error&) {
-    is_exception_caught = true;
-  }
+  libff::alt_bn128_G1 hash = obj.Hashing(message);
 
-  BOOST_REQUIRE(is_exception_caught);
+  BOOST_REQUIRE_THROW(obj.Signing(hash, secret_key), signatures::Bls::ZeroSecretKey);
 
   std::cout << "DONE\n";
 }
@@ -566,107 +559,67 @@ BOOST_AUTO_TEST_CASE(SignVerification) {
   signatures::Bls obj (num_signed, num_all);
   signatures::Bls obj_2_2 (2, 2);
 
-  bool is_exception_caught = false;     // sign is not from G1
-  try {
-    libff::alt_bn128_G1 sign;
-    sign.X = libff::alt_bn128_Fq("123");
-    sign.Y = libff::alt_bn128_Fq("234");
-    sign.Z = libff::alt_bn128_Fq("345");
-    obj.Verification("bla-bla-bla", sign, libff::alt_bn128_G2::random_element());
-  }
-  catch (std::runtime_error &) {
-    is_exception_caught = true;
-  }
-  BOOST_REQUIRE(is_exception_caught);
+  bool is_exception_caught = false;
 
-  is_exception_caught = false;    // public key is not from G1
-  try {
-    libff::alt_bn128_G2 pkey = libff::alt_bn128_G2::random_element();
-    pkey.X.c1 = 123;
-    obj.Verification("bla-bla-bla", libff::alt_bn128_G1::random_element(), pkey);
-  }
-  catch (std::runtime_error &) {
-    is_exception_caught = true;
-  }
-  BOOST_REQUIRE(is_exception_caught);
+  libff::alt_bn128_G1 sign;
+  sign.X = libff::alt_bn128_Fq("123");
+  sign.Y = libff::alt_bn128_Fq("234");
+  sign.Z = libff::alt_bn128_Fq("345");
 
-  is_exception_caught = false;       // not enough participants
-  try {
-    std::vector<libff::alt_bn128_Fr> coeffs;
-    coeffs.push_back(libff::alt_bn128_Fr::random_element());
-    std::vector<libff::alt_bn128_Fr> shares;
-    shares.push_back(libff::alt_bn128_Fr::random_element());
-    obj.KeysRecover(coeffs, shares);
-  }
-  catch (std::runtime_error &) {
-    is_exception_caught = true;
-  }
-  BOOST_REQUIRE(is_exception_caught);
+  BOOST_REQUIRE_THROW(obj.Verification("bla-bla-bla", sign, libff::alt_bn128_G2::random_element()), signatures::Bls::IsNotWellFormed);
 
-  is_exception_caught = false;      // one share is zero
-  try {
-    std::vector<libff::alt_bn128_Fr> coeffs;
-    coeffs.push_back(libff::alt_bn128_Fr::random_element());
-    coeffs.push_back(libff::alt_bn128_Fr::random_element());
-    std::vector<libff::alt_bn128_Fr> shares;
-    shares.push_back(libff::alt_bn128_Fr::random_element());
-    shares.push_back(libff::alt_bn128_Fr::zero());
-    obj_2_2.KeysRecover(coeffs, shares);
-  }
-  catch (std::runtime_error &) {
-    is_exception_caught = true;
-  }
-  BOOST_REQUIRE(is_exception_caught);
+  libff::alt_bn128_G2 pkey = libff::alt_bn128_G2::random_element();
+  pkey.X.c1 = 123;
 
-  is_exception_caught = false;       // not enough participants
-  try {
-    std::vector<libff::alt_bn128_Fr> coeffs;
-    coeffs.push_back(libff::alt_bn128_Fr::random_element());
-    std::vector<libff::alt_bn128_G1> shares;
-    shares.push_back(libff::alt_bn128_G1::random_element());
-    obj.SignatureRecover(shares, coeffs);
-  }
-  catch (std::runtime_error &) {
-    is_exception_caught = true;
-  }
-  BOOST_REQUIRE(is_exception_caught);
+  BOOST_REQUIRE_THROW(obj.Verification("bla-bla-bla", libff::alt_bn128_G1::random_element(), pkey), signatures::Bls::IsNotWellFormed);
 
-  is_exception_caught = false;      // one share is not from G1
-  try {
-    std::vector<libff::alt_bn128_Fr> coeffs;
-    coeffs.push_back(libff::alt_bn128_Fr::random_element());
-    coeffs.push_back(libff::alt_bn128_Fr::random_element());
-    std::vector<libff::alt_bn128_G1> shares;
-    shares.push_back(libff::alt_bn128_G1::random_element());
-    libff::alt_bn128_G1 g1_spoiled = libff::alt_bn128_G1::random_element();
-    g1_spoiled.Y = 257;
-    shares.push_back(g1_spoiled);
-    obj_2_2.SignatureRecover(shares, coeffs);
-  }
-  catch (std::runtime_error &) {
-    is_exception_caught = true;
-  }
-  BOOST_REQUIRE(is_exception_caught);
+  std::vector<libff::alt_bn128_Fr> coeffs;
+  coeffs.push_back(libff::alt_bn128_Fr::random_element());
+  std::vector<libff::alt_bn128_Fr> shares;
+  shares.push_back(libff::alt_bn128_Fr::random_element());
 
-  is_exception_caught = false;
-  try {
-       std::vector<size_t> idx = {1};
-       obj.LagrangeCoeffs(idx);
-  }
-  catch (std::runtime_error &) {
-       is_exception_caught = true;
-  }
-  BOOST_REQUIRE(is_exception_caught);
+  BOOST_REQUIRE_THROW(obj.KeysRecover(coeffs, shares), signatures::Bls::IncorrectInput);
 
-  is_exception_caught = false;
-  try {
-    std::vector<size_t> idx = {1,1};
-    obj_2_2.LagrangeCoeffs(idx);
-  }
-  catch (std::runtime_error &) {
-    is_exception_caught = true;
-  }
-  BOOST_REQUIRE(is_exception_caught);
+  coeffs.clear();
+  shares.clear();
+
+  coeffs.push_back(libff::alt_bn128_Fr::random_element());
+  coeffs.push_back(libff::alt_bn128_Fr::random_element());
+
+  shares.push_back(libff::alt_bn128_Fr::random_element());
+  shares.push_back(libff::alt_bn128_Fr::zero());
+
+  BOOST_REQUIRE_THROW(obj_2_2.KeysRecover(coeffs, shares), signatures::Bls::ZeroSecretKey);
+
+  coeffs.clear();
+  coeffs.push_back(libff::alt_bn128_Fr::random_element());
+
+  std::vector<libff::alt_bn128_G1> sig_shares;
+  sig_shares.push_back(libff::alt_bn128_G1::random_element());
+
+  BOOST_REQUIRE_THROW(obj.SignatureRecover(sig_shares, coeffs), signatures::Bls::IncorrectInput);
+
+  coeffs.clear();
+  sig_shares.clear();
+
+  coeffs.push_back(libff::alt_bn128_Fr::random_element());
+  coeffs.push_back(libff::alt_bn128_Fr::random_element());
+
+  sig_shares.push_back(libff::alt_bn128_G1::random_element());
+  libff::alt_bn128_G1 g1_spoiled = libff::alt_bn128_G1::random_element();
+  g1_spoiled.Y = 257;
+  sig_shares.push_back(g1_spoiled);
+
+  BOOST_REQUIRE_THROW(obj_2_2.SignatureRecover(sig_shares, coeffs), signatures::Bls::IsNotWellFormed);
+
+  std::vector<size_t> idx = {1};
+
+  BOOST_REQUIRE_THROW(obj.LagrangeCoeffs(idx), signatures::Bls::IncorrectInput);
+
+  idx.clear();
+  idx = {1,1};
+  
+  BOOST_REQUIRE_THROW(obj_2_2.LagrangeCoeffs(idx), signatures::Bls::IncorrectInput);
 
   std::cerr << "Exceptions test passed" << std::endl;
 }

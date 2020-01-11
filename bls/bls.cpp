@@ -33,6 +33,7 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 #include <boost/multiprecision/cpp_int.hpp>
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pairing.hpp>
 #include <libff/algebra/exponentiation/exponentiation.hpp>
+#include <libff/common/profiling.hpp>
 
 #include <bls/BLSutils.h>
 
@@ -178,7 +179,7 @@ namespace signatures {
         // implemented constant time signing
 
     if (secret_key == libff::alt_bn128_Fr::zero()) {
-      throw std::runtime_error("Error, secret key share is equal to zero");
+      throw ZeroSecretKey("failed to sign a message hash");
     }
 
     std::clock_t c_start = std::clock();  // hash
@@ -196,13 +197,19 @@ namespace signatures {
   bool Bls::Verification(const std::string &to_be_hashed, const libff::alt_bn128_G1 sign,
    const libff::alt_bn128_G2 public_key) {
         // verifies that a given signature corresponds to given public key
+    
+    libff::inhibit_profiling_info = true;
 
-    if (!sign.is_well_formed() || !public_key.is_well_formed()) {
-      throw std::runtime_error("Error, incorrect input data to verify signature");
+    if (!sign.is_well_formed()) {
+      throw IsNotWellFormed("Error, signature does not lie on the alt_bn128 curve");
+    }
+
+    if (!public_key.is_well_formed()) {
+      throw IsNotWellFormed("Error, public key is invalid");
     }
 
     if (libff::alt_bn128_modulus_r * sign != libff::alt_bn128_G1::zero()) {
-      throw std::runtime_error("Error, signature is invalid");
+      throw IsNotWellFormed("Error, signature is not member of G1");
     }
 
     libff::alt_bn128_G1 hash = Hashing(to_be_hashed);
@@ -215,13 +222,19 @@ namespace signatures {
   bool Bls::Verification(std::shared_ptr< std::array< uint8_t, 32> > hash_byte_arr, const libff::alt_bn128_G1 sign,
    const libff::alt_bn128_G2 public_key) {
         // verifies that a given signature corresponds to given public key
+    
+    libff::inhibit_profiling_info = true;
 
-    if (!sign.is_well_formed() || !public_key.is_well_formed()) {
-      throw std::runtime_error("Error, incorrect input data to verify signature");
+    if (!sign.is_well_formed()) {
+      throw IsNotWellFormed("Error, signature does not lie on the alt_bn128 curve");
+    }
+
+    if (!public_key.is_well_formed()) {
+      throw IsNotWellFormed("Error, public key is invalid");
     }
 
     if (libff::alt_bn128_modulus_r * sign != libff::alt_bn128_G1::zero()) {
-      throw std::runtime_error("Error, signature is invalid");
+      throw IsNotWellFormed("Error, signature is not member of G1");
     }
 
     libff::alt_bn128_G1 hash = HashtoG1(hash_byte_arr);
@@ -235,14 +248,14 @@ namespace signatures {
     const std::vector<libff::alt_bn128_Fr> &coeffs,
     const std::vector<libff::alt_bn128_Fr> &shares) {
     if (shares.size() < this->t_ || coeffs.size() < this->t_) {
-      throw std::runtime_error("Error, not enough participants in the threshold group");
+      throw IncorrectInput("not enough participants in the threshold group");
     }
 
     libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::zero();
 
     for (size_t i = 0; i < this->t_; ++i) {
       if (shares[i] == libff::alt_bn128_Fr::zero()) {
-        throw std::runtime_error("Error, at least one secret key share is equal to zero");
+        throw ZeroSecretKey("at least one secret key share is equal to zero in KeysRecover group");
       }
       secret_key += coeffs[i] * shares[i];  // secret key recovering using Lagrange Interpolation
     }
@@ -255,14 +268,14 @@ namespace signatures {
   libff::alt_bn128_G1 Bls::SignatureRecover(const std::vector<libff::alt_bn128_G1> &shares,
     const std::vector<libff::alt_bn128_Fr> &coeffs) {
     if (shares.size() < this->t_ || coeffs.size() < this->t_) {
-      throw std::runtime_error("Error, not enough participants in the threshold group");
+      throw IncorrectInput("not enough participants in the threshold group");
     }
 
     libff::alt_bn128_G1 sign = libff::alt_bn128_G1::zero();
 
     for (size_t i = 0; i < this->t_; ++i) {
       if (!shares[i].is_well_formed()) {
-        throw std::runtime_error("Error, incorrect input data to recover signature");
+        throw IsNotWellFormed("incorrect input data to recover signature");
       }
       sign = sign + coeffs[i] * shares[i];  // signature recovering using Lagrange Coefficients
     }
@@ -272,7 +285,7 @@ namespace signatures {
 
   std::vector<libff::alt_bn128_Fr> Bls::LagrangeCoeffs(const std::vector<size_t> &idx) {
     if (idx.size() < this->t_) {
-      throw std::runtime_error("Error, not enough participants in the threshold group");
+      throw IncorrectInput("not enough participants in the threshold group");
     }
 
     std::vector<libff::alt_bn128_Fr> res(this->t_);
@@ -290,8 +303,8 @@ namespace signatures {
         if (j != i) {
           if (libff::alt_bn128_Fr(idx[i]) ==
             libff::alt_bn128_Fr(idx[j])) {
-            throw std::runtime_error(
-              "Error during the interpolation, have same indexes in list of indexes");
+            throw IncorrectInput(
+              "during the interpolation, have same indexes in list of indexes");
           }
 
           v *= (libff::alt_bn128_Fr(idx[j]) -
