@@ -133,13 +133,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
                 for (size_t i = 0; i < num_signed; ++i) {
                     auto pkey = skeys.at(i) * libff::alt_bn128_G2::one();
                     BOOST_REQUIRE(obj.Verification(hash_ptr, signatures.at(i), pkey));
-                    try {
-                        obj.Verification(hash_ptr, SpoilSignature(signatures.at(i)), pkey);
-                    }
-                    catch (std::runtime_error&) {
-                        is_exception_caught = true;
-                    }
-                    BOOST_REQUIRE(is_exception_caught);
+                    BOOST_REQUIRE_THROW(obj.Verification(hash_ptr, SpoilSignature(signatures.at(i)), pkey), signatures::Bls::IsNotWellFormed);
                 }
 
                 std::vector<libff::alt_bn128_Fr> lagrange_coeffs = obj.LagrangeCoeffs(participants);
@@ -147,16 +141,7 @@ BOOST_AUTO_TEST_SUITE(Bls)
 
                 auto recovered_keys = obj.KeysRecover(lagrange_coeffs, skeys);
                 BOOST_REQUIRE(obj.Verification(hash_ptr, signature, recovered_keys.second));
-
-                is_exception_caught = false;
-                try {
-                    obj.Verification(hash_ptr, SpoilSignature(signature), recovered_keys.second);
-                }
-                catch (std::runtime_error&) {
-                    is_exception_caught = true;
-                }
-
-                BOOST_REQUIRE(is_exception_caught);
+                BOOST_REQUIRE_THROW(obj.Verification(hash_ptr, SpoilSignature(signature), recovered_keys.second), signatures::Bls::IsNotWellFormed);
 
             }
 
@@ -201,18 +186,13 @@ BOOST_AUTO_TEST_SUITE(Bls)
                                                  num_all);
                     std::shared_ptr<BLSSigShare> sig_share_ptr = sigSet.getSigShareByIndex(participants.at(i));
                     BOOST_REQUIRE(pkey_share.VerifySig(hash_ptr, sig_share_ptr, num_signed, num_all));
-                    try {
-                        std::shared_ptr<libff::alt_bn128_G1> bad_sig = std::make_shared<libff::alt_bn128_G1>(SpoilSignature(*sig_share_ptr->getSigShare()));
-                        std::string hint = sig_share_ptr->getHint();
-                        BLSSigShare bad_sig_share(bad_sig, hint, participants.at(i),
-                                                  num_signed, num_all);
-                        pkey_share.VerifySig(hash_ptr, std::make_shared<BLSSigShare>(bad_sig_share), num_signed,
-                                             num_all);
-                    }
-                    catch (std::runtime_error &) {
-                        is_exception_caught = true;
-                    }
-                    BOOST_REQUIRE(is_exception_caught);
+                    std::shared_ptr<libff::alt_bn128_G1> bad_sig = std::make_shared<libff::alt_bn128_G1>(SpoilSignature(*sig_share_ptr->getSigShare()));
+                    std::string hint = sig_share_ptr->getHint();
+                    BLSSigShare bad_sig_share(bad_sig, hint, participants.at(i),
+                                              num_signed, num_all);
+
+                    BOOST_REQUIRE_THROW(pkey_share.VerifySig(hash_ptr, std::make_shared<BLSSigShare>(bad_sig_share), num_signed,
+                                             num_all), signatures::Bls::IsNotWellFormed);
                 }
 
                 std::shared_ptr<BLSSignature> common_sig_ptr = sigSet.merge();  // verifying signature
@@ -220,17 +200,11 @@ BOOST_AUTO_TEST_SUITE(Bls)
                                           num_all);
                 BLSPublicKey common_pkey(*(common_skey.getPrivateKey()), num_signed, num_all);
                 BOOST_REQUIRE(common_pkey.VerifySig(hash_ptr, common_sig_ptr, num_signed, num_all));
-                is_exception_caught = false;
-                try {
-                    std::shared_ptr<libff::alt_bn128_G1> bad_sig = std::make_shared<libff::alt_bn128_G1>(SpoilSignature(*common_sig_ptr->getSig()));
-                    std::string hint = common_sig_ptr->getHint();
-                    BLSSignature bad_sign(bad_sig, hint, num_signed, num_all);
-                    common_pkey.VerifySig(hash_ptr, std::make_shared<BLSSignature>(bad_sign), num_signed, num_all);
-                }
-                catch (std::runtime_error &) {
-                    is_exception_caught = true;
-                }
-                BOOST_REQUIRE(is_exception_caught);
+                std::shared_ptr<libff::alt_bn128_G1> bad_sig = std::make_shared<libff::alt_bn128_G1>(SpoilSignature(*common_sig_ptr->getSig()));
+                std::string hint = common_sig_ptr->getHint();
+                BLSSignature bad_sign(bad_sig, hint, num_signed, num_all);
+                
+                BOOST_REQUIRE_THROW(common_pkey.VerifySig(hash_ptr, std::make_shared<BLSSignature>(bad_sign), num_signed, num_all), signatures::Bls::IsNotWellFormed);
 
                 std::map<size_t, std::shared_ptr<BLSPublicKeyShare> > pkeys_map;
                 for (size_t i = 0; i < num_signed; ++i) {
