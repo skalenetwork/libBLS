@@ -54,32 +54,31 @@ BLSSigShare::BLSSigShare(std::shared_ptr<std::string> _sigShare, size_t _signerI
   BLSSignature::checkSigners(requiredSigners, totalSigners);
   BLSutils::initBLS();
   if (signerIndex == 0) {
-    BOOST_THROW_EXCEPTION(std::runtime_error("Zero signer index"));
+    throw signatures::Bls::IncorrectInput("Zero signer index");
   }
 
   if (!_sigShare) {
-    BOOST_THROW_EXCEPTION(std::runtime_error("Null _sigShare"));
+    throw signatures::Bls::IncorrectInput("Null _sigShare");
   }
 
 
   if (_sigShare->size() < 10) {
-    BOOST_THROW_EXCEPTION(
-          std::runtime_error("Signature too short:" + std::to_string(_sigShare->size())));
+    throw signatures::Bls::IsNotWellFormed("Signature too short:" + std::to_string(_sigShare->size()));
   }
 
   if ( _sigShare->size() > BLS_MAX_SIG_LEN ) {
-    BOOST_THROW_EXCEPTION(std::runtime_error( "Signature too long:" + std::to_string( _sigShare->size() ) ) );
+    throw signatures::Bls::IsNotWellFormed( "Signature too long:" + std::to_string( _sigShare->size() ) );
   }
 
 
   std::shared_ptr<std::vector<std::string>> result = BLSutils::SplitString( _sigShare, ":");
   if ( result->size() != 4 )
-      BOOST_THROW_EXCEPTION(std::runtime_error("Misformatted signature"));
+      throw signatures::Bls::IncorrectInput("Misformatted signature");
   for ( auto && str : *result){
       for ( char& c : str ) {
           if ( !( c >= '0' && c <= '9' ) ) {
-              BOOST_THROW_EXCEPTION(std::runtime_error(
-                                             "Misformatted char:" + std::to_string( ( int ) c ) + " in component " +  str ) );
+              throw signatures::Bls::IncorrectInput(
+                                             "Misformatted char:" + std::to_string( ( int ) c ) + " in component " +  str );
           }
       }
   }
@@ -91,7 +90,7 @@ BLSSigShare::BLSSigShare(std::shared_ptr<std::string> _sigShare, size_t _signerI
     hint = result->at(2) + ":" + result->at(3);
 
     if ( !(*sigShare).is_well_formed() )
-      BOOST_THROW_EXCEPTION(std::runtime_error("signature is not from G1"));
+      throw signatures::Bls::IsNotWellFormed("signature is not from G1");
 }
 
 BLSSigShare::BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& _sigShare, std::string & _hint,  size_t _signerIndex,
@@ -104,17 +103,21 @@ BLSSigShare::BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& _sigShar
 
     BLSSignature::checkSigners( requiredSigners, totalSigners );
     if (  _sigShare->is_zero() ) {
-        BOOST_THROW_EXCEPTION(std::runtime_error( "Zero signature" ) );
+      throw signatures::Bls::IsNotWellFormed( "Zero signature" );
     }
     if ( _signerIndex == 0 ) {
-      BOOST_THROW_EXCEPTION(std::runtime_error( "Zero signer index" ) );
+      throw signatures::Bls::IncorrectInput("Zero signer index" );
     }
 
     if ( !_sigShare ) {
-        BOOST_THROW_EXCEPTION(std::runtime_error( "Null _s" ) );
+      throw signatures::Bls::IncorrectInput( "Null _s" );
     }
     if ( hint.length() == 0 ) {
-      BOOST_THROW_EXCEPTION(std::runtime_error( "Empty or misformatted hint" ) );
+      throw signatures::Bls::IncorrectInput( "Empty or misformatted hint" );
+    }
+
+    if (!_sigShare->is_well_formed()) {
+      throw signatures::Bls::IsNotWellFormed("signature is not from G1");
     }
 }
 

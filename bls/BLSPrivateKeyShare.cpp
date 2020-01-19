@@ -36,12 +36,12 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(const std::string &_key, size_t _required
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
     BLSutils::initBLS();
     if (_key.empty()) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Secret key share string is empty"));
+        throw signatures::Bls::IncorrectInput("Secret key share string is empty");
     }
     privateKey = std::make_shared<libff::alt_bn128_Fr>(_key.c_str());
 
     if (*privateKey == libff::alt_bn128_Fr::zero()) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Secret key share is equal to zero or corrupt"));
+        throw signatures::Bls::ZeroSecretKey("Secret key share is equal to zero or corrupt");
     }
 }
 
@@ -53,7 +53,7 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(const libff::alt_bn128_Fr& libff_skey,
     privateKey = std::make_shared<libff::alt_bn128_Fr>(libff_skey);
 
     if (*privateKey == libff::alt_bn128_Fr::zero()) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Secret key share is equal to zero or corrupt"));
+        throw signatures::Bls::ZeroSecretKey("Secret key share is equal to zero or corrupt");
     }
 }
 
@@ -61,10 +61,10 @@ std::shared_ptr<BLSSigShare> BLSPrivateKeyShare::sign(std::shared_ptr<std::array
     std::shared_ptr<signatures::Bls> obj;
 
     if (_signerIndex == 0) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Zero signer index"));
+        throw signatures::Bls::IncorrectInput("Zero signer index");
     }
     if (hash_byte_arr == nullptr) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Hash is null"));
+      throw signatures::Bls::IncorrectInput("Hash is null");
     }
 
     obj = std::make_shared<signatures::Bls>(signatures::Bls(requiredSigners, totalSigners));
@@ -88,10 +88,10 @@ std::shared_ptr<BLSSigShare>  BLSPrivateKeyShare::signWithHelper(std::shared_ptr
     std::shared_ptr <signatures::Bls> obj;
 
     if (_signerIndex == 0) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Zero signer index"));
+        throw signatures::Bls::IncorrectInput("Zero signer index");
     }
     if (hash_byte_arr == nullptr) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Hash is null"));
+      throw signatures::Bls::IncorrectInput("Hash is null");
     }
 
     obj = std::make_shared<signatures::Bls>(signatures::Bls(requiredSigners, totalSigners));
@@ -143,13 +143,13 @@ std::shared_ptr<libff::alt_bn128_Fr> BLSPrivateKeyShare::getPrivateKey() const {
 
 std::shared_ptr<std::string> BLSPrivateKeyShare::toString() {
     if (!privateKey)
-        BOOST_THROW_EXCEPTION(std::runtime_error("Secret key share is null"));
+        throw signatures::Bls::IncorrectInput("Secret key share is null");
     if (*privateKey == libff::alt_bn128_Fr::zero()) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Secret key share is equal to zero or corrupt"));
+        throw signatures::Bls::ZeroSecretKey("Secret key share is equal to zero or corrupt");
     }
     std::shared_ptr<std::string> key_str = std::make_shared<std::string>(BLSutils::ConvertToString(*privateKey));
 
     if (key_str->empty())
-        BOOST_THROW_EXCEPTION(std::runtime_error("Secret key share string is empty"));
+        throw signatures::Bls::IncorrectInput("Secret key share string is empty");
     return key_str;
 }

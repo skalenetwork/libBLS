@@ -29,15 +29,15 @@ BLSPrivateKey::BLSPrivateKey(const std::shared_ptr<std::string> &_key, size_t _r
         : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
     if ( _key->empty()){
-      BOOST_THROW_EXCEPTION(std::runtime_error("Secret key share is empty"));
+      throw signatures::Bls::IncorrectInput("Secret key share is empty");
     }
     if ( _key == nullptr){
-      BOOST_THROW_EXCEPTION(std::runtime_error("Secret key share is null"));
+      throw signatures::Bls::IncorrectInput("Secret key share is null");
     }
     BLSutils::initBLS();
     privateKey = std::make_shared<libff::alt_bn128_Fr>(_key->c_str());
     if (*privateKey == libff::alt_bn128_Fr::zero()) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Secret key share is equal to zero or corrupt"));
+        throw signatures::Bls::ZeroSecretKey("Secret key share is equal to zero or corrupt");
     }
 }
 
@@ -45,10 +45,10 @@ BLSPrivateKey::BLSPrivateKey(const std::shared_ptr<std::vector<std::shared_ptr<B
                              std::shared_ptr<std::vector<size_t >> koefs, size_t _requiredSigners, size_t _totalSigners)
                              : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
   if (skeys == nullptr) {
-    BOOST_THROW_EXCEPTION(std::runtime_error("Secret keys ptr is null"));
+    throw signatures::Bls::IncorrectInput("Secret keys ptr is null");
   }
   if (koefs == nullptr) {
-    BOOST_THROW_EXCEPTION(std::runtime_error("Signers indices ptr is null"));
+    throw signatures::Bls::IncorrectInput("Signers indices ptr is null");
   }
   BLSSignature::checkSigners(_requiredSigners, _totalSigners);
     signatures::Bls obj = signatures::Bls(_requiredSigners, _totalSigners);
@@ -60,7 +60,7 @@ BLSPrivateKey::BLSPrivateKey(const std::shared_ptr<std::vector<std::shared_ptr<B
     }
 
     if (*privateKey == libff::alt_bn128_Fr::zero()) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Secret key share is equal to zero or corrupt"));
+        throw signatures::Bls::ZeroSecretKey("Secret key share is equal to zero or corrupt");
     }
 }
 
@@ -73,7 +73,7 @@ std::shared_ptr<std::string> BLSPrivateKey::toString() {
     std::shared_ptr<std::string> key_str = std::make_shared<std::string>(BLSutils::ConvertToString(*privateKey));
 
     if (key_str->empty())
-        BOOST_THROW_EXCEPTION(std::runtime_error("Secret key share string is empty"));
+        throw signatures::Bls::ZeroSecretKey("Secret key share string is empty");
 
     return key_str;
 }
