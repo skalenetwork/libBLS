@@ -748,65 +748,38 @@ BOOST_AUTO_TEST_SUITE(Bls)
       }
 
 
-      is_exception_caught = false; // add null sigShare to sigSet
-      try {
+      {
         BLSSigShareSet sig_set(num_signed, num_all);
-        sig_set.addSigShare(nullptr);
+        BOOST_REQUIRE_THROW(sig_set.addSigShare(nullptr), signatures::Bls::IncorrectInput);
       }
-      catch (std::runtime_error &) {
-        is_exception_caught = true;
-      }
-      BOOST_REQUIRE(is_exception_caught);
 
-      is_exception_caught = false; // add signers with same index
-      try {
+      {
         std::string hint = "123:1";
         BLSSigShare sigShare1( std::make_shared<libff::alt_bn128_G1>(libff::alt_bn128_G1::random_element()), hint, 1, num_signed, num_all);
         BLSSigShare sigShare2 = sigShare1;
         BLSSigShareSet sig_set(num_signed, num_all);
         sig_set.addSigShare( std::make_shared<BLSSigShare>(sigShare1));
-        sig_set.addSigShare( std::make_shared<BLSSigShare>(sigShare2));
-       }
-      catch (std::runtime_error &) {
-         is_exception_caught = true;
+        BOOST_REQUIRE_THROW(sig_set.addSigShare( std::make_shared<BLSSigShare>(sigShare2)), signatures::Bls::IncorrectInput);
       }
-      BOOST_REQUIRE(is_exception_caught);
 
-      is_exception_caught = false; // add sigShare after merge
-      try {
+      {
         std::string hint = "123:1";
         BLSSigShare sigShare1( std::make_shared<libff::alt_bn128_G1>(libff::alt_bn128_G1::random_element()), hint, 1, num_signed, num_all);
         BLSSigShareSet sig_set(1, 1);
         sig_set.addSigShare( std::make_shared<BLSSigShare>(sigShare1));
         sig_set.merge();
-        sig_set.addSigShare( std::make_shared<BLSSigShare>(sigShare1));
+        BOOST_REQUIRE_THROW(sig_set.addSigShare( std::make_shared<BLSSigShare>(sigShare1)), signatures::Bls::IncorrectInput);
       }
-      catch (std::runtime_error &) {
-        is_exception_caught = true;
-      }
-      BOOST_REQUIRE(is_exception_caught);
 
-      is_exception_caught = false; //  merge sigShareSet with not enough sigShares
-      try {
+      {
         BLSSigShareSet sig_set(num_signed, num_all);
-        sig_set.merge();
-
+        BOOST_REQUIRE_THROW(sig_set.merge(), signatures::Bls::IncorrectInput);
       }
-      catch (std::runtime_error &) {
-        is_exception_caught = true;
-      }
-      BOOST_REQUIRE(is_exception_caught);
 
-      is_exception_caught = false; //  get signer with 0 index in sigShareSet
-      try {
+      {
         BLSSigShareSet sig_set(num_signed, num_all);
-        sig_set.getSigShareByIndex(0);
-
+        BOOST_REQUIRE_THROW(sig_set.getSigShareByIndex(0), signatures::Bls::IncorrectInput);
       }
-      catch (std::runtime_error &) {
-         is_exception_caught = true;
-      }
-      BOOST_REQUIRE(is_exception_caught);
 
       std::cerr << "EXCEPTIONS TEST FINISHED" << std::endl;
     }

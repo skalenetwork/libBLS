@@ -35,16 +35,16 @@
 bool BLSSigShareSet::addSigShare(std::shared_ptr<BLSSigShare> _sigShare) {
 
     if (was_merged) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Invalid state"));
+      throw signatures::Bls::IncorrectInput("Invalid state");
     }
 
     if (!_sigShare) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Null _sigShare"));
+        throw signatures::Bls::IncorrectInput("Null _sigShare");
     }
 
     if (sigShares.count(_sigShare->getSignerIndex()) > 0) {
-        BOOST_THROW_EXCEPTION(std::runtime_error(
-            "Already have this index:" + std::to_string(_sigShare->getSignerIndex())));
+        throw signatures::Bls::IncorrectInput(
+            "Already have this index:" + std::to_string(_sigShare->getSignerIndex()));
         return false;
     }
     sigShares[_sigShare->getSignerIndex()] = _sigShare;
@@ -59,7 +59,7 @@ size_t BLSSigShareSet::getTotalSigSharesCount() {
 std::shared_ptr< BLSSigShare > BLSSigShareSet::getSigShareByIndex( size_t _index ) {
 
     if (_index == 0) {
-        BOOST_THROW_EXCEPTION(std::runtime_error("Index out of range:" + std::to_string(_index)));
+        throw signatures::Bls::IncorrectInput("Index out of range:" + std::to_string(_index));
     }
 
 
@@ -81,7 +81,7 @@ bool BLSSigShareSet::isEnough() {
 
 std::shared_ptr< BLSSignature > BLSSigShareSet::merge() {
     if (!isEnough())
-        BOOST_THROW_EXCEPTION(std::runtime_error("Not enough shares to create signature"));
+        throw signatures::Bls::IncorrectInput("Not enough shares to create signature");
 
     was_merged = true;
     signatures::Bls obj = signatures::Bls( requiredSigners, totalSigners );
