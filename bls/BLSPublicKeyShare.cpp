@@ -35,7 +35,7 @@ BLSPublicKeyShare::BLSPublicKeyShare(const std::shared_ptr<std::vector<std::stri
   BLSSignature::checkSigners(_requiredSigners, _totalSigners);
 
   if (pkey_str_vect == nullptr) {
-    BOOST_THROW_EXCEPTION(std::runtime_error("Public Key ptr is null"));
+    throw signatures::Bls::IncorrectInput("Public Key ptr is null");
   }
   BLSutils::initBLS();
   publicKey = std::make_shared<libff::alt_bn128_G2>();
@@ -48,7 +48,7 @@ BLSPublicKeyShare::BLSPublicKeyShare(const std::shared_ptr<std::vector<std::stri
   publicKey->Z.c1 = libff::alt_bn128_Fq::zero();
 
   if (publicKey->is_zero()  || !(publicKey->is_well_formed())) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Public Key is equal to zero or corrupt"));
+      throw signatures::Bls::IsNotWellFormed("Public Key is equal to zero or corrupt");
   }
 }
 
@@ -57,7 +57,7 @@ BLSPublicKeyShare::BLSPublicKeyShare(const libff::alt_bn128_Fr&_skey,
         : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
   BLSutils::initBLS();
   if (_skey.is_zero()) {
-    BOOST_THROW_EXCEPTION(std::runtime_error("Secret Key is equal to zero or corrupt"));
+    throw signatures::Bls::ZeroSecretKey("Secret Key is equal to zero or corrupt");
   }
   publicKey = std::make_shared<libff::alt_bn128_G2>(_skey * libff::alt_bn128_G2::one());
 }
@@ -85,10 +85,10 @@ BLSPublicKeyShare::VerifySig(std::shared_ptr<std::array<uint8_t, 32>> hash_ptr, 
   std::shared_ptr<signatures::Bls> obj;
   BLSSignature::checkSigners(_requiredSigners, _totalSigners);
   if (!hash_ptr) {
-    BOOST_THROW_EXCEPTION(std::runtime_error("hash is null"));
+    throw signatures::Bls::IncorrectInput("hash is null");
   }
   if (!sign_ptr || sign_ptr->getSigShare()->is_zero()) {
-    BOOST_THROW_EXCEPTION(std::runtime_error("Sig share is equal to zero or corrupt"));
+    throw signatures::Bls::IsNotWellFormed("Sig share is equal to zero or corrupt");
   }
 
   obj = std::make_shared<signatures::Bls>(signatures::Bls(_requiredSigners, _totalSigners));
@@ -103,10 +103,10 @@ bool BLSPublicKeyShare::VerifySigWithHelper(std::shared_ptr<std::array<uint8_t, 
     std::shared_ptr<signatures::Bls> obj;
     BLSSignature::checkSigners(_requiredSigners, _totalSigners);
     if (!hash_ptr) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("hash is null"));
+      throw signatures::Bls::IncorrectInput("hash is null");
     }
     if (!sign_ptr || sign_ptr->getSigShare()->is_zero()) {
-      BOOST_THROW_EXCEPTION(std::runtime_error("Sig share is equal to zero or corrupt"));
+      throw signatures::Bls::IsNotWellFormed("Sig share is equal to zero or corrupt");
     }
 
     std::string hint = sign_ptr->getHint();
