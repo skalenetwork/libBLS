@@ -12,6 +12,7 @@ matrix:
             - CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
             - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
             - CPU_COUNT=$(nproc)
+            - NIGHTLY_BUILD_FLAGS="valgrind --leak-check=yes"
           addons:
               apt:
                   packages:
@@ -42,12 +43,13 @@ matrix:
           after_success:
               - cd build
               - echo "========================================= after_success (coverage)"
-              - ./bls_unit_test || travis_terminate 1
-              - ./dkg_unit_test || travis_terminate 1
-              - ./bls_test || travis_terminate 1
-              - ./threshold_encryption/te_unit_test || travis_terminate 1
-              - ./threshold_encryption/te_test || travis_terminate 1
-              - ./threshold_encryption/dkg_te_unit_test || travis_terminate 1
+              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./bls_unit_test || travis_terminate 1; else ./bls_unit_test || travis_terminate 1; fi
+              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./dkg_unit_test || travis_terminate 1; else ./dkg_unit_test || travis_terminate 1; fi
+              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./bls_test || travis_terminate 1; else ./bls_test || travis_terminate 1; fi
+              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_unit_test || travis_terminate 1; else ./threshold_encryption/te_unit_test || travis_terminate 1; fi
+              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_test || travis_terminate 1; else ./threshold_encryption/te_test || travis_terminate 1; fi
+              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_test || travis_terminate 1; else ./threshold_encryption/te_test || travis_terminate 1; fi
+              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./threshold_encryption/dkg_te_unit_test || travis_terminate 1; else ./threshold_encryption/dkg_te_unit_test || travis_terminate 1; fi
               - cd ..
               - ./get_code_cov
               - echo "========================================= after_success (coverage gathered to gcov files)"
@@ -146,6 +148,6 @@ script:
 notifications:
     email:
         recipients:
-            - sergiy@skalelabs.com
+            - oleg@skalelabs.com
         on_success: change
         on_failure: always
