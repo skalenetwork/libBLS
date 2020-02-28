@@ -1,60 +1,188 @@
 # Contributing
 
-Thank you for considering to help out with the source code! We welcome
-contributions from anyone on the internet, and are grateful for even the
-smallest of fixes!
+<!-- SPDX-License-Identifier: (AGPL-3.0-only OR CC-BY-4.0) -->
 
-**When contributing to this repository, please first discuss the change you wish to make by opening an issue.**
+Feedback and contributions are very welcome!
 
-## I don't want to read this whole thing I just have a question
+Here's help on how to make contributions, divided into the following sections:
 
-> **Note:** Please don't file an issue to ask a question. You'll get faster results by simply [joining our Discord and asking our team there](https://discord.gg/vvUtWJB).
+-   general information,
+-   documentation changes,
+-   code changes, and
+-   keeping up with external changes.
 
-## Pull Request Philosophy
+## General information
 
-Patchsets should always be focused. For example, a pull request could add a
-feature, fix a bug, or refactor code; but not a mixture. Please also avoid super
-pull requests which attempt to do too much, are overly large, or overly complex
-as this makes review difficult.
+For specific proposals, please provide them as
+[pull requests](https://github.com/skalenetwork/sgxwallet/pulls)
+or
+[issues](https://github.com/skalenetwork/sgxwallet/issues)
+via our
+[GitHub site](https://github.com/skalenetwork/sgxwallet).
+For general discussion, feel free to use 
+[![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
 
-## Branch naming convention
+### Pull requests and different branches recommended
 
-Name your branches with one of the following prefixes (`bug/`, `feature/`, or 
-`enhancement/`), add the issue number and add a description: `[type]/[issueNum]-[change-with-hyphens]`. 
+Pull requests are preferred, since they are specific.
+For more about how to create a pull request, see
+<https://help.github.com/articles/using-pull-requests/>.
 
-Examples:
+We recommend creating different branches for different (logical)
+changes, and creating a pull request when you're done into the master branch.
+See the GitHub documentation on
+[creating branches](https://help.github.com/articles/creating-and-deleting-branches-within-your-repository/)
+and
+[using pull requests](https://help.github.com/articles/using-pull-requests/).
 
--   `bug/87-archives-crash-app`
--   `bug/92-font-size-update-not-immediate`
--   `enhancement/56-add-date-search`
--   `enhancement/63-show-number-tweets-in-search-results`
+### How we handle proposals
 
-### Features
+We use GitHub to track proposed changes via its
+[issue tracker](https://github.com/skalenetwork/sgxwallet/issues) and
+[pull requests](https://github.com/skalenetwork/sgxwallet/pulls).
+Specific changes are proposed using those mechanisms.
+Issues are assigned to an individual, who works it and then marks it complete.
+If there are questions or objections, the conversation area of that
+issue or pull request is used to resolve it.
 
-When adding a new feature, thought must be given to the long term technical debt
-and maintenance that feature may require after inclusion. Before proposing a new
-feature that will require maintenance, please consider if you are willing to
-maintain it (including bug fixing). If features get orphaned with no maintainer
-in the future, they may be removed by the Repository Maintainer.
+### Two-person review
 
-### Refactoring
+Our policy is that at least 50% of all proposed modifications will be reviewed
+before release by a person other than the author,
+to determine if it is a worthwhile modification and free of known issues
+which would argue against its inclusion
+(per the Gold requirement two_person_review).
 
-Refactoring is a necessary part of any software project's evolution. The
-following guidelines cover refactoring pull requests for the project.
+We achieve this by splitting proposals into two kinds:
 
-There are three categories of refactoring, code only moves, code style fixes,
-code refactoring. In general refactoring pull requests should not mix these
-three kinds of activity in order to make refactoring pull requests easy to
-review and uncontroversial. In all cases, refactoring PRs must not change the
-behavior of code within the pull request (bugs must be preserved as is).
+1.  Low-risk modifications.  These modifications are being proposed by
+    people authorized to commit directly, pass all tests, and are unlikely
+    to have problems.  These include documentation/text updates
+    (other than changes to the criteria) and/or updates to existing gems
+    (especially minor updates) where no risk (such as a security risk)
+    have been identified.  The project lead can decide that any particular
+    modification is low-risk.
+2.  Other modifications.  These other modifications need to be
+    reviewed by someone else or the project lead can decide to accept
+    the modification.  Typically this is done by creating a branch and a
+    pull request so that it can be reviewed before accepting it.
 
-Project maintainers aim for a quick turnaround on refactoring pull requests, so
-where possible keep them concise and easy to verify.
+### Contributor License Agreement (CLA)
 
-Pull requests that refactor the code should not be made by new contributors. It
-requires a certain level of experience to know where the code belongs to and to
-understand the full ramification (including rebase effort of open pull requests).
+All contributions must agree to the 
+[SKALE Network Contributor License Agreement](https://cla.skale.network).
+This is derived from Apache Software Foundations’ Individual Contributor License 
+Agreement v2.0, and it's purpose is to ensure that the guardian of a project's 
+outputs has the necessary ownership or grants of rights over all contributions 
+to allow them to distribute under the chosen license.
 
-Trivial pull requests or pull requests that refactor the code with no clear
-benefits may be immediately closed by the maintainers to reduce unnecessary
-workload on reviewing.
+Simply submitting a contribution implies this agreement, however,
+for a pull request to be accepted, you must use the 
+[SKALE Network CLA assistant](https://cla.skale.network), which 
+is one of the requirement for pull request checks.
+
+### License (AGPL)
+
+All (new) contributed material must be released
+under the [AGPL-3.0-only license](./LICENSE), with exception to material included
+under the `third_party` directory.
+All new contributed material
+that is not executable, including all text when not executed,
+is also released under the
+[Creative Commons Attribution 4.0 International (CC BY 4.0) license](https://creativecommons.org/licenses/by/4.0/) or later.
+
+### We are proactive
+
+In general we try to be proactive to detect and eliminate
+mistakes and vulnerabilities as soon as possible,
+and to reduce their impact when they do happen.
+We use a defensive design and coding style to reduce the likelihood of mistakes,
+a variety of tools that try to detect mistakes early,
+and an automatic test suite with significant coverage.
+We also release the software as open source software so others can review it.
+
+Since early detection and impact reduction can never be perfect, we also try to
+detect and repair problems during deployment as quickly as possible.
+This is _especially_ true for security issues; see our
+[security information](docs/security.md) for more.
+
+### No trailing whitespace
+
+Please do not use or include trailing whitespace
+(spaces or tabs at the end of a line).
+Since they are often not visible, they can cause silent problems
+and misleading unexpected changes.
+For example, some editors (e.g., Atom) quietly delete them by default.
+
+## Documentation changes
+
+Most of the documentation is in "markdown" or "mdx" format.
+All markdown files use the .md filename extension, otherwise .mdx for mdx files.
+
+Where reasonable, limit yourself to Markdown
+that will be accepted by different markdown processors
+(e.g., what is specified by CommonMark or the original Markdown)
+In practice we use
+the version of Markdown implemented by GitHub when it renders .md files,
+and you can use its extensions
+(in particular, mark code snippets with the programming language used).
+This version of markdown is sometimes called
+[GitHub-flavored markdown](https://help.github.com/articles/github-flavored-markdown/).
+In particular, blank lines separate paragraphs; newlines inside a paragraph
+do _not_ force a line break.
+Beware - this is _not_
+the same markdown algorithm used by GitHub when it renders
+issue or pull comments; in those cases
+[newlines in paragraph-like content are considered as real line breaks](https://help.github.com/articles/writing-on-github/);
+unfortunately this other algorithm is _also_ called
+GitHub rendered markdown.
+(Yes, it'd be better if there were standard different names
+for different things.)
+
+Do not use trailing two spaces for line breaks, since these cannot be
+seen and may be silently removed by some tools.
+Instead, use <tt>&lt;br /></tt> (an HTML break).
+
+## Code changes
+
+### Code style and formatting
+
+The code style is defined by `.clang-format`, and in general, all C++ files 
+should follow it. Files with minor deviations from the defined style are still 
+accepted in PRs; however, unless explicitly marked with `// clang-format off` 
+and `// clang-format on`, these deviations will be rectified any commit soon 
+after.
+
+Exercise the [principle of least privilege](https://en.wikipedia.org/wiki/Principle_of_least_privilege) 
+where reasonable and appropriate. Prefer less-coupled cohesive code.
+
+## How to check proposed changes before submitting them
+
+Checking the code on at least one configuration is essential; if you only have
+a hasty fix that doesn't even compile, better make an issue and put a link to
+your commit into it (with an explanation what it is about and why).
+
+### clang-format
+
+We strongly recommend using clang-format or, even better, use an IDE that
+supports it. This will lay a tedious task of following the assumed
+code style from your shoulders over to your computer.
+
+## Keeping up with external changes
+
+The installer adds a git remote named 'upstream'.
+Running 'git pull upstream master' will pull the current version from
+upstream, enabling you to sync with upstream.
+
+You can reset this, if something has happened to it, using:
+
+```bash
+git remote add upstream \
+    https://github.com/skalenetwork/libBLS.git
+```
+
+## Attribution
+
+This text is based on CONTRIBUTING.md from CII Best Practices Badge project, 
+which is a collective work of its contributors (many thanks!). The text itself 
+is licensed under CC-BY-4.0.
