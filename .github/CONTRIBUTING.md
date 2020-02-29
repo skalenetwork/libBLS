@@ -14,11 +14,11 @@ Here's help on how to make contributions, divided into the following sections:
 ## General information
 
 For specific proposals, please provide them as
-[pull requests](https://github.com/skalenetwork/sgxwallet/pulls)
+[pull requests](https://github.com/skalenetwork/libBLS/pulls)
 or
-[issues](https://github.com/skalenetwork/sgxwallet/issues)
+[issues](https://github.com/skalenetwork/libBLS/issues)
 via our
-[GitHub site](https://github.com/skalenetwork/sgxwallet).
+[GitHub site](https://github.com/skalenetwork/libBLS).
 For general discussion, feel free to use 
 [![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
 
@@ -38,8 +38,8 @@ and
 ### How we handle proposals
 
 We use GitHub to track proposed changes via its
-[issue tracker](https://github.com/skalenetwork/sgxwallet/issues) and
-[pull requests](https://github.com/skalenetwork/sgxwallet/pulls).
+[issue tracker](https://github.com/skalenetwork/libBLS/issues) and
+[pull requests](https://github.com/skalenetwork/libBLS/pulls).
 Specific changes are proposed using those mechanisms.
 Issues are assigned to an individual, who works it and then marks it complete.
 If there are questions or objections, the conversation area of that
