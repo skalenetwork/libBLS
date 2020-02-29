@@ -129,7 +129,6 @@ BOOST_AUTO_TEST_SUITE(Bls)
                     participants.erase(participants.begin() + ind4del);
                 }
 
-                bool is_exception_caught = false;
                 for (size_t i = 0; i < num_signed; ++i) {
                     auto pkey = skeys.at(i) * libff::alt_bn128_G2::one();
                     BOOST_REQUIRE(obj.Verification(hash_ptr, signatures.at(i), pkey));
@@ -178,7 +177,6 @@ BOOST_AUTO_TEST_SUITE(Bls)
                     sigSet.addSigShare(sigShare);
                 }
 
-                bool is_exception_caught = false;  // verifying sigShare
                 for (size_t i = 0; i < num_signed; ++i) {
                     BLSPublicKeyShare pkey_share(*Skeys->at(participants.at(i) - 1)->getPrivateKey(), num_signed,
                                                  num_all);
@@ -525,7 +523,6 @@ BOOST_AUTO_TEST_SUITE(Bls)
       std::vector<size_t> participants(num_all);
       for (size_t i = 0; i < num_all; ++i) participants.at(i) = i + 1;
 
-      bool is_exception_caught = false;  // Empty private key
       {
         BOOST_REQUIRE_THROW(BLSPrivateKey pkey(std::make_shared<std::string>(""), num_signed, num_all ), signatures::Bls::IncorrectInput);
       }
@@ -594,7 +591,6 @@ BOOST_AUTO_TEST_SUITE(Bls)
         BOOST_REQUIRE_THROW(pkey.VerifySigWithHelper(nullptr, std::make_shared<BLSSignature>(rand_sig), num_signed, num_all), signatures::Bls::IncorrectInput);
       }
 
-      is_exception_caught = false;   // Null signature in Verify Signature
       {
         BLSPublicKey pkey(libff::alt_bn128_Fr::random_element(), num_signed, num_all);
         BOOST_REQUIRE_THROW(pkey.VerifySigWithHelper(std::make_shared<std::array<uint8_t, 32> >(GenerateRandHash()), nullptr, num_signed,
@@ -735,7 +731,6 @@ BOOST_AUTO_TEST_SUITE(Bls)
         BOOST_REQUIRE_THROW(BLSSigShare(std::make_shared< std::string >(long_sig), 1, num_signed, num_all), signatures::Bls::IsNotWellFormed);
       }
 
-      is_exception_caught = false; //  sigShsare with  not digit
       {
         std::string long_sig;
         for (size_t j = 0; j < 4; j++)

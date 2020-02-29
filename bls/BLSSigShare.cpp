@@ -46,11 +46,11 @@ std::shared_ptr<std::string> BLSSigShare::toString() {
   return std::make_shared<std::string>(str);
 }
 
-BLSSigShare::BLSSigShare(std::shared_ptr<std::string> _sigShare, size_t _signerIndex, size_t _requiredSigners,
-        size_t _totalSigners)
+BLSSigShare::BLSSigShare(std::shared_ptr<std::string> _sigShare, size_t _signerIndex, size_t _totalSigners,
+                         size_t _requiredSigners)
     : signerIndex(_signerIndex),
-      totalSigners(_totalSigners),
-      requiredSigners(_requiredSigners) {
+      requiredSigners(_requiredSigners),
+      totalSigners(_totalSigners) {
   BLSSignature::checkSigners(requiredSigners, totalSigners);
   BLSutils::initBLS();
   if (signerIndex == 0) {

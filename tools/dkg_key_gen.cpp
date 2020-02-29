@@ -51,8 +51,7 @@ void KeysToJson(std::shared_ptr<BLSPrivateKeyShare> skey_ptr, size_t num_signed,
   outfile.close();
 }
 
-void CommonPkeyToJson(std::shared_ptr<BLSPublicKey> common_pkey_ptr,
- size_t num_signed, size_t num_all) {
+void CommonPkeyToJson(std::shared_ptr<BLSPublicKey> common_pkey_ptr) {
   nlohmann::json keys_json;
   std::string pkey_name = "insecureCommonBLSPublicKey";
   std::shared_ptr<std::vector<std::string> > common_pkey_str = common_pkey_ptr->toString();
@@ -109,7 +108,7 @@ void KeyGeneration(const size_t t, const size_t n, bool generate_all = true, int
       skeys.push_back(std::make_shared<BLSPrivateKeyShare>(cur_skey));
     }
 
-    CommonPkeyToJson( std::make_shared<BLSPublicKey>(common_public_key, t, n), t , n );
+    CommonPkeyToJson( std::make_shared<BLSPublicKey>(common_public_key, t, n) );
 
     for (size_t i = 0; i < n; ++i) {
       KeysToJson(skeys.at(i), t, n , i);

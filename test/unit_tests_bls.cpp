@@ -44,7 +44,6 @@ BOOST_AUTO_TEST_CASE(zeroSecretKey) {
   std::cout << "Testing zeroSecretKey\n";
 
   libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::zero();
-  libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
 
   signatures::Bls obj = signatures::Bls(1, 1);
 
@@ -558,8 +557,6 @@ BOOST_AUTO_TEST_CASE(SignVerification) {
   size_t num_signed = rand_gen() % (num_all - 1) + 2;
   signatures::Bls obj (num_signed, num_all);
   signatures::Bls obj_2_2 (2, 2);
-
-  bool is_exception_caught = false;
 
   libff::alt_bn128_G1 sign;
   sign.X = libff::alt_bn128_Fq("123");
