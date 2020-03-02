@@ -143,6 +143,7 @@ script:
     - mkdir -p build
     - cd build
     - cmake $CMAKE_BUILD_FLAGS ..
+    - make format-check || travis_terminate 1;
     - cmake --build . -- -j$CPU_COUNT
     - cd ..
     - echo "========================================= script (2)"
