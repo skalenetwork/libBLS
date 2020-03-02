@@ -7,7 +7,7 @@ if( ( NOT DEFINED CLANG_FORMAT_BIN_NAME ) OR ( "${CLANG_FORMAT_BIN_NAME}" STREQU
         #
         unset( CLANG_FORMAT_FOUND )
         unset( CLANG_FORMAT_BIN_NAME )
-        set( VARIANTS_OF_CLANG_FORMAT_BIN_NAME clang-format-6.0 clang-format-7.0 clang-format-8.0 clang-format )
+        set( VARIANTS_OF_CLANG_FORMAT_BIN_NAME clang-format-6.0 ) # clang-format-7.0 clang-format-8.0 clang-format
         foreach( CLANG_FORMAT_WALK_VAR IN LISTS VARIANTS_OF_CLANG_FORMAT_BIN_NAME )
                 execute_process( COMMAND bash -c "which ${CLANG_FORMAT_WALK_VAR}" OUTPUT_VARIABLE CLANG_FORMAT_BIN_NAME )
                 if( ( DEFINED CLANG_FORMAT_BIN_NAME ) AND ( NOT "${CLANG_FORMAT_BIN_NAME}" STREQUAL "" ) )
