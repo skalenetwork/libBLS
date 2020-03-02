@@ -100,7 +100,7 @@ set(headers_bls
 
 set(PROJECT_VERSION 0.4.0)
 add_definitions(-DBLS_VERSION=${PROJECT_VERSION})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wparentheses -Wunused -Wunreachable-code -Wextra -Werror=int-in-bool-context -fPIC -std=c++17")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wparentheses -Wunused -Wunreachable-code -Wextra -Wno-error=int-in-bool-context -fPIC -std=c++17")
 
 include_directories(${CMAKE_BINARY_DIR}/deps/include)
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
