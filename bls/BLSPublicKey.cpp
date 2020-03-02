@@ -85,7 +85,7 @@ bool BLSPublicKey::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_
     if ( !hash_ptr ) {
         throw signatures::Bls::IncorrectInput( "hash is null" );
     }
-    if ( !sign_ptr || sign_ptr->getSig()->is_zero() ) {
+    if ( !sign_ptr || sign_ptr->getSig()->is_zero() || !sign_ptr->getSig()->is_well_formed() ) {
         throw signatures::Bls::IsNotWellFormed( "Sig share is equal to zero or corrupt" );
     }
 

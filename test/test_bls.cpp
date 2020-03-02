@@ -269,7 +269,6 @@ BOOST_AUTO_TEST_CASE( libffObjsToString ) {
             std::shared_ptr< std::string > sig_str_ptr = sigShare->toString();
             std::shared_ptr< BLSSigShare > sigShare_from_str = std::make_shared< BLSSigShare >(
                 sig_str_ptr, participants.at( i ), num_signed, num_all );
-
             BOOST_REQUIRE( *sigShare->getSigShare() == *sigShare_from_str->getSigShare() );
             BOOST_REQUIRE( sigShare->getHint() == sigShare_from_str->getHint() );
             BOOST_REQUIRE(
@@ -605,22 +604,19 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        BLSPrivateKeyShare skey(
-            libff::alt_bn128_Fr::random_element(), num_signed, num_all );  // Zero signer index
+        BLSPrivateKeyShare skey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
         BOOST_REQUIRE_THROW(
             skey.sign( std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() ), 0 ),
             signatures::Bls::IncorrectInput );
     }
 
     {
-        BLSPrivateKeyShare skey(
-            libff::alt_bn128_Fr::random_element(), num_signed, num_all );  // Null hash
+        BLSPrivateKeyShare skey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
         BOOST_REQUIRE_THROW( skey.sign( NULL, 1 ), signatures::Bls::IncorrectInput );
     }
 
     {
-        BLSPrivateKeyShare skey(
-            libff::alt_bn128_Fr::random_element(), num_signed, num_all );  // Zero signer index
+        BLSPrivateKeyShare skey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
         BOOST_REQUIRE_THROW(
             skey.signWithHelper(
                 std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() ), 0 ),
@@ -628,8 +624,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        BLSPrivateKeyShare skey(
-            libff::alt_bn128_Fr::random_element(), num_signed, num_all );  // Null hash
+        BLSPrivateKeyShare skey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
         BOOST_REQUIRE_THROW( skey.signWithHelper( NULL, 1 ), signatures::Bls::IncorrectInput );
     }
 
@@ -788,10 +783,8 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
     {
         std::string hint = "123:1";
-        BOOST_REQUIRE_THROW( BLSSigShare( std::make_shared< libff::alt_bn128_G1 >(
-                                              libff::alt_bn128_G1::random_element() ),
-                                 hint, 0, num_signed, num_all ),
-            signatures::Bls::IncorrectInput );
+        BOOST_REQUIRE_THROW(
+            BLSSigShare( nullptr, hint, 0, num_signed, num_all ), signatures::Bls::IncorrectInput );
     }
 
     {
@@ -812,12 +805,13 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
     {
         std::string long_sig;
-        for ( size_t j = 0; j < 3; j++ )
+        for ( size_t j = 0; j < 3; j++ ) {
             for ( size_t i = 0; i < 100; i++ ) {
                 long_sig += std::to_string( rand_gen() % 10 );
                 if ( i == 99 && j != 2 )
                     long_sig += ":";
             }
+        }
         BOOST_REQUIRE_THROW(
             BLSSigShare( std::make_shared< std::string >( long_sig ), 1, num_signed, num_all ),
             signatures::Bls::IsNotWellFormed );

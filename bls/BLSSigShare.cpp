@@ -47,13 +47,13 @@ std::shared_ptr< std::string > BLSSigShare::toString() {
 }
 
 BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _signerIndex,
-    size_t _totalSigners, size_t _requiredSigners )
+    size_t _requiredSigners, size_t _totalSigners )
     : signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
     BLSSignature::checkSigners( requiredSigners, totalSigners );
     BLSutils::initBLS();
-    if ( signerIndex == 0 ) {
+    if ( _signerIndex == 0 ) {
         throw signatures::Bls::IncorrectInput( "Zero signer index" );
     }
 
@@ -103,6 +103,9 @@ BLSSigShare::BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& _sigShar
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
     BLSSignature::checkSigners( requiredSigners, totalSigners );
+    if ( !_sigShare ) {
+        throw signatures::Bls::IncorrectInput( "Null _s" );
+    }
     if ( _sigShare->is_zero() ) {
         throw signatures::Bls::IsNotWellFormed( "Zero signature" );
     }
@@ -110,10 +113,7 @@ BLSSigShare::BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& _sigShar
         throw signatures::Bls::IncorrectInput( "Zero signer index" );
     }
 
-    if ( !_sigShare ) {
-        throw signatures::Bls::IncorrectInput( "Null _s" );
-    }
-    if ( hint.length() == 0 ) {
+    if ( _hint.length() == 0 ) {
         throw signatures::Bls::IncorrectInput( "Empty or misformatted hint" );
     }
 
