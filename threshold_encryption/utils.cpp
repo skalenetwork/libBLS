@@ -28,13 +28,10 @@ libff::bigint< num_limbs > modulus = libff::bigint< num_limbs >(
     "662221423155858769582317459277713367317481324925129998224791" );
 
 void MpzSquareRoot( mpz_t ret_val, mpz_t x ) {
-    libff::bigint< num_limbs >
-        to_find_square_root =
-            libff::
-                bigint< num_limbs >(
-                    "219517769991582813060944549618851245395172079985355205275716334981661890772005"
-                    "573926965629485566555535578896469239557936481942834182937033123128249955619"
-                    "8" );  // type_a_Fq(libff::bigint<num_limbs>(x));
+    libff::bigint< num_limbs > to_find_square_root = libff::bigint< num_limbs >(
+        "219517769991582813060944549618851245395172079985355205275716334981661890772005"
+        "573926965629485566555535578896469239557936481942834182937033123128249955619"
+        "8" );  // type_a_Fq(libff::bigint<num_limbs>(x));
 
     mpz_t deg;
     mpz_init( deg );
