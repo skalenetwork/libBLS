@@ -28,22 +28,22 @@
 
 
 class TEDataSingleton {
- private:
-   TEDataSingleton();
+private:
+    TEDataSingleton();
 
- public:
+public:
     pairing_t pairing_;
     element_t generator_;
 
-    static TEDataSingleton& getData(){
-      static TEDataSingleton data;
-      return data;
+    static TEDataSingleton& getData() {
+        static TEDataSingleton data;
+        return data;
     }
 
-    static void checkSigners(size_t _requiredSigners, size_t _totalSigners );
+    static void checkSigners( size_t _requiredSigners, size_t _totalSigners );
 
     ~TEDataSingleton();
 };
 
 
-#endif //LIBBLS_TEBASEWRAPPER_H
+#endif  // LIBBLS_TEBASEWRAPPER_H

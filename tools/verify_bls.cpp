@@ -44,196 +44,194 @@ static bool g_b_rehash = false;
 
 static bool g_b_common = true;
 
-int char2int(char _input) {
-  if (_input >= '0' && _input <= '9')
-    return _input - '0';
-  if (_input >= 'A' && _input <= 'F')
-    return _input - 'A' + 10;
-  if (_input >= 'a' && _input <= 'f')
-    return _input - 'a' + 10;
-  return -1;
+int char2int( char _input ) {
+    if ( _input >= '0' && _input <= '9' )
+        return _input - '0';
+    if ( _input >= 'A' && _input <= 'F' )
+        return _input - 'A' + 10;
+    if ( _input >= 'a' && _input <= 'f' )
+        return _input - 'a' + 10;
+    return -1;
 }
 
-bool hex2carray(const char * _hex, uint64_t  *_bin_len,
-               uint8_t* _bin ) {
-  int len = strnlen(_hex, 2 * 1024);
+bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin ) {
+    int len = strnlen( _hex, 2 * 1024 );
 
-  if (len == 0 && len % 2 == 1)
-    return false;
-  *_bin_len = len / 2;
-  for (int i = 0; i < len / 2; i++) {
-    int high = char2int((char)_hex[i * 2]);
-    int low = char2int((char)_hex[i * 2 + 1]);
-    if (high < 0 || low < 0) {
-      return false;
+    if ( len == 0 && len % 2 == 1 )
+        return false;
+    *_bin_len = len / 2;
+    for ( int i = 0; i < len / 2; i++ ) {
+        int high = char2int( ( char ) _hex[i * 2] );
+        int low = char2int( ( char ) _hex[i * 2 + 1] );
+        if ( high < 0 || low < 0 ) {
+            return false;
+        }
+        _bin[i] = ( unsigned char ) ( high * 16 + low );
     }
-    _bin[i] = (unsigned char) (high * 16 + low);
-    }
-  return true;
+    return true;
 }
 
-void Verify(const size_t t, const size_t n, std::istream& sign_file, int j = -1) {
-  libff::inhibit_profiling_info = true;
-  signatures::Bls bls_instance = signatures::Bls(t ,n);
+void Verify( const size_t t, const size_t n, std::istream& sign_file, int j = -1 ) {
+    libff::inhibit_profiling_info = true;
+    signatures::Bls bls_instance = signatures::Bls( t, n );
 
-  nlohmann::json signature;
-  sign_file >> signature;
+    nlohmann::json signature;
+    sign_file >> signature;
 
-  libff::alt_bn128_G1 sign;
+    libff::alt_bn128_G1 sign;
 
-  sign.X = libff::alt_bn128_Fq(signature["signature"]["X"].get<std::string>().c_str());
-  sign.Y = libff::alt_bn128_Fq(signature["signature"]["Y"].get<std::string>().c_str());
-  sign.Z = libff::alt_bn128_Fq::one();
+    sign.X = libff::alt_bn128_Fq( signature["signature"]["X"].get< std::string >().c_str() );
+    sign.Y = libff::alt_bn128_Fq( signature["signature"]["Y"].get< std::string >().c_str() );
+    sign.Z = libff::alt_bn128_Fq::one();
 
-  nlohmann::json hash_in;
+    nlohmann::json hash_in;
 
-  std::ifstream hash_file("hash.json");
-  hash_file >> hash_in;
+    std::ifstream hash_file( "hash.json" );
+    hash_file >> hash_in;
 
-  std::string to_be_hashed = hash_in["message"].get<std::string>();
+    std::string to_be_hashed = hash_in["message"].get< std::string >();
 
-  auto hash_bytes_arr = std::make_shared<std::array<uint8_t, 32>>();
-  if (g_b_rehash) {
-    std::string hash_str = cryptlite::sha256::hash_hex(to_be_hashed);
-    for (size_t i = 0; i < 32; i++ ){
-      hash_bytes_arr->at(i) = static_cast<uint8_t>(hash_str[i]);
-    }
-  } else {
-    uint64_t bin_len;
-    if (!hex2carray(to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data())) {
-      throw std::runtime_error("Invalid hash");
-    }
-  }
-
-  nlohmann::json pk_in;
-  std::vector<std::string> pkey_str;
-  if (g_b_common) {
-    std::ifstream pk_file("common_public_key.json");
-    pk_file >> pk_in;
-
-    for ( size_t i = 0; i < 4; i++){
-      pkey_str.push_back(pk_in["insecureCommonBLSPublicKey" + std::to_string(i)]);
-    }
-  } else {
-    std::ifstream pk_file("BLS_keys" + std::to_string(j) + ".json");
-    pk_file >> pk_in;
-
-    for ( size_t i = 0; i < 4; i++){
-      pkey_str.push_back(pk_in["insecureBLSPublicKey" + std::to_string(i)]);
-    }
-  }
-
-  BLSPublicKey pkey(std::make_shared<std::vector<std::string>>(pkey_str), t, n);
-
-  if (!sign.is_well_formed()) {
-    std::cout << "Bad value, signature was not verified\n";
-  }
-
-  bool bRes = bls_instance.Verification(hash_bytes_arr , sign, *pkey.getPublicKey());
-
-  if (g_b_verbose_mode) {
-    std::cout << "Signature verification result: " << (bRes ? "True" : "False") << '\n';
-  }
-  
-  if (!bRes) {
-    throw std::runtime_error("Signature verification failed");
-  } else {
-    std::cout << "Verification passed\n";
-  }
-}
-
-int main(int argc, const char *argv[]) {
-  std::istream * p_in = &std::cin;
-  int r = 1;
-  try {
-    boost::program_options::options_description desc("Options");
-    desc.add_options()
-    ("help", "Show this help screen")
-    ("version", "Show version number")
-    ("t", boost::program_options::value<size_t>(), "Threshold")
-    ("n", boost::program_options::value<size_t>(), "Number of participants")
-    ("input", boost::program_options::value<std::string>(), "Input file path with BLS signature; if not specified then use standard input")
-    ("j", boost::program_options::value<size_t>(), "if not specified then common public key will be verified, otherwise - single public key from j-th node (optional)")
-    ("v", "Verbose mode (optional)")
-    ("rehash", "if not specified, then do not hash input message");
-
-    boost::program_options::variables_map vm;
-    boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
-    boost::program_options::notify(vm);
-
-    if (vm.count("help") || argc <= 1) {
-      std::cout
-      << "BLS signature verification tool, version " << EXPAND_AS_STR( BLS_VERSION ) << '\n'
-      << "Usage:\n"
-      << "   " << argv[0] << " --t <threshold> --n <num_participants> [--input <path>] [--v]" << '\n'
-      << desc << '\n';
-      return 0;
-    }
-    if (vm.count("version")) {
-      std::cout
-      << EXPAND_AS_STR( BLS_VERSION ) << '\n';
-      return 0;
-    }
-
-    if (vm.count("t") == 0) {
-      throw std::runtime_error("--t is missing (see --help)");
-    }
-
-    if (vm.count("n") == 0) {
-      throw std::runtime_error("--n is missing (see --help)");
-    }
-
-    if (vm.count("v")) {
-      g_b_verbose_mode = true;
-    }
-
-    if (vm.count("rehash")) {
-      g_b_rehash = true;
-    }
-
-    size_t t = vm["t"].as<size_t>();
-    size_t n = vm["n"].as<size_t>();
-    if( g_b_verbose_mode )
-      std::cout
-    << "t = " << t << '\n'
-    << "n = " << n << '\n'
-    << '\n';
-
-    if( vm.count("input") ) {
-      if( g_b_verbose_mode ) {
-        std::cout << "input = " << vm["input"].as<std::string>() << '\n';
-      }
-      p_in = new std::ifstream( vm["input"].as<std::string>().c_str(), std::ifstream::binary);
-    }
-
-    size_t j = 0;
-    if (vm.count("j")) {
-      g_b_common = false;
-      j = vm["j"].as<size_t>();
-
-      if (g_b_verbose_mode) {
-        std::cout << "signature from " << j << "-th node is going to be verified" << '\n';
-      }
-    }
-
-    if (!g_b_common) {
-      Verify(t, n, *p_in, j);
+    auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
+    if ( g_b_rehash ) {
+        std::string hash_str = cryptlite::sha256::hash_hex( to_be_hashed );
+        for ( size_t i = 0; i < 32; i++ ) {
+            hash_bytes_arr->at( i ) = static_cast< uint8_t >( hash_str[i] );
+        }
     } else {
-      Verify(t, n, *p_in);
+        uint64_t bin_len;
+        if ( !hex2carray( to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+            throw std::runtime_error( "Invalid hash" );
+        }
     }
 
-    r = 0; // success
-  } catch ( std::exception & ex ) {
-    r = 1;
-    std::string str_what = ex.what();
-    if( str_what.empty() )
-      str_what = "exception without description";
-    std::cerr << "exception: " << str_what << "\n";
-  } catch (...) {
-    r = 2;
-    std::cerr << "unknown exception\n";
-  }
-  if( p_in != &std::cin )
-    delete (std::ifstream*)p_in;
-  return r;
+    nlohmann::json pk_in;
+    std::vector< std::string > pkey_str;
+    if ( g_b_common ) {
+        std::ifstream pk_file( "common_public_key.json" );
+        pk_file >> pk_in;
+
+        for ( size_t i = 0; i < 4; i++ ) {
+            pkey_str.push_back( pk_in["insecureCommonBLSPublicKey" + std::to_string( i )] );
+        }
+    } else {
+        std::ifstream pk_file( "BLS_keys" + std::to_string( j ) + ".json" );
+        pk_file >> pk_in;
+
+        for ( size_t i = 0; i < 4; i++ ) {
+            pkey_str.push_back( pk_in["insecureBLSPublicKey" + std::to_string( i )] );
+        }
+    }
+
+    BLSPublicKey pkey( std::make_shared< std::vector< std::string > >( pkey_str ), t, n );
+
+    if ( !sign.is_well_formed() ) {
+        std::cout << "Bad value, signature was not verified\n";
+    }
+
+    bool bRes = bls_instance.Verification( hash_bytes_arr, sign, *pkey.getPublicKey() );
+
+    if ( g_b_verbose_mode ) {
+        std::cout << "Signature verification result: " << ( bRes ? "True" : "False" ) << '\n';
+    }
+
+    if ( !bRes ) {
+        throw std::runtime_error( "Signature verification failed" );
+    } else {
+        std::cout << "Verification passed\n";
+    }
+}
+
+int main( int argc, const char* argv[] ) {
+    std::istream* p_in = &std::cin;
+    int r = 1;
+    try {
+        boost::program_options::options_description desc( "Options" );
+        desc.add_options()( "help", "Show this help screen" )( "version", "Show version number" )(
+            "t", boost::program_options::value< size_t >(), "Threshold" )(
+            "n", boost::program_options::value< size_t >(), "Number of participants" )( "input",
+            boost::program_options::value< std::string >(),
+            "Input file path with BLS signature; if not specified then use standard input" )( "j",
+            boost::program_options::value< size_t >(),
+            "if not specified then common public key will be verified, otherwise - single public "
+            "key from j-th node (optional)" )( "v", "Verbose mode (optional)" )(
+            "rehash", "if not specified, then do not hash input message" );
+
+        boost::program_options::variables_map vm;
+        boost::program_options::store(
+            boost::program_options::parse_command_line( argc, argv, desc ), vm );
+        boost::program_options::notify( vm );
+
+        if ( vm.count( "help" ) || argc <= 1 ) {
+            std::cout << "BLS signature verification tool, version " << EXPAND_AS_STR( BLS_VERSION )
+                      << '\n'
+                      << "Usage:\n"
+                      << "   " << argv[0]
+                      << " --t <threshold> --n <num_participants> [--input <path>] [--v]" << '\n'
+                      << desc << '\n';
+            return 0;
+        }
+        if ( vm.count( "version" ) ) {
+            std::cout << EXPAND_AS_STR( BLS_VERSION ) << '\n';
+            return 0;
+        }
+
+        if ( vm.count( "t" ) == 0 ) {
+            throw std::runtime_error( "--t is missing (see --help)" );
+        }
+
+        if ( vm.count( "n" ) == 0 ) {
+            throw std::runtime_error( "--n is missing (see --help)" );
+        }
+
+        if ( vm.count( "v" ) ) {
+            g_b_verbose_mode = true;
+        }
+
+        if ( vm.count( "rehash" ) ) {
+            g_b_rehash = true;
+        }
+
+        size_t t = vm["t"].as< size_t >();
+        size_t n = vm["n"].as< size_t >();
+        if ( g_b_verbose_mode )
+            std::cout << "t = " << t << '\n' << "n = " << n << '\n' << '\n';
+
+        if ( vm.count( "input" ) ) {
+            if ( g_b_verbose_mode ) {
+                std::cout << "input = " << vm["input"].as< std::string >() << '\n';
+            }
+            p_in =
+                new std::ifstream( vm["input"].as< std::string >().c_str(), std::ifstream::binary );
+        }
+
+        size_t j = 0;
+        if ( vm.count( "j" ) ) {
+            g_b_common = false;
+            j = vm["j"].as< size_t >();
+
+            if ( g_b_verbose_mode ) {
+                std::cout << "signature from " << j << "-th node is going to be verified" << '\n';
+            }
+        }
+
+        if ( !g_b_common ) {
+            Verify( t, n, *p_in, j );
+        } else {
+            Verify( t, n, *p_in );
+        }
+
+        r = 0;  // success
+    } catch ( std::exception& ex ) {
+        r = 1;
+        std::string str_what = ex.what();
+        if ( str_what.empty() )
+            str_what = "exception without description";
+        std::cerr << "exception: " << str_what << "\n";
+    } catch ( ... ) {
+        r = 2;
+        std::cerr << "unknown exception\n";
+    }
+    if ( p_in != &std::cin )
+        delete ( std::ifstream* ) p_in;
+    return r;
 }

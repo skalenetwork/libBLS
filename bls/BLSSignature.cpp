@@ -24,81 +24,88 @@
 #include <bls/BLSSignature.h>
 #include <bls/BLSutils.h>
 
-std::shared_ptr<libff::alt_bn128_G1> BLSSignature::getSig() const {
+std::shared_ptr< libff::alt_bn128_G1 > BLSSignature::getSig() const {
     return sig;
 }
-BLSSignature::BLSSignature(
-    const std::shared_ptr< libff::alt_bn128_G1 > sig, std::string & _hint, size_t _requiredSigners, size_t _totalSigners )
-    : sig( sig ), hint( _hint ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
+BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, std::string& _hint,
+    size_t _requiredSigners, size_t _totalSigners )
+    : sig( sig ),
+      hint( _hint ),
+      requiredSigners( _requiredSigners ),
+      totalSigners( _totalSigners ) {
     checkSigners( _requiredSigners, _totalSigners );
     BLSSignature::checkSigners( requiredSigners, totalSigners );
     if ( sig == nullptr || sig->is_zero() ) {
         throw signatures::Bls::IncorrectInput( "Zero or null signature" );
     }
     if ( hint.length() == 0 ) {
-      throw signatures::Bls::IncorrectInput( "Empty or misformatted hint" );
+        throw signatures::Bls::IncorrectInput( "Empty or misformatted hint" );
     }
 }
 
-BLSSignature::BLSSignature(std::shared_ptr<std::string> _sig,  size_t _requiredSigners,  size_t _totalSigners )
-        : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
+BLSSignature::BLSSignature(
+    std::shared_ptr< std::string > _sig, size_t _requiredSigners, size_t _totalSigners )
+    : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     BLSSignature::checkSigners( requiredSigners, totalSigners );
     BLSutils::initBLS();
 
-    if (!_sig) {
-        throw signatures::Bls::IncorrectInput("Null signature");
+    if ( !_sig ) {
+        throw signatures::Bls::IncorrectInput( "Null signature" );
     }
 
-    if (_sig->size() < 10) {
-        throw signatures::Bls::IsNotWellFormed("Signature too short:" + std::to_string(_sig->size()));
+    if ( _sig->size() < 10 ) {
+        throw signatures::Bls::IsNotWellFormed(
+            "Signature too short:" + std::to_string( _sig->size() ) );
     }
 
-    if (_sig->size() > BLS_MAX_SIG_LEN) {
-        throw signatures::Bls::IsNotWellFormed("Signature too long:" + std::to_string(_sig->size()));
+    if ( _sig->size() > BLS_MAX_SIG_LEN ) {
+        throw signatures::Bls::IsNotWellFormed(
+            "Signature too long:" + std::to_string( _sig->size() ) );
     }
 
-    std::shared_ptr<std::vector<std::string>> result = BLSutils::SplitString( _sig, ":");
-    if (result->size() != 4)
-        throw signatures::Bls::IncorrectInput("Misformatted signature");
-    for (auto && str : *result){
-        for (char& c : str) {
-            if (!( c >= '0' && c <= '9')) {
-                throw signatures::Bls::IncorrectInput("Misformatted char:" + std::to_string((int)c) + " in component " +  str);
+    std::shared_ptr< std::vector< std::string > > result = BLSutils::SplitString( _sig, ":" );
+    if ( result->size() != 4 )
+        throw signatures::Bls::IncorrectInput( "Misformatted signature" );
+    for ( auto&& str : *result ) {
+        for ( char& c : str ) {
+            if ( !( c >= '0' && c <= '9' ) ) {
+                throw signatures::Bls::IncorrectInput(
+                    "Misformatted char:" + std::to_string( ( int ) c ) + " in component " + str );
             }
         }
     }
-    libff::alt_bn128_Fq X(result->at(0).c_str());
-    libff::alt_bn128_Fq Y(result->at(1).c_str());
-    sig = std::make_shared< libff::alt_bn128_G1 >( X, Y, libff::alt_bn128_Fq::one());
-    hint = result->at(2) + ":" + result->at(3);
+    libff::alt_bn128_Fq X( result->at( 0 ).c_str() );
+    libff::alt_bn128_Fq Y( result->at( 1 ).c_str() );
+    sig = std::make_shared< libff::alt_bn128_G1 >( X, Y, libff::alt_bn128_Fq::one() );
+    hint = result->at( 2 ) + ":" + result->at( 3 );
 
-    if (!(*sig).is_well_formed()) {
-      throw signatures::Bls::IsNotWellFormed("signature is not from G1");
+    if ( !( *sig ).is_well_formed() ) {
+        throw signatures::Bls::IsNotWellFormed( "signature is not from G1" );
     }
 }
 
-std::shared_ptr<std::string> BLSSignature::toString() {
+std::shared_ptr< std::string > BLSSignature::toString() {
     char str[512];
 
     sig->to_affine_coordinates();
 
     gmp_sprintf( str, "%Nd:%Nd:%s", sig->X.as_bigint().data, libff::alt_bn128_Fq::num_limbs,
-        sig->Y.as_bigint().data, libff::alt_bn128_Fq::num_limbs, hint.c_str());
+        sig->Y.as_bigint().data, libff::alt_bn128_Fq::num_limbs, hint.c_str() );
 
-    return std::make_shared<std::string>(str);
+    return std::make_shared< std::string >( str );
 }
 void BLSSignature::checkSigners( size_t _requiredSigners, size_t _totalSigners ) {
     if ( _requiredSigners > _totalSigners ) {
-        throw signatures::Bls::IncorrectInput("_requiredSigners > _totalSigners");
+        throw signatures::Bls::IncorrectInput( "_requiredSigners > _totalSigners" );
     }
 
 
-    if (_totalSigners == 0) {
-        throw signatures::Bls::IncorrectInput("_totalSigners == 0");
+    if ( _totalSigners == 0 ) {
+        throw signatures::Bls::IncorrectInput( "_totalSigners == 0" );
     }
 }
 
-std::string BLSSignature::getHint() const{
+std::string BLSSignature::getHint() const {
     return hint;
 }
 

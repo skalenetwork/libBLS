@@ -24,11 +24,11 @@
 #ifndef LIBBLS_TEPUBLICKEYSHARE_H
 #define LIBBLS_TEPUBLICKEYSHARE_H
 
-#include <threshold_encryption/threshold_encryption.h>
 #include <threshold_encryption/TEPrivateKeyShare.h>
+#include <threshold_encryption/threshold_encryption.h>
 
 class TEPublicKeyShare {
- private:
+private:
     encryption::element_wrapper PublicKey;
 
     size_t signerIndex;
@@ -36,18 +36,18 @@ class TEPublicKeyShare {
     size_t totalSigners;
 
 
+public:
+    TEPublicKeyShare( std::shared_ptr< std::vector< std::string > > _key_str_ptr,
+        size_t signerIndex, size_t _requiredSigners, size_t _totalSigners );
 
- public:
-    TEPublicKeyShare(std::shared_ptr<std::vector<std::string>> _key_str_ptr, size_t signerIndex, size_t  _requiredSigners, size_t _totalSigners);
+    TEPublicKeyShare( TEPrivateKeyShare _p_key, size_t _requiredSigners, size_t _totalSigners );
 
-    TEPublicKeyShare(TEPrivateKeyShare _p_key, size_t  _requiredSigners, size_t _totalSigners);
+    bool Verify( const encryption::Ciphertext& ciphertext, const element_t& decrypted );
 
-    bool Verify(const encryption::Ciphertext& ciphertext, const element_t& decrypted);
-
-    std::shared_ptr<std::vector<std::string>> toString();
+    std::shared_ptr< std::vector< std::string > > toString();
 
     encryption::element_wrapper getPublicKey() const;
 };
 
 
-#endif //LIBBLS_TEPUBLICKEYSHARE_H
+#endif  // LIBBLS_TEPUBLICKEYSHARE_H

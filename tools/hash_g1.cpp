@@ -21,13 +21,13 @@
   @date 2019
 */
 
-#include <fstream>
-#include <boost/program_options.hpp>
-#include <libff/common/profiling.hpp>
-#include <bls/bls.h>
-#include <third_party/json.hpp>
-#include <bls/BLSutils.h>
 #include <bls/BLSPublicKey.h>
+#include <bls/BLSutils.h>
+#include <bls/bls.h>
+#include <boost/program_options.hpp>
+#include <fstream>
+#include <libff/common/profiling.hpp>
+#include <third_party/json.hpp>
 
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
 #define __EXPAND_AS_STR__( x ) #x
@@ -82,8 +82,8 @@ void hash_g1( const size_t t, const size_t n ) {
         }
     } else {
         uint64_t bin_len;
-        if (!hex2carray( to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data() )){
-            throw std::runtime_error("Invalid hash");
+        if ( !hex2carray( to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+            throw std::runtime_error( "Invalid hash" );
         }
     }
 
@@ -112,10 +112,10 @@ int main( int argc, const char* argv[] ) {
     try {
         boost::program_options::options_description desc( "Options" );
         desc.add_options()( "help", "Show this help screen" )( "version", "Show version number" )(
-            "t", boost::program_options::value< size_t >(), "Threshold" )(
-            "n", boost::program_options::value< size_t >(), "Number of participants" )(
-            "v", "Verbose mode (optional)" )( "rehash",
-            "if not specified, then do not hash input message" );
+            "t", boost::program_options::value< size_t >(), "Threshold" )( "n",
+            boost::program_options::value< size_t >(),
+            "Number of participants" )( "v", "Verbose mode (optional)" )(
+            "rehash", "if not specified, then do not hash input message" );
 
         boost::program_options::variables_map vm;
         boost::program_options::store(

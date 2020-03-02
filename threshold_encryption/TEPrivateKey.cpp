@@ -24,39 +24,39 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 #include <threshold_encryption/TEPrivateKey.h>
 #include <threshold_encryption/utils.h>
 
-TEPrivateKey::TEPrivateKey(std::shared_ptr<std::string> _key_str, size_t  _requiredSigners, size_t _totalSigners)
-: requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
+TEPrivateKey::TEPrivateKey(
+    std::shared_ptr< std::string > _key_str, size_t _requiredSigners, size_t _totalSigners )
+    : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
+    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
 
-  TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
+    if ( !_key_str ) {
+        throw std::runtime_error( "private key is null" );
+    }
 
-  if (!_key_str) {
-    throw std::runtime_error("private key is null");
-  }
+    element_t pkey;
+    element_init_Zr( pkey, TEDataSingleton::getData().pairing_ );
+    element_set_str( pkey, _key_str->c_str(), 10 );
+    privateKey = encryption::element_wrapper( pkey );
+    element_clear( pkey );
 
-  element_t pkey;
-  element_init_Zr(pkey,  TEDataSingleton::getData().pairing_);
-  element_set_str(pkey, _key_str->c_str(), 10);
-  privateKey = encryption::element_wrapper(pkey);
-  element_clear(pkey);
-
-  if (element_is0(privateKey.el_)) {
-    throw std::runtime_error(" private key is zero");
-  }
+    if ( element_is0( privateKey.el_ ) ) {
+        throw std::runtime_error( " private key is zero" );
+    }
 }
 
-TEPrivateKey::TEPrivateKey( encryption::element_wrapper _skey, size_t  _requiredSigners, size_t _totalSigners)
-: privateKey(_skey), requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
+TEPrivateKey::TEPrivateKey(
+    encryption::element_wrapper _skey, size_t _requiredSigners, size_t _totalSigners )
+    : privateKey( _skey ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
+    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
 
-  TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
-
-  if (element_is0(_skey.el_))
-    throw std::runtime_error(" private key is zero");
+    if ( element_is0( _skey.el_ ) )
+        throw std::runtime_error( " private key is zero" );
 }
 
 std::string TEPrivateKey::toString() {
-  return ElementZrToString(privateKey.el_);
+    return ElementZrToString( privateKey.el_ );
 }
 
-encryption::element_wrapper  TEPrivateKey::getPrivateKey() const {
-  return privateKey;
+encryption::element_wrapper TEPrivateKey::getPrivateKey() const {
+    return privateKey;
 }

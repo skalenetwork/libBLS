@@ -26,29 +26,30 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 
-class BLSutils{
- public:
-    template<class T>
-    static std::string ConvertToString(const T& field_elem);
-    static std::pair<libff::alt_bn128_Fq , libff::alt_bn128_Fq> ParseHint (std::string &);
-    static libff::alt_bn128_Fq HashToFq (std::shared_ptr<std::array< uint8_t, 32>>);
-    static std::shared_ptr<std::vector<std::string>> SplitString(const std::shared_ptr<std::string>, const std::string& delim);
+class BLSutils {
+public:
+    template < class T >
+    static std::string ConvertToString( const T& field_elem );
+    static std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ParseHint( std::string& );
+    static libff::alt_bn128_Fq HashToFq( std::shared_ptr< std::array< uint8_t, 32 > > );
+    static std::shared_ptr< std::vector< std::string > > SplitString(
+        const std::shared_ptr< std::string >, const std::string& delim );
     static void initBLS();
 };
 
-template<class T>
-std::string BLSutils::ConvertToString(const T& field_elem) {
-  mpz_t t;
-  mpz_init(t);
+template < class T >
+std::string BLSutils::ConvertToString( const T& field_elem ) {
+    mpz_t t;
+    mpz_init( t );
 
-  field_elem.as_bigint().to_mpz(t);
+    field_elem.as_bigint().to_mpz( t );
 
-  char arr[mpz_sizeinbase (t, 10) + 2];
-  
-  char* tmp = mpz_get_str(arr, 10, t);
-  mpz_clear(t);
+    char arr[mpz_sizeinbase( t, 10 ) + 2];
 
-  std::string output = tmp;
+    char* tmp = mpz_get_str( arr, 10, t );
+    mpz_clear( t );
 
-  return output;
+    std::string output = tmp;
+
+    return output;
 }

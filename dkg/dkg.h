@@ -32,35 +32,35 @@
 namespace signatures {
 
 class Dkg {
- public:
-    Dkg(const size_t t, const size_t n);
+public:
+    Dkg( const size_t t, const size_t n );
 
-    std::vector<libff::alt_bn128_Fr> GeneratePolynomial();
+    std::vector< libff::alt_bn128_Fr > GeneratePolynomial();
 
-    std::vector<libff::alt_bn128_G2> VerificationVector(
-                                              const std::vector<libff::alt_bn128_Fr>& polynomial);
+    std::vector< libff::alt_bn128_G2 > VerificationVector(
+        const std::vector< libff::alt_bn128_Fr >& polynomial );
 
-    libff::alt_bn128_Fr PolynomialValue(const std::vector<libff::alt_bn128_Fr>& pol,
-                                                                        libff::alt_bn128_Fr point);
+    libff::alt_bn128_Fr PolynomialValue(
+        const std::vector< libff::alt_bn128_Fr >& pol, libff::alt_bn128_Fr point );
 
-    std::vector<libff::alt_bn128_Fr> SecretKeyContribution(
-                                              const std::vector<libff::alt_bn128_Fr>& polynomial);
+    std::vector< libff::alt_bn128_Fr > SecretKeyContribution(
+        const std::vector< libff::alt_bn128_Fr >& polynomial );
 
     libff::alt_bn128_Fr SecretKeyShareCreate(
-                                  const std::vector<libff::alt_bn128_Fr>& secret_key_contribution);
+        const std::vector< libff::alt_bn128_Fr >& secret_key_contribution );
 
-    bool Verification(size_t idx, libff::alt_bn128_Fr share,
-                        const std::vector<libff::alt_bn128_G2>& verification_vector);
+    bool Verification( size_t idx, libff::alt_bn128_Fr share,
+        const std::vector< libff::alt_bn128_G2 >& verification_vector );
 
-    libff::alt_bn128_G2 GetPublicKeyFromSecretKey(const libff::alt_bn128_Fr& secret_key);
+    libff::alt_bn128_G2 GetPublicKeyFromSecretKey( const libff::alt_bn128_Fr& secret_key );
 
-    libff::alt_bn128_G2 ComputeVerificationValue(const libff::alt_bn128_Fr& share);
+    libff::alt_bn128_G2 ComputeVerificationValue( const libff::alt_bn128_Fr& share );
 
     size_t GetT() const;
 
     size_t GetN() const;
 
- private:
+private:
     const size_t t_ = 0;
 
     const size_t n_ = 0;

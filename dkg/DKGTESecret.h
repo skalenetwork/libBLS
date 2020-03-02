@@ -28,16 +28,17 @@
 #include <threshold_encryption/threshold_encryption.h>
 
 class DKGTESecret {
- private:
+private:
     size_t requiredSigners;
     size_t totalSigners;
-    std::vector<encryption::element_wrapper> poly;
- public:
-    DKGTESecret(size_t _requiredSigners, size_t _totalSigners);
-    void setPoly(std::vector <encryption::element_wrapper>& _poly);
-    std::vector <encryption::element_wrapper> getDKGTESecretShares();
-    std::vector <encryption::element_wrapper> getDKGTEPublicShares();
+    std::vector< encryption::element_wrapper > poly;
+
+public:
+    DKGTESecret( size_t _requiredSigners, size_t _totalSigners );
+    void setPoly( std::vector< encryption::element_wrapper >& _poly );
+    std::vector< encryption::element_wrapper > getDKGTESecretShares();
+    std::vector< encryption::element_wrapper > getDKGTEPublicShares();
 };
 
 
-#endif //LIBBLS_DKGTESECRET_H
+#endif  // LIBBLS_DKGTESECRET_H
