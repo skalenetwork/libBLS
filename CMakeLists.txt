@@ -100,7 +100,11 @@ set(headers_bls
 
 set(PROJECT_VERSION 0.4.0)
 add_definitions(-DBLS_VERSION=${PROJECT_VERSION})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wparentheses -Wunused -Wunreachable-code -Wextra -Wno-error=int-in-bool-context -fPIC -std=c++17")
+if ( APPLE )
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wparentheses -Wunused -Wunreachable-code -Wextra -fPIC -std=c++17")
+else()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wparentheses -Wunused -Wunreachable-code -Wextra -Wno-error=int-in-bool-context -fPIC -std=c++17")
+endif()
 
 include_directories(${CMAKE_BINARY_DIR}/deps/include)
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
