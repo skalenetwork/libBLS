@@ -21,59 +21,63 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 @date 2019
 */
 
-#include <algorithm>
-#include <boost/multiprecision/cpp_int.hpp>
 #include <bls/BLSutils.h>
+#include <boost/multiprecision/cpp_int.hpp>
+#include <algorithm>
 
 #include <bitset>
 
 void BLSutils::initBLS() {
-  static bool is_initialized = false;
-  if (!is_initialized) {
-    libff::init_alt_bn128_params();
-    is_initialized = true;
-  }
+    static bool is_initialized = false;
+    if ( !is_initialized ) {
+        libff::init_alt_bn128_params();
+        is_initialized = true;
+    }
 }
 
-std::pair<libff::alt_bn128_Fq, libff::alt_bn128_Fq> BLSutils::ParseHint(std::string& _hint){
-  auto position = _hint.find( ":" );
+std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > BLSutils::ParseHint( std::string& _hint ) {
+    auto position = _hint.find( ":" );
 
-  if (position == std::string::npos) {
-    throw std::runtime_error( "Misformatted hint" ) ;
-  }
+    if ( position == std::string::npos ) {
+        throw std::runtime_error( "Misformatted hint" );
+    }
 
-  libff::alt_bn128_Fq y (_hint.substr(0, position).c_str());
-  libff::alt_bn128_Fq shift_x(_hint.substr(position + 1).c_str());
+    libff::alt_bn128_Fq y( _hint.substr( 0, position ).c_str() );
+    libff::alt_bn128_Fq shift_x( _hint.substr( position + 1 ).c_str() );
 
-  return std::make_pair(y, shift_x);
+    return std::make_pair( y, shift_x );
 }
 
-libff::alt_bn128_Fq BLSutils::HashToFq (std::shared_ptr<std::array< uint8_t, 32>> hash_byte_arr){
-  libff::bigint<libff::alt_bn128_q_limbs> from_hex;
-  
-  unsigned char* hex = new unsigned char [64];
-  for (size_t i = 0; i < 32; ++i) {
-    hex[2 * i] = static_cast<int>(hash_byte_arr->at(i)) / 16;
-    hex[2 * i + 1] = static_cast<int>(hash_byte_arr->at(i)) % 16;
-  }
-  mpn_set_str(from_hex.data, hex, 64, 16);
-  delete[] hex;
+libff::alt_bn128_Fq BLSutils::HashToFq(
+    std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr ) {
+    libff::bigint< libff::alt_bn128_q_limbs > from_hex;
 
-  libff::alt_bn128_Fq ret_val(from_hex);
+    unsigned char* hex = new unsigned char[64];
+    for ( size_t i = 0; i < 32; ++i ) {
+        hex[2 * i] = static_cast< int >( hash_byte_arr->at( i ) ) / 16;
+        hex[2 * i + 1] = static_cast< int >( hash_byte_arr->at( i ) ) % 16;
+    }
+    mpn_set_str( from_hex.data, hex, 64, 16 );
+    delete[] hex;
 
-  return ret_val;
+    libff::alt_bn128_Fq ret_val( from_hex );
+
+    return ret_val;
 }
 
-std::shared_ptr<std::vector<std::string>> BLSutils::SplitString(std::shared_ptr<std::string> str, const std::string& delim){
-  std::vector<std::string> tokens;
-  size_t prev = 0, pos = 0;
-  do {
-    pos = str->find(delim, prev);
-    if (pos == std::string::npos) pos = str->length();
-    std::string token = str->substr(prev, pos-prev);
-    if (!token.empty()) tokens.push_back(token);
-    prev = pos + delim.length();
-  } while (pos < str->length() && prev < str->length());
+std::shared_ptr< std::vector< std::string > > BLSutils::SplitString(
+    std::shared_ptr< std::string > str, const std::string& delim ) {
+    std::vector< std::string > tokens;
+    size_t prev = 0, pos = 0;
+    do {
+        pos = str->find( delim, prev );
+        if ( pos == std::string::npos )
+            pos = str->length();
+        std::string token = str->substr( prev, pos - prev );
+        if ( !token.empty() )
+            tokens.push_back( token );
+        prev = pos + delim.length();
+    } while ( pos < str->length() && prev < str->length() );
 
-  return std::make_shared< std::vector<std::string>>(tokens);
+    return std::make_shared< std::vector< std::string > >( tokens );
 }

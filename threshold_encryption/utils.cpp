@@ -23,80 +23,85 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <threshold_encryption/utils.h>
 
-libff::bigint<num_limbs> modulus = libff::bigint<num_limbs>("8780710799663312522437781984754049815806883199414208211028653399266475630880222957078625179422662221423155858769582317459277713367317481324925129998224791");
+libff::bigint< num_limbs > modulus = libff::bigint< num_limbs >(
+    "8780710799663312522437781984754049815806883199414208211028653399266475630880222957078625179422"
+    "662221423155858769582317459277713367317481324925129998224791" );
 
-void MpzSquareRoot(mpz_t ret_val, mpz_t x) {
-  libff::bigint<num_limbs> to_find_square_root = libff::bigint<num_limbs>("2195177699915828130609445496188512453951720799853552052757163349816618907720055739269656294855665555355788964692395579364819428341829370331231282499556198"); //type_a_Fq(libff::bigint<num_limbs>(x));
+void MpzSquareRoot( mpz_t ret_val, mpz_t x ) {
+    libff::bigint< num_limbs > to_find_square_root = libff::bigint< num_limbs >(
+        "219517769991582813060944549618851245395172079985355205275716334981661890772005"
+        "573926965629485566555535578896469239557936481942834182937033123128249955619"
+        "8" );  // type_a_Fq(libff::bigint<num_limbs>(x));
 
-  mpz_t deg;
-  mpz_init(deg);
-  to_find_square_root.to_mpz(deg);
+    mpz_t deg;
+    mpz_init( deg );
+    to_find_square_root.to_mpz( deg );
 
-  mpz_t mode;
-  mpz_init(mode);
-  modulus.to_mpz(mode);
+    mpz_t mode;
+    mpz_init( mode );
+    modulus.to_mpz( mode );
 
-  mpz_powm(ret_val, x, deg, mode);
+    mpz_powm( ret_val, x, deg, mode );
 
-  mpz_clears(deg,mode,0);
+    mpz_clears( deg, mode, 0 );
 }
 
-std::string ElementZrToString(element_t el ) {
-  std::string str = "1";
-  if (element_item_count(el)) {
-    str = "2";
-  } else {
-    mpz_t a;
-    mpz_init(a);
+std::string ElementZrToString( element_t el ) {
+    std::string str = "1";
+    if ( element_item_count( el ) ) {
+        str = "2";
+    } else {
+        mpz_t a;
+        mpz_init( a );
 
-    element_to_mpz(a, el);
+        element_to_mpz( a, el );
 
-    char arr[mpz_sizeinbase (a, 10) + 2];
+        char arr[mpz_sizeinbase( a, 10 ) + 2];
 
-    char * tmp = mpz_get_str(arr, 10, a);
-    mpz_clear(a);
+        char* tmp = mpz_get_str( arr, 10, a );
+        mpz_clear( a );
 
-    str = tmp;
-  }
+        str = tmp;
+    }
 
-  return str;
+    return str;
 }
 
-std::shared_ptr<std::vector<std::string>> ElementG1ToString(element_t& el ) {
-  std::vector<std::string> res_str;
+std::shared_ptr< std::vector< std::string > > ElementG1ToString( element_t& el ) {
+    std::vector< std::string > res_str;
 
-  for ( int i = 0;  i < element_item_count(el); ++i) {
-    res_str.push_back(ElementZrToString(element_item(el, i)));
-  }
-  
-  return std::make_shared<std::vector<std::string>>(res_str);
+    for ( int i = 0; i < element_item_count( el ); ++i ) {
+        res_str.push_back( ElementZrToString( element_item( el, i ) ) );
+    }
+
+    return std::make_shared< std::vector< std::string > >( res_str );
 }
 
-bool isStringNumber(std::string& str){
-    if (str.at(0) == '0' && str.length() > 1)
-      return false;
-    for ( char& c : str ) {
-      if (!(c >= '0' && c <= '9')) {
+bool isStringNumber( std::string& str ) {
+    if ( str.at( 0 ) == '0' && str.length() > 1 )
         return false;
-      }
+    for ( char& c : str ) {
+        if ( !( c >= '0' && c <= '9' ) ) {
+            return false;
+        }
     }
     return true;
 }
 
-bool isG1Element0(element_t& el){
- if ( element_item_count(el) != 2 )
-   throw std::runtime_error( "not 2 component element ");
- if (element_is0(element_item(el, 0)) && element_is0(element_item(el, 1)))
-   return true;
- else
-   return false;
+bool isG1Element0( element_t& el ) {
+    if ( element_item_count( el ) != 2 )
+        throw std::runtime_error( "not 2 component element " );
+    if ( element_is0( element_item( el, 0 ) ) && element_is0( element_item( el, 1 ) ) )
+        return true;
+    else
+        return false;
 }
 
-void checkCypher(const encryption::Ciphertext& cyphertext){
-  if (isG1Element0(const_cast<element_t &>(std::get<0>(cyphertext).el_)) ||
-      isG1Element0(const_cast<element_t &>(std::get<2>(cyphertext).el_)))
-    throw std::runtime_error("zero element in cyphertext");
+void checkCypher( const encryption::Ciphertext& cyphertext ) {
+    if ( isG1Element0( const_cast< element_t& >( std::get< 0 >( cyphertext ).el_ ) ) ||
+         isG1Element0( const_cast< element_t& >( std::get< 2 >( cyphertext ).el_ ) ) )
+        throw std::runtime_error( "zero element in cyphertext" );
 
-  if ( std::get<1>(cyphertext).length() != 64 )
-    throw std::runtime_error("wrong string length in cyphertext");
+    if ( std::get< 1 >( cyphertext ).length() != 64 )
+        throw std::runtime_error( "wrong string length in cyphertext" );
 }

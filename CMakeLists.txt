@@ -1,11 +1,13 @@
 cmake_minimum_required(VERSION 3.5.1)
 
+set( CMAKE_CXX_STANDARD 17 )
+
 project(libBLS)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-		if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.0)
-    		message(FATAL_ERROR "Require at least gcc-7.0")
-		endif()
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.0)
+        message(FATAL_ERROR "Require at least gcc-7.0")
+    endif()
 endif()
 
 if (CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -23,6 +25,9 @@ message(INFO "---- DEPS_INSTALL_ROOT in BLS is: ${DEPS_INSTALL_ROOT}")
 include_directories( "${DEPS_INSTALL_ROOT}/include" ${CMAKE_BINARY_DIR}/deps/include )
 link_directories( "${DEPS_INSTALL_ROOT}/lib" )
 set( CMAKE_PREFIX_PATH "${DEPS_INSTALL_ROOT}" )
+
+set( LIBBLS_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake" CACHE PATH "The path to the cmake directory" )
+list( APPEND CMAKE_MODULE_PATH ${LIBBLS_CMAKE_DIR} )
 
 find_library( GMP_LIBRARY NAMES "gmp" PATHS "${DEPS_INSTALL_ROOT}/lib" )
 find_library( GMPXX_LIBRARY NAMES "gmpxx" PATHS "${DEPS_INSTALL_ROOT}/lib" )
@@ -50,6 +55,11 @@ if(COVERAGE)
 	set(CMAKE_EXE_LINKER_FLAGS "--coverage ${CMAKE_EXE_LINKER_FLAGS}")
 endif()
 
+set( CLANG_FORMAT_EXCLUDE_PATTERNS
+    ${CMAKE_BINARY_DIR}
+    ${DEPS_SOURCES_ROOT}
+    )
+include( FindClangFormat )
 
 set(sourses_bls
 		bls/bls.cpp
@@ -90,13 +100,16 @@ set(headers_bls
 
 set(PROJECT_VERSION 0.4.0)
 add_definitions(-DBLS_VERSION=${PROJECT_VERSION})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++17 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-error=unused-variable -Wno-error=unused-parameter -Wno-error=int-in-bool-context")
+if ( APPLE )
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wparentheses -Wunused -Wunreachable-code -Wextra -fPIC -std=c++17")
+else()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wparentheses -Wunused -Wunreachable-code -Wextra -Wno-error=int-in-bool-context -fPIC -std=c++17")
+endif()
 
 include_directories(${CMAKE_BINARY_DIR}/deps/include)
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 
 add_library(bls ${sourses_bls} ${headers_bls})
-target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wno-error=unused-but-set-variable)
 
 include_directories(${Boost_INCLUDE_DIRS})
 

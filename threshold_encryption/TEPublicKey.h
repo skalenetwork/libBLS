@@ -24,30 +24,31 @@
 #ifndef LIBBLS_TEPUBLICKEY_H
 #define LIBBLS_TEPUBLICKEY_H
 
-#include <threshold_encryption/threshold_encryption.h>
 #include <threshold_encryption/TEPrivateKey.h>
+#include <threshold_encryption/threshold_encryption.h>
 
 class TEPublicKey {
- private:
-  encryption::element_wrapper PublicKey;
+private:
+    encryption::element_wrapper PublicKey;
 
-  size_t requiredSigners;
-  size_t totalSigners;
+    size_t requiredSigners;
+    size_t totalSigners;
 
 
- public:
-    TEPublicKey(std::shared_ptr<std::vector<std::string>> _key_str_ptr, size_t  _requiredSigners, size_t _totalSigners);
+public:
+    TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str_ptr,
+        size_t _requiredSigners, size_t _totalSigners );
 
-    TEPublicKey(encryption::element_wrapper _pkey, size_t  _requiredSigners, size_t _totalSigners);
+    TEPublicKey( encryption::element_wrapper _pkey, size_t _requiredSigners, size_t _totalSigners );
 
-    TEPublicKey(TEPrivateKey _comon_private, size_t  _requiredSigners, size_t _totalSigners);
+    TEPublicKey( TEPrivateKey _comon_private, size_t _requiredSigners, size_t _totalSigners );
 
-    std::shared_ptr<std::vector<std::string>> toString();
+    std::shared_ptr< std::vector< std::string > > toString();
 
-    encryption::Ciphertext encrypt(const std::shared_ptr<std::string>& message);
+    encryption::Ciphertext encrypt( const std::shared_ptr< std::string >& message );
 
     encryption::element_wrapper getPublicKey() const;
 };
 
 
-#endif //LIBBLS_TEPUBLICKEY_H
+#endif  // LIBBLS_TEPUBLICKEY_H

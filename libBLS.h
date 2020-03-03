@@ -25,15 +25,15 @@
 #define LIBBLS_LIBBLS_H
 
 #include <bls/BLSPrivateKey.h>
-#include <bls/BLSSigShareSet.h>
 #include <bls/BLSPublicKeyShare.h>
+#include <bls/BLSSigShareSet.h>
 
 #include <dkg/DKGBLSWrapper.h>
 #include <dkg/DKGTEWrapper.h>
 
-#include <threshold_encryption/TEPublicKeyShare.h>
-#include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/TEDataSingleton.h>
+#include <threshold_encryption/TEPublicKey.h>
+#include <threshold_encryption/TEPublicKeyShare.h>
 
 
-#endif //LIBBLS_LIBBLS_H
+#endif  // LIBBLS_LIBBLS_H
