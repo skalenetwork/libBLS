@@ -23,37 +23,36 @@
 
 #pragma once
 
-#include <threshold_encryption.h>
 #include <TEDataSingleton.h>
+#include <threshold_encryption.h>
 
 namespace encryption {
 
 class DkgTe {
- public:
+public:
+    DkgTe( const size_t t, const size_t n );
 
-    DkgTe(const size_t t, const size_t n);
+    std::vector< element_wrapper > GeneratePolynomial();
 
-    std::vector<element_wrapper> GeneratePolynomial();
+    std::vector< element_wrapper > CreateVerificationVector(
+        const std::vector< element_wrapper >& polynomial );
 
-    std::vector<element_wrapper> CreateVerificationVector(
-                                                  const std::vector<element_wrapper>& polynomial);
+    element_wrapper ComputePolynomialValue(
+        const std::vector< element_wrapper >& polynomial, const element_wrapper& point );
 
-    element_wrapper ComputePolynomialValue(const std::vector<element_wrapper>& polynomial,
-                                    const element_wrapper& point);
-
-    std::vector<element_wrapper> CreateSecretKeyContribution(
-                                                  const std::vector<element_wrapper>& polynomial);
+    std::vector< element_wrapper > CreateSecretKeyContribution(
+        const std::vector< element_wrapper >& polynomial );
 
     element_wrapper CreateSecretKeyShare(
-                                    const std::vector<element_wrapper>& secret_key_contribution);
+        const std::vector< element_wrapper >& secret_key_contribution );
 
-    bool Verify(size_t idx, const element_wrapper& share,
-                const std::vector<element_wrapper>& verification_vector);
+    bool Verify( size_t idx, const element_wrapper& share,
+        const std::vector< element_wrapper >& verification_vector );
 
- private:
-  const size_t t_ = 0;
+private:
+    const size_t t_ = 0;
 
-  const size_t n_ = 0;
+    const size_t n_ = 0;
 };
 
 }  // namespace encryption

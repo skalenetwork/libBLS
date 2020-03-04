@@ -4,6 +4,7 @@ cache:
     ccache: true
     directories:
         - $TRAVIS_BUILD_DIR/build/deps
+        - $TRAVIS_BUILD_DIR/deps
 matrix:
     include:
         - os: linux
@@ -17,6 +18,7 @@ matrix:
               apt:
                   packages:
                       - g++-7
+                      - clang-format-6.0
                       - valgrind
                       - gawk
                       - sed
@@ -65,6 +67,7 @@ matrix:
               apt:
                   packages:
                       - g++-7
+                      - clang-format-6.0
                       - valgrind
                       - gawk
                       - sed
@@ -86,6 +89,7 @@ matrix:
               apt:
                   packages:
                       - g++-7
+                      - clang-format-6.0
                       - valgrind
                       - gawk
                       - sed
@@ -141,6 +145,7 @@ script:
     - mkdir -p build
     - cd build
     - cmake $CMAKE_BUILD_FLAGS ..
+    - if [ "$TRAVIS_OS_NAME" != "osx" ]; then make format-check || travis_terminate 1; fi
     - cmake --build . -- -j$CPU_COUNT
     - cd ..
     - echo "========================================= script (2)"

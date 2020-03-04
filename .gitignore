@@ -9,3 +9,7 @@ gmp-6.1.2
 
 deps/*
 !deps/build.sh
+saved_environment_on_startup.txt
+test/dkgpython.so
+test/test_sgx.py
+qt_build/
