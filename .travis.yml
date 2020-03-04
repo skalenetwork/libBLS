@@ -45,13 +45,12 @@ matrix:
           after_success:
               - cd build
               - echo "========================================= after_success (coverage)"
-              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./bls_unit_test || travis_terminate 1; else ./bls_unit_test || travis_terminate 1; fi
-              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./dkg_unit_test || travis_terminate 1; else ./dkg_unit_test || travis_terminate 1; fi
-              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./bls_test || travis_terminate 1; else ./bls_test || travis_terminate 1; fi
-              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_unit_test || travis_terminate 1; else ./threshold_encryption/te_unit_test || travis_terminate 1; fi
-              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_test || travis_terminate 1; else ./threshold_encryption/te_test || travis_terminate 1; fi
-              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_test || travis_terminate 1; else ./threshold_encryption/te_test || travis_terminate 1; fi
-              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./threshold_encryption/dkg_te_unit_test || travis_terminate 1; else ./threshold_encryption/dkg_te_unit_test || travis_terminate 1; fi
+              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./bls_unit_test; else ./bls_unit_test || travis_terminate 1; fi
+              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./dkg_unit_test; else ./dkg_unit_test || travis_terminate 1; fi
+              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./bls_test; else ./bls_test || travis_terminate 1; fi
+              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_unit_test; else ./threshold_encryption/te_unit_test || travis_terminate 1; fi
+              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_test; else ./threshold_encryption/te_test || travis_terminate 1; fi
+              - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./threshold_encryption/dkg_te_unit_test; else ./threshold_encryption/dkg_te_unit_test || travis_terminate 1; fi
               - cd ..
               - ./get_code_cov
               - echo "========================================= after_success (coverage gathered to gcov files)"
