@@ -262,17 +262,34 @@ then
 	else
 		if [ "$UNIX_SYSTEM_NAME" = "Linux" ];
 		then
-			export CC=`which gcc-7`
-			if [ -z "${CC}" ];
-			then
-				export CC=`which gcc`
-			fi
-			export CXX=`which g++-7`
-			if [ -z "${CXX}" ];
-			then
-				export CXX=`which g++`
-			fi
-		else
+            export CC=`which gcc-9`
+            if [ -z "${CC}" ];
+            then
+                export CC=`which gcc-8`
+                if [ -z "${CC}" ];
+                then
+                    export CC=`which gcc-7`
+                    if [ -z "${CC}" ];
+                    then
+                        export CC=`which gcc`
+                    fi
+                fi
+            fi
+            ###
+            export CXX=`which g++-9`
+            if [ -z "${CXX}" ];
+            then
+                export CXX=`which g++-8`
+                if [ -z "${CXX}" ];
+                then
+                    export CXX=`which g++-7`
+                    if [ -z "${CXX}" ];
+                    then
+                        export CXX=`which g++`
+                    fi
+                fi
+            fi
+        else
 			export CC=`which gcc`
 			export CXX=`which g++`
 		fi

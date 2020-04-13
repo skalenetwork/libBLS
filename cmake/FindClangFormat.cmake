@@ -57,5 +57,5 @@ if( ( NOT DEFINED CLANG_FORMAT_BIN_NAME ) OR ( "${CLANG_FORMAT_BIN_NAME}" STREQU
         message( INFO " - clang-format not found and not specified - will skip setting up format targets" )
 else()
         # A CMake script to find all source files and setup clang-format targets for them
-        include( clang-format )
+        include( ./cmake/clang-format.cmake )
 endif()

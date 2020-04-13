@@ -5,8 +5,8 @@ set( CMAKE_CXX_STANDARD 17 )
 project(libBLS)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.0)
-        message(FATAL_ERROR "Require at least gcc-7.0")
+    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0)
+        message(FATAL_ERROR "Require at least gcc-9.0")
     endif()
 endif()
 
@@ -55,11 +55,11 @@ if(COVERAGE)
 	set(CMAKE_EXE_LINKER_FLAGS "--coverage ${CMAKE_EXE_LINKER_FLAGS}")
 endif()
 
-set( CLANG_FORMAT_EXCLUDE_PATTERNS
+set( BLS_CLANG_FORMAT_EXCLUDE_PATTERNS
     ${CMAKE_BINARY_DIR}
     ${DEPS_SOURCES_ROOT}
     )
-include( FindClangFormat )
+include( ./cmake/FindClangFormat.cmake )
 
 set(sourses_bls
 		bls/bls.cpp
@@ -199,3 +199,5 @@ if(NOT SKALE_SKIP_INSTALLING_DIRECTIVES)
 	install( TARGETS bls_glue DESTINATION bin )
 	install( TARGETS verify_bls DESTINATION bin )
 endif()
+
+

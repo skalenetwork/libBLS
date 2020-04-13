@@ -1,57 +1,59 @@
 # A CMake script to find all source files and setup clang-format targets for them
 
 # Find all source files
-set(CLANG_FORMAT_CXX_FILE_EXTENSIONS ${CLANG_FORMAT_CXX_FILE_EXTENSIONS} *.cpp *.h *.cxx *.hxx *.hpp *.cc *.ipp)
-file(GLOB_RECURSE ALL_SOURCE_FILES ${CLANG_FORMAT_CXX_FILE_EXTENSIONS})
+set(BLS_CLANG_FORMAT_CXX_FILE_EXTENSIONS ${BLS_CLANG_FORMAT_CXX_FILE_EXTENSIONS} *.cpp *.h *.cxx *.hxx *.hpp *.cc *.ipp)
+file(GLOB_RECURSE BLS_ALL_SOURCE_FILES ${BLS_CLANG_FORMAT_CXX_FILE_EXTENSIONS})
 
 # Don't include some common build folders
-set(CLANG_FORMAT_EXCLUDE_PATTERNS ${CLANG_FORMAT_EXCLUDE_PATTERNS} "/CMakeFiles/" "cmake")
+set(BLS_CLANG_FORMAT_EXCLUDE_PATTERNS ${BLS_CLANG_FORMAT_EXCLUDE_PATTERNS} "/CMakeFiles/" "cmake")
 
 # get all project files file
-foreach (EXCLUDE_PATTERN ${CLANG_FORMAT_EXCLUDE_PATTERNS})
-    list(FILTER ALL_SOURCE_FILES EXCLUDE REGEX ${EXCLUDE_PATTERN})
+foreach (BLS_EXCLUDE_PATTERN ${BLS_CLANG_FORMAT_EXCLUDE_PATTERNS})
+    list(FILTER BLS_ALL_SOURCE_FILES EXCLUDE REGEX ${BLS_EXCLUDE_PATTERN})
 endforeach()
 
-add_custom_target(format
-    COMMENT "Running clang-format to change files"
+add_custom_target( bls-format
+    COMMENT "Running clang-format to change BLS files"
     COMMAND ${CLANG_FORMAT_BIN}
     -style=file
     -i
-    ${ALL_SOURCE_FILES}
+    ${BLS_ALL_SOURCE_FILES}
 )
 
 
-add_custom_target(format-check
-    COMMENT "Checking clang-format changes"
+add_custom_target( bls-format-check
+    COMMENT "Checking clang-format changes in BLS"
     # Use ! to negate the result for correct output
     COMMAND !
     ${CLANG_FORMAT_BIN}
     -style=file
     -output-replacements-xml
-    ${ALL_SOURCE_FILES}
+    ${BLS_ALL_SOURCE_FILES}
     | grep -q "replacement offset"
 )
 
 # Get the path to this file
 get_filename_component(_clangcheckpath ${CMAKE_CURRENT_LIST_FILE} PATH)
 # have at least one here by default
-set(CHANGED_FILE_EXTENSIONS ".cpp")
-foreach(EXTENSION ${CLANG_FORMAT_CXX_FILE_EXTENSIONS})
-    set(CHANGED_FILE_EXTENSIONS "${CHANGED_FILE_EXTENSIONS},${EXTENSION}" )
+set(BLS_CHANGED_FILE_EXTENSIONS ".cpp")
+foreach(EXTENSION ${BLS_CLANG_FORMAT_CXX_FILE_EXTENSIONS})
+    set(BLS_CHANGED_FILE_EXTENSIONS "${BLS_CHANGED_FILE_EXTENSIONS},${EXTENSION}" )
 endforeach()
 
-set(EXCLUDE_PATTERN_ARGS)
-foreach(EXCLUDE_PATTERN ${CLANG_FORMAT_EXCLUDE_PATTERNS})
-    list(APPEND EXCLUDE_PATTERN_ARGS "--exclude=${EXCLUDE_PATTERN}")
+set(BLS_EXCLUDE_PATTERN_ARGS)
+foreach(BLS_EXCLUDE_PATTERN ${BLS_CLANG_FORMAT_EXCLUDE_PATTERNS})
+    list(APPEND BLS_EXCLUDE_PATTERN_ARGS "--exclude=${BLS_EXCLUDE_PATTERN}")
 endforeach()
 
 # call the script to chech changed files in git
-add_custom_target(format-check-changed
-    COMMENT "Checking changed files in git"
+add_custom_target( bls-format-check-changed
+    COMMENT "Checking changed BLS files in git"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMAND ${_clangcheckpath}/../scripts/clang-format-check-changed.py 
-    --file-extensions \"${CHANGED_FILE_EXTENSIONS}\"
-    ${EXCLUDE_PATTERN_ARGS}
+    --file-extensions \"${BLS_CHANGED_FILE_EXTENSIONS}\"
+    ${BLS_EXCLUDE_PATTERN_ARGS}
     --clang-format-bin ${CLANG_FORMAT_BIN}
 )
+
+
 

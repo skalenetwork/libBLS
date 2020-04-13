@@ -11,13 +11,16 @@ matrix:
           env:
             - BUILDING_FOR_OS=linux
             - CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
-            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+            - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9"
             - CPU_COUNT=$(nproc)
             - NIGHTLY_BUILD_FLAGS="valgrind --leak-check=yes"
           addons:
               apt:
+                  sources:
+                      - ubuntu-toolchain-r-test
                   packages:
-                      - g++-7
+                      - gcc-9
+                      - g++-9
                       - clang-format-6.0
                       - valgrind
                       - gawk
@@ -61,12 +64,15 @@ matrix:
           env:
             - BUILDING_FOR_OS=linux
             - CMAKE_BUILD_FLAGS=""
-            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+            - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9"
             - CPU_COUNT=$(nproc)
           addons:
               apt:
+                  sources:
+                      - ubuntu-toolchain-r-test
                   packages:
-                      - g++-7
+                      - gcc-9
+                      - g++-9
                       - clang-format-6.0
                       - valgrind
                       - gawk
@@ -83,12 +89,15 @@ matrix:
             - PYTHON=3.6
             - BUILDING_FOR_OS=linux
             - CMAKE_BUILD_FLAGS="-DBUILD_WITH_FPIC=ON"
-            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+            - MATRIX_EVAL="CC=gcc-9 && CXX=g++-9"
             - CPU_COUNT=$(nproc)
           addons:
               apt:
+                  sources:
+                      - ubuntu-toolchain-r-test
                   packages:
-                      - g++-7
+                      - gcc-9
+                      - g++-9
                       - clang-format-6.0
                       - valgrind
                       - gawk
@@ -145,7 +154,7 @@ script:
     - mkdir -p build
     - cd build
     - cmake $CMAKE_BUILD_FLAGS ..
-    - if [ "$TRAVIS_OS_NAME" != "osx" ]; then make format-check || travis_terminate 1; fi
+    - if [ "$TRAVIS_OS_NAME" != "osx" ]; then make bls-format-check || travis_terminate 1; fi
     - cmake --build . -- -j$CPU_COUNT
     - cd ..
     - echo "========================================= script (2)"
