@@ -47,6 +47,9 @@ matrix:
               - mkdir -p build
               - cd build
               - cd ..
+              - echo "========================================= before_script (installing latest lcov - before)"
+              - git clone git clone https://github.com/linux-test-project/lcov.git && cd lcov && sudo make install && cd .. && lcov --version
+              - echo "========================================= before_script (installing latest lcov - after)"
           after_success:
               - cd build
               - echo "========================================= after_success (coverage)"
@@ -79,7 +82,6 @@ matrix:
                       - valgrind
                       - gawk
                       - sed
-                      - lcov
                       - yasm
                       - texinfo
                       - shtool
