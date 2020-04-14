@@ -41,6 +41,8 @@ matrix:
               - sudo python -m pip install pyopenssl ndg-httpsclient pyasn1
               - sudo python -m pip install requests[security]
               - sudo python -m pip install codecov --ignore-installed
+              - echo "========================================= before_script (setting up alternatives)"
+              - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 900 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9
               - echo "========================================= before_script (codecov installed)"
               - mkdir -p build
               - cd build
@@ -118,6 +120,8 @@ matrix:
               - sudo apt-get install python3-pip
               - sudo apt-get install python3-setuptools
               - python3.6 -m pip install coincurve
+              - echo "========================================= before_script (setting up alternatives)"
+              - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 900 --slave /usr/bin/g++ g++ /usr/bin/g++-9 --slave /usr/bin/gcov gcov /usr/bin/gcov-9
           after_success:
               - cd python
               - echo "========================================= after_success (dkg)"
