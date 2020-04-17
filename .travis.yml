@@ -16,7 +16,7 @@ matrix:
             - NIGHTLY_BUILD_FLAGS="valgrind --leak-check=yes"
           addons:
               snaps:
-                  - valgrind
+                  - valgrind --classic
               apt:
                   packages:
                       - g++-7
