@@ -30,6 +30,8 @@ matrix:
                       - texinfo
                       - flex
                       - bison
+                      - libc6-dbg:i386
+                      - libc6-dbg
                   sources: &sources
                       - ubuntu-toolchain-r-test
           before_script:
