@@ -129,6 +129,8 @@ then
 fi
 simple_find_tool_program "wget" "WGET" "no"
 
+echo -e "${COLOR_SEPARATOR}===================================================================${COLOR_RESET}"
+echo -e "${COLOR_YELLOW}BLS dependencies build actions...${COLOR_RESET}"
 echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}PREPARE BUILD${COLOR_SEPARATOR} ================================${COLOR_RESET}"
 
 if [ -z "${ARCH}" ];
@@ -433,9 +435,9 @@ echo -e "${COLOR_VAR_NAME}LIBTOOL${COLOR_DOTS}..................................
 echo -e "${COLOR_VAR_NAME}PKG_CONFIG${COLOR_DOTS}....................................................${COLOR_VAR_VAL}$PKG_CONFIG${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_OPENSSL${COLOR_DOTS}...........${COLOR_VAR_DESC}OpenSSL${COLOR_DOTS}................................${COLOR_VAR_VAL}$WITH_OPENSSL${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_BOOST${COLOR_DOTS}.............${COLOR_VAR_DESC}libBoostC++${COLOR_DOTS}............................${COLOR_VAR_VAL}$WITH_BOOST${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_GMP${COLOR_DOTS}...............${COLOR_VAR_DESC}LibGMP${COLOR_DOTS}............................${COLOR_VAR_VAL}$WITH_GMP${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_FF${COLOR_DOTS}................${COLOR_VAR_DESC}LibFF${COLOR_DOTS}............................${COLOR_VAR_VAL}$WITH_FF${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_PBC${COLOR_DOTS}...............${COLOR_VAR_DESC}LibPBC${COLOR_DOTS}............................${COLOR_VAR_VAL}$WITH_PBC${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_GMP${COLOR_DOTS}...............${COLOR_VAR_DESC}LibGMP${COLOR_DOTS}.................................${COLOR_VAR_VAL}$WITH_GMP${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_FF${COLOR_DOTS}................${COLOR_VAR_DESC}LibFF${COLOR_DOTS}..................................${COLOR_VAR_VAL}$WITH_FF${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_PBC${COLOR_DOTS}...............${COLOR_VAR_DESC}LibPBC${COLOR_DOTS}.................................${COLOR_VAR_VAL}$WITH_PBC${COLOR_RESET}"
 
 cd $SOURCES_ROOT
 
@@ -541,95 +543,100 @@ fi
 
 if [ "$WITH_GMP" = "yes" ];
 then
-  echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}GMP${COLOR_SEPARATOR} =========================================${COLOR_RESET}"
-  if [ ! -f "$INSTALL_ROOT/lib/libgmp.a" ] || [ ! -f "$INSTALL_ROOT/lib/libgmpxx.a" ] || [ ! -f "$INSTALL_ROOT/lib/libgmp.la" ] || [ ! -f "$INSTALL_ROOT/lib/libgmpxx.la" ];
+	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}GMP${COLOR_SEPARATOR} ==========================================${COLOR_RESET}"
+	if [ ! -f "$INSTALL_ROOT/lib/libgmp.a" ] || [ ! -f "$INSTALL_ROOT/lib/libgmpxx.a" ] || [ ! -f "$INSTALL_ROOT/lib/libgmp.la" ] || [ ! -f "$INSTALL_ROOT/lib/libgmpxx.la" ];
 	then
-    # requiired for libff and pbc
-    env_restore
-    cd $SOURCES_ROOT
-    if [ ! -d "gmp-6.1.2" ];
-    then
-      if [ ! -f "gmp-6.1.2.tar.xz" ];
-			then
-        echo -e "${COLOR_INFO}getting it from gmp website${COLOR_DOTS}...${COLOR_RESET}"
-        $WGET https://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz
-      fi
-      echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
-      tar -xf gmp-6.1.2.tar.xz
-    fi
-    cd gmp-6.1.2
-    echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-    ./configure $CONF_CROSSCOMPILING_OPTS_GENERIC $CONF_DEBUG_OPTIONS --enable-cxx --enable-static --disable-shared --prefix=$INSTALL_ROOT
-    echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-    $MAKE $PARALLEL_MAKE_OPTIONS
-    $MAKE $PARALLEL_MAKE_OPTIONS install
-    cd ..
-    cd $SOURCES_ROOT
-  else
+		# requiired for libff and pbc
+		env_restore
+		cd $SOURCES_ROOT
+		if [ ! -d "gmp-6.1.2" ];
+		then
+			if [ ! -f "gmp-6.1.2.tar.xz" ];
+				then
+			echo -e "${COLOR_INFO}getting it from gmp website${COLOR_DOTS}...${COLOR_RESET}"
+			$WGET https://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz
+			fi
+			echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
+			tar -xf gmp-6.1.2.tar.xz
+		fi
+		cd gmp-6.1.2
+		echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+		./configure $CONF_CROSSCOMPILING_OPTS_GENERIC $CONF_DEBUG_OPTIONS --enable-cxx --enable-static --disable-shared --prefix=$INSTALL_ROOT
+		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+		$MAKE $PARALLEL_MAKE_OPTIONS
+		$MAKE $PARALLEL_MAKE_OPTIONS install
+		cd ..
+		cd $SOURCES_ROOT
+	else
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
-  fi
+	fi
 fi
 
 if [ "$WITH_FF" = "yes" ];
 then
-  echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}FF${COLOR_SEPARATOR} =========================================${COLOR_RESET}"
-  if [ ! -f "$INSTALL_ROOT/lib/libff.a" ];
-  then
-    env_restore
-		cd $SOURCES_ROOT
-		if [ ! -d "libff" ];
-		then
-			echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
-			git clone https://github.com/scipr-lab/libff.git --recursive # libff
-		fi
-    cd libff
-    echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-    mkdir -p build
-    cd build
-    $CMAKE $CMAKE_CROSSCOMPILING_OPTS -DCMAKE_INSTALL_PREFIX=$INSTALL_ROOT -DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE .. -DWITH_PROCPS=OFF
-    echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-		$MAKE $PARALLEL_MAKE_OPTIONS
-		$MAKE $PARALLEL_MAKE_OPTIONS install
-		cd $SOURCES_ROOT
-  else
-    echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
-  fi
+	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}FF${COLOR_SEPARATOR} ===========================================${COLOR_RESET}"
+	if [ ! -f "$INSTALL_ROOT/lib/libff.a" ];
+	then
+		env_restore
+			cd $SOURCES_ROOT
+			if [ ! -d "libff" ];
+			then
+				echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
+				git clone https://github.com/scipr-lab/libff.git --recursive # libff
+			fi
+		cd libff
+		echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+		mkdir -p build
+		cd build
+		$CMAKE $CMAKE_CROSSCOMPILING_OPTS -DCMAKE_INSTALL_PREFIX=$INSTALL_ROOT -DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE .. -DWITH_PROCPS=OFF
+		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+			$MAKE $PARALLEL_MAKE_OPTIONS
+			$MAKE $PARALLEL_MAKE_OPTIONS install
+			cd $SOURCES_ROOT
+	else
+		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+	fi
 fi
 
 if [ "$WITH_PBC" = "yes" ];
 then
-  echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}PBC${COLOR_SEPARATOR} =========================================${COLOR_RESET}"
-  if [ ! -f "$INSTALL_ROOT/lib/libpbc.a" ] || [ ! -f "$INSTALL_ROOT/lib/libpbc.la" ];
-  then
-    env_restore
-		cd $SOURCES_ROOT
-		if [ ! -d "pbc" ];
-		then
-			echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
-			git clone https://github.com/skalenetwork/pbc.git # pbc
-		fi
-    echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-    cd pbc
-    export CFLAGS="$CFLAGS -I${INSTALL_ROOT}/include"
-    export CXXFLAGS="$CXXFLAGS -I${INSTALL_ROOT}/include"
-    export CPPFLAGS="$CPPFLAGS -I${INSTALL_ROOT}/include"
-    export LDFLAGS="$LDFLAGS -L${INSTALL_ROOT}/lib"
-    echo "    CFLAGS   = $CFLAGS"
-    echo "    CXXFLAGS = $CXXFLAGS"
-    echo "    CPPFLAGS = $CPPFLAGS"
-    echo "    LDFLAGS  = $LDFLAGS"
-    $LIBTOOLIZE --force && aclocal && autoheader && automake --force-missing --add-missing && autoconf
-    ./configure $CONF_CROSSCOMPILING_OPTS_GENERIC $CONF_DEBUG_OPTIONS --with-pic --enable-static --disable-shared --prefix=$INSTALL_ROOT
-    echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-		$MAKE $PARALLEL_MAKE_OPTIONS
-		$MAKE $PARALLEL_MAKE_OPTIONS install
-		cd $SOURCES_ROOT
-  else
-    echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
-  fi
+	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}PBC${COLOR_SEPARATOR} ==========================================${COLOR_RESET}"
+	if [ ! -f "$INSTALL_ROOT/lib/libpbc.a" ] || [ ! -f "$INSTALL_ROOT/lib/libpbc.la" ];
+	then
+		env_restore
+			cd $SOURCES_ROOT
+			if [ ! -d "pbc" ];
+			then
+				echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
+				git clone https://github.com/skalenetwork/pbc.git # pbc
+			fi
+		echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+		cd pbc
+		export CFLAGS="$CFLAGS -I${INSTALL_ROOT}/include"
+		export CXXFLAGS="$CXXFLAGS -I${INSTALL_ROOT}/include"
+		export CPPFLAGS="$CPPFLAGS -I${INSTALL_ROOT}/include"
+		export LDFLAGS="$LDFLAGS -L${INSTALL_ROOT}/lib"
+		echo "    CFLAGS   = $CFLAGS"
+		echo "    CXXFLAGS = $CXXFLAGS"
+		echo "    CPPFLAGS = $CPPFLAGS"
+		echo "    LDFLAGS  = $LDFLAGS"
+		$LIBTOOLIZE --force && aclocal && autoheader && automake --force-missing --add-missing && autoconf
+		./configure $CONF_CROSSCOMPILING_OPTS_GENERIC $CONF_DEBUG_OPTIONS --with-pic --enable-static --disable-shared --prefix=$INSTALL_ROOT
+		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+			$MAKE $PARALLEL_MAKE_OPTIONS
+			$MAKE $PARALLEL_MAKE_OPTIONS install
+			cd $SOURCES_ROOT
+	else
+		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+	fi
 fi
 
+echo -e "${COLOR_SEPARATOR}===================================================================${COLOR_RESET}"
+echo -e "${COLOR_YELLOW}BLS dependencies build actions...${COLOR_RESET}"
 echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}FINISH${COLOR_SEPARATOR} =======================================${COLOR_RESET}"
+echo -e " "
+echo -e " "
+echo -e " "
 
 cd $WORKING_DIR_OLD
 env_restore_original
