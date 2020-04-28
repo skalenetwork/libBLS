@@ -43,7 +43,7 @@ COLOR_VAR_DESC="${COLOR_BROWN}"
 COLOR_VAR_VAL="${COLOR_LIGHT_GRAY}"
 COLOR_PROJECT_NAME="${COLOR_LIGHT_BLUE}"
 
-echo -e ${COLOR_BLACK}${COLOR_DARK_GRAY}${COLOR_BLUE}${COLOR_LIGHT_BLUE}${COLOR_GREEN}${COLOR_LIGHT_GREEN}${COLOR_CYAN}${COLOR_LIGHT_CYAN}${COLOR_RED}${COLOR_LIGHT_RED}${COLOR_MAGENTA}${COLOR_LIGHT_MAGENTA}${COLOR_BROWN}${COLOR_YELLOW}${COLOR_LIGHT_GRAY}${COLOR_WHITE}${COLOR_ERROR}${COLOR_WARN}${COLOR_ATTENTION}${COLOR_SUCCESS}${COLOR_INFO}${COLOR_NOTICE}${COLOR_DOTS}${COLOR_SEPARATOR}${COLOR_VAR_NAME}${COLOR_VAR_DESC}${COLOR_VAR_VAL}${COLOR_PROJECT_NAME}${COLOR_RESET} &> /dev/null
+echo -e "${COLOR_BLACK}${COLOR_DARK_GRAY}${COLOR_BLUE}${COLOR_LIGHT_BLUE}${COLOR_GREEN}${COLOR_LIGHT_GREEN}${COLOR_CYAN}${COLOR_LIGHT_CYAN}${COLOR_RED}${COLOR_LIGHT_RED}${COLOR_MAGENTA}${COLOR_LIGHT_MAGENTA}${COLOR_BROWN}${COLOR_YELLOW}${COLOR_LIGHT_GRAY}${COLOR_WHITE}${COLOR_ERROR}${COLOR_WARN}${COLOR_ATTENTION}${COLOR_SUCCESS}${COLOR_INFO}${COLOR_NOTICE}${COLOR_DOTS}${COLOR_SEPARATOR}${COLOR_VAR_NAME}${COLOR_VAR_DESC}${COLOR_VAR_VAL}${COLOR_PROJECT_NAME}${COLOR_RESET}" &> /dev/null
 
 # detect system name and number of CPU cores
 export UNIX_SYSTEM_NAME=$(uname -s)
@@ -66,13 +66,9 @@ fi
 # detect working directories, change if needed
 WORKING_DIR_OLD=$(pwd)
 WORKING_DIR_NEW="$(dirname "$0")"
-WORKING_DIR_OLD=$($READLINK -f $WORKING_DIR_OLD)
-WORKING_DIR_NEW=$($READLINK -f $WORKING_DIR_NEW)
+WORKING_DIR_OLD="$($READLINK -f $WORKING_DIR_OLD)"
+WORKING_DIR_NEW="$($READLINK -f $WORKING_DIR_NEW)"
 cd "$WORKING_DIR_NEW"
-
-cd "$WORKING_DIR_NEW/../libBLS/deps"
-./build.sh
-cd ../../deps
 
 #
 # MUST HAVE: make, git, svn, nasm, yasm, wget, cmake, ccmake, libtool, libtool_bin, autogen, automake, autopoint, gperf, awk (mawk or gawk), sed, shtool, texinfo, pkg-config
@@ -86,8 +82,8 @@ argc=$#
 argv=($@)
 for (( j=0; j<argc; j++ )); do
 	#echo ${argv[j]}
-	PARAM=$(echo ${argv[j]} | awk -F= '{print $1}')
-	VALUE=$(echo ${argv[j]} | awk -F= '{print $2}')
+	PARAM="$(echo ${argv[j]} | awk -F= '{print $1}')"
+	VALUE="$(echo ${argv[j]} | awk -F= '{print $2}')"
 	#echo ${PARAM}
 	#echo ${VALUE}
 	export ${PARAM}="${VALUE}"
@@ -241,14 +237,14 @@ fi
 export CUSTOM_BUILD_ROOT=$PWD
 export INSTALL_ROOT_RELATIVE="$CUSTOM_BUILD_ROOT/deps_inst/$ARCH"
 mkdir -p "$INSTALL_ROOT_RELATIVE"
-export INSTALL_ROOT=$($READLINK -f $INSTALL_ROOT_RELATIVE)
-export SOURCES_ROOT=$($READLINK -f $CUSTOM_BUILD_ROOT)
-export PREDOWNLOADED_ROOT=$($READLINK -f $CUSTOM_BUILD_ROOT/pre_downloaded)
-export LIBRARIES_ROOT=$INSTALL_ROOT/lib
-mkdir -p $SOURCES_ROOT
-mkdir -p $INSTALL_ROOT
-mkdir -p $INSTALL_ROOT/share
-mkdir -p $INSTALL_ROOT/share/pkgconfig
+export INSTALL_ROOT="$($READLINK -f $INSTALL_ROOT_RELATIVE)"
+export SOURCES_ROOT="$($READLINK -f $CUSTOM_BUILD_ROOT)"
+export PREDOWNLOADED_ROOT="$($READLINK -f $CUSTOM_BUILD_ROOT/pre_downloaded)"
+export LIBRARIES_ROOT="$INSTALL_ROOT/lib"
+mkdir -p "$SOURCES_ROOT"
+mkdir -p "$INSTALL_ROOT"
+mkdir -p "$INSTALL_ROOT/share"
+mkdir -p "$INSTALL_ROOT/share/pkgconfig"
 
 # we need this custom prefix bin dir in PATH for tools like gpg-error-config which we build here
 export PATH=$PATH:$INSTALL_ROOT/bin
