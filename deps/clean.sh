@@ -32,6 +32,8 @@ COLOR_VAR_DESC="${COLOR_BROWN}"
 COLOR_VAR_VAL="${COLOR_LIGHT_GRAY}"
 COLOR_PROJECT_NAME="${COLOR_LIGHT_BLUE}"
 
+echo -e "${COLOR_BLACK}${COLOR_DARK_GRAY}${COLOR_BLUE}${COLOR_LIGHT_BLUE}${COLOR_GREEN}${COLOR_LIGHT_GREEN}${COLOR_CYAN}${COLOR_LIGHT_CYAN}${COLOR_RED}${COLOR_LIGHT_RED}${COLOR_MAGENTA}${COLOR_LIGHT_MAGENTA}${COLOR_BROWN}${COLOR_YELLOW}${COLOR_LIGHT_GRAY}${COLOR_WHITE}${COLOR_ERROR}${COLOR_WARN}${COLOR_ATTENTION}${COLOR_SUCCESS}${COLOR_INFO}${COLOR_NOTICE}${COLOR_DOTS}${COLOR_SEPARATOR}${COLOR_VAR_NAME}${COLOR_VAR_DESC}${COLOR_VAR_VAL}${COLOR_PROJECT_NAME}${COLOR_RESET}" &> /dev/null
+
 #
 # move values of command line arguments into variables
 #
@@ -39,11 +41,11 @@ argc=$#
 argv=($@)
 for (( j=0; j<argc; j++ )); do
 	#echo ${argv[j]}
-	PARAM=`echo ${argv[j]} | awk -F= '{print $1}'`
-	VALUE=`echo ${argv[j]} | awk -F= '{print $2}'`
+	PARAM=$(echo ${argv[j]} | awk -F= '{print $1}')
+	VALUE=$(echo ${argv[j]} | awk -F= '{print $2}')
 	#echo ${PARAM}
 	#echo ${VALUE}
-	export ${PARAM}=${VALUE}
+	export "${PARAM}"="${VALUE}"
 done
 #
 #
@@ -68,30 +70,30 @@ then
 fi
 
 # detect system name and number of CPU cores
-export UNIX_SYSTEM_NAME=`uname -s`
+export UNIX_SYSTEM_NAME=$(uname -s)
 export NUMBER_OF_CPU_CORES=1
 if [ "$UNIX_SYSTEM_NAME" = "Linux" ];
 then
-	export NUMBER_OF_CPU_CORES=`grep -c ^processor /proc/cpuinfo`
+	export NUMBER_OF_CPU_CORES=$(grep -c ^processor /proc/cpuinfo)
 	export READLINK=readlink
 	export SO_EXT=so
 fi
 if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
 then
-	#export NUMBER_OF_CPU_CORES=`system_profiler | awk '/Number Of CPUs/{print $4}{next;}'`
-	export NUMBER_OF_CPU_CORES=`sysctl -n hw.ncpu`
+	#export NUMBER_OF_CPU_CORES=$(system_profiler | awk '/Number Of CPUs/{print $4}{next;}')
+	export NUMBER_OF_CPU_CORES=$(sysctl -n hw.ncpu)
 	# required -> brew install coreutils
 	export READLINK=greadlink
 	export SO_EXT=dylib
 fi
 
 # detect working directories, change if needed
-WORKING_DIR_OLD=`pwd`
+WORKING_DIR_OLD=$(pwd)
 cd "$(dirname "$0")"
 WORKING_DIR_NEW="$(dirname "$0")"
-WORKING_DIR_OLD=`$READLINK -f $WORKING_DIR_OLD`
-WORKING_DIR_NEW=`$READLINK -f $WORKING_DIR_NEW`
-cd $WORKING_DIR_NEW
+WORKING_DIR_OLD=$($READLINK -f $WORKING_DIR_OLD)
+WORKING_DIR_NEW=$($READLINK -f $WORKING_DIR_NEW)
+cd "$WORKING_DIR_NEW"
 
 echo -e " "
 echo -e "${COLOR_LIGHT_MAGENTA}BLS dependencies cleanup actions...${COLOR_RESET}"
@@ -140,4 +142,4 @@ rm -rf ./libcryptopp
 echo "Done (all clean)."
 
 #finish
-cd $WORKING_DIR_OLD
+cd "$WORKING_DIR_OLD"
