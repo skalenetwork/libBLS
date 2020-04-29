@@ -221,7 +221,17 @@ fi
 export CFLAGS="$CFLAGS -fPIC"
 export CXXFLAGS="$CXXFLAGS -fPIC"
 WITH_OPENSSL="yes"
+
 WITH_BOOST="yes"
+if [ "$SKALED_DEPS_CHAIN" = "1" ];
+then
+	WITH_BOOST="no"
+fi
+if [ "$CONSENSUS_DEPS_CHAIN" = "1" ];
+then
+	WITH_BOOST="no"
+fi
+
 WITH_FF="yes"
 WITH_GMP="yes"
 WITH_PBC="yes"
