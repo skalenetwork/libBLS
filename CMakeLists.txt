@@ -59,7 +59,7 @@ set( CLANG_FORMAT_EXCLUDE_PATTERNS
     ${CMAKE_BINARY_DIR}
     ${DEPS_SOURCES_ROOT}
     )
-include( FindClangFormat )
+include( BlsFindClangFormat )
 
 set(sourses_bls
 		bls/bls.cpp
