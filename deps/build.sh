@@ -95,7 +95,7 @@ done
 simple_find_tool_program () { # program_name, var_name_to_export_full_path, is_optional("yes" or "no")
 	#echo $1
 	#echo $2
-	TMP_CMD="export $2=\"$(which $1)\""
+	TMP_CMD="export "$2"=\"$(which $1)\""
 	$TMP_CMD
 	TMP_CMD="echo ${!2}"
 	#echo "TMP_CMD is" $TMP_CMD
@@ -134,7 +134,7 @@ simple_find_tool_program () { # program_name, var_name_to_export_full_path, is_o
 	echo -e "${COLOR_ERROR}error: $2 tool was not found by deps build script${COLOR_RESET}"
 	cd "$WORKING_DIR_OLD"
 	env_restore_original
-	exit -1
+	exit 255
 }
 
 simple_find_tool_program "make" "MAKE" "no"
@@ -270,7 +270,7 @@ if [[ ! -z $CXX ]];
 then
     SET_CXX=$CXX
 fi
-if [[ ! -z CC ]];
+if [[ ! -z $CC ]];
 then
     SET_CC=$CC
 fi
@@ -346,7 +346,7 @@ else
 			echo -e "${COLOR_SEPARATOR}=================================================${COLOR_RESET}"
 			cd "$WORKING_DIR_OLD"
 			env_restore_original
-			exit -1
+			exit 255
 		fi
 
 		mkdir -p $TOOLCHAINS_DOWNLOADED_PATH
@@ -364,7 +364,7 @@ else
 			echo -e "${COLOR_SEPARATOR}=================================================${COLOR_RESET}"
 			cd "$WORKING_DIR_OLD"
 			env_restore_original
-			exit -1
+			exit 255
 		fi
 
 		mkdir -p $ARM_TOOLCHAIN_PATH
@@ -379,7 +379,7 @@ else
 			echo -e "${COLOR_SEPARATOR}=================================================${COLOR_RESET}"
 			cd "$WORKING_DIR_OLD"
 			env_restore_original
-			exit -1
+			exit 255
 		fi
 
 		echo -e "${COLOR_SEPARATOR}============== ${COLOR_PROJECT_NAME}TOOLCHAINE UNPACKED${COLOR_SEPARATOR} ==============${COLOR_RESET}"
@@ -437,14 +437,14 @@ then
 	echo -e "${COLOR_ERROR}error: build requires gcc compiler or link which was not detected successfully${COLOR_RESET}"
 	cd "$WORKING_DIR_OLD"
 	env_restore_original
-	exit -1
+	exit 255
 fi
 if [ -z "${CXX}" ];
 then
 	echo -e "${COLOR_ERROR}error: build requires g++ compiler or link which was not detected successfully${COLOR_RESET}"
 	cd "$WORKING_DIR_OLD"
 	env_restore_original
-	exit -1
+	exit 255
 fi
 export CMAKE="$CMAKE -DUSE_LLVM=$USE_LLVM -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_LINKER=$LD -DCMAKE_AR=$AR -DCMAKE_OBJCOPY=$OBJCOPY -DCMAKE_OBJDUMP=$OBJDUMP -DCMAKE_RANLIB=$RANLIB -DCMAKE_NM=$NM"
 #
@@ -531,11 +531,11 @@ echo -e "${COLOR_VAR_NAME}WITH_PBC${COLOR_DOTS}...............${COLOR_VAR_DESC}L
 cd "$SOURCES_ROOT"
 
 env_save() {
-	export > $SOURCES_ROOT/saved_environment_pre_configured.txt
+	export > "$SOURCES_ROOT/saved_environment_pre_configured.txt"
 }
 
 env_restore() {
-	ENV_RESTORE_CMD="source ${SOURCES_ROOT}/saved_environment_pre_configured.txt"
+	ENV_RESTORE_CMD="source \"${SOURCES_ROOT}/saved_environment_pre_configured.txt\""
 	#env_clear_all
 	$ENV_RESTORE_CMD
 }
