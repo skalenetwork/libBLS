@@ -227,10 +227,10 @@ if [ "$SKALED_DEPS_CHAIN" = "1" ];
 then
 	WITH_BOOST="no"
 fi
-if [ "$CONSENSUS_DEPS_CHAIN" = "1" ];
-then
-	WITH_BOOST="no"
-fi
+# if [ "$CONSENSUS_DEPS_CHAIN" = "1" ];
+# then
+# 	WITH_BOOST="no"
+# fi
 
 WITH_FF="yes"
 WITH_GMP="yes"
