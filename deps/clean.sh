@@ -139,6 +139,9 @@ rm -rf ./libcryptopp
 # rm -rf ./libevent
 # rm -rf l./ibwebsockets
 # rm -rf ./gtest
+rm -rf ./gmp-6.1.2
+rm -rf ./libff
+rm -rf ./pbc
 echo "Done (all clean)."
 
 #finish
