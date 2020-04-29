@@ -82,8 +82,8 @@ argc=$#
 argv=($@)
 for (( j=0; j<argc; j++ )); do
 	#echo ${argv[j]}
-	PARAM="$(echo ${argv[j]} | awk -F= '{print $1}')"
-	VALUE="$(echo ${argv[j]} | awk -F= '{print $2}')"
+	PARAM=$(echo "${argv[j]}" | awk -F= '{print $1}')
+	VALUE=$(echo "${argv[j]}" | awk -F= '{print $2}')
 	#echo ${PARAM}
 	#echo ${VALUE}
 	export "${PARAM}"="${VALUE}"
@@ -95,7 +95,7 @@ done
 simple_find_tool_program () { # program_name, var_name_to_export_full_path, is_optional("yes" or "no")
 	#echo $1
 	#echo $2
-	TMP_CMD="export $2=$(which $1)"
+	TMP_CMD="export $2=\"$(which $1)\""
 	$TMP_CMD
 	TMP_CMD="echo ${!2}"
 	#echo "TMP_CMD is" $TMP_CMD
@@ -568,9 +568,9 @@ then
 	if [ ${ARCH} = "arm" ]
 	then
 		sed -i -e 's#using gcc ;#using gcc : arm : /usr/local/toolchains/gcc7.2-arm/bin/arm-linux-gnueabihf-g++ ;#g' project-config.jam
-		./b2 $CONF_CROSSCOMPILING_OPTS_BOOST cxxflags=-fPIC cflags=-fPIC $PARALLEL_MAKE_OPTIONS --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
+		./b2 ${CONF_CROSSCOMPILING_OPTS_BOOST} cxxflags=-fPIC cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 		else
-		./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC $PARALLEL_MAKE_OPTIONS --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
+		./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 	fi
 		cd ..
 		cd "$SOURCES_ROOT"
@@ -616,15 +616,15 @@ then
 					./config -fPIC no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
 				fi
 			else
-				./Configure linux-armv4 --prefix="$INSTALL_ROOT" $ADDITIONAL_INCLUDES $ADDITIONAL_LIBRARIES no-shared no-tests no-dso
+				./Configure linux-armv4 --prefix="$INSTALL_ROOT" ${ADDITIONAL_INCLUDES} ${ADDITIONAL_LIBRARIES} no-shared no-tests no-dso
 			fi
 			cd ..
 		fi
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 		cd openssl
-		$MAKE $PARALLEL_MAKE_OPTIONS depend
-		$MAKE $PARALLEL_MAKE_OPTIONS
-		$MAKE $PARALLEL_MAKE_OPTIONS install_sw
+		$MAKE ${PARALLEL_MAKE_OPTIONS} depend
+		$MAKE ${PARALLEL_MAKE_OPTIONS}
+		$MAKE ${PARALLEL_MAKE_OPTIONS} install_sw
 		cd "$SOURCES_ROOT"
 	else
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
@@ -651,10 +651,10 @@ then
 		fi
 		cd gmp-6.1.2
 		echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-		./configure $CONF_CROSSCOMPILING_OPTS_GENERIC $CONF_DEBUG_OPTIONS --enable-cxx --enable-static --disable-shared --prefix="$INSTALL_ROOT"
+		./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --prefix="$INSTALL_ROOT"
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-		$MAKE $PARALLEL_MAKE_OPTIONS
-		$MAKE $PARALLEL_MAKE_OPTIONS install
+		$MAKE ${PARALLEL_MAKE_OPTIONS}
+		$MAKE ${PARALLEL_MAKE_OPTIONS} install
 		cd ..
 		cd "$SOURCES_ROOT"
 	else
@@ -678,10 +678,10 @@ then
 		echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
 		mkdir -p build
 		cd build
-		$CMAKE $CMAKE_CROSSCOMPILING_OPTS -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF
+		$CMAKE ${CMAKE_CROSSCOMPILING_OPTS} -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-			$MAKE $PARALLEL_MAKE_OPTIONS
-			$MAKE $PARALLEL_MAKE_OPTIONS install
+			$MAKE ${PARALLEL_MAKE_OPTIONS}
+			$MAKE ${PARALLEL_MAKE_OPTIONS} install
 			cd "$SOURCES_ROOT"
 	else
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
@@ -711,10 +711,10 @@ then
 		echo "    CPPFLAGS = $CPPFLAGS"
 		echo "    LDFLAGS  = $LDFLAGS"
 		$LIBTOOLIZE --force && aclocal && autoheader && automake --force-missing --add-missing && autoconf
-		./configure $CONF_CROSSCOMPILING_OPTS_GENERIC $CONF_DEBUG_OPTIONS --with-pic --enable-static --disable-shared --prefix="$INSTALL_ROOT"
+		./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_DEBUG_OPTIONS} --with-pic --enable-static --disable-shared --prefix="$INSTALL_ROOT"
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-			$MAKE $PARALLEL_MAKE_OPTIONS
-			$MAKE $PARALLEL_MAKE_OPTIONS install
+			$MAKE ${PARALLEL_MAKE_OPTIONS}
+			$MAKE ${PARALLEL_MAKE_OPTIONS} install
 			cd "$SOURCES_ROOT"
 	else
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"

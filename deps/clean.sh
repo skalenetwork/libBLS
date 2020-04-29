@@ -41,8 +41,8 @@ argc=$#
 argv=($@)
 for (( j=0; j<argc; j++ )); do
 	#echo ${argv[j]}
-	PARAM=$(echo ${argv[j]} | awk -F= '{print $1}')
-	VALUE=$(echo ${argv[j]} | awk -F= '{print $2}')
+	PARAM=$(echo "${argv[j]}" | awk -F= '{print $1}')
+	VALUE=$(echo "${argv[j]}" | awk -F= '{print $2}')
 	#echo ${PARAM}
 	#echo ${VALUE}
 	export "${PARAM}"="${VALUE}"
