@@ -96,10 +96,8 @@ simple_find_tool_program () { # program_name, var_name_to_export_full_path, is_o
 	#echo $1
 	#echo $2
 	#
-	#TMP_CMD="export \$\"$2\"=$(which \"$1\")"
-	TMP_R1=$2
-	TMP_W1=$(which "$1")
-	TMP_CMD="export $TMP_R1=\"$TMP_W1\""
+	TMP_P=$(which "$1")
+	TMP_CMD="export $2=$TMP_P"
 	#
 	$TMP_CMD
 	TMP_CMD="echo ${!2}"
