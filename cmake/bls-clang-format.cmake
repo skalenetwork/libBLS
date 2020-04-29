@@ -12,7 +12,7 @@ foreach (EXCLUDE_PATTERN ${CLANG_FORMAT_EXCLUDE_PATTERNS})
     list(FILTER ALL_SOURCE_FILES EXCLUDE REGEX ${EXCLUDE_PATTERN})
 endforeach()
 
-add_custom_target(format
+add_custom_target(bls-format
     COMMENT "Running clang-format to change files"
     COMMAND ${CLANG_FORMAT_BIN}
     -style=file
@@ -21,7 +21,7 @@ add_custom_target(format
 )
 
 
-add_custom_target(format-check
+add_custom_target(bls-format-check
     COMMENT "Checking clang-format changes"
     # Use ! to negate the result for correct output
     COMMAND !
@@ -46,7 +46,7 @@ foreach(EXCLUDE_PATTERN ${CLANG_FORMAT_EXCLUDE_PATTERNS})
 endforeach()
 
 # call the script to chech changed files in git
-add_custom_target(format-check-changed
+add_custom_target(bls-format-check-changed
     COMMENT "Checking changed files in git"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMAND ${_clangcheckpath}/../scripts/clang-format-check-changed.py 
