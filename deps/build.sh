@@ -571,7 +571,7 @@ then
 	if [ ${ARCH} = "arm" ]
 	then
 		sed -i -e 's#using gcc ;#using gcc : arm : /usr/local/toolchains/gcc7.2-arm/bin/arm-linux-gnueabihf-g++ ;#g' project-config.jam
-		./b2 ${CONF_CROSSCOMPILING_OPTS_BOOST} cxxflags=-fPIC cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
+		./b2 "${CONF_CROSSCOMPILING_OPTS_BOOST}" cxxflags=-fPIC cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 		else
 		./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 	fi
@@ -619,7 +619,7 @@ then
 					./config -fPIC no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
 				fi
 			else
-				./Configure linux-armv4 --prefix="$INSTALL_ROOT" ${ADDITIONAL_INCLUDES} ${ADDITIONAL_LIBRARIES} no-shared no-tests no-dso
+				./Configure linux-armv4 --prefix="$INSTALL_ROOT" "${ADDITIONAL_INCLUDES}" "${ADDITIONAL_LIBRARIES"} no-shared no-tests no-dso
 			fi
 			cd ..
 		fi
