@@ -95,7 +95,7 @@ done
 simple_find_tool_program () { # program_name, var_name_to_export_full_path, is_optional("yes" or "no")
 	#echo $1
 	#echo $2
-	TMP_CMD="export \"$2\"=\"$(which $1)\""
+	TMP_CMD="export \$\"$2\"=\"$(which $1)\""
 	$TMP_CMD
 	TMP_CMD="echo ${!2}"
 	#echo "TMP_CMD is" $TMP_CMD
