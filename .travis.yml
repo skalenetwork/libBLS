@@ -9,11 +9,12 @@ matrix:
     include:
         - os: linux
           env:
-            - BUILDING_FOR_OS=linux
-            - CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
-            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-            - CPU_COUNT=$(nproc)
-            - NIGHTLY_BUILD_FLAGS="valgrind --leak-check=yes"
+              - PYTHON=3.6
+              - BUILDING_FOR_OS=linux
+              - CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+              - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+              - CPU_COUNT=$(nproc)
+              - NIGHTLY_BUILD_FLAGS="valgrind --leak-check=yes"
           addons:
               snaps:
                   - valgrind --classic
@@ -32,7 +33,10 @@ matrix:
                       - bison
                       - libc6-dbg:i386
                       - libc6-dbg
+                      - python3.6
+                      - python3.6-dev
                   sources: &sources
+                      - deadsnakes
                       - ubuntu-toolchain-r-test
           before_script:
               - echo "========================================= before_script (coverage)"
@@ -41,11 +45,20 @@ matrix:
               - sudo python -m pip install pyopenssl ndg-httpsclient pyasn1
               - sudo python -m pip install requests[security]
               - sudo python -m pip install codecov --ignore-installed
+              - sudo apt-get install python3.6
+              - sudo apt-get install python3-pip
+              - sudo apt-get install python3-setuptools
+              - python3.6 -m pip install coincurve
               - echo "========================================= before_script (codecov installed)"
               - mkdir -p build
               - cd build
               - cd ..
           after_success:
+              - cd python
+              - echo "========================================= after_success (dkg-python test)"
+              - ./setup.sh || travis terminate 1
+              - ./test.sh || travis terminate 1
+              - cd ..
               - cd build
               - echo "========================================= after_success (coverage)"
               - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./bls_unit_test || travis_terminate 1; else ./bls_unit_test || travis_terminate 1; fi
@@ -60,64 +73,38 @@ matrix:
               - codecov
               - bash <(curl -s https://codecov.io/bash)
               - echo "========================================= after_success (coverage end)"
-        - os: linux
-          env:
-            - BUILDING_FOR_OS=linux
-            - CMAKE_BUILD_FLAGS=""
-            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-            - CPU_COUNT=$(nproc)
-          addons:
-              apt:
-                  packages:
-                      - g++-7
-                      - clang-format-6.0
-                      - valgrind
-                      - gawk
-                      - sed
-                      - lcov
-                      - yasm
-                      - texinfo
-                      - shtool
-                      - libprocps4-dev
-                  sources: &sources
-                      - ubuntu-toolchain-r-test
-        - os: linux
-          env:
-            - PYTHON=3.6
-            - BUILDING_FOR_OS=linux
-            - CMAKE_BUILD_FLAGS="-DBUILD_WITH_FPIC=ON"
-            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-            - CPU_COUNT=$(nproc)
-          addons:
-              apt:
-                  packages:
-                      - g++-7
-                      - clang-format-6.0
-                      - valgrind
-                      - gawk
-                      - sed
-                      - lcov
-                      - yasm
-                      - texinfo
-                      - shtool
-                      - libprocps4-dev
-                      - python3.6
-                      - python3.6-dev
-                  sources: &sources
-                      - deadsnakes
-                      - ubuntu-toolchain-r-test
-          before_script:
-              - sudo apt-get update
-              - sudo apt-get install python3.6
-              - sudo apt-get install python3-pip
-              - sudo apt-get install python3-setuptools
-              - python3.6 -m pip install coincurve
-          after_success:
-              - cd python
-              - echo "========================================= after_success (dkg)"
-              - ./setup.sh || travis terminate 1
-              - ./test.sh || travis terminate 1
-              - cd ..
+          before_deploy:
+            - VERSION=$(BRANCH=$TRAVIS_BRANCH bash ./scripts/calculate_version.sh)
+            - echo "Version $VERSION"
+            - export VERSION=$VERSION
+            # Set up git user name and tag this commit
+            - (
+              test ! $TRAVIS_TAG && $TRAVIS_EVENT_TYPE != "cron" &&
+              git config --local user.name "skale-travis" &&
+              git config --local user.email "$GITHUB_EMAIL" &&
+              export TRAVIS_TAG=$VERSION &&
+              git tag "$TRAVIS_TAG" &&
+              git push https://$GITHUB_OAUTH_TOKEN@github.com/$TRAVIS_REPO_SLUG.git $TRAVIS_TAG
+              ) || true
+          deploy:
+            - provider: releases
+              api_key: "$GITHUB_OAUTH_TOKEN"
+              skip_cleanup: true
+              name: $VERSION
+              on:
+                repo: $TRAVIS_REPO_SLUG
+                branch: master
+            - provider: releases
+              api_key: "$GITHUB_OAUTH_TOKEN"
+              skip_cleanup: true
+              prerelease: true
+              name: $VERSION
+              on:
+                repo: $TRAVIS_REPO_SLUG
+                branch:
+                  - develop
+                  - beta
+                  - stable
         - os: osx
           osx_image: xcode10.1
           env:
