@@ -73,6 +73,40 @@ matrix:
               - codecov
               - bash <(curl -s https://codecov.io/bash)
               - echo "========================================= after_success (coverage end)"
+          before_deploy:
+          if: branch IN (master, stable, beta, develop) AND $TRAVIS_EVENT_TYPE != "cron"
+            - VERSION=$(BRANCH=$TRAVIS_BRANCH bash ./scripts/calculate_version.sh)
+            - echo "Version $VERSION"
+            - export VERSION=$VERSION
+            # Set up git user name and tag this commit
+            - (
+              test ! $TRAVIS_TAG &&
+              git config --local user.name "skale-travis" &&
+              git config --local user.email "$GITHUB_EMAIL" &&
+              export TRAVIS_TAG=$VERSION &&
+              git tag "$TRAVIS_TAG" &&
+              git push https://$GITHUB_OAUTH_TOKEN@github.com/$TRAVIS_REPO_SLUG.git $TRAVIS_TAG
+              ) || true
+          deploy:
+          if: branch IN (master, stable, beta, develop) AND $TRAVIS_EVENT_TYPE != "cron"
+            - provider: releases
+              api_key: "$GITHUB_OAUTH_TOKEN"
+              skip_cleanup: true
+              name: $VERSION
+              on:
+                repo: $TRAVIS_REPO_SLUG
+                branch: master
+            - provider: releases
+              api_key: "$GITHUB_OAUTH_TOKEN"
+              skip_cleanup: true
+              prerelease: true
+              name: $VERSION
+              on:
+                repo: $TRAVIS_REPO_SLUG
+                branch:
+                  - develop
+                  - beta
+                  - stable
         - os: osx
           osx_image: xcode10.1
           env:
