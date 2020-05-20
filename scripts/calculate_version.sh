@@ -1,7 +1,7 @@
 #!/bin/bash
 
-BRANCH=$1
-VERSION=$2
+VERSION=$(cat VERSION)
+USAGE_MSG='Usage: BRANCH=[BRANCH] calculate_version.sh'
 
 if [ -z "$BRANCH" ]
 then
