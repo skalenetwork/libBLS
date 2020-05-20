@@ -3,13 +3,13 @@
 BRANCH=$1
 VERSION=$2
 
-if [ -z $BRANCH ]
+if [ -z "$BRANCH" ]
 then
       echo "A branch is not set."
       exit 1
 fi
 
-if [ -z $VERSION ]
+if [ -z "$VERSION" ]
 then
       echo "The base version is not set."
       exit 1
@@ -17,17 +17,17 @@ fi
 
 git fetch --tags
 
-if [ $BRANCH = "master" ]
+if [ "$BRANCH" = "master" ]
 then
-    echo $VERSION
+    echo "$VERSION"
     exit 0
 fi
 
 LABEL="develop"
-if [ $BRANCH = "stable" ]
+if [ "$BRANCH" = "stable" ]
 then
     LABEL="stable"
-elif [ $BRANCH = "beta" ]
+elif [ "$BRANCH" = "beta" ]
 then
     LABEL="beta"
 fi
@@ -37,7 +37,7 @@ do
     RESULT_VERSION="$VERSION-$LABEL.$VERSION_NUMBER"
     if ! [ $(git tag -l ?$RESULT_VERSION) ]
     then
-        echo $RESULT_VERSION
+        echo "$RESULT_VERSION"
         break
     fi
 done
