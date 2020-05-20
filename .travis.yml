@@ -9,12 +9,12 @@ matrix:
     include:
         - os: linux
           env:
-            - PYTHON=3.6
-            - BUILDING_FOR_OS=linux
-            - CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
-            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-            - CPU_COUNT=$(nproc)
-            - NIGHTLY_BUILD_FLAGS="valgrind --leak-check=yes"
+              - PYTHON=3.6
+              - BUILDING_FOR_OS=linux
+              - CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+              - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+              - CPU_COUNT=$(nproc)
+              - NIGHTLY_BUILD_FLAGS="valgrind --leak-check=yes"
           addons:
               snaps:
                   - valgrind --classic
@@ -74,13 +74,12 @@ matrix:
               - bash <(curl -s https://codecov.io/bash)
               - echo "========================================= after_success (coverage end)"
           before_deploy:
-          if: branch IN (master, stable, beta, develop) AND $TRAVIS_EVENT_TYPE != "cron"
             - VERSION=$(BRANCH=$TRAVIS_BRANCH bash ./scripts/calculate_version.sh)
             - echo "Version $VERSION"
             - export VERSION=$VERSION
             # Set up git user name and tag this commit
             - (
-              test ! $TRAVIS_TAG &&
+              test ! $TRAVIS_TAG && branch IN (master, stable, beta, develop) && $TRAVIS_EVENT_TYPE != "cron"
               git config --local user.name "skale-travis" &&
               git config --local user.email "$GITHUB_EMAIL" &&
               export TRAVIS_TAG=$VERSION &&
@@ -88,7 +87,6 @@ matrix:
               git push https://$GITHUB_OAUTH_TOKEN@github.com/$TRAVIS_REPO_SLUG.git $TRAVIS_TAG
               ) || true
           deploy:
-          if: branch IN (master, stable, beta, develop) AND $TRAVIS_EVENT_TYPE != "cron"
             - provider: releases
               api_key: "$GITHUB_OAUTH_TOKEN"
               skip_cleanup: true
