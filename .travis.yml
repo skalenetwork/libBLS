@@ -79,7 +79,7 @@ matrix:
             - export VERSION=$VERSION
             # Set up git user name and tag this commit
             - (
-              test ! $TRAVIS_TAG && $TRAVIS_EVENT_TYPE != "cron" &&
+              test ! $TRAVIS_TAG && ! [ "$TRAVIS_EVENT_TYPE" = "cron" ] &&
               git config --local user.name "skale-travis" &&
               git config --local user.email "$GITHUB_EMAIL" &&
               export TRAVIS_TAG=$VERSION &&

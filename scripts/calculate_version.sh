@@ -35,9 +35,8 @@ fi
 for (( VERSION_NUMBER=0; ; VERSION_NUMBER++ ))
 do
     RESULT_VERSION="$VERSION-$LABEL.$VERSION_NUMBER"
-    if ! [ $(git tag -l ?$RESULT_VERSION) ]
-    then
-        echo "$RESULT_VERSION"
+    if ! [[ $(git tag -l | grep $RESULT_VERSION) ]]; then
+        echo "$RESULT_VERSION" | tr / -
         break
     fi
 done
