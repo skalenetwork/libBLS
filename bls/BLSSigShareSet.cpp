@@ -74,6 +74,8 @@ bool BLSSigShareSet::isEnough() {
 }
 
 
+
+
 std::shared_ptr< BLSSignature > BLSSigShareSet::merge() {
     if ( !isEnough() )
         throw signatures::Bls::IncorrectInput( "Not enough shares to create signature" );
