@@ -43,7 +43,7 @@ namespace signatures {
 
 class Bls {
 private:
-    class BlsException : std::exception {
+    class BlsException : public std::exception {
     protected:
         std::string what_str;
 
