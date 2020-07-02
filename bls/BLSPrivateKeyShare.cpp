@@ -58,6 +58,10 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(
 
 std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::sign(
     std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr, size_t _signerIndex ) {
+
+    CHECK(hash_byte_arr);
+
+
     std::shared_ptr< signatures::Bls > obj;
 
     if ( _signerIndex == 0 ) {

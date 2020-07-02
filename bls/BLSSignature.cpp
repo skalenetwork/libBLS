@@ -46,6 +46,9 @@ BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, st
 BLSSignature::BLSSignature(
     std::shared_ptr< std::string > _sig, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
+
+    CHECK(_sig);
+
     BLSSignature::checkSigners( requiredSigners, totalSigners );
     BLSutils::initBLS();
 

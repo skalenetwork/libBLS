@@ -21,6 +21,7 @@
   @date 2019
 */
 
+#include "bls.h"
 #include <bls/BLSPrivateKey.h>
 #include <bls/BLSutils.h>
 
@@ -28,6 +29,9 @@
 BLSPrivateKey::BLSPrivateKey(
     const std::shared_ptr< std::string >& _key, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
+
+    CHECK(_key);
+
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
     if ( _key->empty() ) {
         throw signatures::Bls::IncorrectInput( "Secret key share is empty" );
