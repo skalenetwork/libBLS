@@ -21,6 +21,7 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 @date 2019
 */
 
+#include "bls.h"
 #include <bls/BLSutils.h>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <algorithm>
@@ -67,6 +68,9 @@ libff::alt_bn128_Fq BLSutils::HashToFq(
 
 std::shared_ptr< std::vector< std::string > > BLSutils::SplitString(
     std::shared_ptr< std::string > str, const std::string& delim ) {
+
+    CHECK(str);
+
     std::vector< std::string > tokens;
     size_t prev = 0, pos = 0;
     do {

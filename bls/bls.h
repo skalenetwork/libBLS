@@ -116,3 +116,12 @@ private:
 };
 
 }  // namespace signatures
+
+
+
+#define CHECK(_EXPRESSION_) \
+    if (!(_EXPRESSION_)) { \
+        auto __msg__ = std::string("Check failed:") + #_EXPRESSION_ + "\n" + __FUNCTION__ +  \
+        + " " + std::string(__FILE__) + ":" + std::to_string(__LINE__); \
+        throw signatures::Bls::IncorrectInput(__msg__);}
+

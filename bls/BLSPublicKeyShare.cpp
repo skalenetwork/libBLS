@@ -31,6 +31,9 @@ BLSPublicKeyShare::BLSPublicKeyShare(
     const std::shared_ptr< std::vector< std::string > > pkey_str_vect, size_t _requiredSigners,
     size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
+
+    CHECK(pkey_str_vect);
+
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
 
     if ( pkey_str_vect == nullptr ) {
@@ -80,6 +83,9 @@ std::shared_ptr< std::vector< std::string > > BLSPublicKeyShare::toString() {
 
 bool BLSPublicKeyShare::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
     std::shared_ptr< BLSSigShare > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
+
+    CHECK(hash_ptr);
+
     std::shared_ptr< signatures::Bls > obj;
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
     if ( !hash_ptr ) {
@@ -97,6 +103,11 @@ bool BLSPublicKeyShare::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > 
 
 bool BLSPublicKeyShare::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
     std::shared_ptr< BLSSigShare > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
+
+
+    CHECK(hash_ptr);
+    CHECK(sign_ptr);
+
     std::shared_ptr< signatures::Bls > obj;
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
     if ( !hash_ptr ) {

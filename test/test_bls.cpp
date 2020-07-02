@@ -693,7 +693,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
             pkey.VerifySigWithHelper(
                 std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() ), nullptr,
                 num_signed, num_all ),
-            signatures::Bls::IsNotWellFormed );
+            signatures::Bls::IncorrectInput);
     }
 
     {
