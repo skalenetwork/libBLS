@@ -52,7 +52,7 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(
     privateKey = std::make_shared< libff::alt_bn128_Fr >( libff_skey );
 
     if ( *privateKey == libff::alt_bn128_Fr::zero() ) {
-        throw signatures::Bls::ZeroSecretKey( "Secret key share is equal to zero or corrupt" );
+        throw signatures::Bls::ZeroSecretKey( "BLS Secret key share is equal to zero" );
     }
 }
 
@@ -65,10 +65,10 @@ std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::sign(
     std::shared_ptr< signatures::Bls > obj;
 
     if ( _signerIndex == 0 ) {
-        throw signatures::Bls::IncorrectInput( "Zero signer index" );
+        throw signatures::Bls::IncorrectInput( "Zero signer index during BLS sign" );
     }
     if ( hash_byte_arr == nullptr ) {
-        throw signatures::Bls::IncorrectInput( "Hash is null" );
+        throw signatures::Bls::IncorrectInput( "Hash is null during BLS sign" );
     }
 
     obj = std::make_shared< signatures::Bls >( signatures::Bls( requiredSigners, totalSigners ) );
@@ -98,7 +98,7 @@ std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::signWithHelper(
         throw signatures::Bls::IncorrectInput( "Zero signer index" );
     }
     if ( hash_byte_arr == nullptr ) {
-        throw signatures::Bls::IncorrectInput( "Hash is null" );
+        throw signatures::Bls::IncorrectInput( "Null hash is bls signWithHelper" );
     }
 
     obj = std::make_shared< signatures::Bls >( signatures::Bls( requiredSigners, totalSigners ) );
@@ -154,6 +154,7 @@ BLSPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSi
 }
 
 std::shared_ptr< libff::alt_bn128_Fr > BLSPrivateKeyShare::getPrivateKey() const {
+    CHECK(privateKey);
     return privateKey;
 }
 

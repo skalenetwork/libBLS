@@ -34,12 +34,16 @@ BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, st
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
     checkSigners( _requiredSigners, _totalSigners );
+
+    CHECK(sig);
+
     BLSSignature::checkSigners( requiredSigners, totalSigners );
-    if ( sig == nullptr || sig->is_zero() ) {
-        throw signatures::Bls::IncorrectInput( "Zero or null signature" );
+
+    if (sig->is_zero() ) {
+        throw signatures::Bls::IncorrectInput( "Zero BLS signature" );
     }
     if ( hint.length() == 0 ) {
-        throw signatures::Bls::IncorrectInput( "Empty or misformatted hint" );
+        throw signatures::Bls::IncorrectInput( "Empty BLS hint" );
     }
 }
 
@@ -50,11 +54,8 @@ BLSSignature::BLSSignature(
     CHECK(_sig);
 
     BLSSignature::checkSigners( requiredSigners, totalSigners );
-    BLSutils::initBLS();
 
-    if ( !_sig ) {
-        throw signatures::Bls::IncorrectInput( "Null signature" );
-    }
+    BLSutils::initBLS();
 
     if ( _sig->size() < 10 ) {
         throw signatures::Bls::IsNotWellFormed(
@@ -67,8 +68,10 @@ BLSSignature::BLSSignature(
     }
 
     std::shared_ptr< std::vector< std::string > > result = BLSutils::SplitString( _sig, ":" );
+
     if ( result->size() != 4 )
         throw signatures::Bls::IncorrectInput( "Misformatted signature" );
+
     for ( auto&& str : *result ) {
         for ( char& c : str ) {
             if ( !( c >= '0' && c <= '9' ) ) {
@@ -98,6 +101,9 @@ std::shared_ptr< std::string > BLSSignature::toString() {
     return std::make_shared< std::string >( str );
 }
 void BLSSignature::checkSigners( size_t _requiredSigners, size_t _totalSigners ) {
+
+    CHECK(_totalSigners > 0);
+
     if ( _requiredSigners > _totalSigners ) {
         throw signatures::Bls::IncorrectInput( "_requiredSigners > _totalSigners" );
     }
