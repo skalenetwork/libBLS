@@ -31,6 +31,8 @@ BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > 
     size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
 
+    BLSutils::initBLS();
+
     CHECK(pkey_str_vect);
 
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
@@ -59,7 +61,12 @@ BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > 
 BLSPublicKey::BLSPublicKey(
     const libff::alt_bn128_G2& pkey, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
+
+    BLSutils::initBLS();
+
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+
+
     libffPublicKey = std::make_shared< libff::alt_bn128_G2 >( pkey );
     if ( libffPublicKey->is_zero() ) {
         throw signatures::Bls::IsNotWellFormed( "Zero BLS Public Key" );
@@ -88,7 +95,11 @@ bool BLSPublicKey::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_
     std::shared_ptr< BLSSignature > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
 
 
+
+
     CHECK(sign_ptr);
+
+    BLSutils::initBLS();
 
     std::shared_ptr< signatures::Bls > obj;
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
@@ -145,6 +156,9 @@ BLSPublicKey::BLSPublicKey(
     std::shared_ptr< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > > koefs_pkeys_map,
     size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
+
+    BLSutils::initBLS();
+
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
 
     signatures::Bls obj = signatures::Bls( requiredSigners, totalSigners );

@@ -68,6 +68,9 @@ std::shared_ptr< BLSSigShare > BLSSigShareSet::getSigShareByIndex( size_t _index
 BLSSigShareSet::BLSSigShareSet( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ), was_merged( false ) {
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+
+    BLSutils::initBLS();
+
 }
 
 bool BLSSigShareSet::isEnough() {

@@ -90,6 +90,8 @@ bool BLSPublicKeyShare::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > 
     CHECK(hash_ptr);
     CHECK(sign_ptr);
 
+
+
     std::shared_ptr< signatures::Bls > obj;
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
 

@@ -25,6 +25,9 @@
 #include <bls/BLSutils.h>
 
 std::shared_ptr< libff::alt_bn128_G1 > BLSSignature::getSig() const {
+
+    CHECK(sig);
+
     return sig;
 }
 BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, std::string& _hint,
@@ -37,7 +40,8 @@ BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, st
 
     CHECK(sig);
 
-    BLSSignature::checkSigners( requiredSigners, totalSigners );
+    BLSutils::initBLS();
+
 
     if (sig->is_zero() ) {
         throw signatures::Bls::IncorrectInput( "Zero BLS signature" );
