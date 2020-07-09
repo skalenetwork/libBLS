@@ -35,6 +35,10 @@ public:
     static std::shared_ptr< std::vector< std::string > > SplitString(
         const std::shared_ptr< std::string >, const std::string& delim );
     static void initBLS();
+
+
+    static std::atomic<bool> is_initialized;
+
 };
 
 template < class T >

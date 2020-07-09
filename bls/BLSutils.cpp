@@ -28,11 +28,14 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <bitset>
 
+std::atomic<bool> BLSutils::is_initialized = false;
+
 void BLSutils::initBLS() {
-    static bool is_initialized = false;
-    if ( !is_initialized ) {
+
+    auto initialized = is_initialized.exchange(true);
+
+    if (!initialized ) {
         libff::init_alt_bn128_params();
-        is_initialized = true;
     }
 }
 
