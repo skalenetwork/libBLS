@@ -36,10 +36,8 @@ BLSPublicKeyShare::BLSPublicKeyShare(
 
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
 
-    if ( pkey_str_vect == nullptr ) {
-        throw signatures::Bls::IncorrectInput( "Public Key ptr is null" );
-    }
     BLSutils::initBLS();
+
     publicKey = std::make_shared< libff::alt_bn128_G2 >();
 
     publicKey->X.c0 = libff::alt_bn128_Fq( pkey_str_vect->at( 0 ).c_str() );
@@ -49,8 +47,12 @@ BLSPublicKeyShare::BLSPublicKeyShare(
     publicKey->Z.c0 = libff::alt_bn128_Fq::one();
     publicKey->Z.c1 = libff::alt_bn128_Fq::zero();
 
-    if ( publicKey->is_zero() || !( publicKey->is_well_formed() ) ) {
-        throw signatures::Bls::IsNotWellFormed( "Public Key is equal to zero or corrupt" );
+    if ( publicKey->is_zero()) {
+        throw signatures::Bls::IsNotWellFormed( "Zero BLS public Key share" );
+    }
+
+    if (!( publicKey->is_well_formed() ) ) {
+        throw signatures::Bls::IsNotWellFormed( "Corrupt BLS public key share" );
     }
 }
 
@@ -59,12 +61,13 @@ BLSPublicKeyShare::BLSPublicKeyShare(
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     BLSutils::initBLS();
     if ( _skey.is_zero() ) {
-        throw signatures::Bls::ZeroSecretKey( "Secret Key is equal to zero or corrupt" );
+        throw signatures::Bls::ZeroSecretKey( "Zero BLS Secret Key" );
     }
     publicKey = std::make_shared< libff::alt_bn128_G2 >( _skey * libff::alt_bn128_G2::one() );
 }
 
 std::shared_ptr< libff::alt_bn128_G2 > BLSPublicKeyShare::getPublicKey() const {
+    CHECK(publicKey);
     return publicKey;
 }
 
@@ -85,14 +88,15 @@ bool BLSPublicKeyShare::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > 
     std::shared_ptr< BLSSigShare > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
 
     CHECK(hash_ptr);
+    CHECK(sign_ptr);
+
+
 
     std::shared_ptr< signatures::Bls > obj;
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
-    if ( !hash_ptr ) {
-        throw signatures::Bls::IncorrectInput( "hash is null" );
-    }
-    if ( !sign_ptr || sign_ptr->getSigShare()->is_zero() ) {
-        throw signatures::Bls::IsNotWellFormed( "Sig share is equal to zero or corrupt" );
+
+    if ( sign_ptr->getSigShare()->is_zero() ) {
+        throw signatures::Bls::IsNotWellFormed( "Zero BLS Sig share" );
     }
 
     obj = std::make_shared< signatures::Bls >( signatures::Bls( _requiredSigners, _totalSigners ) );
@@ -113,8 +117,8 @@ bool BLSPublicKeyShare::VerifySigWithHelper( std::shared_ptr< std::array< uint8_
     if ( !hash_ptr ) {
         throw signatures::Bls::IncorrectInput( "hash is null" );
     }
-    if ( !sign_ptr || sign_ptr->getSigShare()->is_zero() ) {
-        throw signatures::Bls::IsNotWellFormed( "Sig share is equal to zero or corrupt" );
+    if (sign_ptr->getSigShare()->is_zero() ) {
+        throw signatures::Bls::IsNotWellFormed( "Sig share is equal to zero" );
     }
 
     std::string hint = sign_ptr->getHint();
@@ -122,6 +126,7 @@ bool BLSPublicKeyShare::VerifySigWithHelper( std::shared_ptr< std::array< uint8_
     std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > y_shift_x = BLSutils::ParseHint( hint );
 
     libff::alt_bn128_Fq x = BLSutils::HashToFq( hash_ptr );
+
     x = x + y_shift_x.second;
 
     libff::alt_bn128_Fq y_sqr = y_shift_x.first ^ 2;

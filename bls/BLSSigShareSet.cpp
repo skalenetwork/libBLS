@@ -36,12 +36,9 @@ bool BLSSigShareSet::addSigShare( std::shared_ptr< BLSSigShare > _sigShare ) {
     CHECK(_sigShare);
 
     if ( was_merged ) {
-        throw signatures::Bls::IncorrectInput( "Invalid state" );
+        throw signatures::Bls::IncorrectInput( "Invalid state:was already merged" );
     }
 
-    if ( !_sigShare ) {
-        throw signatures::Bls::IncorrectInput( "Null _sigShare" );
-    }
 
     if ( sigShares.count( _sigShare->getSignerIndex() ) > 0 ) {
         throw signatures::Bls::IncorrectInput(
@@ -71,6 +68,9 @@ std::shared_ptr< BLSSigShare > BLSSigShareSet::getSigShareByIndex( size_t _index
 BLSSigShareSet::BLSSigShareSet( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ), was_merged( false ) {
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+
+    BLSutils::initBLS();
+
 }
 
 bool BLSSigShareSet::isEnough() {

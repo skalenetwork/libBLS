@@ -29,6 +29,7 @@
 #include <string>
 
 std::shared_ptr< libff::alt_bn128_G1 > BLSSigShare::getSigShare() const {
+    CHECK(sigShare);
     return sigShare;
 }
 size_t BLSSigShare::getSignerIndex() const {

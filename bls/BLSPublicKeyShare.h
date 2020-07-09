@@ -35,11 +35,11 @@ private:
     size_t totalSigners;
 
 public:
-    BLSPublicKeyShare( const std::shared_ptr< std::vector< std::string > >, size_t _totalSigners,
-        size_t _requiredSigners );
+    BLSPublicKeyShare( const std::shared_ptr< std::vector< std::string > >, size_t _requiredSigners,
+        size_t _totalSigners );
 
     BLSPublicKeyShare(
-        const libff::alt_bn128_Fr& skey, size_t _totalSigners, size_t _requiredSigners );
+        const libff::alt_bn128_Fr& skey, size_t _requiredSigners, size_t _totalSigners );
 
     std::shared_ptr< libff::alt_bn128_G2 > getPublicKey() const;
 
