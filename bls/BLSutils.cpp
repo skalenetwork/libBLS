@@ -56,13 +56,12 @@ libff::alt_bn128_Fq BLSutils::HashToFq(
     std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr ) {
     libff::bigint< libff::alt_bn128_q_limbs > from_hex;
 
-    unsigned char* hex = new unsigned char[64];
+    std::vector<uint8_t> hex(64);
     for ( size_t i = 0; i < 32; ++i ) {
         hex[2 * i] = static_cast< int >( hash_byte_arr->at( i ) ) / 16;
         hex[2 * i + 1] = static_cast< int >( hash_byte_arr->at( i ) ) % 16;
     }
-    mpn_set_str( from_hex.data, hex, 64, 16 );
-    delete[] hex;
+    mpn_set_str( from_hex.data, hex.data(), 64, 16 );
 
     libff::alt_bn128_Fq ret_val( from_hex );
 
