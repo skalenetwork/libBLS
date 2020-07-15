@@ -58,8 +58,7 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(
 
 std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::sign(
     std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr, size_t _signerIndex ) {
-
-    CHECK(hash_byte_arr);
+    CHECK( hash_byte_arr );
 
 
     std::shared_ptr< signatures::Bls > obj;
@@ -154,7 +153,7 @@ BLSPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSi
 }
 
 std::shared_ptr< libff::alt_bn128_Fr > BLSPrivateKeyShare::getPrivateKey() const {
-    CHECK(privateKey);
+    CHECK( privateKey );
     return privateKey;
 }
 

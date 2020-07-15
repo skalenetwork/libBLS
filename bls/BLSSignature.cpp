@@ -25,8 +25,7 @@
 #include <bls/BLSutils.h>
 
 std::shared_ptr< libff::alt_bn128_G1 > BLSSignature::getSig() const {
-
-    CHECK(sig);
+    CHECK( sig );
 
     return sig;
 }
@@ -38,12 +37,12 @@ BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, st
       totalSigners( _totalSigners ) {
     checkSigners( _requiredSigners, _totalSigners );
 
-    CHECK(sig);
+    CHECK( sig );
 
     BLSutils::initBLS();
 
 
-    if (sig->is_zero() ) {
+    if ( sig->is_zero() ) {
         throw signatures::Bls::IncorrectInput( "Zero BLS signature" );
     }
     if ( hint.length() == 0 ) {
@@ -54,8 +53,7 @@ BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, st
 BLSSignature::BLSSignature(
     std::shared_ptr< std::string > _sig, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-
-    CHECK(_sig);
+    CHECK( _sig );
 
     BLSSignature::checkSigners( requiredSigners, totalSigners );
 
@@ -105,8 +103,7 @@ std::shared_ptr< std::string > BLSSignature::toString() {
     return std::make_shared< std::string >( str );
 }
 void BLSSignature::checkSigners( size_t _requiredSigners, size_t _totalSigners ) {
-
-    CHECK(_totalSigners > 0);
+    CHECK( _totalSigners > 0 );
 
     if ( _requiredSigners > _totalSigners ) {
         throw signatures::Bls::IncorrectInput( "_requiredSigners > _totalSigners" );
