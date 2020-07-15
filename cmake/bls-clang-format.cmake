@@ -14,22 +14,14 @@ endforeach()
 
 add_custom_target(bls-format
     COMMENT "Running clang-format to change files"
-    COMMAND ${CLANG_FORMAT_BIN}
-    -style=file
-    -i
-    ${ALL_SOURCE_FILES}
+    COMMAND ${BLS_CLANG_FORMAT_BIN} -style=file -i ${ALL_SOURCE_FILES}
 )
 
 
 add_custom_target(bls-format-check
     COMMENT "Checking clang-format changes"
     # Use ! to negate the result for correct output
-    COMMAND !
-    ${CLANG_FORMAT_BIN}
-    -style=file
-    -output-replacements-xml
-    ${ALL_SOURCE_FILES}
-    | grep -q "replacement offset"
+    COMMAND ! ${BLS_CLANG_FORMAT_BIN} -style=file -output-replacements-xml ${ALL_SOURCE_FILES} | grep -q "replacement offset"
 )
 
 # Get the path to this file
@@ -52,6 +44,6 @@ add_custom_target(bls-format-check-changed
     COMMAND ${_clangcheckpath}/../scripts/clang-format-check-changed.py 
     --file-extensions \"${CHANGED_FILE_EXTENSIONS}\"
     ${EXCLUDE_PATTERN_ARGS}
-    --clang-format-bin ${CLANG_FORMAT_BIN}
+    --clang-format-bin ${BLS_CLANG_FORMAT_BIN}
 )
 

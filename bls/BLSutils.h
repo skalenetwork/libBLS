@@ -37,8 +37,7 @@ public:
     static void initBLS();
 
 
-    static std::atomic<bool> is_initialized;
-
+    static std::atomic< bool > is_initialized;
 };
 
 template < class T >

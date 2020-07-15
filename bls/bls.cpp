@@ -125,8 +125,7 @@ libff::alt_bn128_G1 Bls::HashtoG1( std::shared_ptr< std::array< uint8_t, 32 > > 
 
 std::pair< libff::alt_bn128_G1, std::string > Bls::HashtoG1withHint(
     std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr ) {
-
-    CHECK(hash_byte_arr);
+    CHECK( hash_byte_arr );
 
     libff::alt_bn128_G1 point;
     libff::alt_bn128_Fq counter = libff::alt_bn128_Fq::zero();
@@ -175,9 +174,8 @@ std::pair< libff::alt_bn128_G1, std::string > Bls::HashtoG1withHint(
 
 libff::alt_bn128_G1 Bls::HashBytes(
     const char* raw_bytes, size_t length, std::string ( *hash_func )( const std::string& str ) ) {
-
-    CHECK(raw_bytes);
-    CHECK(hash_func);
+    CHECK( raw_bytes );
+    CHECK( hash_func );
 
     std::string from_bytes( raw_bytes, length );
 
@@ -235,8 +233,7 @@ bool Bls::Verification( const std::string& to_be_hashed, const libff::alt_bn128_
 
 bool Bls::Verification( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr,
     const libff::alt_bn128_G1 sign, const libff::alt_bn128_G2 public_key ) {
-
-    CHECK(hash_byte_arr);
+    CHECK( hash_byte_arr );
 
     // verifies that a given signature corresponds to given public key
 

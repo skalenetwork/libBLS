@@ -31,8 +31,7 @@ BLSPublicKeyShare::BLSPublicKeyShare(
     const std::shared_ptr< std::vector< std::string > > pkey_str_vect, size_t _requiredSigners,
     size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-
-    CHECK(pkey_str_vect);
+    CHECK( pkey_str_vect );
 
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
 
@@ -47,11 +46,11 @@ BLSPublicKeyShare::BLSPublicKeyShare(
     publicKey->Z.c0 = libff::alt_bn128_Fq::one();
     publicKey->Z.c1 = libff::alt_bn128_Fq::zero();
 
-    if ( publicKey->is_zero()) {
+    if ( publicKey->is_zero() ) {
         throw signatures::Bls::IsNotWellFormed( "Zero BLS public Key share" );
     }
 
-    if (!( publicKey->is_well_formed() ) ) {
+    if ( !( publicKey->is_well_formed() ) ) {
         throw signatures::Bls::IsNotWellFormed( "Corrupt BLS public key share" );
     }
 }
@@ -67,7 +66,7 @@ BLSPublicKeyShare::BLSPublicKeyShare(
 }
 
 std::shared_ptr< libff::alt_bn128_G2 > BLSPublicKeyShare::getPublicKey() const {
-    CHECK(publicKey);
+    CHECK( publicKey );
     return publicKey;
 }
 
@@ -86,10 +85,8 @@ std::shared_ptr< std::vector< std::string > > BLSPublicKeyShare::toString() {
 
 bool BLSPublicKeyShare::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
     std::shared_ptr< BLSSigShare > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
-
-    CHECK(hash_ptr);
-    CHECK(sign_ptr);
-
+    CHECK( hash_ptr );
+    CHECK( sign_ptr );
 
 
     std::shared_ptr< signatures::Bls > obj;
@@ -107,17 +104,15 @@ bool BLSPublicKeyShare::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > 
 
 bool BLSPublicKeyShare::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
     std::shared_ptr< BLSSigShare > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
-
-
-    CHECK(hash_ptr);
-    CHECK(sign_ptr);
+    CHECK( hash_ptr );
+    CHECK( sign_ptr );
 
     std::shared_ptr< signatures::Bls > obj;
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
     if ( !hash_ptr ) {
         throw signatures::Bls::IncorrectInput( "hash is null" );
     }
-    if (sign_ptr->getSigShare()->is_zero() ) {
+    if ( sign_ptr->getSigShare()->is_zero() ) {
         throw signatures::Bls::IsNotWellFormed( "Sig share is equal to zero" );
     }
 
