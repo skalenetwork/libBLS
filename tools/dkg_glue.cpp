@@ -135,13 +135,13 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
 
         libff::alt_bn128_G2 publ_key = dkg_instance.GetPublicKeyFromSecretKey( secret_key[i] );
         publ_key.to_affine_coordinates();
-        BLS_key_file["insecureBLSPublicKey0"] =
+        BLS_key_file["BLSPublicKey0"] =
             BLSutils::ConvertToString< libff::alt_bn128_Fq >( publ_key.X.c0 );
-        BLS_key_file["insecureBLSPublicKey1"] =
+        BLS_key_file["BLSPublicKey1"] =
             BLSutils::ConvertToString< libff::alt_bn128_Fq >( publ_key.X.c1 );
-        BLS_key_file["insecureBLSPublicKey2"] =
+        BLS_key_file["BLSPublicKey2"] =
             BLSutils::ConvertToString< libff::alt_bn128_Fq >( publ_key.Y.c0 );
-        BLS_key_file["insecureBLSPublicKey3"] =
+        BLS_key_file["BLSPublicKey3"] =
             BLSutils::ConvertToString< libff::alt_bn128_Fq >( publ_key.Y.c1 );
 
         if ( g_b_verbose_mode ) {
@@ -151,13 +151,13 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
 
     common_public_key.to_affine_coordinates();
     nlohmann::json public_key_json;
-    public_key_json["insecureCommonBLSPublicKey0"] =
+    public_key_json["commonBLSPublicKey0"] =
         BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_public_key.X.c0 );
-    public_key_json["insecureCommonBLSPublicKey1"] =
+    public_key_json["commonBLSPublicKey1"] =
         BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_public_key.X.c1 );
-    public_key_json["insecureCommonBLSPublicKey2"] =
+    public_key_json["commonBLSPublicKey2"] =
         BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_public_key.Y.c0 );
-    public_key_json["insecureCommonBLSPublicKey3"] =
+    public_key_json["commonBLSPublicKey3"] =
         BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_public_key.Y.c1 );
 
     std::ofstream outfile_pk( "common_public_key.json" );
