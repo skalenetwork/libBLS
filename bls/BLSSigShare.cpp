@@ -94,7 +94,7 @@ BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _sign
     sigShare = std::make_shared< libff::alt_bn128_G1 >( X, Y, libff::alt_bn128_Fq::one() );
     hint = result->at( 2 ) + ":" + result->at( 3 );
 
-    if ( !( *sigShare ).is_well_formed() )
+    if ( !sigShare->is_well_formed() )
         throw signatures::Bls::IsNotWellFormed( "signature is not from G1" );
 }
 

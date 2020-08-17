@@ -61,15 +61,17 @@ BLSPrivateKey::BLSPrivateKey(
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
     signatures::Bls obj = signatures::Bls( _requiredSigners, _totalSigners );
     std::vector lagrange_koefs = obj.LagrangeCoeffs( *koefs );
-    privateKey = std::make_shared< libff::alt_bn128_Fr >( libff::alt_bn128_Fr::zero() );
+    libff::alt_bn128_Fr privateKeyObj(libff::alt_bn128_Fr::zero());
     for ( size_t i = 0; i < requiredSigners; i++ ) {
         libff::alt_bn128_Fr skey = *skeys->at( koefs->at( i ) - 1 )->getPrivateKey();
-        *privateKey = *privateKey + lagrange_koefs.at( i ) * skey;
+        privateKeyObj = privateKeyObj + lagrange_koefs.at( i ) * skey;
     }
 
-    if ( *privateKey == libff::alt_bn128_Fr::zero() ) {
+    if (privateKeyObj == libff::alt_bn128_Fr::zero() ) {
         throw signatures::Bls::ZeroSecretKey( "Secret key share is equal to zero or corrupt" );
     }
+
+    privateKey = std::make_shared<libff::alt_bn128_Fr>(privateKeyObj);
 }
 
 std::shared_ptr< libff::alt_bn128_Fr > BLSPrivateKey::getPrivateKey() const {

@@ -86,7 +86,7 @@ BLSSignature::BLSSignature(
     sig = std::make_shared< libff::alt_bn128_G1 >( X, Y, libff::alt_bn128_Fq::one() );
     hint = result->at( 2 ) + ":" + result->at( 3 );
 
-    if ( !( *sig ).is_well_formed() ) {
+    if ( !(sig->is_well_formed() )) {
         throw signatures::Bls::IsNotWellFormed( "signature is not from G1" );
     }
 }
