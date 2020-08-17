@@ -30,6 +30,9 @@ BLSPrivateKey::BLSPrivateKey(
     const std::shared_ptr< std::string >& _key, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     CHECK( _key );
+    BLSutils::initBLS();
+
+
 
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
     if ( _key->empty() ) {
@@ -38,7 +41,7 @@ BLSPrivateKey::BLSPrivateKey(
     if ( _key == nullptr ) {
         throw signatures::Bls::IncorrectInput( "Secret key share is null" );
     }
-    BLSutils::initBLS();
+
     privateKey = std::make_shared< libff::alt_bn128_Fr >( _key->c_str() );
     if ( *privateKey == libff::alt_bn128_Fr::zero() ) {
         throw signatures::Bls::ZeroSecretKey( "Secret key share is equal to zero or corrupt" );

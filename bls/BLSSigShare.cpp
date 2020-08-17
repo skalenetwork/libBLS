@@ -105,6 +105,7 @@ BLSSigShare::BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& _sigShar
       signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
+    BLSutils::initBLS();
     BLSSignature::checkSigners( requiredSigners, totalSigners );
     if ( !_sigShare ) {
         throw signatures::Bls::IncorrectInput( "Null _s" );

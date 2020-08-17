@@ -26,7 +26,6 @@
 
 std::shared_ptr< libff::alt_bn128_G1 > BLSSignature::getSig() const {
     CHECK( sig );
-
     return sig;
 }
 BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, std::string& _hint,

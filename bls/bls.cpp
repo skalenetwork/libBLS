@@ -40,7 +40,7 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 namespace signatures {
 
 Bls::Bls( const size_t t, const size_t n ) : t_( t ), n_( n ) {
-    libff::init_alt_bn128_params();  // init all parameters for math operations
+    BLSutils::initBLS();
 }
 
 std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > Bls::KeyGeneration() {
