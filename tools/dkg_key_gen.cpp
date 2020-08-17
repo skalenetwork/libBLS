@@ -42,7 +42,7 @@ void KeysToJson( std::shared_ptr< BLSPrivateKeyShare > skey_ptr, size_t num_sign
     keys_json["insecureBLSPrivateKey"] = *skey_ptr->toString();
     BLSPublicKeyShare pkey( *skey_ptr->getPrivateKey(), num_signed, num_all );
     std::shared_ptr< std::vector< std::string > > pkey_ptr = pkey.toString();
-    std::string pkey_name = "insecureBLSPublicKey";
+    std::string pkey_name = "BLSPublicKey";
     for ( size_t i = 0; i < 4; i++ ) {
         keys_json[pkey_name + std::to_string( i )] = pkey_ptr->at( i );
     }
@@ -54,7 +54,7 @@ void KeysToJson( std::shared_ptr< BLSPrivateKeyShare > skey_ptr, size_t num_sign
 
 void CommonPkeyToJson( std::shared_ptr< BLSPublicKey > common_pkey_ptr ) {
     nlohmann::json keys_json;
-    std::string pkey_name = "insecureCommonBLSPublicKey";
+    std::string pkey_name = "commonBLSPublicKey";
     std::shared_ptr< std::vector< std::string > > common_pkey_str = common_pkey_ptr->toString();
     for ( size_t i = 0; i < 4; ++i ) {
         keys_json[pkey_name + std::to_string( i )] = common_pkey_str->at( i );

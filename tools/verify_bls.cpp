@@ -111,14 +111,14 @@ void Verify( const size_t t, const size_t n, std::istream& sign_file, int j = -1
         pk_file >> pk_in;
 
         for ( size_t i = 0; i < 4; i++ ) {
-            pkey_str.push_back( pk_in["insecureCommonBLSPublicKey" + std::to_string( i )] );
+            pkey_str.push_back( pk_in["commonBLSPublicKey" + std::to_string( i )] );
         }
     } else {
         std::ifstream pk_file( "BLS_keys" + std::to_string( j ) + ".json" );
         pk_file >> pk_in;
 
         for ( size_t i = 0; i < 4; i++ ) {
-            pkey_str.push_back( pk_in["insecureBLSPublicKey" + std::to_string( i )] );
+            pkey_str.push_back( pk_in["BLSPublicKey" + std::to_string( i )] );
         }
     }
 
