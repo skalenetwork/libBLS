@@ -40,7 +40,7 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 namespace signatures {
 
 Bls::Bls( const size_t t, const size_t n ) : t_( t ), n_( n ) {
-    libff::init_alt_bn128_params();  // init all parameters for math operations
+    BLSutils::initBLS();
 }
 
 std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > Bls::KeyGeneration() {
@@ -60,6 +60,8 @@ std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > Bls::KeyGeneration() {
 
 libff::alt_bn128_G1 Bls::Hashing(
     const std::string& message, std::string ( *hash_func )( const std::string& str ) ) {
+    CHECK( hash_func );
+
     std::string sha256hex = hash_func( message );
 
     boost::multiprecision::uint256_t num = 0;
@@ -176,6 +178,8 @@ libff::alt_bn128_G1 Bls::HashBytes(
     const char* raw_bytes, size_t length, std::string ( *hash_func )( const std::string& str ) ) {
     CHECK( raw_bytes );
     CHECK( hash_func );
+
+    CHECK( raw_bytes );
 
     std::string from_bytes( raw_bytes, length );
 
