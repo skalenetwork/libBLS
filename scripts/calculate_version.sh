@@ -17,7 +17,7 @@ if [ -z "$VERSION" ]; then
 fi
 
 if [[ "$BRANCH" == 'master' ]]; then
-    echo $VERSION
+    echo "$VERSION"
     exit 1
 fi
 
