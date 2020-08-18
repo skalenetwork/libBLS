@@ -448,7 +448,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         is_exception_caught = false;  // 1 coord of public key share is not digit
         try {
-            std::vector< std::string > pkey_str( {"123", "abc"} );
+            std::vector< std::string > pkey_str( { "123", "abc" } );
             TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
                 num_signed, num_all );
         } catch ( std::runtime_error& ) {
@@ -458,7 +458,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         is_exception_caught = false;  // zero public key share
         try {
-            std::vector< std::string > pkey_str( {"0", "0"} );
+            std::vector< std::string > pkey_str( { "0", "0" } );
             TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
                 num_signed, num_all );
         } catch ( std::runtime_error& ) {
@@ -468,7 +468,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         is_exception_caught = false;  // one component public key share
         try {
-            std::vector< std::string > pkey_str( {"1232450"} );
+            std::vector< std::string > pkey_str( { "1232450" } );
             TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
                 num_signed, num_all );
         } catch ( std::runtime_error& ) {
@@ -627,7 +627,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         is_exception_caught = false;  // zero public key
         try {
-            std::vector< std::string > pkey_str( {"0", "0"} );
+            std::vector< std::string > pkey_str( { "0", "0" } );
             TEPublicKey(
                 std::make_shared< std::vector< std::string > >( pkey_str ), num_signed, num_all );
         } catch ( std::runtime_error& ) {

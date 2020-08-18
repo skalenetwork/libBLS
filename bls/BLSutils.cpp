@@ -36,7 +36,7 @@ std::atomic< bool > BLSutils::is_initialized = false;
 mutex initMutex;
 
 void BLSutils::initBLS() {
-    lock_guard<mutex> lock(initMutex);
+    lock_guard< mutex > lock( initMutex );
     if ( !is_initialized ) {
         libff::init_alt_bn128_params();
         is_initialized = true;

@@ -60,8 +60,7 @@ std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > Bls::KeyGeneration() {
 
 libff::alt_bn128_G1 Bls::Hashing(
     const std::string& message, std::string ( *hash_func )( const std::string& str ) ) {
-
-    CHECK(hash_func);
+    CHECK( hash_func );
 
     std::string sha256hex = hash_func( message );
 
@@ -180,7 +179,7 @@ libff::alt_bn128_G1 Bls::HashBytes(
     CHECK( raw_bytes );
     CHECK( hash_func );
 
-    CHECK(raw_bytes);
+    CHECK( raw_bytes );
 
     std::string from_bytes( raw_bytes, length );
 
