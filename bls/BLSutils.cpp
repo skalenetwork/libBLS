@@ -26,8 +26,8 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 #include <boost/multiprecision/cpp_int.hpp>
 #include <algorithm>
 
-#include <mutex>
 #include <bitset>
+#include <mutex>
 
 std::atomic< bool > BLSutils::is_initialized = false;
 
