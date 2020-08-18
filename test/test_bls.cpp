@@ -913,7 +913,7 @@ BOOST_AUTO_TEST_CASE( DKGWrappersExceptions ) {
     bool is_exception_caught = false;  // zero share
     try {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
-        std::vector< libff::alt_bn128_G2 > vect = {libff::alt_bn128_G2::random_element()};
+        std::vector< libff::alt_bn128_G2 > vect = { libff::alt_bn128_G2::random_element() };
         dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::zero(),
             std::make_shared< std::vector< libff::alt_bn128_G2 > >( vect ) );
     } catch ( std::runtime_error& ) {
@@ -933,7 +933,7 @@ BOOST_AUTO_TEST_CASE( DKGWrappersExceptions ) {
     is_exception_caught = false;  // wrong vector size
     try {
         DKGBLSWrapper dkg_wrap( num_signed + 1, num_all + 1 );
-        std::vector< libff::alt_bn128_G2 > vect = {libff::alt_bn128_G2::random_element()};
+        std::vector< libff::alt_bn128_G2 > vect = { libff::alt_bn128_G2::random_element() };
         dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::random_element(),
             std::make_shared< std::vector< libff::alt_bn128_G2 > >( vect ) );
     } catch ( std::runtime_error& ) {

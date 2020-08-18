@@ -21,7 +21,7 @@
   @date 2018
 */
 
-
+#include "bls/BLSutils.h"
 #include <dkg/dkg.h>
 
 #include <boost/multiprecision/cpp_int.hpp>
@@ -33,7 +33,7 @@ namespace signatures {
 typedef std::vector< libff::alt_bn128_Fr > Polynomial;
 
 Dkg::Dkg( const size_t t, const size_t n ) : t_( t ), n_( n ) {
-    libff::init_alt_bn128_params();  // init all libff::alt_bn128 parameters
+    BLSutils::initBLS();
 }
 
 Polynomial Dkg::GeneratePolynomial() {
