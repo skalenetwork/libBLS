@@ -26,17 +26,15 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 #include <boost/multiprecision/cpp_int.hpp>
 #include <algorithm>
 
-#include "mutex"
 #include <bitset>
-
-using namespace std;
+#include <mutex>
 
 std::atomic< bool > BLSutils::is_initialized = false;
 
-mutex initMutex;
+std::mutex initMutex;
 
 void BLSutils::initBLS() {
-    lock_guard< mutex > lock( initMutex );
+    std::lock_guard< std::mutex > lock( initMutex );
     if ( !is_initialized ) {
         libff::init_alt_bn128_params();
         is_initialized = true;

@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_SUITE( DkgAlgorithm )
 BOOST_AUTO_TEST_CASE( PolynomialValue ) {
     signatures::Dkg obj = signatures::Dkg( 3, 4 );
     std::vector< libff::alt_bn128_Fr > polynomial = {
-        libff::alt_bn128_Fr( "1" ), libff::alt_bn128_Fr( "0" ), libff::alt_bn128_Fr( "1" ) };
+        libff::alt_bn128_Fr( "1" ), libff::alt_bn128_Fr( "0" ), libff::alt_bn128_Fr( "1" )};
 
     libff::alt_bn128_Fr value = obj.PolynomialValue( polynomial, 5 );
 
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE( PolynomialValue ) {
     polynomial.clear();
 
     polynomial = {
-        libff::alt_bn128_Fr( "0" ), libff::alt_bn128_Fr( "1" ), libff::alt_bn128_Fr( "0" ) };
+        libff::alt_bn128_Fr( "0" ), libff::alt_bn128_Fr( "1" ), libff::alt_bn128_Fr( "0" )};
     bool is_exception_caught = false;
 
     try {

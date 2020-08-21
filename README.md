@@ -82,7 +82,7 @@ Ensure that the required packages are installed by executing:
 ```bash
 sudo apt-get update
 sudo apt-get install -y automake cmake build-essential libprocps-dev libtool\
-                        pkg-config yasm texinfo autoconf flex bison
+                        pkg-config yasm texinfo autoconf flex bison clang-format-6.0
 ```
 
 Configure the project build with the following commands.
