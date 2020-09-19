@@ -62,7 +62,13 @@ BOOST_AUTO_TEST_CASE( testSqrt ) {
         mpz_t rand;
         mpz_init( rand );
 
-        mpz_random( rand, num_limbs );
+        mpz_t num_limbs_mpz;
+        mpz_init( num_limbs_mpz );
+        mpz_set_si( num_limbs_mpz, num_limbs );
+
+        mpz_urandomm( rand, state, num_limbs_mpz );
+
+        mpz_clear( num_limbs_mpz );
 
         mpz_t modulus_q;
         mpz_init( modulus_q );
