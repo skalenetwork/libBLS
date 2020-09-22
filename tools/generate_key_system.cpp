@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018-2019 SKALE Labs
+  Copyright (C) 2018-2020 SKALE Labs
 
   This file is part of libBLS.
 
