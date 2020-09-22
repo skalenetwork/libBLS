@@ -98,7 +98,7 @@ set(headers_bls
 		third_party/cryptlite/base64.h
 		)
 
-set(PROJECT_VERSION 0.4.0)
+set(PROJECT_VERSION 0.1.1)
 add_definitions(-DBLS_VERSION=${PROJECT_VERSION})
 if ( APPLE )
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wparentheses -Wunused -Wunreachable-code -Wextra -fPIC -std=c++17")
@@ -160,6 +160,10 @@ target_link_libraries(bls_glue PRIVATE bls ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${
 add_executable(verify_bls tools/verify_bls.cpp)
 target_include_directories(verify_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(verify_bls PRIVATE bls ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
+
+add_executable(generate_key_system tools/generate_key_system.cpp)
+target_include_directories(generate_key_system PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(generate_key_system PRIVATE bls ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
 
 
 if(BUILD_TESTS)
