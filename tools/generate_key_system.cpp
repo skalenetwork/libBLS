@@ -67,26 +67,26 @@ void GenerateKeys( const size_t t, const size_t n, std::ostream& outfile ) {
     nlohmann::json outdata;
 
     outdata["commonBLSPublicKey"]["0"] =
-        BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_keys.second.X.c1 );
-    outdata["commonBLSPublicKey"]["1"] =
         BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_keys.second.X.c0 );
+    outdata["commonBLSPublicKey"]["1"] =
+        BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_keys.second.X.c1 );
     outdata["commonBLSPublicKey"]["2"] =
-        BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_keys.second.Y.c1 );
-    outdata["commonBLSPublicKey"]["3"] =
         BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_keys.second.Y.c0 );
+    outdata["commonBLSPublicKey"]["3"] =
+        BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_keys.second.Y.c1 );
 
     for ( size_t i = 0; i < n; ++i ) {
         outdata["privateKey"][std::to_string( i )] =
             BLSutils::ConvertToString< libff::alt_bn128_Fr >( secret_keys[i] );
 
         outdata["BLSPublicKey"][std::to_string( i )]["0"] =
-            BLSutils::ConvertToString< libff::alt_bn128_Fq >( public_keys[i].X.c1 );
-        outdata["BLSPublicKey"][std::to_string( i )]["1"] =
             BLSutils::ConvertToString< libff::alt_bn128_Fq >( public_keys[i].X.c0 );
+        outdata["BLSPublicKey"][std::to_string( i )]["1"] =
+            BLSutils::ConvertToString< libff::alt_bn128_Fq >( public_keys[i].X.c1 );
         outdata["BLSPublicKey"][std::to_string( i )]["2"] =
-            BLSutils::ConvertToString< libff::alt_bn128_Fq >( public_keys[i].Y.c1 );
-        outdata["BLSPublicKey"][std::to_string( i )]["3"] =
             BLSutils::ConvertToString< libff::alt_bn128_Fq >( public_keys[i].Y.c0 );
+        outdata["BLSPublicKey"][std::to_string( i )]["3"] =
+            BLSutils::ConvertToString< libff::alt_bn128_Fq >( public_keys[i].Y.c1 );
     }
 
     outfile << outdata.dump( 4 ) << '\n';
