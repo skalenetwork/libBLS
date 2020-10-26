@@ -1,10 +1,5 @@
 language: cpp
 sudo: required
-cache:
-    ccache: true
-    directories:
-        - $TRAVIS_BUILD_DIR/build/deps
-        - $TRAVIS_BUILD_DIR/deps
 matrix:
     include:
         - os: linux
@@ -49,10 +44,8 @@ matrix:
               - sudo apt-get install python3-pip
               - sudo apt-get install python3-setuptools
               - python3.6 -m pip install coincurve
+              - ./deps/build.sh
               - echo "========================================= before_script (codecov installed)"
-              - mkdir -p build
-              - cd build
-              - cd ..
           after_success:
               - cd python
               - echo "========================================= after_success (dkg-python test)"
@@ -129,15 +122,12 @@ matrix:
           before_script:
               - ln -s $(which glibtool) /usr/local/bin/libtool || true
               - ln -s $(which glibtoolize) /usr/local/bin/libtoolize || true
+              - ./deps/build.sh
 before_install:
     - eval "${MATRIX_EVAL}"
 script:
     - echo "========================================= script (1)"
     - echo "CMAKE_BUILD_FLAGS=$CMAKE_BUILD_FLAGS"
-    - cd deps
-    - sh -c "while :; do clear; date; sleep 300; done" &
-    - ./build.sh PARALLEL_COUNT=$CPU_COUNT &> ./log_of_deps_build.txt || (cat ./log_of_deps_build.txt && travis_terminate 1)
-    - cd ..
     - mkdir -p build
     - cd build
     - cmake $CMAKE_BUILD_FLAGS ..
