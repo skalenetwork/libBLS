@@ -1,10 +1,5 @@
 language: cpp
 sudo: required
-cache:
-    ccache: true
-    directories:
-        - $TRAVIS_BUILD_DIR/build/deps
-        - $TRAVIS_BUILD_DIR/deps
 matrix:
     include:
         - os: linux
@@ -127,7 +122,7 @@ script:
     - echo "CMAKE_BUILD_FLAGS=$CMAKE_BUILD_FLAGS"
     - cd deps
     - sh -c "while :; do clear; date; sleep 300; done" &
-    - ./build.sh PARALLEL_COUNT=$CPU_COUNT &> ./log_of_deps_build.txt || (cat ./log_of_deps_build.txt && travis_terminate 1)
+    - ./build.sh &> ./log_of_deps_build.txt || (cat ./log_of_deps_build.txt && travis_terminate 1)
     - cd ..
     - mkdir -p build
     - cd build
