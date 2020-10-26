@@ -116,6 +116,7 @@ matrix:
           before_script:
               - ln -s $(which glibtool) /usr/local/bin/libtool || true
               - ln -s $(which glibtoolize) /usr/local/bin/libtoolize || true
+              - ./deps/build.sh
 before_install:
     - eval "${MATRIX_EVAL}"
 script:
