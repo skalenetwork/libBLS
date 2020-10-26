@@ -50,9 +50,6 @@ matrix:
               - sudo apt-get install python3-setuptools
               - python3.6 -m pip install coincurve
               - echo "========================================= before_script (codecov installed)"
-              - mkdir -p build
-              - cd build
-              - cd ..
           after_success:
               - cd python
               - echo "========================================= after_success (dkg-python test)"
