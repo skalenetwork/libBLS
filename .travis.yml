@@ -1,10 +1,5 @@
 language: cpp
 sudo: required
-cache:
-    ccache: true
-    directories:
-        - $TRAVIS_BUILD_DIR/build/deps
-        - $TRAVIS_BUILD_DIR/deps
 matrix:
     include:
         - os: linux
