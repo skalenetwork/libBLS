@@ -26,7 +26,7 @@
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-#include <libff/algebra/field_utils/algorithms.hpp>
+#include <libff/algebra/exponentiation/exponentiation.hpp>
 
 namespace signatures {
 
