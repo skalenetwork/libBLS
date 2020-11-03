@@ -696,7 +696,7 @@ then
 			fi
 		cd libff
 		echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-		get fetch
+		git fetch
 		git checkout 03b719a7c81757071f99fc60be1f7f7694e51390
 		mkdir -p build
 		cd build
