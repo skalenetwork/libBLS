@@ -35,7 +35,7 @@
 #include <set>
 
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-#include <libff/algebra/field_utils/algorithms.hpp>
+#include <libff/algebra/exponentiation/exponentiation.hpp>
 
 
 #define BOOST_TEST_MODULE
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE( ZeroSecret ) {
 
 libff::alt_bn128_Fq SpoilSignCoord( libff::alt_bn128_Fq& sign_coord ) {
     libff::alt_bn128_Fq bad_coord = sign_coord;
-    size_t n_bad_bit = rand_gen() % ( bad_coord.ceil_size_in_bits() ) + 1;
+    size_t n_bad_bit = rand_gen() % ( bad_coord.size_in_bits() ) + 1;
 
     mpz_t was_coord;
     mpz_init( was_coord );

@@ -696,6 +696,8 @@ then
 			fi
 		cd libff
 		echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+		git fetch
+		git checkout 03b719a7c81757071f99fc60be1f7f7694e51390
 		mkdir -p build
 		cd build
 		$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF

@@ -24,7 +24,7 @@
 #pragma once
 
 #include <threshold_encryption.h>
-#include <libff/algebra/fields/prime_base/fp.hpp>
+#include <libff/algebra/fields/fp.hpp>
 
 const mp_size_t bitcount = 512;
 const mp_size_t num_limbs = ( bitcount + GMP_NUMB_BITS - 1 ) / GMP_NUMB_BITS;

@@ -32,7 +32,7 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pairing.hpp>
-#include <libff/algebra/field_utils/algorithms.hpp>
+#include <libff/algebra/exponentiation/exponentiation.hpp>
 #include <libff/common/profiling.hpp>
 
 #include <bls/BLSutils.h>
