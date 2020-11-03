@@ -44,7 +44,8 @@ matrix:
               - sudo apt-get install python3-pip
               - sudo apt-get install python3-setuptools
               - python3.6 -m pip install coincurve
-              - ./deps/build.sh
+              - sh -c "while :; do clear; date; sleep 300; done" &
+              - ./deps/build.sh PARALLEL_COUNT=$CPU_COUNT &> ./log_of_deps_build.txt || (cat ./log_of_deps_build.txt && travis_terminate 1)
               - echo "========================================= before_script (codecov installed)"
           after_success:
               - cd python
