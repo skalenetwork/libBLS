@@ -296,6 +296,7 @@ then
 	export CMAKE_CROSSCOMPILING_OPTS="-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
 	#export MAKE_CROSSCOMPILING_OPTS=""
 	export CONF_CROSSCOMPILING_OPTS_GENERIC=""
+	export CONF_CROSSCOMPILING_OPTS_GMP="--host=haswell-pc-linux-gnu"
 	export CONF_CROSSCOMPILING_OPTS_VORBIS=""
 	export CONF_CROSSCOMPILING_OPTS_CURL=""
 	export CONF_CROSSCOMPILING_OPTS_BOOST=""
@@ -671,7 +672,7 @@ then
 		fi
 		cd gmp-6.1.2
 		echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-		./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --prefix="$INSTALL_ROOT"
+		./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_CROSSCOMPILING_OPTS_GMP} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --prefix="$INSTALL_ROOT"
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 		$MAKE ${PARALLEL_MAKE_OPTIONS}
 		$MAKE ${PARALLEL_MAKE_OPTIONS} install
