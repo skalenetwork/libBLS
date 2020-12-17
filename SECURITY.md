@@ -14,4 +14,4 @@ If you have suggestions on how this process could be improved, please submit a p
 
 ## Bug Reporting Bounty
 
-Please refer to our HackerOne program for any bug bounties related to libBLS: <https://hackerone.com/skale_network>
+Please refer to the SKALE Network's HackerOne program for any bug bounties related to libBLS: <https://hackerone.com/skale_network>
