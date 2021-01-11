@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE( PolynomialValue ) {
 
     try {
         value = obj.PolynomialValue( polynomial, 5 );
-    } catch ( std::runtime_error ) {
+    } catch ( std::logic_error ) {
         is_exception_caught = true;
     }
 
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE( ZeroSecret ) {
         bool is_exception_caught = false;
         try {
             dkg_obj.SecretKeyShareCreate( pol );
-        } catch ( std::runtime_error& ) {
+        } catch ( std::logic_error& ) {
             is_exception_caught = true;
         }
         BOOST_REQUIRE( is_exception_caught );

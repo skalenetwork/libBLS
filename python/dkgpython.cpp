@@ -347,8 +347,8 @@ static PyMethodDef PyDkgObject_methods[] = {
         "verify recieved data"},
     {"GetPublicKeyFromSecretKey", ( PyCFunction ) PyDkgObject_GetPublicKeyFromSecretKey,
         METH_VARARGS, "get public key from secret key"},
-    {"GetPublicKeyFromSecretKey", ( PyCFunction ) PyDkgObject_GetPublicKeyFromSecretKey, METH_VARARGS,
-        "compute verification value"},
+    {"GetPublicKeyFromSecretKey", ( PyCFunction ) PyDkgObject_GetPublicKeyFromSecretKey,
+        METH_VARARGS, "compute verification value"},
     {nullptr}};
 
 static PyTypeObject PyDkgType = {
