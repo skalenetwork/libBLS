@@ -123,13 +123,6 @@ libff::alt_bn128_G2 Dkg::GetPublicKeyFromSecretKey( const libff::alt_bn128_Fr& s
     return public_key;
 }
 
-libff::alt_bn128_G2 Dkg::ComputeVerificationValue( const libff::alt_bn128_Fr& share ) {
-    libff::alt_bn128_G2 verification_value = share * libff::alt_bn128_G2::one();
-    verification_value.to_affine_coordinates();
-
-    return verification_value;
-}
-
 size_t Dkg::GetT() const {
     return this->t_;
 }
