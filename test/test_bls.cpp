@@ -420,7 +420,7 @@ BOOST_AUTO_TEST_CASE( public_keys_equality ) {
         signatures::Dkg dkg_obj = signatures::Dkg( num_signed, num_all );
         const std::vector< libff::alt_bn128_Fr > pol = dkg_obj.GeneratePolynomial();
         std::vector< libff::alt_bn128_Fr > skeys = dkg_obj.SecretKeyContribution( pol );
-        libff::alt_bn128_G2 common_pkey = pol.at( 0 ) * libff::alt_bn128_G2::one();
+        libff::alt_bn128_G2 common_pkey = dkg_obj.GetPublicKeyFromSecretKey( pol.at( 0 ) );
 
         std::shared_ptr< std::vector< size_t > > participants =
             choose_rand_signers( num_signed, num_all );

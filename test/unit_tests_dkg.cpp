@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE( PolynomialValue ) {
 
     try {
         value = obj.PolynomialValue( polynomial, 5 );
-    } catch ( std::runtime_error ) {
+    } catch ( std::logic_error ) {
         is_exception_caught = true;
     }
 
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE( ZeroSecret ) {
         bool is_exception_caught = false;
         try {
             dkg_obj.SecretKeyShareCreate( pol );
-        } catch ( std::runtime_error& ) {
+        } catch ( std::logic_error& ) {
             is_exception_caught = true;
         }
         BOOST_REQUIRE( is_exception_caught );
@@ -189,6 +189,9 @@ BOOST_AUTO_TEST_CASE( Verification2 ) {
         size_t num_all = rand_gen() % 16 + 1;
         size_t num_signed = rand_gen() % num_all + 1;
         signatures::Dkg obj = signatures::Dkg( num_signed, num_all );
+        BOOST_REQUIRE( obj.GetN() == num_all );
+        BOOST_REQUIRE( obj.GetT() == num_signed );
+
         std::vector< libff::alt_bn128_Fr > pol = obj.GeneratePolynomial();
         std::vector< libff::alt_bn128_Fr > secret_shares = obj.SecretKeyContribution( pol );
         std::vector< libff::alt_bn128_G2 > verif_vect = obj.VerificationVector( pol );

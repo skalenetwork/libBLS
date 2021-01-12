@@ -69,7 +69,7 @@ libff::alt_bn128_Fr Dkg::PolynomialValue( const Polynomial& pol, libff::alt_bn12
     libff::alt_bn128_Fr pow = libff::alt_bn128_Fr::one();
     for ( size_t i = 0; i < this->t_; ++i ) {
         if ( i == this->t_ - 1 && pol[i] == libff::alt_bn128_Fr::zero() ) {
-            throw std::runtime_error( "Error, incorrect degree of a polynomial" );
+            throw std::logic_error( "Error, incorrect degree of a polynomial" );
         }
         value += pol[i] * pow;
         pow *= point;
@@ -99,7 +99,7 @@ libff::alt_bn128_Fr Dkg::SecretKeyShareCreate(
     }
 
     if ( secret_key_share == libff::alt_bn128_Fr::zero() ) {
-        throw std::runtime_error( "Error, at least one secret key share is equal to zero" );
+        throw std::logic_error( "Error, at least one secret key share is equal to zero" );
     }
 
     return secret_key_share;
@@ -121,13 +121,6 @@ libff::alt_bn128_G2 Dkg::GetPublicKeyFromSecretKey( const libff::alt_bn128_Fr& s
     public_key.to_affine_coordinates();
 
     return public_key;
-}
-
-libff::alt_bn128_G2 Dkg::ComputeVerificationValue( const libff::alt_bn128_Fr& share ) {
-    libff::alt_bn128_G2 verification_value = share * libff::alt_bn128_G2::one();
-    verification_value.to_affine_coordinates();
-
-    return verification_value;
 }
 
 size_t Dkg::GetT() const {

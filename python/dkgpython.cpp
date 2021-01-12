@@ -332,42 +332,6 @@ static PyObject* PyDkgObject_GetPublicKeyFromSecretKey(
     return pyPublicKey;
 }
 
-static PyObject* PyDkgObject_ComputeVerificationValue(
-    struct PyDkgObject* self, PyObject* args, PyObject* kwds ) {
-    char* pyShare = nullptr;
-
-    if ( !PyArg_ParseTuple( args, ( char* ) "s", &pyShare ) ) {
-        return -1;
-    }
-
-    libff::alt_bn128_Fr share = libff::alt_bn128_Fr( pyShare );
-
-    libff::alt_bn128_G2 verification_value = self->pDKG->ComputeVerificationValue( share );
-
-    PyObject* pFirstCoord = PyTuple_New( 2 );
-    PyObject* pSecondCoord = PyTuple_New( 2 );
-
-    PyTuple_SET_ITEM( pFirstCoord, 0,
-        MakePythonString(
-            BLSutils::ConvertToString< libff::alt_bn128_Fq >( verification_value.X.c0 ).c_str() ) );
-    PyTuple_SET_ITEM( pFirstCoord, 1,
-        MakePythonString(
-            BLSutils::ConvertToString< libff::alt_bn128_Fq >( verification_value.X.c1 ).c_str() ) );
-    PyTuple_SET_ITEM( pSecondCoord, 0,
-        MakePythonString(
-            BLSutils::ConvertToString< libff::alt_bn128_Fq >( verification_value.Y.c0 ).c_str() ) );
-    PyTuple_SET_ITEM( pSecondCoord, 1,
-        MakePythonString(
-            BLSutils::ConvertToString< libff::alt_bn128_Fq >( verification_value.Y.c1 ).c_str() ) );
-
-    PyObject* pyVerificationValue = PyList_New( 2 );
-    PyList_SetItem( pyVerificationValue, 0, pFirstCoord );
-    PyList_SetItem( pyVerificationValue, 1, pSecondCoord );
-
-    return pyVerificationValue;
-}
-
-
 static PyMethodDef PyDkgObject_methods[] = {
     {"GeneratePolynomial", ( PyCFunction ) PyDkgObject_GeneratePolynomial, METH_NOARGS,
         "generate random polynomial"},
@@ -383,8 +347,8 @@ static PyMethodDef PyDkgObject_methods[] = {
         "verify recieved data"},
     {"GetPublicKeyFromSecretKey", ( PyCFunction ) PyDkgObject_GetPublicKeyFromSecretKey,
         METH_VARARGS, "get public key from secret key"},
-    {"ComputeVerificationValue", ( PyCFunction ) PyDkgObject_ComputeVerificationValue, METH_VARARGS,
-        "compute verification value"},
+    {"GetPublicKeyFromSecretKey", ( PyCFunction ) PyDkgObject_GetPublicKeyFromSecretKey,
+        METH_VARARGS, "compute verification value"},
     {nullptr}};
 
 static PyTypeObject PyDkgType = {
