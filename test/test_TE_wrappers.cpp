@@ -341,6 +341,13 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
 
         for ( size_t i = 0; i < num_all; i++ ) {
             DKGTEWrapper dkg_wrap( num_signed, num_all );
+
+            encryption::DkgTe dkg_te( num_signed, num_all );
+            std::vector< encryption::element_wrapper > poly = dkg_te.GeneratePolynomial();
+            auto shared_poly =
+                std::make_shared< std::vector< encryption::element_wrapper > >( poly );
+            dkg_wrap.setDKGSecret( shared_poly );
+
             dkgs.push_back( dkg_wrap );
             std::shared_ptr< std::vector< encryption::element_wrapper > > secret_shares_ptr =
                 dkg_wrap.createDKGSecretShares();
