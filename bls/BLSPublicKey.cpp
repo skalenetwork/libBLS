@@ -167,8 +167,13 @@ BLSPublicKey::BLSPublicKey(
     libff::alt_bn128_G2 key = libff::alt_bn128_G2::zero();
     size_t i = 0;
     for ( auto&& item : *koefs_pkeys_map ) {
-        key = key + lagrangeCoeffs.at( i ) * ( *item.second->getPublicKey() );
-        i++;
+        if(i < _requiredSigners) {
+            key = key + lagrangeCoeffs.at(i) * (*item.second->getPublicKey());
+            i++;
+        }
+        else {
+            break;
+        }
     }
 
     libffPublicKey = std::make_shared< libff::alt_bn128_G2 >( key );
