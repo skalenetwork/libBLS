@@ -170,8 +170,7 @@ BLSPublicKey::BLSPublicKey(
         if ( i < _requiredSigners ) {
             key = key + lagrangeCoeffs.at( i ) * ( *item.second->getPublicKey() );
             i++;
-        }
-        else {
+        } else {
             break;
         }
     }
