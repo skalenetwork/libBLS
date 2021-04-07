@@ -167,8 +167,8 @@ BLSPublicKey::BLSPublicKey(
     libff::alt_bn128_G2 key = libff::alt_bn128_G2::zero();
     size_t i = 0;
     for ( auto&& item : *koefs_pkeys_map ) {
-        if(i < _requiredSigners) {
-            key = key + lagrangeCoeffs.at(i) * (*item.second->getPublicKey());
+        if ( i < _requiredSigners ) {
+            key = key + lagrangeCoeffs.at( i ) * ( *item.second->getPublicKey() );
             i++;
         }
         else {
