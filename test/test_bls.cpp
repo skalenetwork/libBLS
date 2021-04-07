@@ -219,20 +219,41 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
                     hash_ptr, std::make_shared< BLSSignature >( bad_sign ), num_signed, num_all ),
                 signatures::Bls::IsNotWellFormed );
 
-            std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > pkeys_map;
+            std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > pkeys_map1;
             for ( size_t i = 0; i < num_signed; ++i ) {
                 BLSPublicKeyShare cur_pkey(
                     *Skeys->at( participants.at( i ) - 1 )->getPrivateKey(), num_signed, num_all );
-                pkeys_map[participants.at( i )] = std::make_shared< BLSPublicKeyShare >( cur_pkey );
+                pkeys_map1[participants.at( i )] =
+                    std::make_shared< BLSPublicKeyShare >( cur_pkey );
             }
 
             BLSPublicKey common_pkey1(
                 std::make_shared< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > >(
-                    pkeys_map ),
+                    pkeys_map1 ),
                 num_signed, num_all );
 
             BOOST_REQUIRE(
                 common_pkey1.VerifySig( hash_ptr, common_sig_ptr, num_signed, num_all ) );
+
+            std::vector< size_t > participants1( num_all );  // use the whole set of participants
+            for ( size_t i = 0; i < num_all; ++i )
+                participants1.at( i ) = i + 1;
+
+            std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > pkeys_map2;
+            for ( size_t i = 0; i < num_all; ++i ) {
+                BLSPublicKeyShare cur_pkey(
+                    *Skeys->at( participants1.at( i ) - 1 )->getPrivateKey(), num_signed, num_all );
+                pkeys_map2[participants1.at( i )] =
+                    std::make_shared< BLSPublicKeyShare >( cur_pkey );
+            }
+
+            BLSPublicKey common_pkey2(
+                std::make_shared< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > >(
+                    pkeys_map2 ),
+                num_signed, num_all );
+
+            BOOST_REQUIRE(
+                common_pkey2.VerifySig( hash_ptr, common_sig_ptr, num_signed, num_all ) );
         }
     }
     std::cerr << "BLS API TEST END" << std::endl;
