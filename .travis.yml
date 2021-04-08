@@ -28,23 +28,12 @@ matrix:
                       - bison
                       - libc6-dbg:i386
                       - libc6-dbg
-                      - python3.6
-                      - python3.6-dev
                   sources: &sources
                       - deadsnakes
                       - ubuntu-toolchain-r-test
           before_script:
               - echo "========================================= before_script (coverage)"
               - sudo apt-get update -qq
-              - sudo apt-get install python3.6
-              - sudo apt install python3-pip
-              - pip3 install --upgrade pip
-              - sudo python3.6 -m pip install --upgrade pip
-              - sudo python3.6 -m pip install pyopenssl ndg-httpsclient pyasn1
-              - sudo python3.6 -m pip install requests[security]
-              - sudo python3.6 -m pip install codecov==2.1.11 --ignore-installed
-              - sudo apt-get install python3-setuptools
-              - python3.6 -m pip install coincurve
               - sh -c "while :; do clear; date; sleep 300; done" &
               - ./deps/build.sh PARALLEL_COUNT=$CPU_COUNT &> ./log_of_deps_build.txt || (cat ./log_of_deps_build.txt && travis_terminate 1)
               - echo "========================================= before_script (codecov installed)"
@@ -62,10 +51,6 @@ matrix:
               - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_unit_test || travis_terminate 1; else ./threshold_encryption/te_unit_test || travis_terminate 1; fi
               - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_test || travis_terminate 1; else ./threshold_encryption/te_test || travis_terminate 1; fi
               - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./threshold_encryption/dkg_te_unit_test || travis_terminate 1; else ./threshold_encryption/dkg_te_unit_test || travis_terminate 1; fi
-              - cd ..
-              - cd python
-              - ./setup.sh
-              - ./test.sh
               - cd ..
               - ./get_code_cov
               - echo "========================================= after_success (coverage gathered to gcov files)"
