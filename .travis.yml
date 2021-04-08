@@ -42,7 +42,7 @@ matrix:
               - sudo python3.6 -m pip install --upgrade pip
               - sudo python3.6 -m pip install pyopenssl ndg-httpsclient pyasn1
               - sudo python3.6 -m pip install requests[security]
-              - sudo python3.6 -m pip install codecov --ignore-installed
+              - sudo python3.6 -m pip install codecov==2.1.11 --ignore-installed
               - sudo apt-get install python3-setuptools
               - python3.6 -m pip install coincurve
               - sh -c "while :; do clear; date; sleep 300; done" &
