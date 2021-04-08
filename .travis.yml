@@ -37,11 +37,11 @@ matrix:
               - echo "========================================= before_script (coverage)"
               - sudo apt-get update -qq
               - sudo apt install python3-pip
-              - sudo python3 -m pip3 install --upgrade pip
-              - sudo python3 -m pip3 install pyopenssl ndg-httpsclient pyasn1
-              - sudo python3 -m pip3 install requests[security]
-              - sudo python3 -m pip3 install codecov --ignore-installed
               - pip3 install --upgrade pip
+              - sudo python3 -m pip install --upgrade pip
+              - sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
+              - sudo python3 -m pip install requests[security]
+              - sudo python3 -m pip install codecov --ignore-installed
               - sudo apt-get install python3.6
               - sudo apt-get install python3-pip
               - sudo apt-get install python3-setuptools
