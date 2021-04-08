@@ -40,6 +40,7 @@ matrix:
               - sudo python -m pip install pyopenssl ndg-httpsclient pyasn1
               - sudo python -m pip install requests[security]
               - sudo python -m pip install codecov --ignore-installed
+              - pip install --upgrade pip
               - sudo apt-get install python3.6
               - sudo apt-get install python3-pip
               - sudo apt-get install python3-setuptools
