@@ -37,7 +37,7 @@ matrix:
               - echo "========================================= before_script (coverage)"
               - sudo apt-get update -qq
               - sudo apt-get install python3.6
-              - sudo apt install python3.6-pip
+              - sudo apt install python3-pip
               - pip3 install --upgrade pip
               - sudo python3.6 -m pip install --upgrade pip
               - sudo python3.6 -m pip install pyopenssl ndg-httpsclient pyasn1
