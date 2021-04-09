@@ -9,6 +9,10 @@ os.environ["CC" ] = "gcc-7" + strCompilerCommonFlagsSuffix
 os.environ["CXX"] = "g++-7" + strCompilerCommonFlagsSuffix
 os.environ["LD" ] = "ld" + strCompilerCommonFlagsSuffix
 
+extras_require= {
+    "codecov==2.1.11"
+}
+
 dkgpython_module = Extension('dkgpython',
                              sources = ['dkgpython.cpp'],
                              include_dirs = ['..', '../bls', '../dkg', '../third_party', '../deps/',
@@ -24,5 +28,6 @@ dkgpython_module = Extension('dkgpython',
 setup(name = 'dkgpython',
       version = '0.1.0',
       description = 'dkgpython module written in C++',
-      ext_modules = [dkgpython_module]
+      ext_modules = [dkgpython_module],
+      extras_require = extras_require
       )

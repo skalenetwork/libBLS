@@ -29,30 +29,23 @@ matrix:
                       - libc6-dbg:i386
                       - libc6-dbg
                       - python3.6
-                      - python3.6-dev
                   sources: &sources
                       - deadsnakes
                       - ubuntu-toolchain-r-test
           before_script:
               - echo "========================================= before_script (coverage)"
               - sudo apt-get update -qq
-              - sudo python -m pip install --upgrade pip
-              - sudo python -m pip install pyopenssl ndg-httpsclient pyasn1
-              - sudo python -m pip install requests[security]
-              - sudo python -m pip install codecov --ignore-installed
               - sudo apt-get install python3.6
-              - sudo apt-get install python3-pip
-              - sudo apt-get install python3-setuptools
-              - python3.6 -m pip install coincurve
+              - sudo apt install python3-pip
+              - pip3 install --upgrade pip
+              - sudo python3.6 -m pip install --upgrade pip
+              - sudo python3.6 -m pip install pyopenssl ndg-httpsclient pyasn1
+              - sudo python3.6 -m pip install requests[security]
+              - sudo python3.6 -m pip install codecov --ignore-installed
               - sh -c "while :; do clear; date; sleep 300; done" &
               - ./deps/build.sh PARALLEL_COUNT=$CPU_COUNT &> ./log_of_deps_build.txt || (cat ./log_of_deps_build.txt && travis_terminate 1)
               - echo "========================================= before_script (codecov installed)"
           after_success:
-              - cd python
-              - echo "========================================= after_success (dkg-python test)"
-              - ./setup.sh || travis terminate 1
-              - ./test.sh || travis terminate 1
-              - cd ..
               - cd build
               - echo "========================================= after_success (coverage)"
               - if [ $TRAVIS_EVENT_TYPE = "cron" ]; then $NIGHTLY_BUILD_FLAGS ./bls_unit_test || travis_terminate 1; else ./bls_unit_test || travis_terminate 1; fi
