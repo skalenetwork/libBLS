@@ -576,7 +576,8 @@ then
 			if [ ! -f "boost_1_68_0.tar.gz" ];
 			then
 				echo -e "${COLOR_INFO}downloading it${COLOR_DOTS}...${COLOR_RESET}"
-				$WGET https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz
+				#$WGET https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz
+				$WGET https://cfhcable.dl.sourceforge.net/project/boost/boost/1.68.0/boost_1_68_0.tar.gz
 			fi
 			echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
 			tar -xzf boost_1_68_0.tar.gz
