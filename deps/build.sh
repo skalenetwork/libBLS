@@ -580,7 +580,7 @@ then
                                 $WGET  https://boostorg.jfrog.io/artifactory/main/release/1.68.0/source/boost_1_68_0.tar.bz2
 			fi
 			echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
-			tar -xzf boost_1_68_0.tar.gz
+                        tar -xf boost_1_68_0.tar.bz2
 		fi
 		cd boost_1_68_0
 		echo -e "${COLOR_INFO}configuring and building it${COLOR_DOTS}...${COLOR_RESET}"
