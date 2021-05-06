@@ -43,7 +43,7 @@ matrix:
               - sudo python3.6 -m pip install requests[security]
               - sudo python3.6 -m pip install codecov --ignore-installed
               - sh -c "while :; do clear; date; sleep 300; done" &
-              - ./deps/build.sh PARALLEL_COUNT=$CPU_COUNT &> ./log_of_deps_build.txt || (cat ./log_of_deps_build.txt && travis_terminate 1)
+              - ./deps/build.sh PARALLEL_COUNT=$CPU_COUNT > ./log_of_deps_build.txt || (cat ./log_of_deps_build.txt && travis_terminate 1)
               - echo "========================================= before_script (codecov installed)"
           after_success:
               - cd build
