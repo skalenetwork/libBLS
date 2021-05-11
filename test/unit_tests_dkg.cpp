@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE( ZeroSecret ) {
     }
 }
 
-libff::alt_bn128_Fq SpoilSignCoord( libff::alt_bn128_Fq& sign_coord ) {
+libff::alt_bn128_Fq SpoilCoord( libff::alt_bn128_Fq& sign_coord ) {
     libff::alt_bn128_Fq bad_coord = sign_coord;
     size_t n_bad_bit = rand_gen() % ( bad_coord.size_in_bits() ) + 1;
 
@@ -157,28 +157,22 @@ std::vector< libff::alt_bn128_G2 > SpoilVerifVector(
     std::vector< libff::alt_bn128_G2 > bad_verif_vect = verif_vect;
     switch ( bad_coord_num ) {
     case 0:
-        bad_verif_vect.at( elem_to_spoil ).X.c0 =
-            SpoilSignCoord( verif_vect.at( elem_to_spoil ).X.c0 );
+        bad_verif_vect.at( elem_to_spoil ).X.c0 = SpoilCoord( verif_vect.at( elem_to_spoil ).X.c0 );
         break;
     case 1:
-        bad_verif_vect.at( elem_to_spoil ).X.c1 =
-            SpoilSignCoord( verif_vect.at( elem_to_spoil ).X.c1 );
+        bad_verif_vect.at( elem_to_spoil ).X.c1 = SpoilCoord( verif_vect.at( elem_to_spoil ).X.c1 );
         break;
     case 2:
-        bad_verif_vect.at( elem_to_spoil ).Y.c0 =
-            SpoilSignCoord( verif_vect.at( elem_to_spoil ).Y.c0 );
+        bad_verif_vect.at( elem_to_spoil ).Y.c0 = SpoilCoord( verif_vect.at( elem_to_spoil ).Y.c0 );
         break;
     case 3:
-        bad_verif_vect.at( elem_to_spoil ).Y.c1 =
-            SpoilSignCoord( verif_vect.at( elem_to_spoil ).Y.c1 );
+        bad_verif_vect.at( elem_to_spoil ).Y.c1 = SpoilCoord( verif_vect.at( elem_to_spoil ).Y.c1 );
         break;
     case 4:
-        bad_verif_vect.at( elem_to_spoil ).Z.c0 =
-            SpoilSignCoord( verif_vect.at( elem_to_spoil ).Z.c0 );
+        bad_verif_vect.at( elem_to_spoil ).Z.c0 = SpoilCoord( verif_vect.at( elem_to_spoil ).Z.c0 );
         break;
     case 5:
-        bad_verif_vect.at( elem_to_spoil ).Z.c1 =
-            SpoilSignCoord( verif_vect.at( elem_to_spoil ).Z.c1 );
+        bad_verif_vect.at( elem_to_spoil ).Z.c1 = SpoilCoord( verif_vect.at( elem_to_spoil ).Z.c1 );
         break;
     }
     return bad_verif_vect;

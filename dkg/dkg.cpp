@@ -110,6 +110,9 @@ bool Dkg::Verification( size_t idx, libff::alt_bn128_Fr share,
     // idx-th node verifies that share corresponds to the verification vector
     libff::alt_bn128_G2 value = libff::alt_bn128_G2::zero();
     for ( size_t i = 0; i < this->t_; ++i ) {
+        if ( !this->isG2( verification_vector[i] ) ) {
+            return false;
+        }
         value = value + power( libff::alt_bn128_Fr( idx + 1 ), i ) * verification_vector[i];
     }
 
@@ -129,6 +132,11 @@ size_t Dkg::GetT() const {
 
 size_t Dkg::GetN() const {
     return this->n_;
+}
+
+bool Dkg::isG2( const libff::alt_bn128_G2& point ) {
+    return point.is_well_formed() &&
+           libff::alt_bn128_G2::order() * point == libff::alt_bn128_G2::zero();
 }
 
 }  // namespace signatures
