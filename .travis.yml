@@ -128,6 +128,7 @@ script:
     - if [ "$TRAVIS_OS_NAME" != "osx" ]; then make bls-format-check || travis_terminate 1; fi
     - cmake --build . -- -j$CPU_COUNT
     - cd ..
+    - cp scripts/parameters.json build/
     - echo "========================================= script (2)"
 notifications:
     email:

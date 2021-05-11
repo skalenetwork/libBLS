@@ -136,7 +136,7 @@ size_t Dkg::GetN() const {
 
 bool Dkg::isG2( const libff::alt_bn128_G2& point ) {
     return point.is_well_formed() &&
-           libff::alt_bn128_modulus_r * point == libff::alt_bn128_G2::zero();
+           libff::alt_bn128_G2::order() * point == libff::alt_bn128_G2::zero();
 }
 
 }  // namespace signatures

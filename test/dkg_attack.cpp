@@ -10,13 +10,13 @@
 #include <fstream>
 #include <third_party/json.hpp>
 
-int main( int argc, char const* argv[] ) {
+int main() {
     // Initialize paring parameters
     libff::alt_bn128_pp::init_public_params();
 
     // (num_signed, num_all)=(11,13)
     size_t num_signed = 11;
-    size_t num_all = 13;
+    size_t num_all = 16;
 
     // Initialize dkgs, secret_shares, public_shares, common_public_key_point,
     // private_keys, public_keys
@@ -134,11 +134,19 @@ int main( int argc, char const* argv[] ) {
     }
 
     // Then only honest participants verify the active adversary's secret shares
+    // modified by SKALE
+    size_t verified = 0;
     for ( size_t i = 0; i < num_signed - 1; i++ ) {
-        assert( dkgs.at( num_signed - 1 )
-                    .VerifyDKGShare( i, secret_shares_all.at( num_signed - 1 ).at( i ),
-                        std::make_shared< std::vector< libff::alt_bn128_G2 > >(
-                            public_shares_all.at( num_signed - 1 ) ) ) );
+        verified += dkgs.at( num_signed - 1 )
+                        .VerifyDKGShare( i, secret_shares_all.at( num_signed - 1 ).at( i ),
+                            std::make_shared< std::vector< libff::alt_bn128_G2 > >(
+                                public_shares_all.at( num_signed - 1 ) ) );
+
+        if ( verified == 0 ) {
+            // SKALE fixed
+            std::cout << "ATTACK TEST PASSED\n";
+            return 0;
+        }
     }
 
 
@@ -213,6 +221,8 @@ int main( int argc, char const* argv[] ) {
 
     // Construct the final signature
     std::shared_ptr< BLSSignature > signature = signature_share_set.merge();
+
+    std::cout << "isG2:" << signatures::Dkg::isG2( *( common_public_key.getPublicKey() ) );
 
     // This assertion will fail
     assert( common_public_key.VerifySig( hash_ptr, signature, num_signed, num_all ) );
