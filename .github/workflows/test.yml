@@ -28,7 +28,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install g++-7 clang-format-6.0 gawk sed shtool \
           libffi-dev yasm texinfo flex bison \
-          python3.6 lcov # libc6-dbg:i386 libc6-dbg
+          python3.6 lcov
         sudo apt-get update -qq
         sudo apt install python3-pip
         pip3 install --upgrade pip
@@ -87,7 +87,6 @@ jobs:
         lcov --capture --directory . --output-file coverage.info
         lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
         lcov --remove coverage.info 'deps/*' --output-file coverage.info # filter dependency files
-        lcov --list coverage.info # debug info
 
         # Uploading report to CodeCov
         bash <(curl -s https://codecov.io/bash) -f coverage.info -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports" 
