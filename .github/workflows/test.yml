@@ -42,7 +42,7 @@ jobs:
         export CC=gcc-7
         export CXX=g++-7
         export TARGET=all
-        export CODE_COVERAGE=ON
+        export CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
         cd deps
         ./build.sh
 
@@ -52,7 +52,7 @@ jobs:
         export CXX=g++-7
         export TARGET=all
         export CMAKE_BUILD_TYPE=Debug
-        export CODE_COVERAGE=ON
+        CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
         mkdir -p build && cd build
         cmake ..
     
@@ -67,7 +67,7 @@ jobs:
         export CXX=g++-7
         export TARGET=all
         export CMAKE_BUILD_TYPE=Debug
-        export CODE_COVERAGE=ON
+        CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
         cd build
         make -j$(nproc)
 
