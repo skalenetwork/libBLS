@@ -10,7 +10,7 @@ defaults:
   run:
     shell: bash
 jobs:
-  Nightly test:
+  build:
     runs-on: ubuntu-bionic
     env:
       NIGHTLY_BUILD_FLAGS: "valgrind --leak-check=yes"
