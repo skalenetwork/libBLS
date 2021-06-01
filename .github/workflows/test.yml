@@ -51,10 +51,9 @@ jobs:
         export CC=gcc-7
         export CXX=g++-7
         export TARGET=all
-        export CMAKE_BUILD_TYPE=Debug
         CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
         mkdir -p build && cd build
-        cmake ..
+        cmake $CMAKE_BUILD_FLAGS ..
     
     - name: Run format check
       run: |
@@ -66,7 +65,6 @@ jobs:
         export CC=gcc-7
         export CXX=g++-7
         export TARGET=all
-        export CMAKE_BUILD_TYPE=Debug
         CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
         cd build
         make -j$(nproc)
