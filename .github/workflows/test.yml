@@ -56,7 +56,9 @@ jobs:
         cmake ..
     
     - name: Run format check
-      run: make bls-format-check
+      run: |
+        cd build
+        make bls-format-check
 
     - name: Build all
       run: |
