@@ -1,0 +1,109 @@
+name: Build and publish libBLS
+on:
+  push:
+    branches:
+      - master
+      - develop
+      - beta
+      - stable
+defaults:
+  run:
+    shell: bash
+jobs:
+  Nightly test:
+    runs-on: ubuntu-bionic
+    env:
+      NIGHTLY_BUILD_FLAGS: "valgrind --leak-check=yes"
+
+    steps:
+    - name: Extract repo name
+      run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
+      shell: bash
+      env:
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Update apt
+      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
+    - name: Install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install g++-7 clang-format-6.0 gawk sed shtool \
+          libffi-dev libprocps4-dev yasm texinfo flex bison \
+          libc6-dbg:i386 libc6-dbg python3.6
+
+    - name: Build dependencies
+      run: |
+        export CC=gcc-7
+        export CXX=g++-7
+        export TARGET=all
+        cd deps
+        ./build.sh
+
+    - name: Configure all
+      run: |
+        export CC=gcc-7
+        export CXX=g++-7
+        export TARGET=all
+        mkdir -p build && cd build
+        cmake ..
+    
+    - name: Build all
+      run: |
+        export CC=gcc-7
+        export CXX=g++-7
+        export TARGET=all
+        cd build
+        make -j$(nproc)
+    
+    - name: Calculate version
+      run: |
+        export BRANCH=${GITHUB_REF##*/}
+        echo "Branch $BRANCH"
+        export VERSION=$(cat VERSION)
+        export VERSION=$(bash ./scripts/calculate_version.sh $BRANCH $VERSION)
+        echo "::set-env name=VERSION::$VERSION"
+        echo "Version $VERSION"
+        export RELEASE=true
+        echo "::set-env name=RELEASE::$RELEASE"
+
+    - name: Create Release
+        id: create_release
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ env.VERSION }}
+          release_name: ${{ env.VERSION }}
+          draft: false
+          prerelease: true
+
+    - name: Upload bls_glue to Release
+      uses: actions/upload-release-asset@latest
+      env: 
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build/bls_glue
+        asset_name: bls_glue
+        asset_content_type: application/octet-stream
+
+    - name: Upload hash_g1 to Release
+      uses: actions/upload-release-asset@latest
+      env: 
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build/hash_g1
+        asset_name: hash_g1
+        asset_content_type: application/octet-stream
+
+    - name: Upload verify_bls to Release
+      uses: actions/upload-release-asset@latest
+      env: 
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build/verify_bls
+        asset_name: verify_bls
+        asset_content_type: application/octet-stream

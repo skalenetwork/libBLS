@@ -52,56 +52,33 @@ target_link_libraries(te PRIVATE ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 include_directories(${CMAKE_BINARY_DIR}/deps/include )
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 
-target_include_directories(te PRIVATE ${PBC_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}
-																													${THIRD_PARTY_DIR})
-target_link_libraries(
-    te
-    PRIVATE
-    pbc
-    )
+target_include_directories(te PRIVATE ${PBC_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
+target_link_libraries(te PRIVATE pbc)
 
 if (BUILD_TESTS)
 	add_executable(dkg_te_unit_test ../test/unit_tests_dkg_te.cpp)
 	target_include_directories(dkg_te_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${TEST_DIR})
-        target_link_libraries(dkg_te_unit_test
-            PRIVATE
-            te
-            pbc
-            ${GMP_LIBRARY}
-            ${GMPXX_LIBRARY}
-            )
+    target_link_libraries(dkg_te_unit_test PRIVATE te pbc ${GMP_LIBRARY} ${GMPXX_LIBRARY})
 
 	add_test(NAME dkg_te_tests COMMAND dkg_te_unit_test)
 
 	add_executable(te_unit_test ../test/unit_tests_te.cpp)
 	target_include_directories(te_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
-        target_link_libraries(te_unit_test
-            PRIVATE
-            te
-            pbc
-            ${GMP_LIBRARY}
-            ${GMPXX_LIBRARY}
-            )
+    target_link_libraries(te_unit_test PRIVATE te pbc ${GMP_LIBRARY} ${GMPXX_LIBRARY})
 
 	add_test(NAME te_tests COMMAND te_unit_test)
 
-        add_executable(te_test ../test/test_TE_wrappers.cpp)
-        target_include_directories(te_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
-        target_link_libraries(te_test
-            PRIVATE
-            te
-            pbc
-            ${GMP_LIBRARY}
-            ${GMPXX_LIBRARY}
-            )
+    add_executable(te_test ../test/test_TE_wrappers.cpp)
+    target_include_directories(te_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
+    target_link_libraries(te_test PRIVATE te pbc ${GMP_LIBRARY} ${GMPXX_LIBRARY})
 
-        add_test(NAME te_wrap_tests COMMAND te_unit_test)
+    add_test(NAME te_wrap_tests COMMAND te_unit_test)
 
-        add_custom_target(all_te_tests
-            COMMAND ./te_unit_test
-            COMMAND ./te_test
-            DEPENDS te_unit_test
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-            COMMENT "Run all TE tests"
-            )
+    add_custom_target(all_te_tests
+        COMMAND ./te_unit_test
+        COMMAND ./te_test
+        DEPENDS te_unit_test
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Run all TE tests"
+        )
 endif()
