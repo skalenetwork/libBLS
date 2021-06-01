@@ -42,6 +42,7 @@ jobs:
         export CC=gcc-7
         export CXX=g++-7
         export TARGET=all
+        export CODE_COVERAGE=ON
         cd deps
         ./build.sh
 
@@ -88,6 +89,7 @@ jobs:
         lcov --capture --directory . --output-file coverage.info
         lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
         lcov --remove coverage.info 'deps/*' --output-file coverage.info # filter dependency files
+        lcov --list coverage.info # debug info
 
         # Uploading report to CodeCov
         bash <(curl -s https://codecov.io/bash) -f coverage.info -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports" 
