@@ -71,7 +71,7 @@ jobs:
         ./test.sh
         cd ..
 
-    -name: Run tools
+    - name: Run tools
       run: |
         ./scripts/run_tools_test.sh
         
