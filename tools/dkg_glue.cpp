@@ -131,7 +131,6 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
 
         std::string str_file_name = "BLS_keys" + std::to_string( i ) + ".json";
         std::ofstream out( str_file_name.c_str() );
-        out << BLS_key_file.dump( 4 ) << "\n";
 
         libff::alt_bn128_G2 publ_key = dkg_instance.GetPublicKeyFromSecretKey( secret_key[i] );
         publ_key.to_affine_coordinates();
@@ -147,6 +146,7 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
         if ( g_b_verbose_mode ) {
             std::cout << str_file_name << " file:\n" << BLS_key_file.dump( 4 ) << "\n\n";
         }
+        out << BLS_key_file.dump( 4 ) << '\n';
     }
 
     common_public_key.to_affine_coordinates();
