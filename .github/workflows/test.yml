@@ -10,7 +10,7 @@ defaults:
   run:
     shell: bash
 jobs:
-  build:
+  build_linux:
     runs-on: ubuntu-18.04
 
     steps:
@@ -89,4 +89,59 @@ jobs:
         lcov --remove coverage.info 'deps/*' --output-file coverage.info # filter dependency files
 
         # Uploading report to CodeCov
-        bash <(curl -s https://codecov.io/bash) -f coverage.info -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports" 
+        bash <(curl -s https://codecov.io/bash) -f coverage.info -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports"
+  
+  build_osx:
+    runs-on: macos-10.15
+
+    steps:
+    - name: Extract repo name
+      run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
+      shell: bash
+      env:
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Update apt
+      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
+    - name: Install packages
+      run: |
+        brew install yasm texinfo shtool libtool
+
+    - name: Build dependencies
+      run: |
+        export CC=gcc-7
+        export CXX=g++-7
+        export TARGET=all
+        CMAKE_BUILD_FLAGS="-DWITH_PROCPS=OFF""
+        cd deps
+        ./build.sh
+
+    - name: Configure all
+      run: |
+        export CC=gcc-7
+        export CXX=g++-7
+        export TARGET=all
+        CMAKE_BUILD_FLAGS="-DWITH_PROCPS=OFF""
+        mkdir -p build && cd build
+        cmake $CMAKE_BUILD_FLAGS ..
+
+    - name: Build all
+      run: |
+        export CC=gcc-7
+        export CXX=g++-7
+        export TARGET=all
+        cd build
+        make -j$(nproc)
+
+    - name: Run tests
+      run: |
+        cp scripts/parameters.json build/
+        cd build
+        ./bls_unit_test
+        ./dkg_unit_test
+        ./bls_test
+        ./threshold_encryption/dkg_te_unit_test
+        ./threshold_encryption/te_unit_test
+        ./threshold_encryption/te_test
+        ./dkg_attack
