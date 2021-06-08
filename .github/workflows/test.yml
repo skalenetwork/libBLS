@@ -102,8 +102,6 @@ jobs:
         ACTIONS_ALLOW_UNSECURE_COMMANDS: true
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Update apt
-      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
     - name: Install packages
       run: |
         brew install yasm texinfo shtool libtool
