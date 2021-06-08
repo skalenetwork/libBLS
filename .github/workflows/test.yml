@@ -108,27 +108,16 @@ jobs:
 
     - name: Build dependencies
       run: |
-        export CC=gcc-7
-        export CXX=g++-7
-        export TARGET=all
-        CMAKE_BUILD_FLAGS="-DWITH_PROCPS=OFF""
         cd deps
         ./build.sh
 
     - name: Configure all
       run: |
-        export CC=gcc-7
-        export CXX=g++-7
-        export TARGET=all
-        CMAKE_BUILD_FLAGS="-DWITH_PROCPS=OFF""
         mkdir -p build && cd build
         cmake $CMAKE_BUILD_FLAGS ..
 
     - name: Build all
       run: |
-        export CC=gcc-7
-        export CXX=g++-7
-        export TARGET=all
         cd build
         make -j$(nproc)
 
