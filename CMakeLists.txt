@@ -185,11 +185,11 @@ if(BUILD_TESTS)
   
 	add_test(NAME bls_test COMMAND bls_test)
 
-        add_executable(dkg_attack test/dkg_attack.cpp)
-        target_include_directories(dkg_attack PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-        target_link_libraries(dkg_attack PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} ${BOOST_LIBS_4_BLS})
+	add_executable(dkg_attack test/dkg_attack.cpp)
+	target_include_directories(dkg_attack PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+	target_link_libraries(dkg_attack PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} ${BOOST_LIBS_4_BLS})
 
-        add_test(NAME dkg_attack COMMAND dkg_attack)
+	add_test(NAME dkg_attack COMMAND dkg_attack)
 
 	add_custom_target(all_bls_tests
 			COMMAND ./bls_unit_test

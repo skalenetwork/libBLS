@@ -1,0 +1,77 @@
+name: libBLS Nightly Tests
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  Nightly test:
+    runs-on: ubuntu-18.04
+    env:
+      NIGHTLY_BUILD_FLAGS: "valgrind --leak-check=yes"
+
+    steps:
+    - name: Extract repo name
+      run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
+      shell: bash
+      env:
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Update apt
+      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
+    - name: Install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install g++-7 clang-format-6.0 gawk sed shtool \
+          libffi-dev yasm texinfo flex bison \
+          libc6-dbg:i386 libc6-dbg python3.6
+        sudo snap install valgrind --classic
+
+    - name: Build dependencies
+      run: |
+        export CC=gcc-7
+        export CXX=g++-7
+        export TARGET=all
+        cd deps
+        ./build.sh
+
+    - name: Configure all
+      run: |
+        export CC=gcc-7
+        export CXX=g++-7
+        export TARGET=all
+        mkdir -p build && cd build
+        cmake ..
+    
+    - name: Build all
+      run: |
+        export CC=gcc-7
+        export CXX=g++-7
+        export TARGET=all
+        cd build
+        make -j$(nproc)
+
+    - name: Run tests
+      run: |
+        cp scripts/parameters.json build/
+        cd build
+        $NIGHTLY_BUILD_FLAGS ./bls_unit_test
+        $NIGHTLY_BUILD_FLAGS ./dkg_unit_test
+        $NIGHTLY_BUILD_FLAGS ./bls_test
+        $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_unit_test
+        $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_test
+        $NIGHTLY_BUILD_FLAGS ./threshold_encryption/dkg_te_unit_test
+        $NIGHTLY_BUILD_FLAGS ./dkg_attack
+
+    - name: Run python test
+      run: |
+        cd python
+        ./setup.sh
+        ./test.sh
+        cd ..
+
+    - name: Run tools tests
+      run: |
+        ./scripts/run_tools_test.sh
+        

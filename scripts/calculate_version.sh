@@ -1,33 +1,42 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-VERSION=$(cat VERSION)
-USAGE_MSG='Usage: BRANCH=[BRANCH] calculate_version.sh'
+BRANCH=$1
+VERSION=$2
 
 if [ -z "$BRANCH" ]
 then
-    (>&2 echo 'You should provide branch')
-    echo "$USAGE_MSG"
-    exit 1
+      echo "A branch is not set."
+      exit 1
 fi
 
-
-if [ -z "$VERSION" ]; then
+if [ -z "$VERSION" ]
+then
       echo "The base version is not set."
       exit 1
 fi
 
-if [[ "$BRANCH" == 'master' ]]; then
+git fetch --tags
+
+if [ "$BRANCH" = "master" ]
+then
     echo "$VERSION"
-    exit 1
+    exit 0
 fi
 
-git fetch --tags > /dev/null
+LABEL="develop"
+if [ "$BRANCH" = "stable" ]
+then
+    LABEL="stable"
+elif [ "$BRANCH" = "beta" ]
+then
+    LABEL="beta"
+fi
 
-for (( NUMBER=0; ; NUMBER++ ))
+for (( VERSION_NUMBER=0; ; VERSION_NUMBER++ ))
 do
-    FULL_VERSION="$VERSION-$BRANCH.$NUMBER"
-    if ! [[ $(git tag -l | grep "$FULL_VERSION") ]]; then
-        echo "$FULL_VERSION" | tr / -
+    RESULT_VERSION="$VERSION-$LABEL.$VERSION_NUMBER"
+    if ! [[ $(git tag -l | grep "$RESULT_VERSION") ]]; then
+        echo "$RESULT_VERSION" | tr / -
         break
     fi
 done
