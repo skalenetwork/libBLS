@@ -3,7 +3,7 @@
 set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-PROJECT_DIR="$(dirname $DIR)"
+PROJECT_DIR="$(dirname "$DIR")"
 WORK_DIR="$PROJECT_DIR"/build
 echo "$WORK_DIR"
 cd "$WORK_DIR"
