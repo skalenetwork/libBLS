@@ -5,7 +5,7 @@ on:
     - cron: '0 0 * * *'
 
 jobs:
-  Nightly test:
+  main_job:
     runs-on: ubuntu-18.04
     env:
       NIGHTLY_BUILD_FLAGS: "valgrind --leak-check=yes"
