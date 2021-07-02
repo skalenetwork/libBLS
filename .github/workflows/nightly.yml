@@ -24,8 +24,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install g++-7 clang-format-6.0 gawk sed shtool \
-          libffi-dev yasm texinfo flex bison \
-          libc6-dbg:i386 libc6-dbg python3.6
+          libffi-dev yasm texinfo flex bison python3.6
         sudo snap install valgrind --classic
 
     - name: Build dependencies
