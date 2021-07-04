@@ -18,14 +18,20 @@ jobs:
         ACTIONS_ALLOW_UNSECURE_COMMANDS: true
     - name: Checkout
       uses: actions/checkout@v2
+    - name: Set up Python 3.6
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.6
     - name: Update apt
       run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
     - name: Install packages
       run: |
         sudo apt-get update
         sudo apt-get install g++-7 clang-format-6.0 gawk sed shtool \
-          libffi-dev yasm texinfo flex bison python3.6 libc6-dbg
+          libffi-dev yasm texinfo flex bison libc6-dbg
         sudo snap install valgrind --classic
+        python -m pip install --upgrade pip
+        pip install coincurve
 
     - name: Build dependencies
       run: |
