@@ -1,6 +1,6 @@
 # libBLS: a C++ library for BLS Threshold Signatures
 
-[![Build Status](https://travis-ci.com/skalenetwork/libBLS.svg?token=GpDGXHqy9kTj5H5cyHGS&branch=develop)](https://travis-ci.com/skalenetwork/libBLS)
+[![Build and test libBLS](https://github.com/skalenetwork/libBLS/actions/workflows/test.yml/badge.svg)](https://github.com/skalenetwork/libBLS/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/skalenetwork/libBLS/branch/develop/graph/badge.svg)](https://codecov.io/gh/skalenetwork/libBLS)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3745/badge)](https://bestpractices.coreinfrastructure.org/projects/3745)
 [![Discord](https://img.shields.io/discord/534485763354787851.svg)](https://discord.gg/vvUtWJB)
@@ -47,7 +47,7 @@ libBLS has been built and tested on Ubuntu and Mac.
 
 GitHub is used to maintain this source code. Clone this repository by:
 
-```bash
+```shell
 git clone https://github.com/skalenetwork/libBLS.git
 cd libBLS
 ```
@@ -58,7 +58,7 @@ Ensure that required packages listed below are installed.
 
 Build libBLS's dependencies by:
 
-```bash
+```shell
 cd deps
 bash ./build.sh
 cd ..
@@ -66,7 +66,7 @@ cd ..
 
 ## Building from source on Mac
 
-```bash
+```shell
 brew install flex bison libtool automake cmake pkg-config yasm
 # Configure the project and create a build directory.
 cmake -H. -Bbuild
@@ -79,7 +79,7 @@ cmake --build build -- -j$(sysctl -n hw.ncpu)
 
 Ensure that the required packages are installed by executing:
 
-```bash
+```shell
 sudo apt-get update
 sudo apt-get install -y automake cmake build-essential libprocps-dev libtool\
                         pkg-config yasm texinfo autoconf flex bison clang-format-6.0
@@ -87,7 +87,7 @@ sudo apt-get install -y automake cmake build-essential libprocps-dev libtool\
 
 Configure the project build with the following commands.
 
-```bash
+```shell
 # Configure the project and create a build directory.
 cmake -H. -Bbuild
 
