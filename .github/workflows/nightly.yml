@@ -71,12 +71,12 @@ jobs:
         $NIGHTLY_BUILD_FLAGS ./threshold_encryption/dkg_te_unit_test
         $NIGHTLY_BUILD_FLAGS ./dkg_attack
 
-    - name: Run python test
-      run: |
-        cd python
-        ./setup.sh
-        ./test.sh
-        cd ..
+    # - name: Run python test
+    #   run: |
+    #     cd python
+    #     ./setup.sh
+    #     ./test.sh
+    #     cd ..
 
     - name: Run tools tests
       run: |
