@@ -207,6 +207,8 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
             BLSPrivateKey common_skey( Skeys,
                 std::make_shared< std::vector< size_t > >( participants ), num_signed, num_all );
             BLSPublicKey common_pkey( *( common_skey.getPrivateKey() ), num_signed, num_all );
+            BOOST_REQUIRE( common_pkey.getTotalSigners() == num_all );
+            BOOST_REQUIRE( common_pkey.getRequiredSigners() == num_signed );
             BOOST_REQUIRE( common_pkey.VerifySig( hash_ptr, common_sig_ptr, num_signed, num_all ) );
             std::shared_ptr< libff::alt_bn128_G1 > bad_sig =
                 std::make_shared< libff::alt_bn128_G1 >(
@@ -657,6 +659,12 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
         const std::shared_ptr< std::vector< std::string > > null_vect = nullptr;
         BOOST_REQUIRE_THROW(
             BLSPublicKey pkey( null_vect, num_signed, num_all ), signatures::Bls::IncorrectInput );
+    }
+
+    {
+        const std::shared_ptr< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > > null_map = nullptr;
+        BOOST_REQUIRE_THROW(
+            BLSPublicKey pkey( null_map, num_signed, num_all ), signatures::Bls::IncorrectInput );
     }
 
     {
