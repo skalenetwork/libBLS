@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file dkg_glue.cpp
   @author Oleh Nikolaiev
@@ -51,7 +51,6 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
         infile >> data;
 
         size_t idx = stoi( data["idx"].get< std::string >() );
-
 
         secret_key_contribution[idx].resize( n );
         for ( size_t i = 0; i < n; ++i ) {

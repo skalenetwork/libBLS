@@ -23,14 +23,16 @@ calculate_hash() {
 }
 
 run_tools_test_with_individual_keys() {
-    individual_dkg_keys=""
+    individual_dkg_keys="./dkg_glue --t 11 --n 16"
     for i in {0..15}
     do
-        individual_dkg_keys="$individual_dkg_keys --input data_for_$i-th_participant.json"
+        individual_dkg_keys=""$individual_dkg_keys" --input data_for_"$i"-th_participant.json"
         ./dkg_keygen --t 11 --n 16 --j "$i"
     done
     echo "Generated individual dkg keys"
-    ./dkg_glue --t 11 --n 16 "$individual_dkg_keys"
+    echo "$individual_dkg_keys"
+    echo "./dkg_glue --t 11 --n 16 "$individual_dkg_keys""
+    $individual_dkg_keys
     echo "Generated individual bls keys"
     
     calculate_hash
@@ -47,13 +49,13 @@ run_tools_test_with_individual_keys() {
     done
     echo "Completed individual signatures and verified them"
     
-    individual_signatures=""
+    individual_signatures="./bls_glue --t 11 --n 16 "
     for i in {0..10}
     do
         SIGNATURE="signature"$i".json"
         individual_signatures="$individual_signatures --input $SIGNATURE"
     done
-    ./bls_glue --t 11 --n 16 "$individual_signatures" --output "$SIGNATURE_FILE"
+    $individual_signatures --output "$SIGNATURE_FILE"
     echo "Generated common bls signature"
     
     ./verify_bls --t 11 --n 16 --input "$SIGNATURE_FILE"
