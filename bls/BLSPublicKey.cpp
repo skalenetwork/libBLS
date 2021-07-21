@@ -91,7 +91,7 @@ bool BLSPublicKey::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_
 
     std::shared_ptr< signatures::Bls > obj;
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
-    
+
     if ( !hash_ptr ) {
         throw signatures::Bls::IncorrectInput( "hash is null" );
     }

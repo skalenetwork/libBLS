@@ -662,7 +662,8 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        const std::shared_ptr< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > > null_map = nullptr;
+        const std::shared_ptr< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > > null_map =
+            nullptr;
         BOOST_REQUIRE_THROW(
             BLSPublicKey pkey( null_map, num_signed, num_all ), signatures::Bls::IncorrectInput );
     }
