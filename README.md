@@ -28,7 +28,7 @@ libBLS uses the alt_bn128 (Barreto-Naehrig curve) elliptic curve to be compatibl
 
 libBLS for the most part corresponds to [BLS signature standard](https://tools.ietf.org/html/draft-boneh-bls-signature-00). This work is still in progress and is going to be improved in the next couple of months.
 
-Encryption process is running running as follows:
+Encryption process is running as follows:
 
 1.  Key generation
 2.  Encryption
