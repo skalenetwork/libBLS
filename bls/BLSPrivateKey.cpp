@@ -29,16 +29,14 @@
 BLSPrivateKey::BLSPrivateKey(
     const std::shared_ptr< std::string >& _key, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    CHECK( _key );
     BLSutils::initBLS();
 
-
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
-    if ( _key->empty() ) {
-        throw signatures::Bls::IncorrectInput( "Secret key share is empty" );
-    }
     if ( _key == nullptr ) {
         throw signatures::Bls::IncorrectInput( "Secret key share is null" );
+    }
+    if ( _key->empty() ) {
+        throw signatures::Bls::IncorrectInput( "Secret key share is empty" );
     }
 
     privateKey = std::make_shared< libff::alt_bn128_Fr >( _key->c_str() );
