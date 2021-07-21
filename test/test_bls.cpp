@@ -203,6 +203,8 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
                     signatures::Bls::IsNotWellFormed );
             }
 
+            BOOST_REQUIRE( sigSet.getTotalSigSharesCount() == num_signed );
+
             std::shared_ptr< BLSSignature > common_sig_ptr = sigSet.merge();  // verifying signature
             BLSPrivateKey common_skey( Skeys,
                 std::make_shared< std::vector< size_t > >( participants ), num_signed, num_all );
@@ -601,6 +603,11 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
     {
         BOOST_REQUIRE_THROW(
+            BLSPrivateKey skey( nullptr, num_signed, num_all ), signatures::Bls::IncorrectInput );
+    }
+
+    {
+        BOOST_REQUIRE_THROW(
             BLSPrivateKey skey( nullptr, std::make_shared< std::vector< size_t > >( participants ),
                 num_signed, num_all ),
             signatures::Bls::IncorrectInput );
@@ -926,6 +933,11 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     {
         BLSSigShareSet sig_set( num_signed, num_all );
         BOOST_REQUIRE_THROW( sig_set.merge(), signatures::Bls::IncorrectInput );
+    }
+
+    {
+        BLSSigShareSet sig_set( num_signed, num_all );
+        BOOST_REQUIRE( sig_set.getSigShareByIndex( 1 ) == nullptr );
     }
 
     {
