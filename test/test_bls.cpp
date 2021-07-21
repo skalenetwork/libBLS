@@ -823,6 +823,11 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
+        BOOST_REQUIRE_THROW(
+            BLSSigShare( nullptr, 0, num_signed, num_all ), signatures::Bls::IncorrectInput );
+    }
+
+    {
         std::string hint = "123:1";
         BOOST_REQUIRE_THROW(
             BLSSigShare( nullptr, hint, 0, num_signed, num_all ), signatures::Bls::IncorrectInput );
