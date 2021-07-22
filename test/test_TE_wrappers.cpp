@@ -14,7 +14,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 @file TEPublicKey.h
 @author Sveta Rogova
@@ -933,6 +933,19 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
         std::shared_ptr< std::vector< encryption::element_wrapper > > shares =
             dkg_te.createDKGSecretShares();
         shares = nullptr;
+        dkg_te.setDKGSecret( shares );
+    } catch ( std::runtime_error& ) {
+        is_exception_caught = true;
+    }
+    BOOST_REQUIRE( is_exception_caught );
+
+    is_exception_caught = false;
+    try {
+        DKGTEWrapper dkg_te( num_signed, num_all );
+        std::shared_ptr< std::vector< encryption::element_wrapper > > shares =
+            dkg_te.createDKGSecretShares();
+        shares->erase( shares->begin() + shares->size() - 2 );
+        shares->shrink_to_fit();
         dkg_te.setDKGSecret( shares );
     } catch ( std::runtime_error& ) {
         is_exception_caught = true;
