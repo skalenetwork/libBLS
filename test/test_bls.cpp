@@ -834,6 +834,14 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
+        libff::alt_bn128_G1 zero_sig = libff::alt_bn128_G1::zero();
+        std::string hint = "123:1";
+        BOOST_REQUIRE_THROW(
+            BLSSigShare( std::make_shared<libff::alt_bn128_G1>(zero_sig), hint, 0, num_signed, num_all ),
+                        signatures::Bls::IsNotWellFormed );
+    }
+
+    {
         std::string empty_hint = "";
         BOOST_REQUIRE_THROW( BLSSigShare( std::make_shared< libff::alt_bn128_G1 >(
                                               libff::alt_bn128_G1::random_element() ),
