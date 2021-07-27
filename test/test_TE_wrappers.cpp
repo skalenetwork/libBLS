@@ -470,7 +470,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         is_exception_caught = false;
         try {
-            TEDataSingleton::checkSigners( num_signed, 0 );
+            TEDataSingleton::checkSigners( 0, 0 );
         } catch ( std::runtime_error& ) {
             is_exception_caught = true;
         }
