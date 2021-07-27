@@ -822,7 +822,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
         std::string hint = "123:1";
         BOOST_REQUIRE_THROW( BLSSignature( std::make_shared< libff::alt_bn128_G1 >( zero_sig ),
                                  hint, num_signed, num_all ),
-            signatures::Bls::IsNotWellFormed );
+            signatures::Bls::IncorrectInput );
     }
 
     {
