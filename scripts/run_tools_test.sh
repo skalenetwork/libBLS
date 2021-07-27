@@ -30,8 +30,6 @@ run_tools_test_with_individual_keys() {
         ./dkg_keygen --t 11 --n 16 --j "$i"
     done
     echo "Generated individual dkg keys"
-    echo "$individual_dkg_keys"
-    echo "./dkg_glue --t 11 --n 16 "$individual_dkg_keys""
     $individual_dkg_keys
     echo "Generated individual bls keys"
     

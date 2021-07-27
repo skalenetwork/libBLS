@@ -66,18 +66,15 @@ BOOST_AUTO_TEST_CASE( singleBlsrun ) {
     libff::alt_bn128_Fr secret_key = keys.first;
     libff::alt_bn128_G2 public_key = keys.second;
 
-
     std::string message = "testingSKALE";
 
     libff::alt_bn128_G1 hash = obj.Hashing( message );
 
     BOOST_CHECK( hash.is_well_formed() );  // is hash belongs to group G1
 
-
     libff::alt_bn128_G1 signature = obj.Signing( hash, secret_key );
 
     BOOST_CHECK( signature.is_well_formed() );  // is signature belongs to group G1
-
 
     BOOST_REQUIRE( obj.Verification( message, signature, public_key ) );
 
@@ -95,7 +92,6 @@ BOOST_AUTO_TEST_CASE( SimillarHashes ) {
 
     std::cout << "DONE\n";
 }
-
 
 BOOST_AUTO_TEST_CASE( BlsThresholdSignatures ) {
     std::cout << "Testing BlsThresholdSignatures\n";
@@ -125,13 +121,11 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignatures ) {
     libff::alt_bn128_G2 public_key =
         libff::alt_bn128_G2( first_coord, second_coord, libff::alt_bn128_Fq2::one() );
 
-
     std::string message = "testingSKALE";
 
     libff::alt_bn128_G1 hash = obj.Hashing( message );
 
     BOOST_CHECK( hash.is_well_formed() );  // hash belongs to group G1
-
 
     std::vector< size_t > testing_nodes = {1, 2};
 
@@ -143,7 +137,6 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignatures ) {
 
     BOOST_REQUIRE( public_key == common_public );
 
-
     libff::alt_bn128_G1 fst_signature = obj.Signing( hash, fst_secret );
     libff::alt_bn128_G1 snd_signature = obj.Signing( hash, snd_secret );
 
@@ -151,7 +144,6 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignatures ) {
 
     libff::alt_bn128_G1 common_signature =
         obj.SignatureRecover( single_signatures, lagrange_coeffs );
-
 
     BOOST_REQUIRE( obj.Verification( message, common_signature, common_public ) );
 
@@ -188,13 +180,11 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesFalse ) {
     libff::alt_bn128_G2 public_key =
         libff::alt_bn128_G2( first_coord, second_coord, libff::alt_bn128_Fq2::one() );
 
-
     std::string message = "testingSKALE";
 
     libff::alt_bn128_G1 hash = obj.Hashing( message );
 
     BOOST_CHECK( hash.is_well_formed() );  // hash belongs to group G1
-
 
     std::vector< size_t > testing_nodes = {1, 2};
 
@@ -208,12 +198,10 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesFalse ) {
     libff::alt_bn128_G1 common_signature =
         obj.SignatureRecover( single_signatures, lagrange_coeffs );
 
-
     BOOST_REQUIRE( obj.Verification( message, common_signature, public_key ) == false );
 
     std::cout << "DONE\n";
 }
-
 
 BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesReal ) {
     std::cout << "Testing BlsThresholdSignaturesReal\n";
@@ -231,7 +219,6 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesReal ) {
         }
     }
 
-
     std::vector< libff::alt_bn128_Fr > secret_keys( 16 );
     for ( size_t i = 0; i < 16; ++i ) {
         secret_keys[i] = libff::alt_bn128_Fr::zero();
@@ -244,13 +231,11 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesReal ) {
         }
     }
 
-
     std::string message = "testingSKALE";
 
     libff::alt_bn128_G1 hash = obj.Hashing( message );
 
     BOOST_CHECK( hash.is_well_formed() );  // hash belongs to group G1
-
 
     std::vector< size_t > testing_nodes( 11 );
     for ( size_t i = 0; i < 11; ++i ) {
@@ -258,7 +243,6 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesReal ) {
     }
 
     std::vector< libff::alt_bn128_Fr > lagrange_coeffs = obj.LagrangeCoeffs( testing_nodes );
-
 
     auto recovered_keys = obj.KeysRecover( lagrange_coeffs, secret_keys );
 
@@ -269,7 +253,6 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesReal ) {
 
     BOOST_CHECK( common_public.is_well_formed() );
 
-
     std::vector< libff::alt_bn128_G1 > single_signatures( 11 );
     for ( size_t i = 0; i < 11; ++i ) {
         single_signatures[i] = obj.Signing( hash, secret_keys[i] );
@@ -278,15 +261,12 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesReal ) {
     libff::alt_bn128_G1 common_signature =
         obj.SignatureRecover( single_signatures, lagrange_coeffs );
 
-
     BOOST_CHECK( common_signature == obj.Signing( hash, common_secret ) );
-
 
     BOOST_REQUIRE( obj.Verification( message, common_signature, common_public ) );
 
     std::cout << "DONE\n";
 }
-
 
 BOOST_AUTO_TEST_CASE( simillarSignatures ) {
     std::cout << "Testing simillarSignatures\n";
@@ -304,7 +284,6 @@ BOOST_AUTO_TEST_CASE( simillarSignatures ) {
         }
     }
 
-
     std::vector< libff::alt_bn128_Fr > secret_keys( 16 );
     for ( size_t i = 0; i < 16; ++i ) {
         secret_keys[i] = libff::alt_bn128_Fr::zero();
@@ -317,13 +296,11 @@ BOOST_AUTO_TEST_CASE( simillarSignatures ) {
         }
     }
 
-
     std::string message = "testingSKALE";
 
     libff::alt_bn128_G1 hash = obj.Hashing( message );
 
     BOOST_CHECK( hash.is_well_formed() );  // hash belongs to group G1
-
 
     std::vector< size_t > testing_nodes_fst( 11 );  // first group - nodes from 1 up to 12
     for ( size_t i = 0; i < 11; ++i ) {
@@ -333,14 +310,12 @@ BOOST_AUTO_TEST_CASE( simillarSignatures ) {
     std::vector< libff::alt_bn128_Fr > lagrange_coeffs_fst =
         obj.LagrangeCoeffs( testing_nodes_fst );
 
-
     auto recovered_keys_fst = obj.KeysRecover( lagrange_coeffs_fst, secret_keys );
 
     libff::alt_bn128_Fr common_secret_fst = recovered_keys_fst.first;
     libff::alt_bn128_G2 common_public_fst = recovered_keys_fst.second;
 
     BOOST_CHECK( common_public_fst.is_well_formed() );
-
 
     std::vector< libff::alt_bn128_G1 > single_signatures_fst( 16 );
     for ( size_t i = 0; i < 16; ++i ) {
@@ -349,7 +324,6 @@ BOOST_AUTO_TEST_CASE( simillarSignatures ) {
 
     libff::alt_bn128_G1 common_signature_fst =
         obj.SignatureRecover( single_signatures_fst, lagrange_coeffs_fst );
-
 
     std::map< size_t, libff::alt_bn128_Fr > nodes;
     // initializing map
@@ -367,10 +341,8 @@ BOOST_AUTO_TEST_CASE( simillarSignatures ) {
         }
     }
 
-
     std::vector< libff::alt_bn128_Fr > lagrange_coeffs_snd =
         obj.LagrangeCoeffs( testing_nodes_snd );
-
 
     std::vector< libff::alt_bn128_Fr > secret_keys_for_random_subgroup( 11 );
     for ( size_t i = 0; i < 11; ++i ) {
@@ -477,7 +449,6 @@ BOOST_AUTO_TEST_CASE( RandomPolynomial ) {
     size_t deg = std::rand() % 30 + 1;  // a degree of polynomial should never be 0
 
     std::vector< libff::alt_bn128_Fr > pol( deg + 1 );
-
 
     BLSutils::initBLS();
 

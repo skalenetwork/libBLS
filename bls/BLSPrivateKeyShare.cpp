@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file BLSPrivateKeyShare.cpp
   @author Stan Kladko, Sveta Rogova
@@ -58,9 +58,6 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(
 
 std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::sign(
     std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr, size_t _signerIndex ) {
-    CHECK( hash_byte_arr );
-
-
     std::shared_ptr< signatures::Bls > obj;
 
     if ( _signerIndex == 0 ) {

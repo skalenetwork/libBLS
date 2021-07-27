@@ -153,7 +153,7 @@ libff::alt_bn128_Fq SpoilCoord( libff::alt_bn128_Fq& sign_coord ) {
 std::vector< libff::alt_bn128_G2 > SpoilVerifVector(
     std::vector< libff::alt_bn128_G2 >& verif_vect ) {
     size_t elem_to_spoil = rand_gen() % verif_vect.size();
-    size_t bad_coord_num = rand_gen() % 5;
+    size_t bad_coord_num = rand_gen() % 6;
     std::vector< libff::alt_bn128_G2 > bad_verif_vect = verif_vect;
     switch ( bad_coord_num ) {
     case 0:

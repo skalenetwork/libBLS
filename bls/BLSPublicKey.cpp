@@ -32,7 +32,7 @@ BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > 
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     BLSutils::initBLS();
 
-    CHECK( pkey_str_vect );
+    CHECK( pkey_str_vect )
 
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
 
@@ -61,7 +61,6 @@ BLSPublicKey::BLSPublicKey(
 
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
 
-
     libffPublicKey = std::make_shared< libff::alt_bn128_G2 >( pkey );
     if ( libffPublicKey->is_zero() ) {
         throw signatures::Bls::IsNotWellFormed( "Zero BLS Public Key" );
@@ -88,16 +87,16 @@ size_t BLSPublicKey::getRequiredSigners() const {
 
 bool BLSPublicKey::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
     std::shared_ptr< BLSSignature > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
-    CHECK( sign_ptr );
-
     BLSutils::initBLS();
 
     std::shared_ptr< signatures::Bls > obj;
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+
     if ( !hash_ptr ) {
         throw signatures::Bls::IncorrectInput( "hash is null" );
     }
-    if ( !sign_ptr || sign_ptr->getSig()->is_zero() || !sign_ptr->getSig()->is_well_formed() ) {
+
+    if ( !sign_ptr || sign_ptr->getSig()->is_zero() ) {
         throw signatures::Bls::IsNotWellFormed( "Sig share is equal to zero or corrupt" );
     }
 
@@ -109,9 +108,6 @@ bool BLSPublicKey::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_
 
 bool BLSPublicKey::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
     std::shared_ptr< BLSSignature > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
-    CHECK( hash_ptr );
-    CHECK( sign_ptr );
-
     std::shared_ptr< signatures::Bls > obj;
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
     if ( !hash_ptr ) {

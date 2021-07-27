@@ -52,8 +52,6 @@ BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _sign
     : signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    CHECK( _sigShare );
-
     BLSSignature::checkSigners( requiredSigners, totalSigners );
     BLSutils::initBLS();
     if ( _signerIndex == 0 ) {

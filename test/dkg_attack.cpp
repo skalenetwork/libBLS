@@ -160,72 +160,75 @@ int main() {
     }
     */
 
-    // Compute common_public_key_point
-    common_public_key_point = libff::alt_bn128_G2::zero();
-    for ( size_t i = 0; i < num_all; i++ )
-        common_public_key_point = common_public_key_point + public_shares_all.at( i ).at( 0 );
+    // // Compute common_public_key_point
+    // common_public_key_point = libff::alt_bn128_G2::zero();
+    // for ( size_t i = 0; i < num_all; i++ )
+    //     common_public_key_point = common_public_key_point + public_shares_all.at( i ).at( 0 );
 
-    // Initialize common_public_key
-    BLSPublicKey common_public_key = BLSPublicKey( common_public_key_point, num_signed, num_all );
+    // // Initialize common_public_key
+    // BLSPublicKey common_public_key = BLSPublicKey( common_public_key_point, num_signed, num_all
+    // );
 
-    // Check that the public key is corrputed (it is not in G2)
-    std::cout << "Let's check if public key is in G2: "
-              << ( libff::alt_bn128_G2::order() * ( *common_public_key.getPublicKey() ) ).is_zero()
-              << "\n";
+    // // Check that the public key is corrputed (it is not in G2)
+    // std::cout << "Let's check if public key is in G2: "
+    //           << ( libff::alt_bn128_G2::order() * ( *common_public_key.getPublicKey() )
+    //           ).is_zero()
+    //           << "\n";
 
-    // Initialize secret_key_shares
-    std::vector< std::vector< libff::alt_bn128_Fr > > secret_key_shares;
+    // // Initialize secret_key_shares
+    // std::vector< std::vector< libff::alt_bn128_Fr > > secret_key_shares;
 
-    // Construct secret_key_shares
-    for ( size_t i = 0; i < num_all; i++ ) {
-        std::vector< libff::alt_bn128_Fr > secret_key_contribution;
-        for ( size_t j = 0; j < num_all; j++ ) {
-            secret_key_contribution.push_back( secret_shares_all.at( j ).at( i ) );
-        }
-        secret_key_shares.push_back( secret_key_contribution );
-    }
+    // // Construct secret_key_shares
+    // for ( size_t i = 0; i < num_all; i++ ) {
+    //     std::vector< libff::alt_bn128_Fr > secret_key_contribution;
+    //     for ( size_t j = 0; j < num_all; j++ ) {
+    //         secret_key_contribution.push_back( secret_shares_all.at( j ).at( i ) );
+    //     }
+    //     secret_key_shares.push_back( secret_key_contribution );
+    // }
 
-    // Compute public and private key shares
-    for ( size_t i = 0; i < num_all; i++ ) {
-        BLSPrivateKeyShare private_key_share = dkgs.at( i ).CreateBLSPrivateKeyShare(
-            std::make_shared< std::vector< libff::alt_bn128_Fr > >( secret_key_shares.at( i ) ) );
-        BLSPublicKeyShare public_key_share =
-            BLSPublicKeyShare( *private_key_share.getPrivateKey(), num_signed, num_all );
+    // // Compute public and private key shares
+    // for ( size_t i = 0; i < num_all; i++ ) {
+    //     BLSPrivateKeyShare private_key_share = dkgs.at( i ).CreateBLSPrivateKeyShare(
+    //         std::make_shared< std::vector< libff::alt_bn128_Fr > >( secret_key_shares.at( i ) )
+    //         );
+    //     BLSPublicKeyShare public_key_share =
+    //         BLSPublicKeyShare( *private_key_share.getPrivateKey(), num_signed, num_all );
 
-        private_keys.push_back( private_key_share );
-        public_keys.push_back( public_key_share );
-    }
+    //     private_keys.push_back( private_key_share );
+    //     public_keys.push_back( public_key_share );
+    // }
 
-    // Let's try to sign some message
-    // Initialize a hash array and set all bytes to 0xff
-    std::array< uint8_t, 32 > hash_byte_arr;
-    for ( size_t i = 0; i < 32; i++ )
-        hash_byte_arr[i] = 0xff;
-    std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr =
-        std::make_shared< std::array< uint8_t, 32 > >( hash_byte_arr );
+    // // Let's try to sign some message
+    // // Initialize a hash array and set all bytes to 0xff
+    // std::array< uint8_t, 32 > hash_byte_arr;
+    // for ( size_t i = 0; i < 32; i++ )
+    //     hash_byte_arr[i] = 0xff;
+    // std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr =
+    //     std::make_shared< std::array< uint8_t, 32 > >( hash_byte_arr );
 
-    // Create signature shares
-    std::vector< BLSSigShare > signature_shares;
-    for ( size_t i = 0; i < num_all; i++ ) {
-        if ( i == num_signed - 1 )
-            continue;  // Active adversary doesn't have to sign, passive advesaries behave
-        signature_shares.push_back( *private_keys.at( i ).sign( hash_ptr, i + 1 ) );
-    }
+    // // Create signature shares
+    // std::vector< BLSSigShare > signature_shares;
+    // for ( size_t i = 0; i < num_all; i++ ) {
+    //     if ( i == num_signed - 1 )
+    //         continue;  // Active adversary doesn't have to sign, passive advesaries behave
+    //     signature_shares.push_back( *private_keys.at( i ).sign( hash_ptr, i + 1 ) );
+    // }
 
-    // Construct signature share set (active adversary didn't take part)
-    BLSSigShareSet signature_share_set = BLSSigShareSet( num_signed, num_all );
-    for ( size_t i = 0; i < num_all && !signature_share_set.isEnough(); i++ ) {
-        signature_share_set.addSigShare(
-            std::make_shared< BLSSigShare >( signature_shares.at( i ) ) );
-    }
+    // // Construct signature share set (active adversary didn't take part)
+    // BLSSigShareSet signature_share_set = BLSSigShareSet( num_signed, num_all );
+    // for ( size_t i = 0; i < num_all && !signature_share_set.isEnough(); i++ ) {
+    //     signature_share_set.addSigShare(
+    //         std::make_shared< BLSSigShare >( signature_shares.at( i ) ) );
+    // }
 
-    // Construct the final signature
-    std::shared_ptr< BLSSignature > signature = signature_share_set.merge();
+    // // Construct the final signature
+    // std::shared_ptr< BLSSignature > signature = signature_share_set.merge();
 
-    std::cout << "isG2:" << signatures::Dkg::isG2( *( common_public_key.getPublicKey() ) );
+    // std::cout << "isG2:" << signatures::Dkg::isG2( *( common_public_key.getPublicKey() ) );
 
-    // This assertion will fail
-    assert( common_public_key.VerifySig( hash_ptr, signature, num_signed, num_all ) );
-    delete ( std::ifstream* ) malicious_parameters_if;
-    return 0;
+    // // This assertion will fail
+    // assert( common_public_key.VerifySig( hash_ptr, signature, num_signed, num_all ) );
+    // delete ( std::ifstream* ) malicious_parameters_if;
+    // return 0;
 }

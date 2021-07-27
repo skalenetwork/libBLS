@@ -14,7 +14,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 @file TEPublicKey.h
 @author Sveta Rogova
@@ -165,11 +165,20 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         std::string message_decrypted = decr_set.merge( cypher );
         BOOST_REQUIRE( message == message_decrypted );
 
-        encryption::Ciphertext bad_cypher = cypher;  // corrupt V n cypher
+        encryption::Ciphertext bad_cypher = cypher;  // corrupt V in cypher
         std::get< 1 >( bad_cypher ) = spoilMessage( std::get< 1 >( cypher ) );
         bool is_exception_caught = false;
         try {
             decr_set.merge( bad_cypher );
+        } catch ( std::runtime_error& ) {
+            is_exception_caught = true;
+        }
+        BOOST_REQUIRE( is_exception_caught );
+
+        is_exception_caught = false;
+        try {
+            // cannot add after merge
+            decr_set.addDecrypt( num_signed, nullptr );
         } catch ( std::runtime_error& ) {
             is_exception_caught = true;
         }
@@ -451,7 +460,23 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         size_t num_all = rand_gen() % 15 + 2;
         size_t num_signed = rand_gen() % num_all + 1;
 
-        bool is_exception_caught = false;  // null public key share
+        bool is_exception_caught = false;
+        try {
+            TEDataSingleton::checkSigners( 0, num_all );
+        } catch ( std::runtime_error& ) {
+            is_exception_caught = true;
+        }
+        BOOST_REQUIRE( is_exception_caught );
+
+        is_exception_caught = false;
+        try {
+            TEDataSingleton::checkSigners( 0, 0 );
+        } catch ( std::runtime_error& ) {
+            is_exception_caught = true;
+        }
+        BOOST_REQUIRE( is_exception_caught );
+
+        is_exception_caught = false;  // null public key share
         try {
             TEPublicKeyShare( nullptr, 1, num_signed, num_all );
         } catch ( std::runtime_error& ) {
@@ -877,6 +902,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
 
     bool is_exception_caught = false;
     try {
+        // zero share
         DKGTEWrapper dkg_te( num_signed, num_all );
 
         element_t el1;
@@ -893,11 +919,12 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
 
     is_exception_caught = false;
     try {
+        // null verification vector
         DKGTEWrapper dkg_te( num_signed, num_all );
 
         element_t el1;
         element_init_Zr( el1, TEDataSingleton::getData().pairing_ );
-        element_set0( el1 );
+        element_random( el1 );
         encryption::element_wrapper el_wrap( el1 );
         element_clear( el1 );
         dkg_te.VerifyDKGShare( 1, el_wrap, nullptr );
@@ -942,7 +969,31 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
     is_exception_caught = false;
     try {
         DKGTEWrapper dkg_te( num_signed, num_all );
+        std::shared_ptr< std::vector< encryption::element_wrapper > > shares =
+            dkg_te.createDKGSecretShares();
+        shares->erase( shares->begin() + shares->size() - 2 );
+        shares->shrink_to_fit();
+        dkg_te.setDKGSecret( shares );
+    } catch ( std::runtime_error& ) {
+        is_exception_caught = true;
+    }
+    BOOST_REQUIRE( is_exception_caught );
+
+    is_exception_caught = false;
+    try {
+        DKGTEWrapper dkg_te( num_signed, num_all );
         dkg_te.CreateTEPrivateKeyShare( 1, nullptr );
+    } catch ( std::runtime_error& ) {
+        is_exception_caught = true;
+    }
+    BOOST_REQUIRE( is_exception_caught );
+
+    is_exception_caught = false;
+    try {
+        DKGTEWrapper dkg_te( num_signed, num_all );
+        auto wrong_size_vector = std::make_shared< std::vector< encryption::element_wrapper > >();
+        wrong_size_vector->resize( num_signed - 1 );
+        dkg_te.CreateTEPrivateKeyShare( 1, wrong_size_vector );
     } catch ( std::runtime_error& ) {
         is_exception_caught = true;
     }
@@ -953,6 +1004,15 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
         DKGTEWrapper dkg_te( num_signed, num_all );
         std::shared_ptr< std::vector< encryption::element_wrapper > > shares;
         dkg_te.setDKGSecret( shares );
+    } catch ( std::runtime_error& ) {
+        is_exception_caught = true;
+    }
+    BOOST_REQUIRE( is_exception_caught );
+
+    is_exception_caught = false;
+    try {
+        DKGTEWrapper dkg_te( num_signed, num_all );
+        dkg_te.CreateTEPublicKey( nullptr, num_signed, num_all );
     } catch ( std::runtime_error& ) {
         is_exception_caught = true;
     }

@@ -203,10 +203,14 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
                     signatures::Bls::IsNotWellFormed );
             }
 
+            BOOST_REQUIRE( sigSet.getTotalSigSharesCount() == num_signed );
+
             std::shared_ptr< BLSSignature > common_sig_ptr = sigSet.merge();  // verifying signature
             BLSPrivateKey common_skey( Skeys,
                 std::make_shared< std::vector< size_t > >( participants ), num_signed, num_all );
             BLSPublicKey common_pkey( *( common_skey.getPrivateKey() ), num_signed, num_all );
+            BOOST_REQUIRE( common_pkey.getTotalSigners() == num_all );
+            BOOST_REQUIRE( common_pkey.getRequiredSigners() == num_signed );
             BOOST_REQUIRE( common_pkey.VerifySig( hash_ptr, common_sig_ptr, num_signed, num_all ) );
             std::shared_ptr< libff::alt_bn128_G1 > bad_sig =
                 std::make_shared< libff::alt_bn128_G1 >(
@@ -599,6 +603,11 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
     {
         BOOST_REQUIRE_THROW(
+            BLSPrivateKey skey( nullptr, num_signed, num_all ), signatures::Bls::IncorrectInput );
+    }
+
+    {
+        BOOST_REQUIRE_THROW(
             BLSPrivateKey skey( nullptr, std::make_shared< std::vector< size_t > >( participants ),
                 num_signed, num_all ),
             signatures::Bls::IncorrectInput );
@@ -657,6 +666,13 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
         const std::shared_ptr< std::vector< std::string > > null_vect = nullptr;
         BOOST_REQUIRE_THROW(
             BLSPublicKey pkey( null_vect, num_signed, num_all ), signatures::Bls::IncorrectInput );
+    }
+
+    {
+        const std::shared_ptr< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > > null_map =
+            nullptr;
+        BOOST_REQUIRE_THROW(
+            BLSPublicKey pkey( null_map, num_signed, num_all ), signatures::Bls::IncorrectInput );
     }
 
     {
@@ -802,8 +818,21 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
+        libff::alt_bn128_G1 zero_sig = libff::alt_bn128_G1::zero();
+        std::string hint = "123:1";
+        BOOST_REQUIRE_THROW( BLSSignature( std::make_shared< libff::alt_bn128_G1 >( zero_sig ),
+                                 hint, num_signed, num_all ),
+            signatures::Bls::IncorrectInput );
+    }
+
+    {
         BOOST_REQUIRE_THROW(
             BLSSigShare( nullptr, 1, num_signed, num_all ), signatures::Bls::IncorrectInput );
+    }
+
+    {
+        BOOST_REQUIRE_THROW(
+            BLSSigShare( nullptr, 0, num_signed, num_all ), signatures::Bls::IncorrectInput );
     }
 
     {
@@ -921,6 +950,11 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
     {
         BLSSigShareSet sig_set( num_signed, num_all );
+        BOOST_REQUIRE( sig_set.getSigShareByIndex( 1 ) == nullptr );
+    }
+
+    {
+        BLSSigShareSet sig_set( num_signed, num_all );
         BOOST_REQUIRE_THROW( sig_set.getSigShareByIndex( 0 ), signatures::Bls::IncorrectInput );
     }
 
@@ -942,10 +976,19 @@ BOOST_AUTO_TEST_CASE( DKGWrappersExceptions ) {
     }
     BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;  // null verification vector
+    is_exception_caught = false;  // zero share
     try {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
         dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::zero(), nullptr );
+    } catch ( std::runtime_error& ) {
+        is_exception_caught = true;
+    }
+    BOOST_REQUIRE( is_exception_caught );
+
+    is_exception_caught = false;  // null verification vector
+    try {
+        DKGBLSWrapper dkg_wrap( num_signed, num_all );
+        dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::random_element(), nullptr );
     } catch ( std::runtime_error& ) {
         is_exception_caught = true;
     }
