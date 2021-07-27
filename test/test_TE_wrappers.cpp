@@ -165,11 +165,20 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         std::string message_decrypted = decr_set.merge( cypher );
         BOOST_REQUIRE( message == message_decrypted );
 
-        encryption::Ciphertext bad_cypher = cypher;  // corrupt V n cypher
+        encryption::Ciphertext bad_cypher = cypher;  // corrupt V in cypher
         std::get< 1 >( bad_cypher ) = spoilMessage( std::get< 1 >( cypher ) );
         bool is_exception_caught = false;
         try {
             decr_set.merge( bad_cypher );
+        } catch ( std::runtime_error& ) {
+            is_exception_caught = true;
+        }
+        BOOST_REQUIRE( is_exception_caught );
+
+        is_exception_caught = false;
+        try {
+            // cannot add after merge
+            decr_set.addDecrypt( num_signed, nullptr );
         } catch ( std::runtime_error& ) {
             is_exception_caught = true;
         }

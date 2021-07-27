@@ -33,7 +33,7 @@ TEDecryptSet::TEDecryptSet( size_t _requiredSigners, size_t _totalSigners )
 }
 
 void TEDecryptSet::addDecrypt(
-    size_t _signerIndex, std::shared_ptr< encryption::element_wrapper >& _el ) {
+    size_t _signerIndex, std::shared_ptr< encryption::element_wrapper > _el ) {
     if ( decrypts.count( _signerIndex ) > 0 ) {
         throw std::runtime_error( "Already have this index:" + std::to_string( _signerIndex ) );
     }
