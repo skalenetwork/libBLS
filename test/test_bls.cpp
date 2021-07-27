@@ -818,6 +818,14 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
+        libff::alt_bn128_G1 zero_sig = libff::alt_bn128_G1::zero();
+        std::string hint = "123:1";
+        BOOST_REQUIRE_THROW( BLSSignature( std::make_shared< libff::alt_bn128_G1 >( zero_sig ),
+                                 hint, num_signed, num_all ),
+            signatures::Bls::IsNotWellFormed );
+    }
+
+    {
         BOOST_REQUIRE_THROW(
             BLSSigShare( nullptr, 1, num_signed, num_all ), signatures::Bls::IncorrectInput );
     }
@@ -831,14 +839,6 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
         std::string hint = "123:1";
         BOOST_REQUIRE_THROW(
             BLSSigShare( nullptr, hint, 0, num_signed, num_all ), signatures::Bls::IncorrectInput );
-    }
-
-    {
-        libff::alt_bn128_G1 zero_sig = libff::alt_bn128_G1::zero();
-        std::string hint = "123:1";
-        BOOST_REQUIRE_THROW( BLSSigShare( std::make_shared< libff::alt_bn128_G1 >( zero_sig ), hint,
-                                 0, num_signed, num_all ),
-            signatures::Bls::IsNotWellFormed );
     }
 
     {
