@@ -460,7 +460,23 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         size_t num_all = rand_gen() % 15 + 2;
         size_t num_signed = rand_gen() % num_all + 1;
 
-        bool is_exception_caught = false;  // null public key share
+        bool is_exception_caught = false;
+        try {
+            TEDataSingleton::checkSigners( 0, num_all );
+        } catch ( std::runtime_error& ) {
+            is_exception_caught = true;
+        }
+        BOOST_REQUIRE( is_exception_caught );
+
+        is_exception_caught = false;
+        try {
+            TEDataSingleton::checkSigners( num_signed, 0 );
+        } catch ( std::runtime_error& ) {
+            is_exception_caught = true;
+        }
+        BOOST_REQUIRE( is_exception_caught );
+
+        is_exception_caught = false;  // null public key share
         try {
             TEPublicKeyShare( nullptr, 1, num_signed, num_all );
         } catch ( std::runtime_error& ) {
