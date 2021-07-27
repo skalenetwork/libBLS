@@ -966,8 +966,28 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
     is_exception_caught = false;
     try {
         DKGTEWrapper dkg_te( num_signed, num_all );
+        auto wrong_size_vector = std::make_shared< std::vector< encryption::element_wrapper > >();
+        wrong_size_vector->resize( num_signed - 1 );
+        dkg_te.CreateTEPrivateKeyShare( 1, wrong_size_vector );
+    } catch ( std::runtime_error& ) {
+        is_exception_caught = true;
+    }
+    BOOST_REQUIRE( is_exception_caught );
+
+    is_exception_caught = false;
+    try {
+        DKGTEWrapper dkg_te( num_signed, num_all );
         std::shared_ptr< std::vector< encryption::element_wrapper > > shares;
         dkg_te.setDKGSecret( shares );
+    } catch ( std::runtime_error& ) {
+        is_exception_caught = true;
+    }
+    BOOST_REQUIRE( is_exception_caught );
+
+    is_exception_caught = false;
+    try {
+        DKGTEWrapper dkg_te( num_signed, num_all );
+        dkg_te.CreateTEPublicKey( nullptr, num_signed, num_all );
     } catch ( std::runtime_error& ) {
         is_exception_caught = true;
     }
