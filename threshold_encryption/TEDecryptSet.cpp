@@ -29,11 +29,10 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
 TEDecryptSet::TEDecryptSet( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ), was_merged( false ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    // TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
 }
 
-void TEDecryptSet::addDecrypt(
-    size_t _signerIndex, std::shared_ptr< encryption::element_wrapper > _el ) {
+void TEDecryptSet::addDecrypt( size_t _signerIndex, std::shared_ptr< libff::alt_bn128_G2 > _el ) {
     if ( decrypts.count( _signerIndex ) > 0 ) {
         throw std::runtime_error( "Already have this index:" + std::to_string( _signerIndex ) );
     }
@@ -46,7 +45,7 @@ void TEDecryptSet::addDecrypt(
         throw std::runtime_error( "try to add Null _element to decrypt set" );
     }
 
-    if ( isG1Element0( _el->el_ ) ) {
+    if ( _el->is_zero() ) {
         throw std::runtime_error( "try to add zero _element to decrypt set" );
     }
 
@@ -63,10 +62,9 @@ std::string TEDecryptSet::merge( const encryption::Ciphertext& cyphertext ) {
     }
 
     encryption::TE te( requiredSigners, totalSigners );
-    std::vector< std::pair< encryption::element_wrapper, size_t > > decrypted;
+    std::vector< std::pair< libff::alt_bn128_G2, size_t > > decrypted;
     for ( auto&& item : decrypts ) {
-        std::pair< encryption::element_wrapper, size_t > encr =
-            std::make_pair( *item.second, item.first );
+        std::pair< libff::alt_bn128_G2, size_t > encr = std::make_pair( *item.second, item.first );
         decrypted.push_back( encr );
     }
 

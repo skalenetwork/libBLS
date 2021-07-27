@@ -34,12 +34,12 @@ private:
 
     bool was_merged;
 
-    std::map< size_t, std::shared_ptr< encryption::element_wrapper > > decrypts;
+    std::map< size_t, std::shared_ptr< libff::alt_bn128_G2 > > decrypts;
 
 public:
     TEDecryptSet( size_t _requiredSigners, size_t _totalSigners );
 
-    void addDecrypt( size_t _signerIndex, std::shared_ptr< encryption::element_wrapper > _el );
+    void addDecrypt( size_t _signerIndex, std::shared_ptr< libff::alt_bn128_G2 > _el );
 
     std::string merge( const encryption::Ciphertext& ciphertext );
 };

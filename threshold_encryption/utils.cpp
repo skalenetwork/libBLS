@@ -46,37 +46,6 @@ void MpzSquareRoot( mpz_t ret_val, mpz_t x ) {
     mpz_clears( deg, mode, 0 );
 }
 
-std::string ElementZrToString( element_t el ) {
-    std::string str = "1";
-    if ( element_item_count( el ) ) {
-        str = "2";
-    } else {
-        mpz_t a;
-        mpz_init( a );
-
-        element_to_mpz( a, el );
-
-        char arr[mpz_sizeinbase( a, 10 ) + 2];
-
-        char* tmp = mpz_get_str( arr, 10, a );
-        mpz_clear( a );
-
-        str = tmp;
-    }
-
-    return str;
-}
-
-std::shared_ptr< std::vector< std::string > > ElementG1ToString( element_t& el ) {
-    std::vector< std::string > res_str;
-
-    for ( int i = 0; i < element_item_count( el ); ++i ) {
-        res_str.push_back( ElementZrToString( element_item( el, i ) ) );
-    }
-
-    return std::make_shared< std::vector< std::string > >( res_str );
-}
-
 bool isStringNumber( std::string& str ) {
     if ( str.at( 0 ) == '0' && str.length() > 1 )
         return false;
@@ -88,18 +57,8 @@ bool isStringNumber( std::string& str ) {
     return true;
 }
 
-bool isG1Element0( element_t& el ) {
-    if ( element_item_count( el ) != 2 )
-        throw std::runtime_error( "not 2 component element " );
-    if ( element_is0( element_item( el, 0 ) ) && element_is0( element_item( el, 1 ) ) )
-        return true;
-    else
-        return false;
-}
-
 void checkCypher( const encryption::Ciphertext& cyphertext ) {
-    if ( isG1Element0( const_cast< element_t& >( std::get< 0 >( cyphertext ).el_ ) ) ||
-         isG1Element0( const_cast< element_t& >( std::get< 2 >( cyphertext ).el_ ) ) )
+    if ( std::get< 0 >( cyphertext ).is_zero() || std::get< 2 >( cyphertext ).is_zero() )
         throw std::runtime_error( "zero element in cyphertext" );
 
     if ( std::get< 1 >( cyphertext ).length() != 64 )

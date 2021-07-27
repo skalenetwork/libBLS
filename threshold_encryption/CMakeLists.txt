@@ -16,10 +16,11 @@ set(sources
             TEPublicKey.cpp
             TEPublicKeyShare.cpp
             TEDataSingleton.h
-            ../dkg/dkg_te.cpp
-            ../dkg/DKGTEWrapper.cpp
-            ../dkg/DKGTESecret.cpp
+            ../dkg/dkg.cpp
+            ../dkg/DKGBLSWrapper.cpp
+            ../dkg/DKGBLSSecret.cpp
             utils.cpp
+            ../tools/utils.cpp
 )
 
 set(headers
@@ -30,10 +31,11 @@ set(headers
             TEPublicKey.h
             TEPublicKeyShare.h
             TEDataSingleton.cpp
-            ../dkg/dkg_te.h
-            ../dkg/DKGTEWrapper.h
-            ../dkg/DKGTESecret.h
+            ../dkg/dkg.h
+            ../dkg/DKGBLSWrapper.h
+            ../dkg/DKGBLSSecret.h
             utils.h
+            ../tools/utils.h
 )
 
 set(PROJECT_VERSION 0.1.0)
@@ -56,9 +58,9 @@ target_include_directories(te PRIVATE ${PBC_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_
 target_link_libraries(te PRIVATE pbc)
 
 if (BUILD_TESTS)
-	add_executable(dkg_te_unit_test ../test/unit_tests_dkg_te.cpp)
-	target_include_directories(dkg_te_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${TEST_DIR})
-    target_link_libraries(dkg_te_unit_test PRIVATE te pbc ${GMP_LIBRARY} ${GMPXX_LIBRARY})
+	# add_executable(dkg_te_unit_test ../test/unit_tests_dkg_te.cpp)
+	# target_include_directories(dkg_te_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${TEST_DIR})
+    # target_link_libraries(dkg_te_unit_test PRIVATE te pbc ${GMP_LIBRARY} ${GMPXX_LIBRARY})
 
 	add_test(NAME dkg_te_tests COMMAND dkg_te_unit_test)
 

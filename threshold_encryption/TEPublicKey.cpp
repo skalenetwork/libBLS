@@ -14,13 +14,14 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 @file TEPublicKey.h
 @author Sveta Rogova
 @date 2019
 */
 
+#include "../tools/utils.h"
 #include <threshold_encryption/TEDataSingleton.h>
 #include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/utils.h>
@@ -38,48 +39,48 @@ TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str
         throw std::runtime_error( "public key is null" );
     }
 
-    std::string key_str = "[" + _key_str_ptr->at( 0 ) + "," + _key_str_ptr->at( 1 ) + "]";
+    if ( _key_str_ptr->size() != 4 ) {
+        throw std::runtime_error( "wrong number of components in public key share" );
+    }
 
-    element_t pkey;
-    element_init_G1( pkey, TEDataSingleton::getData().pairing_ );
-    element_set_str( pkey, key_str.c_str(), 10 );
-    PublicKey = encryption::element_wrapper( pkey );
-    element_clear( pkey );
+    if ( !isStringNumber( _key_str_ptr->at( 0 ) ) || !isStringNumber( _key_str_ptr->at( 1 ) ) ||
+         !isStringNumber( _key_str_ptr->at( 2 ) ) || !isStringNumber( _key_str_ptr->at( 3 ) ) ) {
+        throw std::runtime_error( "non-digit symbol or first zero in non-zero public key share" );
+    }
 
-    if ( isG1Element0( PublicKey.el_ ) ) {
+    PublicKey.Z = libff::alt_bn128_Fq2::one();
+    PublicKey.X.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 0 ).c_str() );
+    PublicKey.X.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 1 ).c_str() );
+    PublicKey.Y.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 2 ).c_str() );
+    PublicKey.Y.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 3 ).c_str() );
+
+    if ( PublicKey.is_zero() ) {
         throw std::runtime_error( "corrupted string or zero public key" );
     }
 }
 
 TEPublicKey::TEPublicKey(
-    TEPrivateKey _comon_private, size_t _requiredSigners, size_t _totalSigners )
+    TEPrivateKey _common_private, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
 
-    if ( element_is0( _comon_private.getPrivateKey().el_ ) ) {
+    if ( _common_private.getPrivateKey().is_zero() ) {
         throw std::runtime_error( "zero key" );
     }
 
-    element_t pkey;
-    element_init_G1( pkey, TEDataSingleton::getData().pairing_ );
-    element_mul_zn(
-        pkey, TEDataSingleton::getData().generator_, _comon_private.getPrivateKey().el_ );
-
-    PublicKey = pkey;
-    element_clear( pkey );
+    PublicKey = _common_private.getPrivateKey() * libff::alt_bn128_G2::one();
 }
 
-TEPublicKey::TEPublicKey(
-    encryption::element_wrapper _pkey, size_t _requiredSigners, size_t _totalSigners )
+TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, size_t _totalSigners )
     : PublicKey( _pkey ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
 
-    if ( isG1Element0( _pkey.el_ ) ) {
+    if ( _pkey.is_zero() ) {
         throw std::runtime_error( "zero public key" );
     }
 }
 
-encryption::Ciphertext TEPublicKey::encrypt( const std::shared_ptr< std::string >& mes_ptr ) {
+encryption::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_ptr ) {
     encryption::TE te( requiredSigners, totalSigners );
 
     if ( mes_ptr == nullptr ) {
@@ -90,35 +91,26 @@ encryption::Ciphertext TEPublicKey::encrypt( const std::shared_ptr< std::string 
         throw std::runtime_error( "Message length is not equal to 64" );
     }
 
-    encryption::Ciphertext cypher = te.Encrypt( *mes_ptr, PublicKey.el_ );
+    encryption::Ciphertext cypher = te.Encrypt( *mes_ptr, PublicKey );
     checkCypher( cypher );
 
-    element_t U;
-    element_init_G1( U, TEDataSingleton::getData().pairing_ );
-    element_set( U, std::get< 0 >( cypher ).el_ );
-    encryption::element_wrapper U_wrap( U );
+    libff::alt_bn128_G2 U = std::get< 0 >( cypher );
     /*if (element_item_count(U) == 0 ) {
       throw std::runtime_error("U is zero");
     }*/
 
-    element_t W;
-    element_init_G1( W, TEDataSingleton::getData().pairing_ );
-    element_set( W, std::get< 2 >( cypher ).el_ );
+    libff::alt_bn128_G1 W = std::get< 2 >( cypher );
     /*if (element_item_count(W) == 0) {
       throw std::runtime_error("W is zero");
     }*/
-    encryption::element_wrapper W_wrap( W );
-    element_clear( W );
 
-    element_clear( U );
-
-    return std::make_tuple( U_wrap, std::get< 1 >( cypher ), W_wrap );
+    return std::make_tuple( U, std::get< 1 >( cypher ), W );
 }
 
 std::shared_ptr< std::vector< std::string > > TEPublicKey::toString() {
-    return ElementG1ToString( PublicKey.el_ );
+    return std::make_shared< std::vector< std::string > >( G2ToString( PublicKey ) );
 }
 
-encryption::element_wrapper TEPublicKey::getPublicKey() const {
+libff::alt_bn128_G2 TEPublicKey::getPublicKey() const {
     return PublicKey;
 }

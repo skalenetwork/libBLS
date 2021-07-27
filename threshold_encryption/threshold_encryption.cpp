@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file threshold_encryption.cpp
   @author Oleh Nikolaiev
@@ -25,6 +25,7 @@
 #include <iostream>
 #include <valarray>
 
+#include "../tools/utils.h"
 #include <threshold_encryption.h>
 #include <threshold_encryption/utils.h>
 
@@ -34,141 +35,49 @@ TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {}
 
 TE::~TE() {}
 
-std::string TE::Hash( const element_t& Y, std::string ( *hash_func )( const std::string& str ) ) {
-    // assumed that Y lies in from G1
+std::string TE::Hash(
+    const libff::alt_bn128_G2& Y, std::string ( *hash_func )( const std::string& str ) ) {
+    auto vectorCoordinates = G2ToString( Y );
 
-    mpz_t z;
-    mpz_init( z );
-    element_to_mpz( z, element_item( const_cast< element_t& >( Y ), 0 ) );
-
-    char arr[mpz_sizeinbase( z, 10 ) + 2];
-    char* tmp_c = mpz_get_str( arr, 10, z );
-    std::string tmp1 = tmp_c;
-    mpz_clear( z );
-
-    mpz_init( z );
-    element_to_mpz( z, element_item( const_cast< element_t& >( Y ), 1 ) );
-
-    char arr1[mpz_sizeinbase( z, 10 ) + 2];
-    char* other_tmp = mpz_get_str( arr1, 10, z );
-    std::string tmp2 = other_tmp;
-    mpz_clear( z );
-
-    std::string tmp = tmp1 + tmp2;
+    std::string tmp = "";
+    for ( const auto& coord : vectorCoordinates ) {
+        tmp += coord;
+    }
 
     const std::string sha256hex = hash_func( tmp );
 
     return sha256hex;
 }
 
-void TE::HashToGroup( element_t ret_val, const element_t& U, const std::string& V,
+libff::alt_bn128_G1 TE::HashToGroup( const libff::alt_bn128_G2& U, const std::string& V,
     std::string ( *hash_func )( const std::string& str ) ) {
     // assumed that U lies in G1
 
-    std::shared_ptr< std::vector< std::string > > U_str_ptr =
-        ElementG1ToString( const_cast< element_t& >( U ) );
+    auto U_str = G2ToString( U );
 
-    const std::string sha256hex = hash_func( U_str_ptr->at( 0 ) + U_str_ptr->at( 1 ) + V );
+    const std::string sha256hex = hash_func( U_str[0] + U_str[1] + U_str[2] + U_str[3] + V );
 
-    mpz_t hex;
-    mpz_init( hex );
-    mpz_set_str( hex, sha256hex.c_str(), 16 );
-
-    mpz_t modulus_q;
-    mpz_init( modulus_q );
-    mpz_set_str( modulus_q,
-        "878071079966331252243778198475404981580688319941420821102865339926647563088022295707862517"
-        "9422662221423155858769582317459277713367317481324925129998224791",
-        10 );
-
-    mpz_t x_coord;
-    mpz_init( x_coord );
-    mpz_mod( x_coord, hex, modulus_q );
-
-    mpz_clear( hex );
-
-    mpz_t y_coord;
-    mpz_init( y_coord );
-
-    mpz_t one;
-    mpz_init( one );
-    mpz_set_ui( one, 1 );
-
-    while ( true ) {
-        mpz_t x_cubed;
-        mpz_init( x_cubed );
-
-        mpz_powm_ui( x_cubed, x_coord, 3, modulus_q );
-
-        mpz_t sum;
-        mpz_init( sum );
-        mpz_add( sum, x_cubed, x_coord );
-        mpz_clear( x_cubed );
-
-        mpz_t y_squared;
-        mpz_init( y_squared );
-        mpz_mod( y_squared, sum, modulus_q );
-        mpz_clear( sum );
-
-        int is_square = mpz_legendre( y_squared, modulus_q );
-
-        if ( is_square == -1 || is_square == 0 ) {
-            mpz_addmul_ui( x_coord, one, 1 );
-            mpz_clear( y_squared );
-
-        } else {
-            MpzSquareRoot( y_coord, y_squared );
-
-            mpz_clear( y_squared );
-            mpz_clear( one );
-
-            break;
-        }
+    auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
+    std::string hash_str = cryptlite::sha256::hash_hex( sha256hex );
+    for ( size_t i = 0; i < 32; ++i ) {
+        hash_bytes_arr->at( i ) = static_cast< uint8_t >( hash_str[i] );
     }
 
-    char arr1[mpz_sizeinbase( x_coord, 10 ) + 2];
-    char* coord_x = mpz_get_str( arr1, 10, x_coord );
-
-    char arr2[mpz_sizeinbase( y_coord, 10 ) + 2];
-    char* coord_y = mpz_get_str( arr2, 10, y_coord );
-
-    std::string coords_str = "[" + std::string( coord_x ) + "," + std::string( coord_y ) + "]";
-
-
-    int num = element_set_str( ret_val, coords_str.c_str(), 10 );
-    if ( num == 0 ) {
-        std::runtime_error( "Incorrectly formed string for G1 point" );
-    }
-
-    mpz_clear( modulus_q );
-    mpz_clear( y_coord );
-    mpz_clear( x_coord );
+    return HashtoG1( hash_bytes_arr );
 }
 
-Ciphertext TE::Encrypt( const std::string& message, const element_t& common_public ) {
-    element_t r;
-    element_init_Zr( r, TEDataSingleton::getData().pairing_ );
-    element_random( r );
+Ciphertext TE::Encrypt( const std::string& message, const libff::alt_bn128_G2& common_public ) {
+    libff::alt_bn128_Fr r = libff::alt_bn128_Fr::random_element();
 
-    while ( element_is0( r ) ) {
-        element_random( r );
+    while ( r.is_zero() ) {
+        r = libff::alt_bn128_Fr::random_element();
     }
 
-    element_t g;
-    element_init_G1( g, TEDataSingleton::getData().pairing_ );
-    element_set( g, TEDataSingleton::getData().generator_ );
-
-    element_t U, Y;
-    element_init_G1( U, TEDataSingleton::getData().pairing_ );
-    element_init_G1( Y, TEDataSingleton::getData().pairing_ );
-    element_mul_zn( U, g, r );
-    element_mul_zn( Y, const_cast< element_t& >( common_public ), r );
-
-    element_clear( g );
+    libff::alt_bn128_G2 U, Y;
+    U = r * libff::alt_bn128_G2::one();
+    Y = r * common_public;
 
     std::string hash = this->Hash( Y );
-
-    element_clear( Y );
 
     // assuming message and hash are the same size strings
     // the behaviour is undefined when the two arguments are valarrays with different sizes
@@ -191,203 +100,118 @@ Ciphertext TE::Encrypt( const std::string& message, const element_t& common_publ
         V += static_cast< char >( res[i] );
     }
 
-    element_t W, H;
-    element_init_G1( W, TEDataSingleton::getData().pairing_ );
-    element_init_G1( H, TEDataSingleton::getData().pairing_ );
+    libff::alt_bn128_G1 W, H;
 
-    this->HashToGroup( H, U, V );
-    element_mul_zn( W, H, r );
-
-    element_clear( H );
-    element_clear( r );
+    H = this->HashToGroup( U, V );
+    W = r * H;
 
     Ciphertext result;
-    std::get< 0 >( result ) = element_wrapper( U );
+    std::get< 0 >( result ) = U;
     std::get< 1 >( result ) = V;
-    std::get< 2 >( result ) = element_wrapper( W );
-
-    element_clear( U );
-    element_clear( W );
+    std::get< 2 >( result ) = W;
 
     return result;
 }
 
-void TE::Decrypt( element_t ret_val, const Ciphertext& ciphertext, const element_t& secret_key ) {
+libff::alt_bn128_G2 TE::getDecryptionShare(
+    const Ciphertext& ciphertext, const libff::alt_bn128_Fr& secret_key ) {
     checkCypher( ciphertext );
-    if ( element_is0( const_cast< element_t& >( secret_key ) ) )
+    if ( secret_key.is_zero() )
         throw std::runtime_error( "zero secret key" );
 
-    element_t U;
-    element_init_G1( U, TEDataSingleton::getData().pairing_ );
-    element_set( U, const_cast< element_t& >( std::get< 0 >( ciphertext ).el_ ) );
+    libff::alt_bn128_G2 U = std::get< 0 >( ciphertext );
 
     std::string V = std::get< 1 >( ciphertext );
 
-    element_t W;
-    element_init_G1( W, TEDataSingleton::getData().pairing_ );
-    element_set( W, const_cast< element_t& >( std::get< 2 >( ciphertext ).el_ ) );
+    libff::alt_bn128_G1 W = std::get< 2 >( ciphertext );
 
-    element_t H;
-    element_init_G1( H, TEDataSingleton::getData().pairing_ );
-    this->HashToGroup( H, U, V );
+    libff::alt_bn128_G1 H = this->HashToGroup( U, V );
 
-    element_t fst, snd;
-    element_init_GT( fst, TEDataSingleton::getData().pairing_ );
-    element_init_GT( snd, TEDataSingleton::getData().pairing_ );
+    libff::alt_bn128_GT fst, snd;
+    fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
+    snd = libff::alt_bn128_ate_reduced_pairing( H, U );
 
-    pairing_apply(
-        fst, TEDataSingleton::getData().generator_, W, TEDataSingleton::getData().pairing_ );
-    pairing_apply( snd, U, H, TEDataSingleton::getData().pairing_ );
+    bool res = fst == snd;
 
-    bool res = element_cmp( fst, snd );
-
-    element_clear( fst );
-    element_clear( snd );
-
-    if ( res ) {
-        element_clear( U );
-        element_clear( W );
-        element_clear( H );
+    if ( !res ) {
         throw std::runtime_error( "cannot decrypt data" );
     }
 
-    element_mul_zn( ret_val, U, const_cast< element_t& >( secret_key ) );
+    libff::alt_bn128_G2 ret_val = secret_key * U;
 
-    element_clear( U );
-    element_clear( W );
-    element_clear( H );
+    return ret_val;
 }
 
-bool TE::Verify(
-    const Ciphertext& ciphertext, const element_t& decrypted, const element_t& public_key ) {
-    element_t U;
-    element_init_G1( U, TEDataSingleton::getData().pairing_ );
-    element_set( U, const_cast< element_t& >( std::get< 0 >( ciphertext ).el_ ) );
+bool TE::Verify( const Ciphertext& ciphertext, const libff::alt_bn128_G2& decryptionShare,
+    const libff::alt_bn128_G2& public_key ) {
+    libff::alt_bn128_G2 U = std::get< 0 >( ciphertext );
 
     std::string V = std::get< 1 >( ciphertext );
 
-    element_t W;
-    element_init_G1( W, TEDataSingleton::getData().pairing_ );
-    element_set( W, const_cast< element_t& >( std::get< 2 >( ciphertext ).el_ ) );
+    libff::alt_bn128_G1 W = std::get< 2 >( ciphertext );
 
-    element_t H;
-    element_init_G1( H, TEDataSingleton::getData().pairing_ );
-    this->HashToGroup( H, U, V );
+    libff::alt_bn128_G1 H = this->HashToGroup( U, V );
 
-    element_t fst, snd;
-    element_init_GT( fst, TEDataSingleton::getData().pairing_ );
-    element_init_GT( snd, TEDataSingleton::getData().pairing_ );
+    libff::alt_bn128_GT fst, snd;
+    fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
+    snd = libff::alt_bn128_ate_reduced_pairing( H, U );
 
-    pairing_apply(
-        fst, TEDataSingleton::getData().generator_, W, TEDataSingleton::getData().pairing_ );
-    pairing_apply( snd, U, H, TEDataSingleton::getData().pairing_ );
-
-    bool res = !element_cmp( fst, snd );
+    bool res = fst == snd;
 
     bool ret_val = true;
 
     if ( res ) {
-        if ( isG1Element0( const_cast< element_t& >( decrypted ) ) ) {
+        if ( decryptionShare.is_zero() ) {
             ret_val = false;
         } else {
-            element_t pp1, pp2;
-            element_init_GT( pp1, TEDataSingleton::getData().pairing_ );
-            element_init_GT( pp2, TEDataSingleton::getData().pairing_ );
+            libff::alt_bn128_GT pp1, pp2;
+            pp1 = libff::alt_bn128_ate_reduced_pairing( W, public_key );
+            pp2 = libff::alt_bn128_ate_reduced_pairing( H, decryptionShare );
 
-            pairing_apply( pp1, TEDataSingleton::getData().generator_,
-                const_cast< element_t& >( decrypted ), TEDataSingleton::getData().pairing_ );
-            pairing_apply( pp2, U, const_cast< element_t& >( public_key ),
-                TEDataSingleton::getData().pairing_ );
-
-            bool check = element_cmp( pp1, pp2 );
+            bool check = pp1 == pp2;
             if ( check ) {
                 ret_val = false;
             }
-
-            element_clear( pp1 );
-            element_clear( pp2 );
         }
     } else {
         ret_val = false;
     }
 
-    element_clear( fst );
-    element_clear( snd );
-
-    element_clear( U );
-    element_clear( W );
-    element_clear( H );
-
     return ret_val;
 }
 
 std::string TE::CombineShares( const Ciphertext& ciphertext,
-    const std::vector< std::pair< element_wrapper, size_t > >& decrypted ) {
-    element_t U;
-    element_init_G1( U, TEDataSingleton::getData().pairing_ );
-    element_set( U, const_cast< element_t& >( std::get< 0 >( ciphertext ).el_ ) );
+    const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShares ) {
+    libff::alt_bn128_G2 U = std::get< 0 >( ciphertext );
 
     std::string V = std::get< 1 >( ciphertext );
 
-    element_t W;
-    element_init_G1( W, TEDataSingleton::getData().pairing_ );
-    element_set( W, const_cast< element_t& >( std::get< 2 >( ciphertext ).el_ ) );
+    libff::alt_bn128_G1 W = std::get< 2 >( ciphertext );
 
-    element_t H;
-    element_init_G1( H, TEDataSingleton::getData().pairing_ );
-    this->HashToGroup( H, U, V );
+    libff::alt_bn128_G1 H = this->HashToGroup( U, V );
 
-    element_t fst, snd;
-    element_init_GT( fst, TEDataSingleton::getData().pairing_ );
-    element_init_GT( snd, TEDataSingleton::getData().pairing_ );
+    libff::alt_bn128_GT fst, snd;
+    fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
+    snd = libff::alt_bn128_ate_reduced_pairing( H, U );
 
-    pairing_apply(
-        fst, TEDataSingleton::getData().generator_, W, TEDataSingleton::getData().pairing_ );
-    pairing_apply( snd, U, H, TEDataSingleton::getData().pairing_ );
+    bool res = fst == snd;
 
-    element_clear( U );
-    element_clear( W );
-    element_clear( H );
-
-    bool res = element_cmp( fst, snd );
-
-    element_clear( fst );
-    element_clear( snd );
-
-    if ( res ) {
+    if ( !res ) {
         throw std::runtime_error( "error during share combining" );
     }
 
     std::vector< int > idx( this->t_ );
     for ( size_t i = 0; i < this->t_; ++i ) {
-        idx[i] = decrypted[i].second;
+        idx[i] = decryptionShares[i].second;
     }
 
+    std::vector< libff::alt_bn128_Fr > lagrange_coeffs = this->LagrangeCoeffs( idx );
 
-    std::vector< element_wrapper > lagrange_coeffs = this->LagrangeCoeffs( idx );
-
-    element_t sum;
-    element_init_G1( sum, TEDataSingleton::getData().pairing_ );
-    element_set0( sum );
+    libff::alt_bn128_G2 sum = libff::alt_bn128_G2::zero();
     for ( size_t i = 0; i < this->t_; ++i ) {
-        element_t temp;
-        element_init_G1( temp, TEDataSingleton::getData().pairing_ );
-        element_mul_zn( temp,
-            ( const_cast< std::vector< std::pair< element_wrapper, size_t > >& >( decrypted ) )[i]
-                .first.el_,
-            lagrange_coeffs[i].el_ );
+        libff::alt_bn128_G2 temp = lagrange_coeffs[i] * decryptionShares[i].first;
 
-        element_t tmp1;
-        element_init_G1( tmp1, TEDataSingleton::getData().pairing_ );
-
-        element_add( tmp1, sum, temp );
-
-        element_clear( sum );
-        element_init_G1( sum, TEDataSingleton::getData().pairing_ );
-        element_set( sum, tmp1 );
-
-        element_clear( temp );
-        element_clear( tmp1 );
+        sum = sum + temp;
     }
 
     std::string hash = this->Hash( sum );
@@ -409,87 +233,42 @@ std::string TE::CombineShares( const Ciphertext& ciphertext,
         message += static_cast< char >( xor_res[i] );
     }
 
-    element_clear( sum );
-
     return message;
 }
 
-std::vector< element_wrapper > TE::LagrangeCoeffs( const std::vector< int >& idx ) {
+std::vector< libff::alt_bn128_Fr > TE::LagrangeCoeffs( const std::vector< int >& idx ) {
     if ( idx.size() < this->t_ ) {
-        throw std::runtime_error( "Error, not enough participants in the threshold group" );
+        // throw IncorrectInput( "not enough participants in the threshold group" );
+        throw std::runtime_error( "not enough participants in the threshold group" );
     }
 
-    std::vector< element_wrapper > res( this->t_ );
+    std::vector< libff::alt_bn128_Fr > res( this->t_ );
 
-    element_t w;
-    element_init_Zr( w, TEDataSingleton::getData().pairing_ );
-    element_set1( w );
-
-    element_t a;
-    element_init_Zr( a, TEDataSingleton::getData().pairing_ );
+    libff::alt_bn128_Fr w = libff::alt_bn128_Fr::one();
 
     for ( size_t i = 0; i < this->t_; ++i ) {
-        element_mul_si( a, w, idx[i] );
-        element_clear( w );
-        element_init_Zr( w, TEDataSingleton::getData().pairing_ );
-        element_set( w, a );
+        w *= libff::alt_bn128_Fr( idx[i] );
     }
 
-    element_clear( a );
-
     for ( size_t i = 0; i < this->t_; ++i ) {
-        element_t v;
-        element_init_Zr( v, TEDataSingleton::getData().pairing_ );
-        element_set_si( v, idx[i] );
+        libff::alt_bn128_Fr v = libff::alt_bn128_Fr( idx[i] );
 
         for ( size_t j = 0; j < this->t_; ++j ) {
             if ( j != i ) {
-                if ( idx[i] == idx[j] ) {
-                    element_clear( w );
-                    element_clear( v );
+                if ( libff::alt_bn128_Fr( idx[i] ) == libff::alt_bn128_Fr( idx[j] ) ) {
+                    // throw IncorrectInput(
+                    //     "during the interpolation, have same indexes in list of indexes" );
                     throw std::runtime_error(
-                        "Error during the interpolation, have same indexes in the list of "
-                        "indexes" );
+                        "during the interpolation, have same indexes in list of indexes" );
                 }
 
-                element_t u;
-                element_init_Zr( u, TEDataSingleton::getData().pairing_ );
-
-                element_set_si( u, idx[j] - idx[i] );
-
-                element_init_Zr( a, TEDataSingleton::getData().pairing_ );
-                element_mul_zn( a, v, u );
-                element_clear( v );
-                element_init_Zr( v, TEDataSingleton::getData().pairing_ );
-                element_set( v, a );
-
-                element_clear( a );
-
-                element_clear( u );
+                v *= ( libff::alt_bn128_Fr( idx[j] ) -
+                       libff::alt_bn128_Fr( idx[i] ) );  // calculating Lagrange coefficients
             }
         }
 
-        element_init_Zr( a, TEDataSingleton::getData().pairing_ );
-        element_invert( a, v );
-        element_clear( v );
-        element_init_Zr( v, TEDataSingleton::getData().pairing_ );
-        element_set( v, a );
-
-        element_clear( a );
-
-
-        element_init_Zr( a, TEDataSingleton::getData().pairing_ );
-        element_mul_zn( a, w, v );
-
-        element_init_Zr( res[i].el_, TEDataSingleton::getData().pairing_ );
-        element_set( res[i].el_, a );
-
-        element_clear( a );
-
-        element_clear( v );
+        res[i] = w * v.invert();
     }
-
-    element_clear( w );
 
     return res;
 }

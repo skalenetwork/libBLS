@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file TEPublicKey.h
   @author Sveta Rogova
@@ -29,7 +29,7 @@
 
 class TEPublicKey {
 private:
-    encryption::element_wrapper PublicKey;
+    libff::alt_bn128_G2 PublicKey;
 
     size_t requiredSigners;
     size_t totalSigners;
@@ -39,15 +39,15 @@ public:
     TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str_ptr,
         size_t _requiredSigners, size_t _totalSigners );
 
-    TEPublicKey( encryption::element_wrapper _pkey, size_t _requiredSigners, size_t _totalSigners );
+    TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, size_t _totalSigners );
 
     TEPublicKey( TEPrivateKey _comon_private, size_t _requiredSigners, size_t _totalSigners );
 
     std::shared_ptr< std::vector< std::string > > toString();
 
-    encryption::Ciphertext encrypt( const std::shared_ptr< std::string >& message );
+    encryption::Ciphertext encrypt( std::shared_ptr< std::string > message );
 
-    encryption::element_wrapper getPublicKey() const;
+    libff::alt_bn128_G2 getPublicKey() const;
 };
 
 

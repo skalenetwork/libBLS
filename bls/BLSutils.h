@@ -14,7 +14,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 @file BLSUtils.h
 @author Sveta Rogova
@@ -35,7 +35,6 @@ public:
     static std::shared_ptr< std::vector< std::string > > SplitString(
         const std::shared_ptr< std::string >, const std::string& delim );
     static void initBLS();
-
 
     static std::atomic< bool > is_initialized;
 };

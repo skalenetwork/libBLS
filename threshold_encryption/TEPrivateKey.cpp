@@ -14,13 +14,14 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 @file TEPublicKey.h
 @author Sveta Rogova
 @date 2019
 */
 
+#include "../tools/utils.h"
 #include <threshold_encryption/TEPrivateKey.h>
 #include <threshold_encryption/utils.h>
 
@@ -33,30 +34,26 @@ TEPrivateKey::TEPrivateKey(
         throw std::runtime_error( "private key is null" );
     }
 
-    element_t pkey;
-    element_init_Zr( pkey, TEDataSingleton::getData().pairing_ );
-    element_set_str( pkey, _key_str->c_str(), 10 );
-    privateKey = encryption::element_wrapper( pkey );
-    element_clear( pkey );
+    privateKey = libff::alt_bn128_Fr( _key_str->c_str() );
 
-    if ( element_is0( privateKey.el_ ) ) {
+    if ( privateKey.is_zero() ) {
         throw std::runtime_error( " private key is zero" );
     }
 }
 
 TEPrivateKey::TEPrivateKey(
-    encryption::element_wrapper _skey, size_t _requiredSigners, size_t _totalSigners )
+    libff::alt_bn128_Fr _skey, size_t _requiredSigners, size_t _totalSigners )
     : privateKey( _skey ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
 
-    if ( element_is0( _skey.el_ ) )
+    if ( _skey.is_zero() )
         throw std::runtime_error( " private key is zero" );
 }
 
 std::string TEPrivateKey::toString() {
-    return ElementZrToString( privateKey.el_ );
+    return fieldElementToString( privateKey );
 }
 
-encryption::element_wrapper TEPrivateKey::getPrivateKey() const {
+libff::alt_bn128_Fr TEPrivateKey::getPrivateKey() const {
     return privateKey;
 }
