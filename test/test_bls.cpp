@@ -976,10 +976,19 @@ BOOST_AUTO_TEST_CASE( DKGWrappersExceptions ) {
     }
     BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;  // null verification vector
+    is_exception_caught = false;  // zero share
     try {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
         dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::zero(), nullptr );
+    } catch ( std::runtime_error& ) {
+        is_exception_caught = true;
+    }
+    BOOST_REQUIRE( is_exception_caught );
+
+    is_exception_caught = false;  // null verification vector
+    try {
+        DKGBLSWrapper dkg_wrap( num_signed, num_all );
+        dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::random_element(), nullptr );
     } catch ( std::runtime_error& ) {
         is_exception_caught = true;
     }

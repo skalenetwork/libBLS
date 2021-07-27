@@ -877,6 +877,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
 
     bool is_exception_caught = false;
     try {
+        // zero share
         DKGTEWrapper dkg_te( num_signed, num_all );
 
         element_t el1;
@@ -893,11 +894,12 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
 
     is_exception_caught = false;
     try {
+        // null verification vector
         DKGTEWrapper dkg_te( num_signed, num_all );
 
         element_t el1;
         element_init_Zr( el1, TEDataSingleton::getData().pairing_ );
-        element_set0( el1 );
+        element_random( el1 );
         encryption::element_wrapper el_wrap( el1 );
         element_clear( el1 );
         dkg_te.VerifyDKGShare( 1, el_wrap, nullptr );
