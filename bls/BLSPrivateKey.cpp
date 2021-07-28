@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file BLSPrivateKey.cpp
   @author Sveta Rogova
@@ -22,7 +22,6 @@
 */
 
 #include <bls/BLSPrivateKey.h>
-#include <bls/BLSutils.h>
 #include <bls/bls.h>
 #include <tools/utils.h>
 
@@ -30,7 +29,7 @@
 BLSPrivateKey::BLSPrivateKey(
     const std::shared_ptr< std::string >& _key, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    BLSutils::initBLS();
+    ThresholdUtils::initCurve();
 
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
     if ( _key == nullptr ) {

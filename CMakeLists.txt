@@ -73,7 +73,6 @@ set(sourses_bls
 		bls/BLSSignature.cpp
 		bls/BLSSigShare.cpp
 		bls/BLSSigShareSet.cpp
-		bls/BLSutils.cpp
 		dkg/dkg.cpp
 		dkg/DKGBLSWrapper.cpp
 		dkg/DKGBLSSecret.cpp
@@ -91,7 +90,6 @@ set(headers_bls
 		bls/BLSSignature.h
 		bls/BLSSigShare.h
 		bls/BLSSigShareSet.h
-		bls/BLSutils.h
 		dkg/dkg.h
 		dkg/DKGBLSWrapper.h
 		dkg/DKGBLSSecret.h

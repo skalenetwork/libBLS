@@ -30,7 +30,6 @@
 #include <bls/BLSPrivateKeyShare.h>
 #include <bls/BLSPublicKey.h>
 #include <bls/BLSPublicKeyShare.h>
-#include <bls/BLSutils.h>
 
 
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )

@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file BLSSigShareSet.cpp
   @author Stan Kladko, Sveta Rogova
@@ -27,7 +27,6 @@
 #include <bls/BLSSigShare.h>
 #include <bls/BLSSigShareSet.h>
 #include <bls/BLSSignature.h>
-#include <bls/BLSutils.h>
 #include <tools/utils.h>
 
 
@@ -67,7 +66,7 @@ BLSSigShareSet::BLSSigShareSet( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ), was_merged( false ) {
     ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    BLSutils::initBLS();
+    ThresholdUtils::initCurve();
 }
 
 bool BLSSigShareSet::isEnough() {

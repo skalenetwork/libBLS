@@ -25,6 +25,7 @@
 #define LIBBLS_UTILS_H
 
 #include <array>
+#include <atomic>
 #include <memory>
 #include <string>
 #include <vector>
@@ -33,6 +34,10 @@
 
 class ThresholdUtils {
 public:
+    static void initCurve();
+
+    static std::atomic< bool > is_initialized;
+
     static void checkSigners( size_t _requiredSigners, size_t _totalSigners );
 
     static std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem );
@@ -50,6 +55,12 @@ public:
 
     static void checkCypher(
         const std::tuple< libff::alt_bn128_G2, std::string, libff::alt_bn128_G1 >& cypher );
+
+    static std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ParseHint(
+        const std::string& hint );
+
+    static std::shared_ptr< std::vector< std::string > > SplitString(
+        const std::shared_ptr< std::string >, const std::string& delim );
 
     template < class T >
     static std::string fieldElementToString( const T& field_elem );

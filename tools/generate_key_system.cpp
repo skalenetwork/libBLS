@@ -24,7 +24,6 @@
 
 #include <fstream>
 
-#include <bls/BLSutils.h>
 #include <bls/bls.h>
 #include <tools/utils.h>
 

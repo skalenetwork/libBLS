@@ -22,7 +22,6 @@
 */
 
 
-#include <bls/BLSutils.h>
 #include <dkg/dkg.h>
 #include <tools/utils.h>
 

@@ -26,7 +26,6 @@
 #include <bls/BLSSignature.h>
 #include <tools/utils.h>
 
-#include <bls/BLSutils.h>
 #include <dkg/dkg.h>
 
 
@@ -34,7 +33,7 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(
     const std::string& _key, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
-    BLSutils::initBLS();
+    ThresholdUtils::initCurve();
     if ( _key.empty() ) {
         throw signatures::Bls::IncorrectInput( "Secret key share string is empty" );
     }

@@ -22,7 +22,6 @@
 */
 
 #include <bls/BLSPublicKey.h>
-#include <bls/BLSutils.h>
 #include <bls/bls.h>
 #include <tools/utils.h>
 #include <boost/program_options.hpp>

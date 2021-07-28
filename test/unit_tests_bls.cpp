@@ -36,7 +36,6 @@
 
 #define BOOST_TEST_MODULE
 
-#include <bls/BLSutils.h>
 #include <boost/test/included/unit_test.hpp>
 
 BOOST_AUTO_TEST_SUITE( libBls )
@@ -454,7 +453,7 @@ BOOST_AUTO_TEST_CASE( RandomPolynomial ) {
 
     std::vector< libff::alt_bn128_Fr > pol( deg + 1 );
 
-    BLSutils::initBLS();
+    ThresholdUtils::initCurve();
 
     // random polynomial generation
     for ( size_t i = 0; i < deg + 1; ++i ) {

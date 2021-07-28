@@ -21,8 +21,8 @@
   @date 2018
 */
 
-#include "bls/BLSutils.h"
 #include <dkg/dkg.h>
+#include <tools/utils.h>
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
@@ -33,7 +33,7 @@ namespace signatures {
 typedef std::vector< libff::alt_bn128_Fr > Polynomial;
 
 Dkg::Dkg( const size_t t, const size_t n ) : t_( t ), n_( n ) {
-    BLSutils::initBLS();
+    ThresholdUtils::initCurve();
 }
 
 Polynomial Dkg::GeneratePolynomial() {

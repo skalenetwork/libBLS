@@ -32,7 +32,6 @@
 #include <bls/BLSSigShare.h>
 #include <bls/BLSSigShareSet.h>
 #include <bls/BLSSignature.h>
-#include <bls/BLSutils.h>
 #include <tools/utils.h>
 
 #include <map>

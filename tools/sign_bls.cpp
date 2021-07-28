@@ -21,7 +21,6 @@
   @date 2019
 */
 
-#include <bls/BLSutils.h>
 #include <bls/bls.h>
 #include <tools/utils.h>
 

@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file BLSSignature.cpp
   @author Stan Kladko, Sveta Rogova
@@ -22,7 +22,7 @@
 */
 
 #include <bls/BLSSignature.h>
-#include <bls/BLSutils.h>
+#include <tools/utils.h>
 
 std::shared_ptr< libff::alt_bn128_G1 > BLSSignature::getSig() const {
     CHECK( sig );
@@ -38,7 +38,7 @@ BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, st
 
     CHECK( sig );
 
-    BLSutils::initBLS();
+    ThresholdUtils::initCurve();
 
 
     if ( sig->is_zero() ) {
@@ -56,7 +56,7 @@ BLSSignature::BLSSignature(
 
     BLSSignature::checkSigners( requiredSigners, totalSigners );
 
-    BLSutils::initBLS();
+    ThresholdUtils::initCurve();
 
     if ( _sig->size() < 10 ) {
         throw signatures::Bls::IsNotWellFormed(
@@ -68,7 +68,7 @@ BLSSignature::BLSSignature(
             "Signature too long:" + std::to_string( _sig->size() ) );
     }
 
-    std::shared_ptr< std::vector< std::string > > result = BLSutils::SplitString( _sig, ":" );
+    std::shared_ptr< std::vector< std::string > > result = ThresholdUtils::SplitString( _sig, ":" );
 
     if ( result->size() != 4 )
         throw signatures::Bls::IncorrectInput( "Misformatted signature" );

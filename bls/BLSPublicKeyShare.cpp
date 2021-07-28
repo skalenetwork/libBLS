@@ -24,7 +24,6 @@
 #include <bls/BLSPublicKeyShare.h>
 #include <bls/BLSSigShare.h>
 #include <bls/BLSSignature.h>
-#include <bls/BLSutils.h>
 #include <bls/bls.h>
 #include <tools/utils.h>
 
@@ -36,7 +35,7 @@ BLSPublicKeyShare::BLSPublicKeyShare(
 
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
 
-    BLSutils::initBLS();
+    ThresholdUtils::initCurve();
 
     publicKey = std::make_shared< libff::alt_bn128_G2 >();
 
@@ -59,7 +58,7 @@ BLSPublicKeyShare::BLSPublicKeyShare(
 BLSPublicKeyShare::BLSPublicKeyShare(
     const libff::alt_bn128_Fr& _skey, size_t _totalSigners, size_t _requiredSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    BLSutils::initBLS();
+    ThresholdUtils::initCurve();
     if ( _skey.is_zero() ) {
         throw signatures::Bls::ZeroSecretKey( "Zero BLS Secret Key" );
     }
@@ -117,7 +116,8 @@ bool BLSPublicKeyShare::VerifySigWithHelper( std::shared_ptr< std::array< uint8_
 
     std::string hint = sign_ptr->getHint();
 
-    std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > y_shift_x = BLSutils::ParseHint( hint );
+    std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > y_shift_x =
+        ThresholdUtils::ParseHint( hint );
 
     libff::alt_bn128_Fq x = ThresholdUtils::HashToFq( hash_ptr );
 

@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file BLSPublicKey.cpp
   @author Sveta Rogova
@@ -24,14 +24,13 @@
 
 #include <bls/BLSPublicKey.h>
 #include <bls/BLSPublicKeyShare.h>
-#include <bls/BLSutils.h>
 #include <tools/utils.h>
 
 
 BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > pkey_str_vect,
     size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    BLSutils::initBLS();
+    ThresholdUtils::initCurve();
 
     CHECK( pkey_str_vect )
 
@@ -58,7 +57,7 @@ BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > 
 BLSPublicKey::BLSPublicKey(
     const libff::alt_bn128_G2& pkey, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    BLSutils::initBLS();
+    ThresholdUtils::initCurve();
 
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
 
@@ -88,7 +87,7 @@ size_t BLSPublicKey::getRequiredSigners() const {
 
 bool BLSPublicKey::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
     std::shared_ptr< BLSSignature > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
-    BLSutils::initBLS();
+    ThresholdUtils::initCurve();
 
     std::shared_ptr< signatures::Bls > obj;
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
@@ -120,7 +119,8 @@ bool BLSPublicKey::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32
 
     std::string hint = sign_ptr->getHint();
 
-    std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > y_shift_x = BLSutils::ParseHint( hint );
+    std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > y_shift_x =
+        ThresholdUtils::ParseHint( hint );
 
     libff::alt_bn128_Fq x = ThresholdUtils::HashToFq( hash_ptr );
     x = x + y_shift_x.second;
@@ -143,7 +143,7 @@ BLSPublicKey::BLSPublicKey(
     std::shared_ptr< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > > koefs_pkeys_map,
     size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    BLSutils::initBLS();
+    ThresholdUtils::initCurve();
 
     ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 

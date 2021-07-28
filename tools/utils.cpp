@@ -21,7 +21,20 @@
   @date 2021
 */
 
-#include "utils.h"
+#include <tools/utils.h>
+#include <mutex>
+
+std::atomic< bool > ThresholdUtils::is_initialized = false;
+
+std::mutex initMutex;
+
+void ThresholdUtils::initCurve() {
+    std::lock_guard< std::mutex > lock( initMutex );
+    if ( !is_initialized ) {
+        libff::init_alt_bn128_params();
+        is_initialized = true;
+    }
+}
 
 void ThresholdUtils::checkSigners( size_t _requiredSigners, size_t _totalSigners ) {
     if ( _requiredSigners > _totalSigners ) {
@@ -167,4 +180,37 @@ void ThresholdUtils::checkCypher(
 
     if ( std::get< 1 >( cyphertext ).length() != 64 )
         throw std::runtime_error( "wrong string length in cyphertext" );
+}
+
+std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ThresholdUtils::ParseHint(
+    const std::string& _hint ) {
+    auto position = _hint.find( ":" );
+
+    if ( position == std::string::npos ) {
+        throw std::runtime_error( "Misformatted hint" );
+    }
+
+    libff::alt_bn128_Fq y( _hint.substr( 0, position ).c_str() );
+    libff::alt_bn128_Fq shift_x( _hint.substr( position + 1 ).c_str() );
+
+    return std::make_pair( y, shift_x );
+}
+
+std::shared_ptr< std::vector< std::string > > ThresholdUtils::SplitString(
+    std::shared_ptr< std::string > str, const std::string& delim ) {
+    // CHECK( str );
+
+    std::vector< std::string > tokens;
+    size_t prev = 0, pos = 0;
+    do {
+        pos = str->find( delim, prev );
+        if ( pos == std::string::npos )
+            pos = str->length();
+        std::string token = str->substr( prev, pos - prev );
+        if ( !token.empty() )
+            tokens.push_back( token );
+        prev = pos + delim.length();
+    } while ( pos < str->length() && prev < str->length() );
+
+    return std::make_shared< std::vector< std::string > >( tokens );
 }

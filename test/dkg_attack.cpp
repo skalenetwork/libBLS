@@ -2,7 +2,6 @@
 #include <bls/BLSSigShare.h>
 #include <bls/BLSSigShareSet.h>
 #include <bls/BLSSignature.h>
-#include <bls/BLSutils.h>
 #include <bls/bls.h>
 #include <dkg/DKGBLSWrapper.h>
 #include <dkg/dkg.h>
