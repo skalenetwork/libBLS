@@ -89,7 +89,7 @@ void Sign( const size_t t, const size_t n, std::istream& data_file, std::ostream
         }
     }
 
-    libff::alt_bn128_G1 hash = bls_instance.HashtoG1( hash_bytes_arr );
+    libff::alt_bn128_G1 hash = ThresholdUtils::HashtoG1( hash_bytes_arr );
 
     nlohmann::json hash_json;
     hash_json["message"] = message;

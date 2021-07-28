@@ -24,6 +24,7 @@
 #include <bls/BLSPrivateKeyShare.h>
 #include <bls/BLSSigShare.h>
 #include <bls/BLSSignature.h>
+#include <tools/utils.h>
 
 #include <bls/BLSutils.h>
 #include <dkg/dkg.h>
@@ -69,7 +70,7 @@ std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::sign(
 
     obj = std::make_shared< signatures::Bls >( signatures::Bls( requiredSigners, totalSigners ) );
 
-    libff::alt_bn128_G1 hash = obj->HashtoG1( hash_byte_arr );
+    libff::alt_bn128_G1 hash = ThresholdUtils::HashtoG1( hash_byte_arr );
 
     auto ss = std::make_shared< libff::alt_bn128_G1 >( obj->Signing( hash, *privateKey ) );
 

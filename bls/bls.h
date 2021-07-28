@@ -86,8 +86,6 @@ public:
     static libff::alt_bn128_G1 HashBytes( const char* raw_bytes, size_t length,
         std::string ( *hash_func )( const std::string& str ) = cryptlite::sha256::hash_hex );
 
-    static libff::alt_bn128_G1 HashtoG1( std::shared_ptr< std::array< uint8_t, 32 > > );
-
     static std::pair< libff::alt_bn128_G1, std::string > HashtoG1withHint(
         std::shared_ptr< std::array< uint8_t, 32 > > );
 

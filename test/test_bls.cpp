@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE( libBls ) {
         for ( size_t i = 0; i < 10; ++i ) {
             std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr =
                 std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() );
-            libff::alt_bn128_G1 hash = obj.HashtoG1( hash_ptr );
+            libff::alt_bn128_G1 hash = ThresholdUtils::HashtoG1( hash_ptr );
 
             for ( size_t i = 0; i < num_signed; ++i )
                 signatures.at( i ) = obj.Signing( hash, skeys.at( i ) );

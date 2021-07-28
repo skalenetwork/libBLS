@@ -23,6 +23,7 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
 
 #include <bls/bls.h>
+#include <tools/utils.h>
 
 #include <bitset>
 #include <chrono>
@@ -77,52 +78,6 @@ libff::alt_bn128_G1 Bls::Hashing(
     const libff::alt_bn128_G1 hash = libff::alt_bn128_Fr( s.c_str() ) * libff::alt_bn128_G1::one();
 
     return hash;
-}
-
-libff::alt_bn128_G1 Bls::HashtoG1( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr ) {
-    CHECK( hash_byte_arr );
-
-    libff::alt_bn128_Fq x1( BLSutils::HashToFq( hash_byte_arr ) );
-
-    libff::alt_bn128_G1 result;
-
-    while ( true ) {
-        libff::alt_bn128_Fq y1_sqr = x1 ^ 3;
-        y1_sqr = y1_sqr + libff::alt_bn128_coeff_b;
-
-        libff::alt_bn128_Fq euler = y1_sqr ^ libff::alt_bn128_Fq::euler;
-
-        if ( euler == libff::alt_bn128_Fq::one() ||
-             euler == libff::alt_bn128_Fq::zero() ) {  // if y1_sqr is a square
-            result.X = x1;
-            libff::alt_bn128_Fq temp_y = y1_sqr.sqrt();
-
-            mpz_t pos_y;
-            mpz_init( pos_y );
-
-            temp_y.as_bigint().to_mpz( pos_y );
-
-            mpz_t neg_y;
-            mpz_init( neg_y );
-
-            ( -temp_y ).as_bigint().to_mpz( neg_y );
-
-            if ( mpz_cmp( pos_y, neg_y ) < 0 ) {
-                temp_y = -temp_y;
-            }
-
-            mpz_clear( pos_y );
-            mpz_clear( neg_y );
-
-            result.Y = temp_y;
-            break;
-        } else {
-            x1 = x1 + 1;
-        }
-    }
-    result.Z = libff::alt_bn128_Fq::one();
-
-    return result;
 }
 
 std::pair< libff::alt_bn128_G1, std::string > Bls::HashtoG1withHint(
@@ -255,7 +210,7 @@ bool Bls::Verification( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_a
         throw IsNotWellFormed( "Error, signature is not member of G1" );
     }
 
-    libff::alt_bn128_G1 hash = HashtoG1( hash_byte_arr );
+    libff::alt_bn128_G1 hash = ThresholdUtils::HashtoG1( hash_byte_arr );
 
     return ( libff::alt_bn128_ate_reduced_pairing( sign, libff::alt_bn128_G2::one() ) ==
              libff::alt_bn128_ate_reduced_pairing( hash, public_key ) );
