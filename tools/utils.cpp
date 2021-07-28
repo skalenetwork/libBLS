@@ -90,8 +90,7 @@ std::vector< libff::alt_bn128_Fr > LagrangeCoeffs( const std::vector< int >& idx
     return res;
 }
 
-libff::alt_bn128_Fq HashToFq(
-    std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr ) {
+libff::alt_bn128_Fq HashToFq( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr ) {
     libff::bigint< libff::alt_bn128_q_limbs > from_hex;
 
     std::vector< uint8_t > hex( 64 );

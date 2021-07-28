@@ -28,10 +28,14 @@
 #include "../tools/utils.h"
 #include <threshold_encryption.h>
 #include <threshold_encryption/utils.h>
+#include <libff/common/profiling.hpp>
 
 namespace encryption {
 
-TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {}
+TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {
+    libff::init_alt_bn128_params();
+    libff::inhibit_profiling_info = true;
+}
 
 TE::~TE() {}
 
@@ -169,7 +173,7 @@ bool TE::Verify( const Ciphertext& ciphertext, const libff::alt_bn128_G2& decryp
             pp2 = libff::alt_bn128_ate_reduced_pairing( H, decryptionShare );
 
             bool check = pp1 == pp2;
-            if ( check ) {
+            if ( !check ) {
                 ret_val = false;
             }
         }

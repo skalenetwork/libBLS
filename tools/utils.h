@@ -38,8 +38,8 @@ std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem );
 
 std::vector< libff::alt_bn128_Fr > LagrangeCoeffs( const std::vector< int >& idx, size_t t );
 
-libff::alt_bn128_Fq HashToFq( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr);
+libff::alt_bn128_Fq HashToFq( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
 
-libff::alt_bn128_G1 HashtoG1( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr);
+libff::alt_bn128_G1 HashtoG1( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
 
-#endif // LIBBLS_UTILS_H
+#endif  // LIBBLS_UTILS_H
