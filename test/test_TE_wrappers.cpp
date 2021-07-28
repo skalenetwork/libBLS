@@ -24,6 +24,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 #define BOOST_TEST_MODULE
 
+#include "../tools/utils.h"
 #include <dkg/dkg_te.h>
 #include <threshold_encryption/TEDecryptSet.h>
 #include <threshold_encryption/TEPrivateKey.h>
@@ -54,56 +55,6 @@ std::string spoilMessage( std::string& message ) {
 
 BOOST_AUTO_TEST_SUITE( ThresholdEncryptionWrappers )
 
-BOOST_AUTO_TEST_CASE( testSqrt ) {
-    for ( size_t i = 0; i < 100; i++ ) {
-        gmp_randstate_t state;
-        gmp_randinit_default( state );
-
-        mpz_t rand;
-        mpz_init( rand );
-
-        mpz_t num_limbs_mpz;
-        mpz_init( num_limbs_mpz );
-        mpz_set_si( num_limbs_mpz, num_limbs );
-
-        mpz_urandomm( rand, state, num_limbs_mpz );
-
-        mpz_clear( num_limbs_mpz );
-
-        mpz_t modulus_q;
-        mpz_init( modulus_q );
-        mpz_set_str( modulus_q,
-            "87807107996633125224377819847540498158068831994142082110286533992664756308802229570786"
-            "25179422662221423155858769582317459277713367317481324925129998224791",
-            10 );
-
-        mpz_t sqr_mod;
-        mpz_init( sqr_mod );
-        mpz_powm_ui( sqr_mod, rand, 2, modulus_q );
-
-        mpz_t mpz_sqrt0;
-        mpz_init( mpz_sqrt0 );
-        mpz_mod( mpz_sqrt0, rand, modulus_q );
-
-        mpz_clear( rand );
-
-        mpz_t mpz_sqrt;
-        mpz_init( mpz_sqrt );
-
-        MpzSquareRoot( mpz_sqrt, sqr_mod );
-
-        mpz_t sum;
-        mpz_init( sum );
-
-        mpz_add( sum, mpz_sqrt0, mpz_sqrt );
-
-        BOOST_REQUIRE( mpz_cmp( mpz_sqrt0, mpz_sqrt ) == 0 || mpz_cmp( sum, modulus_q ) == 0 );
-
-        mpz_clears( mpz_sqrt0, mpz_sqrt, sqr_mod, sum, modulus_q, 0 );
-        gmp_randclear( state );
-    }
-}
-
 BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
     for ( size_t i = 0; i < 10; i++ ) {
         size_t num_all = rand_gen() % 16 + 1;
@@ -111,16 +62,12 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
 
         encryption::DkgTe dkg_te( num_signed, num_all );
 
-        std::vector< encryption::element_wrapper > poly = dkg_te.GeneratePolynomial();
-        element_t zero;
-        element_init_Zr( zero, TEDataSingleton::getData().pairing_ );
-        element_set0( zero );
-        encryption::element_wrapper zero_el( zero );
+        std::vector< libff::alt_bn128_Fr > poly = dkg_te.GeneratePolynomial();
+        
+        libff::alt_bn128_Fr zero_el = libff::alt_bn128_Fr::zero();
 
-        element_clear( zero );
-
-        encryption::element_wrapper common_skey = dkg_te.ComputePolynomialValue( poly, zero_el );
-        BOOST_REQUIRE( element_cmp( common_skey.el_, poly.at( 0 ).el_ ) == 0 );
+        libff::alt_bn128_Fr common_skey = dkg_te.ComputePolynomialValue( poly, zero_el );
+        BOOST_REQUIRE( common_skey == poly.at( 0 ) );
 
         TEPrivateKey common_private( common_skey, num_signed, num_all );
 
@@ -131,16 +78,15 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         }
 
         TEPublicKey common_public( common_private, num_signed, num_all );
-        std::shared_ptr msg_ptr = std::make_shared< std::string >( message );
+        auto msg_ptr = std::make_shared< std::string >( message );
         encryption::Ciphertext cypher = common_public.encrypt( msg_ptr );
 
-        std::vector< encryption::element_wrapper > skeys =
-            dkg_te.CreateSecretKeyContribution( poly );
+        std::vector< libff::alt_bn128_Fr > skeys = dkg_te.CreateSecretKeyContribution( poly );
         std::vector< TEPrivateKeyShare > skey_shares;
         std::vector< TEPublicKeyShare > public_key_shares;
         for ( size_t i = 0; i < num_all; i++ ) {
             skey_shares.emplace_back(
-                TEPrivateKeyShare( skeys[i].el_, i + 1, num_signed, num_all ) );
+                TEPrivateKeyShare( skeys[i], i + 1, num_signed, num_all ) );
             public_key_shares.emplace_back(
                 TEPublicKeyShare( skey_shares[i], num_signed, num_all ) );
         }
@@ -157,9 +103,9 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
 
         TEDecryptSet decr_set( num_signed, num_all );
         for ( size_t i = 0; i < num_signed; i++ ) {
-            encryption::element_wrapper decrypt = skey_shares[i].decrypt( cypher );
-            BOOST_REQUIRE( public_key_shares[i].Verify( cypher, decrypt.el_ ) );
-            std::shared_ptr decr_ptr = std::make_shared< encryption::element_wrapper >( decrypt );
+            libff::alt_bn128_G2 decrypt = skey_shares[i].getDecryptionShare( cypher );
+            BOOST_REQUIRE( public_key_shares[i].Verify( cypher, decrypt ) );
+            auto decr_ptr = std::make_shared< libff::alt_bn128_G2 >( decrypt );
             decr_set.addDecrypt( skey_shares[i].getSignerIndex(), decr_ptr );
         }
         std::string message_decrypted = decr_set.merge( cypher );
@@ -185,8 +131,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         BOOST_REQUIRE( is_exception_caught );
 
         bad_cypher = cypher;  // corrupt U in cypher
-        element_t rand_el;
-        element_init_G1( rand_el, TEDataSingleton::getData().pairing_ );
+        libff::alt_bn128_G2 rand_el = libff::alt_bn128_G2::random_element();
         std::get< 0 >( bad_cypher ) = rand_el;
 
         is_exception_caught = false;
@@ -198,8 +143,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         BOOST_REQUIRE( is_exception_caught );
 
         bad_cypher = cypher;  // corrupt W in cypher
-        element_t rand_el2;
-        element_init_G1( rand_el2, TEDataSingleton::getData().pairing_ );
+        libff::alt_bn128_G1 rand_el2 = libff::alt_bn128_G1::random_element();
         std::get< 2 >( bad_cypher ) = rand_el2;
         is_exception_caught = false;
         try {
@@ -211,38 +155,30 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
 
         size_t ind = rand_gen() % num_signed;  // corrupt random private key share
 
-        element_t bad_pkey;
-        element_init_Zr( bad_pkey, TEDataSingleton::getData().pairing_ );
-        element_random( bad_pkey );
-        TEPrivateKeyShare bad_key( encryption::element_wrapper( bad_pkey ),
-            skey_shares[ind].getSignerIndex(), num_signed, num_all );
+        libff::alt_bn128_Fr bad_pkey = libff::alt_bn128_Fr::random_element();
+        TEPrivateKeyShare bad_key( bad_pkey, skey_shares[ind].getSignerIndex(), num_signed, num_all );
         skey_shares[ind] = bad_key;
-        element_clear( bad_pkey );
 
         TEDecryptSet bad_decr_set( num_signed, num_all );
         for ( size_t i = 0; i < num_signed; i++ ) {
-            encryption::element_wrapper decrypt = skey_shares[i].decrypt( cypher );
+            libff::alt_bn128_G2 decrypt = skey_shares[i].getDecryptionShare( cypher );
             if ( i == ind )
-                BOOST_REQUIRE( !public_key_shares[i].Verify( cypher, decrypt.el_ ) );
-            std::shared_ptr decr_ptr = std::make_shared< encryption::element_wrapper >( decrypt );
+                BOOST_REQUIRE( !public_key_shares[i].Verify( cypher, decrypt ) );
+            auto decr_ptr = std::make_shared< libff::alt_bn128_G2 >( decrypt );
             bad_decr_set.addDecrypt( skey_shares[i].getSignerIndex(), decr_ptr );
         }
 
         std::string bad_message_decrypted = bad_decr_set.merge( cypher );
         BOOST_REQUIRE( message != bad_message_decrypted );
-
-        element_clear( rand_el );
-        element_clear( rand_el2 );
     }
 }
 
 BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
-    for ( size_t i = 0; i < 10; i++ ) {
+    for ( size_t i = 0; i < 10; ++i ) {
         size_t num_all = rand_gen() % 16 + 1;
         size_t num_signed = rand_gen() % num_all + 1;
 
         encryption::DkgTe dkg_te( num_signed, num_all );
-
 
         std::string message;
         size_t msg_length = 64;
@@ -255,7 +191,7 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
             keys = TEPrivateKeyShare::generateSampleKeys( num_signed, num_all );
 
 
-        std::shared_ptr msg_ptr = std::make_shared< std::string >( message );
+        auto msg_ptr = std::make_shared< std::string >( message );
         encryption::Ciphertext cypher = keys.second->encrypt( msg_ptr );
 
         std::vector< TEPublicKeyShare > public_key_shares;
@@ -276,9 +212,9 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
 
         TEDecryptSet decr_set( num_signed, num_all );
         for ( size_t i = 0; i < num_signed; i++ ) {
-            encryption::element_wrapper decrypt = ( *keys.first->at( i ) ).decrypt( cypher );
-            BOOST_REQUIRE( public_key_shares.at( i ).Verify( cypher, decrypt.el_ ) );
-            std::shared_ptr decr_ptr = std::make_shared< encryption::element_wrapper >( decrypt );
+            libff::alt_bn128_G2 decrypt = ( *keys.first->at( i ) ).getDecryptionShare( cypher );
+            BOOST_REQUIRE( public_key_shares.at( i ).Verify( cypher, decrypt ) );
+            auto decr_ptr = std::make_shared< libff::alt_bn128_G2 >( decrypt );
             decr_set.addDecrypt( ( *keys.first->at( i ) ).getSignerIndex(), decr_ptr );
         }
         std::string message_decrypted = decr_set.merge( cypher );
@@ -291,49 +227,32 @@ BOOST_AUTO_TEST_CASE( WrappersFromString ) {
         size_t num_all = rand_gen() % 16 + 1;
         size_t num_signed = rand_gen() % num_all + 1;
 
-        element_t test0;
-        element_init_G1( test0, TEDataSingleton::getData().pairing_ );
-        element_random( test0 );
-        TEPublicKey common_pkey( encryption::element_wrapper( test0 ), num_signed, num_all );
-
-        element_clear( test0 );
+        libff::alt_bn128_G2 test0 = libff::alt_bn128_G2::random_element();
+        TEPublicKey common_pkey( test0, num_signed, num_all );
 
         TEPublicKey common_pkey_from_str( common_pkey.toString(), num_signed, num_all );
-        BOOST_REQUIRE( element_cmp( common_pkey.getPublicKey().el_,
-                           common_pkey_from_str.getPublicKey().el_ ) == 0 );
+        BOOST_REQUIRE( common_pkey.getPublicKey() == common_pkey_from_str.getPublicKey() );
 
-        element_t test;
-        element_init_Zr( test, TEDataSingleton::getData().pairing_ );
-        element_random( test );
-        TEPrivateKey private_key( encryption::element_wrapper( test ), num_signed, num_all );
-
-        element_clear( test );
+        libff::alt_bn128_Fr test = libff::alt_bn128_Fr::random_element();
+        TEPrivateKey private_key( test, num_signed, num_all );
 
         TEPrivateKey private_key_from_str(
             std::make_shared< std::string >( private_key.toString() ), num_signed, num_all );
-        BOOST_REQUIRE( element_cmp( private_key.getPrivateKey().el_,
-                           private_key_from_str.getPrivateKey().el_ ) == 0 );
+        BOOST_REQUIRE( private_key.getPrivateKey() == private_key_from_str.getPrivateKey() );
 
-        element_t test2;
-        element_init_Zr( test2, TEDataSingleton::getData().pairing_ );
-        element_random( test2 );
+        libff::alt_bn128_Fr test2 = libff::alt_bn128_Fr::random_element();
         size_t signer = rand_gen() % num_all;
-        TEPrivateKeyShare pr_key_share(
-            encryption::element_wrapper( test2 ), signer, num_signed, num_all );
-
-        element_clear( test2 );
+        TEPrivateKeyShare pr_key_share( test2, signer, num_signed, num_all );
 
         TEPrivateKeyShare pr_key_share_from_str(
             std::make_shared< std::string >( pr_key_share.toString() ), signer, num_signed,
             num_all );
-        BOOST_REQUIRE( element_cmp( pr_key_share.getPrivateKey().el_,
-                           pr_key_share_from_str.getPrivateKey().el_ ) == 0 );
+        BOOST_REQUIRE( pr_key_share.getPrivateKey() == pr_key_share_from_str.getPrivateKey() );
 
         TEPublicKeyShare pkey( pr_key_share, num_signed, num_all );
         TEPublicKeyShare pkey_from_str(
             pkey.toString(), pr_key_share.getSignerIndex(), num_signed, num_all );
-        BOOST_REQUIRE(
-            element_cmp( pkey.getPublicKey().el_, pkey_from_str.getPublicKey().el_ ) == 0 );
+        BOOST_REQUIRE( pkey.getPublicKey() == pkey_from_str.getPublicKey() );
     }
     std::cerr << "TE wrappers tests finished" << std::endl;
 }
@@ -342,8 +261,8 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
     for ( size_t i = 0; i < 10; i++ ) {
         size_t num_all = rand_gen() % 15 + 2;
         size_t num_signed = rand_gen() % num_all + 1;
-        std::vector< std::vector< encryption::element_wrapper > > secret_shares_all;
-        std::vector< std::vector< encryption::element_wrapper > > public_shares_all;
+        std::vector< std::vector< libff::alt_bn128_Fr > > secret_shares_all;
+        std::vector< std::vector< libff::alt_bn128_G2 > > public_shares_all;
         std::vector< DKGTEWrapper > dkgs;
         std::vector< TEPrivateKeyShare > skeys;
         std::vector< TEPublicKeyShare > pkeys;
@@ -352,15 +271,15 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
             DKGTEWrapper dkg_wrap( num_signed, num_all );
 
             encryption::DkgTe dkg_te( num_signed, num_all );
-            std::vector< encryption::element_wrapper > poly = dkg_te.GeneratePolynomial();
+            std::vector< libff::alt_bn128_Fr > poly = dkg_te.GeneratePolynomial();
             auto shared_poly =
-                std::make_shared< std::vector< encryption::element_wrapper > >( poly );
+                std::make_shared< std::vector< libff::alt_bn128_Fr > >( poly );
             dkg_wrap.setDKGSecret( shared_poly );
 
             dkgs.push_back( dkg_wrap );
-            std::shared_ptr< std::vector< encryption::element_wrapper > > secret_shares_ptr =
+            std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr =
                 dkg_wrap.createDKGSecretShares();
-            std::shared_ptr< std::vector< encryption::element_wrapper > > public_shares_ptr =
+            std::shared_ptr< std::vector< libff::alt_bn128_G2 > > public_shares_ptr =
                 dkg_wrap.createDKGPublicShares();
             secret_shares_all.push_back( *secret_shares_ptr );
             public_shares_all.push_back( *public_shares_ptr );
@@ -370,14 +289,14 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
         for ( size_t i = 0; i < num_all; i++ )
             for ( size_t j = 0; j < num_all; j++ ) {
                 BOOST_REQUIRE( dkgs.at( i ).VerifyDKGShare( j, secret_shares_all.at( i ).at( j ),
-                    std::make_shared< std::vector< encryption::element_wrapper > >(
+                    std::make_shared< std::vector< libff::alt_bn128_G2 > >(
                         public_shares_all.at( i ) ) ) );
             }
 
-        std::vector< std::vector< encryption::element_wrapper > > secret_key_shares;
+        std::vector< std::vector< libff::alt_bn128_Fr > > secret_key_shares;
 
         for ( size_t i = 0; i < num_all; i++ ) {
-            std::vector< encryption::element_wrapper > secret_key_contribution;
+            std::vector< libff::alt_bn128_Fr > secret_key_contribution;
             for ( size_t j = 0; j < num_all; j++ ) {
                 secret_key_contribution.push_back( secret_shares_all.at( j ).at( i ) );
             }
@@ -386,7 +305,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
 
         for ( size_t i = 0; i < num_all; i++ ) {
             TEPrivateKeyShare pkey_share = dkgs.at( i ).CreateTEPrivateKeyShare(
-                i + 1, std::make_shared< std::vector< encryption::element_wrapper > >(
+                i + 1, std::make_shared< std::vector< libff::alt_bn128_Fr > >(
                            secret_key_shares.at( i ) ) );
             skeys.push_back( pkey_share );
             pkeys.push_back( TEPublicKeyShare( pkey_share, num_signed, num_all ) );
@@ -419,7 +338,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
          element_clear(public_key);*/
 
         TEPublicKey common_public = DKGTEWrapper::CreateTEPublicKey(
-            std::make_shared< std::vector< std::vector< encryption::element_wrapper > > >(
+            std::make_shared< std::vector< std::vector< libff::alt_bn128_G2 > > >(
                 public_shares_all ),
             num_signed, num_all );
 
@@ -429,7 +348,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
             message += char( rand_gen() % 128 );
         }
 
-        std::shared_ptr msg_ptr = std::make_shared< std::string >( message );
+        auto msg_ptr = std::make_shared< std::string >( message );
         encryption::Ciphertext cypher = common_public.encrypt( msg_ptr );
 
         for ( size_t i = 0; i < num_all - num_signed; ++i ) {
@@ -444,9 +363,9 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
 
         TEDecryptSet decr_set( num_signed, num_all );
         for ( size_t i = 0; i < num_signed; i++ ) {
-            encryption::element_wrapper decrypt = skeys[i].decrypt( cypher );
-            BOOST_REQUIRE( pkeys[i].Verify( cypher, decrypt.el_ ) );
-            std::shared_ptr decr_ptr = std::make_shared< encryption::element_wrapper >( decrypt );
+            libff::alt_bn128_G2 decrypt = skeys[i].getDecryptionShare( cypher );
+            BOOST_REQUIRE( pkeys[i].Verify( cypher, decrypt ) );
+            auto decr_ptr = std::make_shared< libff::alt_bn128_G2 >( decrypt );
             decr_set.addDecrypt( skeys[i].getSignerIndex(), decr_ptr );
         }
 
@@ -462,7 +381,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         bool is_exception_caught = false;
         try {
-            TEDataSingleton::checkSigners( 0, num_all );
+            checkSigners( 0, num_all );
         } catch ( std::runtime_error& ) {
             is_exception_caught = true;
         }
@@ -470,7 +389,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         is_exception_caught = false;
         try {
-            TEDataSingleton::checkSigners( 0, 0 );
+            checkSigners( 0, 0 );
         } catch ( std::runtime_error& ) {
             is_exception_caught = true;
         }
@@ -516,33 +435,20 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         is_exception_caught = false;  // one zero component in cypher
         try {
-            element_t el;
-            element_init_Zr( el, TEDataSingleton::getData().pairing_ );
-            element_random( el );
-            encryption::element_wrapper el_wrap( el );
-            element_clear( el );
+            libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
             TEPublicKeyShare pkey(
-                TEPrivateKeyShare( el_wrap, 1, num_signed, num_all ), num_signed, num_all );
+                TEPrivateKeyShare( el, 1, num_signed, num_all ), num_signed, num_all );
 
-            element_t U;
-            element_init_G1( U, TEDataSingleton::getData().pairing_ );
-            element_set_str( U, "[0, 0]", 10 );
-            encryption::element_wrapper U_wrap( U );
-            element_clear( U );
+            libff::alt_bn128_G2 U = libff::alt_bn128_G2::zero();
 
-
-            element_t W;
-            element_init_G1( W, TEDataSingleton::getData().pairing_ );
-            element_random( W );
-            encryption::element_wrapper W_wrap( W );
-            element_clear( W );
+            libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
             encryption::Ciphertext cypher;
-            std::get< 0 >( cypher ) = U_wrap;
+            std::get< 0 >( cypher ) = U;
             std::get< 1 >( cypher ) = "tra-la-la";
-            std::get< 2 >( cypher ) = W_wrap;
+            std::get< 2 >( cypher ) = W;
 
-            pkey.Verify( cypher, el );
+            pkey.Verify( cypher, U );
 
         } catch ( std::runtime_error& ) {
             is_exception_caught = true;
@@ -552,31 +458,20 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         is_exception_caught = false;  // wrong string length in cypher
         try {
-            element_t el;
-            element_init_Zr( el, TEDataSingleton::getData().pairing_ );
-            element_random( el );
-            encryption::element_wrapper el_wrap( el );
-            element_clear( el );
+            libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
 
             TEPublicKeyShare pkey(
-                TEPrivateKeyShare( el_wrap, 1, num_signed, num_all ), num_signed, num_all );
-            element_t U;
-            element_init_G1( U, TEDataSingleton::getData().pairing_ );
-            element_random( U );
+                TEPrivateKeyShare( el, 1, num_signed, num_all ), num_signed, num_all );
+            libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
 
-            element_t W;
-            element_init_G1( W, TEDataSingleton::getData().pairing_ );
-            element_random( W );
+            libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
             encryption::Ciphertext cypher;
-            std::get< 0 >( cypher ) = encryption::element_wrapper( U );
+            std::get< 0 >( cypher ) = U;
             std::get< 1 >( cypher ) = "tra-la-la";
-            std::get< 2 >( cypher ) = encryption::element_wrapper( W );
+            std::get< 2 >( cypher ) = W;
 
-            element_clear( U );
-            element_clear( W );
-
-            pkey.Verify( cypher, el );
+            pkey.Verify( cypher, U );
         } catch ( std::runtime_error& ) {
             is_exception_caught = true;
         }
@@ -584,40 +479,21 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         is_exception_caught = false;  // zero decrypted
         try {
-            element_t el;
-            element_init_Zr( el, TEDataSingleton::getData().pairing_ );
-            element_random( el );
-            TEPublicKeyShare pkey(
-                TEPrivateKeyShare( encryption::element_wrapper( el ), 1, num_signed, num_all ),
-                num_signed, num_all );
+            libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
+            TEPublicKeyShare pkey( TEPrivateKeyShare( el, 1, num_signed, num_all ), num_signed, num_all );
 
-            element_t U;
-            element_init_G1( U, TEDataSingleton::getData().pairing_ );
-            element_random( U );
+            libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
 
-            element_t W;
-            element_init_G1( W, TEDataSingleton::getData().pairing_ );
-            element_random( W );
+            libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
             encryption::Ciphertext cypher;
-            std::get< 0 >( cypher ) = encryption::element_wrapper( U );
-            std::get< 1 >( cypher ) =
-                "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
-            std::get< 2 >( cypher ) = encryption::element_wrapper( W );
+            std::get< 0 >( cypher ) = U;
+            std::get< 1 >( cypher ) = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
+            std::get< 2 >( cypher ) = W;
 
-            element_t decr;
-            element_init_G1( decr, TEDataSingleton::getData().pairing_ );
-            element_set_str( decr, "[0, 0]", 10 );
-            encryption::element_wrapper decrypt( decr );
-            element_clear( decr );
+            libff::alt_bn128_G2 decrypt = libff::alt_bn128_G2::zero();
 
-            element_clear( el );
-            element_clear( U );
-            element_clear( W );
-
-            pkey.Verify( cypher, decrypt.el_ );
-
-
+            pkey.Verify( cypher, decrypt );
         } catch ( std::runtime_error& ) {
             is_exception_caught = true;
         }
@@ -643,12 +519,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         is_exception_caught = false;  // zero private key share
         try {
-            element_t el;
-            element_init_Zr( el, TEDataSingleton::getData().pairing_ );
-            element_set0( el );
-            encryption::element_wrapper el_wrap( el );
-            element_clear( el );
-            TEPrivateKeyShare( el_wrap, 1, num_signed, num_all );
+            libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
+            TEPrivateKeyShare( el, 1, num_signed, num_all );
 
         } catch ( std::runtime_error& ) {
             is_exception_caught = true;
@@ -675,12 +547,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         is_exception_caught = false;  // zero public key
         try {
-            element_t el;
-            element_init_Zr( el, TEDataSingleton::getData().pairing_ );
-            element_set_si( el, 0 );
-            encryption::element_wrapper el_wrap( el );
-            element_clear( el );
-            TEPublicKey pkey( TEPrivateKey( el_wrap, num_signed, num_all ), num_signed, num_all );
+            libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
+            TEPublicKey pkey( TEPrivateKey( el, num_signed, num_all ), num_signed, num_all );
 
         } catch ( std::runtime_error& ) {
             is_exception_caught = true;
@@ -689,12 +557,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         is_exception_caught = false;  // zero public key
         try {
-            element_t el;
-            element_init_G1( el, TEDataSingleton::getData().pairing_ );
-            element_set_str( el, "[0, 0]", 10 );
-            encryption::element_wrapper el_wrap( el );
-            element_clear( el );
-            TEPublicKey pkey( el_wrap, num_signed, num_all );
+            libff::alt_bn128_G2 el = libff::alt_bn128_G2::zero();
+            TEPublicKey pkey( el, num_signed, num_all );
         } catch ( std::runtime_error& ) {
             is_exception_caught = true;
         }
@@ -702,12 +566,9 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         is_exception_caught = false;  // null message
         try {
-            element_t el;
-            element_init_G1( el, TEDataSingleton::getData().pairing_ );
-            element_random( el );
+            libff::alt_bn128_G2 el = libff::alt_bn128_G2::random_element();
 
             TEPublicKey pkey( el, num_signed, num_all );
-            element_clear( el );
 
             pkey.encrypt( nullptr );
         } catch ( std::runtime_error& ) {
@@ -717,12 +578,9 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         is_exception_caught = false;  // message length is not 64
         try {
-            element_t el;
-            element_init_G1( el, TEDataSingleton::getData().pairing_ );
-            element_random( el );
+            libff::alt_bn128_G2 el = libff::alt_bn128_G2::random_element();
 
             TEPublicKey pkey( el, num_signed, num_all );
-            element_clear( el );
 
             pkey.encrypt( std::make_shared< std::string >( "tra-la-la" ) );
         } catch ( std::runtime_error& ) {
@@ -749,12 +607,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         is_exception_caught = false;  // zero private key
         try {
-            element_t el;
-            element_init_Zr( el, TEDataSingleton::getData().pairing_ );
-            element_set0( el );
-            encryption::element_wrapper el_wrap( el );
-            element_clear( el );
-            TEPrivateKey( el_wrap, num_signed, num_all );
+            libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
+            TEPrivateKey( el, num_signed, num_all );
         } catch ( std::runtime_error& ) {
             is_exception_caught = true;
         }
@@ -772,17 +626,11 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         try {
             TEDecryptSet decr_set( num_signed, num_all );  // same indices in decrypt set
 
-            element_t el1;
-            element_init_G1( el1, TEDataSingleton::getData().pairing_ );
-            element_random( el1 );
-            std::shared_ptr el_ptr1 = std::make_shared< encryption::element_wrapper >( el1 );
-            element_clear( el1 );
+            libff::alt_bn128_G2 el1 = libff::alt_bn128_G2::random_element();
+            auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
 
-            element_t el2;
-            element_init_G1( el2, TEDataSingleton::getData().pairing_ );
-            element_random( el2 );
-            std::shared_ptr el_ptr2 = std::make_shared< encryption::element_wrapper >( el2 );
-            element_clear( el2 );
+            libff::alt_bn128_G2 el2 = libff::alt_bn128_G2::random_element();
+            auto el_ptr2 = std::make_shared< libff::alt_bn128_G2 >( el2 );
 
             decr_set.addDecrypt( 1, el_ptr1 );
             decr_set.addDecrypt( 1, el_ptr2 );
@@ -796,11 +644,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         try {
             TEDecryptSet decr_set( num_signed, num_all );  // zero element in decrypt set
 
-            element_t el1;
-            element_init_G1( el1, TEDataSingleton::getData().pairing_ );
-            element_set_str( el1, "[0, 0]", 10 );
-            std::shared_ptr el_ptr1 = std::make_shared< encryption::element_wrapper >( el1 );
-            element_clear( el1 );
+            libff::alt_bn128_G2 el1 = libff::alt_bn128_G2::zero();
+            auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
 
             decr_set.addDecrypt( 1, el_ptr1 );
         } catch ( std::runtime_error& ) {
@@ -811,13 +656,10 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         is_exception_caught = false;
         try {
             TEDecryptSet decr_set( num_signed, num_all );  // null element in decrypt set
-            element_t el1;
-            element_init_G1( el1, TEDataSingleton::getData().pairing_ );
-            element_set_str( el1, "[0, 0]", 10 );
-            encryption::element_wrapper el_wrap( el1 );
-            std::shared_ptr el_ptr1 = std::make_shared< encryption::element_wrapper >( el_wrap );
+            libff::alt_bn128_G2 el1 = libff::alt_bn128_G2::zero();
+
+            auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
             el_ptr1 = nullptr;
-            element_clear( el1 );
             decr_set.addDecrypt( 1, el_ptr1 );
 
         } catch ( std::runtime_error& ) {
@@ -828,31 +670,20 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         is_exception_caught = false;
         try {
             TEDecryptSet decr_set( num_signed, num_all );  // not enough elements in decrypt set
-            element_t el1;
-            element_init_G1( el1, TEDataSingleton::getData().pairing_ );
-            element_random( el1 );
-            encryption::element_wrapper el_wrap( el1 );
-            element_clear( el1 );
-            std::shared_ptr el_ptr1 = std::make_shared< encryption::element_wrapper >( el_wrap );
+            libff::alt_bn128_G2 el1 = libff::alt_bn128_G2::random_element();
+
+            auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
             decr_set.addDecrypt( 1, el_ptr1 );
 
-            element_t U;
-            element_init_G1( U, TEDataSingleton::getData().pairing_ );
-            element_random( U );
-            encryption::element_wrapper U_wrap( U );
-            element_clear( U );
+            libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
 
-            element_t W;
-            element_init_G1( W, TEDataSingleton::getData().pairing_ );
-            element_random( W );
-            encryption::element_wrapper W_wrap( W );
-            element_clear( W );
+            libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
             encryption::Ciphertext cypher;
-            std::get< 0 >( cypher ) = U_wrap;
+            std::get< 0 >( cypher ) = U;
             std::get< 1 >( cypher ) =
                 "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
-            std::get< 2 >( cypher ) = W_wrap;
+            std::get< 2 >( cypher ) = W;
 
             decr_set.merge( cypher );
         } catch ( std::runtime_error& ) {
@@ -863,30 +694,19 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         is_exception_caught = false;
         try {
             TEDecryptSet decr_set( 1, 1 );  // cannot combine shares
-            element_t el1;
-            element_init_G1( el1, TEDataSingleton::getData().pairing_ );
-            element_random( el1 );
-            std::shared_ptr el_ptr1 = std::make_shared< encryption::element_wrapper >( el1 );
-            element_clear( el1 );
+            libff::alt_bn128_G2 el1 = libff::alt_bn128_G2::random_element();
+            auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
             decr_set.addDecrypt( 1, el_ptr1 );
 
-            element_t U;
-            element_init_G1( U, TEDataSingleton::getData().pairing_ );
-            element_random( U );
-            encryption::element_wrapper U_wrap( U );
-            element_clear( U );
+            libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
 
-            element_t W;
-            element_init_G1( W, TEDataSingleton::getData().pairing_ );
-            element_random( W );
-            encryption::element_wrapper W_wrap( W );
-            element_clear( W );
+            libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
             encryption::Ciphertext cypher;
-            std::get< 0 >( cypher ) = U_wrap;
+            std::get< 0 >( cypher ) = U;
             std::get< 1 >( cypher ) =
                 "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
-            std::get< 2 >( cypher ) = W_wrap;
+            std::get< 2 >( cypher ) = W;
 
             decr_set.merge( cypher );
         } catch ( std::runtime_error& ) {
@@ -905,13 +725,9 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
         // zero share
         DKGTEWrapper dkg_te( num_signed, num_all );
 
-        element_t el1;
-        element_init_Zr( el1, TEDataSingleton::getData().pairing_ );
-        element_set0( el1 );
-        encryption::element_wrapper el_wrap( el1 );
-        element_clear( el1 );
+        libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
 
-        dkg_te.VerifyDKGShare( 1, el_wrap, dkg_te.createDKGPublicShares() );
+        dkg_te.VerifyDKGShare( 1, el, dkg_te.createDKGPublicShares() );
     } catch ( std::runtime_error& ) {
         is_exception_caught = true;
     }
@@ -922,12 +738,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
         // null verification vector
         DKGTEWrapper dkg_te( num_signed, num_all );
 
-        element_t el1;
-        element_init_Zr( el1, TEDataSingleton::getData().pairing_ );
-        element_random( el1 );
-        encryption::element_wrapper el_wrap( el1 );
-        element_clear( el1 );
-        dkg_te.VerifyDKGShare( 1, el_wrap, nullptr );
+        libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
+        dkg_te.VerifyDKGShare( 1, el, nullptr );
     } catch ( std::runtime_error& ) {
         is_exception_caught = true;
     }
@@ -937,17 +749,13 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
     try {
         DKGTEWrapper dkg_te( num_signed, num_all );
 
-        element_t el1;
-        element_init_Zr( el1, TEDataSingleton::getData().pairing_ );
-        element_random( el1 );
-        encryption::element_wrapper el_wrap( el1 );
-        element_clear( el1 );
+        libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
 
-        std::vector< encryption::element_wrapper > pub_shares = *dkg_te.createDKGPublicShares();
+        std::vector< libff::alt_bn128_G2 > pub_shares = *dkg_te.createDKGPublicShares();
         pub_shares.erase( pub_shares.begin() );
 
-        dkg_te.VerifyDKGShare( 1, el_wrap,
-            std::make_shared< std::vector< encryption::element_wrapper > >( pub_shares ) );
+        dkg_te.VerifyDKGShare( 1, el,
+            std::make_shared< std::vector< libff::alt_bn128_G2 > >( pub_shares ) );
 
     } catch ( std::runtime_error& ) {
         is_exception_caught = true;
@@ -957,7 +765,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
     is_exception_caught = false;
     try {
         DKGTEWrapper dkg_te( num_signed, num_all );
-        std::shared_ptr< std::vector< encryption::element_wrapper > > shares =
+        std::shared_ptr< std::vector< libff::alt_bn128_Fr > > shares =
             dkg_te.createDKGSecretShares();
         shares = nullptr;
         dkg_te.setDKGSecret( shares );
@@ -969,7 +777,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
     is_exception_caught = false;
     try {
         DKGTEWrapper dkg_te( num_signed, num_all );
-        std::shared_ptr< std::vector< encryption::element_wrapper > > shares =
+        std::shared_ptr< std::vector< libff::alt_bn128_Fr > > shares =
             dkg_te.createDKGSecretShares();
         shares->erase( shares->begin() + shares->size() - 2 );
         shares->shrink_to_fit();
@@ -991,7 +799,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
     is_exception_caught = false;
     try {
         DKGTEWrapper dkg_te( num_signed, num_all );
-        auto wrong_size_vector = std::make_shared< std::vector< encryption::element_wrapper > >();
+        auto wrong_size_vector = std::make_shared< std::vector< libff::alt_bn128_Fr > >();
         wrong_size_vector->resize( num_signed - 1 );
         dkg_te.CreateTEPrivateKeyShare( 1, wrong_size_vector );
     } catch ( std::runtime_error& ) {
@@ -1002,7 +810,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
     is_exception_caught = false;
     try {
         DKGTEWrapper dkg_te( num_signed, num_all );
-        std::shared_ptr< std::vector< encryption::element_wrapper > > shares;
+        std::shared_ptr< std::vector< libff::alt_bn128_Fr > > shares;
         dkg_te.setDKGSecret( shares );
     } catch ( std::runtime_error& ) {
         is_exception_caught = true;

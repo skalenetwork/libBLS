@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file TEPrivateKeyShare.h
   @author Sveta Rogova
@@ -31,13 +31,13 @@ class DKGTESecret {
 private:
     size_t requiredSigners;
     size_t totalSigners;
-    std::vector< encryption::element_wrapper > poly;
+    std::vector< libff::alt_bn128_Fr > poly;
 
 public:
     DKGTESecret( size_t _requiredSigners, size_t _totalSigners );
-    void setPoly( std::vector< encryption::element_wrapper >& _poly );
-    std::vector< encryption::element_wrapper > getDKGTESecretShares();
-    std::vector< encryption::element_wrapper > getDKGTEPublicShares();
+    void setPoly( std::vector< libff::alt_bn128_Fr >& _poly );
+    std::vector< libff::alt_bn128_Fr > getDKGTESecretShares();
+    std::vector< libff::alt_bn128_G2 > getDKGTEPublicShares();
 };
 
 

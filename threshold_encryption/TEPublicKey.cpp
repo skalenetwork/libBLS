@@ -22,7 +22,6 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "../tools/utils.h"
-#include <threshold_encryption/TEDataSingleton.h>
 #include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/utils.h>
 
@@ -33,7 +32,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str_ptr,
     size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str_ptr ) {
         throw std::runtime_error( "public key is null" );
@@ -47,6 +46,8 @@ TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str
          !isStringNumber( _key_str_ptr->at( 2 ) ) || !isStringNumber( _key_str_ptr->at( 3 ) ) ) {
         throw std::runtime_error( "non-digit symbol or first zero in non-zero public key share" );
     }
+
+    libff::init_alt_bn128_params();
 
     PublicKey.Z = libff::alt_bn128_Fq2::one();
     PublicKey.X.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 0 ).c_str() );
@@ -62,7 +63,9 @@ TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str
 TEPublicKey::TEPublicKey(
     TEPrivateKey _common_private, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    checkSigners( _requiredSigners, _totalSigners );
+
+    libff::init_alt_bn128_params();
 
     if ( _common_private.getPrivateKey().is_zero() ) {
         throw std::runtime_error( "zero key" );
@@ -73,7 +76,7 @@ TEPublicKey::TEPublicKey(
 
 TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, size_t _totalSigners )
     : PublicKey( _pkey ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    checkSigners( _requiredSigners, _totalSigners );
 
     if ( _pkey.is_zero() ) {
         throw std::runtime_error( "zero public key" );

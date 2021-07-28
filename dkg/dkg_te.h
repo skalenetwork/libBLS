@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file dkg_te.h
   @author Oleh Nikolaiev
@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include <TEDataSingleton.h>
 #include <threshold_encryption.h>
 
 namespace encryption {
@@ -32,22 +31,24 @@ class DkgTe {
 public:
     DkgTe( const size_t t, const size_t n );
 
-    std::vector< element_wrapper > GeneratePolynomial();
+    std::vector< libff::alt_bn128_Fr > GeneratePolynomial();
 
-    std::vector< element_wrapper > CreateVerificationVector(
-        const std::vector< element_wrapper >& polynomial );
+    std::vector< libff::alt_bn128_G2 > CreateVerificationVector(
+        const std::vector< libff::alt_bn128_Fr >& polynomial );
 
-    element_wrapper ComputePolynomialValue(
-        const std::vector< element_wrapper >& polynomial, const element_wrapper& point );
+    libff::alt_bn128_Fr ComputePolynomialValue(
+        const std::vector< libff::alt_bn128_Fr >& polynomial, const libff::alt_bn128_Fr& point );
 
-    std::vector< element_wrapper > CreateSecretKeyContribution(
-        const std::vector< element_wrapper >& polynomial );
+    std::vector< libff::alt_bn128_Fr > CreateSecretKeyContribution(
+        const std::vector< libff::alt_bn128_Fr >& polynomial );
 
-    element_wrapper CreateSecretKeyShare(
-        const std::vector< element_wrapper >& secret_key_contribution );
+    libff::alt_bn128_Fr CreateSecretKeyShare(
+        const std::vector< libff::alt_bn128_Fr >& secret_key_contribution );
 
-    bool Verify( size_t idx, const element_wrapper& share,
-        const std::vector< element_wrapper >& verification_vector );
+    bool Verify( size_t idx, const libff::alt_bn128_Fr& share,
+        const std::vector< libff::alt_bn128_G2 >& verification_vector );
+
+    static bool isG2( const libff::alt_bn128_G2& point );
 
 private:
     const size_t t_ = 0;

@@ -22,7 +22,6 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "../tools/utils.h"
-#include <TEDataSingleton.h>
 #include <threshold_encryption/TEPublicKeyShare.h>
 #include <threshold_encryption/utils.h>
 
@@ -31,7 +30,7 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
     : signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str_ptr ) {
         throw std::runtime_error( "public key share is null" );
@@ -45,6 +44,8 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
          !isStringNumber( _key_str_ptr->at( 2 ) ) || !isStringNumber( _key_str_ptr->at( 3 ) ) ) {
         throw std::runtime_error( "non-digit symbol or first zero in non-zero public key share" );
     }
+
+    libff::init_alt_bn128_params();
 
     PublicKey.Z = libff::alt_bn128_Fq2::one();
     PublicKey.X.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 0 ).c_str() );
@@ -60,7 +61,9 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
 TEPublicKeyShare::TEPublicKeyShare(
     TEPrivateKeyShare _p_key, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    checkSigners( _requiredSigners, _totalSigners );
+
+    libff::init_alt_bn128_params();
 
     PublicKey = _p_key.getPrivateKey() * libff::alt_bn128_G2::one();
     signerIndex = _p_key.getSignerIndex();

@@ -14,22 +14,26 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 @file TEPublicKey.h
 @author Sveta Rogova
 @date 2019
 */
 
-#include <pbc/pbc.h>
 #include <threshold_encryption/TEDecryptSet.h>
 #include <threshold_encryption/utils.h>
 #include <utility>
 
+#include "../tools/utils.h"
+
 
 TEDecryptSet::TEDecryptSet( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ), was_merged( false ) {
-    // TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    checkSigners( _requiredSigners, _totalSigners );
+
+    libff::init_alt_bn128_params();
+    
 }
 
 void TEDecryptSet::addDecrypt( size_t _signerIndex, std::shared_ptr< libff::alt_bn128_G2 > _el ) {

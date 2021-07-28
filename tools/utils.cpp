@@ -23,21 +23,35 @@
 
 #include "utils.h"
 
-template < class T >
-std::string fieldElementToString( const T& field_elem ) {
-    mpz_t t;
-    mpz_init( t );
+// template < class T >
+// std::string fieldElementToString( const T& field_elem ) {
+//     mpz_t t;
+//     mpz_init( t );
 
-    field_elem.as_bigint().to_mpz( t );
+//     field_elem.as_bigint().to_mpz( t );
 
-    char arr[mpz_sizeinbase( t, 10 ) + 2];
+//     char arr[mpz_sizeinbase( t, 10 ) + 2];
 
-    char* tmp = mpz_get_str( arr, 10, t );
-    mpz_clear( t );
+//     char* tmp = mpz_get_str( arr, 10, t );
+//     mpz_clear( t );
 
-    std::string output = tmp;
+//     std::string output = tmp;
 
-    return output;
+//     return output;
+// }
+
+void checkSigners( size_t _requiredSigners, size_t _totalSigners ) {
+    if ( _requiredSigners > _totalSigners ) {
+        throw std::runtime_error( "_requiredSigners > _totalSigners" );
+    }
+
+    if ( _totalSigners == 0 ) {
+        throw std::runtime_error( "_totalSigners == 0" );
+    }
+
+    if ( _requiredSigners == 0 ) {
+        throw std::runtime_error( "_requiredSigners == 0" );
+    }
 }
 
 std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem ) {

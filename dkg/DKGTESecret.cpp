@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file TEPrivateKeyShare.h
   @author Sveta Rogova
@@ -23,19 +23,21 @@
 
 
 #include "DKGTESecret.h"
+#include "../tools/utils.h"
 
 #include <dkg/dkg_te.h>
-#include <threshold_encryption/TEDataSingleton.h>
 
 DKGTESecret::DKGTESecret( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    checkSigners( _requiredSigners, _totalSigners );
+
+    libff::init_alt_bn128_params();
 
     encryption::DkgTe dkg_te( requiredSigners, totalSigners );
     poly = dkg_te.GeneratePolynomial();
 }
 
-void DKGTESecret::setPoly( std::vector< encryption::element_wrapper >& _poly ) {
+void DKGTESecret::setPoly( std::vector< libff::alt_bn128_Fr >& _poly ) {
     if ( _poly.size() != requiredSigners ) {
         throw std::runtime_error( "Wrong size of vector" );
     }
@@ -43,12 +45,12 @@ void DKGTESecret::setPoly( std::vector< encryption::element_wrapper >& _poly ) {
     poly = _poly;
 }
 
-std::vector< encryption::element_wrapper > DKGTESecret::getDKGTESecretShares() {
+std::vector< libff::alt_bn128_Fr > DKGTESecret::getDKGTESecretShares() {
     encryption::DkgTe dkg_te( requiredSigners, totalSigners );
     return dkg_te.CreateSecretKeyContribution( poly );
 }
 
-std::vector< encryption::element_wrapper > DKGTESecret::getDKGTEPublicShares() {
+std::vector< libff::alt_bn128_G2 > DKGTESecret::getDKGTEPublicShares() {
     encryption::DkgTe dkg_te( requiredSigners, totalSigners );
     return dkg_te.CreateVerificationVector( poly );
 }

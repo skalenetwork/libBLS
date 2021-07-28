@@ -15,10 +15,9 @@ set(sources
             TEPrivateKey.cpp
             TEPublicKey.cpp
             TEPublicKeyShare.cpp
-            TEDataSingleton.h
-            ../dkg/dkg.cpp
-            ../dkg/DKGBLSWrapper.cpp
-            ../dkg/DKGBLSSecret.cpp
+            ../dkg/dkg_te.cpp
+            ../dkg/DKGTEWrapper.cpp
+            ../dkg/DKGTESecret.cpp
             utils.cpp
             ../tools/utils.cpp
 )
@@ -30,15 +29,14 @@ set(headers
             TEPrivateKey.h
             TEPublicKey.h
             TEPublicKeyShare.h
-            TEDataSingleton.cpp
-            ../dkg/dkg.h
-            ../dkg/DKGBLSWrapper.h
-            ../dkg/DKGBLSSecret.h
+            ../dkg/dkg_te.h
+            ../dkg/DKGTEWrapper.h
+            ../dkg/DKGTESecret.h
             utils.h
             ../tools/utils.h
 )
 
-set(PROJECT_VERSION 0.1.0)
+set(PROJECT_VERSION 0.2.0)
 
 set (THIRD_PARTY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../)
 set (TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../)
@@ -48,13 +46,10 @@ add_library(te ${sources} ${headers})
 include_directories(${CMAKE_BINARY_DIR})
 link_directories(${CMAKE_BINARY_DIR})
 
-target_include_directories(te PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(te PRIVATE ${GMPXX_LIBRARY} ${GMP_LIBRARY})
-
 include_directories(${CMAKE_BINARY_DIR}/deps/include )
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 
-target_include_directories(te PRIVATE ${PBC_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
+target_include_directories(te PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
 target_link_libraries(te PRIVATE ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
 if (BUILD_TESTS)
@@ -72,7 +67,7 @@ if (BUILD_TESTS)
 
     add_executable(te_test ../test/test_TE_wrappers.cpp)
     target_include_directories(te_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
-    target_link_libraries(te_test PRIVATE te pbc ${GMP_LIBRARY} ${GMPXX_LIBRARY})
+    target_link_libraries(te_test PRIVATE te ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
     add_test(NAME te_wrap_tests COMMAND te_unit_test)
 

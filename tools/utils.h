@@ -31,6 +31,8 @@
 
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 
+void checkSigners( size_t _requiredSigners, size_t _totalSigners );
+
 template < class T >
 std::string fieldElementToString( const T& field_elem );
 
@@ -41,5 +43,22 @@ std::vector< libff::alt_bn128_Fr > LagrangeCoeffs( const std::vector< int >& idx
 libff::alt_bn128_Fq HashToFq( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
 
 libff::alt_bn128_G1 HashtoG1( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
+
+template < class T >
+std::string fieldElementToString( const T& field_elem ) {
+    mpz_t t;
+    mpz_init( t );
+
+    field_elem.as_bigint().to_mpz( t );
+
+    char arr[mpz_sizeinbase( t, 10 ) + 2];
+
+    char* tmp = mpz_get_str( arr, 10, t );
+    mpz_clear( t );
+
+    std::string output = tmp;
+
+    return output;
+}
 
 #endif  // LIBBLS_UTILS_H

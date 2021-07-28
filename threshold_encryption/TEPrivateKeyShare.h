@@ -24,7 +24,6 @@
 #ifndef LIBBLS_TEPRIVATEKEYSHARE_H
 #define LIBBLS_TEPRIVATEKEYSHARE_H
 
-#include <threshold_encryption/TEDataSingleton.h>
 #include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/threshold_encryption.h>
 
@@ -49,7 +48,7 @@ public:
         std::shared_ptr< TEPublicKey > >
     generateSampleKeys( size_t _requiredSigners, size_t _totalSigners );
 
-    std::string toString();
+    std::string toString() const;
 
     size_t getSignerIndex() const;
 

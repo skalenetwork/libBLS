@@ -22,7 +22,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "../tools/utils.h"
-#include <dkg/dkg.h>
+#include <dkg/dkg_te.h>
 #include <threshold_encryption/TEPrivateKeyShare.h>
 #include <threshold_encryption/utils.h>
 
@@ -31,11 +31,13 @@ TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr< std::string > _key_str, s
     : signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str ) {
         throw std::runtime_error( "private key share is null" );
     }
+
+    libff::init_alt_bn128_params();
 
     privateKey = libff::alt_bn128_Fr( _key_str->c_str() );
 
@@ -50,11 +52,13 @@ TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _s
       signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    checkSigners( _requiredSigners, _totalSigners );
 
     if ( _signerIndex > _totalSigners ) {
         throw std::runtime_error( "Wrong _signerIndex" );
     }
+
+    libff::init_alt_bn128_params();
 
     if ( _skey_share.is_zero() ) {
         throw std::runtime_error( "Zero private key share" );
@@ -66,9 +70,6 @@ libff::alt_bn128_G2 TEPrivateKeyShare::getDecryptionShare( encryption::Ciphertex
 
     encryption::TE te( requiredSigners, totalSigners );
 
-    element_t decrypt;
-    element_init_G1( decrypt, TEDataSingleton::getData().pairing_ );
-
     libff::alt_bn128_G2 decryption_share = te.getDecryptionShare( cipher, privateKey );
 
     if ( decryption_share.is_zero() ) {
@@ -78,7 +79,7 @@ libff::alt_bn128_G2 TEPrivateKeyShare::getDecryptionShare( encryption::Ciphertex
     return decryption_share;
 }
 
-std::string TEPrivateKeyShare::toString() {
+std::string TEPrivateKeyShare::toString() const {
     return fieldElementToString( privateKey );
 }
 
@@ -93,15 +94,15 @@ libff::alt_bn128_Fr TEPrivateKeyShare::getPrivateKey() const {
 std::pair< std::shared_ptr< std::vector< std::shared_ptr< TEPrivateKeyShare > > >,
     std::shared_ptr< TEPublicKey > >
 TEPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSigners ) {
-    signatures::Dkg dkg_te( _requiredSigners, _totalSigners );
+    encryption::DkgTe dkg_te( _requiredSigners, _totalSigners );
 
     std::vector< libff::alt_bn128_Fr > poly = dkg_te.GeneratePolynomial();
 
-    libff::alt_bn128_Fr common_skey = dkg_te.PolynomialValue( poly, libff::alt_bn128_Fr::zero() );
+    libff::alt_bn128_Fr common_skey = dkg_te.ComputePolynomialValue( poly, libff::alt_bn128_Fr::zero() );
     TEPrivateKey common_private( common_skey, _requiredSigners, _totalSigners );
     TEPublicKey common_public( common_private, _requiredSigners, _totalSigners );
 
-    std::vector< libff::alt_bn128_Fr > skeys = dkg_te.SecretKeyContribution( poly );
+    std::vector< libff::alt_bn128_Fr > skeys = dkg_te.CreateSecretKeyContribution( poly );
 
     std::vector< std::shared_ptr< TEPrivateKeyShare > > skey_shares;
 

@@ -24,7 +24,6 @@
 #ifndef LIBBLS_TEPRIVATEKEY_H
 #define LIBBLS_TEPRIVATEKEY_H
 
-#include <threshold_encryption/TEDataSingleton.h>
 #include <threshold_encryption/threshold_encryption.h>
 
 class TEPrivateKey {
@@ -40,7 +39,7 @@ public:
 
     TEPrivateKey( libff::alt_bn128_Fr _skey, size_t _requiredSigners, size_t _totalSigners );
 
-    std::string toString();
+    std::string toString() const;
 
     libff::alt_bn128_Fr getPrivateKey() const;
 };
