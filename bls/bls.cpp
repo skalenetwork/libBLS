@@ -86,7 +86,7 @@ std::pair< libff::alt_bn128_G1, std::string > Bls::HashtoG1withHint(
 
     libff::alt_bn128_G1 point;
     libff::alt_bn128_Fq counter = libff::alt_bn128_Fq::zero();
-    libff::alt_bn128_Fq x1( BLSutils::HashToFq( hash_byte_arr ) );
+    libff::alt_bn128_Fq x1( ThresholdUtils::HashToFq( hash_byte_arr ) );
 
 
     while ( true ) {

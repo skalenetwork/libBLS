@@ -54,22 +54,6 @@ std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > BLSutils::ParseHint( std::
     return std::make_pair( y, shift_x );
 }
 
-libff::alt_bn128_Fq BLSutils::HashToFq(
-    std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr ) {
-    libff::bigint< libff::alt_bn128_q_limbs > from_hex;
-
-    std::vector< uint8_t > hex( 64 );
-    for ( size_t i = 0; i < 32; ++i ) {
-        hex[2 * i] = static_cast< int >( hash_byte_arr->at( i ) ) / 16;
-        hex[2 * i + 1] = static_cast< int >( hash_byte_arr->at( i ) ) % 16;
-    }
-    mpn_set_str( from_hex.data, hex.data(), 64, 16 );
-
-    libff::alt_bn128_Fq ret_val( from_hex );
-
-    return ret_val;
-}
-
 std::shared_ptr< std::vector< std::string > > BLSutils::SplitString(
     std::shared_ptr< std::string > str, const std::string& delim ) {
     CHECK( str );

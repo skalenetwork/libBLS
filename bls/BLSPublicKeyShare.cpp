@@ -119,7 +119,7 @@ bool BLSPublicKeyShare::VerifySigWithHelper( std::shared_ptr< std::array< uint8_
 
     std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > y_shift_x = BLSutils::ParseHint( hint );
 
-    libff::alt_bn128_Fq x = BLSutils::HashToFq( hash_ptr );
+    libff::alt_bn128_Fq x = ThresholdUtils::HashToFq( hash_ptr );
 
     x = x + y_shift_x.second;
 
