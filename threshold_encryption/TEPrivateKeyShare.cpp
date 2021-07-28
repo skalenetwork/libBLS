@@ -31,7 +31,7 @@ TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr< std::string > _key_str, s
     : signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    checkSigners( _requiredSigners, _totalSigners );
+    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str ) {
         throw std::runtime_error( "private key share is null" );
@@ -52,7 +52,7 @@ TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _s
       signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    checkSigners( _requiredSigners, _totalSigners );
+    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( _signerIndex > _totalSigners ) {
         throw std::runtime_error( "Wrong _signerIndex" );
@@ -80,7 +80,7 @@ libff::alt_bn128_G2 TEPrivateKeyShare::getDecryptionShare( encryption::Ciphertex
 }
 
 std::string TEPrivateKeyShare::toString() const {
-    return fieldElementToString( privateKey );
+    return ThresholdUtils::fieldElementToString( privateKey );
 }
 
 size_t TEPrivateKeyShare::getSignerIndex() const {

@@ -380,7 +380,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         bool is_exception_caught = false;
         try {
-            checkSigners( 0, num_all );
+            ThresholdUtils::checkSigners( 0, num_all );
         } catch ( std::runtime_error& ) {
             is_exception_caught = true;
         }
@@ -388,7 +388,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         is_exception_caught = false;
         try {
-            checkSigners( 0, 0 );
+            ThresholdUtils::checkSigners( 0, 0 );
         } catch ( std::runtime_error& ) {
             is_exception_caught = true;
         }

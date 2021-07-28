@@ -41,7 +41,7 @@ TE::~TE() {}
 
 std::string TE::Hash(
     const libff::alt_bn128_G2& Y, std::string ( *hash_func )( const std::string& str ) ) {
-    auto vectorCoordinates = G2ToString( Y );
+    auto vectorCoordinates = ThresholdUtils::G2ToString( Y );
 
     std::string tmp = "";
     for ( const auto& coord : vectorCoordinates ) {
@@ -55,9 +55,9 @@ std::string TE::Hash(
 
 libff::alt_bn128_G1 TE::HashToGroup( const libff::alt_bn128_G2& U, const std::string& V,
     std::string ( *hash_func )( const std::string& str ) ) {
-    // assumed that U lies in G1
+    // assumed that U lies in G2
 
-    auto U_str = G2ToString( U );
+    auto U_str = ThresholdUtils::G2ToString( U );
 
     const std::string sha256hex = hash_func( U_str[0] + U_str[1] + U_str[2] + U_str[3] + V );
 
@@ -67,7 +67,7 @@ libff::alt_bn128_G1 TE::HashToGroup( const libff::alt_bn128_G2& U, const std::st
         hash_bytes_arr->at( i ) = static_cast< uint8_t >( hash_str[i] );
     }
 
-    return HashtoG1( hash_bytes_arr );
+    return ThresholdUtils::HashtoG1( hash_bytes_arr );
 }
 
 Ciphertext TE::Encrypt( const std::string& message, const libff::alt_bn128_G2& common_public ) {

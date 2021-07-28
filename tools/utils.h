@@ -31,18 +31,27 @@
 
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 
-void checkSigners( size_t _requiredSigners, size_t _totalSigners );
+class ThresholdUtils {
+public:
+    static void checkSigners( size_t _requiredSigners, size_t _totalSigners );
 
-std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem );
+    static std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem );
 
-std::vector< libff::alt_bn128_Fr > LagrangeCoeffs( const std::vector< int >& idx, size_t t );
+    static std::vector< libff::alt_bn128_Fr > LagrangeCoeffs(
+        const std::vector< int >& idx, size_t t );
 
-libff::alt_bn128_Fq HashToFq( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
+    static libff::alt_bn128_Fq HashToFq(
+        std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
 
-libff::alt_bn128_G1 HashtoG1( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
+    static libff::alt_bn128_G1 HashtoG1(
+        std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
+
+    template < class T >
+    static std::string fieldElementToString( const T& field_elem );
+};
 
 template < class T >
-std::string fieldElementToString( const T& field_elem ) {
+std::string ThresholdUtils::fieldElementToString( const T& field_elem ) {
     mpz_t t;
     mpz_init( t );
 

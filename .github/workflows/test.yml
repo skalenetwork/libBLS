@@ -76,7 +76,6 @@ jobs:
         ./bls_unit_test
         ./dkg_unit_test
         ./bls_test
-        ./threshold_encryption/dkg_te_unit_test
         ./threshold_encryption/te_unit_test
         ./threshold_encryption/te_test
         ./dkg_attack

@@ -27,7 +27,7 @@
 
 DKGTEWrapper::DKGTEWrapper( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    checkSigners( _requiredSigners, _totalSigners );
+    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libff::init_alt_bn128_params();
 
@@ -81,7 +81,7 @@ TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare(
 TEPublicKey DKGTEWrapper::CreateTEPublicKey(
     std::shared_ptr< std::vector< std::vector< libff::alt_bn128_G2 > > > public_shares_all,
     size_t _requiredSigners, size_t _totalSigners ) {
-    checkSigners( _requiredSigners, _totalSigners );
+    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( public_shares_all == nullptr )
         throw std::runtime_error( "Null public shares all" );

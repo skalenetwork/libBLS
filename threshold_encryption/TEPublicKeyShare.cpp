@@ -30,7 +30,7 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
     : signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    checkSigners( _requiredSigners, _totalSigners );
+    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str_ptr ) {
         throw std::runtime_error( "public key share is null" );
@@ -61,7 +61,7 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
 TEPublicKeyShare::TEPublicKeyShare(
     TEPrivateKeyShare _p_key, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    checkSigners( _requiredSigners, _totalSigners );
+    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libff::init_alt_bn128_params();
 
@@ -82,7 +82,8 @@ bool TEPublicKeyShare::Verify(
 }
 
 std::shared_ptr< std::vector< std::string > > TEPublicKeyShare::toString() {
-    return std::make_shared< std::vector< std::string > >( G2ToString( PublicKey ) );
+    return std::make_shared< std::vector< std::string > >(
+        ThresholdUtils::G2ToString( PublicKey ) );
 }
 
 libff::alt_bn128_G2 TEPublicKeyShare::getPublicKey() const {

@@ -30,7 +30,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 TEDecryptSet::TEDecryptSet( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ), was_merged( false ) {
-    checkSigners( _requiredSigners, _totalSigners );
+    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libff::init_alt_bn128_params();
 }

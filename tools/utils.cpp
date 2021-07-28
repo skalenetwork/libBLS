@@ -23,7 +23,7 @@
 
 #include "utils.h"
 
-void checkSigners( size_t _requiredSigners, size_t _totalSigners ) {
+void ThresholdUtils::checkSigners( size_t _requiredSigners, size_t _totalSigners ) {
     if ( _requiredSigners > _totalSigners ) {
         throw std::runtime_error( "_requiredSigners > _totalSigners" );
     }
@@ -37,7 +37,7 @@ void checkSigners( size_t _requiredSigners, size_t _totalSigners ) {
     }
 }
 
-std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem ) {
+std::vector< std::string > ThresholdUtils::G2ToString( libff::alt_bn128_G2 elem ) {
     std::vector< std::string > pkey_str_vect;
 
     elem.to_affine_coordinates();
@@ -50,7 +50,8 @@ std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem ) {
     return pkey_str_vect;
 }
 
-std::vector< libff::alt_bn128_Fr > LagrangeCoeffs( const std::vector< int >& idx, size_t t ) {
+std::vector< libff::alt_bn128_Fr > ThresholdUtils::LagrangeCoeffs(
+    const std::vector< int >& idx, size_t t ) {
     if ( idx.size() < t ) {
         // throw IncorrectInput( "not enough participants in the threshold group" );
         throw std::runtime_error( "not enough participants in the threshold group" );
@@ -87,7 +88,8 @@ std::vector< libff::alt_bn128_Fr > LagrangeCoeffs( const std::vector< int >& idx
     return res;
 }
 
-libff::alt_bn128_Fq HashToFq( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr ) {
+libff::alt_bn128_Fq ThresholdUtils::HashToFq(
+    std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr ) {
     libff::bigint< libff::alt_bn128_q_limbs > from_hex;
 
     std::vector< uint8_t > hex( 64 );
@@ -102,7 +104,8 @@ libff::alt_bn128_Fq HashToFq( std::shared_ptr< std::array< uint8_t, 32 > > hash_
     return ret_val;
 }
 
-libff::alt_bn128_G1 HashtoG1( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr ) {
+libff::alt_bn128_G1 ThresholdUtils::HashtoG1(
+    std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr ) {
     libff::alt_bn128_Fq x1( HashToFq( hash_byte_arr ) );
 
     libff::alt_bn128_G1 result;

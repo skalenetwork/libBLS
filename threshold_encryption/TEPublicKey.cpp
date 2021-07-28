@@ -32,7 +32,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str_ptr,
     size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    checkSigners( _requiredSigners, _totalSigners );
+    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str_ptr ) {
         throw std::runtime_error( "public key is null" );
@@ -63,7 +63,7 @@ TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str
 TEPublicKey::TEPublicKey(
     TEPrivateKey _common_private, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    checkSigners( _requiredSigners, _totalSigners );
+    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libff::init_alt_bn128_params();
 
@@ -76,7 +76,7 @@ TEPublicKey::TEPublicKey(
 
 TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, size_t _totalSigners )
     : PublicKey( _pkey ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    checkSigners( _requiredSigners, _totalSigners );
+    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( _pkey.is_zero() ) {
         throw std::runtime_error( "zero public key" );
@@ -111,7 +111,8 @@ encryption::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_
 }
 
 std::shared_ptr< std::vector< std::string > > TEPublicKey::toString() {
-    return std::make_shared< std::vector< std::string > >( G2ToString( PublicKey ) );
+    return std::make_shared< std::vector< std::string > >(
+        ThresholdUtils::G2ToString( PublicKey ) );
 }
 
 libff::alt_bn128_G2 TEPublicKey::getPublicKey() const {

@@ -28,7 +28,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 TEPrivateKey::TEPrivateKey(
     std::shared_ptr< std::string > _key_str, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    checkSigners( _requiredSigners, _totalSigners );
+    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str ) {
         throw std::runtime_error( "private key is null" );
@@ -46,7 +46,7 @@ TEPrivateKey::TEPrivateKey(
 TEPrivateKey::TEPrivateKey(
     libff::alt_bn128_Fr _skey, size_t _requiredSigners, size_t _totalSigners )
     : privateKey( _skey ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    checkSigners( _requiredSigners, _totalSigners );
+    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libff::init_alt_bn128_params();
 
@@ -55,7 +55,7 @@ TEPrivateKey::TEPrivateKey(
 }
 
 std::string TEPrivateKey::toString() const {
-    return fieldElementToString( privateKey );
+    return ThresholdUtils::fieldElementToString( privateKey );
 }
 
 libff::alt_bn128_Fr TEPrivateKey::getPrivateKey() const {
