@@ -28,6 +28,7 @@
 #include <bls/BLSSigShareSet.h>
 #include <bls/BLSSignature.h>
 #include <bls/BLSutils.h>
+#include <tools/utils.h>
 
 
 bool BLSSigShareSet::addSigShare( std::shared_ptr< BLSSigShare > _sigShare ) {
@@ -36,7 +37,6 @@ bool BLSSigShareSet::addSigShare( std::shared_ptr< BLSSigShare > _sigShare ) {
     if ( was_merged ) {
         throw signatures::Bls::IncorrectInput( "Invalid state:was already merged" );
     }
-
 
     if ( sigShares.count( _sigShare->getSignerIndex() ) > 0 ) {
         throw signatures::Bls::IncorrectInput(
@@ -65,7 +65,7 @@ std::shared_ptr< BLSSigShare > BLSSigShareSet::getSigShareByIndex( size_t _index
 }
 BLSSigShareSet::BLSSigShareSet( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ), was_merged( false ) {
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     BLSutils::initBLS();
 }
@@ -90,7 +90,8 @@ std::shared_ptr< BLSSignature > BLSSigShareSet::merge() {
         shares.push_back( *item.second->getSigShare() );
     }
 
-    std::vector< libff::alt_bn128_Fr > lagrangeCoeffs = obj.LagrangeCoeffs( participatingNodes );
+    std::vector< libff::alt_bn128_Fr > lagrangeCoeffs =
+        ThresholdUtils::LagrangeCoeffs( participatingNodes, requiredSigners );
 
     libff::alt_bn128_G1 signature = obj.SignatureRecover( shares, lagrangeCoeffs );
 

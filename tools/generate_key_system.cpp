@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file generate_key_system.cpp
   @author Oleh Nikolaiev
@@ -26,6 +26,7 @@
 
 #include <bls/BLSutils.h>
 #include <bls/bls.h>
+#include <tools/utils.h>
 
 #include <dkg/dkg.h>
 
@@ -59,7 +60,7 @@ void GenerateKeys( const size_t t, const size_t n, std::ostream& outfile ) {
     for ( size_t i = 0; i < n; ++i ) {
         idx[i] = i + 1;
     }
-    auto lagrange_coeffs = bls_instance.LagrangeCoeffs( idx );
+    auto lagrange_coeffs = ThresholdUtils::LagrangeCoeffs( idx, t );
 
     auto common_keys = bls_instance.KeysRecover( lagrange_coeffs, secret_keys );
     common_keys.second.to_affine_coordinates();

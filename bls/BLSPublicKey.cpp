@@ -25,6 +25,7 @@
 #include <bls/BLSPublicKey.h>
 #include <bls/BLSPublicKeyShare.h>
 #include <bls/BLSutils.h>
+#include <tools/utils.h>
 
 
 BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > pkey_str_vect,
@@ -144,9 +145,8 @@ BLSPublicKey::BLSPublicKey(
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     BLSutils::initBLS();
 
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    signatures::Bls obj = signatures::Bls( requiredSigners, totalSigners );
     if ( !koefs_pkeys_map ) {
         throw signatures::Bls::IncorrectInput( "map is null" );
     }
@@ -158,7 +158,8 @@ BLSPublicKey::BLSPublicKey(
         participatingNodes.push_back( static_cast< uint64_t >( item.first ) );
     }
 
-    std::vector< libff::alt_bn128_Fr > lagrangeCoeffs = obj.LagrangeCoeffs( participatingNodes );
+    std::vector< libff::alt_bn128_Fr > lagrangeCoeffs =
+        ThresholdUtils::LagrangeCoeffs( participatingNodes, requiredSigners );
 
     libff::alt_bn128_G2 key = libff::alt_bn128_G2::zero();
     size_t i = 0;

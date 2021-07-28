@@ -51,7 +51,7 @@ std::vector< std::string > ThresholdUtils::G2ToString( libff::alt_bn128_G2 elem 
 }
 
 std::vector< libff::alt_bn128_Fr > ThresholdUtils::LagrangeCoeffs(
-    const std::vector< int >& idx, size_t t ) {
+    const std::vector< size_t >& idx, size_t t ) {
     if ( idx.size() < t ) {
         // throw IncorrectInput( "not enough participants in the threshold group" );
         throw std::runtime_error( "not enough participants in the threshold group" );

@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file unit_tests_bls.cpp
   @author Oleh Nikolaiev
@@ -23,6 +23,7 @@
 
 
 #include <bls/bls.h>
+#include <tools/utils.h>
 
 #include <cstdlib>
 #include <ctime>
@@ -129,7 +130,8 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignatures ) {
 
     std::vector< size_t > testing_nodes = {1, 2};
 
-    std::vector< libff::alt_bn128_Fr > lagrange_coeffs = obj.LagrangeCoeffs( testing_nodes );
+    std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
+        ThresholdUtils::LagrangeCoeffs( testing_nodes, 2 );
 
     auto recovered_keys = obj.KeysRecover( lagrange_coeffs, secret_keys );
 
@@ -188,7 +190,8 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesFalse ) {
 
     std::vector< size_t > testing_nodes = {1, 2};
 
-    std::vector< libff::alt_bn128_Fr > lagrange_coeffs = obj.LagrangeCoeffs( testing_nodes );
+    std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
+        ThresholdUtils::LagrangeCoeffs( testing_nodes, 2 );
 
     libff::alt_bn128_G1 fst_signature = obj.Signing( hash, fst_secret );
     libff::alt_bn128_G1 snd_signature = obj.Signing( hash, snd_secret );
@@ -242,7 +245,8 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesReal ) {
         testing_nodes[i] = i + 1;
     }
 
-    std::vector< libff::alt_bn128_Fr > lagrange_coeffs = obj.LagrangeCoeffs( testing_nodes );
+    std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
+        ThresholdUtils::LagrangeCoeffs( testing_nodes, 11 );
 
     auto recovered_keys = obj.KeysRecover( lagrange_coeffs, secret_keys );
 
@@ -308,7 +312,7 @@ BOOST_AUTO_TEST_CASE( simillarSignatures ) {
     }
 
     std::vector< libff::alt_bn128_Fr > lagrange_coeffs_fst =
-        obj.LagrangeCoeffs( testing_nodes_fst );
+        ThresholdUtils::LagrangeCoeffs( testing_nodes_fst, 11 );
 
     auto recovered_keys_fst = obj.KeysRecover( lagrange_coeffs_fst, secret_keys );
 
@@ -342,7 +346,7 @@ BOOST_AUTO_TEST_CASE( simillarSignatures ) {
     }
 
     std::vector< libff::alt_bn128_Fr > lagrange_coeffs_snd =
-        obj.LagrangeCoeffs( testing_nodes_snd );
+        ThresholdUtils::LagrangeCoeffs( testing_nodes_snd, 11 );
 
     std::vector< libff::alt_bn128_Fr > secret_keys_for_random_subgroup( 11 );
     for ( size_t i = 0; i < 11; ++i ) {
@@ -489,7 +493,7 @@ BOOST_AUTO_TEST_CASE( RandomPolynomial ) {
     }
 
     signatures::Bls obj = signatures::Bls( deg + 1, deg + 1 );
-    auto coeffs = obj.LagrangeCoeffs( indexes );
+    auto coeffs = ThresholdUtils::LagrangeCoeffs( indexes, deg + 1 );
 
     std::vector< libff::alt_bn128_Fr > values( deg + 1 );
     for ( size_t i = 0; i < deg + 1; ++i ) {
@@ -573,12 +577,14 @@ BOOST_AUTO_TEST_CASE( SignVerification ) {
 
     std::vector< size_t > idx = {1};
 
-    BOOST_REQUIRE_THROW( obj.LagrangeCoeffs( idx ), signatures::Bls::IncorrectInput );
+    BOOST_REQUIRE_THROW(
+        ThresholdUtils::LagrangeCoeffs( idx, num_signed ), std::runtime_error ); // signatures::Bls::IncorrectInput
 
     idx.clear();
     idx = {1, 1};
 
-    BOOST_REQUIRE_THROW( obj_2_2.LagrangeCoeffs( idx ), signatures::Bls::IncorrectInput );
+    BOOST_REQUIRE_THROW(
+        ThresholdUtils::LagrangeCoeffs( idx, 2 ), std::runtime_error ); // signatures::Bls::IncorrectInput
 
     std::cerr << "Exceptions test passed" << std::endl;
 }

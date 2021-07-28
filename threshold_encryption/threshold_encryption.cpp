@@ -25,9 +25,9 @@
 #include <iostream>
 #include <valarray>
 
-#include "../tools/utils.h"
 #include <threshold_encryption.h>
 #include <threshold_encryption/utils.h>
+#include <tools/utils.h>
 #include <libff/common/profiling.hpp>
 
 namespace encryption {
@@ -204,12 +204,13 @@ std::string TE::CombineShares( const Ciphertext& ciphertext,
         throw std::runtime_error( "error during share combining" );
     }
 
-    std::vector< int > idx( this->t_ );
+    std::vector< size_t > idx( this->t_ );
     for ( size_t i = 0; i < this->t_; ++i ) {
         idx[i] = decryptionShares[i].second;
     }
 
-    std::vector< libff::alt_bn128_Fr > lagrange_coeffs = this->LagrangeCoeffs( idx );
+    std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
+        ThresholdUtils::LagrangeCoeffs( idx, this->t_ );
 
     libff::alt_bn128_G2 sum = libff::alt_bn128_G2::zero();
     for ( size_t i = 0; i < this->t_; ++i ) {
@@ -238,43 +239,6 @@ std::string TE::CombineShares( const Ciphertext& ciphertext,
     }
 
     return message;
-}
-
-std::vector< libff::alt_bn128_Fr > TE::LagrangeCoeffs( const std::vector< int >& idx ) {
-    if ( idx.size() < this->t_ ) {
-        // throw IncorrectInput( "not enough participants in the threshold group" );
-        throw std::runtime_error( "not enough participants in the threshold group" );
-    }
-
-    std::vector< libff::alt_bn128_Fr > res( this->t_ );
-
-    libff::alt_bn128_Fr w = libff::alt_bn128_Fr::one();
-
-    for ( size_t i = 0; i < this->t_; ++i ) {
-        w *= libff::alt_bn128_Fr( idx[i] );
-    }
-
-    for ( size_t i = 0; i < this->t_; ++i ) {
-        libff::alt_bn128_Fr v = libff::alt_bn128_Fr( idx[i] );
-
-        for ( size_t j = 0; j < this->t_; ++j ) {
-            if ( j != i ) {
-                if ( libff::alt_bn128_Fr( idx[i] ) == libff::alt_bn128_Fr( idx[j] ) ) {
-                    // throw IncorrectInput(
-                    //     "during the interpolation, have same indexes in list of indexes" );
-                    throw std::runtime_error(
-                        "during the interpolation, have same indexes in list of indexes" );
-                }
-
-                v *= ( libff::alt_bn128_Fr( idx[j] ) -
-                       libff::alt_bn128_Fr( idx[i] ) );  // calculating Lagrange coefficients
-            }
-        }
-
-        res[i] = w * v.invert();
-    }
-
-    return res;
 }
 
 }  // namespace encryption

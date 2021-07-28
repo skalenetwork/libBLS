@@ -24,7 +24,6 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 #define BOOST_TEST_MODULE
 
-#include "../tools/utils.h"
 #include <dkg/dkg_te.h>
 #include <threshold_encryption/TEDecryptSet.h>
 #include <threshold_encryption/TEPrivateKey.h>
@@ -33,6 +32,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <threshold_encryption/TEPublicKeyShare.h>
 #include <threshold_encryption/threshold_encryption.h>
 #include <threshold_encryption/utils.h>
+#include <tools/utils.h>
 #include <boost/test/included/unit_test.hpp>
 
 #include <dkg/DKGTEWrapper.h>

@@ -24,6 +24,7 @@
 #include <bls/BLSSigShare.h>
 #include <bls/BLSSignature.h>
 #include <bls/BLSutils.h>
+#include <tools/utils.h>
 
 #include <stdlib.h>
 #include <string>
@@ -52,7 +53,7 @@ BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _sign
     : signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    BLSSignature::checkSigners( requiredSigners, totalSigners );
+    ThresholdUtils::checkSigners( requiredSigners, totalSigners );
     BLSutils::initBLS();
     if ( _signerIndex == 0 ) {
         throw signatures::Bls::IncorrectInput( "Zero signer index" );
@@ -104,7 +105,7 @@ BLSSigShare::BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& _sigShar
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
     BLSutils::initBLS();
-    BLSSignature::checkSigners( requiredSigners, totalSigners );
+    ThresholdUtils::checkSigners( requiredSigners, totalSigners );
     if ( !_sigShare ) {
         throw signatures::Bls::IncorrectInput( "Null _s" );
     }

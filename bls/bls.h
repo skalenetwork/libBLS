@@ -107,8 +107,6 @@ public:
     libff::alt_bn128_G1 SignatureRecover( const std::vector< libff::alt_bn128_G1 >& shares,
         const std::vector< libff::alt_bn128_Fr >& coeffs );
 
-    std::vector< libff::alt_bn128_Fr > LagrangeCoeffs( const std::vector< size_t >& idx );
-
 private:
     const size_t t_ = 0;
 

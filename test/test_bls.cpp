@@ -32,7 +32,8 @@
 #include <bls/BLSSigShare.h>
 #include <bls/BLSSigShareSet.h>
 #include <bls/BLSSignature.h>
-#include <bls/BLSutils.cpp>
+#include <bls/BLSutils.h>
+#include <tools/utils.h>
 
 #include <map>
 
@@ -143,7 +144,8 @@ BOOST_AUTO_TEST_CASE( libBls ) {
                     signatures::Bls::IsNotWellFormed );
             }
 
-            std::vector< libff::alt_bn128_Fr > lagrange_coeffs = obj.LagrangeCoeffs( participants );
+            std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
+                ThresholdUtils::LagrangeCoeffs( participants, num_signed );
             libff::alt_bn128_G1 signature = obj.SignatureRecover( signatures, lagrange_coeffs );
 
             auto recovered_keys = obj.KeysRecover( lagrange_coeffs, skeys );
@@ -425,8 +427,8 @@ BOOST_AUTO_TEST_CASE( private_keys_equality ) {
         std::shared_ptr< std::vector< size_t > > participants =
             choose_rand_signers( num_signed, num_all );
 
-        signatures::Bls bls_obj = signatures::Bls( num_signed, num_all );
-        std::vector< libff::alt_bn128_Fr > lagrange_koefs = bls_obj.LagrangeCoeffs( *participants );
+        std::vector< libff::alt_bn128_Fr > lagrange_koefs =
+            ThresholdUtils::LagrangeCoeffs( *participants, num_signed );
         libff::alt_bn128_Fr common_skey = libff::alt_bn128_Fr::zero();
         for ( size_t i = 0; i < num_signed; ++i ) {
             common_skey =
@@ -450,8 +452,8 @@ BOOST_AUTO_TEST_CASE( public_keys_equality ) {
         std::shared_ptr< std::vector< size_t > > participants =
             choose_rand_signers( num_signed, num_all );
 
-        signatures::Bls bls_obj = signatures::Bls( num_signed, num_all );
-        std::vector< libff::alt_bn128_Fr > lagrange_koefs = bls_obj.LagrangeCoeffs( *participants );
+        std::vector< libff::alt_bn128_Fr > lagrange_koefs =
+            ThresholdUtils::LagrangeCoeffs( *participants, num_signed );
         libff::alt_bn128_G2 common_pkey1 = libff::alt_bn128_G2::zero();
         for ( size_t i = 0; i < num_signed; ++i ) {
             common_pkey1 = common_pkey1 + lagrange_koefs.at( i ) *

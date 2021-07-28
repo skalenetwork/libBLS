@@ -59,8 +59,6 @@ public:
     std::string CombineShares( const Ciphertext& ciphertext,
         const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShare );
 
-    std::vector< libff::alt_bn128_Fr > LagrangeCoeffs( const std::vector< int >& idx );
-
 private:
     const size_t t_ = 0;
 

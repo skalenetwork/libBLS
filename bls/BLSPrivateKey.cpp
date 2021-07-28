@@ -21,9 +21,10 @@
   @date 2019
 */
 
-#include "bls.h"
 #include <bls/BLSPrivateKey.h>
 #include <bls/BLSutils.h>
+#include <bls/bls.h>
+#include <tools/utils.h>
 
 
 BLSPrivateKey::BLSPrivateKey(
@@ -55,11 +56,12 @@ BLSPrivateKey::BLSPrivateKey(
     if ( koefs == nullptr ) {
         throw signatures::Bls::IncorrectInput( "Signers indices ptr is null" );
     }
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
-    signatures::Bls obj = signatures::Bls( _requiredSigners, _totalSigners );
-    std::vector lagrange_koefs = obj.LagrangeCoeffs( *koefs );
+
+    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+
+    auto lagrange_koefs = ThresholdUtils::LagrangeCoeffs( *koefs, this->requiredSigners );
     libff::alt_bn128_Fr privateKeyObj( libff::alt_bn128_Fr::zero() );
-    for ( size_t i = 0; i < requiredSigners; i++ ) {
+    for ( size_t i = 0; i < requiredSigners; ++i ) {
         libff::alt_bn128_Fr skey = *skeys->at( koefs->at( i ) - 1 )->getPrivateKey();
         privateKeyObj = privateKeyObj + lagrange_koefs.at( i ) * skey;
     }

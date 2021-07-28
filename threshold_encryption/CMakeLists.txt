@@ -15,11 +15,11 @@ set(sources
             TEPrivateKey.cpp
             TEPublicKey.cpp
             TEPublicKeyShare.cpp
-            ../dkg/dkg_te.cpp
-            ../dkg/DKGTEWrapper.cpp
-            ../dkg/DKGTESecret.cpp
+            ${DKG_DIR}/dkg_te.cpp
+            ${DKG_DIR}/DKGTEWrapper.cpp
+            ${DKG_DIR}/DKGTESecret.cpp
             utils.cpp
-            ../tools/utils.cpp
+            ${TOOLS_DIR}/utils.cpp
 )
 
 set(headers
@@ -29,11 +29,11 @@ set(headers
             TEPrivateKey.h
             TEPublicKey.h
             TEPublicKeyShare.h
-            ../dkg/dkg_te.h
-            ../dkg/DKGTEWrapper.h
-            ../dkg/DKGTESecret.h
+            ${DKG_DIR}/dkg_te.h
+            ${DKG_DIR}/DKGTEWrapper.h
+            ${DKG_DIR}/DKGTESecret.h
             utils.h
-            ../tools/utils.h
+            ${TOOLS_DIR}/utils.h
 )
 
 set(PROJECT_VERSION 0.2.0)
@@ -53,12 +53,6 @@ target_include_directories(te PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_
 target_link_libraries(te PRIVATE ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
 if (BUILD_TESTS)
-	# add_executable(dkg_te_unit_test ../test/unit_tests_dkg_te.cpp)
-	# target_include_directories(dkg_te_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${TEST_DIR})
-    # target_link_libraries(dkg_te_unit_test PRIVATE te pbc ${GMP_LIBRARY} ${GMPXX_LIBRARY})
-
-	add_test(NAME dkg_te_tests COMMAND dkg_te_unit_test)
-
 	add_executable(te_unit_test ../test/unit_tests_te.cpp)
 	target_include_directories(te_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
     target_link_libraries(te_unit_test PRIVATE te ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
@@ -77,5 +71,5 @@ if (BUILD_TESTS)
         DEPENDS te_unit_test
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMENT "Run all TE tests"
-        )
+    )
 endif()

@@ -26,6 +26,7 @@
 
 #include <bls/BLSutils.h>
 #include <bls/bls.h>
+#include <tools/utils.h>
 
 #include <third_party/json.hpp>
 
@@ -62,7 +63,7 @@ void RecoverSignature( const size_t t, const size_t n, const std::vector< std::s
         signature_shares[i] = signature_share;
     }
 
-    std::vector< libff::alt_bn128_Fr > lagrange_coeffs = bls_instance.LagrangeCoeffs( idx );
+    std::vector< libff::alt_bn128_Fr > lagrange_coeffs = ThresholdUtils::LagrangeCoeffs( idx, t );
 
     libff::alt_bn128_G1 common_signature =
         bls_instance.SignatureRecover( signature_shares, lagrange_coeffs );

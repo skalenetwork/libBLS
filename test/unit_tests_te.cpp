@@ -22,6 +22,7 @@
  */
 
 #include <threshold_encryption.h>
+#include <tools/utils.h>
 #include <random>
 
 #define BOOST_TEST_MODULE
@@ -312,10 +313,10 @@ BOOST_AUTO_TEST_CASE( LagrangeInterpolationExceptions ) {
         bool is_exception_caught = false;
         try {
             encryption::TE obj( num_signed, num_all );
-            std::vector< int > vect;
+            std::vector< size_t > vect;
             for ( size_t i = 0; i < num_signed - 1; i++ )
                 vect.push_back( i + 1 );
-            obj.LagrangeCoeffs( vect );
+            ThresholdUtils::LagrangeCoeffs( vect, num_signed );
         } catch ( std::runtime_error& ) {
             is_exception_caught = true;
         }
@@ -324,12 +325,12 @@ BOOST_AUTO_TEST_CASE( LagrangeInterpolationExceptions ) {
         is_exception_caught = false;
         try {
             encryption::TE obj( num_signed, num_all );
-            std::vector< int > vect;
+            std::vector< size_t > vect;
             for ( size_t i = 0; i < num_signed; i++ ) {
                 vect.push_back( i + 1 );
             }
             vect.at( 1 ) = vect.at( 0 );
-            obj.LagrangeCoeffs( vect );
+            ThresholdUtils::LagrangeCoeffs( vect, num_signed );
         } catch ( std::runtime_error& ) {
             is_exception_caught = true;
         }

@@ -303,38 +303,4 @@ libff::alt_bn128_G1 Bls::SignatureRecover( const std::vector< libff::alt_bn128_G
     return sign;  // first element is hash of a receiving message
 }
 
-std::vector< libff::alt_bn128_Fr > Bls::LagrangeCoeffs( const std::vector< size_t >& idx ) {
-    if ( idx.size() < this->t_ ) {
-        throw IncorrectInput( "not enough participants in the threshold group" );
-    }
-
-    std::vector< libff::alt_bn128_Fr > res( this->t_ );
-
-    libff::alt_bn128_Fr w = libff::alt_bn128_Fr::one();
-
-    for ( size_t i = 0; i < this->t_; ++i ) {
-        w *= libff::alt_bn128_Fr( idx[i] );
-    }
-
-    for ( size_t i = 0; i < this->t_; ++i ) {
-        libff::alt_bn128_Fr v = libff::alt_bn128_Fr( idx[i] );
-
-        for ( size_t j = 0; j < this->t_; ++j ) {
-            if ( j != i ) {
-                if ( libff::alt_bn128_Fr( idx[i] ) == libff::alt_bn128_Fr( idx[j] ) ) {
-                    throw IncorrectInput(
-                        "during the interpolation, have same indexes in list of indexes" );
-                }
-
-                v *= ( libff::alt_bn128_Fr( idx[j] ) -
-                       libff::alt_bn128_Fr( idx[i] ) );  // calculating Lagrange coefficients
-            }
-        }
-
-        res[i] = w * v.invert();
-    }
-
-    return res;
-}
-
 }  // namespace signatures

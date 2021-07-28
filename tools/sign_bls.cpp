@@ -23,6 +23,7 @@
 
 #include <bls/BLSutils.h>
 #include <bls/bls.h>
+#include <tools/utils.h>
 
 #include <fstream>
 
@@ -118,7 +119,8 @@ void Sign( const size_t t, const size_t n, std::istream& data_file, std::ostream
             idx[i] = i + 1;
         }
 
-        std::vector< libff::alt_bn128_Fr > lagrange_coeffs = bls_instance.LagrangeCoeffs( idx );
+        std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
+            ThresholdUtils::LagrangeCoeffs( idx, t );
 
         common_signature = bls_instance.SignatureRecover( signature_shares, lagrange_coeffs );
     } else {
