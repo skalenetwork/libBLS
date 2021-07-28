@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         encryption::DkgTe dkg_te( num_signed, num_all );
 
         std::vector< libff::alt_bn128_Fr > poly = dkg_te.GeneratePolynomial();
-        
+
         libff::alt_bn128_Fr zero_el = libff::alt_bn128_Fr::zero();
 
         libff::alt_bn128_Fr common_skey = dkg_te.ComputePolynomialValue( poly, zero_el );
@@ -85,8 +85,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         std::vector< TEPrivateKeyShare > skey_shares;
         std::vector< TEPublicKeyShare > public_key_shares;
         for ( size_t i = 0; i < num_all; i++ ) {
-            skey_shares.emplace_back(
-                TEPrivateKeyShare( skeys[i], i + 1, num_signed, num_all ) );
+            skey_shares.emplace_back( TEPrivateKeyShare( skeys[i], i + 1, num_signed, num_all ) );
             public_key_shares.emplace_back(
                 TEPublicKeyShare( skey_shares[i], num_signed, num_all ) );
         }
@@ -156,7 +155,8 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         size_t ind = rand_gen() % num_signed;  // corrupt random private key share
 
         libff::alt_bn128_Fr bad_pkey = libff::alt_bn128_Fr::random_element();
-        TEPrivateKeyShare bad_key( bad_pkey, skey_shares[ind].getSignerIndex(), num_signed, num_all );
+        TEPrivateKeyShare bad_key(
+            bad_pkey, skey_shares[ind].getSignerIndex(), num_signed, num_all );
         skey_shares[ind] = bad_key;
 
         TEDecryptSet bad_decr_set( num_signed, num_all );
@@ -272,8 +272,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
 
             encryption::DkgTe dkg_te( num_signed, num_all );
             std::vector< libff::alt_bn128_Fr > poly = dkg_te.GeneratePolynomial();
-            auto shared_poly =
-                std::make_shared< std::vector< libff::alt_bn128_Fr > >( poly );
+            auto shared_poly = std::make_shared< std::vector< libff::alt_bn128_Fr > >( poly );
             dkg_wrap.setDKGSecret( shared_poly );
 
             dkgs.push_back( dkg_wrap );
@@ -480,7 +479,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         is_exception_caught = false;  // zero decrypted
         try {
             libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
-            TEPublicKeyShare pkey( TEPrivateKeyShare( el, 1, num_signed, num_all ), num_signed, num_all );
+            TEPublicKeyShare pkey(
+                TEPrivateKeyShare( el, 1, num_signed, num_all ), num_signed, num_all );
 
             libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
 
@@ -488,7 +488,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
             encryption::Ciphertext cypher;
             std::get< 0 >( cypher ) = U;
-            std::get< 1 >( cypher ) = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
+            std::get< 1 >( cypher ) =
+                "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
             std::get< 2 >( cypher ) = W;
 
             libff::alt_bn128_G2 decrypt = libff::alt_bn128_G2::zero();
@@ -754,8 +755,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
         std::vector< libff::alt_bn128_G2 > pub_shares = *dkg_te.createDKGPublicShares();
         pub_shares.erase( pub_shares.begin() );
 
-        dkg_te.VerifyDKGShare( 1, el,
-            std::make_shared< std::vector< libff::alt_bn128_G2 > >( pub_shares ) );
+        dkg_te.VerifyDKGShare(
+            1, el, std::make_shared< std::vector< libff::alt_bn128_G2 > >( pub_shares ) );
 
     } catch ( std::runtime_error& ) {
         is_exception_caught = true;

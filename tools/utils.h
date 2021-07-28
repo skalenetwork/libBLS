@@ -33,9 +33,6 @@
 
 void checkSigners( size_t _requiredSigners, size_t _totalSigners );
 
-template < class T >
-std::string fieldElementToString( const T& field_elem );
-
 std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem );
 
 std::vector< libff::alt_bn128_Fr > LagrangeCoeffs( const std::vector< int >& idx, size_t t );

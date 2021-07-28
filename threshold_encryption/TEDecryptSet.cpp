@@ -33,7 +33,6 @@ TEDecryptSet::TEDecryptSet( size_t _requiredSigners, size_t _totalSigners )
     checkSigners( _requiredSigners, _totalSigners );
 
     libff::init_alt_bn128_params();
-    
 }
 
 void TEDecryptSet::addDecrypt( size_t _signerIndex, std::shared_ptr< libff::alt_bn128_G2 > _el ) {

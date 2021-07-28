@@ -98,7 +98,8 @@ TEPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSig
 
     std::vector< libff::alt_bn128_Fr > poly = dkg_te.GeneratePolynomial();
 
-    libff::alt_bn128_Fr common_skey = dkg_te.ComputePolynomialValue( poly, libff::alt_bn128_Fr::zero() );
+    libff::alt_bn128_Fr common_skey =
+        dkg_te.ComputePolynomialValue( poly, libff::alt_bn128_Fr::zero() );
     TEPrivateKey common_private( common_skey, _requiredSigners, _totalSigners );
     TEPublicKey common_public( common_private, _requiredSigners, _totalSigners );
 

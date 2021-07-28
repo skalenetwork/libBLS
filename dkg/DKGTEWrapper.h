@@ -52,8 +52,7 @@ public:
         std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr );
 
     static TEPublicKey CreateTEPublicKey(
-        std::shared_ptr< std::vector< std::vector< libff::alt_bn128_G2 > > >
-            public_shares_all,
+        std::shared_ptr< std::vector< std::vector< libff::alt_bn128_G2 > > > public_shares_all,
         size_t _requiredSigners, size_t _totalSigners );
 };
 

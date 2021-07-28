@@ -37,7 +37,7 @@ DKGTEWrapper::DKGTEWrapper( size_t _requiredSigners, size_t _totalSigners )
 
 bool DKGTEWrapper::VerifyDKGShare( size_t _signerIndex, const libff::alt_bn128_Fr& _share,
     const std::shared_ptr< std::vector< libff::alt_bn128_G2 > >& _verification_vector ) {
-    if ( _share.is_zero()  )
+    if ( _share.is_zero() )
         throw std::runtime_error( "Zero secret share" );
     if ( _verification_vector == nullptr )
         throw std::runtime_error( "Null verification vector" );
@@ -54,20 +54,18 @@ void DKGTEWrapper::setDKGSecret(
     dkg_secret_ptr->setPoly( *_poly_ptr );
 }
 
-std::shared_ptr< std::vector< libff::alt_bn128_Fr > >
-DKGTEWrapper::createDKGSecretShares() {
+std::shared_ptr< std::vector< libff::alt_bn128_Fr > > DKGTEWrapper::createDKGSecretShares() {
     return std::make_shared< std::vector< libff::alt_bn128_Fr > >(
         dkg_secret_ptr->getDKGTESecretShares() );
 }
 
-std::shared_ptr< std::vector< libff::alt_bn128_G2 > >
-DKGTEWrapper::createDKGPublicShares() {
+std::shared_ptr< std::vector< libff::alt_bn128_G2 > > DKGTEWrapper::createDKGPublicShares() {
     return std::make_shared< std::vector< libff::alt_bn128_G2 > >(
         dkg_secret_ptr->getDKGTEPublicShares() );
 }
 
-TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare( size_t signerIndex_,
-    std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr ) {
+TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare(
+    size_t signerIndex_, std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr ) {
     if ( secret_shares_ptr == nullptr )
         throw std::runtime_error( "Null secret_shares_ptr " );
     if ( secret_shares_ptr->size() != totalSigners )
