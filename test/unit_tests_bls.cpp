@@ -577,14 +577,14 @@ BOOST_AUTO_TEST_CASE( SignVerification ) {
 
     std::vector< size_t > idx = {1};
 
-    BOOST_REQUIRE_THROW(
-        ThresholdUtils::LagrangeCoeffs( idx, num_signed ), std::runtime_error ); // signatures::Bls::IncorrectInput
+    BOOST_REQUIRE_THROW( ThresholdUtils::LagrangeCoeffs( idx, num_signed ),
+        std::runtime_error );  // signatures::Bls::IncorrectInput
 
     idx.clear();
     idx = {1, 1};
 
-    BOOST_REQUIRE_THROW(
-        ThresholdUtils::LagrangeCoeffs( idx, 2 ), std::runtime_error ); // signatures::Bls::IncorrectInput
+    BOOST_REQUIRE_THROW( ThresholdUtils::LagrangeCoeffs( idx, 2 ),
+        std::runtime_error );  // signatures::Bls::IncorrectInput
 
     std::cerr << "Exceptions test passed" << std::endl;
 }

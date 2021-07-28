@@ -21,10 +21,9 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 @date 2019
 */
 
-#include "../tools/utils.h"
 #include <dkg/dkg_te.h>
 #include <threshold_encryption/TEPrivateKeyShare.h>
-#include <threshold_encryption/utils.h>
+#include <tools/utils.h>
 
 TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr< std::string > _key_str, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
@@ -66,7 +65,7 @@ TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _s
 }
 
 libff::alt_bn128_G2 TEPrivateKeyShare::getDecryptionShare( encryption::Ciphertext& cipher ) {
-    checkCypher( cipher );
+    ThresholdUtils::checkCypher( cipher );
 
     encryption::TE te( requiredSigners, totalSigners );
 

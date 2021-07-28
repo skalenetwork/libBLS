@@ -21,9 +21,8 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 @date 2019
 */
 
-#include "../tools/utils.h"
 #include <threshold_encryption/TEPrivateKey.h>
-#include <threshold_encryption/utils.h>
+#include <tools/utils.h>
 
 TEPrivateKey::TEPrivateKey(
     std::shared_ptr< std::string > _key_str, size_t _requiredSigners, size_t _totalSigners )

@@ -22,10 +22,9 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <threshold_encryption/TEDecryptSet.h>
-#include <threshold_encryption/utils.h>
 #include <utility>
 
-#include "../tools/utils.h"
+#include <tools/utils.h>
 
 
 TEDecryptSet::TEDecryptSet( size_t _requiredSigners, size_t _totalSigners )
@@ -56,7 +55,7 @@ void TEDecryptSet::addDecrypt( size_t _signerIndex, std::shared_ptr< libff::alt_
 }
 
 std::string TEDecryptSet::merge( const encryption::Ciphertext& cyphertext ) {
-    checkCypher( cyphertext );
+    ThresholdUtils::checkCypher( cyphertext );
 
     was_merged = true;
 

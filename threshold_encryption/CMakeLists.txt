@@ -18,7 +18,6 @@ set(sources
             ${DKG_DIR}/dkg_te.cpp
             ${DKG_DIR}/DKGTEWrapper.cpp
             ${DKG_DIR}/DKGTESecret.cpp
-            utils.cpp
             ${TOOLS_DIR}/utils.cpp
 )
 
@@ -32,7 +31,6 @@ set(headers
             ${DKG_DIR}/dkg_te.h
             ${DKG_DIR}/DKGTEWrapper.h
             ${DKG_DIR}/DKGTESecret.h
-            utils.h
             ${TOOLS_DIR}/utils.h
 )
 

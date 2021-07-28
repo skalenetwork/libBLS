@@ -21,9 +21,8 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 @date 2019
 */
 
-#include "../tools/utils.h"
 #include <threshold_encryption/TEPublicKey.h>
-#include <threshold_encryption/utils.h>
+#include <tools/utils.h>
 
 #include <iostream>
 #include <utility>
@@ -42,8 +41,10 @@ TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str
         throw std::runtime_error( "wrong number of components in public key share" );
     }
 
-    if ( !isStringNumber( _key_str_ptr->at( 0 ) ) || !isStringNumber( _key_str_ptr->at( 1 ) ) ||
-         !isStringNumber( _key_str_ptr->at( 2 ) ) || !isStringNumber( _key_str_ptr->at( 3 ) ) ) {
+    if ( !ThresholdUtils::isStringNumber( _key_str_ptr->at( 0 ) ) ||
+         !ThresholdUtils::isStringNumber( _key_str_ptr->at( 1 ) ) ||
+         !ThresholdUtils::isStringNumber( _key_str_ptr->at( 2 ) ) ||
+         !ThresholdUtils::isStringNumber( _key_str_ptr->at( 3 ) ) ) {
         throw std::runtime_error( "non-digit symbol or first zero in non-zero public key share" );
     }
 
@@ -95,7 +96,7 @@ encryption::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_
     }
 
     encryption::Ciphertext cypher = te.Encrypt( *mes_ptr, PublicKey );
-    checkCypher( cypher );
+    ThresholdUtils::checkCypher( cypher );
 
     libff::alt_bn128_G2 U = std::get< 0 >( cypher );
     /*if (element_item_count(U) == 0 ) {

@@ -21,9 +21,8 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 @date 2019
 */
 
-#include "../tools/utils.h"
 #include <threshold_encryption/TEPublicKeyShare.h>
-#include <threshold_encryption/utils.h>
+#include <tools/utils.h>
 
 TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > > _key_str_ptr,
     size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
@@ -40,8 +39,10 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
         throw std::runtime_error( "wrong number of components in public key share" );
     }
 
-    if ( !isStringNumber( _key_str_ptr->at( 0 ) ) || !isStringNumber( _key_str_ptr->at( 1 ) ) ||
-         !isStringNumber( _key_str_ptr->at( 2 ) ) || !isStringNumber( _key_str_ptr->at( 3 ) ) ) {
+    if ( !ThresholdUtils::isStringNumber( _key_str_ptr->at( 0 ) ) ||
+         !ThresholdUtils::isStringNumber( _key_str_ptr->at( 1 ) ) ||
+         !ThresholdUtils::isStringNumber( _key_str_ptr->at( 2 ) ) ||
+         !ThresholdUtils::isStringNumber( _key_str_ptr->at( 3 ) ) ) {
         throw std::runtime_error( "non-digit symbol or first zero in non-zero public key share" );
     }
 
@@ -71,7 +72,7 @@ TEPublicKeyShare::TEPublicKeyShare(
 
 bool TEPublicKeyShare::Verify(
     const encryption::Ciphertext& cyphertext, const libff::alt_bn128_G2& decryptionShare ) {
-    checkCypher( cyphertext );
+    ThresholdUtils::checkCypher( cyphertext );
     if ( decryptionShare.is_zero() ) {
         throw std::runtime_error( "zero decrypt" );
     }

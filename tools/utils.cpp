@@ -148,3 +148,23 @@ libff::alt_bn128_G1 ThresholdUtils::HashtoG1(
 
     return result;
 }
+
+bool ThresholdUtils::isStringNumber( std::string& str ) {
+    if ( str.at( 0 ) == '0' && str.length() > 1 )
+        return false;
+    for ( char& c : str ) {
+        if ( !( c >= '0' && c <= '9' ) ) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void ThresholdUtils::checkCypher(
+    const std::tuple< libff::alt_bn128_G2, std::string, libff::alt_bn128_G1 >& cyphertext ) {
+    if ( std::get< 0 >( cyphertext ).is_zero() || std::get< 2 >( cyphertext ).is_zero() )
+        throw std::runtime_error( "zero element in cyphertext" );
+
+    if ( std::get< 1 >( cyphertext ).length() != 64 )
+        throw std::runtime_error( "wrong string length in cyphertext" );
+}

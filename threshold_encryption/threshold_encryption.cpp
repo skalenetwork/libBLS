@@ -26,7 +26,6 @@
 #include <valarray>
 
 #include <threshold_encryption.h>
-#include <threshold_encryption/utils.h>
 #include <tools/utils.h>
 #include <libff/common/profiling.hpp>
 
@@ -119,7 +118,7 @@ Ciphertext TE::Encrypt( const std::string& message, const libff::alt_bn128_G2& c
 
 libff::alt_bn128_G2 TE::getDecryptionShare(
     const Ciphertext& ciphertext, const libff::alt_bn128_Fr& secret_key ) {
-    checkCypher( ciphertext );
+    ThresholdUtils::checkCypher( ciphertext );
     if ( secret_key.is_zero() )
         throw std::runtime_error( "zero secret key" );
 

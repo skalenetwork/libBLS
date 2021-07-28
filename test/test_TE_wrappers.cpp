@@ -31,7 +31,6 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/TEPublicKeyShare.h>
 #include <threshold_encryption/threshold_encryption.h>
-#include <threshold_encryption/utils.h>
 #include <tools/utils.h>
 #include <boost/test/included/unit_test.hpp>
 
