@@ -126,7 +126,7 @@ std::pair< libff::alt_bn128_G1, std::string > Bls::HashtoG1withHint(
     }
     point.Z = libff::alt_bn128_Fq::one();
 
-    return std::make_pair( point, BLSutils::ConvertToString( counter ) );
+    return std::make_pair( point, ThresholdUtils::fieldElementToString( counter ) );
 }
 
 libff::alt_bn128_G1 Bls::HashBytes(
@@ -137,7 +137,6 @@ libff::alt_bn128_G1 Bls::HashBytes(
     CHECK( raw_bytes );
 
     std::string from_bytes( raw_bytes, length );
-
 
     libff::alt_bn128_G1 hash = Hashing( from_bytes, *hash_func );
 

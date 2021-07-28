@@ -183,10 +183,10 @@ std::shared_ptr< std::vector< std::string > > BLSPublicKey::toString() {
 
     libffPublicKey->to_affine_coordinates();
 
-    pkey_str_vect.push_back( BLSutils::ConvertToString( libffPublicKey->X.c0 ) );
-    pkey_str_vect.push_back( BLSutils::ConvertToString( libffPublicKey->X.c1 ) );
-    pkey_str_vect.push_back( BLSutils::ConvertToString( libffPublicKey->Y.c0 ) );
-    pkey_str_vect.push_back( BLSutils::ConvertToString( libffPublicKey->Y.c1 ) );
+    pkey_str_vect.push_back( ThresholdUtils::fieldElementToString( libffPublicKey->X.c0 ) );
+    pkey_str_vect.push_back( ThresholdUtils::fieldElementToString( libffPublicKey->X.c1 ) );
+    pkey_str_vect.push_back( ThresholdUtils::fieldElementToString( libffPublicKey->Y.c0 ) );
+    pkey_str_vect.push_back( ThresholdUtils::fieldElementToString( libffPublicKey->Y.c1 ) );
 
     return std::make_shared< std::vector< std::string > >( pkey_str_vect );
 }

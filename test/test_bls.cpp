@@ -553,7 +553,7 @@ BOOST_AUTO_TEST_CASE( BLSWITHDKG ) {
 
         std::shared_ptr< BLSSignature > common_sig_ptr = sigSet.merge();  // verifying signature
 
-        std::string common_secret_str = BLSutils::ConvertToString( common_secret );
+        std::string common_secret_str = ThresholdUtils::fieldElementToString( common_secret );
         BLSPrivateKey common_skey(
             std::make_shared< std::string >( common_secret_str ), num_signed, num_all );
 

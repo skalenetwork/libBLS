@@ -144,10 +144,8 @@ void Sign( const size_t t, const size_t n, std::istream& data_file, std::ostream
         signature["index"] = std::to_string( idx );
     }
 
-    signature["signature"]["X"] =
-        BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_signature.X );
-    signature["signature"]["Y"] =
-        BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_signature.Y );
+    signature["signature"]["X"] = ThresholdUtils::fieldElementToString( common_signature.X );
+    signature["signature"]["Y"] = ThresholdUtils::fieldElementToString( common_signature.Y );
 
     std::ofstream outfile_h( "hash.json" );
     outfile_h << hash_json.dump( 4 ) << "\n";

@@ -79,7 +79,7 @@ std::shared_ptr< libff::alt_bn128_Fr > BLSPrivateKey::getPrivateKey() const {
 
 std::shared_ptr< std::string > BLSPrivateKey::toString() {
     std::shared_ptr< std::string > key_str =
-        std::make_shared< std::string >( BLSutils::ConvertToString( *privateKey ) );
+        std::make_shared< std::string >( ThresholdUtils::fieldElementToString( *privateKey ) );
 
     if ( key_str->empty() )
         throw signatures::Bls::ZeroSecretKey( "Secret key share string is empty" );

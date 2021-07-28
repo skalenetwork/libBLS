@@ -24,6 +24,7 @@
 
 #include <bls/BLSutils.h>
 #include <dkg/dkg.h>
+#include <tools/utils.h>
 
 #include <fstream>
 
@@ -126,21 +127,17 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
         nlohmann::json BLS_key_file;
 
         BLS_key_file["insecureBLSPrivateKey"] =
-            BLSutils::ConvertToString< libff::alt_bn128_Fr >( secret_key[i] );
+            ThresholdUtils::fieldElementToString( secret_key[i] );
 
         std::string str_file_name = "BLS_keys" + std::to_string( i ) + ".json";
         std::ofstream out( str_file_name.c_str() );
 
         libff::alt_bn128_G2 publ_key = dkg_instance.GetPublicKeyFromSecretKey( secret_key[i] );
         publ_key.to_affine_coordinates();
-        BLS_key_file["BLSPublicKey0"] =
-            BLSutils::ConvertToString< libff::alt_bn128_Fq >( publ_key.X.c0 );
-        BLS_key_file["BLSPublicKey1"] =
-            BLSutils::ConvertToString< libff::alt_bn128_Fq >( publ_key.X.c1 );
-        BLS_key_file["BLSPublicKey2"] =
-            BLSutils::ConvertToString< libff::alt_bn128_Fq >( publ_key.Y.c0 );
-        BLS_key_file["BLSPublicKey3"] =
-            BLSutils::ConvertToString< libff::alt_bn128_Fq >( publ_key.Y.c1 );
+        BLS_key_file["BLSPublicKey0"] = ThresholdUtils::fieldElementToString( publ_key.X.c0 );
+        BLS_key_file["BLSPublicKey1"] = ThresholdUtils::fieldElementToString( publ_key.X.c1 );
+        BLS_key_file["BLSPublicKey2"] = ThresholdUtils::fieldElementToString( publ_key.Y.c0 );
+        BLS_key_file["BLSPublicKey3"] = ThresholdUtils::fieldElementToString( publ_key.Y.c1 );
 
         if ( g_b_verbose_mode ) {
             std::cout << str_file_name << " file:\n" << BLS_key_file.dump( 4 ) << "\n\n";
@@ -151,13 +148,13 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
     common_public_key.to_affine_coordinates();
     nlohmann::json public_key_json;
     public_key_json["commonBLSPublicKey0"] =
-        BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_public_key.X.c0 );
+        ThresholdUtils::fieldElementToString( common_public_key.X.c0 );
     public_key_json["commonBLSPublicKey1"] =
-        BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_public_key.X.c1 );
+        ThresholdUtils::fieldElementToString( common_public_key.X.c1 );
     public_key_json["commonBLSPublicKey2"] =
-        BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_public_key.Y.c0 );
+        ThresholdUtils::fieldElementToString( common_public_key.Y.c0 );
     public_key_json["commonBLSPublicKey3"] =
-        BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_public_key.Y.c1 );
+        ThresholdUtils::fieldElementToString( common_public_key.Y.c1 );
 
     std::ofstream outfile_pk( "common_public_key.json" );
     outfile_pk << public_key_json.dump( 4 ) << "\n";

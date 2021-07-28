@@ -71,10 +71,8 @@ void RecoverSignature( const size_t t, const size_t n, const std::vector< std::s
 
     nlohmann::json outdata;
 
-    outdata["signature"]["X"] =
-        BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_signature.X );
-    outdata["signature"]["Y"] =
-        BLSutils::ConvertToString< libff::alt_bn128_Fq >( common_signature.Y );
+    outdata["signature"]["X"] = ThresholdUtils::fieldElementToString( common_signature.X );
+    outdata["signature"]["Y"] = ThresholdUtils::fieldElementToString( common_signature.Y );
 
     outfile << outdata.dump( 4 ) << '\n';
 }

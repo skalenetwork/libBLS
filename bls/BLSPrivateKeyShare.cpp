@@ -78,8 +78,8 @@ std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::sign(
 
     std::pair< libff::alt_bn128_G1, std::string > hash_with_hint =
         obj->HashtoG1withHint( hash_byte_arr );
-    std::string hint =
-        BLSutils::ConvertToString( hash_with_hint.first.Y ) + ":" + hash_with_hint.second;
+    std::string hint = ThresholdUtils::fieldElementToString( hash_with_hint.first.Y ) + ":" +
+                       hash_with_hint.second;
 
     auto s =
         std::make_shared< BLSSigShare >( ss, hint, _signerIndex, requiredSigners, totalSigners );
@@ -108,8 +108,8 @@ std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::signWithHelper(
 
     ss->to_affine_coordinates();
 
-    std::string hint =
-        BLSutils::ConvertToString( hash_with_hint.first.Y ) + ":" + hash_with_hint.second;
+    std::string hint = ThresholdUtils::fieldElementToString( hash_with_hint.first.Y ) + ":" +
+                       hash_with_hint.second;
 
     auto s =
         std::make_shared< BLSSigShare >( ss, hint, _signerIndex, requiredSigners, totalSigners );
@@ -133,7 +133,7 @@ BLSPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSi
         std::make_shared< BLSPublicKey >( common_skey, _requiredSigners, _totalSigners );
 
     for ( size_t i = 0; i < _totalSigners; ++i ) {
-        std::string key_str = BLSutils::ConvertToString( skeys.at( i ) );
+        std::string key_str = ThresholdUtils::fieldElementToString( skeys.at( i ) );
 
         std::shared_ptr< BLSPrivateKeyShare > key_ptr =
             std::make_shared< BLSPrivateKeyShare >( key_str, _requiredSigners, _totalSigners );
@@ -162,7 +162,7 @@ std::shared_ptr< std::string > BLSPrivateKeyShare::toString() {
         throw signatures::Bls::ZeroSecretKey( "Secret key share is equal to zero or corrupt" );
     }
     std::shared_ptr< std::string > key_str =
-        std::make_shared< std::string >( BLSutils::ConvertToString( *privateKey ) );
+        std::make_shared< std::string >( ThresholdUtils::fieldElementToString( *privateKey ) );
 
     if ( key_str->empty() )
         throw signatures::Bls::IncorrectInput( "Secret key share string is empty" );

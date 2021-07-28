@@ -26,6 +26,7 @@
 #include <bls/BLSSignature.h>
 #include <bls/BLSutils.h>
 #include <bls/bls.h>
+#include <tools/utils.h>
 
 BLSPublicKeyShare::BLSPublicKeyShare(
     const std::shared_ptr< std::vector< std::string > > pkey_str_vect, size_t _requiredSigners,
@@ -75,10 +76,10 @@ std::shared_ptr< std::vector< std::string > > BLSPublicKeyShare::toString() {
 
     publicKey->to_affine_coordinates();
 
-    pkey_str_vect.push_back( BLSutils::ConvertToString( publicKey->X.c0 ) );
-    pkey_str_vect.push_back( BLSutils::ConvertToString( publicKey->X.c1 ) );
-    pkey_str_vect.push_back( BLSutils::ConvertToString( publicKey->Y.c0 ) );
-    pkey_str_vect.push_back( BLSutils::ConvertToString( publicKey->Y.c1 ) );
+    pkey_str_vect.push_back( ThresholdUtils::fieldElementToString( publicKey->X.c0 ) );
+    pkey_str_vect.push_back( ThresholdUtils::fieldElementToString( publicKey->X.c1 ) );
+    pkey_str_vect.push_back( ThresholdUtils::fieldElementToString( publicKey->Y.c0 ) );
+    pkey_str_vect.push_back( ThresholdUtils::fieldElementToString( publicKey->Y.c1 ) );
 
     return std::make_shared< std::vector< std::string > >( pkey_str_vect );
 }
