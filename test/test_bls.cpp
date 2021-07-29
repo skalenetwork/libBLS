@@ -966,83 +966,59 @@ BOOST_AUTO_TEST_CASE( DKGWrappersExceptions ) {
     size_t num_all = rand_gen() % 15 + 2;
     size_t num_signed = rand_gen() % ( num_all - 1 ) + 1;
 
-    bool is_exception_caught = false;  // zero share
-    try {
+    {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
         std::vector< libff::alt_bn128_G2 > vect = {libff::alt_bn128_G2::random_element()};
-        dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::zero(),
-            std::make_shared< std::vector< libff::alt_bn128_G2 > >( vect ) );
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW( dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::zero(),
+                                 std::make_shared< std::vector< libff::alt_bn128_G2 > >( vect ) ),
+            std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;  // zero share
-    try {
+    {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
-        dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::zero(), nullptr );
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW( dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::zero(), nullptr ),
+            std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;  // null verification vector
-    try {
+    {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
-        dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::random_element(), nullptr );
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW(
+            dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::random_element(), nullptr ),
+            std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;  // wrong vector size
-    try {
+    {
         DKGBLSWrapper dkg_wrap( num_signed + 1, num_all + 1 );
         std::vector< libff::alt_bn128_G2 > vect = {libff::alt_bn128_G2::random_element()};
-        dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::random_element(),
-            std::make_shared< std::vector< libff::alt_bn128_G2 > >( vect ) );
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW( dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::random_element(),
+                                 std::make_shared< std::vector< libff::alt_bn128_G2 > >( vect ) ),
+            std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;  // set null poly
-    try {
+    {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
-        dkg_wrap.setDKGSecret( nullptr );
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW( dkg_wrap.setDKGSecret( nullptr ), std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;  // set wrong size poly
-    try {
+    {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
         std::vector< libff::alt_bn128_Fr > poly;
-        dkg_wrap.setDKGSecret( std::make_shared< std::vector< libff::alt_bn128_Fr > >( poly ) );
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW(
+            dkg_wrap.setDKGSecret( std::make_shared< std::vector< libff::alt_bn128_Fr > >( poly ) ),
+            std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;  // set null secret shares
-    try {
+    {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
-        dkg_wrap.CreateBLSPrivateKeyShare( nullptr );
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW( dkg_wrap.CreateBLSPrivateKeyShare( nullptr ), std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;  // set wrong size secret shares
-    try {
+    {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
         std::vector< libff::alt_bn128_Fr > shares;
-        dkg_wrap.CreateBLSPrivateKeyShare(
-            std::make_shared< std::vector< libff::alt_bn128_Fr > >( shares ) );
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW( dkg_wrap.CreateBLSPrivateKeyShare(
+                                 std::make_shared< std::vector< libff::alt_bn128_Fr > >( shares ) ),
+            std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 }
 BOOST_AUTO_TEST_SUITE_END()

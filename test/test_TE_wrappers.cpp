@@ -111,45 +111,23 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
 
         crypto::Ciphertext bad_cypher = cypher;  // corrupt V in cypher
         std::get< 1 >( bad_cypher ) = spoilMessage( std::get< 1 >( cypher ) );
-        bool is_exception_caught = false;
-        try {
-            decr_set.merge( bad_cypher );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
-        }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;
-        try {
-            // cannot add after merge
-            decr_set.addDecrypt( num_signed, nullptr );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
-        }
-        BOOST_REQUIRE( is_exception_caught );
+        BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), std::runtime_error );
+
+        // cannot add after merge
+        BOOST_REQUIRE_THROW( decr_set.addDecrypt( num_signed, nullptr ), std::runtime_error );
 
         bad_cypher = cypher;  // corrupt U in cypher
         libff::alt_bn128_G2 rand_el = libff::alt_bn128_G2::random_element();
         std::get< 0 >( bad_cypher ) = rand_el;
 
-        is_exception_caught = false;
-        try {
-            decr_set.merge( bad_cypher );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
-        }
-        BOOST_REQUIRE( is_exception_caught );
+        BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), std::runtime_error );
 
         bad_cypher = cypher;  // corrupt W in cypher
         libff::alt_bn128_G1 rand_el2 = libff::alt_bn128_G1::random_element();
         std::get< 2 >( bad_cypher ) = rand_el2;
-        is_exception_caught = false;
-        try {
-            decr_set.merge( bad_cypher );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
-        }
-        BOOST_REQUIRE( is_exception_caught );
+
+        BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), std::runtime_error );
 
         size_t ind = rand_gen() % num_signed;  // corrupt random private key share
 
@@ -377,62 +355,43 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         size_t num_all = rand_gen() % 15 + 2;
         size_t num_signed = rand_gen() % num_all + 1;
 
-        bool is_exception_caught = false;
-        try {
-            ThresholdUtils::checkSigners( 0, num_all );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
-        }
-        BOOST_REQUIRE( is_exception_caught );
+        BOOST_REQUIRE_THROW( ThresholdUtils::checkSigners( 0, num_all ), std::runtime_error );
 
-        is_exception_caught = false;
-        try {
-            ThresholdUtils::checkSigners( 0, 0 );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
-        }
-        BOOST_REQUIRE( is_exception_caught );
+        BOOST_REQUIRE_THROW( ThresholdUtils::checkSigners( 0, 0 ), std::runtime_error );
 
-        is_exception_caught = false;  // null public key share
-        try {
-            TEPublicKeyShare( nullptr, 1, num_signed, num_all );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
-        }
-        BOOST_REQUIRE( is_exception_caught );
+        // null public key share
+        BOOST_REQUIRE_THROW(
+            TEPublicKeyShare( nullptr, 1, num_signed, num_all ), std::runtime_error );
 
-        is_exception_caught = false;  // 1 coord of public key share is not digit
-        try {
+        {
+            // 1 coord of public key share is not digit
             std::vector< std::string > pkey_str( {"123", "abc"} );
-            TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
-                num_signed, num_all );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW(
+                TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
+                    num_signed, num_all ),
+                std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;  // zero public key share
-        try {
+        {
+            // zero public key share
             std::vector< std::string > pkey_str( {"0", "0"} );
-            TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
-                num_signed, num_all );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW(
+                TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
+                    num_signed, num_all ),
+                std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;  // one component public key share
-        try {
+        {
+            // one component public key share
             std::vector< std::string > pkey_str( {"1232450"} );
-            TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
-                num_signed, num_all );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW(
+                TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
+                    num_signed, num_all ),
+                std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;  // one zero component in cypher
-        try {
+        {
+            // one zero component in cypher
             libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
             TEPublicKeyShare pkey(
                 TEPrivateKeyShare( el, 1, num_signed, num_all ), num_signed, num_all );
@@ -446,16 +405,11 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
             std::get< 1 >( cypher ) = "tra-la-la";
             std::get< 2 >( cypher ) = W;
 
-            pkey.Verify( cypher, U );
-
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW( pkey.Verify( cypher, U ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-
-        is_exception_caught = false;  // wrong string length in cypher
-        try {
+        {
+            // wrong string length in cypher
             libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
 
             TEPublicKeyShare pkey(
@@ -469,14 +423,11 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
             std::get< 1 >( cypher ) = "tra-la-la";
             std::get< 2 >( cypher ) = W;
 
-            pkey.Verify( cypher, U );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW( pkey.Verify( cypher, U ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;  // zero decrypted
-        try {
+        {
+            // zero decrypted
             libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
             TEPublicKeyShare pkey(
                 TEPrivateKeyShare( el, 1, num_signed, num_all ), num_signed, num_all );
@@ -493,138 +444,105 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
             libff::alt_bn128_G2 decrypt = libff::alt_bn128_G2::zero();
 
-            pkey.Verify( cypher, decrypt );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW( pkey.Verify( cypher, decrypt ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;  // null private key share
-        try {
-            TEPrivateKeyShare( nullptr, 1, num_signed, num_all );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+        {
+            // null private key share
+            BOOST_REQUIRE_THROW(
+                TEPrivateKeyShare( nullptr, 1, num_signed, num_all ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;  // zero private key share
-        try {
+        {
+            // zero private key share
             std::string zero_str = "0";
-            TEPrivateKeyShare(
-                std::make_shared< std::string >( zero_str ), 1, num_signed, num_all );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW( TEPrivateKeyShare( std::make_shared< std::string >( zero_str ), 1,
+                                     num_signed, num_all ),
+                std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;  // zero private key share
-        try {
+        {
+            // zero private key share
             libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
-            TEPrivateKeyShare( el, 1, num_signed, num_all );
-
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW(
+                TEPrivateKeyShare( el, 1, num_signed, num_all ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;  // null public key
-        try {
-            TEPublicKey( nullptr, num_signed, num_all );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+        {
+            // null public key
+            BOOST_REQUIRE_THROW( TEPublicKey( nullptr, num_signed, num_all ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;  // zero public key
-        try {
+        {
+            // zero public key
             std::vector< std::string > pkey_str( {"0", "0"} );
-            TEPublicKey(
-                std::make_shared< std::vector< std::string > >( pkey_str ), num_signed, num_all );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW(
+                TEPublicKey( std::make_shared< std::vector< std::string > >( pkey_str ), num_signed,
+                    num_all ),
+                std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;  // zero public key
-        try {
+        {
+            // zero public key
             libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
-            TEPublicKey pkey( TEPrivateKey( el, num_signed, num_all ), num_signed, num_all );
-
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW(
+                TEPublicKey pkey( TEPrivateKey( el, num_signed, num_all ), num_signed, num_all ),
+                std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;  // zero public key
-        try {
+        {
+            // zero public key
             libff::alt_bn128_G2 el = libff::alt_bn128_G2::zero();
-            TEPublicKey pkey( el, num_signed, num_all );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW( TEPublicKey pkey( el, num_signed, num_all ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;  // null message
-        try {
+        {
+            // null message
             libff::alt_bn128_G2 el = libff::alt_bn128_G2::random_element();
 
             TEPublicKey pkey( el, num_signed, num_all );
 
-            pkey.encrypt( nullptr );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW( pkey.encrypt( nullptr ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;  // message length is not 64
-        try {
+        {
+            // message length is not 64
             libff::alt_bn128_G2 el = libff::alt_bn128_G2::random_element();
 
             TEPublicKey pkey( el, num_signed, num_all );
 
-            pkey.encrypt( std::make_shared< std::string >( "tra-la-la" ) );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW( pkey.encrypt( std::make_shared< std::string >( "tra-la-la" ) ),
+                std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;  // null private key
-        try {
-            TEPrivateKey( nullptr, num_signed, num_all );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+        {
+            // null private key
+            BOOST_REQUIRE_THROW( TEPrivateKey( nullptr, num_signed, num_all ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;  // zero private key
-        try {
+        {
+            // zero private key
             std::string zero_str = "0";
-            TEPrivateKey( std::make_shared< std::string >( zero_str ), num_signed, num_all );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW(
+                TEPrivateKey( std::make_shared< std::string >( zero_str ), num_signed, num_all ),
+                std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;  // zero private key
-        try {
+        {
+            // zero private key
             libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
-            TEPrivateKey( el, num_signed, num_all );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW( TEPrivateKey( el, num_signed, num_all ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;
-        try {
-            TEDecryptSet decr_set( num_all + 1, num_signed );  //_requiredSigners > _totalSigners
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+        {
+            //_requiredSigners > _totalSigners
+            BOOST_REQUIRE_THROW(
+                TEDecryptSet decr_set( num_all + 1, num_signed ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;
-        try {
-            TEDecryptSet decr_set( num_signed, num_all );  // same indices in decrypt set
+        {
+            // same indices in decrypt set
+            TEDecryptSet decr_set( num_signed, num_all );
 
             libff::alt_bn128_G2 el1 = libff::alt_bn128_G2::random_element();
             auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
@@ -633,43 +551,32 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
             auto el_ptr2 = std::make_shared< libff::alt_bn128_G2 >( el2 );
 
             decr_set.addDecrypt( 1, el_ptr1 );
-            decr_set.addDecrypt( 1, el_ptr2 );
-
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW( decr_set.addDecrypt( 1, el_ptr2 ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;
-        try {
-            TEDecryptSet decr_set( num_signed, num_all );  // zero element in decrypt set
+        {
+            // zero element in decrypt set
+            TEDecryptSet decr_set( num_signed, num_all );
 
             libff::alt_bn128_G2 el1 = libff::alt_bn128_G2::zero();
             auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
 
-            decr_set.addDecrypt( 1, el_ptr1 );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW( decr_set.addDecrypt( 1, el_ptr1 ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;
-        try {
-            TEDecryptSet decr_set( num_signed, num_all );  // null element in decrypt set
+        {
+            // null element in decrypt set
+            TEDecryptSet decr_set( num_signed, num_all );
             libff::alt_bn128_G2 el1 = libff::alt_bn128_G2::zero();
 
             auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
             el_ptr1 = nullptr;
-            decr_set.addDecrypt( 1, el_ptr1 );
-
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW( decr_set.addDecrypt( 1, el_ptr1 ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;
-        try {
-            TEDecryptSet decr_set( num_signed, num_all );  // not enough elements in decrypt set
+        {
+            // not enough elements in decrypt set
+            TEDecryptSet decr_set( num_signed, num_all );
             libff::alt_bn128_G2 el1 = libff::alt_bn128_G2::random_element();
 
             auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
@@ -685,15 +592,12 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
                 "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
             std::get< 2 >( cypher ) = W;
 
-            decr_set.merge( cypher );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW( decr_set.merge( cypher ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;
-        try {
-            TEDecryptSet decr_set( 1, 1 );  // cannot combine shares
+        {
+            // cannot combine shares
+            TEDecryptSet decr_set( 1, 1 );
             libff::alt_bn128_G2 el1 = libff::alt_bn128_G2::random_element();
             auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
             decr_set.addDecrypt( 1, el_ptr1 );
@@ -708,11 +612,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
                 "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
             std::get< 2 >( cypher ) = W;
 
-            decr_set.merge( cypher );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW( decr_set.merge( cypher ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
     }
 }
 
@@ -720,33 +621,25 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
     size_t num_all = rand_gen() % 15 + 2;
     size_t num_signed = rand_gen() % num_all + 1;
 
-    bool is_exception_caught = false;
-    try {
+    {
         // zero share
         DKGTEWrapper dkg_te( num_signed, num_all );
 
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
 
-        dkg_te.VerifyDKGShare( 1, el, dkg_te.createDKGPublicShares() );
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW(
+            dkg_te.VerifyDKGShare( 1, el, dkg_te.createDKGPublicShares() ), std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;
-    try {
+    {
         // null verification vector
         DKGTEWrapper dkg_te( num_signed, num_all );
 
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
-        dkg_te.VerifyDKGShare( 1, el, nullptr );
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW( dkg_te.VerifyDKGShare( 1, el, nullptr ), std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;
-    try {
+    {
         DKGTEWrapper dkg_te( num_signed, num_all );
 
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
@@ -754,77 +647,53 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
         std::vector< libff::alt_bn128_G2 > pub_shares = *dkg_te.createDKGPublicShares();
         pub_shares.erase( pub_shares.begin() );
 
-        dkg_te.VerifyDKGShare(
-            1, el, std::make_shared< std::vector< libff::alt_bn128_G2 > >( pub_shares ) );
-
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW(
+            dkg_te.VerifyDKGShare(
+                1, el, std::make_shared< std::vector< libff::alt_bn128_G2 > >( pub_shares ) ),
+            std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;
-    try {
+    {
         DKGTEWrapper dkg_te( num_signed, num_all );
         std::shared_ptr< std::vector< libff::alt_bn128_Fr > > shares =
             dkg_te.createDKGSecretShares();
         shares = nullptr;
-        dkg_te.setDKGSecret( shares );
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW( dkg_te.setDKGSecret( shares ), std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;
-    try {
+    {
         DKGTEWrapper dkg_te( num_signed, num_all );
         std::shared_ptr< std::vector< libff::alt_bn128_Fr > > shares =
             dkg_te.createDKGSecretShares();
         shares->erase( shares->begin() + shares->size() - 2 );
         shares->shrink_to_fit();
-        dkg_te.setDKGSecret( shares );
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW( dkg_te.setDKGSecret( shares ), std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;
-    try {
+    {
         DKGTEWrapper dkg_te( num_signed, num_all );
-        dkg_te.CreateTEPrivateKeyShare( 1, nullptr );
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW( dkg_te.CreateTEPrivateKeyShare( 1, nullptr ), std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;
-    try {
+    {
         DKGTEWrapper dkg_te( num_signed, num_all );
         auto wrong_size_vector = std::make_shared< std::vector< libff::alt_bn128_Fr > >();
         wrong_size_vector->resize( num_signed - 1 );
-        dkg_te.CreateTEPrivateKeyShare( 1, wrong_size_vector );
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW(
+            dkg_te.CreateTEPrivateKeyShare( 1, wrong_size_vector ), std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;
-    try {
+    {
         DKGTEWrapper dkg_te( num_signed, num_all );
         std::shared_ptr< std::vector< libff::alt_bn128_Fr > > shares;
-        dkg_te.setDKGSecret( shares );
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW( dkg_te.setDKGSecret( shares ), std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 
-    is_exception_caught = false;
-    try {
+    {
         DKGTEWrapper dkg_te( num_signed, num_all );
-        dkg_te.CreateTEPublicKey( nullptr, num_signed, num_all );
-    } catch ( std::runtime_error& ) {
-        is_exception_caught = true;
+        BOOST_REQUIRE_THROW(
+            dkg_te.CreateTEPublicKey( nullptr, num_signed, num_all ), std::runtime_error );
     }
-    BOOST_REQUIRE( is_exception_caught );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -287,14 +287,9 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionCorruptedCiphertext ) {
     for ( size_t i = 0; i < 11; ++i ) {
         libff::alt_bn128_G2 decrypted;
 
-        bool is_exception_caught = false;
-        try {
-            decrypted = obj.getDecryptionShare( corrupted_ciphertext, secret_keys[i] );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
-        }
-
-        BOOST_REQUIRE( is_exception_caught );
+        BOOST_REQUIRE_THROW(
+            decrypted = obj.getDecryptionShare( corrupted_ciphertext, secret_keys[i] ),
+            std::runtime_error );
 
         decrypted = obj.getDecryptionShare( ciphertext, secret_keys[i] );
 
@@ -310,31 +305,25 @@ BOOST_AUTO_TEST_CASE( LagrangeInterpolationExceptions ) {
         size_t num_all = rand_gen() % 15 + 2;
         size_t num_signed = rand_gen() % ( num_all - 1 ) + 2;
 
-        bool is_exception_caught = false;
-        try {
+        {
             crypto::TE obj( num_signed, num_all );
             std::vector< size_t > vect;
             for ( size_t i = 0; i < num_signed - 1; i++ )
                 vect.push_back( i + 1 );
-            ThresholdUtils::LagrangeCoeffs( vect, num_signed );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW(
+                ThresholdUtils::LagrangeCoeffs( vect, num_signed ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
 
-        is_exception_caught = false;
-        try {
+        {
             crypto::TE obj( num_signed, num_all );
             std::vector< size_t > vect;
             for ( size_t i = 0; i < num_signed; i++ ) {
                 vect.push_back( i + 1 );
             }
             vect.at( 1 ) = vect.at( 0 );
-            ThresholdUtils::LagrangeCoeffs( vect, num_signed );
-        } catch ( std::runtime_error& ) {
-            is_exception_caught = true;
+            BOOST_REQUIRE_THROW(
+                ThresholdUtils::LagrangeCoeffs( vect, num_signed ), std::runtime_error );
         }
-        BOOST_REQUIRE( is_exception_caught );
     }
 }
 
