@@ -34,18 +34,20 @@ TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str
     crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str_ptr ) {
-        throw std::runtime_error( "public key is null" );
+        throw crypto::ThresholdUtils::IncorrectInput( "public key is null" );
     }
 
     if ( _key_str_ptr->size() != 4 ) {
-        throw std::runtime_error( "wrong number of components in public key share" );
+        throw crypto::ThresholdUtils::IncorrectInput(
+            "wrong number of components in public key share" );
     }
 
     if ( !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 0 ) ) ||
          !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 1 ) ) ||
          !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 2 ) ) ||
          !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 3 ) ) ) {
-        throw std::runtime_error( "non-digit symbol or first zero in non-zero public key share" );
+        throw crypto::ThresholdUtils::IncorrectInput(
+            "non-digit symbol or first zero in non-zero public key share" );
     }
 
     libff::init_alt_bn128_params();
@@ -56,8 +58,8 @@ TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str
     PublicKey.Y.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 2 ).c_str() );
     PublicKey.Y.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 3 ).c_str() );
 
-    if ( PublicKey.is_zero() ) {
-        throw std::runtime_error( "corrupted string or zero public key" );
+    if ( PublicKey.is_zero() || !PublicKey.is_well_formed() ) {
+        throw crypto::ThresholdUtils::IsNotWellFormed( "corrupted string or zero public key" );
     }
 }
 
@@ -69,7 +71,7 @@ TEPublicKey::TEPublicKey(
     libff::init_alt_bn128_params();
 
     if ( _common_private.getPrivateKey().is_zero() ) {
-        throw std::runtime_error( "zero key" );
+        throw crypto::ThresholdUtils::ZeroSecretKey( "zero key" );
     }
 
     PublicKey = _common_private.getPrivateKey() * libff::alt_bn128_G2::one();
@@ -80,7 +82,7 @@ TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, si
     crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( _pkey.is_zero() ) {
-        throw std::runtime_error( "zero public key" );
+        throw crypto::ThresholdUtils::IsNotWellFormed( "zero public key" );
     }
 }
 
@@ -88,27 +90,18 @@ crypto::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_ptr 
     crypto::TE te( requiredSigners, totalSigners );
 
     if ( mes_ptr == nullptr ) {
-        throw std::runtime_error( "Message is null" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Message is null" );
     }
 
     if ( mes_ptr->length() != 64 ) {
-        throw std::runtime_error( "Message length is not equal to 64" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Message length is not equal to 64" );
     }
 
     crypto::Ciphertext cypher = te.Encrypt( *mes_ptr, PublicKey );
     crypto::ThresholdUtils::checkCypher( cypher );
 
-    libff::alt_bn128_G2 U = std::get< 0 >( cypher );
-    /*if (element_item_count(U) == 0 ) {
-      throw std::runtime_error("U is zero");
-    }*/
-
-    libff::alt_bn128_G1 W = std::get< 2 >( cypher );
-    /*if (element_item_count(W) == 0) {
-      throw std::runtime_error("W is zero");
-    }*/
-
-    return std::make_tuple( U, std::get< 1 >( cypher ), W );
+    return std::make_tuple(
+        std::get< 0 >( cypher ), std::get< 1 >( cypher ), std::get< 2 >( cypher ) );
 }
 
 std::shared_ptr< std::vector< std::string > > TEPublicKey::toString() {

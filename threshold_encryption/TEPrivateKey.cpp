@@ -38,7 +38,7 @@ TEPrivateKey::TEPrivateKey(
     privateKey = libff::alt_bn128_Fr( _key_str->c_str() );
 
     if ( privateKey.is_zero() ) {
-        throw std::runtime_error( "private key is zero" );
+        throw crypto::ThresholdUtils::IsNotWellFormed( "private key is zero" );
     }
 }
 
@@ -50,7 +50,7 @@ TEPrivateKey::TEPrivateKey(
     libff::init_alt_bn128_params();
 
     if ( _skey.is_zero() )
-        throw std::runtime_error( "private key is zero" );
+        throw crypto::ThresholdUtils::IsNotWellFormed( "private key is zero" );
 }
 
 std::string TEPrivateKey::toString() const {

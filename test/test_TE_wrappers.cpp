@@ -473,16 +473,17 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         {
             // null public key
-            BOOST_REQUIRE_THROW( TEPublicKey( nullptr, num_signed, num_all ), std::runtime_error );
+            BOOST_REQUIRE_THROW( TEPublicKey( nullptr, num_signed, num_all ),
+                crypto::ThresholdUtils::IncorrectInput );
         }
 
         {
-            // zero public key
-            std::vector< std::string > pkey_str( {"0", "0"} );
+            // wrong formated public key
+            std::vector< std::string > pkey_str( {"0", "0", "0", "0"} );
             BOOST_REQUIRE_THROW(
                 TEPublicKey( std::make_shared< std::vector< std::string > >( pkey_str ), num_signed,
                     num_all ),
-                std::runtime_error );
+                crypto::ThresholdUtils::IsNotWellFormed );
         }
 
         {
@@ -490,13 +491,14 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
             libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
             BOOST_REQUIRE_THROW(
                 TEPublicKey pkey( TEPrivateKey( el, num_signed, num_all ), num_signed, num_all ),
-                std::runtime_error );
+                crypto::ThresholdUtils::IsNotWellFormed );
         }
 
         {
             // zero public key
             libff::alt_bn128_G2 el = libff::alt_bn128_G2::zero();
-            BOOST_REQUIRE_THROW( TEPublicKey pkey( el, num_signed, num_all ), std::runtime_error );
+            BOOST_REQUIRE_THROW( TEPublicKey pkey( el, num_signed, num_all ),
+                crypto::ThresholdUtils::IsNotWellFormed );
         }
 
         {
@@ -505,7 +507,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
             TEPublicKey pkey( el, num_signed, num_all );
 
-            BOOST_REQUIRE_THROW( pkey.encrypt( nullptr ), std::runtime_error );
+            BOOST_REQUIRE_THROW( pkey.encrypt( nullptr ), crypto::ThresholdUtils::IncorrectInput );
         }
 
         {
@@ -515,7 +517,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
             TEPublicKey pkey( el, num_signed, num_all );
 
             BOOST_REQUIRE_THROW( pkey.encrypt( std::make_shared< std::string >( "tra-la-la" ) ),
-                std::runtime_error );
+                crypto::ThresholdUtils::IncorrectInput );
         }
 
         {
@@ -528,13 +530,14 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
             std::string zero_str = "0";
             BOOST_REQUIRE_THROW(
                 TEPrivateKey( std::make_shared< std::string >( zero_str ), num_signed, num_all ),
-                std::runtime_error );
+                crypto::ThresholdUtils::IsNotWellFormed );
         }
 
         {
             // zero private key
             libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
-            BOOST_REQUIRE_THROW( TEPrivateKey( el, num_signed, num_all ), std::runtime_error );
+            BOOST_REQUIRE_THROW(
+                TEPrivateKey( el, num_signed, num_all ), crypto::ThresholdUtils::IsNotWellFormed );
         }
 
         {
