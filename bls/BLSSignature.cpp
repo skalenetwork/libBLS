@@ -34,12 +34,11 @@ BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, st
       hint( _hint ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     CHECK( sig );
 
     crypto::ThresholdUtils::initCurve();
-
 
     if ( sig->is_zero() ) {
         throw crypto::ThresholdUtils::IncorrectInput( "Zero BLS signature" );
@@ -54,7 +53,7 @@ BLSSignature::BLSSignature(
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     CHECK( _sig );
 
-    BLSSignature::checkSigners( requiredSigners, totalSigners );
+    crypto::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
 
     crypto::ThresholdUtils::initCurve();
 
@@ -101,18 +100,6 @@ std::shared_ptr< std::string > BLSSignature::toString() {
         sig->Y.as_bigint().data, libff::alt_bn128_Fq::num_limbs, hint.c_str() );
 
     return std::make_shared< std::string >( str );
-}
-void BLSSignature::checkSigners( size_t _requiredSigners, size_t _totalSigners ) {
-    CHECK( _totalSigners > 0 );
-
-    if ( _requiredSigners > _totalSigners ) {
-        throw crypto::ThresholdUtils::IncorrectInput( "_requiredSigners > _totalSigners" );
-    }
-
-
-    if ( _totalSigners == 0 ) {
-        throw crypto::ThresholdUtils::IncorrectInput( "_totalSigners == 0" );
-    }
 }
 
 std::string BLSSignature::getHint() const {

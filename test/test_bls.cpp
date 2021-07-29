@@ -975,20 +975,20 @@ BOOST_AUTO_TEST_CASE( DKGWrappersExceptions ) {
         std::vector< libff::alt_bn128_G2 > vect = {libff::alt_bn128_G2::random_element()};
         BOOST_REQUIRE_THROW( dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::zero(),
                                  std::make_shared< std::vector< libff::alt_bn128_G2 > >( vect ) ),
-            std::runtime_error );
+            crypto::ThresholdUtils::ZeroSecretKey );
     }
 
     {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
         BOOST_REQUIRE_THROW( dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::zero(), nullptr ),
-            std::runtime_error );
+            crypto::ThresholdUtils::ZeroSecretKey );
     }
 
     {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
         BOOST_REQUIRE_THROW(
             dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::random_element(), nullptr ),
-            std::runtime_error );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -996,12 +996,13 @@ BOOST_AUTO_TEST_CASE( DKGWrappersExceptions ) {
         std::vector< libff::alt_bn128_G2 > vect = {libff::alt_bn128_G2::random_element()};
         BOOST_REQUIRE_THROW( dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::random_element(),
                                  std::make_shared< std::vector< libff::alt_bn128_G2 > >( vect ) ),
-            std::runtime_error );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
-        BOOST_REQUIRE_THROW( dkg_wrap.setDKGSecret( nullptr ), std::runtime_error );
+        BOOST_REQUIRE_THROW(
+            dkg_wrap.setDKGSecret( nullptr ), crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -1009,12 +1010,13 @@ BOOST_AUTO_TEST_CASE( DKGWrappersExceptions ) {
         std::vector< libff::alt_bn128_Fr > poly;
         BOOST_REQUIRE_THROW(
             dkg_wrap.setDKGSecret( std::make_shared< std::vector< libff::alt_bn128_Fr > >( poly ) ),
-            std::runtime_error );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
-        BOOST_REQUIRE_THROW( dkg_wrap.CreateBLSPrivateKeyShare( nullptr ), std::runtime_error );
+        BOOST_REQUIRE_THROW(
+            dkg_wrap.CreateBLSPrivateKeyShare( nullptr ), crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -1022,7 +1024,7 @@ BOOST_AUTO_TEST_CASE( DKGWrappersExceptions ) {
         std::vector< libff::alt_bn128_Fr > shares;
         BOOST_REQUIRE_THROW( dkg_wrap.CreateBLSPrivateKeyShare(
                                  std::make_shared< std::vector< libff::alt_bn128_Fr > >( shares ) ),
-            std::runtime_error );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 }
 BOOST_AUTO_TEST_SUITE_END()

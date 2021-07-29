@@ -26,7 +26,6 @@
 
 
 #include <bls/BLSPrivateKeyShare.h>
-#include <bls/BLSSignature.h>
 #include <bls/bls.h>
 
 

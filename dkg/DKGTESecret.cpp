@@ -39,7 +39,7 @@ DKGTESecret::DKGTESecret( size_t _requiredSigners, size_t _totalSigners )
 
 void DKGTESecret::setPoly( std::vector< libff::alt_bn128_Fr >& _poly ) {
     if ( _poly.size() != requiredSigners ) {
-        throw std::runtime_error( "Wrong size of vector" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Wrong size of vector" );
     }
 
     poly = _poly;

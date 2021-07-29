@@ -31,7 +31,7 @@ BLSPrivateKey::BLSPrivateKey(
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     crypto::ThresholdUtils::initCurve();
 
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
     if ( _key == nullptr ) {
         throw crypto::ThresholdUtils::IncorrectInput( "Secret key share is null" );
     }

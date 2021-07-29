@@ -23,7 +23,6 @@
 
 #include <bls/BLSPublicKeyShare.h>
 #include <bls/BLSSigShare.h>
-#include <bls/BLSSignature.h>
 #include <bls/bls.h>
 #include <tools/utils.h>
 
@@ -33,7 +32,7 @@ BLSPublicKeyShare::BLSPublicKeyShare(
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     CHECK( pkey_str_vect );
 
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     crypto::ThresholdUtils::initCurve();
 
@@ -89,7 +88,7 @@ bool BLSPublicKeyShare::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > 
     CHECK( sign_ptr );
 
     std::shared_ptr< crypto::Bls > obj;
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( sign_ptr->getSigShare()->is_zero() ) {
         throw crypto::ThresholdUtils::IsNotWellFormed( "Zero BLS Sig share" );
@@ -106,7 +105,7 @@ bool BLSPublicKeyShare::VerifySigWithHelper( std::shared_ptr< std::array< uint8_
     CHECK( sign_ptr )
 
     std::shared_ptr< crypto::Bls > obj;
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
     if ( !hash_ptr ) {
         throw crypto::ThresholdUtils::IncorrectInput( "hash is null" );
     }

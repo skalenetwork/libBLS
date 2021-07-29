@@ -23,7 +23,6 @@
 
 #include <bls/BLSPrivateKeyShare.h>
 #include <bls/BLSSigShare.h>
-#include <bls/BLSSignature.h>
 #include <tools/utils.h>
 
 #include <dkg/dkg.h>
@@ -32,7 +31,7 @@
 BLSPrivateKeyShare::BLSPrivateKeyShare(
     const std::string& _key, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
     crypto::ThresholdUtils::initCurve();
     if ( _key.empty() ) {
         throw crypto::ThresholdUtils::IncorrectInput( "Secret key share string is empty" );
@@ -48,7 +47,7 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(
 BLSPrivateKeyShare::BLSPrivateKeyShare(
     const libff::alt_bn128_Fr& libff_skey, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     privateKey = std::make_shared< libff::alt_bn128_Fr >( libff_skey );
 
@@ -120,7 +119,7 @@ std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::signWithHelper(
 std::shared_ptr< std::pair< std::shared_ptr< std::vector< std::shared_ptr< BLSPrivateKeyShare > > >,
     std::shared_ptr< BLSPublicKey > > >
 BLSPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSigners ) {
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     std::vector< std::shared_ptr< BLSPrivateKeyShare > > skeys_shares;
 

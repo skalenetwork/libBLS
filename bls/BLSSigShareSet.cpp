@@ -56,7 +56,6 @@ std::shared_ptr< BLSSigShare > BLSSigShareSet::getSigShareByIndex( size_t _index
             "Index out of range:" + std::to_string( _index ) );
     }
 
-
     if ( sigShares.count( _index ) == 0 ) {
         return nullptr;
     }
@@ -73,7 +72,6 @@ BLSSigShareSet::BLSSigShareSet( size_t _requiredSigners, size_t _totalSigners )
 bool BLSSigShareSet::isEnough() {
     return ( sigShares.size() >= requiredSigners );
 }
-
 
 std::shared_ptr< BLSSignature > BLSSigShareSet::merge() {
     if ( !isEnough() )

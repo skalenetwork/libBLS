@@ -14,21 +14,22 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file TEPrivateKeyShare.h
   @author Sveta Rogova
   @date 2019
 */
 
-#include "DKGBLSWrapper.h"
+#include <dkg/DKGBLSWrapper.h>
 
-#include <bls/BLSSignature.h>
 #include <dkg/dkg.h>
+
+#include <tools/utils.h>
 
 DKGBLSWrapper::DKGBLSWrapper( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     DKGBLSSecret temp( _requiredSigners, _totalSigners );
     dkg_secret_ptr = std::make_shared< DKGBLSSecret >( temp );
@@ -37,12 +38,12 @@ DKGBLSWrapper::DKGBLSWrapper( size_t _requiredSigners, size_t _totalSigners )
 bool DKGBLSWrapper::VerifyDKGShare( size_t _signerIndex, const libff::alt_bn128_Fr& _share,
     std::shared_ptr< std::vector< libff::alt_bn128_G2 > > _verification_vector ) {
     if ( _share.is_zero() )
-        throw std::runtime_error( " Zero secret share" );
+        throw crypto::ThresholdUtils::ZeroSecretKey( " Zero secret share" );
     if ( _verification_vector == nullptr ) {
-        throw std::runtime_error( " Null verification vector" );
+        throw crypto::ThresholdUtils::IncorrectInput( " Null verification vector" );
     }
     if ( _verification_vector->size() != requiredSigners )
-        throw std::runtime_error( "Wrong vector size" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Wrong vector size" );
     crypto::Dkg dkg( requiredSigners, totalSigners );
     return dkg.Verification( _signerIndex, _share, *_verification_vector );
 }
@@ -50,7 +51,7 @@ bool DKGBLSWrapper::VerifyDKGShare( size_t _signerIndex, const libff::alt_bn128_
 void DKGBLSWrapper::setDKGSecret(
     std::shared_ptr< std::vector< libff::alt_bn128_Fr > > _poly_ptr ) {
     if ( _poly_ptr == nullptr )
-        throw std::runtime_error( "Null polynomial ptr" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Null polynomial ptr" );
     dkg_secret_ptr->setPoly( *_poly_ptr );
 }
 
@@ -67,10 +68,10 @@ std::shared_ptr< std::vector< libff::alt_bn128_G2 > > DKGBLSWrapper::createDKGPu
 BLSPrivateKeyShare DKGBLSWrapper::CreateBLSPrivateKeyShare(
     std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr ) {
     if ( secret_shares_ptr == nullptr )
-        throw std::runtime_error( "Null secret_shares_ptr " );
+        throw crypto::ThresholdUtils::IncorrectInput( "Null secret_shares_ptr " );
 
     if ( secret_shares_ptr->size() != totalSigners )
-        throw std::runtime_error( "Wrong number of secret key parts " );
+        throw crypto::ThresholdUtils::IncorrectInput( "Wrong number of secret key parts " );
 
     crypto::Dkg dkg( requiredSigners, totalSigners );
 

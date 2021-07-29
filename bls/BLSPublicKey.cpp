@@ -34,7 +34,7 @@ BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > 
 
     CHECK( pkey_str_vect )
 
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libffPublicKey = std::make_shared< libff::alt_bn128_G2 >();
 
@@ -59,7 +59,7 @@ BLSPublicKey::BLSPublicKey(
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     crypto::ThresholdUtils::initCurve();
 
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libffPublicKey = std::make_shared< libff::alt_bn128_G2 >( pkey );
     if ( libffPublicKey->is_zero() ) {
@@ -70,7 +70,7 @@ BLSPublicKey::BLSPublicKey(
 BLSPublicKey::BLSPublicKey(
     const libff::alt_bn128_Fr& skey, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
     libffPublicKey = std::make_shared< libff::alt_bn128_G2 >( skey * libff::alt_bn128_G2::one() );
     if ( libffPublicKey->is_zero() ) {
         throw crypto::ThresholdUtils::IsNotWellFormed( "Public Key is equal to zero or corrupt" );
@@ -90,7 +90,7 @@ bool BLSPublicKey::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_
     crypto::ThresholdUtils::initCurve();
 
     std::shared_ptr< crypto::Bls > obj;
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !hash_ptr ) {
         throw crypto::ThresholdUtils::IncorrectInput( "hash is null" );
@@ -109,7 +109,7 @@ bool BLSPublicKey::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_
 bool BLSPublicKey::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
     std::shared_ptr< BLSSignature > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
     std::shared_ptr< crypto::Bls > obj;
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
     if ( !hash_ptr ) {
         throw crypto::ThresholdUtils::IncorrectInput( "hash is null" );
     }

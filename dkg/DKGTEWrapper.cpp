@@ -38,11 +38,11 @@ DKGTEWrapper::DKGTEWrapper( size_t _requiredSigners, size_t _totalSigners )
 bool DKGTEWrapper::VerifyDKGShare( size_t _signerIndex, const libff::alt_bn128_Fr& _share,
     std::shared_ptr< std::vector< libff::alt_bn128_G2 > > _verification_vector ) {
     if ( _share.is_zero() )
-        throw std::runtime_error( "Zero secret share" );
+        throw crypto::ThresholdUtils::ZeroSecretKey( "Zero secret share" );
     if ( _verification_vector == nullptr )
-        throw std::runtime_error( "Null verification vector" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Null verification vector" );
     if ( _verification_vector->size() != requiredSigners )
-        throw std::runtime_error( "Wrong size of verification vector" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Wrong size of verification vector" );
     crypto::Dkg dkg_te( requiredSigners, totalSigners );
     return dkg_te.Verification( _signerIndex, _share, *_verification_vector );
 }
@@ -66,9 +66,9 @@ std::shared_ptr< std::vector< libff::alt_bn128_G2 > > DKGTEWrapper::createDKGPub
 TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare(
     size_t signerIndex_, std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr ) {
     if ( secret_shares_ptr == nullptr )
-        throw std::runtime_error( "Null secret_shares_ptr " );
+        throw crypto::ThresholdUtils::IncorrectInput( "Null secret_shares_ptr " );
     if ( secret_shares_ptr->size() != totalSigners )
-        throw std::runtime_error( "Wrong number of secret key parts " );
+        throw crypto::ThresholdUtils::IncorrectInput( "Wrong number of secret key parts " );
 
     crypto::Dkg dkg_te( requiredSigners, totalSigners );
 
@@ -83,7 +83,7 @@ TEPublicKey DKGTEWrapper::CreateTEPublicKey(
     crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( public_shares_all == nullptr )
-        throw std::runtime_error( "Null public shares all" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Null public shares all" );
 
     libff::alt_bn128_G2 public_key = libff::alt_bn128_G2::zero();
 
