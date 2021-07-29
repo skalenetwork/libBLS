@@ -120,7 +120,7 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
     const Ciphertext& ciphertext, const libff::alt_bn128_Fr& secret_key ) {
     ThresholdUtils::checkCypher( ciphertext );
     if ( secret_key.is_zero() )
-        throw std::runtime_error( "zero secret key" );
+        throw ThresholdUtils::ZeroSecretKey( "zero secret key" );
 
     libff::alt_bn128_G2 U = std::get< 0 >( ciphertext );
 
@@ -137,7 +137,7 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
     bool res = fst == snd;
 
     if ( !res ) {
-        throw std::runtime_error( "cannot decrypt data" );
+        throw ThresholdUtils::IncorrectInput( "cannot decrypt data" );
     }
 
     libff::alt_bn128_G2 ret_val = secret_key * U;
@@ -200,7 +200,7 @@ std::string TE::CombineShares( const Ciphertext& ciphertext,
     bool res = fst == snd;
 
     if ( !res ) {
-        throw std::runtime_error( "error during share combining" );
+        throw ThresholdUtils::IncorrectInput( "error during share combining" );
     }
 
     std::vector< size_t > idx( this->t_ );

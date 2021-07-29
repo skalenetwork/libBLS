@@ -289,7 +289,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionCorruptedCiphertext ) {
 
         BOOST_REQUIRE_THROW(
             decrypted = obj.getDecryptionShare( corrupted_ciphertext, secret_keys[i] ),
-            std::runtime_error );
+            crypto::ThresholdUtils::IncorrectInput );
 
         decrypted = obj.getDecryptionShare( ciphertext, secret_keys[i] );
 

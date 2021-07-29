@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         crypto::Ciphertext bad_cypher = cypher;  // corrupt V in cypher
         std::get< 1 >( bad_cypher ) = spoilMessage( std::get< 1 >( cypher ) );
 
-        BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), std::runtime_error );
+        BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), crypto::ThresholdUtils::IncorrectInput );
 
         // cannot add after merge
         BOOST_REQUIRE_THROW( decr_set.addDecrypt( num_signed, nullptr ), std::runtime_error );
@@ -121,13 +121,13 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         libff::alt_bn128_G2 rand_el = libff::alt_bn128_G2::random_element();
         std::get< 0 >( bad_cypher ) = rand_el;
 
-        BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), std::runtime_error );
+        BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), crypto::ThresholdUtils::IncorrectInput );
 
         bad_cypher = cypher;  // corrupt W in cypher
         libff::alt_bn128_G1 rand_el2 = libff::alt_bn128_G1::random_element();
         std::get< 2 >( bad_cypher ) = rand_el2;
 
-        BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), std::runtime_error );
+        BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), crypto::ThresholdUtils::IncorrectInput );
 
         size_t ind = rand_gen() % num_signed;  // corrupt random private key share
 
@@ -406,7 +406,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
             std::get< 1 >( cypher ) = "tra-la-la";
             std::get< 2 >( cypher ) = W;
 
-            BOOST_REQUIRE_THROW( pkey.Verify( cypher, U ), std::runtime_error );
+            BOOST_REQUIRE_THROW( pkey.Verify( cypher, U ), crypto::ThresholdUtils::IncorrectInput );
         }
 
         {
@@ -424,7 +424,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
             std::get< 1 >( cypher ) = "tra-la-la";
             std::get< 2 >( cypher ) = W;
 
-            BOOST_REQUIRE_THROW( pkey.Verify( cypher, U ), std::runtime_error );
+            BOOST_REQUIRE_THROW( pkey.Verify( cypher, U ), crypto::ThresholdUtils::IncorrectInput );
         }
 
         {
@@ -613,7 +613,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
                 "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
             std::get< 2 >( cypher ) = W;
 
-            BOOST_REQUIRE_THROW( decr_set.merge( cypher ), std::runtime_error );
+            BOOST_REQUIRE_THROW( decr_set.merge( cypher ), crypto::ThresholdUtils::IncorrectInput );
         }
     }
 }
