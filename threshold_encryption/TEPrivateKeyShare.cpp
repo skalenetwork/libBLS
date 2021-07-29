@@ -33,7 +33,7 @@ TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr< std::string > _key_str, s
     crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str ) {
-        throw std::runtime_error( "private key share is null" );
+        throw crypto::ThresholdUtils::IncorrectInput( "private key share is null" );
     }
 
     libff::init_alt_bn128_params();
@@ -41,7 +41,7 @@ TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr< std::string > _key_str, s
     privateKey = libff::alt_bn128_Fr( _key_str->c_str() );
 
     if ( privateKey.is_zero() ) {
-        throw std::runtime_error( "Zero private key share" );
+        throw crypto::ThresholdUtils::ZeroSecretKey( "Zero private key share" );
     }
 }
 
@@ -54,13 +54,13 @@ TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _s
     crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( _signerIndex > _totalSigners ) {
-        throw std::runtime_error( "Wrong _signerIndex" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
     }
 
     libff::init_alt_bn128_params();
 
     if ( _skey_share.is_zero() ) {
-        throw std::runtime_error( "Zero private key share" );
+        throw crypto::ThresholdUtils::ZeroSecretKey( "Zero private key share" );
     }
 }
 
@@ -71,8 +71,8 @@ libff::alt_bn128_G2 TEPrivateKeyShare::getDecryptionShare( crypto::Ciphertext& c
 
     libff::alt_bn128_G2 decryption_share = te.getDecryptionShare( cipher, privateKey );
 
-    if ( decryption_share.is_zero() ) {
-        std::runtime_error( "zero decrypt" );
+    if ( decryption_share.is_zero() || !decryption_share.is_well_formed() ) {
+        throw crypto::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
     }
 
     return decryption_share;

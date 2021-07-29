@@ -452,8 +452,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         {
             // null private key share
-            BOOST_REQUIRE_THROW(
-                TEPrivateKeyShare( nullptr, 1, num_signed, num_all ), std::runtime_error );
+            BOOST_REQUIRE_THROW( TEPrivateKeyShare( nullptr, 1, num_signed, num_all ),
+                crypto::ThresholdUtils::IncorrectInput );
         }
 
         {
@@ -461,14 +461,14 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
             std::string zero_str = "0";
             BOOST_REQUIRE_THROW( TEPrivateKeyShare( std::make_shared< std::string >( zero_str ), 1,
                                      num_signed, num_all ),
-                std::runtime_error );
+                crypto::ThresholdUtils::ZeroSecretKey );
         }
 
         {
             // zero private key share
             libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
-            BOOST_REQUIRE_THROW(
-                TEPrivateKeyShare( el, 1, num_signed, num_all ), std::runtime_error );
+            BOOST_REQUIRE_THROW( TEPrivateKeyShare( el, 1, num_signed, num_all ),
+                crypto::ThresholdUtils::ZeroSecretKey );
         }
 
         {
