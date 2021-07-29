@@ -30,7 +30,7 @@ TEPrivateKey::TEPrivateKey(
     crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str ) {
-        throw std::runtime_error( "private key is null" );
+        throw crypto::ThresholdUtils::IncorrectInput( "private key is null" );
     }
 
     libff::init_alt_bn128_params();

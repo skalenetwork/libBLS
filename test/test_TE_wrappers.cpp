@@ -522,7 +522,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         {
             // null private key
-            BOOST_REQUIRE_THROW( TEPrivateKey( nullptr, num_signed, num_all ), std::runtime_error );
+            BOOST_REQUIRE_THROW( TEPrivateKey( nullptr, num_signed, num_all ),
+                crypto::ThresholdUtils::IncorrectInput );
         }
 
         {
