@@ -714,8 +714,8 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        BOOST_REQUIRE_THROW( BLSPublicKeyShare pkey( nullptr, num_signed, num_all ),
-            crypto::Bls::IncorrectInput );
+        BOOST_REQUIRE_THROW(
+            BLSPublicKeyShare pkey( nullptr, num_signed, num_all ), crypto::Bls::IncorrectInput );
     }
 
     {

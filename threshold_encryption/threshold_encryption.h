@@ -65,4 +65,4 @@ private:
     const size_t n_ = 0;
 };
 
-}  // namespace encryption
+}  // namespace crypto

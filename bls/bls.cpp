@@ -255,4 +255,4 @@ libff::alt_bn128_G1 Bls::SignatureRecover( const std::vector< libff::alt_bn128_G
     return sign;  // first element is hash of a receiving message
 }
 
-}  // namespace signatures
+}  // namespace crypto

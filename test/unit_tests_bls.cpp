@@ -557,8 +557,7 @@ BOOST_AUTO_TEST_CASE( SignVerification ) {
     std::vector< libff::alt_bn128_G1 > sig_shares;
     sig_shares.push_back( libff::alt_bn128_G1::random_element() );
 
-    BOOST_REQUIRE_THROW(
-        obj.SignatureRecover( sig_shares, coeffs ), crypto::Bls::IncorrectInput );
+    BOOST_REQUIRE_THROW( obj.SignatureRecover( sig_shares, coeffs ), crypto::Bls::IncorrectInput );
 
     coeffs.clear();
     sig_shares.clear();

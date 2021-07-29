@@ -66,4 +66,4 @@ private:
     const size_t n_ = 0;
 };
 
-}  // namespace signatures
+}  // namespace crypto

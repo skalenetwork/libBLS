@@ -240,4 +240,4 @@ std::string TE::CombineShares( const Ciphertext& ciphertext,
     return message;
 }
 
-}  // namespace encryption
+}  // namespace crypto
