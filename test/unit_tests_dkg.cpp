@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE( PolynomialValue ) {
     polynomial = {
         libff::alt_bn128_Fr( "0" ), libff::alt_bn128_Fr( "1" ), libff::alt_bn128_Fr( "0" )};
 
-    BOOST_REQUIRE_THROW( value = obj.PolynomialValue( polynomial, 5 ), std::runtime_error );
+    BOOST_REQUIRE_THROW( value = obj.PolynomialValue( polynomial, 5 ), std::logic_error );
 }
 
 BOOST_AUTO_TEST_CASE( verification ) {
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE( ZeroSecret ) {
         pol.push_back( num1 );
         pol.push_back( num2 );
 
-        BOOST_REQUIRE_THROW( dkg_obj.SecretKeyShareCreate( pol ), std::runtime_error );
+        BOOST_REQUIRE_THROW( dkg_obj.SecretKeyShareCreate( pol ), std::logic_error );
     }
 }
 
