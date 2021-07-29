@@ -356,10 +356,11 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         size_t num_all = rand_gen() % 15 + 2;
         size_t num_signed = rand_gen() % num_all + 1;
 
-        BOOST_REQUIRE_THROW(
-            crypto::ThresholdUtils::checkSigners( 0, num_all ), std::runtime_error );
+        BOOST_REQUIRE_THROW( crypto::ThresholdUtils::checkSigners( 0, num_all ),
+            crypto::ThresholdUtils::IncorrectInput );
 
-        BOOST_REQUIRE_THROW( crypto::ThresholdUtils::checkSigners( 0, 0 ), std::runtime_error );
+        BOOST_REQUIRE_THROW(
+            crypto::ThresholdUtils::checkSigners( 0, 0 ), crypto::ThresholdUtils::IncorrectInput );
 
         // null public key share
         BOOST_REQUIRE_THROW( TEPublicKeyShare( nullptr, 1, num_signed, num_all ),
@@ -543,8 +544,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         {
             //_requiredSigners > _totalSigners
-            BOOST_REQUIRE_THROW(
-                TEDecryptSet decr_set( num_all + 1, num_signed ), std::runtime_error );
+            BOOST_REQUIRE_THROW( TEDecryptSet decr_set( num_all + 1, num_signed ),
+                crypto::ThresholdUtils::IsNotWellFormed );
         }
 
         {

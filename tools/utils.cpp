@@ -41,15 +41,15 @@ void ThresholdUtils::initCurve() {
 
 void ThresholdUtils::checkSigners( size_t _requiredSigners, size_t _totalSigners ) {
     if ( _requiredSigners > _totalSigners ) {
-        throw std::runtime_error( "_requiredSigners > _totalSigners" );
+        throw IsNotWellFormed( "_requiredSigners > _totalSigners" );
     }
 
     if ( _totalSigners == 0 ) {
-        throw std::runtime_error( "_totalSigners == 0" );
+        throw IncorrectInput( "_totalSigners == 0" );
     }
 
     if ( _requiredSigners == 0 ) {
-        throw std::runtime_error( "_requiredSigners == 0" );
+        throw IncorrectInput( "_requiredSigners == 0" );
     }
 }
 
