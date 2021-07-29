@@ -84,8 +84,8 @@ TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, si
     }
 }
 
-encryption::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_ptr ) {
-    encryption::TE te( requiredSigners, totalSigners );
+crypto::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_ptr ) {
+    crypto::TE te( requiredSigners, totalSigners );
 
     if ( mes_ptr == nullptr ) {
         throw std::runtime_error( "Message is null" );
@@ -95,7 +95,7 @@ encryption::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_
         throw std::runtime_error( "Message length is not equal to 64" );
     }
 
-    encryption::Ciphertext cypher = te.Encrypt( *mes_ptr, PublicKey );
+    crypto::Ciphertext cypher = te.Encrypt( *mes_ptr, PublicKey );
     ThresholdUtils::checkCypher( cypher );
 
     libff::alt_bn128_G2 U = std::get< 0 >( cypher );

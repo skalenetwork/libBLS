@@ -35,12 +35,12 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
     ThresholdUtils::initCurve();
     if ( _key.empty() ) {
-        throw signatures::Bls::IncorrectInput( "Secret key share string is empty" );
+        throw crypto::Bls::IncorrectInput( "Secret key share string is empty" );
     }
     privateKey = std::make_shared< libff::alt_bn128_Fr >( _key.c_str() );
 
     if ( *privateKey == libff::alt_bn128_Fr::zero() ) {
-        throw signatures::Bls::ZeroSecretKey( "Secret key share is equal to zero or corrupt" );
+        throw crypto::Bls::ZeroSecretKey( "Secret key share is equal to zero or corrupt" );
     }
 }
 
@@ -52,22 +52,22 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(
     privateKey = std::make_shared< libff::alt_bn128_Fr >( libff_skey );
 
     if ( *privateKey == libff::alt_bn128_Fr::zero() ) {
-        throw signatures::Bls::ZeroSecretKey( "BLS Secret key share is equal to zero" );
+        throw crypto::Bls::ZeroSecretKey( "BLS Secret key share is equal to zero" );
     }
 }
 
 std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::sign(
     std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr, size_t _signerIndex ) {
-    std::shared_ptr< signatures::Bls > obj;
+    std::shared_ptr< crypto::Bls > obj;
 
     if ( _signerIndex == 0 ) {
-        throw signatures::Bls::IncorrectInput( "Zero signer index during BLS sign" );
+        throw crypto::Bls::IncorrectInput( "Zero signer index during BLS sign" );
     }
     if ( hash_byte_arr == nullptr ) {
-        throw signatures::Bls::IncorrectInput( "Hash is null during BLS sign" );
+        throw crypto::Bls::IncorrectInput( "Hash is null during BLS sign" );
     }
 
-    obj = std::make_shared< signatures::Bls >( signatures::Bls( requiredSigners, totalSigners ) );
+    obj = std::make_shared< crypto::Bls >( crypto::Bls( requiredSigners, totalSigners ) );
 
     libff::alt_bn128_G1 hash = ThresholdUtils::HashtoG1( hash_byte_arr );
 
@@ -88,16 +88,16 @@ std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::sign(
 
 std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::signWithHelper(
     std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr, size_t _signerIndex ) {
-    std::shared_ptr< signatures::Bls > obj;
+    std::shared_ptr< crypto::Bls > obj;
 
     if ( _signerIndex == 0 ) {
-        throw signatures::Bls::IncorrectInput( "Zero signer index" );
+        throw crypto::Bls::IncorrectInput( "Zero signer index" );
     }
     if ( hash_byte_arr == nullptr ) {
-        throw signatures::Bls::IncorrectInput( "Null hash is bls signWithHelper" );
+        throw crypto::Bls::IncorrectInput( "Null hash is bls signWithHelper" );
     }
 
-    obj = std::make_shared< signatures::Bls >( signatures::Bls( requiredSigners, totalSigners ) );
+    obj = std::make_shared< crypto::Bls >( crypto::Bls( requiredSigners, totalSigners ) );
 
     std::pair< libff::alt_bn128_G1, std::string > hash_with_hint =
         obj->HashtoG1withHint( hash_byte_arr );
@@ -123,7 +123,7 @@ BLSPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSi
 
     std::vector< std::shared_ptr< BLSPrivateKeyShare > > skeys_shares;
 
-    signatures::Dkg dkg_obj = signatures::Dkg( _requiredSigners, _totalSigners );
+    crypto::Dkg dkg_obj = crypto::Dkg( _requiredSigners, _totalSigners );
     const std::vector< libff::alt_bn128_Fr > pol = dkg_obj.GeneratePolynomial();
     std::vector< libff::alt_bn128_Fr > skeys = dkg_obj.SecretKeyContribution( pol );
 
@@ -156,14 +156,14 @@ std::shared_ptr< libff::alt_bn128_Fr > BLSPrivateKeyShare::getPrivateKey() const
 
 std::shared_ptr< std::string > BLSPrivateKeyShare::toString() {
     if ( !privateKey )
-        throw signatures::Bls::IncorrectInput( "Secret key share is null" );
+        throw crypto::Bls::IncorrectInput( "Secret key share is null" );
     if ( *privateKey == libff::alt_bn128_Fr::zero() ) {
-        throw signatures::Bls::ZeroSecretKey( "Secret key share is equal to zero or corrupt" );
+        throw crypto::Bls::ZeroSecretKey( "Secret key share is equal to zero or corrupt" );
     }
     std::shared_ptr< std::string > key_str =
         std::make_shared< std::string >( ThresholdUtils::fieldElementToString( *privateKey ) );
 
     if ( key_str->empty() )
-        throw signatures::Bls::IncorrectInput( "Secret key share string is empty" );
+        throw crypto::Bls::IncorrectInput( "Secret key share string is empty" );
     return key_str;
 }

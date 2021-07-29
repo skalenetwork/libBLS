@@ -41,7 +41,7 @@ public:
 
     void addDecrypt( size_t _signerIndex, std::shared_ptr< libff::alt_bn128_G2 > _el );
 
-    std::string merge( const encryption::Ciphertext& ciphertext );
+    std::string merge( const crypto::Ciphertext& ciphertext );
 };
 
 

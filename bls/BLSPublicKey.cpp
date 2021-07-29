@@ -46,11 +46,11 @@ BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > 
     libffPublicKey->Z.c1 = libff::alt_bn128_Fq::zero();
 
     if ( libffPublicKey->is_zero() ) {
-        throw signatures::Bls::IsNotWellFormed( "Zero BLS public Key " );
+        throw crypto::Bls::IsNotWellFormed( "Zero BLS public Key " );
     }
 
     if ( !( libffPublicKey->is_well_formed() ) ) {
-        throw signatures::Bls::IsNotWellFormed( "BLS public Key is corrupt" );
+        throw crypto::Bls::IsNotWellFormed( "BLS public Key is corrupt" );
     }
 }
 
@@ -63,7 +63,7 @@ BLSPublicKey::BLSPublicKey(
 
     libffPublicKey = std::make_shared< libff::alt_bn128_G2 >( pkey );
     if ( libffPublicKey->is_zero() ) {
-        throw signatures::Bls::IsNotWellFormed( "Zero BLS Public Key" );
+        throw crypto::Bls::IsNotWellFormed( "Zero BLS Public Key" );
     }
 }
 
@@ -73,7 +73,7 @@ BLSPublicKey::BLSPublicKey(
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
     libffPublicKey = std::make_shared< libff::alt_bn128_G2 >( skey * libff::alt_bn128_G2::one() );
     if ( libffPublicKey->is_zero() ) {
-        throw signatures::Bls::IsNotWellFormed( "Public Key is equal to zero or corrupt" );
+        throw crypto::Bls::IsNotWellFormed( "Public Key is equal to zero or corrupt" );
     }
 }
 
@@ -89,18 +89,18 @@ bool BLSPublicKey::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_
     std::shared_ptr< BLSSignature > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
     ThresholdUtils::initCurve();
 
-    std::shared_ptr< signatures::Bls > obj;
+    std::shared_ptr< crypto::Bls > obj;
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !hash_ptr ) {
-        throw signatures::Bls::IncorrectInput( "hash is null" );
+        throw crypto::Bls::IncorrectInput( "hash is null" );
     }
 
     if ( !sign_ptr || sign_ptr->getSig()->is_zero() ) {
-        throw signatures::Bls::IsNotWellFormed( "Sig share is equal to zero or corrupt" );
+        throw crypto::Bls::IsNotWellFormed( "Sig share is equal to zero or corrupt" );
     }
 
-    obj = std::make_shared< signatures::Bls >( signatures::Bls( _requiredSigners, _totalSigners ) );
+    obj = std::make_shared< crypto::Bls >( crypto::Bls( _requiredSigners, _totalSigners ) );
 
     bool res = obj->Verification( hash_ptr, *( sign_ptr->getSig() ), *libffPublicKey );
     return res;
@@ -108,13 +108,13 @@ bool BLSPublicKey::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_
 
 bool BLSPublicKey::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
     std::shared_ptr< BLSSignature > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
-    std::shared_ptr< signatures::Bls > obj;
+    std::shared_ptr< crypto::Bls > obj;
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
     if ( !hash_ptr ) {
-        throw signatures::Bls::IncorrectInput( "hash is null" );
+        throw crypto::Bls::IncorrectInput( "hash is null" );
     }
     if ( !sign_ptr || sign_ptr->getSig()->is_zero() ) {
-        throw signatures::Bls::IncorrectInput( "Sig share is equal to zero or corrupt" );
+        throw crypto::Bls::IncorrectInput( "Sig share is equal to zero or corrupt" );
     }
 
     std::string hint = sign_ptr->getHint();
@@ -148,7 +148,7 @@ BLSPublicKey::BLSPublicKey(
     ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !koefs_pkeys_map ) {
-        throw signatures::Bls::IncorrectInput( "map is null" );
+        throw crypto::Bls::IncorrectInput( "map is null" );
     }
 
     std::vector< size_t > participatingNodes;
@@ -174,7 +174,7 @@ BLSPublicKey::BLSPublicKey(
 
     libffPublicKey = std::make_shared< libff::alt_bn128_G2 >( key );
     if ( libffPublicKey->is_zero() ) {
-        throw signatures::Bls::IsNotWellFormed( "Public Key is equal to zero or corrupt" );
+        throw crypto::Bls::IsNotWellFormed( "Public Key is equal to zero or corrupt" );
     }
 }
 

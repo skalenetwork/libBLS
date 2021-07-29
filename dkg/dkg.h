@@ -29,7 +29,7 @@
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 #include <libff/algebra/fields/fp.hpp>
 
-namespace signatures {
+namespace crypto {
 
 class Dkg {
 public:

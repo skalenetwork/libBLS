@@ -65,7 +65,7 @@ bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin ) {
 
 void hash_g1( const size_t t, const size_t n ) {
     libff::inhibit_profiling_info = true;
-    signatures::Bls bls_instance = signatures::Bls( t, n );
+    crypto::Bls bls_instance = crypto::Bls( t, n );
 
     nlohmann::json hash_in;
 

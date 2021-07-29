@@ -38,7 +38,7 @@ static bool g_b_verbose_mode = false;
 
 
 void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std::string >& input ) {
-    signatures::Dkg dkg_instance = signatures::Dkg( t, n );
+    crypto::Dkg dkg_instance = crypto::Dkg( t, n );
 
     std::vector< std::vector< libff::alt_bn128_G2 > > verification_vector( n );
     std::vector< std::vector< libff::alt_bn128_Fr > > secret_key_contribution( n );

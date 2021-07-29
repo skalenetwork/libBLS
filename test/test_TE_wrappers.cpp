@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         size_t num_all = rand_gen() % 16 + 1;
         size_t num_signed = rand_gen() % num_all + 1;
 
-        signatures::Dkg dkg_te( num_signed, num_all );
+        crypto::Dkg dkg_te( num_signed, num_all );
 
         std::vector< libff::alt_bn128_Fr > poly = dkg_te.GeneratePolynomial();
 
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
 
         TEPublicKey common_public( common_private, num_signed, num_all );
         auto msg_ptr = std::make_shared< std::string >( message );
-        encryption::Ciphertext cypher = common_public.encrypt( msg_ptr );
+        crypto::Ciphertext cypher = common_public.encrypt( msg_ptr );
 
         std::vector< libff::alt_bn128_Fr > skeys = dkg_te.SecretKeyContribution( poly );
         std::vector< TEPrivateKeyShare > skey_shares;
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         std::string message_decrypted = decr_set.merge( cypher );
         BOOST_REQUIRE( message == message_decrypted );
 
-        encryption::Ciphertext bad_cypher = cypher;  // corrupt V in cypher
+        crypto::Ciphertext bad_cypher = cypher;  // corrupt V in cypher
         std::get< 1 >( bad_cypher ) = spoilMessage( std::get< 1 >( cypher ) );
         bool is_exception_caught = false;
         try {
@@ -177,7 +177,7 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
         size_t num_all = rand_gen() % 16 + 1;
         size_t num_signed = rand_gen() % num_all + 1;
 
-        signatures::Dkg dkg_te( num_signed, num_all );
+        crypto::Dkg dkg_te( num_signed, num_all );
 
         std::string message;
         size_t msg_length = 64;
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
 
 
         auto msg_ptr = std::make_shared< std::string >( message );
-        encryption::Ciphertext cypher = keys.second->encrypt( msg_ptr );
+        crypto::Ciphertext cypher = keys.second->encrypt( msg_ptr );
 
         std::vector< TEPublicKeyShare > public_key_shares;
         for ( size_t i = 0; i < num_all; i++ ) {
@@ -269,7 +269,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
         for ( size_t i = 0; i < num_all; i++ ) {
             DKGTEWrapper dkg_wrap( num_signed, num_all );
 
-            signatures::Dkg dkg_te( num_signed, num_all );
+            crypto::Dkg dkg_te( num_signed, num_all );
             std::vector< libff::alt_bn128_Fr > poly = dkg_te.GeneratePolynomial();
             auto shared_poly = std::make_shared< std::vector< libff::alt_bn128_Fr > >( poly );
             dkg_wrap.setDKGSecret( shared_poly );
@@ -332,7 +332,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
            element_clear(value);
          }
 
-         TEPublicKey common_public(encryption::element_wrapper(public_key), num_signed, num_all);
+         TEPublicKey common_public(crypto::element_wrapper(public_key), num_signed, num_all);
          element_clear(public_key);*/
 
         TEPublicKey common_public = DKGTEWrapper::CreateTEPublicKey(
@@ -347,7 +347,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
         }
 
         auto msg_ptr = std::make_shared< std::string >( message );
-        encryption::Ciphertext cypher = common_public.encrypt( msg_ptr );
+        crypto::Ciphertext cypher = common_public.encrypt( msg_ptr );
 
         for ( size_t i = 0; i < num_all - num_signed; ++i ) {
             size_t ind4del = rand_gen() % secret_shares_all.size();
@@ -441,7 +441,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
             libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
-            encryption::Ciphertext cypher;
+            crypto::Ciphertext cypher;
             std::get< 0 >( cypher ) = U;
             std::get< 1 >( cypher ) = "tra-la-la";
             std::get< 2 >( cypher ) = W;
@@ -464,7 +464,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
             libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
-            encryption::Ciphertext cypher;
+            crypto::Ciphertext cypher;
             std::get< 0 >( cypher ) = U;
             std::get< 1 >( cypher ) = "tra-la-la";
             std::get< 2 >( cypher ) = W;
@@ -485,7 +485,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
             libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
-            encryption::Ciphertext cypher;
+            crypto::Ciphertext cypher;
             std::get< 0 >( cypher ) = U;
             std::get< 1 >( cypher ) =
                 "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
@@ -679,7 +679,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
             libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
-            encryption::Ciphertext cypher;
+            crypto::Ciphertext cypher;
             std::get< 0 >( cypher ) = U;
             std::get< 1 >( cypher ) =
                 "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
@@ -702,7 +702,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
             libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
-            encryption::Ciphertext cypher;
+            crypto::Ciphertext cypher;
             std::get< 0 >( cypher ) = U;
             std::get< 1 >( cypher ) =
                 "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";

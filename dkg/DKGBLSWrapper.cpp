@@ -43,7 +43,7 @@ bool DKGBLSWrapper::VerifyDKGShare( size_t _signerIndex, const libff::alt_bn128_
     }
     if ( _verification_vector->size() != requiredSigners )
         throw std::runtime_error( "Wrong vector size" );
-    signatures::Dkg dkg( requiredSigners, totalSigners );
+    crypto::Dkg dkg( requiredSigners, totalSigners );
     return dkg.Verification( _signerIndex, _share, *_verification_vector );
 }
 
@@ -72,7 +72,7 @@ BLSPrivateKeyShare DKGBLSWrapper::CreateBLSPrivateKeyShare(
     if ( secret_shares_ptr->size() != totalSigners )
         throw std::runtime_error( "Wrong number of secret key parts " );
 
-    signatures::Dkg dkg( requiredSigners, totalSigners );
+    crypto::Dkg dkg( requiredSigners, totalSigners );
 
     libff::alt_bn128_Fr skey_share = dkg.SecretKeyShareCreate( *secret_shares_ptr );
 

@@ -71,13 +71,13 @@ TEPublicKeyShare::TEPublicKeyShare(
 }
 
 bool TEPublicKeyShare::Verify(
-    const encryption::Ciphertext& cyphertext, const libff::alt_bn128_G2& decryptionShare ) {
+    const crypto::Ciphertext& cyphertext, const libff::alt_bn128_G2& decryptionShare ) {
     ThresholdUtils::checkCypher( cyphertext );
     if ( decryptionShare.is_zero() ) {
         throw std::runtime_error( "zero decrypt" );
     }
 
-    encryption::TE te( requiredSigners, totalSigners );
+    crypto::TE te( requiredSigners, totalSigners );
 
     return te.Verify( cyphertext, decryptionShare, PublicKey );
 }

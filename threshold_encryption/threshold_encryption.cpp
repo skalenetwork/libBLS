@@ -29,7 +29,7 @@
 #include <tools/utils.h>
 #include <libff/common/profiling.hpp>
 
-namespace encryption {
+namespace crypto {
 
 TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {
     libff::init_alt_bn128_params();

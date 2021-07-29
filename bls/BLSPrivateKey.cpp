@@ -33,15 +33,15 @@ BLSPrivateKey::BLSPrivateKey(
 
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
     if ( _key == nullptr ) {
-        throw signatures::Bls::IncorrectInput( "Secret key share is null" );
+        throw crypto::Bls::IncorrectInput( "Secret key share is null" );
     }
     if ( _key->empty() ) {
-        throw signatures::Bls::IncorrectInput( "Secret key share is empty" );
+        throw crypto::Bls::IncorrectInput( "Secret key share is empty" );
     }
 
     privateKey = std::make_shared< libff::alt_bn128_Fr >( _key->c_str() );
     if ( *privateKey == libff::alt_bn128_Fr::zero() ) {
-        throw signatures::Bls::ZeroSecretKey( "Secret key share is equal to zero or corrupt" );
+        throw crypto::Bls::ZeroSecretKey( "Secret key share is equal to zero or corrupt" );
     }
 }
 
@@ -50,10 +50,10 @@ BLSPrivateKey::BLSPrivateKey(
     std::shared_ptr< std::vector< size_t > > koefs, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     if ( skeys == nullptr ) {
-        throw signatures::Bls::IncorrectInput( "Secret keys ptr is null" );
+        throw crypto::Bls::IncorrectInput( "Secret keys ptr is null" );
     }
     if ( koefs == nullptr ) {
-        throw signatures::Bls::IncorrectInput( "Signers indices ptr is null" );
+        throw crypto::Bls::IncorrectInput( "Signers indices ptr is null" );
     }
 
     ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
@@ -66,7 +66,7 @@ BLSPrivateKey::BLSPrivateKey(
     }
 
     if ( privateKeyObj == libff::alt_bn128_Fr::zero() ) {
-        throw signatures::Bls::ZeroSecretKey( "Secret key share is equal to zero or corrupt" );
+        throw crypto::Bls::ZeroSecretKey( "Secret key share is equal to zero or corrupt" );
     }
 
     privateKey = std::make_shared< libff::alt_bn128_Fr >( privateKeyObj );
@@ -81,7 +81,7 @@ std::shared_ptr< std::string > BLSPrivateKey::toString() {
         std::make_shared< std::string >( ThresholdUtils::fieldElementToString( *privateKey ) );
 
     if ( key_str->empty() )
-        throw signatures::Bls::ZeroSecretKey( "Secret key share string is empty" );
+        throw crypto::Bls::ZeroSecretKey( "Secret key share string is empty" );
 
     return key_str;
 }

@@ -42,10 +42,10 @@ BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, st
 
 
     if ( sig->is_zero() ) {
-        throw signatures::Bls::IncorrectInput( "Zero BLS signature" );
+        throw crypto::Bls::IncorrectInput( "Zero BLS signature" );
     }
     if ( hint.length() == 0 ) {
-        throw signatures::Bls::IncorrectInput( "Empty BLS hint" );
+        throw crypto::Bls::IncorrectInput( "Empty BLS hint" );
     }
 }
 
@@ -59,24 +59,24 @@ BLSSignature::BLSSignature(
     ThresholdUtils::initCurve();
 
     if ( _sig->size() < 10 ) {
-        throw signatures::Bls::IsNotWellFormed(
+        throw crypto::Bls::IsNotWellFormed(
             "Signature too short:" + std::to_string( _sig->size() ) );
     }
 
     if ( _sig->size() > BLS_MAX_SIG_LEN ) {
-        throw signatures::Bls::IsNotWellFormed(
+        throw crypto::Bls::IsNotWellFormed(
             "Signature too long:" + std::to_string( _sig->size() ) );
     }
 
     std::shared_ptr< std::vector< std::string > > result = ThresholdUtils::SplitString( _sig, ":" );
 
     if ( result->size() != 4 )
-        throw signatures::Bls::IncorrectInput( "Misformatted signature" );
+        throw crypto::Bls::IncorrectInput( "Misformatted signature" );
 
     for ( auto&& str : *result ) {
         for ( char& c : str ) {
             if ( !( c >= '0' && c <= '9' ) ) {
-                throw signatures::Bls::IncorrectInput(
+                throw crypto::Bls::IncorrectInput(
                     "Misformatted char:" + std::to_string( ( int ) c ) + " in component " + str );
             }
         }
@@ -87,7 +87,7 @@ BLSSignature::BLSSignature(
     hint = result->at( 2 ) + ":" + result->at( 3 );
 
     if ( !( sig->is_well_formed() ) ) {
-        throw signatures::Bls::IsNotWellFormed( "signature is not from G1" );
+        throw crypto::Bls::IsNotWellFormed( "signature is not from G1" );
     }
 }
 
@@ -105,12 +105,12 @@ void BLSSignature::checkSigners( size_t _requiredSigners, size_t _totalSigners )
     CHECK( _totalSigners > 0 );
 
     if ( _requiredSigners > _totalSigners ) {
-        throw signatures::Bls::IncorrectInput( "_requiredSigners > _totalSigners" );
+        throw crypto::Bls::IncorrectInput( "_requiredSigners > _totalSigners" );
     }
 
 
     if ( _totalSigners == 0 ) {
-        throw signatures::Bls::IncorrectInput( "_totalSigners == 0" );
+        throw crypto::Bls::IncorrectInput( "_totalSigners == 0" );
     }
 }
 

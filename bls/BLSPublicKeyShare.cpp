@@ -47,11 +47,11 @@ BLSPublicKeyShare::BLSPublicKeyShare(
     publicKey->Z.c1 = libff::alt_bn128_Fq::zero();
 
     if ( publicKey->is_zero() ) {
-        throw signatures::Bls::IsNotWellFormed( "Zero BLS public Key share" );
+        throw crypto::Bls::IsNotWellFormed( "Zero BLS public Key share" );
     }
 
     if ( !( publicKey->is_well_formed() ) ) {
-        throw signatures::Bls::IsNotWellFormed( "Corrupt BLS public key share" );
+        throw crypto::Bls::IsNotWellFormed( "Corrupt BLS public key share" );
     }
 }
 
@@ -60,7 +60,7 @@ BLSPublicKeyShare::BLSPublicKeyShare(
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     ThresholdUtils::initCurve();
     if ( _skey.is_zero() ) {
-        throw signatures::Bls::ZeroSecretKey( "Zero BLS Secret Key" );
+        throw crypto::Bls::ZeroSecretKey( "Zero BLS Secret Key" );
     }
     publicKey = std::make_shared< libff::alt_bn128_G2 >( _skey * libff::alt_bn128_G2::one() );
 }
@@ -88,14 +88,14 @@ bool BLSPublicKeyShare::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > 
     CHECK( hash_ptr );
     CHECK( sign_ptr );
 
-    std::shared_ptr< signatures::Bls > obj;
+    std::shared_ptr< crypto::Bls > obj;
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
 
     if ( sign_ptr->getSigShare()->is_zero() ) {
-        throw signatures::Bls::IsNotWellFormed( "Zero BLS Sig share" );
+        throw crypto::Bls::IsNotWellFormed( "Zero BLS Sig share" );
     }
 
-    obj = std::make_shared< signatures::Bls >( signatures::Bls( _requiredSigners, _totalSigners ) );
+    obj = std::make_shared< crypto::Bls >( crypto::Bls( _requiredSigners, _totalSigners ) );
 
     bool res = obj->Verification( hash_ptr, *( sign_ptr->getSigShare() ), *publicKey );
     return res;
@@ -105,13 +105,13 @@ bool BLSPublicKeyShare::VerifySigWithHelper( std::shared_ptr< std::array< uint8_
     std::shared_ptr< BLSSigShare > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
     CHECK( sign_ptr )
 
-    std::shared_ptr< signatures::Bls > obj;
+    std::shared_ptr< crypto::Bls > obj;
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
     if ( !hash_ptr ) {
-        throw signatures::Bls::IncorrectInput( "hash is null" );
+        throw crypto::Bls::IncorrectInput( "hash is null" );
     }
     if ( sign_ptr->getSigShare()->is_zero() ) {
-        throw signatures::Bls::IsNotWellFormed( "Sig share is equal to zero" );
+        throw crypto::Bls::IsNotWellFormed( "Sig share is equal to zero" );
     }
 
     std::string hint = sign_ptr->getHint();

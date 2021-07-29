@@ -43,7 +43,7 @@ bool DKGTEWrapper::VerifyDKGShare( size_t _signerIndex, const libff::alt_bn128_F
         throw std::runtime_error( "Null verification vector" );
     if ( _verification_vector->size() != requiredSigners )
         throw std::runtime_error( "Wrong size of verification vector" );
-    signatures::Dkg dkg_te( requiredSigners, totalSigners );
+    crypto::Dkg dkg_te( requiredSigners, totalSigners );
     return dkg_te.Verification( _signerIndex, _share, *_verification_vector );
 }
 
@@ -70,7 +70,7 @@ TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare(
     if ( secret_shares_ptr->size() != totalSigners )
         throw std::runtime_error( "Wrong number of secret key parts " );
 
-    signatures::Dkg dkg_te( requiredSigners, totalSigners );
+    crypto::Dkg dkg_te( requiredSigners, totalSigners );
 
     libff::alt_bn128_Fr skey_share = dkg_te.SecretKeyShareCreate( *secret_shares_ptr );
 

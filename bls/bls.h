@@ -39,7 +39,7 @@ static constexpr size_t BLS_MAX_COMPONENT_LEN = 80;
 static constexpr size_t BLS_MAX_SIG_LEN = 240;
 
 
-namespace signatures {
+namespace crypto {
 
 class Bls {
 private:
@@ -118,5 +118,5 @@ private:
     if ( !( _EXPRESSION_ ) ) {                                                                \
         auto __msg__ = std::string( "Check failed:" ) + #_EXPRESSION_ + "\n" + __FUNCTION__ + \
                        +" " + std::string( __FILE__ ) + ":" + std::to_string( __LINE__ );     \
-        throw signatures::Bls::IncorrectInput( __msg__ );                                     \
+        throw crypto::Bls::IncorrectInput( __msg__ );                                     \
     }

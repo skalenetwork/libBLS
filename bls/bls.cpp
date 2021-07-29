@@ -36,7 +36,7 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 #include <libff/algebra/exponentiation/exponentiation.hpp>
 #include <libff/common/profiling.hpp>
 
-namespace signatures {
+namespace crypto {
 
 Bls::Bls( const size_t t, const size_t n ) : t_( t ), n_( n ) {
     ThresholdUtils::initCurve();

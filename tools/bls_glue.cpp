@@ -38,7 +38,7 @@ static bool g_b_verbose_mode = false;
 
 void RecoverSignature( const size_t t, const size_t n, const std::vector< std::string >& input,
     std::ostream& outfile ) {
-    signatures::Bls bls_instance = signatures::Bls( t, n );
+    crypto::Bls bls_instance = crypto::Bls( t, n );
 
     std::vector< size_t > idx( t );
     std::vector< libff::alt_bn128_G1 > signature_shares( t );

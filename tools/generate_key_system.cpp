@@ -39,8 +39,8 @@
 static bool g_b_verbose_mode = false;
 
 void GenerateKeys( const size_t t, const size_t n, std::ostream& outfile ) {
-    signatures::Bls bls_instance = signatures::Bls( t, n );
-    signatures::Dkg dkg_instance = signatures::Dkg( t, n );
+    crypto::Bls bls_instance = crypto::Bls( t, n );
+    crypto::Dkg dkg_instance = crypto::Dkg( t, n );
 
     auto polynomial = dkg_instance.GeneratePolynomial();
 

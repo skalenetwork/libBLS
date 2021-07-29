@@ -54,7 +54,7 @@ void TEDecryptSet::addDecrypt( size_t _signerIndex, std::shared_ptr< libff::alt_
     decrypts[_signerIndex] = _el;
 }
 
-std::string TEDecryptSet::merge( const encryption::Ciphertext& cyphertext ) {
+std::string TEDecryptSet::merge( const crypto::Ciphertext& cyphertext ) {
     ThresholdUtils::checkCypher( cyphertext );
 
     was_merged = true;
@@ -63,7 +63,7 @@ std::string TEDecryptSet::merge( const encryption::Ciphertext& cyphertext ) {
         throw std::runtime_error( "Not enough elements to decrypt message" );
     }
 
-    encryption::TE te( requiredSigners, totalSigners );
+    crypto::TE te( requiredSigners, totalSigners );
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > decrypted;
     for ( auto&& item : decrypts ) {
         std::pair< libff::alt_bn128_G2, size_t > encr = std::make_pair( *item.second, item.first );

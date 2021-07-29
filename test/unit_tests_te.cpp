@@ -32,7 +32,7 @@
 BOOST_AUTO_TEST_SUITE( ThresholdEncryption )
 
 BOOST_AUTO_TEST_CASE( SimpleEncryption ) {
-    encryption::TE te_instance = encryption::TE( 1, 1 );
+    crypto::TE te_instance = crypto::TE( 1, 1 );
 
     std::string message =
         "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE( SimpleEncryption ) {
 }
 
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
-    encryption::TE obj = encryption::TE( 11, 16 );
+    crypto::TE obj = crypto::TE( 11, 16 );
 
     std::vector< libff::alt_bn128_Fr > coeffs( 11 );
     for ( auto& elem : coeffs ) {
@@ -115,7 +115,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
 }
 
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomPK ) {
-    encryption::TE obj = encryption::TE( 11, 16 );
+    crypto::TE obj = crypto::TE( 11, 16 );
 
     std::vector< libff::alt_bn128_Fr > coeffs( 11 );
     for ( auto& elem : coeffs ) {
@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomPK ) {
 }
 
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomSK ) {
-    encryption::TE obj = encryption::TE( 11, 16 );
+    crypto::TE obj = crypto::TE( 11, 16 );
 
     std::vector< libff::alt_bn128_Fr > coeffs( 11 );
     for ( auto& elem : coeffs ) {
@@ -239,7 +239,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomSK ) {
 }
 
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionCorruptedCiphertext ) {
-    encryption::TE obj = encryption::TE( 11, 16 );
+    crypto::TE obj = crypto::TE( 11, 16 );
 
     std::vector< libff::alt_bn128_Fr > coeffs( 11 );
     for ( auto& elem : coeffs ) {
@@ -312,7 +312,7 @@ BOOST_AUTO_TEST_CASE( LagrangeInterpolationExceptions ) {
 
         bool is_exception_caught = false;
         try {
-            encryption::TE obj( num_signed, num_all );
+            crypto::TE obj( num_signed, num_all );
             std::vector< size_t > vect;
             for ( size_t i = 0; i < num_signed - 1; i++ )
                 vect.push_back( i + 1 );
@@ -324,7 +324,7 @@ BOOST_AUTO_TEST_CASE( LagrangeInterpolationExceptions ) {
 
         is_exception_caught = false;
         try {
-            encryption::TE obj( num_signed, num_all );
+            crypto::TE obj( num_signed, num_all );
             std::vector< size_t > vect;
             for ( size_t i = 0; i < num_signed; i++ ) {
                 vect.push_back( i + 1 );

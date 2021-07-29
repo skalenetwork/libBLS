@@ -64,10 +64,10 @@ TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _s
     }
 }
 
-libff::alt_bn128_G2 TEPrivateKeyShare::getDecryptionShare( encryption::Ciphertext& cipher ) {
+libff::alt_bn128_G2 TEPrivateKeyShare::getDecryptionShare( crypto::Ciphertext& cipher ) {
     ThresholdUtils::checkCypher( cipher );
 
-    encryption::TE te( requiredSigners, totalSigners );
+    crypto::TE te( requiredSigners, totalSigners );
 
     libff::alt_bn128_G2 decryption_share = te.getDecryptionShare( cipher, privateKey );
 
@@ -93,7 +93,7 @@ libff::alt_bn128_Fr TEPrivateKeyShare::getPrivateKey() const {
 std::pair< std::shared_ptr< std::vector< std::shared_ptr< TEPrivateKeyShare > > >,
     std::shared_ptr< TEPublicKey > >
 TEPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSigners ) {
-    signatures::Dkg dkg_te( _requiredSigners, _totalSigners );
+    crypto::Dkg dkg_te( _requiredSigners, _totalSigners );
 
     std::vector< libff::alt_bn128_Fr > poly = dkg_te.GeneratePolynomial();
 

@@ -66,7 +66,7 @@ bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin ) {
 
 void Sign( const size_t t, const size_t n, std::istream& data_file, std::ostream& outfile,
     const std::string& key, bool sign_all = true, int idx = -1 ) {
-    signatures::Bls bls_instance = signatures::Bls( t, n );
+    crypto::Bls bls_instance = crypto::Bls( t, n );
 
     std::vector< uint8_t > message_data;
     uint8_t n_byte;

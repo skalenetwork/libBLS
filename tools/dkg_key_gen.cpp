@@ -68,7 +68,7 @@ void CommonPkeyToJson( std::shared_ptr< BLSPublicKey > common_pkey_ptr ) {
 static bool g_b_verbose_mode = false;
 
 void KeyGeneration( const size_t t, const size_t n, bool generate_all = true, int idx = -1 ) {
-    signatures::Dkg dkg_instance = signatures::Dkg( t, n );
+    crypto::Dkg dkg_instance = crypto::Dkg( t, n );
 
     if ( generate_all ) {
         std::vector< std::vector< libff::alt_bn128_Fr > > polynomial( n );

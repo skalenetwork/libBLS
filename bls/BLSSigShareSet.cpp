@@ -34,11 +34,11 @@ bool BLSSigShareSet::addSigShare( std::shared_ptr< BLSSigShare > _sigShare ) {
     CHECK( _sigShare );
 
     if ( was_merged ) {
-        throw signatures::Bls::IncorrectInput( "Invalid state:was already merged" );
+        throw crypto::Bls::IncorrectInput( "Invalid state:was already merged" );
     }
 
     if ( sigShares.count( _sigShare->getSignerIndex() ) > 0 ) {
-        throw signatures::Bls::IncorrectInput(
+        throw crypto::Bls::IncorrectInput(
             "Already have this index:" + std::to_string( _sigShare->getSignerIndex() ) );
         return false;
     }
@@ -52,7 +52,7 @@ size_t BLSSigShareSet::getTotalSigSharesCount() {
 }
 std::shared_ptr< BLSSigShare > BLSSigShareSet::getSigShareByIndex( size_t _index ) {
     if ( _index == 0 ) {
-        throw signatures::Bls::IncorrectInput( "Index out of range:" + std::to_string( _index ) );
+        throw crypto::Bls::IncorrectInput( "Index out of range:" + std::to_string( _index ) );
     }
 
 
@@ -76,10 +76,10 @@ bool BLSSigShareSet::isEnough() {
 
 std::shared_ptr< BLSSignature > BLSSigShareSet::merge() {
     if ( !isEnough() )
-        throw signatures::Bls::IncorrectInput( "Not enough shares to create signature" );
+        throw crypto::Bls::IncorrectInput( "Not enough shares to create signature" );
 
     was_merged = true;
-    signatures::Bls obj = signatures::Bls( requiredSigners, totalSigners );
+    crypto::Bls obj = crypto::Bls( requiredSigners, totalSigners );
 
     std::vector< size_t > participatingNodes;
     std::vector< libff::alt_bn128_G1 > shares;

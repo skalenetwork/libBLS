@@ -28,7 +28,7 @@
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 #include <libff/algebra/exponentiation/exponentiation.hpp>
 
-namespace signatures {
+namespace crypto {
 
 typedef std::vector< libff::alt_bn128_Fr > Polynomial;
 
