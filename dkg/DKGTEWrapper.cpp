@@ -22,8 +22,8 @@
 */
 
 
-#include "DKGTEWrapper.h"
-#include "../tools/utils.h"
+#include <dkg/DKGTEWrapper.h>
+#include <tools/utils.h>
 
 DKGTEWrapper::DKGTEWrapper( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
@@ -36,19 +36,18 @@ DKGTEWrapper::DKGTEWrapper( size_t _requiredSigners, size_t _totalSigners )
 }
 
 bool DKGTEWrapper::VerifyDKGShare( size_t _signerIndex, const libff::alt_bn128_Fr& _share,
-    const std::shared_ptr< std::vector< libff::alt_bn128_G2 > >& _verification_vector ) {
+    std::shared_ptr< std::vector< libff::alt_bn128_G2 > > _verification_vector ) {
     if ( _share.is_zero() )
         throw std::runtime_error( "Zero secret share" );
     if ( _verification_vector == nullptr )
         throw std::runtime_error( "Null verification vector" );
     if ( _verification_vector->size() != requiredSigners )
         throw std::runtime_error( "Wrong size of verification vector" );
-    encryption::DkgTe dkg_te( requiredSigners, totalSigners );
-    return dkg_te.Verify( _signerIndex, _share, *_verification_vector );
+    signatures::Dkg dkg_te( requiredSigners, totalSigners );
+    return dkg_te.Verification( _signerIndex, _share, *_verification_vector );
 }
 
-void DKGTEWrapper::setDKGSecret(
-    std::shared_ptr< std::vector< libff::alt_bn128_Fr > >& _poly_ptr ) {
+void DKGTEWrapper::setDKGSecret( std::shared_ptr< std::vector< libff::alt_bn128_Fr > > _poly_ptr ) {
     if ( _poly_ptr == nullptr )
         throw std::runtime_error( "Null polynomial ptr" );
     dkg_secret_ptr->setPoly( *_poly_ptr );
@@ -71,9 +70,9 @@ TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare(
     if ( secret_shares_ptr->size() != totalSigners )
         throw std::runtime_error( "Wrong number of secret key parts " );
 
-    encryption::DkgTe dkg_te( requiredSigners, totalSigners );
+    signatures::Dkg dkg_te( requiredSigners, totalSigners );
 
-    libff::alt_bn128_Fr skey_share = dkg_te.CreateSecretKeyShare( *secret_shares_ptr );
+    libff::alt_bn128_Fr skey_share = dkg_te.SecretKeyShareCreate( *secret_shares_ptr );
 
     return TEPrivateKeyShare( skey_share, signerIndex_, requiredSigners, totalSigners );
 }

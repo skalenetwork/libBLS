@@ -35,7 +35,7 @@ DKGBLSWrapper::DKGBLSWrapper( size_t _requiredSigners, size_t _totalSigners )
 }
 
 bool DKGBLSWrapper::VerifyDKGShare( size_t _signerIndex, const libff::alt_bn128_Fr& _share,
-    const std::shared_ptr< std::vector< libff::alt_bn128_G2 > >& _verification_vector ) {
+    std::shared_ptr< std::vector< libff::alt_bn128_G2 > > _verification_vector ) {
     if ( _share.is_zero() )
         throw std::runtime_error( " Zero secret share" );
     if ( _verification_vector == nullptr ) {

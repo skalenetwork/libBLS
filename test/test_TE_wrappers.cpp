@@ -24,7 +24,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 #define BOOST_TEST_MODULE
 
-#include <dkg/dkg_te.h>
+#include <dkg/dkg.h>
 #include <threshold_encryption/TEDecryptSet.h>
 #include <threshold_encryption/TEPrivateKey.h>
 #include <threshold_encryption/TEPrivateKeyShare.h>
@@ -59,13 +59,13 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         size_t num_all = rand_gen() % 16 + 1;
         size_t num_signed = rand_gen() % num_all + 1;
 
-        encryption::DkgTe dkg_te( num_signed, num_all );
+        signatures::Dkg dkg_te( num_signed, num_all );
 
         std::vector< libff::alt_bn128_Fr > poly = dkg_te.GeneratePolynomial();
 
         libff::alt_bn128_Fr zero_el = libff::alt_bn128_Fr::zero();
 
-        libff::alt_bn128_Fr common_skey = dkg_te.ComputePolynomialValue( poly, zero_el );
+        libff::alt_bn128_Fr common_skey = dkg_te.PolynomialValue( poly, zero_el );
         BOOST_REQUIRE( common_skey == poly.at( 0 ) );
 
         TEPrivateKey common_private( common_skey, num_signed, num_all );
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         auto msg_ptr = std::make_shared< std::string >( message );
         encryption::Ciphertext cypher = common_public.encrypt( msg_ptr );
 
-        std::vector< libff::alt_bn128_Fr > skeys = dkg_te.CreateSecretKeyContribution( poly );
+        std::vector< libff::alt_bn128_Fr > skeys = dkg_te.SecretKeyContribution( poly );
         std::vector< TEPrivateKeyShare > skey_shares;
         std::vector< TEPublicKeyShare > public_key_shares;
         for ( size_t i = 0; i < num_all; i++ ) {
@@ -177,7 +177,7 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
         size_t num_all = rand_gen() % 16 + 1;
         size_t num_signed = rand_gen() % num_all + 1;
 
-        encryption::DkgTe dkg_te( num_signed, num_all );
+        signatures::Dkg dkg_te( num_signed, num_all );
 
         std::string message;
         size_t msg_length = 64;
@@ -269,7 +269,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
         for ( size_t i = 0; i < num_all; i++ ) {
             DKGTEWrapper dkg_wrap( num_signed, num_all );
 
-            encryption::DkgTe dkg_te( num_signed, num_all );
+            signatures::Dkg dkg_te( num_signed, num_all );
             std::vector< libff::alt_bn128_Fr > poly = dkg_te.GeneratePolynomial();
             auto shared_poly = std::make_shared< std::vector< libff::alt_bn128_Fr > >( poly );
             dkg_wrap.setDKGSecret( shared_poly );

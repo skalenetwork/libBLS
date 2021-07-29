@@ -22,10 +22,10 @@
 */
 
 
-#include "DKGTESecret.h"
-#include "../tools/utils.h"
+#include <dkg/DKGTESecret.h>
+#include <tools/utils.h>
 
-#include <dkg/dkg_te.h>
+#include <dkg/dkg.h>
 
 DKGTESecret::DKGTESecret( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
@@ -33,7 +33,7 @@ DKGTESecret::DKGTESecret( size_t _requiredSigners, size_t _totalSigners )
 
     libff::init_alt_bn128_params();
 
-    encryption::DkgTe dkg_te( requiredSigners, totalSigners );
+    signatures::Dkg dkg_te( requiredSigners, totalSigners );
     poly = dkg_te.GeneratePolynomial();
 }
 
@@ -46,11 +46,11 @@ void DKGTESecret::setPoly( std::vector< libff::alt_bn128_Fr >& _poly ) {
 }
 
 std::vector< libff::alt_bn128_Fr > DKGTESecret::getDKGTESecretShares() {
-    encryption::DkgTe dkg_te( requiredSigners, totalSigners );
-    return dkg_te.CreateSecretKeyContribution( poly );
+    signatures::Dkg dkg_te( requiredSigners, totalSigners );
+    return dkg_te.SecretKeyContribution( poly );
 }
 
 std::vector< libff::alt_bn128_G2 > DKGTESecret::getDKGTEPublicShares() {
-    encryption::DkgTe dkg_te( requiredSigners, totalSigners );
-    return dkg_te.CreateVerificationVector( poly );
+    signatures::Dkg dkg_te( requiredSigners, totalSigners );
+    return dkg_te.VerificationVector( poly );
 }

@@ -15,7 +15,7 @@ set(sources
             TEPrivateKey.cpp
             TEPublicKey.cpp
             TEPublicKeyShare.cpp
-            ${DKG_DIR}/dkg_te.cpp
+            ${DKG_DIR}/dkg.cpp
             ${DKG_DIR}/DKGTEWrapper.cpp
             ${DKG_DIR}/DKGTESecret.cpp
             ${TOOLS_DIR}/utils.cpp
@@ -28,7 +28,7 @@ set(headers
             TEPrivateKey.h
             TEPublicKey.h
             TEPublicKeyShare.h
-            ${DKG_DIR}/dkg_te.h
+            ${DKG_DIR}/dkg.h
             ${DKG_DIR}/DKGTEWrapper.h
             ${DKG_DIR}/DKGTESecret.h
             ${TOOLS_DIR}/utils.h

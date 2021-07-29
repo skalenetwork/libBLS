@@ -26,7 +26,7 @@
 #define LIBBLS_DKGTEWRAPPER_H
 
 #include <dkg/DKGTESecret.h>
-#include <dkg/dkg_te.h>
+#include <dkg/dkg.h>
 #include <threshold_encryption/TEPrivateKeyShare.h>
 
 class DKGTEWrapper {
@@ -40,9 +40,9 @@ public:
     DKGTEWrapper( size_t _requiredSigners, size_t _totalSigners );
 
     bool VerifyDKGShare( size_t signerIndex, const libff::alt_bn128_Fr& share,
-        const std::shared_ptr< std::vector< libff::alt_bn128_G2 > >& verification_vector );
+        std::shared_ptr< std::vector< libff::alt_bn128_G2 > > verification_vector );
 
-    void setDKGSecret( std::shared_ptr< std::vector< libff::alt_bn128_Fr > >& _poly_ptr );
+    void setDKGSecret( std::shared_ptr< std::vector< libff::alt_bn128_Fr > > _poly_ptr );
 
     std::shared_ptr< std::vector< libff::alt_bn128_Fr > > createDKGSecretShares();
 
