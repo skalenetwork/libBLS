@@ -49,7 +49,7 @@ bool DKGTEWrapper::VerifyDKGShare( size_t _signerIndex, const libff::alt_bn128_F
 
 void DKGTEWrapper::setDKGSecret( std::shared_ptr< std::vector< libff::alt_bn128_Fr > > _poly_ptr ) {
     if ( _poly_ptr == nullptr )
-        throw std::runtime_error( "Null polynomial ptr" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Null polynomial ptr" );
     dkg_secret_ptr->setPoly( *_poly_ptr );
 }
 
