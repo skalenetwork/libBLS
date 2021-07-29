@@ -362,8 +362,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         BOOST_REQUIRE_THROW( crypto::ThresholdUtils::checkSigners( 0, 0 ), std::runtime_error );
 
         // null public key share
-        BOOST_REQUIRE_THROW(
-            TEPublicKeyShare( nullptr, 1, num_signed, num_all ), std::runtime_error );
+        BOOST_REQUIRE_THROW( TEPublicKeyShare( nullptr, 1, num_signed, num_all ),
+            crypto::ThresholdUtils::IncorrectInput );
 
         {
             // 1 coord of public key share is not digit
@@ -371,7 +371,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
             BOOST_REQUIRE_THROW(
                 TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
                     num_signed, num_all ),
-                std::runtime_error );
+                crypto::ThresholdUtils::IncorrectInput );
         }
 
         {
@@ -380,7 +380,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
             BOOST_REQUIRE_THROW(
                 TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
                     num_signed, num_all ),
-                std::runtime_error );
+                crypto::ThresholdUtils::IncorrectInput );
         }
 
         {
@@ -389,7 +389,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
             BOOST_REQUIRE_THROW(
                 TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
                     num_signed, num_all ),
-                std::runtime_error );
+                crypto::ThresholdUtils::IncorrectInput );
         }
 
         {
@@ -446,7 +446,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
             libff::alt_bn128_G2 decrypt = libff::alt_bn128_G2::zero();
 
-            BOOST_REQUIRE_THROW( pkey.Verify( cypher, decrypt ), std::runtime_error );
+            BOOST_REQUIRE_THROW(
+                pkey.Verify( cypher, decrypt ), crypto::ThresholdUtils::IsNotWellFormed );
         }
 
         {

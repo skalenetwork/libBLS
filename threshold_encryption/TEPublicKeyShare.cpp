@@ -32,18 +32,20 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
     crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str_ptr ) {
-        throw std::runtime_error( "public key share is null" );
+        throw crypto::ThresholdUtils::IncorrectInput( "public key share is null" );
     }
 
     if ( _key_str_ptr->size() != 4 ) {
-        throw std::runtime_error( "wrong number of components in public key share" );
+        throw crypto::ThresholdUtils::IncorrectInput(
+            "wrong number of components in public key share" );
     }
 
     if ( !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 0 ) ) ||
          !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 1 ) ) ||
          !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 2 ) ) ||
          !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 3 ) ) ) {
-        throw std::runtime_error( "non-digit symbol or first zero in non-zero public key share" );
+        throw crypto::ThresholdUtils::IncorrectInput(
+            "non-digit symbol or first zero in non-zero public key share" );
     }
 
     libff::init_alt_bn128_params();
@@ -55,7 +57,8 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
     PublicKey.Y.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 3 ).c_str() );
 
     if ( PublicKey.is_zero() ) {
-        throw std::runtime_error( "corrupted string or zero public key share" );
+        throw crypto::ThresholdUtils::IsNotWellFormed(
+            "corrupted string or zero public key share" );
     }
 }
 
@@ -74,7 +77,7 @@ bool TEPublicKeyShare::Verify(
     const crypto::Ciphertext& cyphertext, const libff::alt_bn128_G2& decryptionShare ) {
     crypto::ThresholdUtils::checkCypher( cyphertext );
     if ( decryptionShare.is_zero() ) {
-        throw std::runtime_error( "zero decrypt" );
+        throw crypto::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
     }
 
     crypto::TE te( requiredSigners, totalSigners );
