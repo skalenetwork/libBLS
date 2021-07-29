@@ -310,8 +310,8 @@ BOOST_AUTO_TEST_CASE( LagrangeInterpolationExceptions ) {
             std::vector< size_t > vect;
             for ( size_t i = 0; i < num_signed - 1; i++ )
                 vect.push_back( i + 1 );
-            BOOST_REQUIRE_THROW(
-                ThresholdUtils::LagrangeCoeffs( vect, num_signed ), std::runtime_error );
+            BOOST_REQUIRE_THROW( crypto::ThresholdUtils::LagrangeCoeffs( vect, num_signed ),
+                crypto::ThresholdUtils::IncorrectInput );
         }
 
         {
@@ -321,8 +321,8 @@ BOOST_AUTO_TEST_CASE( LagrangeInterpolationExceptions ) {
                 vect.push_back( i + 1 );
             }
             vect.at( 1 ) = vect.at( 0 );
-            BOOST_REQUIRE_THROW(
-                ThresholdUtils::LagrangeCoeffs( vect, num_signed ), std::runtime_error );
+            BOOST_REQUIRE_THROW( crypto::ThresholdUtils::LagrangeCoeffs( vect, num_signed ),
+                crypto::ThresholdUtils::IncorrectInput );
         }
     }
 }

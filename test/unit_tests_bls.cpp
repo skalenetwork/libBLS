@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE( zeroSecretKey ) {
 
     libff::alt_bn128_G1 hash = obj.Hashing( message );
 
-    BOOST_REQUIRE_THROW( obj.Signing( hash, secret_key ), crypto::Bls::ZeroSecretKey );
+    BOOST_REQUIRE_THROW( obj.Signing( hash, secret_key ), crypto::ThresholdUtils::ZeroSecretKey );
 
     std::cout << "DONE\n";
 }
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignatures ) {
     std::vector< size_t > testing_nodes = {1, 2};
 
     std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
-        ThresholdUtils::LagrangeCoeffs( testing_nodes, 2 );
+        crypto::ThresholdUtils::LagrangeCoeffs( testing_nodes, 2 );
 
     auto recovered_keys = obj.KeysRecover( lagrange_coeffs, secret_keys );
 
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesFalse ) {
     std::vector< size_t > testing_nodes = {1, 2};
 
     std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
-        ThresholdUtils::LagrangeCoeffs( testing_nodes, 2 );
+        crypto::ThresholdUtils::LagrangeCoeffs( testing_nodes, 2 );
 
     libff::alt_bn128_G1 fst_signature = obj.Signing( hash, fst_secret );
     libff::alt_bn128_G1 snd_signature = obj.Signing( hash, snd_secret );
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesReal ) {
     }
 
     std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
-        ThresholdUtils::LagrangeCoeffs( testing_nodes, 11 );
+        crypto::ThresholdUtils::LagrangeCoeffs( testing_nodes, 11 );
 
     auto recovered_keys = obj.KeysRecover( lagrange_coeffs, secret_keys );
 
@@ -311,7 +311,7 @@ BOOST_AUTO_TEST_CASE( simillarSignatures ) {
     }
 
     std::vector< libff::alt_bn128_Fr > lagrange_coeffs_fst =
-        ThresholdUtils::LagrangeCoeffs( testing_nodes_fst, 11 );
+        crypto::ThresholdUtils::LagrangeCoeffs( testing_nodes_fst, 11 );
 
     auto recovered_keys_fst = obj.KeysRecover( lagrange_coeffs_fst, secret_keys );
 
@@ -345,7 +345,7 @@ BOOST_AUTO_TEST_CASE( simillarSignatures ) {
     }
 
     std::vector< libff::alt_bn128_Fr > lagrange_coeffs_snd =
-        ThresholdUtils::LagrangeCoeffs( testing_nodes_snd, 11 );
+        crypto::ThresholdUtils::LagrangeCoeffs( testing_nodes_snd, 11 );
 
     std::vector< libff::alt_bn128_Fr > secret_keys_for_random_subgroup( 11 );
     for ( size_t i = 0; i < 11; ++i ) {
@@ -453,7 +453,7 @@ BOOST_AUTO_TEST_CASE( RandomPolynomial ) {
 
     std::vector< libff::alt_bn128_Fr > pol( deg + 1 );
 
-    ThresholdUtils::initCurve();
+    crypto::ThresholdUtils::initCurve();
 
     // random polynomial generation
     for ( size_t i = 0; i < deg + 1; ++i ) {
@@ -492,7 +492,7 @@ BOOST_AUTO_TEST_CASE( RandomPolynomial ) {
     }
 
     crypto::Bls obj = crypto::Bls( deg + 1, deg + 1 );
-    auto coeffs = ThresholdUtils::LagrangeCoeffs( indexes, deg + 1 );
+    auto coeffs = crypto::ThresholdUtils::LagrangeCoeffs( indexes, deg + 1 );
 
     std::vector< libff::alt_bn128_Fr > values( deg + 1 );
     for ( size_t i = 0; i < deg + 1; ++i ) {
@@ -524,21 +524,22 @@ BOOST_AUTO_TEST_CASE( SignVerification ) {
 
     BOOST_REQUIRE_THROW(
         obj.Verification( "bla-bla-bla", sign, libff::alt_bn128_G2::random_element() ),
-        crypto::Bls::IsNotWellFormed );
+        crypto::ThresholdUtils::IsNotWellFormed );
 
     libff::alt_bn128_G2 pkey = libff::alt_bn128_G2::random_element();
     pkey.X.c1 = 123;
 
     BOOST_REQUIRE_THROW(
         obj.Verification( "bla-bla-bla", libff::alt_bn128_G1::random_element(), pkey ),
-        crypto::Bls::IsNotWellFormed );
+        crypto::ThresholdUtils::IsNotWellFormed );
 
     std::vector< libff::alt_bn128_Fr > coeffs;
     coeffs.push_back( libff::alt_bn128_Fr::random_element() );
     std::vector< libff::alt_bn128_Fr > shares;
     shares.push_back( libff::alt_bn128_Fr::random_element() );
 
-    BOOST_REQUIRE_THROW( obj.KeysRecover( coeffs, shares ), crypto::Bls::IncorrectInput );
+    BOOST_REQUIRE_THROW(
+        obj.KeysRecover( coeffs, shares ), crypto::ThresholdUtils::IncorrectInput );
 
     coeffs.clear();
     shares.clear();
@@ -549,7 +550,8 @@ BOOST_AUTO_TEST_CASE( SignVerification ) {
     shares.push_back( libff::alt_bn128_Fr::random_element() );
     shares.push_back( libff::alt_bn128_Fr::zero() );
 
-    BOOST_REQUIRE_THROW( obj_2_2.KeysRecover( coeffs, shares ), crypto::Bls::ZeroSecretKey );
+    BOOST_REQUIRE_THROW(
+        obj_2_2.KeysRecover( coeffs, shares ), crypto::ThresholdUtils::ZeroSecretKey );
 
     coeffs.clear();
     coeffs.push_back( libff::alt_bn128_Fr::random_element() );
@@ -557,7 +559,8 @@ BOOST_AUTO_TEST_CASE( SignVerification ) {
     std::vector< libff::alt_bn128_G1 > sig_shares;
     sig_shares.push_back( libff::alt_bn128_G1::random_element() );
 
-    BOOST_REQUIRE_THROW( obj.SignatureRecover( sig_shares, coeffs ), crypto::Bls::IncorrectInput );
+    BOOST_REQUIRE_THROW(
+        obj.SignatureRecover( sig_shares, coeffs ), crypto::ThresholdUtils::IncorrectInput );
 
     coeffs.clear();
     sig_shares.clear();
@@ -571,18 +574,18 @@ BOOST_AUTO_TEST_CASE( SignVerification ) {
     sig_shares.push_back( g1_spoiled );
 
     BOOST_REQUIRE_THROW(
-        obj_2_2.SignatureRecover( sig_shares, coeffs ), crypto::Bls::IsNotWellFormed );
+        obj_2_2.SignatureRecover( sig_shares, coeffs ), crypto::ThresholdUtils::IsNotWellFormed );
 
     std::vector< size_t > idx = {1};
 
-    BOOST_REQUIRE_THROW( ThresholdUtils::LagrangeCoeffs( idx, num_signed ),
-        std::runtime_error );  // crypto::Bls::IncorrectInput
+    BOOST_REQUIRE_THROW( crypto::ThresholdUtils::LagrangeCoeffs( idx, num_signed ),
+        crypto::ThresholdUtils::IncorrectInput );
 
     idx.clear();
     idx = {1, 1};
 
-    BOOST_REQUIRE_THROW( ThresholdUtils::LagrangeCoeffs( idx, 2 ),
-        std::runtime_error );  // crypto::Bls::IncorrectInput
+    BOOST_REQUIRE_THROW(
+        crypto::ThresholdUtils::LagrangeCoeffs( idx, 2 ), crypto::ThresholdUtils::IncorrectInput );
 
     std::cerr << "Exceptions test passed" << std::endl;
 }

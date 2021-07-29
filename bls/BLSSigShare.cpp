@@ -52,36 +52,36 @@ BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _sign
     : signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    ThresholdUtils::checkSigners( requiredSigners, totalSigners );
-    ThresholdUtils::initCurve();
+    crypto::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
+    crypto::ThresholdUtils::initCurve();
     if ( _signerIndex == 0 ) {
-        throw crypto::Bls::IncorrectInput( "Zero signer index" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Zero signer index" );
     }
 
     if ( !_sigShare ) {
-        throw crypto::Bls::IncorrectInput( "Null _sigShare" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Null _sigShare" );
     }
 
 
     if ( _sigShare->size() < 10 ) {
-        throw crypto::Bls::IsNotWellFormed(
+        throw crypto::ThresholdUtils::IsNotWellFormed(
             "Signature too short:" + std::to_string( _sigShare->size() ) );
     }
 
     if ( _sigShare->size() > BLS_MAX_SIG_LEN ) {
-        throw crypto::Bls::IsNotWellFormed(
+        throw crypto::ThresholdUtils::IsNotWellFormed(
             "Signature too long:" + std::to_string( _sigShare->size() ) );
     }
 
 
     std::shared_ptr< std::vector< std::string > > result =
-        ThresholdUtils::SplitString( _sigShare, ":" );
+        crypto::ThresholdUtils::SplitString( _sigShare, ":" );
     if ( result->size() != 4 )
-        throw crypto::Bls::IncorrectInput( "Misformatted signature" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Misformatted signature" );
     for ( auto&& str : *result ) {
         for ( char& c : str ) {
             if ( !( c >= '0' && c <= '9' ) ) {
-                throw crypto::Bls::IncorrectInput(
+                throw crypto::ThresholdUtils::IncorrectInput(
                     "Misformatted char:" + std::to_string( ( int ) c ) + " in component " + str );
             }
         }
@@ -94,7 +94,7 @@ BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _sign
     hint = result->at( 2 ) + ":" + result->at( 3 );
 
     if ( !sigShare->is_well_formed() )
-        throw crypto::Bls::IsNotWellFormed( "signature is not from G1" );
+        throw crypto::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
 }
 
 BLSSigShare::BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& _sigShare,
@@ -104,24 +104,24 @@ BLSSigShare::BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& _sigShar
       signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    ThresholdUtils::initCurve();
-    ThresholdUtils::checkSigners( requiredSigners, totalSigners );
+    crypto::ThresholdUtils::initCurve();
+    crypto::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
     if ( !_sigShare ) {
-        throw crypto::Bls::IncorrectInput( "Null _s" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Null _s" );
     }
     if ( _sigShare->is_zero() ) {
-        throw crypto::Bls::IsNotWellFormed( "Zero signature" );
+        throw crypto::ThresholdUtils::IsNotWellFormed( "Zero signature" );
     }
     if ( _signerIndex == 0 ) {
-        throw crypto::Bls::IncorrectInput( "Zero signer index" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Zero signer index" );
     }
 
     if ( _hint.length() == 0 ) {
-        throw crypto::Bls::IncorrectInput( "Empty or misformatted hint" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Empty or misformatted hint" );
     }
 
     if ( !_sigShare->is_well_formed() ) {
-        throw crypto::Bls::IsNotWellFormed( "signature is not from G1" );
+        throw crypto::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
     }
 }
 

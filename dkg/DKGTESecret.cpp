@@ -29,7 +29,7 @@
 
 DKGTESecret::DKGTESecret( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libff::init_alt_bn128_params();
 

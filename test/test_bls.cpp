@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE( libBls ) {
         for ( size_t i = 0; i < 10; ++i ) {
             std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr =
                 std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() );
-            libff::alt_bn128_G1 hash = ThresholdUtils::HashtoG1( hash_ptr );
+            libff::alt_bn128_G1 hash = crypto::ThresholdUtils::HashtoG1( hash_ptr );
 
             for ( size_t i = 0; i < num_signed; ++i )
                 signatures.at( i ) = obj.Signing( hash, skeys.at( i ) );
@@ -140,18 +140,18 @@ BOOST_AUTO_TEST_CASE( libBls ) {
                 BOOST_REQUIRE( obj.Verification( hash_ptr, signatures.at( i ), pkey ) );
                 BOOST_REQUIRE_THROW(
                     obj.Verification( hash_ptr, SpoilSignature( signatures.at( i ) ), pkey ),
-                    crypto::Bls::IsNotWellFormed );
+                    crypto::ThresholdUtils::IsNotWellFormed );
             }
 
             std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
-                ThresholdUtils::LagrangeCoeffs( participants, num_signed );
+                crypto::ThresholdUtils::LagrangeCoeffs( participants, num_signed );
             libff::alt_bn128_G1 signature = obj.SignatureRecover( signatures, lagrange_coeffs );
 
             auto recovered_keys = obj.KeysRecover( lagrange_coeffs, skeys );
             BOOST_REQUIRE( obj.Verification( hash_ptr, signature, recovered_keys.second ) );
             BOOST_REQUIRE_THROW(
                 obj.Verification( hash_ptr, SpoilSignature( signature ), recovered_keys.second ),
-                crypto::Bls::IsNotWellFormed );
+                crypto::ThresholdUtils::IsNotWellFormed );
         }
     }
 
@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
 
                 BOOST_REQUIRE_THROW(
                     BLSSigShare( bad_sig, hint, participants.at( i ), num_signed, num_all ),
-                    crypto::Bls::IsNotWellFormed );
+                    crypto::ThresholdUtils::IsNotWellFormed );
             }
 
             BOOST_REQUIRE( sigSet.getTotalSigSharesCount() == num_signed );
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
             BOOST_REQUIRE_THROW(
                 common_pkey.VerifySig(
                     hash_ptr, std::make_shared< BLSSignature >( bad_sign ), num_signed, num_all ),
-                crypto::Bls::IsNotWellFormed );
+                crypto::ThresholdUtils::IsNotWellFormed );
 
             std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > pkeys_map1;
             for ( size_t i = 0; i < num_signed; ++i ) {
@@ -427,7 +427,7 @@ BOOST_AUTO_TEST_CASE( private_keys_equality ) {
             choose_rand_signers( num_signed, num_all );
 
         std::vector< libff::alt_bn128_Fr > lagrange_koefs =
-            ThresholdUtils::LagrangeCoeffs( *participants, num_signed );
+            crypto::ThresholdUtils::LagrangeCoeffs( *participants, num_signed );
         libff::alt_bn128_Fr common_skey = libff::alt_bn128_Fr::zero();
         for ( size_t i = 0; i < num_signed; ++i ) {
             common_skey =
@@ -452,7 +452,7 @@ BOOST_AUTO_TEST_CASE( public_keys_equality ) {
             choose_rand_signers( num_signed, num_all );
 
         std::vector< libff::alt_bn128_Fr > lagrange_koefs =
-            ThresholdUtils::LagrangeCoeffs( *participants, num_signed );
+            crypto::ThresholdUtils::LagrangeCoeffs( *participants, num_signed );
         libff::alt_bn128_G2 common_pkey1 = libff::alt_bn128_G2::zero();
         for ( size_t i = 0; i < num_signed; ++i ) {
             common_pkey1 = common_pkey1 + lagrange_koefs.at( i ) *
@@ -552,7 +552,8 @@ BOOST_AUTO_TEST_CASE( BLSWITHDKG ) {
 
         std::shared_ptr< BLSSignature > common_sig_ptr = sigSet.merge();  // verifying signature
 
-        std::string common_secret_str = ThresholdUtils::fieldElementToString( common_secret );
+        std::string common_secret_str =
+            crypto::ThresholdUtils::fieldElementToString( common_secret );
         BLSPrivateKey common_skey(
             std::make_shared< std::string >( common_secret_str ), num_signed, num_all );
 
@@ -593,25 +594,25 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     {
         BOOST_REQUIRE_THROW(
             BLSPrivateKey pkey( std::make_shared< std::string >( "" ), num_signed, num_all ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         BOOST_REQUIRE_THROW(
             BLSPrivateKey skey( std::make_shared< std::string >( "0" ), num_signed, num_all ),
-            crypto::Bls::ZeroSecretKey );
+            crypto::ThresholdUtils::ZeroSecretKey );
     }
 
     {
-        BOOST_REQUIRE_THROW(
-            BLSPrivateKey skey( nullptr, num_signed, num_all ), crypto::Bls::IncorrectInput );
+        BOOST_REQUIRE_THROW( BLSPrivateKey skey( nullptr, num_signed, num_all ),
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         BOOST_REQUIRE_THROW(
             BLSPrivateKey skey( nullptr, std::make_shared< std::vector< size_t > >( participants ),
                 num_signed, num_all ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -619,35 +620,35 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
             BLSPrivateKey skey(
                 BLSPrivateKeyShare::generateSampleKeys( num_signed, num_all )->first, NULL,
                 num_signed, num_all ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
-        BOOST_REQUIRE_THROW(
-            BLSPrivateKeyShare skey( "", num_signed, num_all ), crypto::Bls::IncorrectInput );
+        BOOST_REQUIRE_THROW( BLSPrivateKeyShare skey( "", num_signed, num_all ),
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
-        BOOST_REQUIRE_THROW(
-            BLSPrivateKeyShare skey( "0", num_signed, num_all ), crypto::Bls::ZeroSecretKey );
+        BOOST_REQUIRE_THROW( BLSPrivateKeyShare skey( "0", num_signed, num_all ),
+            crypto::ThresholdUtils::ZeroSecretKey );
     }
 
     {
         BOOST_REQUIRE_THROW(
             BLSPrivateKeyShare skey( libff::alt_bn128_Fr::zero(), num_signed, num_all ),
-            crypto::Bls::ZeroSecretKey );
+            crypto::ThresholdUtils::ZeroSecretKey );
     }
 
     {
         BLSPrivateKeyShare skey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
         BOOST_REQUIRE_THROW(
             skey.sign( std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() ), 0 ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         BLSPrivateKeyShare skey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
-        BOOST_REQUIRE_THROW( skey.sign( NULL, 1 ), crypto::Bls::IncorrectInput );
+        BOOST_REQUIRE_THROW( skey.sign( NULL, 1 ), crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -655,35 +656,36 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
         BOOST_REQUIRE_THROW(
             skey.signWithHelper(
                 std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() ), 0 ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         BLSPrivateKeyShare skey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
-        BOOST_REQUIRE_THROW( skey.signWithHelper( NULL, 1 ), crypto::Bls::IncorrectInput );
+        BOOST_REQUIRE_THROW(
+            skey.signWithHelper( NULL, 1 ), crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         const std::shared_ptr< std::vector< std::string > > null_vect = nullptr;
-        BOOST_REQUIRE_THROW(
-            BLSPublicKey pkey( null_vect, num_signed, num_all ), crypto::Bls::IncorrectInput );
+        BOOST_REQUIRE_THROW( BLSPublicKey pkey( null_vect, num_signed, num_all ),
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         const std::shared_ptr< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > > null_map =
             nullptr;
-        BOOST_REQUIRE_THROW(
-            BLSPublicKey pkey( null_map, num_signed, num_all ), crypto::Bls::IncorrectInput );
+        BOOST_REQUIRE_THROW( BLSPublicKey pkey( null_map, num_signed, num_all ),
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         BOOST_REQUIRE_THROW( BLSPublicKey pkey( libff::alt_bn128_G2::zero(), num_signed, num_all ),
-            crypto::Bls::IsNotWellFormed );
+            crypto::ThresholdUtils::IsNotWellFormed );
     }
 
     {
         BOOST_REQUIRE_THROW( BLSPublicKey pkey( libff::alt_bn128_Fr::zero(), num_signed, num_all ),
-            crypto::Bls::IsNotWellFormed );
+            crypto::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -695,7 +697,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
         BOOST_REQUIRE_THROW(
             pkey.VerifySigWithHelper(
                 nullptr, std::make_shared< BLSSignature >( rand_sig ), num_signed, num_all ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -704,18 +706,18 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
             pkey.VerifySigWithHelper(
                 std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() ), nullptr,
                 num_signed, num_all ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         BOOST_REQUIRE_THROW(
             BLSPublicKeyShare pkey( libff::alt_bn128_Fr::zero(), num_signed, num_all ),
-            crypto::Bls::ZeroSecretKey );
+            crypto::ThresholdUtils::ZeroSecretKey );
     }
 
     {
-        BOOST_REQUIRE_THROW(
-            BLSPublicKeyShare pkey( nullptr, num_signed, num_all ), crypto::Bls::IncorrectInput );
+        BOOST_REQUIRE_THROW( BLSPublicKeyShare pkey( nullptr, num_signed, num_all ),
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -726,7 +728,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
             1, num_signed, num_all );
         BOOST_REQUIRE_THROW( pkey.VerifySigWithHelper( nullptr,
                                  std::make_shared< BLSSigShare >( rand_sig ), num_signed, num_all ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -735,18 +737,18 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
             pkey.VerifySigWithHelper(
                 std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() ), nullptr,
                 num_signed, num_all ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         BOOST_REQUIRE_THROW(
-            BLSSignature( nullptr, num_signed, num_all ), crypto::Bls::IncorrectInput );
+            BLSSignature( nullptr, num_signed, num_all ), crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         std::string hint = "123:1";
-        BOOST_REQUIRE_THROW(
-            BLSSignature( nullptr, hint, num_signed, num_all ), crypto::Bls::IncorrectInput );
+        BOOST_REQUIRE_THROW( BLSSignature( nullptr, hint, num_signed, num_all ),
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -754,14 +756,14 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
         BOOST_REQUIRE_THROW( BLSSignature( std::make_shared< libff::alt_bn128_G1 >(
                                                libff::alt_bn128_G1::random_element() ),
                                  empty_hint, num_signed, num_all ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         std::string short_sig = "1:1:1:1";
         BOOST_REQUIRE_THROW(
             BLSSignature( std::make_shared< std::string >( short_sig ), num_signed, num_all ),
-            crypto::Bls::IsNotWellFormed );
+            crypto::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -774,7 +776,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
             }
         BOOST_REQUIRE_THROW(
             BLSSignature( std::make_shared< std::string >( long_sig ), num_signed, num_all ),
-            crypto::Bls::IsNotWellFormed );
+            crypto::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -787,7 +789,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
             }
         BOOST_REQUIRE_THROW(
             BLSSignature( std::make_shared< std::string >( long_sig ), num_signed, num_all ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -801,7 +803,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
         BOOST_REQUIRE_THROW(
             BLSSignature( std::make_shared< std::string >( long_sig ), num_signed, num_all ),
-            crypto::Bls::IsNotWellFormed );
+            crypto::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -815,7 +817,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
         long_sig[25] = 'a';
         BOOST_REQUIRE_THROW(
             BLSSignature( std::make_shared< std::string >( long_sig ), num_signed, num_all ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -823,23 +825,23 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
         std::string hint = "123:1";
         BOOST_REQUIRE_THROW( BLSSignature( std::make_shared< libff::alt_bn128_G1 >( zero_sig ),
                                  hint, num_signed, num_all ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
-        BOOST_REQUIRE_THROW(
-            BLSSigShare( nullptr, 1, num_signed, num_all ), crypto::Bls::IncorrectInput );
+        BOOST_REQUIRE_THROW( BLSSigShare( nullptr, 1, num_signed, num_all ),
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
-        BOOST_REQUIRE_THROW(
-            BLSSigShare( nullptr, 0, num_signed, num_all ), crypto::Bls::IncorrectInput );
+        BOOST_REQUIRE_THROW( BLSSigShare( nullptr, 0, num_signed, num_all ),
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         std::string hint = "123:1";
-        BOOST_REQUIRE_THROW(
-            BLSSigShare( nullptr, hint, 0, num_signed, num_all ), crypto::Bls::IncorrectInput );
+        BOOST_REQUIRE_THROW( BLSSigShare( nullptr, hint, 0, num_signed, num_all ),
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -847,14 +849,14 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
         BOOST_REQUIRE_THROW( BLSSigShare( std::make_shared< libff::alt_bn128_G1 >(
                                               libff::alt_bn128_G1::random_element() ),
                                  empty_hint, 1, num_signed, num_all ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         std::string short_sig = "1:1:1:1";
         BOOST_REQUIRE_THROW(
             BLSSigShare( std::make_shared< std::string >( short_sig ), 1, num_signed, num_all ),
-            crypto::Bls::IsNotWellFormed );
+            crypto::ThresholdUtils::IsNotWellFormed );
     }
 
 
@@ -869,7 +871,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
         }
         BOOST_REQUIRE_THROW(
             BLSSigShare( std::make_shared< std::string >( long_sig ), 1, num_signed, num_all ),
-            crypto::Bls::IsNotWellFormed );
+            crypto::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -882,7 +884,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
             }
         BOOST_REQUIRE_THROW(
             BLSSigShare( std::make_shared< std::string >( long_sig ), 1, num_signed, num_all ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -897,7 +899,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
         BOOST_REQUIRE_THROW(
             BLSSigShare( std::make_shared< std::string >( long_sig ), 1, num_signed, num_all ),
-            crypto::Bls::IsNotWellFormed );
+            crypto::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -911,13 +913,14 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
         long_sig[25] = 'a';
         BOOST_REQUIRE_THROW(
             BLSSigShare( std::make_shared< std::string >( long_sig ), 1, num_signed, num_all ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
 
     {
         BLSSigShareSet sig_set( num_signed, num_all );
-        BOOST_REQUIRE_THROW( sig_set.addSigShare( nullptr ), crypto::Bls::IncorrectInput );
+        BOOST_REQUIRE_THROW(
+            sig_set.addSigShare( nullptr ), crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -929,7 +932,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
         BLSSigShareSet sig_set( num_signed, num_all );
         sig_set.addSigShare( std::make_shared< BLSSigShare >( sigShare1 ) );
         BOOST_REQUIRE_THROW( sig_set.addSigShare( std::make_shared< BLSSigShare >( sigShare2 ) ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -941,12 +944,12 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
         sig_set.addSigShare( std::make_shared< BLSSigShare >( sigShare1 ) );
         sig_set.merge();
         BOOST_REQUIRE_THROW( sig_set.addSigShare( std::make_shared< BLSSigShare >( sigShare1 ) ),
-            crypto::Bls::IncorrectInput );
+            crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         BLSSigShareSet sig_set( num_signed, num_all );
-        BOOST_REQUIRE_THROW( sig_set.merge(), crypto::Bls::IncorrectInput );
+        BOOST_REQUIRE_THROW( sig_set.merge(), crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -956,7 +959,8 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
     {
         BLSSigShareSet sig_set( num_signed, num_all );
-        BOOST_REQUIRE_THROW( sig_set.getSigShareByIndex( 0 ), crypto::Bls::IncorrectInput );
+        BOOST_REQUIRE_THROW(
+            sig_set.getSigShareByIndex( 0 ), crypto::ThresholdUtils::IncorrectInput );
     }
 
     std::cerr << "EXCEPTIONS TEST FINISHED" << std::endl;

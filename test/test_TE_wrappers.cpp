@@ -355,9 +355,10 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         size_t num_all = rand_gen() % 15 + 2;
         size_t num_signed = rand_gen() % num_all + 1;
 
-        BOOST_REQUIRE_THROW( ThresholdUtils::checkSigners( 0, num_all ), std::runtime_error );
+        BOOST_REQUIRE_THROW(
+            crypto::ThresholdUtils::checkSigners( 0, num_all ), std::runtime_error );
 
-        BOOST_REQUIRE_THROW( ThresholdUtils::checkSigners( 0, 0 ), std::runtime_error );
+        BOOST_REQUIRE_THROW( crypto::ThresholdUtils::checkSigners( 0, 0 ), std::runtime_error );
 
         // null public key share
         BOOST_REQUIRE_THROW(

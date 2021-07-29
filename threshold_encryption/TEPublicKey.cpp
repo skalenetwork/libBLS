@@ -31,7 +31,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str_ptr,
     size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str_ptr ) {
         throw std::runtime_error( "public key is null" );
@@ -41,10 +41,10 @@ TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str
         throw std::runtime_error( "wrong number of components in public key share" );
     }
 
-    if ( !ThresholdUtils::isStringNumber( _key_str_ptr->at( 0 ) ) ||
-         !ThresholdUtils::isStringNumber( _key_str_ptr->at( 1 ) ) ||
-         !ThresholdUtils::isStringNumber( _key_str_ptr->at( 2 ) ) ||
-         !ThresholdUtils::isStringNumber( _key_str_ptr->at( 3 ) ) ) {
+    if ( !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 0 ) ) ||
+         !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 1 ) ) ||
+         !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 2 ) ) ||
+         !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 3 ) ) ) {
         throw std::runtime_error( "non-digit symbol or first zero in non-zero public key share" );
     }
 
@@ -64,7 +64,7 @@ TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str
 TEPublicKey::TEPublicKey(
     TEPrivateKey _common_private, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libff::init_alt_bn128_params();
 
@@ -77,7 +77,7 @@ TEPublicKey::TEPublicKey(
 
 TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, size_t _totalSigners )
     : PublicKey( _pkey ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( _pkey.is_zero() ) {
         throw std::runtime_error( "zero public key" );
@@ -96,7 +96,7 @@ crypto::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_ptr 
     }
 
     crypto::Ciphertext cypher = te.Encrypt( *mes_ptr, PublicKey );
-    ThresholdUtils::checkCypher( cypher );
+    crypto::ThresholdUtils::checkCypher( cypher );
 
     libff::alt_bn128_G2 U = std::get< 0 >( cypher );
     /*if (element_item_count(U) == 0 ) {
@@ -113,7 +113,7 @@ crypto::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_ptr 
 
 std::shared_ptr< std::vector< std::string > > TEPublicKey::toString() {
     return std::make_shared< std::vector< std::string > >(
-        ThresholdUtils::G2ToString( PublicKey ) );
+        crypto::ThresholdUtils::G2ToString( PublicKey ) );
 }
 
 libff::alt_bn128_G2 TEPublicKey::getPublicKey() const {

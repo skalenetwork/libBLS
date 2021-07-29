@@ -38,14 +38,14 @@ BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, st
 
     CHECK( sig );
 
-    ThresholdUtils::initCurve();
+    crypto::ThresholdUtils::initCurve();
 
 
     if ( sig->is_zero() ) {
-        throw crypto::Bls::IncorrectInput( "Zero BLS signature" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Zero BLS signature" );
     }
     if ( hint.length() == 0 ) {
-        throw crypto::Bls::IncorrectInput( "Empty BLS hint" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Empty BLS hint" );
     }
 }
 
@@ -56,27 +56,28 @@ BLSSignature::BLSSignature(
 
     BLSSignature::checkSigners( requiredSigners, totalSigners );
 
-    ThresholdUtils::initCurve();
+    crypto::ThresholdUtils::initCurve();
 
     if ( _sig->size() < 10 ) {
-        throw crypto::Bls::IsNotWellFormed(
+        throw crypto::ThresholdUtils::IsNotWellFormed(
             "Signature too short:" + std::to_string( _sig->size() ) );
     }
 
     if ( _sig->size() > BLS_MAX_SIG_LEN ) {
-        throw crypto::Bls::IsNotWellFormed(
+        throw crypto::ThresholdUtils::IsNotWellFormed(
             "Signature too long:" + std::to_string( _sig->size() ) );
     }
 
-    std::shared_ptr< std::vector< std::string > > result = ThresholdUtils::SplitString( _sig, ":" );
+    std::shared_ptr< std::vector< std::string > > result =
+        crypto::ThresholdUtils::SplitString( _sig, ":" );
 
     if ( result->size() != 4 )
-        throw crypto::Bls::IncorrectInput( "Misformatted signature" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Misformatted signature" );
 
     for ( auto&& str : *result ) {
         for ( char& c : str ) {
             if ( !( c >= '0' && c <= '9' ) ) {
-                throw crypto::Bls::IncorrectInput(
+                throw crypto::ThresholdUtils::IncorrectInput(
                     "Misformatted char:" + std::to_string( ( int ) c ) + " in component " + str );
             }
         }
@@ -87,7 +88,7 @@ BLSSignature::BLSSignature(
     hint = result->at( 2 ) + ":" + result->at( 3 );
 
     if ( !( sig->is_well_formed() ) ) {
-        throw crypto::Bls::IsNotWellFormed( "signature is not from G1" );
+        throw crypto::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
     }
 }
 
@@ -105,12 +106,12 @@ void BLSSignature::checkSigners( size_t _requiredSigners, size_t _totalSigners )
     CHECK( _totalSigners > 0 );
 
     if ( _requiredSigners > _totalSigners ) {
-        throw crypto::Bls::IncorrectInput( "_requiredSigners > _totalSigners" );
+        throw crypto::ThresholdUtils::IncorrectInput( "_requiredSigners > _totalSigners" );
     }
 
 
     if ( _totalSigners == 0 ) {
-        throw crypto::Bls::IncorrectInput( "_totalSigners == 0" );
+        throw crypto::ThresholdUtils::IncorrectInput( "_totalSigners == 0" );
     }
 }
 

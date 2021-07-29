@@ -62,7 +62,8 @@ void RecoverSignature( const size_t t, const size_t n, const std::vector< std::s
         signature_shares[i] = signature_share;
     }
 
-    std::vector< libff::alt_bn128_Fr > lagrange_coeffs = ThresholdUtils::LagrangeCoeffs( idx, t );
+    std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
+        crypto::ThresholdUtils::LagrangeCoeffs( idx, t );
 
     libff::alt_bn128_G1 common_signature =
         bls_instance.SignatureRecover( signature_shares, lagrange_coeffs );
@@ -70,8 +71,8 @@ void RecoverSignature( const size_t t, const size_t n, const std::vector< std::s
 
     nlohmann::json outdata;
 
-    outdata["signature"]["X"] = ThresholdUtils::fieldElementToString( common_signature.X );
-    outdata["signature"]["Y"] = ThresholdUtils::fieldElementToString( common_signature.Y );
+    outdata["signature"]["X"] = crypto::ThresholdUtils::fieldElementToString( common_signature.X );
+    outdata["signature"]["Y"] = crypto::ThresholdUtils::fieldElementToString( common_signature.Y );
 
     outfile << outdata.dump( 4 ) << '\n';
 }

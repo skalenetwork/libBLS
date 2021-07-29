@@ -29,7 +29,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 TEDecryptSet::TEDecryptSet( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ), was_merged( false ) {
-    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libff::init_alt_bn128_params();
 }
@@ -55,7 +55,7 @@ void TEDecryptSet::addDecrypt( size_t _signerIndex, std::shared_ptr< libff::alt_
 }
 
 std::string TEDecryptSet::merge( const crypto::Ciphertext& cyphertext ) {
-    ThresholdUtils::checkCypher( cyphertext );
+    crypto::ThresholdUtils::checkCypher( cyphertext );
 
     was_merged = true;
 

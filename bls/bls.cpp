@@ -147,7 +147,7 @@ libff::alt_bn128_G1 Bls::Signing(
     // implemented constant time signing
 
     if ( secret_key == libff::alt_bn128_Fr::zero() ) {
-        throw ZeroSecretKey( "failed to sign a message hash" );
+        throw ThresholdUtils::ZeroSecretKey( "failed to sign a message hash" );
     }
 
     std::clock_t c_start = std::clock();  // hash
@@ -169,15 +169,16 @@ bool Bls::Verification( const std::string& to_be_hashed, const libff::alt_bn128_
     libff::inhibit_profiling_info = true;
 
     if ( !sign.is_well_formed() ) {
-        throw IsNotWellFormed( "Error, signature does not lie on the alt_bn128 curve" );
+        throw ThresholdUtils::IsNotWellFormed(
+            "Error, signature does not lie on the alt_bn128 curve" );
     }
 
     if ( !public_key.is_well_formed() ) {
-        throw IsNotWellFormed( "Error, public key is invalid" );
+        throw ThresholdUtils::IsNotWellFormed( "Error, public key is invalid" );
     }
 
     if ( libff::alt_bn128_modulus_r * sign != libff::alt_bn128_G1::zero() ) {
-        throw IsNotWellFormed( "Error, signature is not member of G1" );
+        throw ThresholdUtils::IsNotWellFormed( "Error, signature is not member of G1" );
     }
 
     libff::alt_bn128_G1 hash = Hashing( to_be_hashed );
@@ -196,15 +197,16 @@ bool Bls::Verification( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_a
     libff::inhibit_profiling_info = true;
 
     if ( !sign.is_well_formed() ) {
-        throw IsNotWellFormed( "Error, signature does not lie on the alt_bn128 curve" );
+        throw ThresholdUtils::IsNotWellFormed(
+            "Error, signature does not lie on the alt_bn128 curve" );
     }
 
     if ( !public_key.is_well_formed() ) {
-        throw IsNotWellFormed( "Error, public key is invalid" );
+        throw ThresholdUtils::IsNotWellFormed( "Error, public key is invalid" );
     }
 
     if ( libff::alt_bn128_modulus_r * sign != libff::alt_bn128_G1::zero() ) {
-        throw IsNotWellFormed( "Error, signature is not member of G1" );
+        throw ThresholdUtils::IsNotWellFormed( "Error, signature is not member of G1" );
     }
 
     libff::alt_bn128_G1 hash = ThresholdUtils::HashtoG1( hash_byte_arr );
@@ -218,14 +220,14 @@ std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > Bls::KeysRecover(
     const std::vector< libff::alt_bn128_Fr >& coeffs,
     const std::vector< libff::alt_bn128_Fr >& shares ) {
     if ( shares.size() < this->t_ || coeffs.size() < this->t_ ) {
-        throw IncorrectInput( "not enough participants in the threshold group" );
+        throw ThresholdUtils::IncorrectInput( "not enough participants in the threshold group" );
     }
 
     libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::zero();
 
     for ( size_t i = 0; i < this->t_; ++i ) {
         if ( shares[i] == libff::alt_bn128_Fr::zero() ) {
-            throw ZeroSecretKey(
+            throw ThresholdUtils::ZeroSecretKey(
                 "at least one secret key share is equal to zero in KeysRecover group" );
         }
         secret_key += coeffs[i] * shares[i];  // secret key recovering using Lagrange Interpolation
@@ -240,14 +242,14 @@ std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > Bls::KeysRecover(
 libff::alt_bn128_G1 Bls::SignatureRecover( const std::vector< libff::alt_bn128_G1 >& shares,
     const std::vector< libff::alt_bn128_Fr >& coeffs ) {
     if ( shares.size() < this->t_ || coeffs.size() < this->t_ ) {
-        throw IncorrectInput( "not enough participants in the threshold group" );
+        throw ThresholdUtils::IncorrectInput( "not enough participants in the threshold group" );
     }
 
     libff::alt_bn128_G1 sign = libff::alt_bn128_G1::zero();
 
     for ( size_t i = 0; i < this->t_; ++i ) {
         if ( !shares[i].is_well_formed() ) {
-            throw IsNotWellFormed( "incorrect input data to recover signature" );
+            throw ThresholdUtils::IsNotWellFormed( "incorrect input data to recover signature" );
         }
         sign = sign + coeffs[i] * shares[i];  // signature recovering using Lagrange Coefficients
     }

@@ -24,6 +24,9 @@
 #include <tools/utils.h>
 #include <mutex>
 
+namespace crypto {
+
+
 std::atomic< bool > ThresholdUtils::is_initialized = false;
 
 std::mutex initMutex;
@@ -66,8 +69,7 @@ std::vector< std::string > ThresholdUtils::G2ToString( libff::alt_bn128_G2 elem 
 std::vector< libff::alt_bn128_Fr > ThresholdUtils::LagrangeCoeffs(
     const std::vector< size_t >& idx, size_t t ) {
     if ( idx.size() < t ) {
-        // throw IncorrectInput( "not enough participants in the threshold group" );
-        throw std::runtime_error( "not enough participants in the threshold group" );
+        throw IncorrectInput( "not enough participants in the threshold group" );
     }
 
     std::vector< libff::alt_bn128_Fr > res( t );
@@ -84,9 +86,7 @@ std::vector< libff::alt_bn128_Fr > ThresholdUtils::LagrangeCoeffs(
         for ( size_t j = 0; j < t; ++j ) {
             if ( j != i ) {
                 if ( libff::alt_bn128_Fr( idx[i] ) == libff::alt_bn128_Fr( idx[j] ) ) {
-                    // throw IncorrectInput(
-                    //     "during the interpolation, have same indexes in list of indexes" );
-                    throw std::runtime_error(
+                    throw IncorrectInput(
                         "during the interpolation, have same indexes in list of indexes" );
                 }
 
@@ -176,10 +176,10 @@ bool ThresholdUtils::isStringNumber( std::string& str ) {
 void ThresholdUtils::checkCypher(
     const std::tuple< libff::alt_bn128_G2, std::string, libff::alt_bn128_G1 >& cyphertext ) {
     if ( std::get< 0 >( cyphertext ).is_zero() || std::get< 2 >( cyphertext ).is_zero() )
-        throw std::runtime_error( "zero element in cyphertext" );
+        throw IncorrectInput( "zero element in cyphertext" );
 
     if ( std::get< 1 >( cyphertext ).length() != 64 )
-        throw std::runtime_error( "wrong string length in cyphertext" );
+        throw IncorrectInput( "wrong string length in cyphertext" );
 }
 
 std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ThresholdUtils::ParseHint(
@@ -187,7 +187,7 @@ std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ThresholdUtils::ParseHint(
     auto position = _hint.find( ":" );
 
     if ( position == std::string::npos ) {
-        throw std::runtime_error( "Misformatted hint" );
+        throw IncorrectInput( "Misformatted hint" );
     }
 
     libff::alt_bn128_Fq y( _hint.substr( 0, position ).c_str() );
@@ -198,7 +198,9 @@ std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ThresholdUtils::ParseHint(
 
 std::shared_ptr< std::vector< std::string > > ThresholdUtils::SplitString(
     std::shared_ptr< std::string > str, const std::string& delim ) {
-    // CHECK( str );
+    if ( !str ) {
+        throw IncorrectInput( " str pointer is null in SplitString " );
+    }
 
     std::vector< std::string > tokens;
     size_t prev = 0, pos = 0;
@@ -214,3 +216,5 @@ std::shared_ptr< std::vector< std::string > > ThresholdUtils::SplitString(
 
     return std::make_shared< std::vector< std::string > >( tokens );
 }
+
+}  // namespace crypto

@@ -32,8 +32,42 @@
 
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 
+namespace crypto {
+
 class ThresholdUtils {
+private:
+    class Exception : public std::exception {
+    protected:
+        std::string what_str;
+
+    public:
+        Exception( const std::string& err_str ) { what_str = err_str; }
+
+        virtual const char* what() const noexcept override { return what_str.c_str(); }
+    };
+
 public:
+    class IsNotWellFormed : public Exception {
+    public:
+        IsNotWellFormed( const std::string& err_str ) : Exception( err_str ) {
+            what_str = "IsNotWellFormedData : " + err_str;
+        }
+    };
+
+    class ZeroSecretKey : public Exception {
+    public:
+        ZeroSecretKey( const std::string& err_str ) : Exception( err_str ) {
+            what_str = "Secret key is equal to zero : " + err_str;
+        }
+    };
+
+    class IncorrectInput : public Exception {
+    public:
+        IncorrectInput( const std::string& err_str ) : Exception( err_str ) {
+            what_str = "Failed to proceed data : " + err_str;
+        }
+    };
+
     static void initCurve();
 
     static std::atomic< bool > is_initialized;
@@ -82,5 +116,7 @@ std::string ThresholdUtils::fieldElementToString( const T& field_elem ) {
 
     return output;
 }
+
+}  // namespace crypto
 
 #endif  // LIBBLS_UTILS_H

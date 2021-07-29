@@ -131,23 +131,23 @@ void KeyGeneration( const size_t t, const size_t n, bool generate_all = true, in
 
         for ( size_t i = 0; i < n; ++i ) {
             data["secret_key_contribution"][std::to_string( i )] =
-                ThresholdUtils::fieldElementToString( secret_key_contribution[i] );
+                crypto::ThresholdUtils::fieldElementToString( secret_key_contribution[i] );
         }
 
 
         for ( size_t i = 0; i < t; ++i ) {
             data["verification_vector"][std::to_string( i )]["X"]["c0"] =
-                ThresholdUtils::fieldElementToString( verification_vector[i].X.c0 );
+                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].X.c0 );
             data["verification_vector"][std::to_string( i )]["X"]["c1"] =
-                ThresholdUtils::fieldElementToString( verification_vector[i].X.c1 );
+                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].X.c1 );
             data["verification_vector"][std::to_string( i )]["Y"]["c0"] =
-                ThresholdUtils::fieldElementToString( verification_vector[i].Y.c0 );
+                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].Y.c0 );
             data["verification_vector"][std::to_string( i )]["Y"]["c1"] =
-                ThresholdUtils::fieldElementToString( verification_vector[i].Y.c1 );
+                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].Y.c1 );
             data["verification_vector"][std::to_string( i )]["Z"]["c0"] =
-                ThresholdUtils::fieldElementToString( verification_vector[i].Z.c0 );
+                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].Z.c0 );
             data["verification_vector"][std::to_string( i )]["Z"]["c1"] =
-                ThresholdUtils::fieldElementToString( verification_vector[i].Z.c1 );
+                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].Z.c1 );
         }
 
         std::ofstream outfile( "data_for_" + std::to_string( idx ) + "-th_participant.json" );

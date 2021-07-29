@@ -35,7 +35,7 @@ BLSPublicKeyShare::BLSPublicKeyShare(
 
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
 
-    ThresholdUtils::initCurve();
+    crypto::ThresholdUtils::initCurve();
 
     publicKey = std::make_shared< libff::alt_bn128_G2 >();
 
@@ -47,20 +47,20 @@ BLSPublicKeyShare::BLSPublicKeyShare(
     publicKey->Z.c1 = libff::alt_bn128_Fq::zero();
 
     if ( publicKey->is_zero() ) {
-        throw crypto::Bls::IsNotWellFormed( "Zero BLS public Key share" );
+        throw crypto::ThresholdUtils::IsNotWellFormed( "Zero BLS public Key share" );
     }
 
     if ( !( publicKey->is_well_formed() ) ) {
-        throw crypto::Bls::IsNotWellFormed( "Corrupt BLS public key share" );
+        throw crypto::ThresholdUtils::IsNotWellFormed( "Corrupt BLS public key share" );
     }
 }
 
 BLSPublicKeyShare::BLSPublicKeyShare(
     const libff::alt_bn128_Fr& _skey, size_t _totalSigners, size_t _requiredSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    ThresholdUtils::initCurve();
+    crypto::ThresholdUtils::initCurve();
     if ( _skey.is_zero() ) {
-        throw crypto::Bls::ZeroSecretKey( "Zero BLS Secret Key" );
+        throw crypto::ThresholdUtils::ZeroSecretKey( "Zero BLS Secret Key" );
     }
     publicKey = std::make_shared< libff::alt_bn128_G2 >( _skey * libff::alt_bn128_G2::one() );
 }
@@ -75,10 +75,10 @@ std::shared_ptr< std::vector< std::string > > BLSPublicKeyShare::toString() {
 
     publicKey->to_affine_coordinates();
 
-    pkey_str_vect.push_back( ThresholdUtils::fieldElementToString( publicKey->X.c0 ) );
-    pkey_str_vect.push_back( ThresholdUtils::fieldElementToString( publicKey->X.c1 ) );
-    pkey_str_vect.push_back( ThresholdUtils::fieldElementToString( publicKey->Y.c0 ) );
-    pkey_str_vect.push_back( ThresholdUtils::fieldElementToString( publicKey->Y.c1 ) );
+    pkey_str_vect.push_back( crypto::ThresholdUtils::fieldElementToString( publicKey->X.c0 ) );
+    pkey_str_vect.push_back( crypto::ThresholdUtils::fieldElementToString( publicKey->X.c1 ) );
+    pkey_str_vect.push_back( crypto::ThresholdUtils::fieldElementToString( publicKey->Y.c0 ) );
+    pkey_str_vect.push_back( crypto::ThresholdUtils::fieldElementToString( publicKey->Y.c1 ) );
 
     return std::make_shared< std::vector< std::string > >( pkey_str_vect );
 }
@@ -92,7 +92,7 @@ bool BLSPublicKeyShare::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > 
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
 
     if ( sign_ptr->getSigShare()->is_zero() ) {
-        throw crypto::Bls::IsNotWellFormed( "Zero BLS Sig share" );
+        throw crypto::ThresholdUtils::IsNotWellFormed( "Zero BLS Sig share" );
     }
 
     obj = std::make_shared< crypto::Bls >( crypto::Bls( _requiredSigners, _totalSigners ) );
@@ -108,18 +108,18 @@ bool BLSPublicKeyShare::VerifySigWithHelper( std::shared_ptr< std::array< uint8_
     std::shared_ptr< crypto::Bls > obj;
     BLSSignature::checkSigners( _requiredSigners, _totalSigners );
     if ( !hash_ptr ) {
-        throw crypto::Bls::IncorrectInput( "hash is null" );
+        throw crypto::ThresholdUtils::IncorrectInput( "hash is null" );
     }
     if ( sign_ptr->getSigShare()->is_zero() ) {
-        throw crypto::Bls::IsNotWellFormed( "Sig share is equal to zero" );
+        throw crypto::ThresholdUtils::IsNotWellFormed( "Sig share is equal to zero" );
     }
 
     std::string hint = sign_ptr->getHint();
 
     std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > y_shift_x =
-        ThresholdUtils::ParseHint( hint );
+        crypto::ThresholdUtils::ParseHint( hint );
 
-    libff::alt_bn128_Fq x = ThresholdUtils::HashToFq( hash_ptr );
+    libff::alt_bn128_Fq x = crypto::ThresholdUtils::HashToFq( hash_ptr );
 
     x = x + y_shift_x.second;
 
