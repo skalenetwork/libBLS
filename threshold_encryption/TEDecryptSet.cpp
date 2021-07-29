@@ -36,19 +36,20 @@ TEDecryptSet::TEDecryptSet( size_t _requiredSigners, size_t _totalSigners )
 
 void TEDecryptSet::addDecrypt( size_t _signerIndex, std::shared_ptr< libff::alt_bn128_G2 > _el ) {
     if ( decrypts.count( _signerIndex ) > 0 ) {
-        throw std::runtime_error( "Already have this index:" + std::to_string( _signerIndex ) );
+        throw crypto::ThresholdUtils::IncorrectInput(
+            "Already have this index:" + std::to_string( _signerIndex ) );
     }
 
     if ( was_merged ) {
-        throw std::runtime_error( "Invalid state" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Invalid state" );
     }
 
     if ( !_el ) {
-        throw std::runtime_error( "try to add Null _element to decrypt set" );
+        throw crypto::ThresholdUtils::IncorrectInput( "try to add Null _element to decrypt set" );
     }
 
     if ( _el->is_zero() ) {
-        throw std::runtime_error( "try to add zero _element to decrypt set" );
+        throw crypto::ThresholdUtils::IsNotWellFormed( "try to add zero _element to decrypt set" );
     }
 
     decrypts[_signerIndex] = _el;
@@ -60,7 +61,7 @@ std::string TEDecryptSet::merge( const crypto::Ciphertext& cyphertext ) {
     was_merged = true;
 
     if ( decrypts.size() < requiredSigners ) {
-        throw std::runtime_error( "Not enough elements to decrypt message" );
+        throw crypto::ThresholdUtils::IsNotWellFormed( "Not enough elements to decrypt message" );
     }
 
     crypto::TE te( requiredSigners, totalSigners );

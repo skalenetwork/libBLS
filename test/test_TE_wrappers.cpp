@@ -115,7 +115,8 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), crypto::ThresholdUtils::IncorrectInput );
 
         // cannot add after merge
-        BOOST_REQUIRE_THROW( decr_set.addDecrypt( num_signed, nullptr ), std::runtime_error );
+        BOOST_REQUIRE_THROW(
+            decr_set.addDecrypt( num_signed, nullptr ), crypto::ThresholdUtils::IncorrectInput );
 
         bad_cypher = cypher;  // corrupt U in cypher
         libff::alt_bn128_G2 rand_el = libff::alt_bn128_G2::random_element();
@@ -552,7 +553,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
             auto el_ptr2 = std::make_shared< libff::alt_bn128_G2 >( el2 );
 
             decr_set.addDecrypt( 1, el_ptr1 );
-            BOOST_REQUIRE_THROW( decr_set.addDecrypt( 1, el_ptr2 ), std::runtime_error );
+            BOOST_REQUIRE_THROW(
+                decr_set.addDecrypt( 1, el_ptr2 ), crypto::ThresholdUtils::IncorrectInput );
         }
 
         {
@@ -562,7 +564,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
             libff::alt_bn128_G2 el1 = libff::alt_bn128_G2::zero();
             auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
 
-            BOOST_REQUIRE_THROW( decr_set.addDecrypt( 1, el_ptr1 ), std::runtime_error );
+            BOOST_REQUIRE_THROW(
+                decr_set.addDecrypt( 1, el_ptr1 ), crypto::ThresholdUtils::IsNotWellFormed );
         }
 
         {
@@ -572,7 +575,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
             auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
             el_ptr1 = nullptr;
-            BOOST_REQUIRE_THROW( decr_set.addDecrypt( 1, el_ptr1 ), std::runtime_error );
+            BOOST_REQUIRE_THROW(
+                decr_set.addDecrypt( 1, el_ptr1 ), crypto::ThresholdUtils::IncorrectInput );
         }
 
         {
@@ -593,7 +597,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
                 "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
             std::get< 2 >( cypher ) = W;
 
-            BOOST_REQUIRE_THROW( decr_set.merge( cypher ), std::runtime_error );
+            BOOST_REQUIRE_THROW(
+                decr_set.merge( cypher ), crypto::ThresholdUtils::IsNotWellFormed );
         }
 
         {
