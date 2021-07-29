@@ -81,8 +81,8 @@ TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, si
     : PublicKey( _pkey ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    if ( _pkey.is_zero() ) {
-        throw crypto::ThresholdUtils::IsNotWellFormed( "zero public key" );
+    if ( _pkey.is_zero() || !_pkey.is_well_formed() ) {
+        throw crypto::ThresholdUtils::IsNotWellFormed( "zero or corrupted public key" );
     }
 }
 

@@ -35,6 +35,7 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
         throw crypto::ThresholdUtils::IncorrectInput( "public key share is null" );
     }
 
+    // assume only using affine coordinates
     if ( _key_str_ptr->size() != 4 ) {
         throw crypto::ThresholdUtils::IncorrectInput(
             "wrong number of components in public key share" );
@@ -56,7 +57,7 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
     PublicKey.Y.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 2 ).c_str() );
     PublicKey.Y.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 3 ).c_str() );
 
-    if ( PublicKey.is_zero() ) {
+    if ( PublicKey.is_zero() || !PublicKey.is_well_formed() ) {
         throw crypto::ThresholdUtils::IsNotWellFormed(
             "corrupted string or zero public key share" );
     }
@@ -76,7 +77,7 @@ TEPublicKeyShare::TEPublicKeyShare(
 bool TEPublicKeyShare::Verify(
     const crypto::Ciphertext& cyphertext, const libff::alt_bn128_G2& decryptionShare ) {
     crypto::ThresholdUtils::checkCypher( cyphertext );
-    if ( decryptionShare.is_zero() ) {
+    if ( decryptionShare.is_zero() || !decryptionShare.is_well_formed() ) {
         throw crypto::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
     }
 
