@@ -152,6 +152,10 @@ BOOST_AUTO_TEST_CASE( libBls ) {
             BOOST_REQUIRE_THROW(
                 obj.Verification( hash_ptr, SpoilSignature( signature ), recovered_keys.second ),
                 crypto::ThresholdUtils::IsNotWellFormed );
+
+            recovered_keys.second.X.c0 = SpoilSignCoord( recovered_keys.second.X.c0 );
+            BOOST_REQUIRE_THROW( obj.Verification( hash_ptr, signature, recovered_keys.second ),
+                crypto::ThresholdUtils::IsNotWellFormed );
         }
     }
 
