@@ -731,6 +731,43 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
+        // creating a polynomial
+        std::vector< libff::alt_bn128_Fr > coeffs( 11 );
+
+        for ( auto& elem : coeffs ) {
+            elem = libff::alt_bn128_Fr::random_element();
+
+            while ( elem == 0 ) {
+                elem = libff::alt_bn128_Fr::random_element();
+            }
+        }
+
+        // make free element zero so the common secret is zero
+        coeffs[0] = libff::alt_bn128_Fr::zero();
+
+        std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > coeffs_map;
+        for ( size_t i = 0; i < 16; ++i ) {
+            libff::alt_bn128_Fr tmp = libff::alt_bn128_Fr::zero();
+
+            for ( size_t j = 0; j < 11; ++j ) {
+                tmp = tmp +
+                      coeffs[j] *
+                          libff::power( libff::alt_bn128_Fr( std::to_string( i + 1 ).c_str() ), j );
+            }
+
+            if ( i < 11 ) {
+                coeffs_map[i + 1] =
+                    std::make_shared< BLSPublicKeyShare >( BLSPublicKeyShare( tmp, 11, 16 ) );
+            }
+        }
+        auto map_ptr = std::make_shared< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > >(
+            coeffs_map );
+
+        BOOST_REQUIRE_THROW(
+            BLSPublicKey pkey( map_ptr, 11, 16 ), crypto::ThresholdUtils::IsNotWellFormed );
+    }
+
+    {
         BOOST_REQUIRE_THROW( BLSPublicKey pkey( libff::alt_bn128_G2::zero(), num_signed, num_all ),
             crypto::ThresholdUtils::IsNotWellFormed );
     }
