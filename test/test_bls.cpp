@@ -628,6 +628,47 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
+        // creating a polynomial
+        std::vector< libff::alt_bn128_Fr > coeffs( 11 );
+
+        for ( auto& elem : coeffs ) {
+            elem = libff::alt_bn128_Fr::random_element();
+
+            while ( elem == 0 ) {
+                elem = libff::alt_bn128_Fr::random_element();
+            }
+        }
+
+        // make free element zero so the common secret is zero
+        coeffs[0] = libff::alt_bn128_Fr::zero();
+
+        std::vector< std::shared_ptr< BLSPrivateKeyShare > > secret_keys( 16 );
+        std::vector< size_t > ids( 11 );
+        for ( size_t i = 0; i < 16; ++i ) {
+            if ( i < 11 ) {
+                ids[i] = i + 1;
+            }
+
+            libff::alt_bn128_Fr tmp = libff::alt_bn128_Fr::zero();
+
+            for ( size_t j = 0; j < 11; ++j ) {
+                tmp = tmp +
+                      coeffs[j] *
+                          libff::power( libff::alt_bn128_Fr( std::to_string( i + 1 ).c_str() ), j );
+            }
+            secret_keys[i] =
+                std::make_shared< BLSPrivateKeyShare >( BLSPrivateKeyShare( tmp, 11, 16 ) );
+        }
+
+        BOOST_REQUIRE_THROW(
+            BLSPrivateKey skey(
+                std::make_shared< std::vector< std::shared_ptr< BLSPrivateKeyShare > > >(
+                    secret_keys ),
+                std::make_shared< std::vector< size_t > >( ids ), 11, 16 ),
+            crypto::ThresholdUtils::ZeroSecretKey );
+    }
+
+    {
         BOOST_REQUIRE_THROW( BLSPrivateKeyShare skey( "", num_signed, num_all ),
             crypto::ThresholdUtils::IncorrectInput );
     }

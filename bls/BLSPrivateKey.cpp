@@ -47,7 +47,7 @@ BLSPrivateKey::BLSPrivateKey(
 }
 
 BLSPrivateKey::BLSPrivateKey(
-    const std::shared_ptr< std::vector< std::shared_ptr< BLSPrivateKeyShare > > > skeys,
+    std::shared_ptr< std::vector< std::shared_ptr< BLSPrivateKeyShare > > > skeys,
     std::shared_ptr< std::vector< size_t > > koefs, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     if ( skeys == nullptr ) {
