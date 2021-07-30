@@ -473,6 +473,13 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         }
 
         {
+            // wrong signer index
+            BOOST_REQUIRE_THROW( TEPrivateKeyShare( libff::alt_bn128_Fr::random_element(),
+                                     num_all + 1, num_signed, num_all ),
+                crypto::ThresholdUtils::IncorrectInput );
+        }
+
+        {
             // null public key
             BOOST_REQUIRE_THROW( TEPublicKey( nullptr, num_signed, num_all ),
                 crypto::ThresholdUtils::IncorrectInput );

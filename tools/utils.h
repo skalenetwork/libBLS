@@ -43,7 +43,6 @@ private:
     public:
         Exception( const std::string& err_str ) { what_str = err_str; }
 
-        // coverage:ignore-line
         virtual const char* what() const noexcept override { return what_str.c_str(); }
     };
 
