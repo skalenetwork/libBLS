@@ -676,6 +676,13 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
+        std::vector< std::string > coords = {"0", "0", "0", "0"};
+        auto vector_ptr_str = std::make_shared< std::vector< std::string > >( coords );
+        BOOST_REQUIRE_THROW( BLSPublicKey pkey( vector_ptr_str, num_signed, num_all ),
+            crypto::ThresholdUtils::IsNotWellFormed );
+    }
+
+    {
         const std::shared_ptr< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > > null_map =
             nullptr;
         BOOST_REQUIRE_THROW( BLSPublicKey pkey( null_map, num_signed, num_all ),
@@ -710,6 +717,25 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
             pkey.VerifySigWithHelper(
                 std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() ), nullptr,
                 num_signed, num_all ),
+            crypto::ThresholdUtils::IncorrectInput );
+    }
+
+    {
+        BLSPublicKey pkey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
+        BOOST_REQUIRE_THROW(
+            pkey.VerifySig( std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() ),
+                nullptr, num_signed, num_all ),
+            crypto::ThresholdUtils::IsNotWellFormed );
+    }
+
+    {
+        BLSPublicKey pkey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
+        std::string hint = "123:1";
+        BLSSignature rand_sig(
+            std::make_shared< libff::alt_bn128_G1 >( libff::alt_bn128_G1::random_element() ), hint,
+            num_signed, num_all );
+        BOOST_REQUIRE_THROW( pkey.VerifySig( nullptr, std::make_shared< BLSSignature >( rand_sig ),
+                                 num_signed, num_all ),
             crypto::ThresholdUtils::IncorrectInput );
     }
 
