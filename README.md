@@ -7,7 +7,7 @@
 
 A mathematical library written in C++ that supports BLS threshold signatures, Distributed Key Generation (DKG) and Threshold Encryption (TE).
 
-This libBLS library is developed by SKALE Labs and uses SCIPR-LAB's libff and PBC library by Ben Lynn (see Libraries below).
+This libBLS library is developed by SKALE Labs and uses SCIPR-LAB's libff (see Libraries below).
 
 ## An important note about production readiness
 
@@ -35,7 +35,7 @@ Encryption process is running as follows:
 3.  Decryption
 4.  Verifying and combining shares
 
-You can learn more about the algebraic structures used in this algorithm in [Ben Lynn’s PhD Dissertation](https://crypto.stanford.edu/pbc/thesis.html). libBLS uses a modified [Ben Lynn's pbc library](https://github.com/skalenetwork/pbc) with memory corruption bug fixed and the TYPE A curve for symmetric bilinear pairing.
+libBls uses the same alt_bn128 curve for threshold encryption as for BLS signatures. 
 
 ## Performance Specifications
 
@@ -108,7 +108,6 @@ See [docs](docs) for libBLS documentation.
 ## Libraries
 
 -   [libff by SCIPR-LAB](http://www.scipr-lab.org/)
--   [pbc by Ben Lynn](https://crypto.stanford.edu/pbc/) with modifications from SKALE Labs
 
 ## Contributing
 

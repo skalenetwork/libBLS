@@ -237,7 +237,6 @@ fi
 
 WITH_FF="yes"
 WITH_GMP="yes"
-WITH_PBC="yes"
 
 if [ -z "${PARALLEL_COUNT}" ];
 then
@@ -539,7 +538,6 @@ echo -e "${COLOR_VAR_NAME}WITH_JSONRPCCPP${COLOR_DOTS}........${COLOR_VAR_DESC}L
 echo -e "${COLOR_VAR_NAME}WITH_CRYPTOPP${COLOR_DOTS}..........${COLOR_VAR_DESC}LibCrypto++${COLOR_DOTS}............................${COLOR_VAR_VAL}$WITH_CRYPTOPP${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_GMP${COLOR_DOTS}...............${COLOR_VAR_DESC}LibGMP${COLOR_DOTS}.................................${COLOR_VAR_VAL}$WITH_GMP${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_FF${COLOR_DOTS}................${COLOR_VAR_DESC}LibFF${COLOR_DOTS}..................................${COLOR_VAR_VAL}$WITH_FF${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_PBC${COLOR_DOTS}...............${COLOR_VAR_DESC}LibPBC${COLOR_DOTS}.................................${COLOR_VAR_VAL}$WITH_PBC${COLOR_RESET}"
 
 #
 #
@@ -658,7 +656,7 @@ then
 	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}GMP${COLOR_SEPARATOR} ==========================================${COLOR_RESET}"
 	if [ ! -f "$INSTALL_ROOT/lib/libgmp.a" ] || [ ! -f "$INSTALL_ROOT/lib/libgmpxx.a" ] || [ ! -f "$INSTALL_ROOT/lib/libgmp.la" ] || [ ! -f "$INSTALL_ROOT/lib/libgmpxx.la" ];
 	then
-		# requiired for libff and pbc
+		# requiired for libff
 		env_restore
 		cd "$SOURCES_ROOT"
 		if [ ! -d "gmp-6.1.2" ];
@@ -703,39 +701,6 @@ then
 		mkdir -p build
 		cd build
 		$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF
-		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-			$MAKE ${PARALLEL_MAKE_OPTIONS}
-			$MAKE ${PARALLEL_MAKE_OPTIONS} install
-			cd "$SOURCES_ROOT"
-	else
-		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
-	fi
-fi
-
-if [ "$WITH_PBC" = "yes" ];
-then
-	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}PBC${COLOR_SEPARATOR} ==========================================${COLOR_RESET}"
-	if [ ! -f "$INSTALL_ROOT/lib/libpbc.a" ] || [ ! -f "$INSTALL_ROOT/lib/libpbc.la" ];
-	then
-		env_restore
-			cd "$SOURCES_ROOT"
-			if [ ! -d "pbc" ];
-			then
-				echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
-				git clone https://github.com/skalenetwork/pbc.git # pbc
-			fi
-		echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-		cd pbc
-		export CFLAGS="$CFLAGS -I${INSTALL_ROOT}/include"
-		export CXXFLAGS="$CXXFLAGS -I${INSTALL_ROOT}/include"
-		export CPPFLAGS="$CPPFLAGS -I${INSTALL_ROOT}/include"
-		export LDFLAGS="$LDFLAGS -L${INSTALL_ROOT}/lib"
-		echo "    CFLAGS   = $CFLAGS"
-		echo "    CXXFLAGS = $CXXFLAGS"
-		echo "    CPPFLAGS = $CPPFLAGS"
-		echo "    LDFLAGS  = $LDFLAGS"
-		$LIBTOOLIZE --force && aclocal && autoheader && automake --force-missing --add-missing && autoconf
-		./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_DEBUG_OPTIONS} --with-pic --enable-static --disable-shared --prefix="$INSTALL_ROOT"
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 			$MAKE ${PARALLEL_MAKE_OPTIONS}
 			$MAKE ${PARALLEL_MAKE_OPTIONS} install
