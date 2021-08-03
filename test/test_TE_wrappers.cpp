@@ -519,16 +519,6 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         }
 
         {
-            // message length is not 64
-            libff::alt_bn128_G2 el = libff::alt_bn128_G2::random_element();
-
-            TEPublicKey pkey( el, num_signed, num_all );
-
-            BOOST_REQUIRE_THROW( pkey.encrypt( std::make_shared< std::string >( "tra-la-la" ) ),
-                crypto::ThresholdUtils::IncorrectInput );
-        }
-
-        {
             // null private key
             BOOST_REQUIRE_THROW( TEPrivateKey( nullptr, num_signed, num_all ),
                 crypto::ThresholdUtils::IncorrectInput );

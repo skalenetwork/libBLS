@@ -48,18 +48,18 @@ include_directories(${CMAKE_BINARY_DIR}/deps/include )
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 
 target_include_directories(te PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
-target_link_libraries(te PRIVATE ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+target_link_libraries(te PRIVATE ff ${CRYPTO_LIBRARY} ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
 if (BUILD_TESTS)
 	add_executable(te_unit_test ../test/unit_tests_te.cpp)
 	target_include_directories(te_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
-    target_link_libraries(te_unit_test PRIVATE te ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+    target_link_libraries(te_unit_test PRIVATE te ff ${CRYPTO_LIBRARY} ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
 	add_test(NAME te_tests COMMAND te_unit_test)
 
     add_executable(te_test ../test/test_TE_wrappers.cpp)
     target_include_directories(te_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
-    target_link_libraries(te_test PRIVATE te ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+    target_link_libraries(te_test PRIVATE te ff ${CRYPTO_LIBRARY} ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
     add_test(NAME te_wrap_tests COMMAND te_unit_test)
 

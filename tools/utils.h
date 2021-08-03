@@ -98,6 +98,9 @@ public:
 
     template < class T >
     static std::string fieldElementToString( const T& field_elem );
+
+    static std::string aesEncrypt( const std::string& message, const std::string& key );
+    static std::string aesDecrypt( const std::string& message, const std::string& key );
 };
 
 template < class T >
