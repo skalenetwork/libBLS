@@ -58,6 +58,8 @@ public:
 
     size_t GetN() const;
 
+    static bool isG2( const libff::alt_bn128_G2& point );
+
 private:
     const size_t t_ = 0;
 

@@ -412,6 +412,24 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         }
 
         {
+            // wrong string length in cypher
+            libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
+
+            TEPublicKeyShare pkey(
+                TEPrivateKeyShare( el, 1, num_signed, num_all ), num_signed, num_all );
+            libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
+
+            libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
+
+            crypto::Ciphertext cypher;
+            std::get< 0 >( cypher ) = U;
+            std::get< 1 >( cypher ) = "tra-la-la";
+            std::get< 2 >( cypher ) = W;
+
+            BOOST_REQUIRE_THROW( pkey.Verify( cypher, U ), crypto::ThresholdUtils::IncorrectInput );
+        }
+
+        {
             // zero decrypted
             libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
             TEPublicKeyShare pkey(

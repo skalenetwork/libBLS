@@ -35,7 +35,7 @@ BOOST_AUTO_TEST_CASE( SimpleEncryption ) {
     crypto::TE te_instance = crypto::TE( 1, 1 );
 
     std::string message =
-        "99c17b86fe861e901c9c41dd501fc99f26ee1022ffa4e7995ba14bb669e5f7e8";  // message should be 64
+        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
                                                                              // length
 
     libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
     libff::alt_bn128_G2 common_public = common_secret * libff::alt_bn128_G2::one();
 
     std::string message =
-        "99c17b86fe861e901c9c41dd501fc99f26ee1022ffa4e7995ba14bb669e5f7e8";  // message should be 64
+        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
                                                                              // length
 
     auto ciphertext = obj.Encrypt( message, common_public );
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomPK ) {
     libff::alt_bn128_G2 common_public = libff::alt_bn128_G2::random_element();
 
     std::string message =
-        "99c17b86fe861e901c9c41dd501fc99f26ee1022ffa4e7995ba14bb669e5f7e8";  // message should be 64
+        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
                                                                              // length
 
     auto ciphertext = obj.Encrypt( message, common_public );
@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomSK ) {
     libff::alt_bn128_G2 common_public = common_secret * libff::alt_bn128_G2::one();
 
     std::string message =
-        "99c17b86fe861e901c9c41dd501fc99f26ee1022ffa4e7995ba14bb669e5f7e8";  // message should be 64
+        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
                                                                              // length
 
     auto ciphertext = obj.Encrypt( message, common_public );
@@ -272,7 +272,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionCorruptedCiphertext ) {
     libff::alt_bn128_G2 common_public = common_secret * libff::alt_bn128_G2::one();
 
     std::string message =
-        "99c17b86fe861e901c9c41dd501fc99f26ee1022ffa4e7995ba14bb669e5f7e8";  // message should be 64
+        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
                                                                              // length
 
     auto ciphertext = obj.Encrypt( message, common_public );
