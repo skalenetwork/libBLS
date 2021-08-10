@@ -93,6 +93,10 @@ crypto::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_ptr 
         throw crypto::ThresholdUtils::IncorrectInput( "Message is null" );
     }
 
+    if ( mes_ptr->length() != 64 ) {
+        throw crypto::ThresholdUtils::IncorrectInput( "Message length is not equal to 64" );
+    }
+
     crypto::Ciphertext cypher = te.Encrypt( *mes_ptr, PublicKey );
     crypto::ThresholdUtils::checkCypher( cypher );
 

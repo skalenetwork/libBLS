@@ -21,11 +21,8 @@
   @date 2021
 */
 
-#include <mutex>
-
 #include <tools/utils.h>
-
-#include <openssl/aes.h>
+#include <mutex>
 
 namespace crypto {
 
@@ -181,8 +178,8 @@ void ThresholdUtils::checkCypher(
     if ( std::get< 0 >( cyphertext ).is_zero() || std::get< 2 >( cyphertext ).is_zero() )
         throw IncorrectInput( "zero element in cyphertext" );
 
-    // if ( std::get< 1 >( cyphertext ).length() != 64 )
-    //     throw IncorrectInput( "wrong string length in cyphertext" );
+    if ( std::get< 1 >( cyphertext ).length() != 64 )
+        throw IncorrectInput( "wrong string length in cyphertext" );
 }
 
 std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ThresholdUtils::ParseHint(
@@ -218,114 +215,6 @@ std::shared_ptr< std::vector< std::string > > ThresholdUtils::SplitString(
     } while ( pos < str->length() && prev < str->length() );
 
     return std::make_shared< std::vector< std::string > >( tokens );
-}
-
-#define AES_KEYLENGTH 256
-#define AES_BLOCK_SIZE 16
-
-std::string ThresholdUtils::aesEncrypt( const std::string& message, const std::string& key ) {
-    size_t inputslength = message.length();
-    unsigned char aes_input[inputslength];
-    unsigned char aes_key[AES_KEYLENGTH];
-    memset( aes_input, 0, inputslength / 8 );
-    memset( aes_key, 0, AES_KEYLENGTH / 8 );
-    strcpy( ( char* ) aes_input, message.c_str() );
-    strcpy( ( char* ) aes_key, key.c_str() );
-
-    /* init vector */
-    unsigned char iv[AES_BLOCK_SIZE];
-    for ( size_t i = 0; i < AES_BLOCK_SIZE; ++i ) {
-        gmp_randstate_t state;
-        gmp_randinit_default( state );
-        // gmp_randseed_ui( state, i + 125156655697493 );
-
-        mpz_t n;
-        mpz_init( n );
-        mpz_set_ui( n, 256 );
-
-        mpz_t t;
-        mpz_init( t );
-        mpz_urandomm( t, state, n );
-
-        char arr1[mpz_sizeinbase( t, 16 ) + 2];
-        char* other_tmp = mpz_get_str( arr1, 16, t );
-        iv[i] = static_cast< unsigned char >( *other_tmp );
-        // std::cout << iv[i] << '\n';
-
-        mpz_clear( t );
-        mpz_clear( n );
-        gmp_randclear( state );
-    }
-
-    // buffers for encryption
-    const size_t encslength =
-        ( ( inputslength + AES_BLOCK_SIZE ) / AES_BLOCK_SIZE ) * AES_BLOCK_SIZE;
-    unsigned char enc_out[encslength];
-    memset( enc_out, 0, sizeof( enc_out ) );
-
-    AES_KEY enc_key;
-    AES_set_encrypt_key( aes_key, AES_KEYLENGTH, &enc_key );
-    AES_cbc_encrypt( aes_input, enc_out, inputslength, &enc_key, iv, AES_ENCRYPT );
-
-    std::string res;
-    res.resize( encslength );
-    for ( size_t i = 0; i < encslength; ++i ) {
-        res[i] = enc_out[i];
-    }
-    return res;
-}
-
-std::string ThresholdUtils::aesDecrypt( const std::string& message, const std::string& key ) {
-    size_t inputslength = message.length();
-    unsigned char aes_input[inputslength];
-    unsigned char aes_key[AES_KEYLENGTH];
-    memset( aes_input, 0, inputslength / 8 );
-    memset( aes_key, 0, AES_KEYLENGTH / 8 );
-    strcpy( ( char* ) aes_input, message.c_str() );
-    strcpy( ( char* ) aes_key, key.c_str() );
-
-    /* init vector */
-    unsigned char iv[AES_BLOCK_SIZE];
-    for ( size_t i = 0; i < AES_BLOCK_SIZE; ++i ) {
-        gmp_randstate_t state;
-        gmp_randinit_default( state );
-        // gmp_randseed_ui( state, i + 125156655697493 );
-
-        mpz_t n;
-        mpz_init( n );
-        mpz_set_ui( n, 256 );
-
-        mpz_t t;
-        mpz_init( t );
-        mpz_urandomm( t, state, n );
-
-        char arr1[mpz_sizeinbase( t, 16 ) + 2];
-        char* other_tmp = mpz_get_str( arr1, 16, t );
-        iv[i] = static_cast< unsigned char >( *other_tmp );
-        // std::cout << iv[i] << '\n';
-
-        mpz_clear( t );
-        mpz_clear( n );
-        gmp_randclear( state );
-    }
-
-    // buffers for decryption
-    const size_t encslength =
-        ( ( inputslength + AES_BLOCK_SIZE ) / AES_BLOCK_SIZE ) * AES_BLOCK_SIZE;
-    unsigned char dec_out[inputslength];
-    memset( dec_out, 0, sizeof( dec_out ) );
-
-    AES_KEY dec_key;
-
-    AES_set_decrypt_key( aes_key, AES_KEYLENGTH, &dec_key );
-    AES_cbc_encrypt( aes_input, dec_out, encslength, &dec_key, iv, AES_DECRYPT );
-
-    std::string res;
-    res.resize( inputslength - AES_BLOCK_SIZE );
-    for ( size_t i = 0; i < inputslength - AES_BLOCK_SIZE; ++i ) {
-        res[i] = dec_out[i];
-    }
-    return res;
 }
 
 }  // namespace crypto

@@ -27,7 +27,6 @@
 
 #include <threshold_encryption.h>
 #include <tools/utils.h>
-
 #include <libff/common/profiling.hpp>
 
 namespace crypto {
@@ -70,7 +69,7 @@ libff::alt_bn128_G1 TE::HashToGroup( const libff::alt_bn128_G2& U, const std::st
     return ThresholdUtils::HashtoG1( hash_bytes_arr );
 }
 
-Ciphertext TE::Encrypt( const std::string& message, libff::alt_bn128_G2 common_public ) {
+Ciphertext TE::Encrypt( const std::string& message, const libff::alt_bn128_G2& common_public ) {
     libff::alt_bn128_Fr r = libff::alt_bn128_Fr::random_element();
 
     while ( r.is_zero() ) {
@@ -83,22 +82,17 @@ Ciphertext TE::Encrypt( const std::string& message, libff::alt_bn128_G2 common_p
 
     std::string hash = this->Hash( Y );
 
-    // assuming aes_message and hash are the same size strings
+    // assuming message and hash are the same size strings
     // the behaviour is undefined when the two arguments are valarrays with different sizes
-    Y.to_affine_coordinates();
-    std::string aes_message =
-        ThresholdUtils::aesEncrypt( message, ThresholdUtils::fieldElementToString( Y.X.c0 ) );
 
-    size_t size = std::max( aes_message.size(), hash.size() );
-
-    std::valarray< uint8_t > lhs_to_hash( size );
-    for ( size_t i = 0; i < size; ++i ) {
-        lhs_to_hash[i] = i < hash.size() ? static_cast< uint8_t >( hash[i] ) : 0;
+    std::valarray< uint8_t > lhs_to_hash( hash.size() );
+    for ( size_t i = 0; i < hash.size(); ++i ) {
+        lhs_to_hash[i] = static_cast< uint8_t >( hash[i] );
     }
 
-    std::valarray< uint8_t > rhs_to_hash( size );
-    for ( size_t i = 0; i < size; ++i ) {
-        rhs_to_hash[i] = i < aes_message.size() ? static_cast< uint8_t >( aes_message[i] ) : 0;
+    std::valarray< uint8_t > rhs_to_hash( message.size() );
+    for ( size_t i = 0; i < message.size(); ++i ) {
+        rhs_to_hash[i] = static_cast< uint8_t >( message[i] );
     }
 
     std::valarray< uint8_t > res = lhs_to_hash ^ rhs_to_hash;
@@ -113,7 +107,12 @@ Ciphertext TE::Encrypt( const std::string& message, libff::alt_bn128_G2 common_p
     H = this->HashToGroup( U, V );
     W = r * H;
 
-    return {U, V, W};
+    Ciphertext result;
+    std::get< 0 >( result ) = U;
+    std::get< 1 >( result ) = V;
+    std::get< 2 >( result ) = W;
+
+    return result;
 }
 
 libff::alt_bn128_G2 TE::getDecryptionShare(
@@ -219,16 +218,15 @@ std::string TE::CombineShares( const Ciphertext& ciphertext,
     }
 
     std::string hash = this->Hash( sum );
-    size_t size = std::max( hash.size(), V.size() );
 
-    std::valarray< uint8_t > lhs_to_hash( size );
-    for ( size_t i = 0; i < size; ++i ) {
-        lhs_to_hash[i] = i < hash.size() ? static_cast< uint8_t >( hash[i] ) : 0;
+    std::valarray< uint8_t > lhs_to_hash( hash.size() );
+    for ( size_t i = 0; i < hash.size(); ++i ) {
+        lhs_to_hash[i] = static_cast< uint8_t >( hash[i] );
     }
 
-    std::valarray< uint8_t > rhs_to_hash( size );
-    for ( size_t i = 0; i < size; ++i ) {
-        rhs_to_hash[i] = i < V.size() ? static_cast< uint8_t >( V[i] ) : 0;
+    std::valarray< uint8_t > rhs_to_hash( V.size() );
+    for ( size_t i = 0; i < V.size(); ++i ) {
+        rhs_to_hash[i] = static_cast< uint8_t >( V[i] );
     }
 
     std::valarray< uint8_t > xor_res = lhs_to_hash ^ rhs_to_hash;
@@ -238,11 +236,7 @@ std::string TE::CombineShares( const Ciphertext& ciphertext,
         message += static_cast< char >( xor_res[i] );
     }
 
-    sum.to_affine_coordinates();
-    std::string ret =
-        ThresholdUtils::aesDecrypt( message, ThresholdUtils::fieldElementToString( sum.X.c0 ) );
-
-    return ret;
+    return message;
 }
 
 }  // namespace crypto
