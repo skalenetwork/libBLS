@@ -71,6 +71,14 @@ libff::alt_bn128_G1 TE::HashToGroup( const libff::alt_bn128_G2& U, const std::st
 }
 
 Ciphertext TE::Encrypt( const std::string& message, libff::alt_bn128_G2 common_public ) {
+    if ( !ThresholdUtils::checkHex(message) ) {
+        throw ThresholdUtils::IncorrectInput("Input message is not hex");
+    }
+
+    if ( !ThresholdUtils::isG2( common_public ) ) {
+        throw ThresholdUtils::IncorrectInput("Input common public key is corrupted");
+    }
+
     libff::alt_bn128_Fr r = libff::alt_bn128_Fr::random_element();
 
     while ( r.is_zero() ) {
@@ -103,9 +111,10 @@ Ciphertext TE::Encrypt( const std::string& message, libff::alt_bn128_G2 common_p
 
     std::valarray< uint8_t > res = lhs_to_hash ^ rhs_to_hash;
 
-    std::string V = "";
-    for ( size_t i = 0; i < res.size(); ++i ) {
-        V += static_cast< char >( res[i] );
+    std::string V;
+    V.resize( size );
+    for ( size_t i = 0; i < size; ++i ) {
+        V[i] = static_cast< char >( res[i] );
     }
 
     libff::alt_bn128_G1 W, H;

@@ -176,13 +176,35 @@ bool ThresholdUtils::isStringNumber( std::string& str ) {
     return true;
 }
 
+bool ThresholdUtils::checkHex( const std::string& hex ) {
+    if ( hex.length() == 0){
+        return false;
+    }
+
+    mpz_t num;
+    mpz_init(num);
+
+    if (mpz_set_str(num, hex.c_str(), 16) == -1) {
+        mpz_clear(num);
+        return false;
+    }
+    mpz_clear(num);
+
+    return true;
+}
+
 void ThresholdUtils::checkCypher(
     const std::tuple< libff::alt_bn128_G2, std::string, libff::alt_bn128_G1 >& cyphertext ) {
     if ( std::get< 0 >( cyphertext ).is_zero() || std::get< 2 >( cyphertext ).is_zero() )
         throw IncorrectInput( "zero element in cyphertext" );
 
-    // if ( std::get< 1 >( cyphertext ).length() != 64 )
-    //     throw IncorrectInput( "wrong string length in cyphertext" );
+    if ( checkHex( std::get< 1 >( cyphertext ) ) )
+        throw IncorrectInput( "Message in cyphertext is not hex" );
+}
+
+bool ThresholdUtils::isG2( const libff::alt_bn128_G2& point ) {
+    return point.is_well_formed() &&
+           libff::alt_bn128_G2::order() * point == libff::alt_bn128_G2::zero();
 }
 
 std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ThresholdUtils::ParseHint(
@@ -221,7 +243,6 @@ std::shared_ptr< std::vector< std::string > > ThresholdUtils::SplitString(
 }
 
 #define AES_KEYLENGTH 256
-#define AES_BLOCK_SIZE 16
 
 std::string ThresholdUtils::aesEncrypt( const std::string& message, const std::string& key ) {
     size_t inputslength = message.length();
@@ -250,7 +271,6 @@ std::string ThresholdUtils::aesEncrypt( const std::string& message, const std::s
         char arr1[mpz_sizeinbase( t, 16 ) + 2];
         char* other_tmp = mpz_get_str( arr1, 16, t );
         iv[i] = static_cast< unsigned char >( *other_tmp );
-        // std::cout << iv[i] << '\n';
 
         mpz_clear( t );
         mpz_clear( n );
@@ -289,7 +309,7 @@ std::string ThresholdUtils::aesDecrypt( const std::string& message, const std::s
     for ( size_t i = 0; i < AES_BLOCK_SIZE; ++i ) {
         gmp_randstate_t state;
         gmp_randinit_default( state );
-        // gmp_randseed_ui( state, i + 125156655697493 );
+        //gmp_randseed_ui( state, i + 125156655697493 );
 
         mpz_t n;
         mpz_init( n );
@@ -302,7 +322,6 @@ std::string ThresholdUtils::aesDecrypt( const std::string& message, const std::s
         char arr1[mpz_sizeinbase( t, 16 ) + 2];
         char* other_tmp = mpz_get_str( arr1, 16, t );
         iv[i] = static_cast< unsigned char >( *other_tmp );
-        // std::cout << iv[i] << '\n';
 
         mpz_clear( t );
         mpz_clear( n );
@@ -321,7 +340,7 @@ std::string ThresholdUtils::aesDecrypt( const std::string& message, const std::s
     AES_cbc_encrypt( aes_input, dec_out, encslength, &dec_key, iv, AES_DECRYPT );
 
     std::string res;
-    res.resize( inputslength - AES_BLOCK_SIZE );
+    res.resize( inputslength - AES_BLOCK_SIZE);
     for ( size_t i = 0; i < inputslength - AES_BLOCK_SIZE; ++i ) {
         res[i] = dec_out[i];
     }

@@ -89,12 +89,16 @@ public:
 
     static void checkCypher(
         const std::tuple< libff::alt_bn128_G2, std::string, libff::alt_bn128_G1 >& cypher );
+      
+    static bool checkHex( const std::string& str );
 
     static std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ParseHint(
         const std::string& hint );
 
     static std::shared_ptr< std::vector< std::string > > SplitString(
         const std::shared_ptr< std::string >, const std::string& delim );
+      
+    static bool isG2( const libff::alt_bn128_G2& point );
 
     template < class T >
     static std::string fieldElementToString( const T& field_elem );
