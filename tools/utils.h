@@ -70,6 +70,8 @@ public:
 
     static void initCurve();
 
+    static void initAES();
+
     static std::atomic< bool > is_initialized;
 
     static void checkSigners( size_t _requiredSigners, size_t _totalSigners );
@@ -98,6 +100,11 @@ public:
 
     template < class T >
     static std::string fieldElementToString( const T& field_elem );
+
+    static std::vector< uint8_t > aesEncrypt( const std::string& message, const std::string& key );
+
+    static std::string aesDecrypt(
+        const std::vector< uint8_t >& ciphertext, const std::string& key );
 };
 
 template < class T >
