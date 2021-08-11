@@ -82,24 +82,23 @@ Ciphertext TE::Encrypt( const std::string& message, const libff::alt_bn128_G2& c
 
     std::string hash = this->Hash( Y );
 
-    // assuming message and hash are the same size strings
-    // the behaviour is undefined when the two arguments are valarrays with different sizes
-
-    std::valarray< uint8_t > lhs_to_hash( hash.size() );
-    for ( size_t i = 0; i < hash.size(); ++i ) {
-        lhs_to_hash[i] = static_cast< uint8_t >( hash[i] );
+    size_t size = std::max( message.size(), hash.size() );
+    std::valarray< uint8_t > lhs_to_hash( size );
+    for ( size_t i = 0; i < size; ++i ) {
+        lhs_to_hash[i] = i < hash.size() ? static_cast< uint8_t >( hash[i] ) : 0;
     }
 
-    std::valarray< uint8_t > rhs_to_hash( message.size() );
-    for ( size_t i = 0; i < message.size(); ++i ) {
-        rhs_to_hash[i] = static_cast< uint8_t >( message[i] );
+    std::valarray< uint8_t > rhs_to_hash( size );
+    for ( size_t i = 0; i < size; ++i ) {
+        rhs_to_hash[i] = i < message.size() ? static_cast< uint8_t >( message[i] ) : 0;
     }
 
     std::valarray< uint8_t > res = lhs_to_hash ^ rhs_to_hash;
 
-    std::string V = "";
-    for ( size_t i = 0; i < res.size(); ++i ) {
-        V += static_cast< char >( res[i] );
+    std::string V;
+    V.resize( size );
+    for ( size_t i = 0; i < size; ++i ) {
+        V[i] = static_cast< uint8_t >( res[i] );
     }
 
     libff::alt_bn128_G1 W, H;

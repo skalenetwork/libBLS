@@ -26,6 +26,8 @@
 #include <map>
 #include <set>
 
+#include <bls/bls.h>
+
 #include <tools/utils.h>
 
 
@@ -35,13 +37,75 @@
 
 BOOST_AUTO_TEST_SUITE( TestLagrange )
 
+// a goal is to get correct polynomial's value at zero point
+
+BOOST_AUTO_TEST_CASE( RandomPolynomial ) {
+    std::cout << "Testing Random Polynomial case\n";
+
+    std::srand( unsigned( std::time( 0 ) ) );
+
+    size_t deg = std::rand() % 30 + 1;  // a degree of polynomial should never be 0
+
+    std::vector< libff::alt_bn128_Fr > pol( deg + 1 );
+
+    crypto::ThresholdUtils::initCurve();
+
+    // random polynomial generation
+    for ( size_t i = 0; i < deg + 1; ++i ) {
+        pol[i] = libff::alt_bn128_Fr::random_element();
+
+        while ( i == deg && pol[i] == libff::alt_bn128_Fr::zero() ) {
+            pol[i] = libff::alt_bn128_Fr::random_element();
+        }
+    }
+
+    auto polynomial_value = [&pol, deg]( libff::alt_bn128_Fr point ) {
+        libff::alt_bn128_Fr value = libff::alt_bn128_Fr::zero();
+
+        libff::alt_bn128_Fr pow = libff::alt_bn128_Fr::one();
+
+        for ( size_t i = 0; i < deg + 1; ++i ) {
+            if ( i == deg && pol[i] == libff::alt_bn128_Fr::zero() ) {
+                throw std::runtime_error( "Error, incorrect degree of a polynomial" );
+            }
+            value += pol[i] * pow;
+            pow *= point;
+        }
+
+        return value;
+    };
+
+    // generating random points to interpolate their values and to get a value at point zero
+    std::vector< size_t > indexes( deg + 1, 0 );
+    std::set< size_t > nodes;
+    for ( size_t i = 0; i < deg + 1; ++i ) {
+        std::srand( unsigned( std::time( 0 ) ) );
+        while ( indexes[i] == 0 || nodes.find( indexes[i] ) != nodes.end() ) {
+            indexes[i] = std::rand() % ( 5 * deg );
+        }
+        nodes.insert( indexes[i] );
+    }
+
+    crypto::Bls obj = crypto::Bls( deg + 1, deg + 1 );
+    auto coeffs = crypto::ThresholdUtils::LagrangeCoeffs( indexes, deg + 1 );
+
+    std::vector< libff::alt_bn128_Fr > values( deg + 1 );
+    for ( size_t i = 0; i < deg + 1; ++i ) {
+        values[i] = polynomial_value( libff::alt_bn128_Fr( std::to_string( indexes[i] ).c_str() ) );
+    }
+
+    libff::alt_bn128_Fr value_at_zero_point = pol[0];
+
+    BOOST_REQUIRE( value_at_zero_point == obj.KeysRecover( coeffs, values ).first );
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE( TestAES )
 
 BOOST_AUTO_TEST_CASE( SimpleAES ) {
     const std::string message = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    const std::string key = "bbbbbbbbbbbbbbbb";
+    const std::string key = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 
     auto ciphertext = crypto::ThresholdUtils::aesEncrypt( message, key );
     auto decrypted_text = crypto::ThresholdUtils::aesDecrypt( ciphertext, key );
