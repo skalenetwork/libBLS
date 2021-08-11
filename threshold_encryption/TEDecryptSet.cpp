@@ -14,59 +14,60 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 @file TEPublicKey.h
 @author Sveta Rogova
 @date 2019
 */
 
-#include <pbc/pbc.h>
 #include <threshold_encryption/TEDecryptSet.h>
-#include <threshold_encryption/utils.h>
 #include <utility>
+
+#include <tools/utils.h>
 
 
 TEDecryptSet::TEDecryptSet( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ), was_merged( false ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+
+    libff::init_alt_bn128_params();
 }
 
-void TEDecryptSet::addDecrypt(
-    size_t _signerIndex, std::shared_ptr< encryption::element_wrapper > _el ) {
+void TEDecryptSet::addDecrypt( size_t _signerIndex, std::shared_ptr< libff::alt_bn128_G2 > _el ) {
     if ( decrypts.count( _signerIndex ) > 0 ) {
-        throw std::runtime_error( "Already have this index:" + std::to_string( _signerIndex ) );
+        throw crypto::ThresholdUtils::IncorrectInput(
+            "Already have this index:" + std::to_string( _signerIndex ) );
     }
 
     if ( was_merged ) {
-        throw std::runtime_error( "Invalid state" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Invalid state" );
     }
 
     if ( !_el ) {
-        throw std::runtime_error( "try to add Null _element to decrypt set" );
+        throw crypto::ThresholdUtils::IncorrectInput( "try to add Null _element to decrypt set" );
     }
 
-    if ( isG1Element0( _el->el_ ) ) {
-        throw std::runtime_error( "try to add zero _element to decrypt set" );
+    if ( _el->is_zero() ) {
+        throw crypto::ThresholdUtils::IsNotWellFormed( "try to add zero _element to decrypt set" );
     }
 
     decrypts[_signerIndex] = _el;
 }
 
-std::string TEDecryptSet::merge( const encryption::Ciphertext& cyphertext ) {
-    checkCypher( cyphertext );
+std::string TEDecryptSet::merge( const crypto::Ciphertext& cyphertext ) {
+    crypto::ThresholdUtils::checkCypher( cyphertext );
 
     was_merged = true;
 
     if ( decrypts.size() < requiredSigners ) {
-        throw std::runtime_error( "Not enough elements to decrypt message" );
+        throw crypto::ThresholdUtils::IsNotWellFormed( "Not enough elements to decrypt message" );
     }
 
-    encryption::TE te( requiredSigners, totalSigners );
-    std::vector< std::pair< encryption::element_wrapper, size_t > > decrypted;
+    crypto::TE te( requiredSigners, totalSigners );
+    std::vector< std::pair< libff::alt_bn128_G2, size_t > > decrypted;
     for ( auto&& item : decrypts ) {
-        std::pair< encryption::element_wrapper, size_t > encr =
-            std::make_pair( *item.second, item.first );
+        std::pair< libff::alt_bn128_G2, size_t > encr = std::make_pair( *item.second, item.first );
         decrypted.push_back( encr );
     }
 

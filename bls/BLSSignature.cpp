@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file BLSSignature.cpp
   @author Stan Kladko, Sveta Rogova
@@ -22,7 +22,7 @@
 */
 
 #include <bls/BLSSignature.h>
-#include <bls/BLSutils.h>
+#include <tools/utils.h>
 
 std::shared_ptr< libff::alt_bn128_G1 > BLSSignature::getSig() const {
     CHECK( sig );
@@ -34,18 +34,17 @@ BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, st
       hint( _hint ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     CHECK( sig );
 
-    BLSutils::initBLS();
-
+    crypto::ThresholdUtils::initCurve();
 
     if ( sig->is_zero() ) {
-        throw signatures::Bls::IncorrectInput( "Zero BLS signature" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Zero BLS signature" );
     }
     if ( hint.length() == 0 ) {
-        throw signatures::Bls::IncorrectInput( "Empty BLS hint" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Empty BLS hint" );
     }
 }
 
@@ -54,29 +53,30 @@ BLSSignature::BLSSignature(
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     CHECK( _sig );
 
-    BLSSignature::checkSigners( requiredSigners, totalSigners );
+    crypto::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
 
-    BLSutils::initBLS();
+    crypto::ThresholdUtils::initCurve();
 
     if ( _sig->size() < 10 ) {
-        throw signatures::Bls::IsNotWellFormed(
+        throw crypto::ThresholdUtils::IsNotWellFormed(
             "Signature too short:" + std::to_string( _sig->size() ) );
     }
 
     if ( _sig->size() > BLS_MAX_SIG_LEN ) {
-        throw signatures::Bls::IsNotWellFormed(
+        throw crypto::ThresholdUtils::IsNotWellFormed(
             "Signature too long:" + std::to_string( _sig->size() ) );
     }
 
-    std::shared_ptr< std::vector< std::string > > result = BLSutils::SplitString( _sig, ":" );
+    std::shared_ptr< std::vector< std::string > > result =
+        crypto::ThresholdUtils::SplitString( _sig, ":" );
 
     if ( result->size() != 4 )
-        throw signatures::Bls::IncorrectInput( "Misformatted signature" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Misformatted signature" );
 
     for ( auto&& str : *result ) {
         for ( char& c : str ) {
             if ( !( c >= '0' && c <= '9' ) ) {
-                throw signatures::Bls::IncorrectInput(
+                throw crypto::ThresholdUtils::IncorrectInput(
                     "Misformatted char:" + std::to_string( ( int ) c ) + " in component " + str );
             }
         }
@@ -87,7 +87,7 @@ BLSSignature::BLSSignature(
     hint = result->at( 2 ) + ":" + result->at( 3 );
 
     if ( !( sig->is_well_formed() ) ) {
-        throw signatures::Bls::IsNotWellFormed( "signature is not from G1" );
+        throw crypto::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
     }
 }
 
@@ -100,18 +100,6 @@ std::shared_ptr< std::string > BLSSignature::toString() {
         sig->Y.as_bigint().data, libff::alt_bn128_Fq::num_limbs, hint.c_str() );
 
     return std::make_shared< std::string >( str );
-}
-void BLSSignature::checkSigners( size_t _requiredSigners, size_t _totalSigners ) {
-    CHECK( _totalSigners > 0 );
-
-    if ( _requiredSigners > _totalSigners ) {
-        throw signatures::Bls::IncorrectInput( "_requiredSigners > _totalSigners" );
-    }
-
-
-    if ( _totalSigners == 0 ) {
-        throw signatures::Bls::IncorrectInput( "_totalSigners == 0" );
-    }
 }
 
 std::string BLSSignature::getHint() const {

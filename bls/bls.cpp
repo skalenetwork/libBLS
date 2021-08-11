@@ -23,6 +23,7 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
 
 #include <bls/bls.h>
+#include <tools/utils.h>
 
 #include <bitset>
 #include <chrono>
@@ -35,12 +36,10 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 #include <libff/algebra/exponentiation/exponentiation.hpp>
 #include <libff/common/profiling.hpp>
 
-#include <bls/BLSutils.h>
-
-namespace signatures {
+namespace crypto {
 
 Bls::Bls( const size_t t, const size_t n ) : t_( t ), n_( n ) {
-    BLSutils::initBLS();
+    ThresholdUtils::initCurve();
 }
 
 std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > Bls::KeyGeneration() {
@@ -79,59 +78,13 @@ libff::alt_bn128_G1 Bls::Hashing(
     return hash;
 }
 
-libff::alt_bn128_G1 Bls::HashtoG1( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr ) {
-    CHECK( hash_byte_arr );
-
-    libff::alt_bn128_Fq x1( BLSutils::HashToFq( hash_byte_arr ) );
-
-    libff::alt_bn128_G1 result;
-
-    while ( true ) {
-        libff::alt_bn128_Fq y1_sqr = x1 ^ 3;
-        y1_sqr = y1_sqr + libff::alt_bn128_coeff_b;
-
-        libff::alt_bn128_Fq euler = y1_sqr ^ libff::alt_bn128_Fq::euler;
-
-        if ( euler == libff::alt_bn128_Fq::one() ||
-             euler == libff::alt_bn128_Fq::zero() ) {  // if y1_sqr is a square
-            result.X = x1;
-            libff::alt_bn128_Fq temp_y = y1_sqr.sqrt();
-
-            mpz_t pos_y;
-            mpz_init( pos_y );
-
-            temp_y.as_bigint().to_mpz( pos_y );
-
-            mpz_t neg_y;
-            mpz_init( neg_y );
-
-            ( -temp_y ).as_bigint().to_mpz( neg_y );
-
-            if ( mpz_cmp( pos_y, neg_y ) < 0 ) {
-                temp_y = -temp_y;
-            }
-
-            mpz_clear( pos_y );
-            mpz_clear( neg_y );
-
-            result.Y = temp_y;
-            break;
-        } else {
-            x1 = x1 + 1;
-        }
-    }
-    result.Z = libff::alt_bn128_Fq::one();
-
-    return result;
-}
-
 std::pair< libff::alt_bn128_G1, std::string > Bls::HashtoG1withHint(
     std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr ) {
     CHECK( hash_byte_arr );
 
     libff::alt_bn128_G1 point;
     libff::alt_bn128_Fq counter = libff::alt_bn128_Fq::zero();
-    libff::alt_bn128_Fq x1( BLSutils::HashToFq( hash_byte_arr ) );
+    libff::alt_bn128_Fq x1( ThresholdUtils::HashToFq( hash_byte_arr ) );
 
 
     while ( true ) {
@@ -171,7 +124,7 @@ std::pair< libff::alt_bn128_G1, std::string > Bls::HashtoG1withHint(
     }
     point.Z = libff::alt_bn128_Fq::one();
 
-    return std::make_pair( point, BLSutils::ConvertToString( counter ) );
+    return std::make_pair( point, ThresholdUtils::fieldElementToString( counter ) );
 }
 
 libff::alt_bn128_G1 Bls::HashBytes(
@@ -182,7 +135,6 @@ libff::alt_bn128_G1 Bls::HashBytes(
     CHECK( raw_bytes );
 
     std::string from_bytes( raw_bytes, length );
-
 
     libff::alt_bn128_G1 hash = Hashing( from_bytes, *hash_func );
 
@@ -195,7 +147,7 @@ libff::alt_bn128_G1 Bls::Signing(
     // implemented constant time signing
 
     if ( secret_key == libff::alt_bn128_Fr::zero() ) {
-        throw ZeroSecretKey( "failed to sign a message hash" );
+        throw ThresholdUtils::ZeroSecretKey( "failed to sign a message hash" );
     }
 
     std::clock_t c_start = std::clock();  // hash
@@ -217,15 +169,16 @@ bool Bls::Verification( const std::string& to_be_hashed, const libff::alt_bn128_
     libff::inhibit_profiling_info = true;
 
     if ( !sign.is_well_formed() ) {
-        throw IsNotWellFormed( "Error, signature does not lie on the alt_bn128 curve" );
+        throw ThresholdUtils::IsNotWellFormed(
+            "Error, signature does not lie on the alt_bn128 curve" );
     }
 
     if ( !public_key.is_well_formed() ) {
-        throw IsNotWellFormed( "Error, public key is invalid" );
+        throw ThresholdUtils::IsNotWellFormed( "Error, public key is invalid" );
     }
 
     if ( libff::alt_bn128_modulus_r * sign != libff::alt_bn128_G1::zero() ) {
-        throw IsNotWellFormed( "Error, signature is not member of G1" );
+        throw ThresholdUtils::IsNotWellFormed( "Error, signature is not member of G1" );
     }
 
     libff::alt_bn128_G1 hash = Hashing( to_be_hashed );
@@ -244,18 +197,19 @@ bool Bls::Verification( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_a
     libff::inhibit_profiling_info = true;
 
     if ( !sign.is_well_formed() ) {
-        throw IsNotWellFormed( "Error, signature does not lie on the alt_bn128 curve" );
+        throw ThresholdUtils::IsNotWellFormed(
+            "Error, signature does not lie on the alt_bn128 curve" );
     }
 
     if ( !public_key.is_well_formed() ) {
-        throw IsNotWellFormed( "Error, public key is invalid" );
+        throw ThresholdUtils::IsNotWellFormed( "Error, public key is invalid" );
     }
 
     if ( libff::alt_bn128_modulus_r * sign != libff::alt_bn128_G1::zero() ) {
-        throw IsNotWellFormed( "Error, signature is not member of G1" );
+        throw ThresholdUtils::IsNotWellFormed( "Error, signature is not member of G1" );
     }
 
-    libff::alt_bn128_G1 hash = HashtoG1( hash_byte_arr );
+    libff::alt_bn128_G1 hash = ThresholdUtils::HashtoG1( hash_byte_arr );
 
     return ( libff::alt_bn128_ate_reduced_pairing( sign, libff::alt_bn128_G2::one() ) ==
              libff::alt_bn128_ate_reduced_pairing( hash, public_key ) );
@@ -266,14 +220,14 @@ std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > Bls::KeysRecover(
     const std::vector< libff::alt_bn128_Fr >& coeffs,
     const std::vector< libff::alt_bn128_Fr >& shares ) {
     if ( shares.size() < this->t_ || coeffs.size() < this->t_ ) {
-        throw IncorrectInput( "not enough participants in the threshold group" );
+        throw ThresholdUtils::IncorrectInput( "not enough participants in the threshold group" );
     }
 
     libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::zero();
 
     for ( size_t i = 0; i < this->t_; ++i ) {
         if ( shares[i] == libff::alt_bn128_Fr::zero() ) {
-            throw ZeroSecretKey(
+            throw ThresholdUtils::ZeroSecretKey(
                 "at least one secret key share is equal to zero in KeysRecover group" );
         }
         secret_key += coeffs[i] * shares[i];  // secret key recovering using Lagrange Interpolation
@@ -288,14 +242,14 @@ std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > Bls::KeysRecover(
 libff::alt_bn128_G1 Bls::SignatureRecover( const std::vector< libff::alt_bn128_G1 >& shares,
     const std::vector< libff::alt_bn128_Fr >& coeffs ) {
     if ( shares.size() < this->t_ || coeffs.size() < this->t_ ) {
-        throw IncorrectInput( "not enough participants in the threshold group" );
+        throw ThresholdUtils::IncorrectInput( "not enough participants in the threshold group" );
     }
 
     libff::alt_bn128_G1 sign = libff::alt_bn128_G1::zero();
 
     for ( size_t i = 0; i < this->t_; ++i ) {
         if ( !shares[i].is_well_formed() ) {
-            throw IsNotWellFormed( "incorrect input data to recover signature" );
+            throw ThresholdUtils::IsNotWellFormed( "incorrect input data to recover signature" );
         }
         sign = sign + coeffs[i] * shares[i];  // signature recovering using Lagrange Coefficients
     }
@@ -303,38 +257,4 @@ libff::alt_bn128_G1 Bls::SignatureRecover( const std::vector< libff::alt_bn128_G
     return sign;  // first element is hash of a receiving message
 }
 
-std::vector< libff::alt_bn128_Fr > Bls::LagrangeCoeffs( const std::vector< size_t >& idx ) {
-    if ( idx.size() < this->t_ ) {
-        throw IncorrectInput( "not enough participants in the threshold group" );
-    }
-
-    std::vector< libff::alt_bn128_Fr > res( this->t_ );
-
-    libff::alt_bn128_Fr w = libff::alt_bn128_Fr::one();
-
-    for ( size_t i = 0; i < this->t_; ++i ) {
-        w *= libff::alt_bn128_Fr( idx[i] );
-    }
-
-    for ( size_t i = 0; i < this->t_; ++i ) {
-        libff::alt_bn128_Fr v = libff::alt_bn128_Fr( idx[i] );
-
-        for ( size_t j = 0; j < this->t_; ++j ) {
-            if ( j != i ) {
-                if ( libff::alt_bn128_Fr( idx[i] ) == libff::alt_bn128_Fr( idx[j] ) ) {
-                    throw IncorrectInput(
-                        "during the interpolation, have same indexes in list of indexes" );
-                }
-
-                v *= ( libff::alt_bn128_Fr( idx[j] ) -
-                       libff::alt_bn128_Fr( idx[i] ) );  // calculating Lagrange coefficients
-            }
-        }
-
-        res[i] = w * v.invert();
-    }
-
-    return res;
-}
-
-}  // namespace signatures
+}  // namespace crypto

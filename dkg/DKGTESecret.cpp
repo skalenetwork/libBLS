@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file TEPrivateKeyShare.h
   @author Sveta Rogova
@@ -22,33 +22,35 @@
 */
 
 
-#include "DKGTESecret.h"
+#include <dkg/DKGTESecret.h>
+#include <tools/utils.h>
 
-#include <dkg/dkg_te.h>
-#include <threshold_encryption/TEDataSingleton.h>
+#include <dkg/dkg.h>
 
 DKGTESecret::DKGTESecret( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    encryption::DkgTe dkg_te( requiredSigners, totalSigners );
+    libff::init_alt_bn128_params();
+
+    crypto::Dkg dkg_te( requiredSigners, totalSigners );
     poly = dkg_te.GeneratePolynomial();
 }
 
-void DKGTESecret::setPoly( std::vector< encryption::element_wrapper >& _poly ) {
+void DKGTESecret::setPoly( std::vector< libff::alt_bn128_Fr >& _poly ) {
     if ( _poly.size() != requiredSigners ) {
-        throw std::runtime_error( "Wrong size of vector" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Wrong size of vector" );
     }
 
     poly = _poly;
 }
 
-std::vector< encryption::element_wrapper > DKGTESecret::getDKGTESecretShares() {
-    encryption::DkgTe dkg_te( requiredSigners, totalSigners );
-    return dkg_te.CreateSecretKeyContribution( poly );
+std::vector< libff::alt_bn128_Fr > DKGTESecret::getDKGTESecretShares() {
+    crypto::Dkg dkg_te( requiredSigners, totalSigners );
+    return dkg_te.SecretKeyContribution( poly );
 }
 
-std::vector< encryption::element_wrapper > DKGTESecret::getDKGTEPublicShares() {
-    encryption::DkgTe dkg_te( requiredSigners, totalSigners );
-    return dkg_te.CreateVerificationVector( poly );
+std::vector< libff::alt_bn128_G2 > DKGTESecret::getDKGTEPublicShares() {
+    crypto::Dkg dkg_te( requiredSigners, totalSigners );
+    return dkg_te.VerificationVector( poly );
 }

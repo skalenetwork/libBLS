@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file unit_tests_dkg.cpp
   @author Oleh Nikolaiev
@@ -27,7 +27,6 @@
 #include <bls/BLSSigShareSet.h>
 #include <bls/BLSSignature.h>
 #include <dkg/dkg.h>
-#include <bls/BLSutils.cpp>
 
 #include <cstdlib>
 #include <ctime>
@@ -45,7 +44,7 @@
 BOOST_AUTO_TEST_SUITE( DkgAlgorithm )
 
 BOOST_AUTO_TEST_CASE( PolynomialValue ) {
-    signatures::Dkg obj = signatures::Dkg( 3, 4 );
+    crypto::Dkg obj = crypto::Dkg( 3, 4 );
     std::vector< libff::alt_bn128_Fr > polynomial = {
         libff::alt_bn128_Fr( "1" ), libff::alt_bn128_Fr( "0" ), libff::alt_bn128_Fr( "1" )};
 
@@ -57,19 +56,12 @@ BOOST_AUTO_TEST_CASE( PolynomialValue ) {
 
     polynomial = {
         libff::alt_bn128_Fr( "0" ), libff::alt_bn128_Fr( "1" ), libff::alt_bn128_Fr( "0" )};
-    bool is_exception_caught = false;
 
-    try {
-        value = obj.PolynomialValue( polynomial, 5 );
-    } catch ( std::logic_error& ) {
-        is_exception_caught = true;
-    }
-
-    BOOST_REQUIRE( is_exception_caught );
+    BOOST_REQUIRE_THROW( value = obj.PolynomialValue( polynomial, 5 ), std::logic_error );
 }
 
 BOOST_AUTO_TEST_CASE( verification ) {
-    signatures::Dkg obj = signatures::Dkg( 2, 2 );
+    crypto::Dkg obj = crypto::Dkg( 2, 2 );
 
     auto polynomial_fst = obj.GeneratePolynomial();
     auto polynomial_snd = obj.GeneratePolynomial();
@@ -101,7 +93,7 @@ BOOST_AUTO_TEST_CASE( PolySize ) {
     for ( size_t i = 0; i < 100; i++ ) {
         size_t num_all = rand_gen() % 16 + 1;
         size_t num_signed = rand_gen() % num_all + 1;
-        signatures::Dkg obj = signatures::Dkg( num_signed, num_all );
+        crypto::Dkg obj = crypto::Dkg( num_signed, num_all );
         std::vector< libff::alt_bn128_Fr > pol = obj.GeneratePolynomial();
         BOOST_REQUIRE( pol.size() == num_signed );
         BOOST_REQUIRE( pol.at( num_signed - 1 ) != libff::alt_bn128_Fr::zero() );
@@ -110,7 +102,7 @@ BOOST_AUTO_TEST_CASE( PolySize ) {
 
 BOOST_AUTO_TEST_CASE( ZeroSecret ) {
     for ( size_t i = 0; i < 100; i++ ) {
-        signatures::Dkg dkg_obj = signatures::Dkg( 2, 2 );
+        crypto::Dkg dkg_obj = crypto::Dkg( 2, 2 );
 
         libff::alt_bn128_Fr num1 = libff::alt_bn128_Fr::random_element();
         libff::alt_bn128_Fr num2 = -num1;
@@ -118,13 +110,7 @@ BOOST_AUTO_TEST_CASE( ZeroSecret ) {
         pol.push_back( num1 );
         pol.push_back( num2 );
 
-        bool is_exception_caught = false;
-        try {
-            dkg_obj.SecretKeyShareCreate( pol );
-        } catch ( std::logic_error& ) {
-            is_exception_caught = true;
-        }
-        BOOST_REQUIRE( is_exception_caught );
+        BOOST_REQUIRE_THROW( dkg_obj.SecretKeyShareCreate( pol ), std::logic_error );
     }
 }
 
@@ -182,7 +168,7 @@ BOOST_AUTO_TEST_CASE( Verification2 ) {
     for ( size_t i = 0; i < 100; i++ ) {
         size_t num_all = rand_gen() % 16 + 1;
         size_t num_signed = rand_gen() % num_all + 1;
-        signatures::Dkg obj = signatures::Dkg( num_signed, num_all );
+        crypto::Dkg obj = crypto::Dkg( num_signed, num_all );
         BOOST_REQUIRE( obj.GetN() == num_all );
         BOOST_REQUIRE( obj.GetT() == num_signed );
 

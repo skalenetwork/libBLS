@@ -41,7 +41,6 @@ public:
     std::shared_ptr< libff::alt_bn128_G1 > getSig() const;
     std::shared_ptr< std::string > toString();
 
-    static void checkSigners( size_t _requiredSigners, size_t _totalSigners );
     std::string getHint() const;
     size_t getTotalSigners() const;
     size_t getRequiredSigners() const;

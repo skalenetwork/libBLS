@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file TEPrivateKeyShare.h
   @author Sveta Rogova
@@ -24,13 +24,12 @@
 #ifndef LIBBLS_TEPRIVATEKEYSHARE_H
 #define LIBBLS_TEPRIVATEKEYSHARE_H
 
-#include <threshold_encryption/TEDataSingleton.h>
 #include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/threshold_encryption.h>
 
 class TEPrivateKeyShare {
 private:
-    encryption::element_wrapper privateKey;
+    libff::alt_bn128_Fr privateKey;
 
     size_t signerIndex;
     size_t requiredSigners;
@@ -40,20 +39,20 @@ public:
     TEPrivateKeyShare( std::shared_ptr< std::string > _key_str_ptr, size_t _signerIndex,
         size_t _requiredSigners, size_t _totalSigners );
 
-    TEPrivateKeyShare( encryption::element_wrapper _skey_share, size_t _signerIndex,
+    TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _signerIndex,
         size_t _requiredSigners, size_t _totalSigners );
 
-    encryption::element_wrapper decrypt( encryption::Ciphertext& cipher );
+    libff::alt_bn128_G2 getDecryptionShare( crypto::Ciphertext& cipher );
 
     static std::pair< std::shared_ptr< std::vector< std::shared_ptr< TEPrivateKeyShare > > >,
         std::shared_ptr< TEPublicKey > >
     generateSampleKeys( size_t _requiredSigners, size_t _totalSigners );
 
-    std::string toString();
+    std::string toString() const;
 
     size_t getSignerIndex() const;
 
-    encryption::element_wrapper getPrivateKey() const;
+    libff::alt_bn128_Fr getPrivateKey() const;
 };
 
 

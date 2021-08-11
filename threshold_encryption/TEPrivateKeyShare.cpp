@@ -14,112 +14,103 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 @file TEPrivateKeyShare.h
 @author Sveta Rogova
 @date 2019
 */
 
-#include <dkg/dkg_te.h>
+#include <dkg/dkg.h>
 #include <threshold_encryption/TEPrivateKeyShare.h>
-#include <threshold_encryption/utils.h>
+#include <tools/utils.h>
 
 TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr< std::string > _key_str, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str ) {
-        throw std::runtime_error( "private key share is null" );
+        throw crypto::ThresholdUtils::IncorrectInput( "private key share is null" );
     }
 
-    element_t pkey;
-    element_init_Zr( pkey, TEDataSingleton::getData().pairing_ );
-    element_set_str( pkey, _key_str->c_str(), 10 );
-    privateKey = encryption::element_wrapper( pkey );
-    element_clear( pkey );
+    libff::init_alt_bn128_params();
 
-    if ( element_is0( privateKey.el_ ) ) {
-        throw std::runtime_error( "Zero private key share" );
+    privateKey = libff::alt_bn128_Fr( _key_str->c_str() );
+
+    if ( privateKey.is_zero() ) {
+        throw crypto::ThresholdUtils::ZeroSecretKey( "Zero private key share" );
     }
 }
 
-TEPrivateKeyShare::TEPrivateKeyShare( encryption::element_wrapper _skey_share, size_t _signerIndex,
+TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : privateKey( _skey_share ),
       signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    /* if (_signerIndex > _totalSigners) {
-       throw std::runtime_error ("Wrong _signerIndex");
-     }*/
-    if ( element_is0( _skey_share.el_ ) ) {
-        throw std::runtime_error( "Zero private key share" );
+    if ( _signerIndex > _totalSigners ) {
+        throw crypto::ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
+    }
+
+    libff::init_alt_bn128_params();
+
+    if ( _skey_share.is_zero() ) {
+        throw crypto::ThresholdUtils::ZeroSecretKey( "Zero private key share" );
     }
 }
 
-encryption::element_wrapper TEPrivateKeyShare::decrypt( encryption::Ciphertext& cypher ) {
-    checkCypher( cypher );
+libff::alt_bn128_G2 TEPrivateKeyShare::getDecryptionShare( crypto::Ciphertext& cipher ) {
+    crypto::ThresholdUtils::checkCypher( cipher );
 
-    encryption::TE te( requiredSigners, totalSigners );
+    crypto::TE te( requiredSigners, totalSigners );
 
-    element_t decrypt;
-    element_init_G1( decrypt, TEDataSingleton::getData().pairing_ );
+    libff::alt_bn128_G2 decryption_share = te.getDecryptionShare( cipher, privateKey );
 
-    te.Decrypt( decrypt, cypher, privateKey.el_ );
-    encryption::element_wrapper decrypted( decrypt );
-
-    if ( isG1Element0( decrypt ) ) {
-        std::runtime_error( "zero decrypt" );
+    if ( decryption_share.is_zero() || !decryption_share.is_well_formed() ) {
+        throw crypto::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
     }
-    element_clear( decrypt );
-    return decrypted;
+
+    return decryption_share;
 }
 
-std::string TEPrivateKeyShare::toString() {
-    return ElementZrToString( privateKey.el_ );
+std::string TEPrivateKeyShare::toString() const {
+    return crypto::ThresholdUtils::fieldElementToString( privateKey );
 }
 
 size_t TEPrivateKeyShare::getSignerIndex() const {
     return signerIndex;
 }
 
-encryption::element_wrapper TEPrivateKeyShare::getPrivateKey() const {
+libff::alt_bn128_Fr TEPrivateKeyShare::getPrivateKey() const {
     return privateKey;
 }
 
 std::pair< std::shared_ptr< std::vector< std::shared_ptr< TEPrivateKeyShare > > >,
     std::shared_ptr< TEPublicKey > >
 TEPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSigners ) {
-    encryption::DkgTe dkg_te( _requiredSigners, _totalSigners );
+    crypto::Dkg dkg_te( _requiredSigners, _totalSigners );
 
-    std::vector< encryption::element_wrapper > poly = dkg_te.GeneratePolynomial();
-    element_t zero;
-    element_init_Zr( zero, TEDataSingleton::getData().pairing_ );
-    element_set0( zero );
-    encryption::element_wrapper zero_el( zero );
+    std::vector< libff::alt_bn128_Fr > poly = dkg_te.GeneratePolynomial();
 
-    element_clear( zero );
-
-    encryption::element_wrapper common_skey = dkg_te.ComputePolynomialValue( poly, zero_el );
+    libff::alt_bn128_Fr common_skey = dkg_te.PolynomialValue( poly, libff::alt_bn128_Fr::zero() );
     TEPrivateKey common_private( common_skey, _requiredSigners, _totalSigners );
     TEPublicKey common_public( common_private, _requiredSigners, _totalSigners );
 
-    std::vector< encryption::element_wrapper > skeys = dkg_te.CreateSecretKeyContribution( poly );
+    std::vector< libff::alt_bn128_Fr > skeys = dkg_te.SecretKeyContribution( poly );
 
     std::vector< std::shared_ptr< TEPrivateKeyShare > > skey_shares;
 
     for ( size_t i = 0; i < _totalSigners; i++ ) {
-        TEPrivateKeyShare skey( skeys[i].el_, i + 1, _requiredSigners, _totalSigners );
+        TEPrivateKeyShare skey( skeys[i], i + 1, _requiredSigners, _totalSigners );
         skey_shares.emplace_back( std::make_shared< TEPrivateKeyShare >( skey ) );
     }
 
-    std::pair keys = std::make_pair(
+    auto keys = std::make_pair(
         std::make_shared< std::vector< std::shared_ptr< TEPrivateKeyShare > > >( skey_shares ),
         std::make_shared< TEPublicKey >( common_public ) );
     return keys;

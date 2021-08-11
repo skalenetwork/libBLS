@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file BLSSigShareSet.cpp
   @author Stan Kladko, Sveta Rogova
@@ -27,19 +27,18 @@
 #include <bls/BLSSigShare.h>
 #include <bls/BLSSigShareSet.h>
 #include <bls/BLSSignature.h>
-#include <bls/BLSutils.h>
+#include <tools/utils.h>
 
 
 bool BLSSigShareSet::addSigShare( std::shared_ptr< BLSSigShare > _sigShare ) {
     CHECK( _sigShare );
 
     if ( was_merged ) {
-        throw signatures::Bls::IncorrectInput( "Invalid state:was already merged" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Invalid state:was already merged" );
     }
 
-
     if ( sigShares.count( _sigShare->getSignerIndex() ) > 0 ) {
-        throw signatures::Bls::IncorrectInput(
+        throw crypto::ThresholdUtils::IncorrectInput(
             "Already have this index:" + std::to_string( _sigShare->getSignerIndex() ) );
         return false;
     }
@@ -53,9 +52,9 @@ size_t BLSSigShareSet::getTotalSigSharesCount() {
 }
 std::shared_ptr< BLSSigShare > BLSSigShareSet::getSigShareByIndex( size_t _index ) {
     if ( _index == 0 ) {
-        throw signatures::Bls::IncorrectInput( "Index out of range:" + std::to_string( _index ) );
+        throw crypto::ThresholdUtils::IncorrectInput(
+            "Index out of range:" + std::to_string( _index ) );
     }
-
 
     if ( sigShares.count( _index ) == 0 ) {
         return nullptr;
@@ -65,22 +64,21 @@ std::shared_ptr< BLSSigShare > BLSSigShareSet::getSigShareByIndex( size_t _index
 }
 BLSSigShareSet::BLSSigShareSet( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ), was_merged( false ) {
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    BLSutils::initBLS();
+    crypto::ThresholdUtils::initCurve();
 }
 
 bool BLSSigShareSet::isEnough() {
     return ( sigShares.size() >= requiredSigners );
 }
 
-
 std::shared_ptr< BLSSignature > BLSSigShareSet::merge() {
     if ( !isEnough() )
-        throw signatures::Bls::IncorrectInput( "Not enough shares to create signature" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Not enough shares to create signature" );
 
     was_merged = true;
-    signatures::Bls obj = signatures::Bls( requiredSigners, totalSigners );
+    crypto::Bls obj = crypto::Bls( requiredSigners, totalSigners );
 
     std::vector< size_t > participatingNodes;
     std::vector< libff::alt_bn128_G1 > shares;
@@ -90,7 +88,8 @@ std::shared_ptr< BLSSignature > BLSSigShareSet::merge() {
         shares.push_back( *item.second->getSigShare() );
     }
 
-    std::vector< libff::alt_bn128_Fr > lagrangeCoeffs = obj.LagrangeCoeffs( participatingNodes );
+    std::vector< libff::alt_bn128_Fr > lagrangeCoeffs =
+        crypto::ThresholdUtils::LagrangeCoeffs( participatingNodes, requiredSigners );
 
     libff::alt_bn128_G1 signature = obj.SignatureRecover( shares, lagrangeCoeffs );
 

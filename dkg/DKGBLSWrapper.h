@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file TEPrivateKeyShare.h
   @author Sveta Rogova
@@ -39,7 +39,7 @@ public:
     DKGBLSWrapper( size_t _requiredSigners, size_t _totalSigners );
 
     bool VerifyDKGShare( size_t signerIndex, const libff::alt_bn128_Fr& share,
-        const std::shared_ptr< std::vector< libff::alt_bn128_G2 > >& _verification_vector );
+        std::shared_ptr< std::vector< libff::alt_bn128_G2 > > _verification_vector );
 
     void setDKGSecret( std::shared_ptr< std::vector< libff::alt_bn128_Fr > > _poly_ptr );
 
@@ -51,6 +51,10 @@ public:
         std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr );
 
     libff::alt_bn128_Fr getValueAt0();
+
+    static BLSPublicKey CreateTEPublicKey(
+        std::shared_ptr< std::vector< std::vector< libff::alt_bn128_G2 > > > public_shares_all,
+        size_t _requiredSigners, size_t _totalSigners );
 };
 
 

@@ -44,7 +44,7 @@ where i is an index of a participant.
 
 ```cpp
 TEPublic publicKey = *keys.second;
-encryption::Ciphertext cipher = publicKey.encrypt(message_ptr);
+crypto::Ciphertext cipher = publicKey.encrypt(message_ptr);
 ```
 
  Where message_ptr is shared_ptr to string, cipher is encrypted message.
@@ -52,7 +52,7 @@ encryption::Ciphertext cipher = publicKey.encrypt(message_ptr);
 5.  Get pieces of decrypted message with private key of each participant and cipher got in step 4. Verify every piece with public key of corresponding participant.
 
 ```cpp
-encryption::element_wrapper piece = privateKey.decrypt(cipher);
+crypto::element_wrapper piece = privateKey.decrypt(cipher);
 assert ( publicKeyShare.Verify(cipher, piece) ) ;
 ```
 

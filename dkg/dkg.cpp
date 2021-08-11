@@ -21,19 +21,19 @@
   @date 2018
 */
 
-#include "bls/BLSutils.h"
 #include <dkg/dkg.h>
+#include <tools/utils.h>
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 #include <libff/algebra/exponentiation/exponentiation.hpp>
 
-namespace signatures {
+namespace crypto {
 
 typedef std::vector< libff::alt_bn128_Fr > Polynomial;
 
 Dkg::Dkg( const size_t t, const size_t n ) : t_( t ), n_( n ) {
-    BLSutils::initBLS();
+    ThresholdUtils::initCurve();
 }
 
 Polynomial Dkg::GeneratePolynomial() {
@@ -139,4 +139,4 @@ bool Dkg::isG2( const libff::alt_bn128_G2& point ) {
            libff::alt_bn128_G2::order() * point == libff::alt_bn128_G2::zero();
 }
 
-}  // namespace signatures
+}  // namespace crypto

@@ -10,7 +10,7 @@
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU Affero General Public License for more details.
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
   @file dkg_key_gen.cpp
   @author Oleh Nikolaiev
   @date 2019
@@ -18,6 +18,7 @@
 
 
 #include <dkg/dkg.h>
+#include <tools/utils.h>
 
 #include <fstream>
 
@@ -29,7 +30,6 @@
 #include <bls/BLSPrivateKeyShare.h>
 #include <bls/BLSPublicKey.h>
 #include <bls/BLSPublicKeyShare.h>
-#include <bls/BLSutils.h>
 
 
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
@@ -68,7 +68,7 @@ void CommonPkeyToJson( std::shared_ptr< BLSPublicKey > common_pkey_ptr ) {
 static bool g_b_verbose_mode = false;
 
 void KeyGeneration( const size_t t, const size_t n, bool generate_all = true, int idx = -1 ) {
-    signatures::Dkg dkg_instance = signatures::Dkg( t, n );
+    crypto::Dkg dkg_instance = crypto::Dkg( t, n );
 
     if ( generate_all ) {
         std::vector< std::vector< libff::alt_bn128_Fr > > polynomial( n );
@@ -131,23 +131,23 @@ void KeyGeneration( const size_t t, const size_t n, bool generate_all = true, in
 
         for ( size_t i = 0; i < n; ++i ) {
             data["secret_key_contribution"][std::to_string( i )] =
-                BLSutils::ConvertToString< libff::alt_bn128_Fr >( secret_key_contribution[i] );
+                crypto::ThresholdUtils::fieldElementToString( secret_key_contribution[i] );
         }
 
 
         for ( size_t i = 0; i < t; ++i ) {
             data["verification_vector"][std::to_string( i )]["X"]["c0"] =
-                BLSutils::ConvertToString< libff::alt_bn128_Fq >( verification_vector[i].X.c0 );
+                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].X.c0 );
             data["verification_vector"][std::to_string( i )]["X"]["c1"] =
-                BLSutils::ConvertToString< libff::alt_bn128_Fq >( verification_vector[i].X.c1 );
+                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].X.c1 );
             data["verification_vector"][std::to_string( i )]["Y"]["c0"] =
-                BLSutils::ConvertToString< libff::alt_bn128_Fq >( verification_vector[i].Y.c0 );
+                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].Y.c0 );
             data["verification_vector"][std::to_string( i )]["Y"]["c1"] =
-                BLSutils::ConvertToString< libff::alt_bn128_Fq >( verification_vector[i].Y.c1 );
+                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].Y.c1 );
             data["verification_vector"][std::to_string( i )]["Z"]["c0"] =
-                BLSutils::ConvertToString< libff::alt_bn128_Fq >( verification_vector[i].Z.c0 );
+                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].Z.c0 );
             data["verification_vector"][std::to_string( i )]["Z"]["c1"] =
-                BLSutils::ConvertToString< libff::alt_bn128_Fq >( verification_vector[i].Z.c1 );
+                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].Z.c1 );
         }
 
         std::ofstream outfile( "data_for_" + std::to_string( idx ) + "-th_participant.json" );

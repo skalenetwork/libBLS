@@ -26,7 +26,6 @@
 
 
 #include <bls/BLSPrivateKeyShare.h>
-#include <bls/BLSSignature.h>
 #include <bls/bls.h>
 
 
@@ -41,7 +40,7 @@ public:
     BLSPrivateKey(
         const std::shared_ptr< std::string >& _key, size_t _requiredSigners, size_t _totalSigners );
 
-    BLSPrivateKey( const std::shared_ptr< std::vector< std::shared_ptr< BLSPrivateKeyShare > > >,
+    BLSPrivateKey( std::shared_ptr< std::vector< std::shared_ptr< BLSPrivateKeyShare > > >,
         std::shared_ptr< std::vector< size_t > > koefs, size_t _requiredSigners,
         size_t _totalSigners );
 

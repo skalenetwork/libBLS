@@ -21,33 +21,33 @@
   @date 2019
 */
 
-#include "DKGBLSSecret.h"
+#include <dkg/DKGBLSSecret.h>
 
-#include <bls/BLSSignature.h>
 #include <dkg/dkg.h>
+#include <tools/utils.h>
 
 DKGBLSSecret::DKGBLSSecret( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    BLSSignature::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    signatures::Dkg dkg( requiredSigners, totalSigners );
+    crypto::Dkg dkg( requiredSigners, totalSigners );
     poly = dkg.GeneratePolynomial();
 }
 
 void DKGBLSSecret::setPoly( std::vector< libff::alt_bn128_Fr > _poly ) {
     if ( _poly.size() != requiredSigners ) {
-        throw std::runtime_error( "Wrong size of vector" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Wrong size of vector" );
     }
     poly = _poly;
 }
 
 std::vector< libff::alt_bn128_Fr > DKGBLSSecret::getDKGBLSSecretShares() {
-    signatures::Dkg dkg( requiredSigners, totalSigners );
+    crypto::Dkg dkg( requiredSigners, totalSigners );
     return dkg.SecretKeyContribution( poly );
 }
 
 std::vector< libff::alt_bn128_G2 > DKGBLSSecret::getDKGBLSPublicShares() {
-    signatures::Dkg dkg( requiredSigners, totalSigners );
+    crypto::Dkg dkg( requiredSigners, totalSigners );
     return dkg.VerificationVector( poly );
 }
 

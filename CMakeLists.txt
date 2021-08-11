@@ -61,6 +61,9 @@ set( CLANG_FORMAT_EXCLUDE_PATTERNS
     )
 include( BlsFindClangFormat )
 
+set( TOOLS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tools/")
+set( DKG_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dkg/")
+
 set(sourses_bls
 		bls/bls.cpp
 		bls/BLSPrivateKeyShare.cpp
@@ -70,11 +73,11 @@ set(sourses_bls
 		bls/BLSSignature.cpp
 		bls/BLSSigShare.cpp
 		bls/BLSSigShareSet.cpp
-		bls/BLSutils.cpp
 		dkg/dkg.cpp
 		dkg/DKGBLSWrapper.cpp
 		dkg/DKGBLSSecret.cpp
 		third_party/cryptlite/base64.cpp
+		tools/utils.cpp
 		)
 
 set(headers_bls
@@ -87,7 +90,6 @@ set(headers_bls
 		bls/BLSSignature.h
 		bls/BLSSigShare.h
 		bls/BLSSigShareSet.h
-		bls/BLSutils.h
 		dkg/dkg.h
 		dkg/DKGBLSWrapper.h
 		dkg/DKGBLSSecret.h
@@ -96,9 +98,10 @@ set(headers_bls
 		third_party/cryptlite/sha1.h
 		third_party/cryptlite/hmac.h
 		third_party/cryptlite/base64.h
+		tools/utils.h
 		)
 
-set(PROJECT_VERSION 0.1.1)
+set(PROJECT_VERSION 0.2.0)
 add_definitions(-DBLS_VERSION=${PROJECT_VERSION})
 if ( APPLE )
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wparentheses -Wunused -Wunreachable-code -Wextra -fPIC -std=c++17")
@@ -112,7 +115,6 @@ link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 add_library(bls ${sourses_bls} ${headers_bls})
 
 include_directories(${Boost_INCLUDE_DIRS})
-
 
 if( SKALE_HAVE_BOOST_FROM_HUNTER )
   set( BOOST_LIBS_4_BLS Boost::program_options )

@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file TEPublicKey.h
   @author Sveta Rogova
@@ -24,12 +24,11 @@
 #ifndef LIBBLS_TEPRIVATEKEY_H
 #define LIBBLS_TEPRIVATEKEY_H
 
-#include <threshold_encryption/TEDataSingleton.h>
 #include <threshold_encryption/threshold_encryption.h>
 
 class TEPrivateKey {
 private:
-    encryption::element_wrapper privateKey;
+    libff::alt_bn128_Fr privateKey;
 
     size_t requiredSigners;
     size_t totalSigners;
@@ -38,12 +37,11 @@ public:
     TEPrivateKey( std::shared_ptr< std::string > _key_str_ptr, size_t _requiredSigners,
         size_t _totalSigners );
 
-    TEPrivateKey(
-        encryption::element_wrapper _skey, size_t _requiredSigners, size_t _totalSigners );
+    TEPrivateKey( libff::alt_bn128_Fr _skey, size_t _requiredSigners, size_t _totalSigners );
 
-    std::string toString();
+    std::string toString() const;
 
-    encryption::element_wrapper getPrivateKey() const;
+    libff::alt_bn128_Fr getPrivateKey() const;
 };
 
 

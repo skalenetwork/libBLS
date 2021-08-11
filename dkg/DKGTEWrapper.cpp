@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file TEPrivateKeyShare.h
   @author Sveta Rogova
@@ -22,95 +22,76 @@
 */
 
 
-#include "DKGTEWrapper.h"
-
-#include <threshold_encryption/TEDataSingleton.h>
+#include <dkg/DKGTEWrapper.h>
+#include <tools/utils.h>
 
 DKGTEWrapper::DKGTEWrapper( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+
+    libff::init_alt_bn128_params();
 
     DKGTESecret temp( _requiredSigners, _totalSigners );
     dkg_secret_ptr = std::make_shared< DKGTESecret >( temp );
 }
 
-bool DKGTEWrapper::VerifyDKGShare( size_t _signerIndex, const encryption::element_wrapper& _share,
-    const std::shared_ptr< std::vector< encryption::element_wrapper > >& _verification_vector ) {
-    if ( element_is0( const_cast< element_t& >( _share.el_ ) ) )
-        throw std::runtime_error( "Zero secret share" );
+bool DKGTEWrapper::VerifyDKGShare( size_t _signerIndex, const libff::alt_bn128_Fr& _share,
+    std::shared_ptr< std::vector< libff::alt_bn128_G2 > > _verification_vector ) {
+    if ( _share.is_zero() )
+        throw crypto::ThresholdUtils::ZeroSecretKey( "Zero secret share" );
     if ( _verification_vector == nullptr )
-        throw std::runtime_error( "Null verification vector" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Null verification vector" );
     if ( _verification_vector->size() != requiredSigners )
-        throw std::runtime_error( "Wrong size of verification vector" );
-    encryption::DkgTe dkg_te( requiredSigners, totalSigners );
-    return dkg_te.Verify( _signerIndex, _share, *_verification_vector );
+        throw crypto::ThresholdUtils::IncorrectInput( "Wrong size of verification vector" );
+    crypto::Dkg dkg_te( requiredSigners, totalSigners );
+    return dkg_te.Verification( _signerIndex, _share, *_verification_vector );
 }
 
-void DKGTEWrapper::setDKGSecret(
-    std::shared_ptr< std::vector< encryption::element_wrapper > >& _poly_ptr ) {
+void DKGTEWrapper::setDKGSecret( std::shared_ptr< std::vector< libff::alt_bn128_Fr > > _poly_ptr ) {
     if ( _poly_ptr == nullptr )
-        throw std::runtime_error( "Null polynomial ptr" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Null polynomial ptr" );
     dkg_secret_ptr->setPoly( *_poly_ptr );
 }
 
-std::shared_ptr< std::vector< encryption::element_wrapper > >
-DKGTEWrapper::createDKGSecretShares() {
-    return std::make_shared< std::vector< encryption::element_wrapper > >(
+std::shared_ptr< std::vector< libff::alt_bn128_Fr > > DKGTEWrapper::createDKGSecretShares() {
+    return std::make_shared< std::vector< libff::alt_bn128_Fr > >(
         dkg_secret_ptr->getDKGTESecretShares() );
 }
 
-std::shared_ptr< std::vector< encryption::element_wrapper > >
-DKGTEWrapper::createDKGPublicShares() {
-    return std::make_shared< std::vector< encryption::element_wrapper > >(
+std::shared_ptr< std::vector< libff::alt_bn128_G2 > > DKGTEWrapper::createDKGPublicShares() {
+    return std::make_shared< std::vector< libff::alt_bn128_G2 > >(
         dkg_secret_ptr->getDKGTEPublicShares() );
 }
 
-TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare( size_t signerIndex_,
-    std::shared_ptr< std::vector< encryption::element_wrapper > > secret_shares_ptr ) {
+TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare(
+    size_t signerIndex_, std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr ) {
     if ( secret_shares_ptr == nullptr )
-        throw std::runtime_error( "Null secret_shares_ptr " );
+        throw crypto::ThresholdUtils::IncorrectInput( "Null secret_shares_ptr " );
     if ( secret_shares_ptr->size() != totalSigners )
-        throw std::runtime_error( "Wrong number of secret key parts " );
+        throw crypto::ThresholdUtils::IncorrectInput( "Wrong number of secret key parts " );
 
-    encryption::DkgTe dkg_te( requiredSigners, totalSigners );
+    crypto::Dkg dkg_te( requiredSigners, totalSigners );
 
-    encryption::element_wrapper skey_share = dkg_te.CreateSecretKeyShare( *secret_shares_ptr );
+    libff::alt_bn128_Fr skey_share = dkg_te.SecretKeyShareCreate( *secret_shares_ptr );
 
     return TEPrivateKeyShare( skey_share, signerIndex_, requiredSigners, totalSigners );
 }
 
 TEPublicKey DKGTEWrapper::CreateTEPublicKey(
-    std::shared_ptr< std::vector< std::vector< encryption::element_wrapper > > > public_shares_all,
+    std::shared_ptr< std::vector< std::vector< libff::alt_bn128_G2 > > > public_shares_all,
     size_t _requiredSigners, size_t _totalSigners ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( public_shares_all == nullptr )
-        throw std::runtime_error( "Null public shares all" );
+        throw crypto::ThresholdUtils::IncorrectInput( "Null public shares all" );
 
-    element_t public_key;
-    element_init_G1( public_key, TEDataSingleton::getData().pairing_ );
-    element_set0( public_key );
+    libff::alt_bn128_G2 public_key = libff::alt_bn128_G2::zero();
 
     for ( size_t i = 0; i < _totalSigners; i++ ) {
-        element_t temp;
-        element_init_G1( temp, TEDataSingleton::getData().pairing_ );
-        element_set( temp, public_shares_all->at( i ).at( 0 ).el_ );
-
-        element_t value;
-        element_init_G1( value, TEDataSingleton::getData().pairing_ );
-        element_add( value, public_key, temp );
-
-        element_clear( temp );
-        element_clear( public_key );
-        element_init_G1( public_key, TEDataSingleton::getData().pairing_ );
-
-        element_set( public_key, value );
-
-        element_clear( value );
+        public_key = public_key + public_shares_all->at( i ).at( 0 );
     }
 
-    TEPublicKey common_public(
-        encryption::element_wrapper( public_key ), _requiredSigners, _totalSigners );
-    element_clear( public_key );
+    TEPublicKey common_public( public_key, _requiredSigners, _totalSigners );
+
     return common_public;
 }

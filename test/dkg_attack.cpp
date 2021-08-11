@@ -2,7 +2,6 @@
 #include <bls/BLSSigShare.h>
 #include <bls/BLSSigShareSet.h>
 #include <bls/BLSSignature.h>
-#include <bls/BLSutils.h>
 #include <bls/bls.h>
 #include <dkg/DKGBLSWrapper.h>
 #include <dkg/dkg.h>
@@ -225,7 +224,7 @@ int main() {
     // // Construct the final signature
     // std::shared_ptr< BLSSignature > signature = signature_share_set.merge();
 
-    // std::cout << "isG2:" << signatures::Dkg::isG2( *( common_public_key.getPublicKey() ) );
+    // std::cout << "isG2:" << crypto::Dkg::isG2( *( common_public_key.getPublicKey() ) );
 
     // // This assertion will fail
     // assert( common_public_key.VerifySig( hash_ptr, signature, num_signed, num_all ) );

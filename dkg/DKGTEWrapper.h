@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file TEPrivateKeyShare.h
   @author Sveta Rogova
@@ -26,7 +26,7 @@
 #define LIBBLS_DKGTEWRAPPER_H
 
 #include <dkg/DKGTESecret.h>
-#include <dkg/dkg_te.h>
+#include <dkg/dkg.h>
 #include <threshold_encryption/TEPrivateKeyShare.h>
 
 class DKGTEWrapper {
@@ -39,21 +39,20 @@ private:
 public:
     DKGTEWrapper( size_t _requiredSigners, size_t _totalSigners );
 
-    bool VerifyDKGShare( size_t signerIndex, const encryption::element_wrapper& share,
-        const std::shared_ptr< std::vector< encryption::element_wrapper > >& verification_vector );
+    bool VerifyDKGShare( size_t signerIndex, const libff::alt_bn128_Fr& share,
+        std::shared_ptr< std::vector< libff::alt_bn128_G2 > > verification_vector );
 
-    void setDKGSecret( std::shared_ptr< std::vector< encryption::element_wrapper > >& _poly_ptr );
+    void setDKGSecret( std::shared_ptr< std::vector< libff::alt_bn128_Fr > > _poly_ptr );
 
-    std::shared_ptr< std::vector< encryption::element_wrapper > > createDKGSecretShares();
+    std::shared_ptr< std::vector< libff::alt_bn128_Fr > > createDKGSecretShares();
 
-    std::shared_ptr< std::vector< encryption::element_wrapper > > createDKGPublicShares();
+    std::shared_ptr< std::vector< libff::alt_bn128_G2 > > createDKGPublicShares();
 
     TEPrivateKeyShare CreateTEPrivateKeyShare( size_t signerIndex_,
-        std::shared_ptr< std::vector< encryption::element_wrapper > > secret_shares_ptr );
+        std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr );
 
     static TEPublicKey CreateTEPublicKey(
-        std::shared_ptr< std::vector< std::vector< encryption::element_wrapper > > >
-            public_shares_all,
+        std::shared_ptr< std::vector< std::vector< libff::alt_bn128_G2 > > > public_shares_all,
         size_t _requiredSigners, size_t _totalSigners );
 };
 

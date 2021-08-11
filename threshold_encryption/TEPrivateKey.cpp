@@ -14,7 +14,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 @file TEPublicKey.h
 @author Sveta Rogova
@@ -22,41 +22,41 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <threshold_encryption/TEPrivateKey.h>
-#include <threshold_encryption/utils.h>
+#include <tools/utils.h>
 
 TEPrivateKey::TEPrivateKey(
     std::shared_ptr< std::string > _key_str, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str ) {
-        throw std::runtime_error( "private key is null" );
+        throw crypto::ThresholdUtils::IncorrectInput( "private key is null" );
     }
 
-    element_t pkey;
-    element_init_Zr( pkey, TEDataSingleton::getData().pairing_ );
-    element_set_str( pkey, _key_str->c_str(), 10 );
-    privateKey = encryption::element_wrapper( pkey );
-    element_clear( pkey );
+    libff::init_alt_bn128_params();
 
-    if ( element_is0( privateKey.el_ ) ) {
-        throw std::runtime_error( " private key is zero" );
+    privateKey = libff::alt_bn128_Fr( _key_str->c_str() );
+
+    if ( privateKey.is_zero() ) {
+        throw crypto::ThresholdUtils::IsNotWellFormed( "private key is zero" );
     }
 }
 
 TEPrivateKey::TEPrivateKey(
-    encryption::element_wrapper _skey, size_t _requiredSigners, size_t _totalSigners )
+    libff::alt_bn128_Fr _skey, size_t _requiredSigners, size_t _totalSigners )
     : privateKey( _skey ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    TEDataSingleton::checkSigners( _requiredSigners, _totalSigners );
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    if ( element_is0( _skey.el_ ) )
-        throw std::runtime_error( " private key is zero" );
+    libff::init_alt_bn128_params();
+
+    if ( _skey.is_zero() )
+        throw crypto::ThresholdUtils::IsNotWellFormed( "private key is zero" );
 }
 
-std::string TEPrivateKey::toString() {
-    return ElementZrToString( privateKey.el_ );
+std::string TEPrivateKey::toString() const {
+    return crypto::ThresholdUtils::fieldElementToString( privateKey );
 }
 
-encryption::element_wrapper TEPrivateKey::getPrivateKey() const {
+libff::alt_bn128_Fr TEPrivateKey::getPrivateKey() const {
     return privateKey;
 }
