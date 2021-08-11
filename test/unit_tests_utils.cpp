@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_SUITE( TestAES )
 
 BOOST_AUTO_TEST_CASE( SimpleAES ) {
     const std::string message = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    const std::string key = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    const std::string key = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 
     auto ciphertext = crypto::ThresholdUtils::aesEncrypt( message, key );
     auto decrypted_text = crypto::ThresholdUtils::aesDecrypt( ciphertext, key );

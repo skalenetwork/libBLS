@@ -250,14 +250,14 @@ std::vector< uint8_t > ThresholdUtils::aesEncrypt(
     int actual_size = 0, final_size = 0;
     EVP_CIPHER_CTX* e_ctx = EVP_CIPHER_CTX_new();
     // EVP_CIPHER_CTX_ctrl(e_ctx, EVP_CTRL_GCM_SET_IVLEN, 16, NULL);
-    EVP_EncryptInit( e_ctx, EVP_aes_128_gcm(), ( const unsigned char* ) key.c_str(), iv );
-    EVP_EncryptUpdate( e_ctx, &output[32], &actual_size, ( const unsigned char* ) plaintext.data(),
+    EVP_EncryptInit( e_ctx, EVP_aes_256_gcm(), ( const unsigned char* ) key.c_str(), iv );
+    EVP_EncryptUpdate( e_ctx, &output[64], &actual_size, ( const unsigned char* ) plaintext.data(),
         plaintext.length() );
-    EVP_EncryptFinal( e_ctx, &output[32 + actual_size], &final_size );
+    EVP_EncryptFinal( e_ctx, &output[64 + actual_size], &final_size );
     EVP_CIPHER_CTX_ctrl( e_ctx, EVP_CTRL_GCM_GET_TAG, 16, tag );
     std::copy( tag, tag + 16, output.begin() );
     std::copy( iv, iv + 16, output.begin() + 16 );
-    output.resize( 32 + actual_size + final_size );
+    output.resize( 64 + actual_size + final_size );
     EVP_CIPHER_CTX_free( e_ctx );
     return output;
 }
@@ -275,9 +275,9 @@ std::string ThresholdUtils::aesDecrypt(
 
     int actual_size = 0, final_size = 0;
     EVP_CIPHER_CTX* d_ctx = EVP_CIPHER_CTX_new();
-    EVP_DecryptInit( d_ctx, EVP_aes_128_gcm(), ( const unsigned char* ) key.c_str(), iv );
+    EVP_DecryptInit( d_ctx, EVP_aes_256_gcm(), ( const unsigned char* ) key.c_str(), iv );
     EVP_DecryptUpdate(
-        d_ctx, &plaintext[0], &actual_size, &ciphertext[32], ciphertext.size() - 32 );
+        d_ctx, &plaintext[0], &actual_size, &ciphertext[64], ciphertext.size() - 64 );
     EVP_CIPHER_CTX_ctrl( d_ctx, EVP_CTRL_GCM_SET_TAG, 16, tag );
     EVP_DecryptFinal( d_ctx, &plaintext[actual_size], &final_size );
     EVP_CIPHER_CTX_free( d_ctx );
