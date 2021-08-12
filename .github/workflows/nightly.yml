@@ -65,6 +65,7 @@ jobs:
         cd build
         $NIGHTLY_BUILD_FLAGS ./bls_unit_test
         $NIGHTLY_BUILD_FLAGS ./dkg_unit_test
+        $NIGHTLY_BUILD_FLAGS ./utils_unit_test
         $NIGHTLY_BUILD_FLAGS ./bls_test
         $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_unit_test
         $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_test

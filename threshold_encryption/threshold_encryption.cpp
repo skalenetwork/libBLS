@@ -27,6 +27,8 @@
 
 #include <threshold_encryption.h>
 #include <tools/utils.h>
+
+#include <openssl/rand.h>
 #include <libff/common/profiling.hpp>
 
 namespace crypto {
@@ -112,6 +114,24 @@ Ciphertext TE::Encrypt( const std::string& message, const libff::alt_bn128_G2& c
     std::get< 2 >( result ) = W;
 
     return result;
+}
+
+std::pair< Ciphertext, std::vector< uint8_t > > TE::encryptWithAES(
+    const std::string& message, const libff::alt_bn128_G2& common_public ) {
+    ThresholdUtils::initAES();
+    unsigned char key_bytes[32];
+    RAND_bytes( key_bytes, sizeof( key_bytes ) );
+    std::string random_aes_key = std::string( ( char* ) key_bytes, sizeof( key_bytes ) );
+
+    auto encrypted_message = ThresholdUtils::aesEncrypt( message, random_aes_key );
+
+    auto ciphertext = this->Encrypt( random_aes_key, common_public );
+
+    auto U = std::get< 0 >( ciphertext );
+    auto V = std::get< 1 >( ciphertext );
+    auto W = std::get< 2 >( ciphertext );
+
+    return {{U, V, W}, encrypted_message};
 }
 
 libff::alt_bn128_G2 TE::getDecryptionShare(

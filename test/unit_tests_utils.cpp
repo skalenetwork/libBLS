@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE( wrongCiphertext ) {
     const std::string message = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
     auto ciphertext = crypto::ThresholdUtils::aesEncrypt( message, random_aes_key );
-    std::cout << ciphertext.size() << '\n';
+
     const std::string bad_message =
         "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
     auto bad_ciphertext = crypto::ThresholdUtils::aesEncrypt( bad_message, random_aes_key );

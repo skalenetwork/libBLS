@@ -44,6 +44,9 @@ public:
 
     Ciphertext Encrypt( const std::string& message, const libff::alt_bn128_G2& common_public );
 
+    std::pair< Ciphertext, std::vector< uint8_t > > encryptWithAES(
+        const std::string& message, const libff::alt_bn128_G2& common_public );
+
     libff::alt_bn128_G2 getDecryptionShare(
         const Ciphertext& ciphertext, const libff::alt_bn128_Fr& secret_key );
 
