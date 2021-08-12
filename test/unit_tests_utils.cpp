@@ -30,6 +30,8 @@
 
 #include <tools/utils.h>
 
+#include <openssl/rand.h>
+
 
 #define BOOST_TEST_MODULE
 
@@ -104,13 +106,55 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE( TestAES )
 
 BOOST_AUTO_TEST_CASE( SimpleAES ) {
-    const std::string message = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    const std::string key = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    crypto::ThresholdUtils::initAES();
+    unsigned char key_bytes[32];
+    RAND_bytes( key_bytes, sizeof( key_bytes ) );
+    std::string random_aes_key = std::string( ( char* ) key_bytes, sizeof( key_bytes ) );
 
-    auto ciphertext = crypto::ThresholdUtils::aesEncrypt( message, key );
-    auto decrypted_text = crypto::ThresholdUtils::aesDecrypt( ciphertext, key );
+    const std::string message = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+    auto ciphertext = crypto::ThresholdUtils::aesEncrypt( message, random_aes_key );
+    auto decrypted_text = crypto::ThresholdUtils::aesDecrypt( ciphertext, random_aes_key );
 
     BOOST_REQUIRE( decrypted_text == message );
+}
+
+BOOST_AUTO_TEST_CASE( wrongCiphertext ) {
+    crypto::ThresholdUtils::initAES();
+    unsigned char key_bytes[32];
+    RAND_bytes( key_bytes, sizeof( key_bytes ) );
+    std::string random_aes_key = std::string( ( char* ) key_bytes, sizeof( key_bytes ) );
+
+    const std::string message = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+    auto ciphertext = crypto::ThresholdUtils::aesEncrypt( message, random_aes_key );
+    std::cout << ciphertext.size() << '\n';
+    const std::string bad_message =
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    auto bad_ciphertext = crypto::ThresholdUtils::aesEncrypt( bad_message, random_aes_key );
+
+    auto decrypted_text = crypto::ThresholdUtils::aesDecrypt( bad_ciphertext, random_aes_key );
+
+    BOOST_REQUIRE( decrypted_text != message );
+}
+
+BOOST_AUTO_TEST_CASE( wrongKey ) {
+    crypto::ThresholdUtils::initAES();
+    unsigned char key_bytes[32];
+    RAND_bytes( key_bytes, sizeof( key_bytes ) );
+    std::string random_aes_key = std::string( ( char* ) key_bytes, sizeof( key_bytes ) );
+
+    const std::string message = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+    auto ciphertext = crypto::ThresholdUtils::aesEncrypt( message, random_aes_key );
+
+    unsigned char bad_key_bytes[32];
+    RAND_bytes( bad_key_bytes, sizeof( bad_key_bytes ) );
+    std::string bad_key = std::string( ( char* ) bad_key_bytes, sizeof( bad_key_bytes ) );
+
+    auto decrypted_text = crypto::ThresholdUtils::aesDecrypt( ciphertext, bad_key );
+
+    BOOST_REQUIRE( decrypted_text != message );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
