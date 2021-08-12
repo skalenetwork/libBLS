@@ -87,7 +87,13 @@ public:
     static libff::alt_bn128_G1 HashtoG1(
         std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
 
-    static bool isStringNumber( std::string& str );
+    static bool isStringNumber( const std::string& str );
+
+    static std::string carray2Hex( const unsigned char* d, uint64_t len );
+
+    static int char2int( char _input );
+
+    static bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin );
 
     static void checkCypher(
         const std::tuple< libff::alt_bn128_G2, std::string, libff::alt_bn128_G1 >& cypher );
@@ -99,7 +105,7 @@ public:
         const std::shared_ptr< std::string >, const std::string& delim );
 
     template < class T >
-    static std::string fieldElementToString( const T& field_elem );
+    static std::string fieldElementToString( const T& field_elem, int base = 10 );
 
     static std::vector< uint8_t > aesEncrypt( const std::string& message, const std::string& key );
 
@@ -108,15 +114,15 @@ public:
 };
 
 template < class T >
-std::string ThresholdUtils::fieldElementToString( const T& field_elem ) {
+std::string ThresholdUtils::fieldElementToString( const T& field_elem, int base ) {
     mpz_t t;
     mpz_init( t );
 
     field_elem.as_bigint().to_mpz( t );
 
-    char arr[mpz_sizeinbase( t, 10 ) + 2];
+    char arr[mpz_sizeinbase( t, base ) + 2];
 
-    char* tmp = mpz_get_str( arr, 10, t );
+    char* tmp = mpz_get_str( arr, base, t );
     mpz_clear( t );
 
     std::string output = tmp;
