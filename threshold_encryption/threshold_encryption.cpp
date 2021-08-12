@@ -82,7 +82,7 @@ Ciphertext TE::Encrypt( const std::string& message, const libff::alt_bn128_G2& c
     U = r * libff::alt_bn128_G2::one();
     Y = r * common_public;
 
-    std::string hash = this->Hash( Y );
+    std::string hash = Hash( Y );
 
     size_t size = std::max( message.size(), hash.size() );
     std::valarray< uint8_t > lhs_to_hash( size );
@@ -105,7 +105,7 @@ Ciphertext TE::Encrypt( const std::string& message, const libff::alt_bn128_G2& c
 
     libff::alt_bn128_G1 W, H;
 
-    H = this->HashToGroup( U, V );
+    H = HashToGroup( U, V );
     W = r * H;
 
     Ciphertext result;
@@ -125,7 +125,7 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::encryptWithAES(
 
     auto encrypted_message = ThresholdUtils::aesEncrypt( message, random_aes_key );
 
-    auto ciphertext = this->Encrypt( random_aes_key, common_public );
+    auto ciphertext = Encrypt( random_aes_key, common_public );
 
     auto U = std::get< 0 >( ciphertext );
     auto V = std::get< 1 >( ciphertext );
@@ -146,7 +146,7 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
 
     libff::alt_bn128_G1 W = std::get< 2 >( ciphertext );
 
-    libff::alt_bn128_G1 H = this->HashToGroup( U, V );
+    libff::alt_bn128_G1 H = HashToGroup( U, V );
 
     libff::alt_bn128_GT fst, snd;
     fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
@@ -171,7 +171,7 @@ bool TE::Verify( const Ciphertext& ciphertext, const libff::alt_bn128_G2& decryp
 
     libff::alt_bn128_G1 W = std::get< 2 >( ciphertext );
 
-    libff::alt_bn128_G1 H = this->HashToGroup( U, V );
+    libff::alt_bn128_G1 H = HashToGroup( U, V );
 
     libff::alt_bn128_GT fst, snd;
     fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );

@@ -42,21 +42,22 @@ public:
 
     ~TE();
 
-    Ciphertext Encrypt( const std::string& message, const libff::alt_bn128_G2& common_public );
-
-    std::pair< Ciphertext, std::vector< uint8_t > > encryptWithAES(
+    static Ciphertext Encrypt(
         const std::string& message, const libff::alt_bn128_G2& common_public );
 
-    libff::alt_bn128_G2 getDecryptionShare(
+    static std::pair< Ciphertext, std::vector< uint8_t > > encryptWithAES(
+        const std::string& message, const libff::alt_bn128_G2& common_public );
+
+    static libff::alt_bn128_G2 getDecryptionShare(
         const Ciphertext& ciphertext, const libff::alt_bn128_Fr& secret_key );
 
-    libff::alt_bn128_G1 HashToGroup( const libff::alt_bn128_G2& U, const std::string& V,
+    static libff::alt_bn128_G1 HashToGroup( const libff::alt_bn128_G2& U, const std::string& V,
         std::string ( *hash_func )( const std::string& str ) = cryptlite::sha256::hash_hex );
 
-    std::string Hash( const libff::alt_bn128_G2& Y,
+    static std::string Hash( const libff::alt_bn128_G2& Y,
         std::string ( *hash_func )( const std::string& str ) = cryptlite::sha256::hash_hex );
 
-    bool Verify( const Ciphertext& ciphertext, const libff::alt_bn128_G2& decryptionShare,
+    static bool Verify( const Ciphertext& ciphertext, const libff::alt_bn128_G2& decryptionShare,
         const libff::alt_bn128_G2& public_key );
 
     std::string CombineShares( const Ciphertext& ciphertext,
