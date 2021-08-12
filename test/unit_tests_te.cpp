@@ -104,7 +104,13 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongKey ) {
     auto ciphertext_with_aes = te_instance.encryptWithAES( message, public_key );
 
     auto ciphertext = ciphertext_with_aes.first;
+    // std::cout << "CIPHER: " << std::get<1>(ciphertext) << '\n';
     auto encrypted_message = ciphertext_with_aes.second;
+    // for (const auto& it: encrypted_message) {
+    //     std::cout << it << ' ';
+    // }
+    // std::cout << encrypted_message.size();
+    // std::cout << std::endl;
 
     libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
 

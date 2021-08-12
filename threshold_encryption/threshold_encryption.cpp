@@ -40,6 +40,15 @@ TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {
 
 TE::~TE() {}
 
+void TE::checkCypher(
+    const std::tuple< libff::alt_bn128_G2, std::string, libff::alt_bn128_G1 >& cyphertext ) {
+    if ( std::get< 0 >( cyphertext ).is_zero() || std::get< 2 >( cyphertext ).is_zero() )
+        throw ThresholdUtils::IncorrectInput( "zero element in cyphertext" );
+
+    if ( std::get< 1 >( cyphertext ).length() != 64 )
+        throw ThresholdUtils::IncorrectInput( "wrong string length in cyphertext" );
+}
+
 std::string TE::Hash(
     const libff::alt_bn128_G2& Y, std::string ( *hash_func )( const std::string& str ) ) {
     auto vectorCoordinates = ThresholdUtils::G2ToString( Y );
@@ -136,7 +145,7 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::encryptWithAES(
 
 libff::alt_bn128_G2 TE::getDecryptionShare(
     const Ciphertext& ciphertext, const libff::alt_bn128_Fr& secret_key ) {
-    ThresholdUtils::checkCypher( ciphertext );
+    checkCypher( ciphertext );
     if ( secret_key.is_zero() )
         throw ThresholdUtils::ZeroSecretKey( "zero secret key" );
 
@@ -256,6 +265,35 @@ std::string TE::CombineShares( const Ciphertext& ciphertext,
     }
 
     return message;
+}
+
+static std::string aesCiphertextToString( const Ciphertext& cipher, const std::vector<uint8_t>& data ) {
+    auto U = std::get<0>( cipher );
+    auto V = std::get<1>( cipher );
+    auto W = std::get<2>( cipher );
+
+    std::string encrypted_data = ThresholdUtils::carray2Hex( data.data(), data.size() );
+
+    auto str = ThresholdUtils::G2ToString( U );
+    std::string u_str = "";
+    for (auto& elem : str) {
+        while ( elem.size() < 64 ) {
+            elem = "0" + elem;
+        }
+        u_str += elem;
+    }
+
+    std::string v_str;
+
+    W.to_affine_coordinates();
+    std::string w_str = ThresholdUtils::fieldElementToString( W.X );
+    while ( w_str.size() < 64 ) {
+        w_str = "0" + w_str;
+    }
+}
+
+static std::pair<Ciphertext, std::vector<uint8_t>> aesCiphertextFromString( const std::string& str ) {
+
 }
 
 }  // namespace crypto

@@ -98,7 +98,7 @@ crypto::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_ptr 
     }
 
     crypto::Ciphertext cypher = te.Encrypt( *mes_ptr, PublicKey );
-    crypto::ThresholdUtils::checkCypher( cypher );
+    crypto::TE::checkCypher( cypher );
 
     return std::make_tuple(
         std::get< 0 >( cypher ), std::get< 1 >( cypher ), std::get< 2 >( cypher ) );

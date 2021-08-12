@@ -223,15 +223,6 @@ bool ThresholdUtils::hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* 
     return true;
 }
 
-void ThresholdUtils::checkCypher(
-    const std::tuple< libff::alt_bn128_G2, std::string, libff::alt_bn128_G1 >& cyphertext ) {
-    if ( std::get< 0 >( cyphertext ).is_zero() || std::get< 2 >( cyphertext ).is_zero() )
-        throw IncorrectInput( "zero element in cyphertext" );
-
-    if ( std::get< 1 >( cyphertext ).length() != 64 )
-        throw IncorrectInput( "wrong string length in cyphertext" );
-}
-
 std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ThresholdUtils::ParseHint(
     const std::string& _hint ) {
     auto position = _hint.find( ":" );

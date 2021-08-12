@@ -68,15 +68,13 @@ public:
         }
     };
 
+    static std::atomic< bool > is_initialized;
+
     static void initCurve();
 
     static void initAES();
 
-    static std::atomic< bool > is_initialized;
-
     static void checkSigners( size_t _requiredSigners, size_t _totalSigners );
-
-    static std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem );
 
     static std::vector< libff::alt_bn128_Fr > LagrangeCoeffs(
         const std::vector< size_t >& idx, size_t t );
@@ -86,17 +84,19 @@ public:
 
     static libff::alt_bn128_G1 HashtoG1(
         std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
+    
+    static std::vector< uint8_t > aesEncrypt( const std::string& message, const std::string& key );
+
+    static std::string aesDecrypt(
+        const std::vector< uint8_t >& ciphertext, const std::string& key );
 
     static bool isStringNumber( const std::string& str );
 
-    static std::string carray2Hex( const unsigned char* d, uint64_t len );
-
     static int char2int( char _input );
 
-    static bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin );
+    static std::string carray2Hex( const unsigned char* d, uint64_t len );
 
-    static void checkCypher(
-        const std::tuple< libff::alt_bn128_G2, std::string, libff::alt_bn128_G1 >& cypher );
+    static bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin );
 
     static std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ParseHint(
         const std::string& hint );
@@ -107,10 +107,7 @@ public:
     template < class T >
     static std::string fieldElementToString( const T& field_elem, int base = 10 );
 
-    static std::vector< uint8_t > aesEncrypt( const std::string& message, const std::string& key );
-
-    static std::string aesDecrypt(
-        const std::vector< uint8_t >& ciphertext, const std::string& key );
+    static std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem );
 };
 
 template < class T >
