@@ -81,7 +81,8 @@ BOOST_AUTO_TEST_CASE( SimpleEncryptionWithAES ) {
 
     std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
 
-    std::string plaintext = crypto::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
+    std::string plaintext =
+        crypto::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
 
     BOOST_REQUIRE( plaintext == message );
 }
