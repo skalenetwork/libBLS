@@ -262,7 +262,6 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
             public_shares_all.push_back( *public_shares_ptr );
         }
 
-
         for ( size_t i = 0; i < num_all; i++ )
             for ( size_t j = 0; j < num_all; j++ ) {
                 BOOST_REQUIRE( dkgs.at( i ).VerifyDKGShare( j, secret_shares_all.at( i ).at( j ),
@@ -287,32 +286,6 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
             skeys.push_back( pkey_share );
             pkeys.push_back( TEPublicKeyShare( pkey_share, num_signed, num_all ) );
         }
-
-        /* element_t public_key;
-         element_init_G1(public_key, TEDataSingleton::getData().pairing_);
-         element_set0(public_key);
-
-         for (size_t i = 0; i < num_all; i++) {
-
-           element_t temp;
-           element_init_G1(temp, TEDataSingleton::getData().pairing_);
-           element_set(temp, public_shares_all.at(i).at(0).el_);
-
-           element_t value;
-           element_init_G1(value, TEDataSingleton::getData().pairing_);
-           element_add(value, public_key, temp);
-
-           element_clear(temp);
-           element_clear(public_key);
-           element_init_G1(public_key, TEDataSingleton::getData().pairing_);
-
-           element_set(public_key, value);
-
-           element_clear(value);
-         }
-
-         TEPublicKey common_public(crypto::element_wrapper(public_key), num_signed, num_all);
-         element_clear(public_key);*/
 
         TEPublicKey common_public = DKGTEWrapper::CreateTEPublicKey(
             std::make_shared< std::vector< std::vector< libff::alt_bn128_G2 > > >(
@@ -366,7 +339,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         crypto::ThresholdUtils::IncorrectInput );
 
     {
-        // 1 coord of public key share is not digit
+        // 1 coord of public key share is not a number
         std::vector< std::string > pkey_str( {"123", "abc"} );
         BOOST_REQUIRE_THROW(
             TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
@@ -375,12 +348,12 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
     }
 
     {
-        // zero public key share
-        std::vector< std::string > pkey_str( {"0", "0"} );
+        // wrong formated public key share
+        std::vector< std::string > pkey_str( {"0", "0", "0", "0"} );
         BOOST_REQUIRE_THROW(
             TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
                 num_signed, num_all ),
-            crypto::ThresholdUtils::IncorrectInput );
+            crypto::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -583,10 +556,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
     {
         // null element in decrypt set
         TEDecryptSet decr_set( num_signed, num_all );
-        libff::alt_bn128_G2 el1 = libff::alt_bn128_G2::zero();
 
-        auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
-        el_ptr1 = nullptr;
+        std::shared_ptr< libff::alt_bn128_G2 > el_ptr1 = nullptr;
         BOOST_REQUIRE_THROW(
             decr_set.addDecrypt( 1, el_ptr1 ), crypto::ThresholdUtils::IncorrectInput );
     }
