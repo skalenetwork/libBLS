@@ -139,6 +139,39 @@ bool BLSPublicKey::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32
         libff::alt_bn128_ate_reduced_pairing( hash, *libffPublicKey ) );
 }
 
+bool BLSPublicKey::AggregateVerifySig(
+    std::vector< std::shared_ptr< std::array< uint8_t, 32 > > >& hash_ptr_vec,
+    std::vector< std::shared_ptr< BLSSignature > >& sign_ptr_vec, size_t _requiredSigners,
+    size_t _totalSigners ) {
+    crypto::ThresholdUtils::initCurve();
+
+    std::shared_ptr< crypto::Bls > obj;
+    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+
+    for ( auto& hash_ptr : hash_ptr_vec ) {
+        if ( !hash_ptr ) {
+            throw crypto::ThresholdUtils::IncorrectInput( "hash is null" );
+        }
+    }
+
+    std::vector< libff::alt_bn128_G1 > libff_sig_vec;
+    libff_sig_vec.reserve( sign_ptr_vec.size() );
+
+    for ( auto& sign_ptr : sign_ptr_vec ) {
+        if ( !sign_ptr || sign_ptr->getSig()->is_zero() ) {
+            throw crypto::ThresholdUtils::IsNotWellFormed(
+                "Sig share is equal to zero or corrupt" );
+        }
+
+        libff_sig_vec.push_back( *( sign_ptr->getSig() ) );
+    }
+
+    obj = std::make_shared< crypto::Bls >( crypto::Bls( _requiredSigners, _totalSigners ) );
+
+    bool res = obj->AggregatedVerification( hash_ptr_vec, libff_sig_vec, *libffPublicKey );
+    return res;
+}
+
 BLSPublicKey::BLSPublicKey(
     std::shared_ptr< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > > koefs_pkeys_map,
     size_t _requiredSigners, size_t _totalSigners )

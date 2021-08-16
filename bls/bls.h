@@ -65,6 +65,10 @@ public:
     static bool Verification( std::shared_ptr< std::array< uint8_t, 32 > >,
         const libff::alt_bn128_G1 sign, const libff::alt_bn128_G2 public_key );
 
+    static bool AggregatedVerification(
+        std::vector< std::shared_ptr< std::array< uint8_t, 32 > > > hash_byte_arr,
+        const std::vector< libff::alt_bn128_G1 > sign, const libff::alt_bn128_G2 public_key );
+
     std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > KeysRecover(
         const std::vector< libff::alt_bn128_Fr >& coeffs,
         const std::vector< libff::alt_bn128_Fr >& shares );
