@@ -205,8 +205,9 @@ BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackTooShort ) {
 
     auto ciphertext_with_aes = crypto::TE::encryptWithAES( message, public_key );
 
-    auto str =
-        crypto::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second );
+    // auto str =
+    //     crypto::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second
+    //     );
 
     BOOST_REQUIRE_THROW( crypto::TE::aesCiphertextFromString( "acefbdg11356" ),
         crypto::ThresholdUtils::IncorrectInput );

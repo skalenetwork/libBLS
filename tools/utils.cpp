@@ -308,6 +308,7 @@ void ThresholdUtils::initAES() {
 
         // initialize random number generator (for IVs)
         RAND_load_file( "/dev/urandom", 32 );
+        ++init;
     }
 }
 
