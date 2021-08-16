@@ -195,15 +195,16 @@ BOOST_AUTO_TEST_CASE( ConvertionToStringAndBack ) {
 BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackTooShort ) {
     crypto::ThresholdUtils::initCurve();
 
-    std::string message =
-        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
-                                                                             // length
+    // std::string message =
+    //     "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be
+    //     64
+    //                                                                          // length
 
-    libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
+    // libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
 
-    libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
+    // libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
 
-    auto ciphertext_with_aes = crypto::TE::encryptWithAES( message, public_key );
+    // auto ciphertext_with_aes = crypto::TE::encryptWithAES( message, public_key );
 
     // auto str =
     //     crypto::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second
@@ -216,18 +217,20 @@ BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackTooShort ) {
 BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackNonHex ) {
     crypto::ThresholdUtils::initCurve();
 
-    std::string message =
-        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
-                                                                             // length
+    // std::string message =
+    //     "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be
+    //     64
+    //                                                                          // length
 
-    libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
+    // libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
 
-    libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
+    // libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
 
-    auto ciphertext_with_aes = crypto::TE::encryptWithAES( message, public_key );
+    // auto ciphertext_with_aes = crypto::TE::encryptWithAES( message, public_key );
 
-    auto str =
-        crypto::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second );
+    // auto str =
+    //     crypto::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second
+    //     );
 
     BOOST_REQUIRE_THROW(
         crypto::TE::aesCiphertextFromString( "qwerty" ), crypto::ThresholdUtils::IncorrectInput );
