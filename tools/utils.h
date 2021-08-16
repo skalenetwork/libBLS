@@ -84,7 +84,7 @@ public:
 
     static libff::alt_bn128_G1 HashtoG1(
         std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
-    
+
     static std::vector< uint8_t > aesEncrypt( const std::string& message, const std::string& key );
 
     static std::string aesDecrypt(
@@ -107,7 +107,11 @@ public:
     template < class T >
     static std::string fieldElementToString( const T& field_elem, int base = 10 );
 
-    static std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem );
+    static std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem, int base = 10 );
+
+    static std::string convertHexToDec( const std::string& hex_str );
+
+    static bool checkHex( const std::string& hex );
 };
 
 template < class T >

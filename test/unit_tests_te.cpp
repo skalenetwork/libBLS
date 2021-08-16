@@ -164,6 +164,80 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongCiphertext ) {
     BOOST_REQUIRE( plaintext != message );
 }
 
+BOOST_AUTO_TEST_CASE( ConvertionToStringAndBack ) {
+    crypto::ThresholdUtils::initCurve();
+
+    std::string message =
+        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
+                                                                             // length
+
+    libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
+
+    libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
+
+    auto ciphertext_with_aes = crypto::TE::encryptWithAES( message, public_key );
+
+    auto str =
+        crypto::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second );
+
+    auto ciphertext_from_string = crypto::TE::aesCiphertextFromString( str );
+    auto V_old = std::get< 1 >( ciphertext_with_aes.first );
+    auto V_new = std::get< 1 >( ciphertext_from_string.first );
+
+    auto W_old = std::get< 2 >( ciphertext_with_aes.first );
+    auto W_new = std::get< 2 >( ciphertext_from_string.first );
+
+    auto U_old = std::get< 0 >( ciphertext_with_aes.first );
+    auto U_new = std::get< 0 >( ciphertext_from_string.first );
+
+    BOOST_REQUIRE( U_old == U_new );
+    BOOST_REQUIRE( W_old == W_new );
+    BOOST_REQUIRE( V_old == V_new );
+    BOOST_REQUIRE( ciphertext_with_aes.first == ciphertext_from_string.first );
+    BOOST_REQUIRE( ciphertext_with_aes.second.size() == ciphertext_from_string.second.size() );
+    BOOST_REQUIRE( ciphertext_with_aes == ciphertext_from_string );
+}
+
+BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackTooShort ) {
+    crypto::ThresholdUtils::initCurve();
+
+    std::string message =
+        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
+                                                                             // length
+
+    libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
+
+    libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
+
+    auto ciphertext_with_aes = crypto::TE::encryptWithAES( message, public_key );
+
+    auto str =
+        crypto::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second );
+
+    BOOST_REQUIRE_THROW( crypto::TE::aesCiphertextFromString( "acefbdg11356" ),
+        crypto::ThresholdUtils::IncorrectInput );
+}
+
+BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackNonHex ) {
+    crypto::ThresholdUtils::initCurve();
+
+    std::string message =
+        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
+                                                                             // length
+
+    libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
+
+    libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
+
+    auto ciphertext_with_aes = crypto::TE::encryptWithAES( message, public_key );
+
+    auto str =
+        crypto::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second );
+
+    BOOST_REQUIRE_THROW(
+        crypto::TE::aesCiphertextFromString( "qwerty" ), crypto::ThresholdUtils::IncorrectInput );
+}
+
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
     crypto::TE obj = crypto::TE( 11, 16 );
 

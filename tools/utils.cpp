@@ -59,17 +59,45 @@ void ThresholdUtils::checkSigners( size_t _requiredSigners, size_t _totalSigners
     }
 }
 
-std::vector< std::string > ThresholdUtils::G2ToString( libff::alt_bn128_G2 elem ) {
+std::vector< std::string > ThresholdUtils::G2ToString( libff::alt_bn128_G2 elem, int base ) {
     std::vector< std::string > pkey_str_vect;
 
     elem.to_affine_coordinates();
 
-    pkey_str_vect.push_back( fieldElementToString( elem.X.c0 ) );
-    pkey_str_vect.push_back( fieldElementToString( elem.X.c1 ) );
-    pkey_str_vect.push_back( fieldElementToString( elem.Y.c0 ) );
-    pkey_str_vect.push_back( fieldElementToString( elem.Y.c1 ) );
+    pkey_str_vect.push_back( fieldElementToString( elem.X.c0, base ) );
+    pkey_str_vect.push_back( fieldElementToString( elem.X.c1, base ) );
+    pkey_str_vect.push_back( fieldElementToString( elem.Y.c0, base ) );
+    pkey_str_vect.push_back( fieldElementToString( elem.Y.c1, base ) );
 
     return pkey_str_vect;
+}
+
+std::string ThresholdUtils::convertHexToDec( const std::string& hex_str ) {
+    mpz_t dec;
+    mpz_init( dec );
+
+    std::string output;
+
+    try {
+        if ( mpz_set_str( dec, hex_str.c_str(), 16 ) == -1 ) {
+            mpz_clear( dec );
+            throw IsNotWellFormed( "Bad formatted hex string provided" );
+        }
+
+        char arr[mpz_sizeinbase( dec, 10 ) + 2];
+        char* tmp = mpz_get_str( arr, 10, dec );
+        mpz_clear( dec );
+
+        output = tmp;
+    } catch ( std::exception& e ) {
+        mpz_clear( dec );
+        throw IsNotWellFormed( e.what() );
+    } catch ( ... ) {
+        mpz_clear( dec );
+        throw IsNotWellFormed( "Exception in convert hex to dec" );
+    }
+
+    return output;
 }
 
 std::vector< libff::alt_bn128_Fr > ThresholdUtils::LagrangeCoeffs(
@@ -209,8 +237,9 @@ int ThresholdUtils::char2int( char _input ) {
 bool ThresholdUtils::hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin ) {
     int len = strnlen( _hex, 2 * 1024 );
 
-    if ( len % 2 == 1 )
+    if ( len % 2 == 1 ) {
         return false;
+    }
     *_bin_len = len / 2;
     for ( int i = 0; i < len / 2; i++ ) {
         int high = char2int( ( char ) _hex[i * 2] );
@@ -220,6 +249,19 @@ bool ThresholdUtils::hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* 
         }
         _bin[i] = ( unsigned char ) ( high * 16 + low );
     }
+    return true;
+}
+
+bool ThresholdUtils::checkHex( const std::string& hex ) {
+    mpz_t num;
+    mpz_init( num );
+
+    if ( mpz_set_str( num, hex.c_str(), 16 ) == -1 ) {
+        mpz_clear( num );
+        return false;
+    }
+    mpz_clear( num );
+
     return true;
 }
 

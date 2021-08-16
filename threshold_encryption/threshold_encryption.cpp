@@ -267,33 +267,99 @@ std::string TE::CombineShares( const Ciphertext& ciphertext,
     return message;
 }
 
-static std::string aesCiphertextToString( const Ciphertext& cipher, const std::vector<uint8_t>& data ) {
-    auto U = std::get<0>( cipher );
-    auto V = std::get<1>( cipher );
-    auto W = std::get<2>( cipher );
+std::string TE::aesCiphertextToString(
+    const Ciphertext& cipher, const std::vector< uint8_t >& data ) {
+    ThresholdUtils::initCurve();
+    ThresholdUtils::initAES();
+
+    auto U = std::get< 0 >( cipher );
+    auto V = std::get< 1 >( cipher );
+    auto W = std::get< 2 >( cipher );
+
+    std::string v_str = ThresholdUtils::carray2Hex( ( unsigned char* ) ( V.data() ), V.size() );
 
     std::string encrypted_data = ThresholdUtils::carray2Hex( data.data(), data.size() );
 
-    auto str = ThresholdUtils::G2ToString( U );
+    auto str = ThresholdUtils::G2ToString( U, 16 );
     std::string u_str = "";
-    for (auto& elem : str) {
+    for ( auto& elem : str ) {
         while ( elem.size() < 64 ) {
             elem = "0" + elem;
         }
         u_str += elem;
     }
 
-    std::string v_str;
-
     W.to_affine_coordinates();
-    std::string w_str = ThresholdUtils::fieldElementToString( W.X );
-    while ( w_str.size() < 64 ) {
-        w_str = "0" + w_str;
+    std::string x = ThresholdUtils::fieldElementToString( W.X, 16 );
+    while ( x.size() < 64 ) {
+        x = "0" + x;
     }
+
+    std::string y = ThresholdUtils::fieldElementToString( W.Y, 16 );
+    while ( y.size() < 64 ) {
+        y = "0" + y;
+    }
+
+    std::string w_str = x + y;
+
+    return u_str + v_str + w_str + encrypted_data;
 }
 
-static std::pair<Ciphertext, std::vector<uint8_t>> aesCiphertextFromString( const std::string& str ) {
+std::pair< Ciphertext, std::vector< uint8_t > > TE::aesCiphertextFromString(
+    const std::string& str ) {
+    ThresholdUtils::initCurve();
+    ThresholdUtils::initAES();
 
+    if ( !ThresholdUtils::checkHex( str ) ) {
+        throw ThresholdUtils::IncorrectInput( "Provided string contains non-hex symbols" );
+    }
+
+    if ( str.size() < 256 + 129 + 128 + 1 ) {
+        throw ThresholdUtils::IncorrectInput(
+            "Incoming string to short to convert to aes ciphertext" );
+    }
+
+    std::string u_str = str.substr( 0, 256 );
+    std::string v_str = str.substr( 256, 129 );
+    std::string w_str = str.substr( 256 + 129, 128 );
+
+    std::string encrypted_data = str.substr( 256 + 129 + 128, std::string::npos );
+
+    uint64_t bin_len;
+    std::vector< uint8_t > aes_cipher( encrypted_data.size() / 2 );
+    if ( !ThresholdUtils::hex2carray( encrypted_data.data(), &bin_len, &aes_cipher[0] ) ) {
+        throw ThresholdUtils::IncorrectInput( "Bad aes_cipher provided" );
+    }
+
+    std::vector< std::string > coords_u( 4 );
+    coords_u[0] = u_str.substr( 0, 64 );
+    coords_u[1] = u_str.substr( 64, 64 );
+    coords_u[2] = u_str.substr( 128, 64 );
+    coords_u[3] = u_str.substr( 192, std::string::npos );
+
+    libff::alt_bn128_G2 U;
+    U.Z = libff::alt_bn128_Fq2::one();
+    U.X.c0 = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( coords_u[0] ).c_str() );
+    U.X.c1 = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( coords_u[1] ).c_str() );
+    U.Y.c0 = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( coords_u[2] ).c_str() );
+    U.Y.c1 = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( coords_u[3] ).c_str() );
+
+    std::vector< std::string > coords_w( 2 );
+    coords_w[0] = w_str.substr( 0, 64 );
+    coords_w[1] = w_str.substr( 64, std::string::npos );
+
+    libff::alt_bn128_G1 W;
+    W.Z = libff::alt_bn128_Fq::one();
+    W.X = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( coords_w[0] ).c_str() );
+    W.Y = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( coords_w[1] ).c_str() );
+
+    std::string V;
+    V.resize( ( v_str.size() - 1 ) / 2 );
+    if ( !ThresholdUtils::hex2carray( v_str.data(), &bin_len, ( unsigned char* ) &V[0] ) ) {
+        throw ThresholdUtils::IncorrectInput( "Bad encrypted aes key provided" );
+    }
+
+    return {{U, V, W}, aes_cipher};
 }
 
 }  // namespace crypto
