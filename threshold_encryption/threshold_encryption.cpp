@@ -80,7 +80,8 @@ libff::alt_bn128_G1 TE::HashToGroup( const libff::alt_bn128_G2& U, const std::st
     return ThresholdUtils::HashtoG1( hash_bytes_arr );
 }
 
-Ciphertext TE::Encrypt( const std::string& message, const libff::alt_bn128_G2& common_public ) {
+Ciphertext TE::getCiphertext(
+    const std::string& message, const libff::alt_bn128_G2& common_public ) {
     libff::alt_bn128_Fr r = libff::alt_bn128_Fr::random_element();
 
     while ( r.is_zero() ) {
@@ -134,13 +135,19 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::encryptWithAES(
 
     auto encrypted_message = ThresholdUtils::aesEncrypt( message, random_aes_key );
 
-    auto ciphertext = Encrypt( random_aes_key, common_public );
+    auto ciphertext = getCiphertext( random_aes_key, common_public );
 
     auto U = std::get< 0 >( ciphertext );
     auto V = std::get< 1 >( ciphertext );
     auto W = std::get< 2 >( ciphertext );
 
     return {{U, V, W}, encrypted_message};
+}
+
+std::string TE::encryptMessage(
+    const std::string& message, const libff::alt_bn128_G2& common_public ) {
+    auto ciphertext_with_aes = encryptWithAES( message, common_public );
+    return aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second );
 }
 
 libff::alt_bn128_G2 TE::getDecryptionShare(

@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE( SimpleEncryption ) {
 
     libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
 
-    auto ciphertext = te_instance.Encrypt( message, public_key );
+    auto ciphertext = te_instance.getCiphertext( message, public_key );
 
     libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
 
@@ -104,13 +104,7 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongKey ) {
     auto ciphertext_with_aes = te_instance.encryptWithAES( message, public_key );
 
     auto ciphertext = ciphertext_with_aes.first;
-    // std::cout << "CIPHER: " << std::get<1>(ciphertext) << '\n';
     auto encrypted_message = ciphertext_with_aes.second;
-    // for (const auto& it: encrypted_message) {
-    //     std::cout << it << ' ';
-    // }
-    // std::cout << encrypted_message.size();
-    // std::cout << std::endl;
 
     libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
 
@@ -238,6 +232,39 @@ BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackNonHex ) {
         crypto::TE::aesCiphertextFromString( "qwerty" ), crypto::ThresholdUtils::IncorrectInput );
 }
 
+BOOST_AUTO_TEST_CASE( EncryptionCipherToString ) {
+    crypto::TE te_instance = crypto::TE( 1, 1 );
+
+    std::string message =
+        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
+                                                                             // length
+
+    libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
+
+    libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
+
+    auto ciphertext_string = te_instance.encryptMessage( message, public_key );
+
+    auto ciphertext_with_aes = te_instance.aesCiphertextFromString( ciphertext_string );
+
+    auto ciphertext = ciphertext_with_aes.first;
+    auto encrypted_message = ciphertext_with_aes.second;
+
+    libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
+
+    BOOST_REQUIRE( te_instance.Verify( ciphertext, decryption_share, public_key ) );
+
+    std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares;
+    shares.push_back( std::make_pair( decryption_share, size_t( 1 ) ) );
+
+    std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
+
+    std::string plaintext =
+        crypto::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
+
+    BOOST_REQUIRE( plaintext == message );
+}
+
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
     crypto::TE obj = crypto::TE( 11, 16 );
 
@@ -275,7 +302,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
         "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
                                                                              // length
 
-    auto ciphertext = obj.Encrypt( message, common_public );
+    auto ciphertext = obj.getCiphertext( message, common_public );
 
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares( 11 );
 
@@ -336,7 +363,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomPK ) {
         "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
                                                                              // length
 
-    auto ciphertext = obj.Encrypt( message, common_public );
+    auto ciphertext = obj.getCiphertext( message, common_public );
 
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares( 11 );
 
@@ -399,7 +426,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomSK ) {
         "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
                                                                              // length
 
-    auto ciphertext = obj.Encrypt( message, common_public );
+    auto ciphertext = obj.getCiphertext( message, common_public );
 
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares( 11 );
 
@@ -457,7 +484,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionCorruptedCiphertext ) {
         "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
                                                                              // length
 
-    auto ciphertext = obj.Encrypt( message, common_public );
+    auto ciphertext = obj.getCiphertext( message, common_public );
 
     libff::alt_bn128_G1 rand = libff::alt_bn128_G1::random_element();
 

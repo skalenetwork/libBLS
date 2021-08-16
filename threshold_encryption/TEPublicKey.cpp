@@ -97,7 +97,7 @@ crypto::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_ptr 
         throw crypto::ThresholdUtils::IncorrectInput( "Message length is not equal to 64" );
     }
 
-    crypto::Ciphertext cypher = te.Encrypt( *mes_ptr, PublicKey );
+    crypto::Ciphertext cypher = te.getCiphertext( *mes_ptr, PublicKey );
     crypto::TE::checkCypher( cypher );
 
     return std::make_tuple(

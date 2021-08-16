@@ -42,10 +42,13 @@ public:
 
     ~TE();
 
-    static Ciphertext Encrypt(
+    static Ciphertext getCiphertext(
         const std::string& message, const libff::alt_bn128_G2& common_public );
 
     static std::pair< Ciphertext, std::vector< uint8_t > > encryptWithAES(
+        const std::string& message, const libff::alt_bn128_G2& common_public );
+
+    static std::string encryptMessage(
         const std::string& message, const libff::alt_bn128_G2& common_public );
 
     static libff::alt_bn128_G2 getDecryptionShare(
