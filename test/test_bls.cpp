@@ -587,6 +587,141 @@ BOOST_AUTO_TEST_CASE( BLSWITHDKG ) {
     std::cerr << "BLS WITH DKG TEST FINISHED" << std::endl;
 }
 
+BOOST_AUTO_TEST_CASE( BLSAGGREGATEDVERIFICATION ) {
+    for ( size_t i = 0; i < 10; ++i ) {
+        size_t num_all = rand_gen() % 15 + 2;
+        size_t num_signed = rand_gen() % ( num_all - 1 ) + 1;
+        size_t batch_size = rand_gen() % 5 + 1;
+
+        bool invalid_sig = rand_gen() % 2;
+
+        std::vector< std::vector< libff::alt_bn128_Fr > > secret_shares_all;
+        std::vector< std::vector< libff::alt_bn128_G2 > > public_shares_all;
+        std::vector< DKGBLSWrapper > dkgs;
+        std::vector< BLSPrivateKeyShare > skeys;
+
+        libff::alt_bn128_G2 common_public = libff::alt_bn128_G2::zero();
+
+        for ( size_t i = 0; i < num_all; i++ ) {
+            DKGBLSWrapper dkg_wrap( num_signed, num_all );
+            dkgs.push_back( dkg_wrap );
+            std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr =
+                dkg_wrap.createDKGSecretShares();
+            std::shared_ptr< std::vector< libff::alt_bn128_G2 > > public_shares_ptr =
+                dkg_wrap.createDKGPublicShares();
+            common_public = common_public + public_shares_ptr->at( 0 );
+            secret_shares_all.push_back( *secret_shares_ptr );
+            public_shares_all.push_back( *public_shares_ptr );
+        }
+
+        BLSPublicKey dkg_common_pkey( common_public, num_signed, num_all );
+
+        for ( size_t i = 0; i < num_all; i++ )
+            for ( size_t j = 0; j < num_all; j++ ) {
+                BOOST_REQUIRE( dkgs.at( i ).VerifyDKGShare( j, secret_shares_all.at( i ).at( j ),
+                    std::make_shared< std::vector< libff::alt_bn128_G2 > >(
+                        public_shares_all.at( i ) ) ) );
+            }
+
+        std::vector< std::vector< libff::alt_bn128_Fr > > secret_key_shares;
+
+        for ( size_t i = 0; i < num_all; i++ ) {
+            std::vector< libff::alt_bn128_Fr > secret_key_contribution;
+            for ( size_t j = 0; j < num_all; j++ ) {
+                secret_key_contribution.push_back( secret_shares_all.at( j ).at( i ) );
+            }
+            secret_key_shares.push_back( secret_key_contribution );
+        }
+
+        for ( size_t i = 0; i < num_all; i++ ) {
+            BLSPrivateKeyShare pkey_share = dkgs.at( i ).CreateBLSPrivateKeyShare(
+                std::make_shared< std::vector< libff::alt_bn128_Fr > >(
+                    secret_key_shares.at( i ) ) );
+            skeys.push_back( pkey_share );
+        }
+
+        std::vector< size_t > participants( num_all );
+        for ( size_t i = 0; i < num_all; ++i )
+            participants.at( i ) = i + 1;
+        for ( size_t i = 0; i < num_all - num_signed; ++i ) {
+            size_t ind4del = rand_gen() % participants.size();
+            participants.erase( participants.begin() + ind4del );
+        }
+
+        std::vector< std::shared_ptr< std::array< uint8_t, 32 > > > hash_ptrs;
+        hash_ptrs.reserve( batch_size );
+        for ( size_t i = 0; i < batch_size; i++ ) {
+            std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr =
+                std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() );
+            hash_ptrs.push_back( std::move( hash_ptr ) );
+        }
+
+        std::vector< BLSSigShareSet > sigSets;
+        sigSets.reserve( batch_size );
+        for ( size_t i = 0; i < batch_size; i++ ) {
+            BLSSigShareSet sigSet( num_signed, num_all );
+            sigSets.push_back( std::move( sigSet ) );
+        }
+
+        for ( size_t i = 0; i < batch_size; i++ ) {
+            size_t malicious_signer = rand_gen() % num_signed;
+            for ( size_t j = 0; j < num_signed; j++ ) {
+                BLSPrivateKeyShare skey = skeys.at( participants.at( j ) - 1 );
+                // simulate a malicious signer
+                if ( invalid_sig && ( j == malicious_signer ) ) {
+                    std::shared_ptr< std::array< uint8_t, 32 > > bad_hash_ptr =
+                        std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() );
+                    std::shared_ptr< BLSSigShare > sigShare =
+                        skey.sign( bad_hash_ptr, participants.at( j ) );
+                    sigSets.at( i ).addSigShare( sigShare );
+                } else {
+                    std::shared_ptr< BLSSigShare > sigShare =
+                        skey.sign( hash_ptrs.at( i ), participants.at( j ) );
+                    sigSets.at( i ).addSigShare( sigShare );
+                }
+            }
+        }
+
+        std::vector< std::shared_ptr< BLSSignature > > common_sig_ptrs;
+        common_sig_ptrs.reserve( batch_size );
+        for ( size_t i = 0; i < batch_size; i++ ) {
+            common_sig_ptrs.push_back( sigSets.at( i ).merge() );
+        }
+
+        std::vector< std::shared_ptr< BLSPrivateKeyShare > > ptr_skeys;
+        ptr_skeys.reserve( batch_size );
+        for ( size_t i = 0; i < num_all; i++ ) {
+            ptr_skeys.push_back( std::make_shared< BLSPrivateKeyShare >( skeys.at( i ) ) );
+        }
+
+        BLSPrivateKey common_skey(
+            std::make_shared< std::vector< std::shared_ptr< BLSPrivateKeyShare > > >( ptr_skeys ),
+            std::make_shared< std::vector< size_t > >( participants ), num_signed, num_all );
+        BLSPublicKey common_pkey( *( common_skey.getPrivateKey() ), num_signed, num_all );
+
+        // individual verification
+        for ( size_t i = 0; i < batch_size; i++ ) {
+            if ( invalid_sig ) {
+                BOOST_REQUIRE( !common_pkey.VerifySig(
+                    hash_ptrs.at( i ), common_sig_ptrs.at( i ), num_signed, num_all ) );
+            } else {
+                BOOST_REQUIRE( common_pkey.VerifySig(
+                    hash_ptrs.at( i ), common_sig_ptrs.at( i ), num_signed, num_all ) );
+            }
+        }
+
+        // aggregated verification
+        if ( invalid_sig ) {
+            BOOST_REQUIRE( !common_pkey.AggregateVerifySig(
+                hash_ptrs, common_sig_ptrs, num_signed, num_all ) );
+        } else {
+            BOOST_REQUIRE(
+                common_pkey.AggregateVerifySig( hash_ptrs, common_sig_ptrs, num_signed, num_all ) );
+        }
+    }
+    std::cerr << "BLS AGGREGATED VERIFICATION TEST FINISHED" << std::endl;
+}
+
 BOOST_AUTO_TEST_CASE( Exceptions ) {
     size_t num_all = rand_gen() % 15 + 2;
     size_t num_signed = rand_gen() % ( num_all - 1 ) + 1;

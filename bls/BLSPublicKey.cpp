@@ -148,6 +148,11 @@ bool BLSPublicKey::AggregateVerifySig(
     std::shared_ptr< crypto::Bls > obj;
     crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
+    if ( hash_ptr_vec.size() != sign_ptr_vec.size() ) {
+        throw crypto::ThresholdUtils::IncorrectInput(
+            "Number of signatures and hashes do not match" );
+    }
+
     for ( auto& hash_ptr : hash_ptr_vec ) {
         if ( !hash_ptr ) {
             throw crypto::ThresholdUtils::IncorrectInput( "hash is null" );
