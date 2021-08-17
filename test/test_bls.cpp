@@ -712,11 +712,11 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDVERIFICATION ) {
 
         // aggregated verification
         if ( invalid_sig ) {
-            BOOST_REQUIRE( !common_pkey.AggregateVerifySig(
+            BOOST_REQUIRE( !common_pkey.AggregatedVerifySig(
                 hash_ptrs, common_sig_ptrs, num_signed, num_all ) );
         } else {
-            BOOST_REQUIRE(
-                common_pkey.AggregateVerifySig( hash_ptrs, common_sig_ptrs, num_signed, num_all ) );
+            BOOST_REQUIRE( common_pkey.AggregatedVerifySig(
+                hash_ptrs, common_sig_ptrs, num_signed, num_all ) );
         }
     }
     std::cerr << "BLS AGGREGATED VERIFICATION TEST FINISHED" << std::endl;

@@ -56,7 +56,7 @@ public:
     bool VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
         std::shared_ptr< BLSSignature > sign_ptr, size_t _requiredSigners, size_t _totalSigners );
 
-    bool AggregateVerifySig(
+    bool AggregatedVerifySig(
         std::vector< std::shared_ptr< std::array< uint8_t, 32 > > >& hash_ptr_vec,
         std::vector< std::shared_ptr< BLSSignature > >& sign_ptr_vec, size_t _requiredSigners,
         size_t _totalSigners );

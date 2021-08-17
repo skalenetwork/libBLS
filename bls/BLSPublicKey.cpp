@@ -139,7 +139,7 @@ bool BLSPublicKey::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32
         libff::alt_bn128_ate_reduced_pairing( hash, *libffPublicKey ) );
 }
 
-bool BLSPublicKey::AggregateVerifySig(
+bool BLSPublicKey::AggregatedVerifySig(
     std::vector< std::shared_ptr< std::array< uint8_t, 32 > > >& hash_ptr_vec,
     std::vector< std::shared_ptr< BLSSignature > >& sign_ptr_vec, size_t _requiredSigners,
     size_t _totalSigners ) {
