@@ -589,8 +589,13 @@ then
 	then
 		sed -i -e 's#using gcc ;#using gcc : arm : /usr/local/toolchains/gcc7.2-arm/bin/arm-linux-gnueabihf-g++ ;#g' project-config.jam
 		./b2 "${CONF_CROSSCOMPILING_OPTS_BOOST}" cxxflags=-fPIC cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
+	else
+		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
+		then
+			./b2 cxxflags=-fPIC toolset=clang cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 		else
-		./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
+			./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
+		fi
 	fi
 		cd ..
 		cd "$SOURCES_ROOT"
@@ -671,7 +676,12 @@ then
 		fi
 		cd gmp-6.1.2
 		echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-		./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_CROSSCOMPILING_OPTS_GMP} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --prefix="$INSTALL_ROOT"
+		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
+		then
+			./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --build=x86_64-apple-darwin#{OS.kernel_version.major} --prefix="$INSTALL_ROOT"
+		else
+			./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_CROSSCOMPILING_OPTS_GMP} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --prefix="$INSTALL_ROOT"
+		fi
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 		$MAKE ${PARALLEL_MAKE_OPTIONS}
 		$MAKE ${PARALLEL_MAKE_OPTIONS} install

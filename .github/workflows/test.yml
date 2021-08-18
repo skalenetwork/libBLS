@@ -90,3 +90,40 @@ jobs:
 
         # Uploading report to CodeCov
         bash <(curl -s https://codecov.io/bash) -f coverage.info -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports"
+
+  build_osx:
+    runs-on: macos-11
+
+    steps:
+    - name: Extract repo name
+      run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
+      shell: bash
+      env:
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Install packages
+      run: |
+        brew install yasm texinfo shtool libtool coreutils
+    - name: Build dependencies
+      run: |
+        cd deps
+        ./build.sh
+    - name: Configure all
+      run: |
+        mkdir -p build && cd build
+        cmake ..
+    - name: Build all
+      run: |
+        cd build
+        make -j$(sysctl -n hw.ncpu)
+    - name: Run tests
+      run: |
+        cp scripts/parameters.json build/
+        cd build
+        ./bls_unit_test
+        ./dkg_unit_test
+        ./bls_test
+        ./threshold_encryption/te_unit_test
+        ./threshold_encryption/te_test
+        ./dkg_attack

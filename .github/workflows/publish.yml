@@ -57,7 +57,7 @@ jobs:
       run: |
         export BRANCH=${GITHUB_REF##*/}
         echo "Branch $BRANCH"
-        export VERSION=$(cat VERSION)
+        export VERSION=$(cat VERSION.txt)
         export VERSION=$(bash ./scripts/calculate_version.sh $BRANCH $VERSION)
         echo "::set-env name=VERSION::$VERSION"
         echo "Version $VERSION"
