@@ -103,11 +103,11 @@ jobs:
       uses: actions/checkout@v2
     - name: Install packages
       run: |
-        brew install yasm texinfo shtool libtool
+        brew install yasm texinfo shtool libtool coreutils
     - name: Build dependencies
       run: |
         cd deps
-        sudo ./build.sh
+        ./build.sh
     - name: Configure all
       run: |
         mkdir -p build && cd build
