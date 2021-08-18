@@ -107,7 +107,7 @@ jobs:
     - name: Build dependencies
       run: |
         cd deps
-        ./build.sh
+        sudo ./build.sh
     - name: Configure all
       run: |
         mkdir -p build && cd build
