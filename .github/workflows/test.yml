@@ -91,7 +91,7 @@ jobs:
         bash <(curl -s https://codecov.io/bash) -f coverage.info -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports"
 
   build_osx:
-    runs-on: macos-10.15
+    runs-on: macos-11
 
     steps:
     - name: Extract repo name
