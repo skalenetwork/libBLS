@@ -100,6 +100,37 @@ std::string ThresholdUtils::convertHexToDec( const std::string& hex_str ) {
     return output;
 }
 
+libff::alt_bn128_G2 ThresholdUtils::stringToG2( const std::string& str ) {
+    if ( str.size() != 256 ) {
+        throw IncorrectInput("Wrong string size to convert to G2");
+    }
+
+    libff::alt_bn128_G2 ret;
+    
+    ret.Z = libff::alt_bn128_Fq2::one();
+
+    ret.X.c0 = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( str.substr( 0, 64 ) ).c_str() );
+    ret.X.c1 = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( str.substr( 64, 64 ) ).c_str() );
+    ret.Y.c0 = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( str.substr( 128, 64 ) ).c_str() );
+    ret.Y.c1 = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( str.substr( 192, std::string::npos ) ).c_str() );
+
+    return ret;
+}
+
+libff::alt_bn128_G1 ThresholdUtils::stringToG1( const std::string& str ) {
+    if ( str.size() != 128 ) {
+        throw IncorrectInput("Wrong string size to convert to G1");
+    }
+
+    libff::alt_bn128_G1 ret;
+    
+    ret.Z = libff::alt_bn128_Fq::one();
+    ret.X = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( str.substr( 0, 64 ) ).c_str() );
+    ret.Y = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( str.substr( 64, 64 ) ).c_str() );
+
+    return ret;
+}
+
 std::vector< libff::alt_bn128_Fr > ThresholdUtils::LagrangeCoeffs(
     const std::vector< size_t >& idx, size_t t ) {
     if ( idx.size() < t ) {

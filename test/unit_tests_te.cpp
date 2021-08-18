@@ -247,7 +247,16 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToString ) {
 
     libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
 
-    auto ciphertext_string = te_instance.encryptMessage( message, public_key );
+    auto str = crypto::ThresholdUtils::G2ToString( public_key, 16 );
+    std::string common_public_str = "";
+    for ( auto& elem : str ) {
+        while ( elem.size() < 64 ) {
+            elem = "0" + elem;
+        }
+        common_public_str += elem;
+    }
+
+    auto ciphertext_string = te_instance.encryptMessage( message, common_public_str );
 
     auto ciphertext_with_aes = te_instance.aesCiphertextFromString( ciphertext_string );
 

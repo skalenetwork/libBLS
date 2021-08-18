@@ -145,7 +145,8 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::encryptWithAES(
 }
 
 std::string TE::encryptMessage(
-    const std::string& message, const libff::alt_bn128_G2& common_public ) {
+    const std::string& message, const std::string& common_public_str ) {
+    libff::alt_bn128_G2 common_public = ThresholdUtils::stringToG2( common_public_str );
     auto ciphertext_with_aes = encryptWithAES( message, common_public );
     return aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second );
 }
@@ -338,27 +339,9 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::aesCiphertextFromString(
         throw ThresholdUtils::IncorrectInput( "Bad aes_cipher provided" );
     }
 
-    std::vector< std::string > coords_u( 4 );
-    coords_u[0] = u_str.substr( 0, 64 );
-    coords_u[1] = u_str.substr( 64, 64 );
-    coords_u[2] = u_str.substr( 128, 64 );
-    coords_u[3] = u_str.substr( 192, std::string::npos );
+    libff::alt_bn128_G2 U = ThresholdUtils::stringToG2( u_str );
 
-    libff::alt_bn128_G2 U;
-    U.Z = libff::alt_bn128_Fq2::one();
-    U.X.c0 = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( coords_u[0] ).c_str() );
-    U.X.c1 = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( coords_u[1] ).c_str() );
-    U.Y.c0 = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( coords_u[2] ).c_str() );
-    U.Y.c1 = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( coords_u[3] ).c_str() );
-
-    std::vector< std::string > coords_w( 2 );
-    coords_w[0] = w_str.substr( 0, 64 );
-    coords_w[1] = w_str.substr( 64, std::string::npos );
-
-    libff::alt_bn128_G1 W;
-    W.Z = libff::alt_bn128_Fq::one();
-    W.X = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( coords_w[0] ).c_str() );
-    W.Y = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( coords_w[1] ).c_str() );
+    libff::alt_bn128_G1 W = ThresholdUtils::stringToG1( w_str );
 
     std::string V;
     V.resize( ( v_str.size() - 1 ) / 2 );

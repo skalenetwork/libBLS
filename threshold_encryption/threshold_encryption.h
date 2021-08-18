@@ -49,7 +49,7 @@ public:
         const std::string& message, const libff::alt_bn128_G2& common_public );
 
     static std::string encryptMessage(
-        const std::string& message, const libff::alt_bn128_G2& common_public );
+        const std::string& message, const std::string& common_public );
 
     static libff::alt_bn128_G2 getDecryptionShare(
         const Ciphertext& ciphertext, const libff::alt_bn128_Fr& secret_key );

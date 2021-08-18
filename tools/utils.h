@@ -109,6 +109,10 @@ public:
 
     static std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem, int base = 10 );
 
+    static libff::alt_bn128_G2 stringToG2( const std::string& str );
+
+    static libff::alt_bn128_G1 stringToG1( const std::string& str );
+
     static std::string convertHexToDec( const std::string& hex_str );
 
     static bool checkHex( const std::string& hex );
