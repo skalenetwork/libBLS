@@ -133,7 +133,7 @@ set(BLS_INCLUDE_DIRS
 		PARENT_SCOPE
 		)
 
-target_include_directories(bls PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/bls" "${CMAKE_CURRENT_SOURCE_DIR}/dkg" "${CMAKE_CURRENT_SOURCE_DIR}/tools")
+target_include_directories(bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(bls PRIVATE ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
 add_subdirectory(threshold_encryption)
