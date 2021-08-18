@@ -144,8 +144,7 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::encryptWithAES(
     return {{U, V, W}, encrypted_message};
 }
 
-std::string TE::encryptMessage(
-    const std::string& message, const std::string& common_public_str ) {
+std::string TE::encryptMessage( const std::string& message, const std::string& common_public_str ) {
     libff::alt_bn128_G2 common_public = ThresholdUtils::stringToG2( common_public_str );
     auto ciphertext_with_aes = encryptWithAES( message, common_public );
     return aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second );
