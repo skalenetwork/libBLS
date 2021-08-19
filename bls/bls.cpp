@@ -239,6 +239,10 @@ bool Bls::AggregatedVerification(
         throw ThresholdUtils::IsNotWellFormed( "Error, public key is invalid" );
     }
 
+    if ( !ThresholdUtils::isG2( public_key ) ) {
+        throw ThresholdUtils::IsNotWellFormed( "Error, public key is not member of G2" );
+    }
+
     libff::alt_bn128_G1 aggregated_hash = libff::alt_bn128_G1::zero();
     for ( std::shared_ptr< std::array< uint8_t, 32 > >& hash : hash_byte_arr ) {
         aggregated_hash = aggregated_hash + ThresholdUtils::HashtoG1( hash );

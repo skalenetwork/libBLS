@@ -116,6 +116,8 @@ public:
     static std::string convertHexToDec( const std::string& hex_str );
 
     static bool checkHex( const std::string& hex );
+
+    static bool isG2( const libff::alt_bn128_G2& point );
 };
 
 template < class T >

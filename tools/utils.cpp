@@ -300,6 +300,11 @@ bool ThresholdUtils::checkHex( const std::string& hex ) {
     return true;
 }
 
+bool ThresholdUtils::isG2( const libff::alt_bn128_G2& point ) {
+    return point.is_well_formed() &&
+           libff::alt_bn128_G2::order() * point == libff::alt_bn128_G2::zero();
+}
+
 std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ThresholdUtils::ParseHint(
     const std::string& _hint ) {
     auto position = _hint.find( ":" );
