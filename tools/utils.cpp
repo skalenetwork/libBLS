@@ -21,8 +21,14 @@
   @date 2021
 */
 
-#include <tools/utils.h>
 #include <mutex>
+
+#include <openssl/aes.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+
+#include <tools/utils.h>
+
 
 namespace crypto {
 
@@ -53,17 +59,80 @@ void ThresholdUtils::checkSigners( size_t _requiredSigners, size_t _totalSigners
     }
 }
 
-std::vector< std::string > ThresholdUtils::G2ToString( libff::alt_bn128_G2 elem ) {
+std::vector< std::string > ThresholdUtils::G2ToString( libff::alt_bn128_G2 elem, int base ) {
     std::vector< std::string > pkey_str_vect;
 
     elem.to_affine_coordinates();
 
-    pkey_str_vect.push_back( fieldElementToString( elem.X.c0 ) );
-    pkey_str_vect.push_back( fieldElementToString( elem.X.c1 ) );
-    pkey_str_vect.push_back( fieldElementToString( elem.Y.c0 ) );
-    pkey_str_vect.push_back( fieldElementToString( elem.Y.c1 ) );
+    pkey_str_vect.push_back( fieldElementToString( elem.X.c0, base ) );
+    pkey_str_vect.push_back( fieldElementToString( elem.X.c1, base ) );
+    pkey_str_vect.push_back( fieldElementToString( elem.Y.c0, base ) );
+    pkey_str_vect.push_back( fieldElementToString( elem.Y.c1, base ) );
 
     return pkey_str_vect;
+}
+
+std::string ThresholdUtils::convertHexToDec( const std::string& hex_str ) {
+    mpz_t dec;
+    mpz_init( dec );
+
+    std::string output;
+
+    try {
+        if ( mpz_set_str( dec, hex_str.c_str(), 16 ) == -1 ) {
+            mpz_clear( dec );
+            throw IsNotWellFormed( "Bad formatted hex string provided" );
+        }
+
+        char arr[mpz_sizeinbase( dec, 10 ) + 2];
+        char* tmp = mpz_get_str( arr, 10, dec );
+        mpz_clear( dec );
+
+        output = tmp;
+    } catch ( std::exception& e ) {
+        mpz_clear( dec );
+        throw IsNotWellFormed( e.what() );
+    } catch ( ... ) {
+        mpz_clear( dec );
+        throw IsNotWellFormed( "Exception in convert hex to dec" );
+    }
+
+    return output;
+}
+
+libff::alt_bn128_G2 ThresholdUtils::stringToG2( const std::string& str ) {
+    if ( str.size() != 256 ) {
+        throw IncorrectInput( "Wrong string size to convert to G2" );
+    }
+
+    libff::alt_bn128_G2 ret;
+
+    ret.Z = libff::alt_bn128_Fq2::one();
+
+    ret.X.c0 =
+        libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( str.substr( 0, 64 ) ).c_str() );
+    ret.X.c1 =
+        libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( str.substr( 64, 64 ) ).c_str() );
+    ret.Y.c0 =
+        libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( str.substr( 128, 64 ) ).c_str() );
+    ret.Y.c1 = libff::alt_bn128_Fq(
+        ThresholdUtils::convertHexToDec( str.substr( 192, std::string::npos ) ).c_str() );
+
+    return ret;
+}
+
+libff::alt_bn128_G1 ThresholdUtils::stringToG1( const std::string& str ) {
+    if ( str.size() != 128 ) {
+        throw IncorrectInput( "Wrong string size to convert to G1" );
+    }
+
+    libff::alt_bn128_G1 ret;
+
+    ret.Z = libff::alt_bn128_Fq::one();
+    ret.X = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( str.substr( 0, 64 ) ).c_str() );
+    ret.Y = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( str.substr( 64, 64 ) ).c_str() );
+
+    return ret;
 }
 
 std::vector< libff::alt_bn128_Fr > ThresholdUtils::LagrangeCoeffs(
@@ -162,10 +231,10 @@ libff::alt_bn128_G1 ThresholdUtils::HashtoG1(
     return result;
 }
 
-bool ThresholdUtils::isStringNumber( std::string& str ) {
+bool ThresholdUtils::isStringNumber( const std::string& str ) {
     if ( str.at( 0 ) == '0' && str.length() > 1 )
         return false;
-    for ( char& c : str ) {
+    for ( const char& c : str ) {
         if ( !( c >= '0' && c <= '9' ) ) {
             return false;
         }
@@ -173,13 +242,62 @@ bool ThresholdUtils::isStringNumber( std::string& str ) {
     return true;
 }
 
-void ThresholdUtils::checkCypher(
-    const std::tuple< libff::alt_bn128_G2, std::string, libff::alt_bn128_G1 >& cyphertext ) {
-    if ( std::get< 0 >( cyphertext ).is_zero() || std::get< 2 >( cyphertext ).is_zero() )
-        throw IncorrectInput( "zero element in cyphertext" );
+std::string ThresholdUtils::carray2Hex( const unsigned char* d, uint64_t len ) {
+    std::string _hexArray;
+    _hexArray.resize( 2 * len + 1 );
 
-    if ( std::get< 1 >( cyphertext ).length() != 64 )
-        throw IncorrectInput( "wrong string length in cyphertext" );
+    char hexval[16] = {
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+    for ( uint64_t j = 0; j < len; j++ ) {
+        _hexArray[j * 2] = hexval[( ( d[j] >> 4 ) & 0xF )];
+        _hexArray[j * 2 + 1] = hexval[( d[j] ) & 0x0F];
+    }
+
+    _hexArray[len * 2] = 0;
+
+    return _hexArray;
+}
+
+int ThresholdUtils::char2int( char _input ) {
+    if ( _input >= '0' && _input <= '9' )
+        return _input - '0';
+    if ( _input >= 'A' && _input <= 'F' )
+        return _input - 'A' + 10;
+    if ( _input >= 'a' && _input <= 'f' )
+        return _input - 'a' + 10;
+    return -1;
+}
+
+bool ThresholdUtils::hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin ) {
+    int len = strnlen( _hex, 2 * 1024 );
+
+    if ( len % 2 == 1 ) {
+        return false;
+    }
+    *_bin_len = len / 2;
+    for ( int i = 0; i < len / 2; i++ ) {
+        int high = char2int( ( char ) _hex[i * 2] );
+        int low = char2int( ( char ) _hex[i * 2 + 1] );
+        if ( high < 0 || low < 0 ) {
+            return false;
+        }
+        _bin[i] = ( unsigned char ) ( high * 16 + low );
+    }
+    return true;
+}
+
+bool ThresholdUtils::checkHex( const std::string& hex ) {
+    mpz_t num;
+    mpz_init( num );
+
+    if ( mpz_set_str( num, hex.c_str(), 16 ) == -1 ) {
+        mpz_clear( num );
+        return false;
+    }
+    mpz_clear( num );
+
+    return true;
 }
 
 std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ThresholdUtils::ParseHint(
@@ -215,6 +333,70 @@ std::shared_ptr< std::vector< std::string > > ThresholdUtils::SplitString(
     } while ( pos < str->length() && prev < str->length() );
 
     return std::make_shared< std::vector< std::string > >( tokens );
+}
+
+void ThresholdUtils::initAES() {
+    static int init = 0;
+    if ( init == 0 ) {
+        // initialize openssl ciphers
+        OpenSSL_add_all_ciphers();
+
+        // initialize random number generator (for IVs)
+        RAND_load_file( "/dev/urandom", 32 );
+        ++init;
+    }
+}
+
+std::vector< uint8_t > ThresholdUtils::aesEncrypt(
+    const std::string& plaintext, const std::string& key ) {
+    initAES();
+
+    size_t enc_length = plaintext.length() * 3;
+    std::vector< unsigned char > output;
+    output.resize( enc_length, '\0' );
+
+    unsigned char tag[AES_BLOCK_SIZE];
+    unsigned char iv[AES_BLOCK_SIZE];
+    RAND_bytes( iv, sizeof( iv ) );
+    std::copy( iv, iv + 16, output.begin() + 16 );
+
+    int actual_size = 0, final_size = 0;
+    EVP_CIPHER_CTX* e_ctx = EVP_CIPHER_CTX_new();
+    // EVP_CIPHER_CTX_ctrl(e_ctx, EVP_CTRL_GCM_SET_IVLEN, 16, NULL);
+    EVP_EncryptInit( e_ctx, EVP_aes_256_gcm(), ( const unsigned char* ) key.c_str(), iv );
+    EVP_EncryptUpdate( e_ctx, &output[64], &actual_size, ( const unsigned char* ) plaintext.data(),
+        plaintext.length() );
+    EVP_EncryptFinal( e_ctx, &output[64 + actual_size], &final_size );
+    EVP_CIPHER_CTX_ctrl( e_ctx, EVP_CTRL_GCM_GET_TAG, 16, tag );
+    std::copy( tag, tag + 16, output.begin() );
+    std::copy( iv, iv + 16, output.begin() + 16 );
+    output.resize( 64 + actual_size + final_size );
+    EVP_CIPHER_CTX_free( e_ctx );
+    return output;
+}
+
+std::string ThresholdUtils::aesDecrypt(
+    const std::vector< uint8_t >& ciphertext, const std::string& key ) {
+    initAES();
+
+    unsigned char tag[AES_BLOCK_SIZE];
+    unsigned char iv[AES_BLOCK_SIZE];
+    std::copy( ciphertext.begin(), ciphertext.begin() + 16, tag );
+    std::copy( ciphertext.begin() + 16, ciphertext.begin() + 32, iv );
+    std::vector< unsigned char > plaintext;
+    plaintext.resize( ciphertext.size(), '\0' );
+
+    int actual_size = 0, final_size = 0;
+    EVP_CIPHER_CTX* d_ctx = EVP_CIPHER_CTX_new();
+    EVP_DecryptInit( d_ctx, EVP_aes_256_gcm(), ( const unsigned char* ) key.c_str(), iv );
+    EVP_DecryptUpdate(
+        d_ctx, &plaintext[0], &actual_size, &ciphertext[64], ciphertext.size() - 64 );
+    EVP_CIPHER_CTX_ctrl( d_ctx, EVP_CTRL_GCM_SET_TAG, 16, tag );
+    EVP_DecryptFinal( d_ctx, &plaintext[actual_size], &final_size );
+    EVP_CIPHER_CTX_free( d_ctx );
+    plaintext.resize( actual_size + final_size, '\0' );
+
+    return std::string( plaintext.begin(), plaintext.end() );
 }
 
 }  // namespace crypto

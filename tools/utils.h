@@ -68,13 +68,13 @@ public:
         }
     };
 
-    static void initCurve();
-
     static std::atomic< bool > is_initialized;
 
-    static void checkSigners( size_t _requiredSigners, size_t _totalSigners );
+    static void initCurve();
 
-    static std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem );
+    static void initAES();
+
+    static void checkSigners( size_t _requiredSigners, size_t _totalSigners );
 
     static std::vector< libff::alt_bn128_Fr > LagrangeCoeffs(
         const std::vector< size_t >& idx, size_t t );
@@ -85,10 +85,18 @@ public:
     static libff::alt_bn128_G1 HashtoG1(
         std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
 
-    static bool isStringNumber( std::string& str );
+    static std::vector< uint8_t > aesEncrypt( const std::string& message, const std::string& key );
 
-    static void checkCypher(
-        const std::tuple< libff::alt_bn128_G2, std::string, libff::alt_bn128_G1 >& cypher );
+    static std::string aesDecrypt(
+        const std::vector< uint8_t >& ciphertext, const std::string& key );
+
+    static bool isStringNumber( const std::string& str );
+
+    static int char2int( char _input );
+
+    static std::string carray2Hex( const unsigned char* d, uint64_t len );
+
+    static bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin );
 
     static std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ParseHint(
         const std::string& hint );
@@ -97,19 +105,29 @@ public:
         const std::shared_ptr< std::string >, const std::string& delim );
 
     template < class T >
-    static std::string fieldElementToString( const T& field_elem );
+    static std::string fieldElementToString( const T& field_elem, int base = 10 );
+
+    static std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem, int base = 10 );
+
+    static libff::alt_bn128_G2 stringToG2( const std::string& str );
+
+    static libff::alt_bn128_G1 stringToG1( const std::string& str );
+
+    static std::string convertHexToDec( const std::string& hex_str );
+
+    static bool checkHex( const std::string& hex );
 };
 
 template < class T >
-std::string ThresholdUtils::fieldElementToString( const T& field_elem ) {
+std::string ThresholdUtils::fieldElementToString( const T& field_elem, int base ) {
     mpz_t t;
     mpz_init( t );
 
     field_elem.as_bigint().to_mpz( t );
 
-    char arr[mpz_sizeinbase( t, 10 ) + 2];
+    char arr[mpz_sizeinbase( t, base ) + 2];
 
-    char* tmp = mpz_get_str( arr, 10, t );
+    char* tmp = mpz_get_str( arr, base, t );
     mpz_clear( t );
 
     std::string output = tmp;
