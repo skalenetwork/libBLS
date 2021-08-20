@@ -213,9 +213,7 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
             std::shared_ptr< BLSSignature > common_sig_ptr = sigSet.merge();  // verifying signature
             BLSPrivateKey common_skey( Skeys,
                 std::make_shared< std::vector< size_t > >( participants ), num_signed, num_all );
-            BLSPublicKey common_pkey( *( common_skey.getPrivateKey() ), num_signed, num_all );
-            BOOST_REQUIRE( common_pkey.getTotalSigners() == num_all );
-            BOOST_REQUIRE( common_pkey.getRequiredSigners() == num_signed );
+            BLSPublicKey common_pkey( *( common_skey.getPrivateKey() ) );
             BOOST_REQUIRE( common_pkey.VerifySig( hash_ptr, common_sig_ptr ) );
             std::shared_ptr< libff::alt_bn128_G1 > bad_sig =
                 std::make_shared< libff::alt_bn128_G1 >(
@@ -332,9 +330,9 @@ BOOST_AUTO_TEST_CASE( libffObjsToString ) {
             common_sig_from_str.getRequiredSigners() == common_sig_ptr->getRequiredSigners() );
         BOOST_REQUIRE( common_sig_from_str.getTotalSigners() == common_sig_ptr->getTotalSigners() );
 
-        BLSPublicKey common_pkey( *( common_skey.getPrivateKey() ), num_signed, num_all );
+        BLSPublicKey common_pkey( *( common_skey.getPrivateKey() ) );
         std::shared_ptr< std::vector< std::string > > common_pkey_str_vect = common_pkey.toString();
-        BLSPublicKey common_pkey_from_str( common_pkey_str_vect, num_signed, num_all );
+        BLSPublicKey common_pkey_from_str( common_pkey_str_vect );
         BOOST_REQUIRE( *common_pkey.getPublicKey() == *common_pkey_from_str.getPublicKey() );
         BOOST_REQUIRE( common_pkey.VerifySigWithHelper( hash_ptr, common_sig_ptr ) );
 
@@ -351,7 +349,7 @@ BOOST_AUTO_TEST_CASE( libffObjsToString ) {
             num_signed, num_all );
         std::shared_ptr< std::vector< std::string > > common_pkey_str_vect1 =
             common_pkey.toString();
-        BLSPublicKey common_pkey_from_str1( common_pkey_str_vect1, num_signed, num_all );
+        BLSPublicKey common_pkey_from_str1( common_pkey_str_vect1 );
 
         BOOST_REQUIRE( *common_pkey1.getPublicKey() == *common_pkey_from_str1.getPublicKey() );
         BOOST_REQUIRE( *common_pkey1.getPublicKey() == *common_pkey.getPublicKey() );
@@ -487,7 +485,7 @@ BOOST_AUTO_TEST_CASE( BLSWITHDKG ) {
             public_shares_all.push_back( *public_shares_ptr );
         }
 
-        BLSPublicKey dkg_common_pkey( common_public, num_signed, num_all );
+        BLSPublicKey dkg_common_pkey( common_public );
 
         for ( size_t i = 0; i < num_all; i++ )
             for ( size_t j = 0; j < num_all; j++ ) {
@@ -562,7 +560,7 @@ BOOST_AUTO_TEST_CASE( BLSWITHDKG ) {
             std::make_shared< std::vector< size_t > >( participants ), num_signed, num_all );
         BOOST_REQUIRE( *common_skey.getPrivateKey() == *common_skey2.getPrivateKey() );
         BOOST_REQUIRE( common_secret * libff::alt_bn128_G2::one() == common_public );
-        BLSPublicKey common_pkey( *( common_skey2.getPrivateKey() ), num_signed, num_all );
+        BLSPublicKey common_pkey( *( common_skey2.getPrivateKey() ) );
         BOOST_REQUIRE( *common_pkey.getPublicKey() == *dkg_common_pkey.getPublicKey() );
         BOOST_REQUIRE( common_pkey.VerifySig( hash_ptr, common_sig_ptr ) );
 
@@ -610,7 +608,7 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDVERIFICATION ) {
             public_shares_all.push_back( *public_shares_ptr );
         }
 
-        BLSPublicKey dkg_common_pkey( common_public, num_signed, num_all );
+        BLSPublicKey dkg_common_pkey( common_public );
 
         for ( size_t i = 0; i < num_all; i++ )
             for ( size_t j = 0; j < num_all; j++ ) {
@@ -693,7 +691,7 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDVERIFICATION ) {
         BLSPrivateKey common_skey(
             std::make_shared< std::vector< std::shared_ptr< BLSPrivateKeyShare > > >( ptr_skeys ),
             std::make_shared< std::vector< size_t > >( participants ), num_signed, num_all );
-        BLSPublicKey common_pkey( *( common_skey.getPrivateKey() ), num_signed, num_all );
+        BLSPublicKey common_pkey( *( common_skey.getPrivateKey() ) );
 
         // individual verification
         for ( size_t i = 0; i < batch_size; i++ ) {
@@ -841,15 +839,15 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
     {
         const std::shared_ptr< std::vector< std::string > > null_vect = nullptr;
-        BOOST_REQUIRE_THROW( BLSPublicKey pkey( null_vect, num_signed, num_all ),
-            crypto::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW(
+            BLSPublicKey pkey( null_vect ), crypto::ThresholdUtils::IncorrectInput );
     }
 
     {
         std::vector< std::string > coords = {"0", "0", "0", "0"};
         auto vector_ptr_str = std::make_shared< std::vector< std::string > >( coords );
-        BOOST_REQUIRE_THROW( BLSPublicKey pkey( vector_ptr_str, num_signed, num_all ),
-            crypto::ThresholdUtils::IsNotWellFormed );
+        BOOST_REQUIRE_THROW(
+            BLSPublicKey pkey( vector_ptr_str ), crypto::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -897,17 +895,17 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        BOOST_REQUIRE_THROW( BLSPublicKey pkey( libff::alt_bn128_G2::zero(), num_signed, num_all ),
+        BOOST_REQUIRE_THROW( BLSPublicKey pkey( libff::alt_bn128_G2::zero() ),
             crypto::ThresholdUtils::IsNotWellFormed );
     }
 
     {
-        BOOST_REQUIRE_THROW( BLSPublicKey pkey( libff::alt_bn128_Fr::zero(), num_signed, num_all ),
+        BOOST_REQUIRE_THROW( BLSPublicKey pkey( libff::alt_bn128_Fr::zero() ),
             crypto::ThresholdUtils::IsNotWellFormed );
     }
 
     {
-        BLSPublicKey pkey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
+        BLSPublicKey pkey( libff::alt_bn128_Fr::random_element() );
         std::string hint = "123:1";
         BLSSignature rand_sig(
             std::make_shared< libff::alt_bn128_G1 >( libff::alt_bn128_G1::random_element() ), hint,
@@ -918,7 +916,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        BLSPublicKey pkey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
+        BLSPublicKey pkey( libff::alt_bn128_Fr::random_element() );
         BOOST_REQUIRE_THROW(
             pkey.VerifySigWithHelper(
                 std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() ), nullptr ),
@@ -926,7 +924,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        BLSPublicKey pkey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
+        BLSPublicKey pkey( libff::alt_bn128_Fr::random_element() );
         BOOST_REQUIRE_THROW(
             pkey.VerifySig(
                 std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() ), nullptr ),
@@ -934,7 +932,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        BLSPublicKey pkey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
+        BLSPublicKey pkey( libff::alt_bn128_Fr::random_element() );
         std::string hint = "123:1";
         BLSSignature rand_sig(
             std::make_shared< libff::alt_bn128_G1 >( libff::alt_bn128_G1::random_element() ), hint,

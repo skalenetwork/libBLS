@@ -27,14 +27,10 @@
 #include <tools/utils.h>
 
 
-BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > pkey_str_vect,
-    size_t _requiredSigners, size_t _totalSigners )
-    : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
+BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > pkey_str_vect ) {
     crypto::ThresholdUtils::initCurve();
 
     CHECK( pkey_str_vect )
-
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libffPublicKey = std::make_shared< libff::alt_bn128_G2 >();
 
@@ -54,12 +50,8 @@ BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > 
     }
 }
 
-BLSPublicKey::BLSPublicKey(
-    const libff::alt_bn128_G2& pkey, size_t _requiredSigners, size_t _totalSigners )
-    : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
+BLSPublicKey::BLSPublicKey( const libff::alt_bn128_G2& pkey ) {
     crypto::ThresholdUtils::initCurve();
-
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libffPublicKey = std::make_shared< libff::alt_bn128_G2 >( pkey );
     if ( libffPublicKey->is_zero() ) {
@@ -67,22 +59,11 @@ BLSPublicKey::BLSPublicKey(
     }
 }
 
-BLSPublicKey::BLSPublicKey(
-    const libff::alt_bn128_Fr& skey, size_t _requiredSigners, size_t _totalSigners )
-    : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+BLSPublicKey::BLSPublicKey( const libff::alt_bn128_Fr& skey ) {
     libffPublicKey = std::make_shared< libff::alt_bn128_G2 >( skey * libff::alt_bn128_G2::one() );
     if ( libffPublicKey->is_zero() ) {
         throw crypto::ThresholdUtils::IsNotWellFormed( "Public Key is equal to zero or corrupt" );
     }
-}
-
-size_t BLSPublicKey::getTotalSigners() const {
-    return totalSigners;
-}
-
-size_t BLSPublicKey::getRequiredSigners() const {
-    return requiredSigners;
 }
 
 bool BLSPublicKey::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
@@ -166,8 +147,7 @@ bool BLSPublicKey::AggregatedVerifySig(
 
 BLSPublicKey::BLSPublicKey(
     std::shared_ptr< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > > koefs_pkeys_map,
-    size_t _requiredSigners, size_t _totalSigners )
-    : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
+    size_t _requiredSigners, size_t _totalSigners ) {
     crypto::ThresholdUtils::initCurve();
 
     crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
@@ -184,7 +164,7 @@ BLSPublicKey::BLSPublicKey(
     }
 
     std::vector< libff::alt_bn128_Fr > lagrangeCoeffs =
-        crypto::ThresholdUtils::LagrangeCoeffs( participatingNodes, requiredSigners );
+        crypto::ThresholdUtils::LagrangeCoeffs( participatingNodes, _requiredSigners );
 
     libff::alt_bn128_G2 key = libff::alt_bn128_G2::zero();
     size_t i = 0;

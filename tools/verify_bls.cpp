@@ -122,7 +122,7 @@ void Verify( const size_t t, const size_t n, std::istream& sign_file, int j = -1
         }
     }
 
-    BLSPublicKey pkey( std::make_shared< std::vector< std::string > >( pkey_str ), t, n );
+    BLSPublicKey pkey( std::make_shared< std::vector< std::string > >( pkey_str ) );
 
     if ( !sign.is_well_formed() ) {
         std::cout << "Bad value, signature was not verified\n";
