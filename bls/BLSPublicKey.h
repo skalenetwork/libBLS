@@ -34,9 +34,6 @@ class BLSPublicKey {
 private:
     std::shared_ptr< libff::alt_bn128_G2 > libffPublicKey;
 
-    // size_t requiredSigners;
-    // size_t totalSigners;
-
 public:
     BLSPublicKey( const std::shared_ptr< std::vector< std::string > > );
     BLSPublicKey( const libff::alt_bn128_Fr& skey );
