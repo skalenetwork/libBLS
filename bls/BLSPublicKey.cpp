@@ -86,11 +86,10 @@ size_t BLSPublicKey::getRequiredSigners() const {
 }
 
 bool BLSPublicKey::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
-    std::shared_ptr< BLSSignature > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
+    std::shared_ptr< BLSSignature > sign_ptr ) {
     crypto::ThresholdUtils::initCurve();
 
     std::shared_ptr< crypto::Bls > obj;
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !hash_ptr ) {
         throw crypto::ThresholdUtils::IncorrectInput( "hash is null" );
@@ -100,16 +99,14 @@ bool BLSPublicKey::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_
         throw crypto::ThresholdUtils::IsNotWellFormed( "Sig share is equal to zero or corrupt" );
     }
 
-    obj = std::make_shared< crypto::Bls >( crypto::Bls( _requiredSigners, _totalSigners ) );
+    obj = std::make_shared< crypto::Bls >( crypto::Bls( requiredSigners, totalSigners ) );
 
     bool res = obj->Verification( hash_ptr, *( sign_ptr->getSig() ), *libffPublicKey );
     return res;
 }
 
 bool BLSPublicKey::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
-    std::shared_ptr< BLSSignature > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
-    std::shared_ptr< crypto::Bls > obj;
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    std::shared_ptr< BLSSignature > sign_ptr ) {
     if ( !hash_ptr ) {
         throw crypto::ThresholdUtils::IncorrectInput( "hash is null" );
     }
@@ -141,12 +138,10 @@ bool BLSPublicKey::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32
 
 bool BLSPublicKey::AggregatedVerifySig(
     std::vector< std::shared_ptr< std::array< uint8_t, 32 > > >& hash_ptr_vec,
-    std::vector< std::shared_ptr< BLSSignature > >& sign_ptr_vec, size_t _requiredSigners,
-    size_t _totalSigners ) {
+    std::vector< std::shared_ptr< BLSSignature > >& sign_ptr_vec ) {
     crypto::ThresholdUtils::initCurve();
 
     std::shared_ptr< crypto::Bls > obj;
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( hash_ptr_vec.size() != sign_ptr_vec.size() ) {
         throw crypto::ThresholdUtils::IncorrectInput(
@@ -171,7 +166,7 @@ bool BLSPublicKey::AggregatedVerifySig(
         libff_sig_vec.push_back( *( sign_ptr->getSig() ) );
     }
 
-    obj = std::make_shared< crypto::Bls >( crypto::Bls( _requiredSigners, _totalSigners ) );
+    obj = std::make_shared< crypto::Bls >( crypto::Bls( requiredSigners, totalSigners ) );
 
     bool res = obj->AggregatedVerification( hash_ptr_vec, libff_sig_vec, *libffPublicKey );
     return res;
