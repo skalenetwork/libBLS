@@ -56,7 +56,7 @@ void TEDecryptSet::addDecrypt( size_t _signerIndex, std::shared_ptr< libff::alt_
 }
 
 std::string TEDecryptSet::merge( const crypto::Ciphertext& cyphertext ) {
-    crypto::ThresholdUtils::checkCypher( cyphertext );
+    crypto::TE::checkCypher( cyphertext );
 
     was_merged = true;
 

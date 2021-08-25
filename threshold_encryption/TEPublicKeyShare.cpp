@@ -76,7 +76,7 @@ TEPublicKeyShare::TEPublicKeyShare(
 
 bool TEPublicKeyShare::Verify(
     const crypto::Ciphertext& cyphertext, const libff::alt_bn128_G2& decryptionShare ) {
-    crypto::ThresholdUtils::checkCypher( cyphertext );
+    crypto::TE::checkCypher( cyphertext );
     if ( decryptionShare.is_zero() || !decryptionShare.is_well_formed() ) {
         throw crypto::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
     }

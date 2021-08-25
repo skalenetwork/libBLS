@@ -65,7 +65,7 @@ TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _s
 }
 
 libff::alt_bn128_G2 TEPrivateKeyShare::getDecryptionShare( crypto::Ciphertext& cipher ) {
-    crypto::ThresholdUtils::checkCypher( cipher );
+    crypto::TE::checkCypher( cipher );
 
     crypto::TE te( requiredSigners, totalSigners );
 
