@@ -594,7 +594,7 @@ then
 		then
 			./b2 cxxflags=-fPIC toolset=clang cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 		else
-			./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
+			./b2 address-model=32 cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 		fi
 	fi
 		cd ..
@@ -638,7 +638,7 @@ then
 					export KERNEL_BITS=64
 					./Configure darwin64-x86_64-cc -fPIC no-shared --prefix="$INSTALL_ROOT"
 				else
-					./config -fPIC no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+					setarch i386 ./config -fPIC no-shared --prefix="$INSTALL_ROOT" -m32 --openssldir="$INSTALL_ROOT"
 				fi
 			else
 				./Configure linux-armv4 --prefix="$INSTALL_ROOT" "${ADDITIONAL_INCLUDES}" "${ADDITIONAL_LIBRARIES}" no-shared no-tests no-dso
@@ -675,6 +675,7 @@ then
 			tar -xf gmp-6.1.2.tar.xz
 		fi
 		cd gmp-6.1.2
+		exit 0
 		echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
 		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
 		then
@@ -712,9 +713,9 @@ then
 		cd build
 		$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-			$MAKE ${PARALLEL_MAKE_OPTIONS}
-			$MAKE ${PARALLEL_MAKE_OPTIONS} install
-			cd "$SOURCES_ROOT"
+		$MAKE ${PARALLEL_MAKE_OPTIONS}
+		$MAKE ${PARALLEL_MAKE_OPTIONS} install
+		cd "$SOURCES_ROOT"
 	else
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
 	fi
