@@ -34,27 +34,24 @@ class BLSPublicKey {
 private:
     std::shared_ptr< libff::alt_bn128_G2 > libffPublicKey;
 
-    size_t requiredSigners;
-    size_t totalSigners;
-
 public:
-    BLSPublicKey( const std::shared_ptr< std::vector< std::string > >, size_t _requiredSigners,
-        size_t _totalSigners );
-    BLSPublicKey( const libff::alt_bn128_Fr& skey, size_t _requiredSigners, size_t _totalSigners );
-    BLSPublicKey( const libff::alt_bn128_G2& skey, size_t _requiredSigners, size_t _totalSigners );
+    BLSPublicKey( const std::shared_ptr< std::vector< std::string > > );
+    BLSPublicKey( const libff::alt_bn128_Fr& skey );
+    BLSPublicKey( const libff::alt_bn128_G2& skey );
 
     BLSPublicKey(
         std::shared_ptr< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > > map_pkeys_koefs,
         size_t _requiredSigners, size_t _totalSigners );
 
-    size_t getTotalSigners() const;
-    size_t getRequiredSigners() const;
-
     bool VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
-        std::shared_ptr< BLSSignature > sign_ptr, size_t _requiredSigners, size_t _totalSigners );
+        std::shared_ptr< BLSSignature > sign_ptr );
 
     bool VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
-        std::shared_ptr< BLSSignature > sign_ptr, size_t _requiredSigners, size_t _totalSigners );
+        std::shared_ptr< BLSSignature > sign_ptr );
+
+    bool AggregatedVerifySig(
+        std::vector< std::shared_ptr< std::array< uint8_t, 32 > > >& hash_ptr_vec,
+        std::vector< std::shared_ptr< BLSSignature > >& sign_ptr_vec );
 
     std::shared_ptr< std::vector< std::string > > toString();
 
