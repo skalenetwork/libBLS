@@ -686,7 +686,7 @@ then
 		then
 			./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --build=x86_64-apple-darwin#{OS.kernel_version.major} --prefix="$INSTALL_ROOT"
 		else
-			emconfigure ./configure --disable-assembly --host none --enable-cxx --prefix="$INSTALL_ROOT" && emmake make && make install
+			emconfigure ./configure --disable-assembly --host none --enable-cxx --prefix="$INSTALL_ROOT"
 		fi
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
