@@ -48,6 +48,7 @@ jobs:
 
     - name: Check emscripten
       run: |
+        emcc -v
         cat deps/emsdk/.emscripten
 
     - name: Configure all
