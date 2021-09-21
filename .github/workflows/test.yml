@@ -46,7 +46,7 @@ jobs:
         cd deps
         ./build.sh
 
-    -name: Check emscripten
+    - name: Check emscripten
       run: |
         cat deps/emsdk/.emscripten
 
