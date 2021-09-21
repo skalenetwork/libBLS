@@ -256,6 +256,7 @@ export INSTALL_ROOT=$("$READLINK" -f "$INSTALL_ROOT_RELATIVE")
 export SOURCES_ROOT=$("$READLINK" -f "$CUSTOM_BUILD_ROOT")
 export PREDOWNLOADED_ROOT=$("$READLINK" -f "$CUSTOM_BUILD_ROOT/pre_downloaded")
 export LIBRARIES_ROOT="$INSTALL_ROOT/lib"
+export INCLUDE_ROOT="$INSTALL_ROOT/include"
 mkdir -p "$SOURCES_ROOT"
 mkdir -p "$INSTALL_ROOT"
 mkdir -p "$INSTALL_ROOT/share"
@@ -594,7 +595,7 @@ then
 		then
 			./b2 cxxflags=-fPIC toolset=clang cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 		else
-			./b2 address-model=32 cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
+			./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=debug link=static threading=multi install
 		fi
 	fi
 		cd ..
@@ -638,7 +639,7 @@ then
 					export KERNEL_BITS=64
 					./Configure darwin64-x86_64-cc -fPIC no-shared --prefix="$INSTALL_ROOT"
 				else
-					setarch i386 ./config -fPIC no-shared --prefix="$INSTALL_ROOT" -m32 --openssldir="$INSTALL_ROOT"
+					emcmake ./config -fPIC no-shared --prefix="$INSTALL_ROOT" --disable-icu --openssldir="$INSTALL_ROOT"
 				fi
 			else
 				./Configure linux-armv4 --prefix="$INSTALL_ROOT" "${ADDITIONAL_INCLUDES}" "${ADDITIONAL_LIBRARIES}" no-shared no-tests no-dso
@@ -647,9 +648,14 @@ then
 		fi
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 		cd openssl
-		$MAKE ${PARALLEL_MAKE_OPTIONS} depend
-		$MAKE ${PARALLEL_MAKE_OPTIONS}
-		$MAKE ${PARALLEL_MAKE_OPTIONS} install_sw
+		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
+		then
+			$MAKE ${PARALLEL_MAKE_OPTIONS} depend
+			$MAKE ${PARALLEL_MAKE_OPTIONS}
+			$MAKE ${PARALLEL_MAKE_OPTIONS} install_sw
+		else
+			emmake $MAKE ${PARALLEL_MAKE_OPTIONS} depend && emmake $MAKE ${PARALLEL_MAKE_OPTIONS} && $MAKE ${PARALLEL_MAKE_OPTIONS} install_sw
+		fi
 		cd "$SOURCES_ROOT"
 	else
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
@@ -675,17 +681,21 @@ then
 			tar -xf gmp-6.1.2.tar.xz
 		fi
 		cd gmp-6.1.2
-		exit 0
 		echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
 		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
 		then
 			./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --build=x86_64-apple-darwin#{OS.kernel_version.major} --prefix="$INSTALL_ROOT"
 		else
-			./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_CROSSCOMPILING_OPTS_GMP} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --prefix="$INSTALL_ROOT"
+			emconfigure ./configure --disable-assembly --host none --enable-cxx --prefix="$INSTALL_ROOT" && emmake make && make install
 		fi
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-		$MAKE ${PARALLEL_MAKE_OPTIONS}
-		$MAKE ${PARALLEL_MAKE_OPTIONS} install
+		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
+		then
+			$MAKE ${PARALLEL_MAKE_OPTIONS}
+			$MAKE ${PARALLEL_MAKE_OPTIONS} install
+		else
+			emmake $MAKE ${PARALLEL_MAKE_OPTIONS} && $MAKE ${PARALLEL_MAKE_OPTIONS} install
+		fi
 		cd ..
 		cd "$SOURCES_ROOT"
 	else
@@ -711,11 +721,18 @@ then
 		git checkout 03b719a7c81757071f99fc60be1f7f7694e51390
 		mkdir -p build
 		cd build
-		$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF
-		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-		$MAKE ${PARALLEL_MAKE_OPTIONS}
-		$MAKE ${PARALLEL_MAKE_OPTIONS} install
-		cd "$SOURCES_ROOT"
+		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
+		then
+			$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF
+			echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+			$MAKE ${PARALLEL_MAKE_OPTIONS}
+			$MAKE ${PARALLEL_MAKE_OPTIONS} install
+			cd "$SOURCES_ROOT"
+		else
+			emcmake $CMAKE "${CMAKE_CROSSCOMPILING_OPTS}"-DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" -DGMP_INCLUDE_DIR="$INCLUDE_ROOT" -DGMP_LIBRARY="$LIBRARIES_ROOT" -DWITH_PROCPS=OFF ..
+			emmake $MAKE ${PARALLEL_MAKE_OPTIONS}
+			$MAKE ${PARALLEL_MAKE_OPTIONS} install
+		fi
 	else
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
 	fi

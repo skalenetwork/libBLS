@@ -30,7 +30,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install g++-7 clang-format-6.0 gawk sed shtool \
-          libffi-dev yasm texinfo flex bison libc6-dbg
+          libffi-dev yasm texinfo flex bison libc6-dbg gcc-multilib
         sudo snap install valgrind --classic
         python -m pip install --upgrade pip
         pip install coincurve
