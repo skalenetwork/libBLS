@@ -46,11 +46,6 @@ jobs:
         cd deps
         ./build.sh
 
-    - name: Check emscripten
-      run: |
-        emcc -v
-        cat deps/emsdk/.emscripten
-
     - name: Configure all
       run: |
         export CC=gcc-7
