@@ -465,11 +465,11 @@ then
 fi
 export CMAKE="$CMAKE -DUSE_LLVM=$USE_LLVM -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_LINKER=$LD -DCMAKE_AR=$AR -DCMAKE_OBJCOPY=$OBJCOPY -DCMAKE_OBJDUMP=$OBJDUMP -DCMAKE_RANLIB=$RANLIB -DCMAKE_NM=$NM"
 #
-if [ -n "${WITH_EMSCRIPTEN}" ];
+if [ -z "${WITH_EMSCRIPTEN}" ];
 then
-	WITH_EMSCRIPTEN=1
-else
 	WITH_EMSCRIPTEN=0
+else
+	WITH_EMSCRIPTEN=1
 fi
 
 echo -e "${COLOR_VAR_NAME}WORKING_DIR_OLD${COLOR_DOTS}........${COLOR_VAR_DESC}Started in directory${COLOR_DOTS}...................${COLOR_VAR_VAL}$WORKING_DIR_OLD${COLOR_RESET}"
@@ -571,8 +571,10 @@ env_restore() {
 # we will save env now, next times we will only restore it)
 env_save
 
-if [ -n "${WITH_EMSCRIPTEN}" ];
+if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 then
+	echo $WITH_EMSCRIPTEN
+	exit 0
 	git clone https://github.com/emscripten-core/emsdk.git
 	cd emsdk
 	git pull
@@ -614,7 +616,7 @@ then
 		then
 			./b2 cxxflags=-fPIC toolset=clang cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 		else
-			if [ -n "${WITH_EMSCRIPTEN}" ];
+			if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 			then
 				./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=debug link=static threading=multi install
 			else
@@ -663,7 +665,7 @@ then
 					export KERNEL_BITS=64
 					./Configure darwin64-x86_64-cc -fPIC no-shared --prefix="$INSTALL_ROOT"
 				else
-					if [ -n "${WITH_EMSCRIPTEN}" ];
+					if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 					then
 						emconfigure ./config -fPIC -no-asm -no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
 						sed -i 's/CROSS_COMPILE=.*/CROSS_COMPILE=/' Makefile
@@ -678,7 +680,7 @@ then
 		fi
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 		cd openssl
-		if [ -n "${WITH_EMSCRIPTEN}" ];
+		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 		then
 			emmake $MAKE ${PARALLEL_MAKE_OPTIONS} depend
 			emmake $MAKE ${PARALLEL_MAKE_OPTIONS}
@@ -717,7 +719,7 @@ then
 		then
 			./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --build=x86_64-apple-darwin#{OS.kernel_version.major} --prefix="$INSTALL_ROOT"
 		else
-			if [ -n "${WITH_EMSCRIPTEN}" ];
+			if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 			then
 				emconfigure ./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_CROSSCOMPILING_OPTS_GMP} ${CONF_DEBUG_OPTIONS} --disable-assembly --host none --enable-cxx --prefix="$INSTALL_ROOT"
 			else
@@ -725,7 +727,7 @@ then
 			fi
 		fi
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-		if [ -n "${WITH_EMSCRIPTEN}" ];
+		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 		then
 			emmake $MAKE ${PARALLEL_MAKE_OPTIONS}
 		else
@@ -758,7 +760,7 @@ then
 		mkdir -p build
 		cd build
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-		if [ -n "${WITH_EMSCRIPTEN}" ];
+		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 		then
 			simple_find_tool_program "cmake" "CMAKE" "no"
 			emcmake $CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" -DGMP_INCLUDE_DIR="$INCLUDE_ROOT" -DGMP_LIBRARY="$LIBRARIES_ROOT" -DWITH_PROCPS=OFF -DCURVE=ALT_BN128 ..
