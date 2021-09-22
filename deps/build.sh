@@ -573,10 +573,14 @@ env_save
 
 if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 then
-	echo $WITH_EMSCRIPTEN
-	exit 0
-	git clone https://github.com/emscripten-core/emsdk.git
-	cd emsdk
+	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}EMSCRIPTEN${COLOR_SEPARATOR} ========================================${COLOR_RESET}"
+	if [ ! -d "emsdk" ];
+	then
+		echo -e "${COLOR_INFO}downloading it${COLOR_DOTS}...${COLOR_RESET}"
+		git clone https://github.com/emscripten-core/emsdk.git
+		cd emsdk
+	fi
+	echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
 	git pull
 	./emsdk install latest
 	./emsdk activate latest
