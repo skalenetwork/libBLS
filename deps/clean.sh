@@ -143,6 +143,7 @@ rm -rf ./libcryptopp
 # rm -rf ./gtest
 rm -rf ./gmp-6.1.2
 rm -rf ./libff
+rm -rf ./emsdk
 echo "Done (all clean)."
 
 #finish
