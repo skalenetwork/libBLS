@@ -163,6 +163,7 @@ jobs:
         export CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
         cd deps
         ./build.sh WITH_EMSCRIPTEN=1
+        cd ..
 
     - name: Activate emsdk env
       run: |
@@ -170,6 +171,7 @@ jobs:
         ./emsdk install latest
         ./emsdk activate latest
         source ./emsdk_env.sh
+        cd ..
 
     - name: Configure all
       run: |

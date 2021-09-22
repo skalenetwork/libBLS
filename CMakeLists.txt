@@ -126,9 +126,9 @@ add_library(bls ${sourses_bls} ${headers_bls})
 include_directories(${Boost_INCLUDE_DIRS})
 
 if( SKALE_HAVE_BOOST_FROM_HUNTER )
-  set( BOOST_LIBS_4_BLS Boost::program_options )
+	set( BOOST_LIBS_4_BLS Boost::program_options )
 else()
-  set( BOOST_LIBS_4_BLS boost_program_options )
+	set( BOOST_LIBS_4_BLS boost_program_options )
 endif()
 
 set (WITH_PROCPS OFF)
