@@ -606,7 +606,12 @@ then
 		then
 			./b2 cxxflags=-fPIC toolset=clang cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 		else
-			./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=debug link=static threading=multi install
+			if [ -z "${WITH_EMSCRIPTEN}" ];
+			then
+				./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=debug link=static threading=multi install
+			else
+				./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
+			fi
 		fi
 	fi
 		cd ..
@@ -650,7 +655,12 @@ then
 					export KERNEL_BITS=64
 					./Configure darwin64-x86_64-cc -fPIC no-shared --prefix="$INSTALL_ROOT"
 				else
-					emcmake ./config -fPIC no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+					if [ -z "${WITH_EMSCRIPTEN}" ];
+					then
+						emcmake ./config -fPIC no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+					else
+						/config -fPIC --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+					fi
 				fi
 			else
 				./Configure linux-armv4 --prefix="$INSTALL_ROOT" "${ADDITIONAL_INCLUDES}" "${ADDITIONAL_LIBRARIES}" no-shared no-tests no-dso
@@ -697,16 +707,21 @@ then
 		then
 			./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --build=x86_64-apple-darwin#{OS.kernel_version.major} --prefix="$INSTALL_ROOT"
 		else
-			emconfigure ./configure --disable-assembly --host none --enable-cxx --prefix="$INSTALL_ROOT"
+			if [ -z "${WITH_EMSCRIPTEN}" ];
+			then
+				emconfigure ./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_CROSSCOMPILING_OPTS_GMP} ${CONF_DEBUG_OPTIONS} --disable-assembly --host none --enable-cxx --prefix="$INSTALL_ROOT"
+			else
+				./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_CROSSCOMPILING_OPTS_GMP} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --prefix="$INSTALL_ROOT"
+			fi
 		fi
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
+		if [ -z "${WITH_EMSCRIPTEN}" ];
 		then
-			$MAKE ${PARALLEL_MAKE_OPTIONS}
-			$MAKE ${PARALLEL_MAKE_OPTIONS} install
+			emmake $MAKE ${PARALLEL_MAKE_OPTIONS}
 		else
-			emmake $MAKE ${PARALLEL_MAKE_OPTIONS} && $MAKE ${PARALLEL_MAKE_OPTIONS} install
+			$MAKE ${PARALLEL_MAKE_OPTIONS}
 		fi
+		$MAKE ${PARALLEL_MAKE_OPTIONS} install
 		cd ..
 		cd "$SOURCES_ROOT"
 	else
@@ -732,19 +747,19 @@ then
 		git checkout 03b719a7c81757071f99fc60be1f7f7694e51390
 		mkdir -p build
 		cd build
-		simple_find_tool_program "cmake" "CMAKE" "no"
-		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
+		if [ -z "${WITH_EMSCRIPTEN}" ];
 		then
+			simple_find_tool_program "cmake" "CMAKE" "no"
+			emcmake $CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" -DGMP_INCLUDE_DIR="$INCLUDE_ROOT" -DGMP_LIBRARY="$LIBRARIES_ROOT" -DWITH_PROCPS=OFF -DCURVE=ALT_BN128 ..
+			echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+			emmake $MAKE ${PARALLEL_MAKE_OPTIONS}
+		else
 			$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF
 			echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 			$MAKE ${PARALLEL_MAKE_OPTIONS}
-			$MAKE ${PARALLEL_MAKE_OPTIONS} install
-			cd "$SOURCES_ROOT"
-		else
-			emcmake $CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" -DGMP_INCLUDE_DIR="$INCLUDE_ROOT" -DGMP_LIBRARY="$LIBRARIES_ROOT" -DWITH_PROCPS=OFF -DCURVE=ALT_BN128 ..
-			emmake $MAKE ${PARALLEL_MAKE_OPTIONS}
-			$MAKE ${PARALLEL_MAKE_OPTIONS} install
 		fi
+		$MAKE ${PARALLEL_MAKE_OPTIONS} install
+		cd "$SOURCES_ROOT"
 	else
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
 	fi
