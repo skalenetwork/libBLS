@@ -465,6 +465,13 @@ then
 fi
 export CMAKE="$CMAKE -DUSE_LLVM=$USE_LLVM -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_LINKER=$LD -DCMAKE_AR=$AR -DCMAKE_OBJCOPY=$OBJCOPY -DCMAKE_OBJDUMP=$OBJDUMP -DCMAKE_RANLIB=$RANLIB -DCMAKE_NM=$NM"
 #
+if [ -n "${WITH_EMSCRIPTEN}" ];
+then
+	WITH_EMSCRIPTEN=1
+else
+	WITH_EMSCRIPTEN=0
+fi
+
 echo -e "${COLOR_VAR_NAME}WORKING_DIR_OLD${COLOR_DOTS}........${COLOR_VAR_DESC}Started in directory${COLOR_DOTS}...................${COLOR_VAR_VAL}$WORKING_DIR_OLD${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WORKING_DIR_NEW${COLOR_DOTS}........${COLOR_VAR_DESC}Switched to directory${COLOR_DOTS}..................${COLOR_VAR_VAL}$WORKING_DIR_NEW${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}UNIX_SYSTEM_NAME${COLOR_DOTS}.......${COLOR_VAR_DESC}Building on host${COLOR_DOTS}.......................${COLOR_VAR_VAL}$UNIX_SYSTEM_NAME${COLOR_RESET}"
@@ -512,6 +519,7 @@ echo -e "${COLOR_VAR_NAME}RANLIB${COLOR_DOTS}...................................
 echo -e "${COLOR_VAR_NAME}NM${COLOR_DOTS}............................................................${COLOR_VAR_VAL}$NM${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}OBJCOPY${COLOR_DOTS}.......................................................${COLOR_VAR_VAL}$OBJCOPY${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}OBJDUMP${COLOR_DOTS}.......................................................${COLOR_VAR_VAL}$OBJDUMP${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_EMSCRIPTEN${COLOR_DOTS}........${COLOR_VAR_DESC}Emscripten${COLOR_DOTS}.............................${COLOR_VAR_VAL}$WITH_EMSCRIPTEN${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_ZLIB${COLOR_DOTS}..............${COLOR_VAR_DESC}Zlib${COLOR_DOTS}...................................${COLOR_VAR_VAL}$WITH_ZLIB${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_OPENSSL${COLOR_DOTS}...........${COLOR_VAR_DESC}OpenSSL${COLOR_DOTS}................................${COLOR_VAR_VAL}$WITH_OPENSSL${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_CURL${COLOR_DOTS}..............${COLOR_VAR_DESC}CURL${COLOR_DOTS}...................................${COLOR_VAR_VAL}$WITH_CURL${COLOR_RESET}"
@@ -563,7 +571,7 @@ env_restore() {
 # we will save env now, next times we will only restore it)
 env_save
 
-if [ -z "${WITH_EMSCRIPTEN}" ];
+if [ -n "${WITH_EMSCRIPTEN}" ];
 then
 	git clone https://github.com/emscripten-core/emsdk.git
 	cd emsdk
@@ -606,7 +614,7 @@ then
 		then
 			./b2 cxxflags=-fPIC toolset=clang cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 		else
-			if [ -z "${WITH_EMSCRIPTEN}" ];
+			if [ -n "${WITH_EMSCRIPTEN}" ];
 			then
 				./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=debug link=static threading=multi install
 			else
@@ -655,11 +663,12 @@ then
 					export KERNEL_BITS=64
 					./Configure darwin64-x86_64-cc -fPIC no-shared --prefix="$INSTALL_ROOT"
 				else
-					if [ -z "${WITH_EMSCRIPTEN}" ];
+					if [ -n "${WITH_EMSCRIPTEN}" ];
 					then
-						emcmake ./config -fPIC no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+						emconfigure ./config -fPIC -no-asm -no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+						sed -i 's/CROSS_COMPILE=.*/CROSS_COMPILE=/' Makefile
 					else
-						/config -fPIC --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+						./config -fPIC --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
 					fi
 				fi
 			else
@@ -669,14 +678,15 @@ then
 		fi
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 		cd openssl
-		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
+		if [ -n "${WITH_EMSCRIPTEN}" ];
 		then
+			emmake $MAKE ${PARALLEL_MAKE_OPTIONS} depend
+			emmake $MAKE ${PARALLEL_MAKE_OPTIONS}
+		else
 			$MAKE ${PARALLEL_MAKE_OPTIONS} depend
 			$MAKE ${PARALLEL_MAKE_OPTIONS}
-			$MAKE ${PARALLEL_MAKE_OPTIONS} install_sw
-		else
-			emmake $MAKE ${PARALLEL_MAKE_OPTIONS} depend && emmake $MAKE ${PARALLEL_MAKE_OPTIONS} && $MAKE ${PARALLEL_MAKE_OPTIONS} install_sw
 		fi
+		$MAKE ${PARALLEL_MAKE_OPTIONS} install_sw
 		cd "$SOURCES_ROOT"
 	else
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
@@ -707,7 +717,7 @@ then
 		then
 			./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --build=x86_64-apple-darwin#{OS.kernel_version.major} --prefix="$INSTALL_ROOT"
 		else
-			if [ -z "${WITH_EMSCRIPTEN}" ];
+			if [ -n "${WITH_EMSCRIPTEN}" ];
 			then
 				emconfigure ./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_CROSSCOMPILING_OPTS_GMP} ${CONF_DEBUG_OPTIONS} --disable-assembly --host none --enable-cxx --prefix="$INSTALL_ROOT"
 			else
@@ -715,7 +725,7 @@ then
 			fi
 		fi
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-		if [ -z "${WITH_EMSCRIPTEN}" ];
+		if [ -n "${WITH_EMSCRIPTEN}" ];
 		then
 			emmake $MAKE ${PARALLEL_MAKE_OPTIONS}
 		else
@@ -747,15 +757,14 @@ then
 		git checkout 03b719a7c81757071f99fc60be1f7f7694e51390
 		mkdir -p build
 		cd build
-		if [ -z "${WITH_EMSCRIPTEN}" ];
+		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+		if [ -n "${WITH_EMSCRIPTEN}" ];
 		then
 			simple_find_tool_program "cmake" "CMAKE" "no"
 			emcmake $CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" -DGMP_INCLUDE_DIR="$INCLUDE_ROOT" -DGMP_LIBRARY="$LIBRARIES_ROOT" -DWITH_PROCPS=OFF -DCURVE=ALT_BN128 ..
-			echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 			emmake $MAKE ${PARALLEL_MAKE_OPTIONS}
 		else
 			$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF
-			echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 			$MAKE ${PARALLEL_MAKE_OPTIONS}
 		fi
 		$MAKE ${PARALLEL_MAKE_OPTIONS} install
