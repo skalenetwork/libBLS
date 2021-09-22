@@ -578,8 +578,8 @@ then
 	then
 		echo -e "${COLOR_INFO}downloading it${COLOR_DOTS}...${COLOR_RESET}"
 		git clone https://github.com/emscripten-core/emsdk.git
-		cd emsdk
 	fi
+	cd emsdk
 	echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
 	git pull
 	./emsdk install latest

@@ -149,7 +149,6 @@ add_subdirectory(threshold_encryption)
 
 add_executable(dkg_keygen tools/dkg_key_gen.cpp)
 target_include_directories(dkg_keygen PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-
 target_link_libraries(dkg_keygen PRIVATE bls ${CRYPTOPP} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
 
 add_executable(dkg_glue tools/dkg_glue.cpp)
@@ -175,7 +174,6 @@ target_link_libraries(verify_bls PRIVATE bls ${CRYPTOPP} ff ${GMPXX_LIBRARY} ${G
 add_executable(generate_key_system tools/generate_key_system.cpp)
 target_include_directories(generate_key_system PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(generate_key_system PRIVATE bls ${CRYPTOPP} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
-
 
 if(BUILD_TESTS)
 	add_executable(bls_unit_test test/unit_tests_bls.cpp)
