@@ -174,8 +174,7 @@ jobs:
         cd ../..
         mkdir -p build_em
         cd build_em
-        CMAKE_BUILD_FLAGS="-DEMSCRIPTEN=ON"
-        emmake cmake ..
+        emmake cmake -DEMSCRIPTEN=ON ..
         emmake make -j$(nproc)
 
     # - name: Run tests
