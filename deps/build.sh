@@ -608,8 +608,13 @@ then
 		fi
 		cd boost_1_68_0
 		echo -e "${COLOR_INFO}configuring and building it${COLOR_DOTS}...${COLOR_RESET}"
-
-		./bootstrap.sh --prefix="$INSTALL_ROOT" --with-libraries=system,thread,filesystem,regex,atomic,program_options
+		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
+		then
+			BOOST_LIBRARIES="program_options"
+		else
+			BOOST_LIBRARIES="system,thread,filesystem,regex,atomic,program_options"
+		fi
+		./bootstrap.sh --prefix="$INSTALL_ROOT" --with-libraries="$BOOST_LIBRARIES"
 
 	if [ ${ARCH} = "arm" ]
 	then
@@ -623,6 +628,9 @@ then
 			if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 			then
 				./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=debug link=static threading=multi install
+				cd bin.v2/libs/program_options/build/emscripten-2.0.30/debug/cxxstd-14-iso/link-static/threading-multi/
+				emar q libboost_program_options.a *.bc
+				cp libboost_program_options.a ${LIBRARIES_ROOT}
 			else
 				./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 			fi
