@@ -25,7 +25,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #define BOOST_TEST_MODULE
 #ifdef EMSCRIPTEN
 #define BOOST_TEST_DISABLE_ALT_STACK
-#endif // EMSCRIPTEN
+#endif  // EMSCRIPTEN
 
 #include <dkg/dkg.h>
 #include <threshold_encryption/TEDecryptSet.h>
