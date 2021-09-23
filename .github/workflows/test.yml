@@ -165,20 +165,17 @@ jobs:
         ./build.sh WITH_EMSCRIPTEN=1
         cd ..
 
-    - name: Activate emsdk env
+    - name: Build all
       run: |
         cd deps/emsdk
         ./emsdk install latest
         ./emsdk activate latest
         source ./emsdk_env.sh
         cd ..
-
-    - name: Configure all
-      run: |
-        CMAKE_BUILD_FLAGS="-DEMSCRIPTEN=ON"
         mkdir -p build_em
         cd build_em
-        emmake cmake .. -DEMSCRIPTEN=ON
+        CMAKE_BUILD_FLAGS="-DEMSCRIPTEN=ON"
+        emmake cmake ..
         emmake make -j$(nproc)
 
     # - name: Run tests
