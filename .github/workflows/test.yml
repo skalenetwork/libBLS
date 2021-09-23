@@ -182,7 +182,7 @@ jobs:
         mkdir -p build_em
         cd scripts
         emmake cmake .. -DEMSCRIPTEN=ON
-        emmake make te
+        emmake make -j$(nproc)
 
     # - name: Run tests
     #   run: |
