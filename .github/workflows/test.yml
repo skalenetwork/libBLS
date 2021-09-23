@@ -171,7 +171,7 @@ jobs:
         ./emsdk install latest
         ./emsdk activate latest
         source ./emsdk_env.sh
-        cd ..
+        cd ../..
         mkdir -p build_em
         cd build_em
         CMAKE_BUILD_FLAGS="-DEMSCRIPTEN=ON"
