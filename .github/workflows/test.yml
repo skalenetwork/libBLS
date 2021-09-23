@@ -175,12 +175,9 @@ jobs:
 
     - name: Configure all
       run: |
-        export CC=gcc-7
-        export CXX=g++-7
-        export TARGET=all
-        CMAKE_BUILD_FLAGS="-DCOVERAGE=ON -DEMSCRIPTEN=ON"
+        CMAKE_BUILD_FLAGS="-DEMSCRIPTEN=ON"
         mkdir -p build_em
-        cd scripts
+        cd build_em
         emmake cmake .. -DEMSCRIPTEN=ON
         emmake make -j$(nproc)
 
