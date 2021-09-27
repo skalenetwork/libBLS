@@ -25,7 +25,8 @@ int main() {
     // auto ciphertext = ciphertext_with_aes.first;
     // auto encrypted_message = ciphertext_with_aes.second;
 
-    // libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
+    // libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key
+    // );
 
     // assert( te_instance.Verify( ciphertext, decryption_share, public_key ) );
 
@@ -35,7 +36,7 @@ int main() {
     // std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
 
     // std::string plaintext = ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
-    
+
     // std::cout << TE::encryptMessage(message, common_public_str) << '\n';
     // assert( plaintext == message );
     std::cout << ciphertext_string;
