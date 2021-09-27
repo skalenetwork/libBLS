@@ -2,8 +2,8 @@
 #include <tools/utils.h>
 #include <iostream>
 
-int main(int argc, char* argv[]) {
-    if (argc != 3) {
+int main( int argc, char* argv[] ) {
+    if ( argc != 3 ) {
         // argv[0] is path to .js file
         std::cout << "Wrong number of arguments\n" << argc << '\n';
         return 1;
@@ -35,7 +35,8 @@ int main(int argc, char* argv[]) {
     // auto ciphertext = ciphertext_with_aes.first;
     // auto encrypted_message = ciphertext_with_aes.second;
 
-    // libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
+    // libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key
+    // );
 
     // assert( te_instance.Verify( ciphertext, decryption_share, public_key ) );
 
@@ -45,7 +46,7 @@ int main(int argc, char* argv[]) {
     // std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
 
     // std::string plaintext = ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
-    
+
     // std::cout << TE::encryptMessage(message, common_public_str) << '\n';
     // assert( plaintext == message );
     std::cout << ciphertext_string;
