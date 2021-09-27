@@ -2,8 +2,8 @@
 #include <tools/utils.h>
 #include <iostream>
 
-int main(int argc, char* argv[]) {
-    if (argc != 3) {
+int main( int argc, char* argv[] ) {
+    if ( argc != 3 ) {
         // argv[0] is path to .js file
         std::cout << "Wrong number of arguments\n" << argc << '\n';
         return 1;
@@ -15,6 +15,41 @@ int main(int argc, char* argv[]) {
     crypto::ThresholdUtils::initCurve();
     auto ciphertext_string = crypto::TE::encryptMessage( message, common_public_str );
 
+<<<<<<< HEAD
+=======
+    // libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
+
+    // auto str = crypto::ThresholdUtils::G2ToString( public_key, 16 );
+    // std::string common_public_str = "";
+    // for ( auto& elem : str ) {
+    //     while ( elem.size() < 64 ) {
+    //         elem = "0" + elem;
+    //     }
+    //     common_public_str += elem;
+    // }
+    // std::cout << common_public_str << '\n';
+    auto ciphertext_string = te_instance.encryptMessage( message, common_public_str );
+
+    // auto ciphertext_with_aes = te_instance.aesCiphertextFromString( ciphertext_string );
+
+    // auto ciphertext = ciphertext_with_aes.first;
+    // auto encrypted_message = ciphertext_with_aes.second;
+
+    // libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key
+    // );
+
+    // assert( te_instance.Verify( ciphertext, decryption_share, public_key ) );
+
+    // std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares;
+    // shares.push_back( std::make_pair( decryption_share, size_t( 1 ) ) );
+
+    // std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
+
+    // std::string plaintext = ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
+
+    // std::cout << TE::encryptMessage(message, common_public_str) << '\n';
+    // assert( plaintext == message );
+>>>>>>> 8497c0808bf12edfdef00f8703602c1578f06b6b
     std::cout << ciphertext_string;
     return 0;
 }
