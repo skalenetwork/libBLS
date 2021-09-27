@@ -35,7 +35,7 @@ list( APPEND CMAKE_MODULE_PATH ${LIBBLS_CMAKE_DIR} )
 
 find_library( GMP_LIBRARY NAMES "gmp" PATHS "${DEPS_INSTALL_ROOT}/lib" )
 find_library( GMPXX_LIBRARY NAMES "gmpxx" PATHS "${DEPS_INSTALL_ROOT}/lib" )
-find_library( CRYPTOPP NAMES "crypto" PATHS "${DEPS_INSTALL_ROOT}/lib" )
+find_library( CRYPTOPP_LIBRARY NAMES "crypto" PATHS "${DEPS_INSTALL_ROOT}/lib" )
 
 set( HUNTER_ENABLED OFF )
 
@@ -143,7 +143,7 @@ set(BLS_INCLUDE_DIRS
 		)
 
 target_include_directories(bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(bls PRIVATE ff ${CRYPTOPP} ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+target_link_libraries(bls PRIVATE ff ${CRYPTOPP_LIBRARY} ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
 add_subdirectory(threshold_encryption)
 
@@ -154,7 +154,7 @@ if (EMSCRIPTEN)
 	set_target_properties(dkg_keygen PROPERTIES LINK_FLAGS "-s DISABLE_EXCEPTION_CATCHING=1")
 endif()
 
-target_link_libraries(dkg_keygen PRIVATE bls ${CRYPTOPP} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
+target_link_libraries(dkg_keygen PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
 
 add_executable(dkg_glue tools/dkg_glue.cpp)
 target_include_directories(dkg_glue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -162,7 +162,7 @@ if (EMSCRIPTEN)
 	target_compile_options(dkg_glue PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
 	set_target_properties(dkg_glue PROPERTIES LINK_FLAGS "-s DISABLE_EXCEPTION_CATCHING=1")
 endif()
-target_link_libraries(dkg_glue PRIVATE bls ${CRYPTOPP} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
+target_link_libraries(dkg_glue PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
 
 add_executable(sign_bls tools/sign_bls.cpp)
 target_include_directories(sign_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -170,7 +170,7 @@ if (EMSCRIPTEN)
 	target_compile_options(sign_bls PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
 	set_target_properties(sign_bls PROPERTIES LINK_FLAGS "-s DISABLE_EXCEPTION_CATCHING=1")
 endif()
-target_link_libraries(sign_bls PRIVATE bls ${CRYPTOPP} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
+target_link_libraries(sign_bls PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
 
 add_executable(hash_g1 tools/hash_g1.cpp)
 target_include_directories(hash_g1 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -178,7 +178,7 @@ if (EMSCRIPTEN)
 	target_compile_options(hash_g1 PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
 	set_target_properties(hash_g1 PROPERTIES LINK_FLAGS "-s DISABLE_EXCEPTION_CATCHING=1")
 endif()
-target_link_libraries(hash_g1 PRIVATE bls ${CRYPTOPP} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
+target_link_libraries(hash_g1 PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
 
 add_executable(bls_glue tools/bls_glue.cpp)
 target_include_directories(bls_glue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -186,7 +186,7 @@ if (EMSCRIPTEN)
 	target_compile_options(bls_glue PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
 	set_target_properties(bls_glue PROPERTIES LINK_FLAGS "-s DISABLE_EXCEPTION_CATCHING=1")
 endif()
-target_link_libraries(bls_glue PRIVATE bls ${CRYPTOPP} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
+target_link_libraries(bls_glue PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
 
 add_executable(verify_bls tools/verify_bls.cpp)
 target_include_directories(verify_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -194,7 +194,7 @@ if (EMSCRIPTEN)
 	target_compile_options(verify_bls PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
 	set_target_properties(verify_bls PROPERTIES LINK_FLAGS "-s DISABLE_EXCEPTION_CATCHING=1")
 endif()
-target_link_libraries(verify_bls PRIVATE bls ${CRYPTOPP} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
+target_link_libraries(verify_bls PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
 
 add_executable(generate_key_system tools/generate_key_system.cpp)
 target_include_directories(generate_key_system PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
@@ -202,7 +202,7 @@ if (EMSCRIPTEN)
 	target_compile_options(generate_key_system PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
 	set_target_properties(generate_key_system PROPERTIES LINK_FLAGS "-s DISABLE_EXCEPTION_CATCHING=1")
 endif()
-target_link_libraries(generate_key_system PRIVATE bls ${CRYPTOPP} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
+target_link_libraries(generate_key_system PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
 
 if(BUILD_TESTS)
 	add_executable(bls_unit_test test/unit_tests_bls.cpp)
@@ -211,7 +211,7 @@ if(BUILD_TESTS)
 		target_compile_options(bls_unit_test PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
 		set_target_properties(bls_unit_test PROPERTIES LINK_FLAGS "-s DISABLE_EXCEPTION_CATCHING=1")
 	endif()
-	target_link_libraries(bls_unit_test PRIVATE bls ${CRYPTOPP} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
+	target_link_libraries(bls_unit_test PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
 
 	add_test(NAME bls_tests COMMAND bls_unit_test)
 
@@ -221,7 +221,7 @@ if(BUILD_TESTS)
 		target_compile_options(dkg_unit_test PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
 		set_target_properties(dkg_unit_test PROPERTIES LINK_FLAGS "-s DISABLE_EXCEPTION_CATCHING=1")
 	endif()
-	target_link_libraries(dkg_unit_test PRIVATE bls ${CRYPTOPP} ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} ${BOOST_LIBS_4_BLS})
+	target_link_libraries(dkg_unit_test PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} ${BOOST_LIBS_4_BLS})
   
 	add_test(NAME dkg_tests COMMAND dkg_unit_test)
 
@@ -231,13 +231,13 @@ if(BUILD_TESTS)
 		target_compile_options(bls_test PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
 		set_target_properties(bls_test PROPERTIES LINK_FLAGS "-s DISABLE_EXCEPTION_CATCHING=1")
 	endif()
-	target_link_libraries(bls_test PRIVATE bls ${CRYPTOPP} ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} ${BOOST_LIBS_4_BLS})
+	target_link_libraries(bls_test PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} ${BOOST_LIBS_4_BLS})
   
 	add_test(NAME bls_test COMMAND bls_test)
 
 	add_executable(dkg_attack test/dkg_attack.cpp)
 	target_include_directories(dkg_attack PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-	target_link_libraries(dkg_attack PRIVATE bls ${CRYPTOPP} ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} ${BOOST_LIBS_4_BLS})
+	target_link_libraries(dkg_attack PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} ${BOOST_LIBS_4_BLS})
 
 	add_test(NAME dkg_attack COMMAND dkg_attack)
 
@@ -247,7 +247,7 @@ if(BUILD_TESTS)
 		target_compile_options(utils_unit_test PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
 		set_target_properties(utils_unit_test PROPERTIES LINK_FLAGS "-s DISABLE_EXCEPTION_CATCHING=1")
 	endif()
-	target_link_libraries(utils_unit_test PRIVATE bls te ${CRYPTOPP} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
+	target_link_libraries(utils_unit_test PRIVATE bls te ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
 
 	add_test(NAME utils_tests COMMAND utils_unit_test)
 

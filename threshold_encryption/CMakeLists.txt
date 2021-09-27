@@ -48,7 +48,12 @@ include_directories(${CMAKE_BINARY_DIR}/deps/include )
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 
 target_include_directories(te PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
-target_link_libraries(te PRIVATE ${CRYPTOPP} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+target_link_libraries(te PRIVATE ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+
+add_executable(encrypt ../threshold_encryption/encryptMessage.cpp)
+set_target_properties(encrypt PROPERTIES LINK_FLAGS "-s EXIT_RUNTIME=1 -s USE_PTHREADS=0 -s EXPORTED_FUNCTIONS=['_main'] -s MAIN_MODULE=1 --bind")
+target_include_directories(encrypt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
+target_link_libraries(encrypt PRIVATE te ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
 if (BUILD_TESTS)
 	add_executable(te_unit_test ../test/unit_tests_te.cpp)
@@ -57,7 +62,7 @@ if (BUILD_TESTS)
 		target_compile_options(te_unit_test PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
 		set_target_properties(te_unit_test PROPERTIES LINK_FLAGS "-s DISABLE_EXCEPTION_CATCHING=1")
 	endif()
-    target_link_libraries(te_unit_test PRIVATE te ${CRYPTOPP} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+    target_link_libraries(te_unit_test PRIVATE te ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
 	add_test(NAME te_tests COMMAND te_unit_test)
 
@@ -67,7 +72,7 @@ if (BUILD_TESTS)
 		target_compile_options(te_test PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
 		set_target_properties(te_test PROPERTIES LINK_FLAGS "-s DISABLE_EXCEPTION_CATCHING=1")
 	endif()
-    target_link_libraries(te_test PRIVATE te ${CRYPTOPP} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+    target_link_libraries(te_test PRIVATE te ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
     add_test(NAME te_wrap_tests COMMAND te_unit_test)
 

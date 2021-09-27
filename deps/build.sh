@@ -591,7 +591,7 @@ fi
 if [ "$WITH_BOOST" = "yes" ];
 then
 	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}BOOST${COLOR_SEPARATOR} ========================================${COLOR_RESET}"
-	if [ ! -f "$INSTALL_ROOT/lib/libboost_system.a" ];
+	if [ ! -f "$INSTALL_ROOT/lib/libboost_program_options.a" ];
 	then
 		env_restore
 		cd "$SOURCES_ROOT"
@@ -627,7 +627,7 @@ then
 		else
 			if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 			then
-				./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=debug link=static threading=multi install
+				./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=debug link=static install
 				cd bin.v2/libs/program_options/build/emscripten-2.0.30/debug/cxxstd-14-iso/link-static/threading-multi/
 				emar q libboost_program_options.a *.bc
 				cp libboost_program_options.a ${LIBRARIES_ROOT}
@@ -679,7 +679,7 @@ then
 				else
 					if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 					then
-						emconfigure ./config -fPIC -no-asm -no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+						emconfigure ./config -fPIC -no-asm -no-shared -no-threads --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
 						sed -i 's/CROSS_COMPILE=.*/CROSS_COMPILE=/' Makefile
 					else
 						./config -fPIC --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
@@ -775,7 +775,7 @@ then
 		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 		then
 			simple_find_tool_program "cmake" "CMAKE" "no"
-			emcmake $CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" -DGMP_INCLUDE_DIR="$INCLUDE_ROOT" -DGMP_LIBRARY="$LIBRARIES_ROOT" -DWITH_PROCPS=OFF -DCURVE=ALT_BN128 ..
+			emcmake $CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" -DGMP_INCLUDE_DIR="$INCLUDE_ROOT" -DGMP_LIBRARY="$LIBRARIES_ROOT" -DWITH_PROCPS=OFF -DCURVE=ALT_BN128 -DUSE_ASM=OFF ..
 			emmake $MAKE ${PARALLEL_MAKE_OPTIONS}
 		else
 			$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF
