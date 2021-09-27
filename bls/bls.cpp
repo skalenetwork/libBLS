@@ -216,6 +216,47 @@ bool Bls::Verification( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_a
     // there are several types of pairing, it does not matter which one is chosen for verification
 }
 
+bool Bls::AggregatedVerification(
+    std::vector< std::shared_ptr< std::array< uint8_t, 32 > > > hash_byte_arr,
+    const std::vector< libff::alt_bn128_G1 > sign, const libff::alt_bn128_G2 public_key ) {
+    for ( auto& hash : hash_byte_arr ) {
+        CHECK( hash );
+    }
+
+    libff::inhibit_profiling_info = true;
+
+    for ( auto& sig : sign ) {
+        if ( !sig.is_well_formed() ) {
+            throw ThresholdUtils::IsNotWellFormed(
+                "Error, signature does not lie on the alt_bn128 curve" );
+        }
+        if ( libff::alt_bn128_modulus_r * sig != libff::alt_bn128_G1::zero() ) {
+            throw ThresholdUtils::IsNotWellFormed( "Error, signature is not member of G1" );
+        }
+    }
+
+    if ( !public_key.is_well_formed() ) {
+        throw ThresholdUtils::IsNotWellFormed( "Error, public key is invalid" );
+    }
+
+    if ( !ThresholdUtils::isG2( public_key ) ) {
+        throw ThresholdUtils::IsNotWellFormed( "Error, public key is not member of G2" );
+    }
+
+    libff::alt_bn128_G1 aggregated_hash = libff::alt_bn128_G1::zero();
+    for ( std::shared_ptr< std::array< uint8_t, 32 > >& hash : hash_byte_arr ) {
+        aggregated_hash = aggregated_hash + ThresholdUtils::HashtoG1( hash );
+    }
+
+    libff::alt_bn128_G1 aggregated_sig = libff::alt_bn128_G1::zero();
+    for ( libff::alt_bn128_G1 sig : sign ) {
+        aggregated_sig = aggregated_sig + sig;
+    }
+
+    return ( libff::alt_bn128_ate_reduced_pairing( aggregated_sig, libff::alt_bn128_G2::one() ) ==
+             libff::alt_bn128_ate_reduced_pairing( aggregated_hash, public_key ) );
+}
+
 std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > Bls::KeysRecover(
     const std::vector< libff::alt_bn128_Fr >& coeffs,
     const std::vector< libff::alt_bn128_Fr >& shares ) {

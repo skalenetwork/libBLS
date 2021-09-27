@@ -111,7 +111,7 @@ void KeyGeneration( const size_t t, const size_t n, bool generate_all = true, in
             skeys.push_back( std::make_shared< BLSPrivateKeyShare >( cur_skey ) );
         }
 
-        CommonPkeyToJson( std::make_shared< BLSPublicKey >( common_public_key, t, n ) );
+        CommonPkeyToJson( std::make_shared< BLSPublicKey >( common_public_key ) );
 
         for ( size_t i = 0; i < n; ++i ) {
             KeysToJson( skeys.at( i ), t, n, i );
