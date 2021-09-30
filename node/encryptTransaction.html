@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Demo</title>
+    <script src="encryptTransaction.min.js"></script>
+    <script src="encrypt.js"></script>
+    <script>
+        // Module.onRuntimeInitialized = () => {
+        //     const Sum = Module.cwrap('encryptMessage', 'string', ['string', 'string']);
+        //     console.log('aaaaaaaaaaaaaaaaaaaaaaaa');
+        //     // console.log(Sum(data, bls_key));
+        //     // console.log(Sum(0, 45));
+        // };
+        async function encrypt() {
+            let to = document.getElementById("to").value;
+            let data = document.getElementById("data").value;
+            window.ethereum.enable();
+            console.log(window.web3);
+            let bls_key = await encryptTransaction.get_common_bls_public_key( window.web3 );
+            console.log(bls_key.substring(2));
+            console.log('aaaaaaaaaaaaaaaaaaaaaaaa');
+        }
+    </script>
+</head>
+<body>
+<!--<div>-->
+<!--&lt;!&ndash;    <div> <label for="to">To:</label> <input id="to" /></div>&ndash;&gt;-->
+<!--&lt;!&ndash;    <div> <label for="data">Data:</label> <input id="data" /></div>&ndash;&gt;-->
+<!--&lt;!&ndash;    <button onclick="encrypt()">Encrypt transaction</button>&ndash;&gt;-->
+    <section>
+        <h2>Tx data</h2>
+        <p>
+            <label for="to">
+                <span>To: </span>
+            </label>
+            <input id="to">
+        </p>
+        <p>
+            <label for="data">
+                <span>Data: </span>
+            </label>
+            <input id="data">
+        </p>
+    </section>
+    <section>
+        <p> <button onclick="encrypt()">Encrypt transaction</button> </p>
+    </section>
+</body>
+</html>
