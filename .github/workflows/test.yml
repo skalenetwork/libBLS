@@ -176,7 +176,6 @@ jobs:
         cd build_em
         export LIBRARIES_ROOT=../deps/deps_inst/x86_or_x64/lib
         emcmake cmake -DEMSCRIPTEN=ON .. -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a
-        emmake cmake -DEMSCRIPTEN=ON ..
         emmake make -j$(nproc)
 
     # - name: Run tests
