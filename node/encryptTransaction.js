@@ -23,10 +23,6 @@ async function encrypt_data( data, common_bls_public_key ) {
 
 async function sendData( eth, to, data ) {
     let web3 = new Web3( eth.currentProvider );
-
-    // let common_bls_public_key_array = await get_common_bls_public_key( web3 );
-    
-    // let encrypted_data = encrypt_data( data, common_bls_public_key_array );
     
     let accs = await web3.eth.getAccounts();
     console.log(accs);
@@ -48,7 +44,12 @@ async function sendData( eth, to, data ) {
     return await web3.eth.sendTransaction(tx);
 }
 
+async function encryptAndSend(eth, to, data) {
+    let bls_key = await get_common_bls_public_key( eth );
+    let encrypted_data = await encrypt_data( data, bls_key.substring(2) );
+    let res = await sendData(eth, to, encrypted_data);
+    return res;
+}
 
-module.exports.get_common_bls_public_key = get_common_bls_public_key
-module.exports.encrypt_data = encrypt_data
-module.exports.sendData = sendData
+
+module.exports.encryptAndSend = encryptAndSend

@@ -9,13 +9,10 @@
             let to = document.getElementById("to").value;
             let data = document.getElementById("data").value;
             if (!window.ethereum.selectedAddress) {
-                await window.ethereum.enable(); // <<< ask for permission
+                await window.ethereum.enable();
             }
             console.log(window.ethereum.selectedAddress);
-            let bls_key = await encryptTransaction.get_common_bls_public_key( window.web3 );
-            let encrypted_data = await encryptTransaction.encrypt_data( data, bls_key.substring(2) );
-            console.log(encrypted_data);
-            let res = await encryptTransaction.sendData(window.web3, to, encrypted_data);
+            let res = await encryptTransaction.encryptAndSend(window.web3, to, data);
             console.log(res);
         }
     </script>
