@@ -4,22 +4,19 @@
     <meta charset="UTF-8">
     <title>Demo</title>
     <script src="encryptTransaction.min.js"></script>
-    <script src="encrypt.js"></script>
     <script>
-        // Module.onRuntimeInitialized = () => {
-        //     const Sum = Module.cwrap('encryptMessage', 'string', ['string', 'string']);
-        //     console.log('aaaaaaaaaaaaaaaaaaaaaaaa');
-        //     // console.log(Sum(data, bls_key));
-        //     // console.log(Sum(0, 45));
-        // };
         async function encrypt() {
             let to = document.getElementById("to").value;
             let data = document.getElementById("data").value;
-            window.ethereum.enable();
-            console.log(window.web3);
+            if (!window.ethereum.selectedAddress) {
+                await window.ethereum.enable(); // <<< ask for permission
+            }
+            console.log(window.ethereum.selectedAddress);
             let bls_key = await encryptTransaction.get_common_bls_public_key( window.web3 );
-            console.log(bls_key.substring(2));
-            console.log('aaaaaaaaaaaaaaaaaaaaaaaa');
+            let encrypted_data = await encryptTransaction.encrypt_data( data, bls_key.substring(2) );
+            console.log(encrypted_data);
+            let res = await encryptTransaction.sendData(window.web3, to, encrypted_data);
+            console.log(res);
         }
     </script>
 </head>

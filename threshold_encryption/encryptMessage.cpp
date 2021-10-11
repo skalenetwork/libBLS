@@ -19,12 +19,10 @@
 //     return 0;
 // }
 extern "C" {
-std::string encryptMessage(const std::string& message, const std::string& key) {
+const char* encryptMessage(const char* data, const char* key) {
     crypto::ThresholdUtils::initCurve();
-    auto ciphertext_string = crypto::TE::encryptMessage( message, key );
+    auto ciphertext_string = crypto::TE::encryptMessage( data, key );
 
-    // std::cout << ciphertext_string << '\n';
-
-    return ciphertext_string;
+    return std::move(ciphertext_string.c_str());
 }
 }
