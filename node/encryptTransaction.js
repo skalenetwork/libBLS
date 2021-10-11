@@ -3,6 +3,7 @@ const Web3 = require('web3');
 async function get_common_bls_public_key( eth ) {    
     // hardcoded address and function signature
     let web3 = new Web3( eth.currentProvider );
+    // TODO: check if it works ok with zeros in coordinates
     return await web3.eth.call({'to': '0xd2aaa00200000000000000000000000000000000', 'data': '0x554ef7a6'});
 }
 

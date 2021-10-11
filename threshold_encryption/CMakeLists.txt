@@ -77,6 +77,14 @@ if (BUILD_TESTS)
 	endif()
     target_link_libraries(te_test PRIVATE te ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
+    if (EMSCRIPTEN)
+        add_executable(encrypt_message ../test/encryptMessageJS.cpp)
+        target_include_directories(encrypt_message PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
+		target_compile_options(encrypt_message PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
+		set_target_properties(encrypt_message PROPERTIES LINK_FLAGS "-s EXIT_RUNTIME=1 -s USE_PTHREADS=0 -s EXPORTED_FUNCTIONS=['_main'] -s MAIN_MODULE=1 --bind")
+        target_link_libraries(encrypt_message PRIVATE te ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+    endif()
+
     add_test(NAME te_wrap_tests COMMAND te_unit_test)
 
     add_custom_target(all_te_tests
