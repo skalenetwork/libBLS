@@ -4,8 +4,8 @@
 
 int main() {
     std::ifstream encryptedDataFile, secretKeyFile;
-    encryptedDataFile.open("encrypted_data.txt");
-    secretKeyFile.open("secret_key.txt");
+    encryptedDataFile.open( "encrypted_data.txt" );
+    secretKeyFile.open( "secret_key.txt" );
 
     std::string encryptedData;
     encryptedDataFile >> encryptedData;
@@ -13,7 +13,7 @@ int main() {
     std::string secretKey;
     secretKeyFile >> secretKey;
 
-    auto te_instance = crypto::TE(1, 1);
+    auto te_instance = crypto::TE( 1, 1 );
 
     auto ciphertext_with_aes = te_instance.aesCiphertextFromString( encryptedData );
 
@@ -32,14 +32,15 @@ int main() {
 
     std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
 
-    std::string plaintext = crypto::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
+    std::string plaintext =
+        crypto::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
 
     std::ifstream messageFile;
-    messageFile.open("message.txt");
+    messageFile.open( "message.txt" );
     std::string message;
     messageFile >> message;
 
-    assert(message == plaintext);
+    assert( message == plaintext );
 
     return 0;
 }
