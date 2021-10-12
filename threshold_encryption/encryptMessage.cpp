@@ -9,5 +9,4 @@ const char* encryptMessage( const char* data, const char* key ) {
 
     return std::move( ciphertext_string.c_str() );
 }
-
 }
