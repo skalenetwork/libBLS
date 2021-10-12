@@ -193,7 +193,7 @@ jobs:
         cp tools/generate_bls_keys build_em/
         cp tools/decrypt_message build_em/
         cd build_em/
-        cp threshold_encryption/encrypt_message.js .
+        cp threshold_encryption/encrypt_message.* .
         ./generate_bls_keys
         MESSAGE=`cat message.txt`
         PUBLIC_BLS_KEY=`cat bls_public_key.txt`
