@@ -741,7 +741,7 @@ then
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 		then
-			emmake $MAKE ${PARALLEL_MAKE_OPTIONS}
+			emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
 		else
 			$MAKE ${PARALLEL_MAKE_OPTIONS}
 		fi
