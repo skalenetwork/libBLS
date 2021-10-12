@@ -155,6 +155,11 @@ jobs:
         sudo python3.6 -m pip install requests[security]
         sudo python3.6 -m pip install codecov --ignore-installed
 
+    - name: Install NODE JS
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ 14.x }}
+  
     - name: Build dependencies
       run: |
         export CC=gcc-7
