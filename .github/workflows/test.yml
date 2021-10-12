@@ -189,8 +189,8 @@ jobs:
 
     - name: Run tests
       run: |
-        cp tools/generate_bls_keys build/
-        cp tools/decrypt_message build
+        cp tools/generate_bls_keys build_em/
+        cp tools/decrypt_message build_em/
         cd build
         ./generate_bls_keys
         MESSAGE=`cat message.txt`
