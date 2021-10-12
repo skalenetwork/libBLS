@@ -15,7 +15,10 @@ int main() {
     auto vector_coordinates = crypto::ThresholdUtils::G2ToString( public_key, 16 );
 
     std::string result = "";
-    for ( const auto& coord : vector_coordinates ) {
+    for ( auto& coord : vector_coordinates ) {
+        while (coord.size() < 64) {
+            coord = "0" + coord;
+        }
         result += coord;
     }
 
