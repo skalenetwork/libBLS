@@ -627,10 +627,10 @@ then
 		else
 			if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 			then
-				./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=debug link=static install
+				./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=debug link=static install
 				cd bin.v2/libs/program_options/build/emscripten-2.0.31/debug/cxxstd-14-iso/link-static/threading-multi/
-				emar q libboost_program_options.a *.bc
-				cp libboost_program_options.a ${LIBRARIES_ROOT}
+				emar q libboost_program_options.a ./*.bc
+				cp libboost_program_options.a "${LIBRARIES_ROOT}"
 			else
 				./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 			fi
@@ -694,8 +694,8 @@ then
 		cd openssl
 		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 		then
-			emmake $MAKE ${PARALLEL_MAKE_OPTIONS} depend
-			emmake $MAKE ${PARALLEL_MAKE_OPTIONS}
+			emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}" depend
+			emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
 		else
 			$MAKE ${PARALLEL_MAKE_OPTIONS} depend
 			$MAKE ${PARALLEL_MAKE_OPTIONS}
@@ -733,7 +733,7 @@ then
 		else
 			if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 			then
-				emconfigure ./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_CROSSCOMPILING_OPTS_GMP} ${CONF_DEBUG_OPTIONS} --disable-assembly --host none --enable-cxx --prefix="$INSTALL_ROOT"
+				emconfigure ./configure "${CONF_CROSSCOMPILING_OPTS_GENERIC}" "${CONF_CROSSCOMPILING_OPTS_GMP}" "${CONF_DEBUG_OPTIONS}" --disable-assembly --host none --enable-cxx --prefix="$INSTALL_ROOT"
 			else
 				./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_CROSSCOMPILING_OPTS_GMP} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --prefix="$INSTALL_ROOT"
 			fi
@@ -775,7 +775,7 @@ then
 		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 		then
 			simple_find_tool_program "cmake" "CMAKE" "no"
-			emcmake $CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" -DGMP_INCLUDE_DIR="$INCLUDE_ROOT" -DGMP_LIBRARY="$LIBRARIES_ROOT" -DWITH_PROCPS=OFF -DCURVE=ALT_BN128 -DUSE_ASM=OFF ..
+			emcmake "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" -DGMP_INCLUDE_DIR="$INCLUDE_ROOT" -DGMP_LIBRARY="$LIBRARIES_ROOT" -DWITH_PROCPS=OFF -DCURVE=ALT_BN128 -DUSE_ASM=OFF ..
 			emmake $MAKE ${PARALLEL_MAKE_OPTIONS}
 		else
 			$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF
