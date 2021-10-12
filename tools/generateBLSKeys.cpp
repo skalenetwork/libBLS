@@ -1,4 +1,4 @@
-#include <threshold_encryption/threshold_encryption.h>
+#include <threshold_encryption.h>
 #include <tools/utils.h>
 #include <iostream>
 #include <fstream>
