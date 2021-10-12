@@ -16,7 +16,7 @@ int main() {
 
     std::string result = "";
     for ( auto& coord : vector_coordinates ) {
-        while (coord.size() < 64) {
+        while ( coord.size() < 64 ) {
             coord = "0" + coord;
         }
         result += coord;
