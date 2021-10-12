@@ -186,12 +186,14 @@ jobs:
         export LIBRARIES_ROOT=../deps/deps_inst/x86_or_x64/lib
         emcmake cmake -DEMSCRIPTEN=ON .. -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a
         emmake make -j$(nproc)
+        cd ..
 
     - name: Run tests
       run: |
         cp tools/generate_bls_keys build_em/
         cp tools/decrypt_message build_em/
-        cd build
+        cd build_em/
+        cp threshold_encryption/encrypt_message.* .
         ./generate_bls_keys
         MESSAGE=`cat message.txt`
         PUBLIC_BLS_KEY=`cat bls_public_key.txt`
