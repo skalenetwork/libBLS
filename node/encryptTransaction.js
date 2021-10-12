@@ -26,12 +26,9 @@ async function sendData( eth, to, data ) {
     let web3 = new Web3( eth.currentProvider );
     
     let accs = await web3.eth.getAccounts();
-    console.log(accs);
     let address = accs[0];
-    console.log(address);
     let nonce = await web3.eth.getTransactionCount( address );
     let chainId = await web3.eth.getChainId();
-    console.log(address);
     
     let tx = {
         from: address,
