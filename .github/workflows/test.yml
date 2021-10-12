@@ -197,5 +197,5 @@ jobs:
         ./generate_bls_keys
         MESSAGE=`cat message.txt`
         PUBLIC_BLS_KEY=`cat bls_public_key.txt`
-        node encrypt_message.js $MESSAGE $PUBLIC_BLS_KEY
+        node encrypt_message.js $MESSAGE $PUBLIC_BLS_KEY > encrypted_data.txt
         ./decrypt_message

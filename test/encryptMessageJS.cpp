@@ -15,6 +15,7 @@ int main( int argc, char* argv[] ) {
     crypto::ThresholdUtils::initCurve();
     auto ciphertext_string = crypto::TE::encryptMessage( message, common_public_str );
 
-    std::cout << "cipher " << ciphertext_string;
+    std::cout << ciphertext_string;
+
     return 0;
 }
