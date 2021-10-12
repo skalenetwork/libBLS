@@ -12,7 +12,7 @@ int main() {
     secretKeyFile.open( "secret_key.txt" );
     secretKeyFile << crypto::ThresholdUtils::fieldElementToString( secret_key );
 
-    auto vector_coordinates = crypto::ThresholdUtils::G2ToString( public_key );
+    auto vector_coordinates = crypto::ThresholdUtils::G2ToString( public_key, 16 );
 
     std::string result = "";
     for ( const auto& coord : vector_coordinates ) {
