@@ -8,7 +8,7 @@ async function get_common_bls_public_key( eth ) {
 }
 
 async function encrypt_data( data, common_bls_public_key ) {
-    var factory = require(""./encrypt.js");
+    var factory = require("./encrypt.js");
 
     var encryptedMesage = "";
     var instance = await factory();
