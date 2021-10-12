@@ -178,14 +178,13 @@ jobs:
         emcmake cmake -DEMSCRIPTEN=ON .. -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a
         emmake make -j$(nproc)
 
-    # - name: Run tests
-    #   run: |
-    #     cp scripts/parameters.json build/
-    #     cd build
-    #     ./bls_unit_test
-    #     ./dkg_unit_test
-    #     ./utils_unit_test
-    #     ./bls_test
-    #     ./threshold_encryption/te_unit_test
-    #     ./threshold_encryption/te_test
-    #     ./dkg_attack
+    - name: Run tests
+      run: |
+        cp tools/generate_bls_keys build/
+        cp tools/decrypt_message build
+        cd build
+        ./generate_bls_keys
+        MESSAGE=`cat message.txt`
+        PUBLIC_BLS_KEY=`cat bls_public_key.txt`
+        node encrypt_message.js $MESSAGE $PUBLIC_BLS_KEY
+        ./decrypt_message
