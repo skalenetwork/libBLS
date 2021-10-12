@@ -131,6 +131,10 @@ jobs:
   linux_build_with_emscripten:
     runs-on: ubuntu-18.04
 
+    strategy:
+      matrix:
+        node-version: [14.x]
+
     steps:
     - name: Extract repo name
       run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
@@ -158,7 +162,7 @@ jobs:
     - name: Install NODE JS
       uses: actions/setup-node@v2
       with:
-        node-version: ${{ 14.x }}
+        node-version: ${{ matrix.node-version }}
   
     - name: Build dependencies
       run: |
