@@ -13,3 +13,4 @@ saved_environment_on_startup.txt
 test/dkgpython.so
 test/test_sgx.py
 qt_build/
+node/node_modules

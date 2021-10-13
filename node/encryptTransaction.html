@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Demo</title>
+    <script src="encryptTransaction.min.js"></script>
+    <script>
+        async function encrypt() {
+            let to = document.getElementById("to").value;
+            let data = document.getElementById("data").value;
+            if (!window.ethereum.selectedAddress) {
+                await window.ethereum.enable();
+            }
+            console.log(window.ethereum.selectedAddress);
+            let res = await encryptTransaction.encryptAndSend(window.web3, to, data);
+            console.log(res);
+        }
+    </script>
+</head>
+<body>
+<!--<div>-->
+<!--&lt;!&ndash;    <div> <label for="to">To:</label> <input id="to" /></div>&ndash;&gt;-->
+<!--&lt;!&ndash;    <div> <label for="data">Data:</label> <input id="data" /></div>&ndash;&gt;-->
+<!--&lt;!&ndash;    <button onclick="encrypt()">Encrypt transaction</button>&ndash;&gt;-->
+    <section>
+        <h2>Tx data</h2>
+        <p>
+            <label for="to">
+                <span>To: </span>
+            </label>
+            <input id="to">
+        </p>
+        <p>
+            <label for="data">
+                <span>Data: </span>
+            </label>
+            <input id="data">
+        </p>
+    </section>
+    <section>
+        <p> <button onclick="encrypt()">Encrypt transaction</button> </p>
+    </section>
+</body>
+</html>

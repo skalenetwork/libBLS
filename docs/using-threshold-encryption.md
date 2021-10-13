@@ -52,7 +52,7 @@ crypto::Ciphertext cipher = publicKey.encrypt(message_ptr);
 5.  Get pieces of decrypted message with private key of each participant and cipher got in step 4. Verify every piece with public key of corresponding participant.
 
 ```cpp
-crypto::element_wrapper piece = privateKey.decrypt(cipher);
+libff::alt_bn128_G2 piece = privateKey.decrypt(cipher);
 assert ( publicKeyShare.Verify(cipher, piece) ) ;
 ```
 

@@ -244,7 +244,7 @@ bool ThresholdUtils::isStringNumber( const std::string& str ) {
 
 std::string ThresholdUtils::carray2Hex( const unsigned char* d, uint64_t len ) {
     std::string _hexArray;
-    _hexArray.resize( 2 * len + 1 );
+    _hexArray.resize( 2 * len );
 
     char hexval[16] = {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
@@ -253,8 +253,6 @@ std::string ThresholdUtils::carray2Hex( const unsigned char* d, uint64_t len ) {
         _hexArray[j * 2] = hexval[( ( d[j] >> 4 ) & 0xF )];
         _hexArray[j * 2 + 1] = hexval[( d[j] ) & 0x0F];
     }
-
-    _hexArray[len * 2] = 0;
 
     return _hexArray;
 }

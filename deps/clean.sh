@@ -104,7 +104,6 @@ echo -e "${COLOR_VAR_NAME}UNIX_SYSTEM_NAME${COLOR_DOTS}.......${COLOR_VAR_DESC}R
 echo -e "${COLOR_VAR_NAME}NUMBER_OF_CPU_CORES${COLOR_DOTS}....${COLOR_VAR_DESC}Running on host having CPU cores${COLOR_DOTS}.......${COLOR_VAR_VAL}${NUMBER_OF_CPU_CORES}${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}ARCH${COLOR_DOTS}...................${COLOR_VAR_DESC}Building for architecture${COLOR_DOTS}..............${COLOR_VAR_VAL}$ARCH${COLOR_RESET}"
 
-#echo "Cleaning \"top\" libraries..."
 echo "Cleaning \"deps_inst\" folder..."
 rm -rf ./deps_inst
 rm -rf ./build
@@ -129,20 +128,9 @@ rm -rf ./libmicrohttpd
 rm -rf ./jsoncpp
 rm -rf ./libjson-rpc-cpp
 rm -rf ./libcryptopp
-# rm -rf ./bzip2
-# rm -rf ./lzma
-# rm -rf ./SDL2-2.0.7
-# rm -rf ./SDL2_ttf-2.0.14
-# rm -rf ./shine
-# rm -rf ./readline-7.0
-# rm -rf ./libxml2-2.9.7
-# rm -rf ./libarchive-3.3.2
-# rm -rf ./libev
-# rm -rf ./libevent
-# rm -rf l./ibwebsockets
-# rm -rf ./gtest
 rm -rf ./gmp-6.1.2
 rm -rf ./libff
+rm -rf ./emsdk
 echo "Done (all clean)."
 
 #finish

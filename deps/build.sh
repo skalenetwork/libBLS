@@ -256,6 +256,7 @@ export INSTALL_ROOT=$("$READLINK" -f "$INSTALL_ROOT_RELATIVE")
 export SOURCES_ROOT=$("$READLINK" -f "$CUSTOM_BUILD_ROOT")
 export PREDOWNLOADED_ROOT=$("$READLINK" -f "$CUSTOM_BUILD_ROOT/pre_downloaded")
 export LIBRARIES_ROOT="$INSTALL_ROOT/lib"
+export INCLUDE_ROOT="$INSTALL_ROOT/include"
 mkdir -p "$SOURCES_ROOT"
 mkdir -p "$INSTALL_ROOT"
 mkdir -p "$INSTALL_ROOT/share"
@@ -464,6 +465,13 @@ then
 fi
 export CMAKE="$CMAKE -DUSE_LLVM=$USE_LLVM -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_LINKER=$LD -DCMAKE_AR=$AR -DCMAKE_OBJCOPY=$OBJCOPY -DCMAKE_OBJDUMP=$OBJDUMP -DCMAKE_RANLIB=$RANLIB -DCMAKE_NM=$NM"
 #
+if [ -z "${WITH_EMSCRIPTEN}" ];
+then
+	WITH_EMSCRIPTEN=0
+else
+	WITH_EMSCRIPTEN=1
+fi
+
 echo -e "${COLOR_VAR_NAME}WORKING_DIR_OLD${COLOR_DOTS}........${COLOR_VAR_DESC}Started in directory${COLOR_DOTS}...................${COLOR_VAR_VAL}$WORKING_DIR_OLD${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WORKING_DIR_NEW${COLOR_DOTS}........${COLOR_VAR_DESC}Switched to directory${COLOR_DOTS}..................${COLOR_VAR_VAL}$WORKING_DIR_NEW${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}UNIX_SYSTEM_NAME${COLOR_DOTS}.......${COLOR_VAR_DESC}Building on host${COLOR_DOTS}.......................${COLOR_VAR_VAL}$UNIX_SYSTEM_NAME${COLOR_RESET}"
@@ -511,6 +519,7 @@ echo -e "${COLOR_VAR_NAME}RANLIB${COLOR_DOTS}...................................
 echo -e "${COLOR_VAR_NAME}NM${COLOR_DOTS}............................................................${COLOR_VAR_VAL}$NM${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}OBJCOPY${COLOR_DOTS}.......................................................${COLOR_VAR_VAL}$OBJCOPY${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}OBJDUMP${COLOR_DOTS}.......................................................${COLOR_VAR_VAL}$OBJDUMP${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_EMSCRIPTEN${COLOR_DOTS}........${COLOR_VAR_DESC}Emscripten${COLOR_DOTS}.............................${COLOR_VAR_VAL}$WITH_EMSCRIPTEN${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_ZLIB${COLOR_DOTS}..............${COLOR_VAR_DESC}Zlib${COLOR_DOTS}...................................${COLOR_VAR_VAL}$WITH_ZLIB${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_OPENSSL${COLOR_DOTS}...........${COLOR_VAR_DESC}OpenSSL${COLOR_DOTS}................................${COLOR_VAR_VAL}$WITH_OPENSSL${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_CURL${COLOR_DOTS}..............${COLOR_VAR_DESC}CURL${COLOR_DOTS}...................................${COLOR_VAR_VAL}$WITH_CURL${COLOR_RESET}"
@@ -562,10 +571,27 @@ env_restore() {
 # we will save env now, next times we will only restore it)
 env_save
 
+if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
+then
+	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}EMSCRIPTEN${COLOR_SEPARATOR} ========================================${COLOR_RESET}"
+	if [ ! -d "emsdk" ];
+	then
+		echo -e "${COLOR_INFO}downloading it${COLOR_DOTS}...${COLOR_RESET}"
+		git clone https://github.com/emscripten-core/emsdk.git
+	fi
+	cd emsdk
+	echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+	git pull
+	./emsdk install latest
+	./emsdk activate latest
+	source ./emsdk_env.sh
+	cd ..	
+fi
+
 if [ "$WITH_BOOST" = "yes" ];
 then
 	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}BOOST${COLOR_SEPARATOR} ========================================${COLOR_RESET}"
-	if [ ! -f "$INSTALL_ROOT/lib/libboost_system.a" ];
+	if [ ! -f "$INSTALL_ROOT/lib/libboost_program_options.a" ];
 	then
 		env_restore
 		cd "$SOURCES_ROOT"
@@ -582,8 +608,13 @@ then
 		fi
 		cd boost_1_68_0
 		echo -e "${COLOR_INFO}configuring and building it${COLOR_DOTS}...${COLOR_RESET}"
-
-		./bootstrap.sh --prefix="$INSTALL_ROOT" --with-libraries=system,thread,filesystem,regex,atomic,program_options
+		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
+		then
+			BOOST_LIBRARIES="program_options"
+		else
+			BOOST_LIBRARIES="system,thread,filesystem,regex,atomic,program_options"
+		fi
+		./bootstrap.sh --prefix="$INSTALL_ROOT" --with-libraries="$BOOST_LIBRARIES"
 
 	if [ ${ARCH} = "arm" ]
 	then
@@ -594,7 +625,15 @@ then
 		then
 			./b2 cxxflags=-fPIC toolset=clang cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 		else
-			./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
+			if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
+			then
+				./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=debug link=static install
+				cd bin.v2/libs/program_options/build/emscripten-2.0.31/debug/cxxstd-14-iso/link-static/threading-multi/
+				emar q libboost_program_options.a *.bc
+				cp libboost_program_options.a "${LIBRARIES_ROOT}"
+			else
+				./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
+			fi
 		fi
 	fi
 		cd ..
@@ -638,7 +677,13 @@ then
 					export KERNEL_BITS=64
 					./Configure darwin64-x86_64-cc -fPIC no-shared --prefix="$INSTALL_ROOT"
 				else
-					./config -fPIC --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+					if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
+					then
+						emconfigure ./config -fPIC -no-asm -no-shared -no-threads --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+						sed -i 's/CROSS_COMPILE=.*/CROSS_COMPILE=/' Makefile
+					else
+						./config -fPIC --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+					fi
 				fi
 			else
 				./Configure linux-armv4 --prefix="$INSTALL_ROOT" "${ADDITIONAL_INCLUDES}" "${ADDITIONAL_LIBRARIES}" no-shared no-tests no-dso
@@ -647,8 +692,14 @@ then
 		fi
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 		cd openssl
-		$MAKE ${PARALLEL_MAKE_OPTIONS} depend
-		$MAKE ${PARALLEL_MAKE_OPTIONS}
+		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
+		then
+			emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}" depend
+			emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
+		else
+			$MAKE ${PARALLEL_MAKE_OPTIONS} depend
+			$MAKE ${PARALLEL_MAKE_OPTIONS}
+		fi
 		$MAKE ${PARALLEL_MAKE_OPTIONS} install_sw
 		cd "$SOURCES_ROOT"
 	else
@@ -680,10 +731,20 @@ then
 		then
 			./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --build=x86_64-apple-darwin#{OS.kernel_version.major} --prefix="$INSTALL_ROOT"
 		else
-			./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_CROSSCOMPILING_OPTS_GMP} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --prefix="$INSTALL_ROOT"
+			if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
+			then
+				emconfigure ./configure "${CONF_CROSSCOMPILING_OPTS_GENERIC}" "${CONF_CROSSCOMPILING_OPTS_GMP}" "${CONF_DEBUG_OPTIONS}" --disable-assembly --host none --enable-cxx --prefix="$INSTALL_ROOT"
+			else
+				./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_CROSSCOMPILING_OPTS_GMP} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --prefix="$INSTALL_ROOT"
+			fi
 		fi
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-		$MAKE ${PARALLEL_MAKE_OPTIONS}
+		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
+		then
+			emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
+		else
+			$MAKE ${PARALLEL_MAKE_OPTIONS}
+		fi
 		$MAKE ${PARALLEL_MAKE_OPTIONS} install
 		cd ..
 		cd "$SOURCES_ROOT"
@@ -710,11 +771,18 @@ then
 		git checkout 03b719a7c81757071f99fc60be1f7f7694e51390
 		mkdir -p build
 		cd build
-		$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
+		then
+			simple_find_tool_program "cmake" "CMAKE" "no"
+			emcmake "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" -DGMP_INCLUDE_DIR="$INCLUDE_ROOT" -DGMP_LIBRARY="$LIBRARIES_ROOT" -DWITH_PROCPS=OFF -DCURVE=ALT_BN128 -DUSE_ASM=OFF ..
+			emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
+		else
+			$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF
 			$MAKE ${PARALLEL_MAKE_OPTIONS}
-			$MAKE ${PARALLEL_MAKE_OPTIONS} install
-			cd "$SOURCES_ROOT"
+		fi
+		$MAKE ${PARALLEL_MAKE_OPTIONS} install
+		cd "$SOURCES_ROOT"
 	else
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
 	fi

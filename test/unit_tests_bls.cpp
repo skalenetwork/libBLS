@@ -35,6 +35,9 @@
 
 
 #define BOOST_TEST_MODULE
+#ifdef EMSCRIPTEN
+#define BOOST_TEST_DISABLE_ALT_STACK
+#endif  // EMSCRIPTEN
 
 #include <boost/test/included/unit_test.hpp>
 

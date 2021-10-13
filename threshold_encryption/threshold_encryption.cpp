@@ -321,16 +321,16 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::aesCiphertextFromString(
         throw ThresholdUtils::IncorrectInput( "Provided string contains non-hex symbols" );
     }
 
-    if ( str.size() < 256 + 129 + 128 + 1 ) {
+    if ( str.size() < 256 + 128 + 128 + 1 ) {
         throw ThresholdUtils::IncorrectInput(
-            "Incoming string to short to convert to aes ciphertext" );
+            "Incoming string is too short to convert to aes ciphertext" );
     }
 
     std::string u_str = str.substr( 0, 256 );
-    std::string v_str = str.substr( 256, 129 );
-    std::string w_str = str.substr( 256 + 129, 128 );
+    std::string v_str = str.substr( 256, 128 );
+    std::string w_str = str.substr( 256 + 128, 128 );
 
-    std::string encrypted_data = str.substr( 256 + 129 + 128, std::string::npos );
+    std::string encrypted_data = str.substr( 256 + 128 + 128, std::string::npos );
 
     uint64_t bin_len;
     std::vector< uint8_t > aes_cipher( encrypted_data.size() / 2 );
@@ -343,7 +343,7 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::aesCiphertextFromString(
     libff::alt_bn128_G1 W = ThresholdUtils::stringToG1( w_str );
 
     std::string V;
-    V.resize( ( v_str.size() - 1 ) / 2 );
+    V.resize( v_str.size() / 2 );
     if ( !ThresholdUtils::hex2carray( v_str.data(), &bin_len, ( unsigned char* ) &V[0] ) ) {
         throw ThresholdUtils::IncorrectInput( "Bad encrypted aes key provided" );
     }
