@@ -582,6 +582,7 @@ then
 	cd emsdk
 	echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
 	git pull
+	git checkout 2.0.31
 	./emsdk install latest
 	./emsdk activate latest
 	source ./emsdk_env.sh
