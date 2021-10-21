@@ -33,6 +33,8 @@ class BLSPublicKeyShare;
 class BLSPublicKey {
 private:
     std::shared_ptr< libff::alt_bn128_G2 > libffPublicKey;
+    size_t t;
+    size_t n;
 
 public:
     BLSPublicKey( const std::shared_ptr< std::vector< std::string > > );
@@ -56,6 +58,10 @@ public:
     std::shared_ptr< std::vector< std::string > > toString();
 
     std::shared_ptr< libff::alt_bn128_G2 > getPublicKey() const;
+
+    size_t getRequiredSigners() const { return t; }
+
+    size_t getTotalSigners() const { return n; }
 };
 
 

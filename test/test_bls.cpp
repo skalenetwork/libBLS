@@ -241,6 +241,9 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
                     pkeys_map1 ),
                 num_signed, num_all );
 
+            BOOST_REQUIRE( common_pkey1.getRequiredSigners() == num_signed );
+            BOOST_REQUIRE( common_pkey1.getTotalSigners() == num_all );
+
             BOOST_REQUIRE( common_pkey1.VerifySig( hash_ptr, common_sig_ptr ) );
 
             std::vector< size_t > participants1( num_all );  // use the whole set of participants
