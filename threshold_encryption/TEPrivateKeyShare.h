@@ -42,7 +42,7 @@ public:
     TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _signerIndex,
         size_t _requiredSigners, size_t _totalSigners );
 
-    libff::alt_bn128_G2 getDecryptionShare( crypto::Ciphertext& cipher );
+    libff::alt_bn128_G2 getDecryptionShare( libBLS::Ciphertext& cipher );
 
     static std::pair< std::shared_ptr< std::vector< std::shared_ptr< TEPrivateKeyShare > > >,
         std::shared_ptr< TEPublicKey > >

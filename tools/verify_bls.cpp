@@ -73,7 +73,7 @@ bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin ) {
 
 void Verify( const size_t t, const size_t n, std::istream& sign_file, int j = -1 ) {
     libff::inhibit_profiling_info = true;
-    crypto::Bls bls_instance = crypto::Bls( t, n );
+    libBLS::Bls bls_instance = libBLS::Bls( t, n );
 
     nlohmann::json signature;
     sign_file >> signature;

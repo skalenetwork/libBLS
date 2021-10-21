@@ -12,8 +12,8 @@ int main( int argc, char* argv[] ) {
     std::string message = argv[1];
     std::string common_public_str = argv[2];
 
-    crypto::ThresholdUtils::initCurve();
-    auto ciphertext_string = crypto::TE::encryptMessage( message, common_public_str );
+    libBLS::ThresholdUtils::initCurve();
+    auto ciphertext_string = libBLS::TE::encryptMessage( message, common_public_str );
 
     std::cout << ciphertext_string;
 

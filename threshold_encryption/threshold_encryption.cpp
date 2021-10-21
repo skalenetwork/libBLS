@@ -31,7 +31,7 @@
 #include <openssl/rand.h>
 #include <libff/common/profiling.hpp>
 
-namespace crypto {
+namespace libBLS {
 
 TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {
     libff::init_alt_bn128_params();
@@ -351,4 +351,4 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::aesCiphertextFromString(
     return {{U, V, W}, aes_cipher};
 }
 
-}  // namespace crypto
+}  // namespace libBLS

@@ -66,7 +66,7 @@ bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin ) {
 
 void Sign( const size_t t, const size_t n, std::istream& data_file, std::ostream& outfile,
     const std::string& key, bool sign_all = true, int idx = -1 ) {
-    crypto::Bls bls_instance = crypto::Bls( t, n );
+    libBLS::Bls bls_instance = libBLS::Bls( t, n );
 
     std::vector< uint8_t > message_data;
     uint8_t n_byte;
@@ -88,7 +88,7 @@ void Sign( const size_t t, const size_t n, std::istream& data_file, std::ostream
         }
     }
 
-    libff::alt_bn128_G1 hash = crypto::ThresholdUtils::HashtoG1( hash_bytes_arr );
+    libff::alt_bn128_G1 hash = libBLS::ThresholdUtils::HashtoG1( hash_bytes_arr );
 
     nlohmann::json hash_json;
     hash_json["message"] = message;
@@ -119,7 +119,7 @@ void Sign( const size_t t, const size_t n, std::istream& data_file, std::ostream
         }
 
         std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
-            crypto::ThresholdUtils::LagrangeCoeffs( idx, t );
+            libBLS::ThresholdUtils::LagrangeCoeffs( idx, t );
 
         common_signature = bls_instance.SignatureRecover( signature_shares, lagrange_coeffs );
     } else {
@@ -144,9 +144,9 @@ void Sign( const size_t t, const size_t n, std::istream& data_file, std::ostream
     }
 
     signature["signature"]["X"] =
-        crypto::ThresholdUtils::fieldElementToString( common_signature.X );
+        libBLS::ThresholdUtils::fieldElementToString( common_signature.X );
     signature["signature"]["Y"] =
-        crypto::ThresholdUtils::fieldElementToString( common_signature.Y );
+        libBLS::ThresholdUtils::fieldElementToString( common_signature.Y );
 
     std::ofstream outfile_h( "hash.json" );
     outfile_h << hash_json.dump( 4 ) << "\n";

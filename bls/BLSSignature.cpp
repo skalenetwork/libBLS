@@ -34,17 +34,17 @@ BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, st
       hint( _hint ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     CHECK( sig );
 
-    crypto::ThresholdUtils::initCurve();
+    libBLS::ThresholdUtils::initCurve();
 
     if ( sig->is_zero() ) {
-        throw crypto::ThresholdUtils::IncorrectInput( "Zero BLS signature" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "Zero BLS signature" );
     }
     if ( hint.length() == 0 ) {
-        throw crypto::ThresholdUtils::IncorrectInput( "Empty BLS hint" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "Empty BLS hint" );
     }
 }
 
@@ -53,30 +53,30 @@ BLSSignature::BLSSignature(
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     CHECK( _sig );
 
-    crypto::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
+    libBLS::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
 
-    crypto::ThresholdUtils::initCurve();
+    libBLS::ThresholdUtils::initCurve();
 
     if ( _sig->size() < 10 ) {
-        throw crypto::ThresholdUtils::IsNotWellFormed(
+        throw libBLS::ThresholdUtils::IsNotWellFormed(
             "Signature too short:" + std::to_string( _sig->size() ) );
     }
 
     if ( _sig->size() > BLS_MAX_SIG_LEN ) {
-        throw crypto::ThresholdUtils::IsNotWellFormed(
+        throw libBLS::ThresholdUtils::IsNotWellFormed(
             "Signature too long:" + std::to_string( _sig->size() ) );
     }
 
     std::shared_ptr< std::vector< std::string > > result =
-        crypto::ThresholdUtils::SplitString( _sig, ":" );
+        libBLS::ThresholdUtils::SplitString( _sig, ":" );
 
     if ( result->size() != 4 )
-        throw crypto::ThresholdUtils::IncorrectInput( "Misformatted signature" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "Misformatted signature" );
 
     for ( auto&& str : *result ) {
         for ( char& c : str ) {
             if ( !( c >= '0' && c <= '9' ) ) {
-                throw crypto::ThresholdUtils::IncorrectInput(
+                throw libBLS::ThresholdUtils::IncorrectInput(
                     "Misformatted char:" + std::to_string( ( int ) c ) + " in component " + str );
             }
         }
@@ -87,7 +87,7 @@ BLSSignature::BLSSignature(
     hint = result->at( 2 ) + ":" + result->at( 3 );
 
     if ( !( sig->is_well_formed() ) ) {
-        throw crypto::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
+        throw libBLS::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
     }
 }
 

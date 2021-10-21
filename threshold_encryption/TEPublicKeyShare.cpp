@@ -29,23 +29,23 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
     : signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str_ptr ) {
-        throw crypto::ThresholdUtils::IncorrectInput( "public key share is null" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "public key share is null" );
     }
 
     // assume only using affine coordinates
     if ( _key_str_ptr->size() != 4 ) {
-        throw crypto::ThresholdUtils::IncorrectInput(
+        throw libBLS::ThresholdUtils::IncorrectInput(
             "wrong number of components in public key share" );
     }
 
-    if ( !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 0 ) ) ||
-         !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 1 ) ) ||
-         !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 2 ) ) ||
-         !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 3 ) ) ) {
-        throw crypto::ThresholdUtils::IncorrectInput(
+    if ( !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 0 ) ) ||
+         !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 1 ) ) ||
+         !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 2 ) ) ||
+         !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 3 ) ) ) {
+        throw libBLS::ThresholdUtils::IncorrectInput(
             "non-digit symbol or first zero in non-zero public key share" );
     }
 
@@ -58,7 +58,7 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
     PublicKey.Y.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 3 ).c_str() );
 
     if ( PublicKey.is_zero() || !PublicKey.is_well_formed() ) {
-        throw crypto::ThresholdUtils::IsNotWellFormed(
+        throw libBLS::ThresholdUtils::IsNotWellFormed(
             "corrupted string or zero public key share" );
     }
 }
@@ -66,7 +66,7 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
 TEPublicKeyShare::TEPublicKeyShare(
     TEPrivateKeyShare _p_key, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libff::init_alt_bn128_params();
 
@@ -75,20 +75,20 @@ TEPublicKeyShare::TEPublicKeyShare(
 }
 
 bool TEPublicKeyShare::Verify(
-    const crypto::Ciphertext& cyphertext, const libff::alt_bn128_G2& decryptionShare ) {
-    crypto::TE::checkCypher( cyphertext );
+    const libBLS::Ciphertext& cyphertext, const libff::alt_bn128_G2& decryptionShare ) {
+    libBLS::TE::checkCypher( cyphertext );
     if ( decryptionShare.is_zero() || !decryptionShare.is_well_formed() ) {
-        throw crypto::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
+        throw libBLS::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
     }
 
-    crypto::TE te( requiredSigners, totalSigners );
+    libBLS::TE te( requiredSigners, totalSigners );
 
     return te.Verify( cyphertext, decryptionShare, PublicKey );
 }
 
 std::shared_ptr< std::vector< std::string > > TEPublicKeyShare::toString() {
     return std::make_shared< std::vector< std::string > >(
-        crypto::ThresholdUtils::G2ToString( PublicKey ) );
+        libBLS::ThresholdUtils::G2ToString( PublicKey ) );
 }
 
 libff::alt_bn128_G2 TEPublicKeyShare::getPublicKey() const {

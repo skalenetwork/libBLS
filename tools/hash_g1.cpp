@@ -38,7 +38,7 @@ static bool g_b_rehash = false;
 
 void hash_g1( const size_t t, const size_t n ) {
     libff::inhibit_profiling_info = true;
-    crypto::Bls bls_instance = crypto::Bls( t, n );
+    libBLS::Bls bls_instance = libBLS::Bls( t, n );
 
     nlohmann::json hash_in;
 
@@ -55,7 +55,7 @@ void hash_g1( const size_t t, const size_t n ) {
         }
     } else {
         uint64_t bin_len;
-        if ( !crypto::ThresholdUtils::hex2carray(
+        if ( !libBLS::ThresholdUtils::hex2carray(
                  to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
             throw std::runtime_error( "Invalid hash" );
         }
@@ -67,8 +67,8 @@ void hash_g1( const size_t t, const size_t n ) {
     nlohmann::json joG1 = nlohmann::json::object();
     joG1["g1"] = nlohmann::json::object();
     joG1["g1"]["hashPoint"] = nlohmann::json::object();
-    joG1["g1"]["hashPoint"]["X"] = crypto::ThresholdUtils::fieldElementToString( p2vals.first.X );
-    joG1["g1"]["hashPoint"]["Y"] = crypto::ThresholdUtils::fieldElementToString( p2vals.first.Y );
+    joG1["g1"]["hashPoint"]["X"] = libBLS::ThresholdUtils::fieldElementToString( p2vals.first.X );
+    joG1["g1"]["hashPoint"]["Y"] = libBLS::ThresholdUtils::fieldElementToString( p2vals.first.Y );
     joG1["g1"]["hint"] = p2vals.second;
 
     std::ofstream g1_file( "g1.json" );

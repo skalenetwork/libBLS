@@ -39,7 +39,7 @@ static constexpr size_t BLS_MAX_COMPONENT_LEN = 80;
 static constexpr size_t BLS_MAX_SIG_LEN = 240;
 
 
-namespace crypto {
+namespace libBLS {
 
 class Bls {
 public:
@@ -82,12 +82,12 @@ private:
     const size_t n_ = 0;
 };
 
-}  // namespace crypto
+}  // namespace libBLS
 
 
 #define CHECK( _EXPRESSION_ )                                                                 \
     if ( !( _EXPRESSION_ ) ) {                                                                \
         auto __msg__ = std::string( "Check failed:" ) + #_EXPRESSION_ + "\n" + __FUNCTION__ + \
                        +" " + std::string( __FILE__ ) + ":" + std::to_string( __LINE__ );     \
-        throw crypto::ThresholdUtils::IncorrectInput( __msg__ );                              \
+        throw libBLS::ThresholdUtils::IncorrectInput( __msg__ );                              \
     }

@@ -68,7 +68,7 @@ void CommonPkeyToJson( std::shared_ptr< BLSPublicKey > common_pkey_ptr ) {
 static bool g_b_verbose_mode = false;
 
 void KeyGeneration( const size_t t, const size_t n, bool generate_all = true, int idx = -1 ) {
-    crypto::Dkg dkg_instance = crypto::Dkg( t, n );
+    libBLS::Dkg dkg_instance = libBLS::Dkg( t, n );
 
     if ( generate_all ) {
         std::vector< std::vector< libff::alt_bn128_Fr > > polynomial( n );
@@ -131,23 +131,23 @@ void KeyGeneration( const size_t t, const size_t n, bool generate_all = true, in
 
         for ( size_t i = 0; i < n; ++i ) {
             data["secret_key_contribution"][std::to_string( i )] =
-                crypto::ThresholdUtils::fieldElementToString( secret_key_contribution[i] );
+                libBLS::ThresholdUtils::fieldElementToString( secret_key_contribution[i] );
         }
 
 
         for ( size_t i = 0; i < t; ++i ) {
             data["verification_vector"][std::to_string( i )]["X"]["c0"] =
-                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].X.c0 );
+                libBLS::ThresholdUtils::fieldElementToString( verification_vector[i].X.c0 );
             data["verification_vector"][std::to_string( i )]["X"]["c1"] =
-                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].X.c1 );
+                libBLS::ThresholdUtils::fieldElementToString( verification_vector[i].X.c1 );
             data["verification_vector"][std::to_string( i )]["Y"]["c0"] =
-                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].Y.c0 );
+                libBLS::ThresholdUtils::fieldElementToString( verification_vector[i].Y.c0 );
             data["verification_vector"][std::to_string( i )]["Y"]["c1"] =
-                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].Y.c1 );
+                libBLS::ThresholdUtils::fieldElementToString( verification_vector[i].Y.c1 );
             data["verification_vector"][std::to_string( i )]["Z"]["c0"] =
-                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].Z.c0 );
+                libBLS::ThresholdUtils::fieldElementToString( verification_vector[i].Z.c0 );
             data["verification_vector"][std::to_string( i )]["Z"]["c1"] =
-                crypto::ThresholdUtils::fieldElementToString( verification_vector[i].Z.c1 );
+                libBLS::ThresholdUtils::fieldElementToString( verification_vector[i].Z.c1 );
         }
 
         std::ofstream outfile( "data_for_" + std::to_string( idx ) + "-th_participant.json" );

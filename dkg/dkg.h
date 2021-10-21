@@ -29,7 +29,7 @@
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 #include <libff/algebra/fields/fp.hpp>
 
-namespace crypto {
+namespace libBLS {
 
 class Dkg {
 public:
@@ -66,4 +66,4 @@ private:
     const size_t n_ = 0;
 };
 
-}  // namespace crypto
+}  // namespace libBLS
