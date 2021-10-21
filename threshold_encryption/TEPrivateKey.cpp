@@ -27,10 +27,10 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 TEPrivateKey::TEPrivateKey(
     std::shared_ptr< std::string > _key_str, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str ) {
-        throw crypto::ThresholdUtils::IncorrectInput( "private key is null" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "private key is null" );
     }
 
     libff::init_alt_bn128_params();
@@ -38,23 +38,23 @@ TEPrivateKey::TEPrivateKey(
     privateKey = libff::alt_bn128_Fr( _key_str->c_str() );
 
     if ( privateKey.is_zero() ) {
-        throw crypto::ThresholdUtils::IsNotWellFormed( "private key is zero" );
+        throw libBLS::ThresholdUtils::IsNotWellFormed( "private key is zero" );
     }
 }
 
 TEPrivateKey::TEPrivateKey(
     libff::alt_bn128_Fr _skey, size_t _requiredSigners, size_t _totalSigners )
     : privateKey( _skey ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libff::init_alt_bn128_params();
 
     if ( _skey.is_zero() )
-        throw crypto::ThresholdUtils::IsNotWellFormed( "private key is zero" );
+        throw libBLS::ThresholdUtils::IsNotWellFormed( "private key is zero" );
 }
 
 std::string TEPrivateKey::toString() const {
-    return crypto::ThresholdUtils::fieldElementToString( privateKey );
+    return libBLS::ThresholdUtils::fieldElementToString( privateKey );
 }
 
 libff::alt_bn128_Fr TEPrivateKey::getPrivateKey() const {

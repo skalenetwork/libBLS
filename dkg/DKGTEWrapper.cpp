@@ -27,7 +27,7 @@
 
 DKGTEWrapper::DKGTEWrapper( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libff::init_alt_bn128_params();
 
@@ -38,18 +38,18 @@ DKGTEWrapper::DKGTEWrapper( size_t _requiredSigners, size_t _totalSigners )
 bool DKGTEWrapper::VerifyDKGShare( size_t _signerIndex, const libff::alt_bn128_Fr& _share,
     std::shared_ptr< std::vector< libff::alt_bn128_G2 > > _verification_vector ) {
     if ( _share.is_zero() )
-        throw crypto::ThresholdUtils::ZeroSecretKey( "Zero secret share" );
+        throw libBLS::ThresholdUtils::ZeroSecretKey( "Zero secret share" );
     if ( _verification_vector == nullptr )
-        throw crypto::ThresholdUtils::IncorrectInput( "Null verification vector" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "Null verification vector" );
     if ( _verification_vector->size() != requiredSigners )
-        throw crypto::ThresholdUtils::IncorrectInput( "Wrong size of verification vector" );
-    crypto::Dkg dkg_te( requiredSigners, totalSigners );
+        throw libBLS::ThresholdUtils::IncorrectInput( "Wrong size of verification vector" );
+    libBLS::Dkg dkg_te( requiredSigners, totalSigners );
     return dkg_te.Verification( _signerIndex, _share, *_verification_vector );
 }
 
 void DKGTEWrapper::setDKGSecret( std::shared_ptr< std::vector< libff::alt_bn128_Fr > > _poly_ptr ) {
     if ( _poly_ptr == nullptr )
-        throw crypto::ThresholdUtils::IncorrectInput( "Null polynomial ptr" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "Null polynomial ptr" );
 
     dkg_secret_ptr->setPoly( *_poly_ptr );
 }
@@ -67,11 +67,11 @@ std::shared_ptr< std::vector< libff::alt_bn128_G2 > > DKGTEWrapper::createDKGPub
 TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare(
     size_t signerIndex_, std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr ) {
     if ( secret_shares_ptr == nullptr )
-        throw crypto::ThresholdUtils::IncorrectInput( "Null secret_shares_ptr " );
+        throw libBLS::ThresholdUtils::IncorrectInput( "Null secret_shares_ptr " );
     if ( secret_shares_ptr->size() != totalSigners )
-        throw crypto::ThresholdUtils::IncorrectInput( "Wrong number of secret key parts " );
+        throw libBLS::ThresholdUtils::IncorrectInput( "Wrong number of secret key parts " );
 
-    crypto::Dkg dkg_te( requiredSigners, totalSigners );
+    libBLS::Dkg dkg_te( requiredSigners, totalSigners );
 
     libff::alt_bn128_Fr skey_share = dkg_te.SecretKeyShareCreate( *secret_shares_ptr );
 
@@ -81,10 +81,10 @@ TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare(
 TEPublicKey DKGTEWrapper::CreateTEPublicKey(
     std::shared_ptr< std::vector< std::vector< libff::alt_bn128_G2 > > > public_shares_all,
     size_t _requiredSigners, size_t _totalSigners ) {
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( public_shares_all == nullptr )
-        throw crypto::ThresholdUtils::IncorrectInput( "Null public shares all" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "Null public shares all" );
 
     libff::alt_bn128_G2 public_key = libff::alt_bn128_G2::zero();
 

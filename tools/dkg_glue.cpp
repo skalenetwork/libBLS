@@ -38,7 +38,7 @@ static bool g_b_verbose_mode = false;
 
 
 void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std::string >& input ) {
-    crypto::Dkg dkg_instance = crypto::Dkg( t, n );
+    libBLS::Dkg dkg_instance = libBLS::Dkg( t, n );
 
     std::vector< std::vector< libff::alt_bn128_G2 > > verification_vector( n );
     std::vector< std::vector< libff::alt_bn128_Fr > > secret_key_contribution( n );
@@ -126,7 +126,7 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
         nlohmann::json BLS_key_file;
 
         BLS_key_file["insecureBLSPrivateKey"] =
-            crypto::ThresholdUtils::fieldElementToString( secret_key[i] );
+            libBLS::ThresholdUtils::fieldElementToString( secret_key[i] );
 
         std::string str_file_name = "BLS_keys" + std::to_string( i ) + ".json";
         std::ofstream out( str_file_name.c_str() );
@@ -134,13 +134,13 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
         libff::alt_bn128_G2 publ_key = dkg_instance.GetPublicKeyFromSecretKey( secret_key[i] );
         publ_key.to_affine_coordinates();
         BLS_key_file["BLSPublicKey0"] =
-            crypto::ThresholdUtils::fieldElementToString( publ_key.X.c0 );
+            libBLS::ThresholdUtils::fieldElementToString( publ_key.X.c0 );
         BLS_key_file["BLSPublicKey1"] =
-            crypto::ThresholdUtils::fieldElementToString( publ_key.X.c1 );
+            libBLS::ThresholdUtils::fieldElementToString( publ_key.X.c1 );
         BLS_key_file["BLSPublicKey2"] =
-            crypto::ThresholdUtils::fieldElementToString( publ_key.Y.c0 );
+            libBLS::ThresholdUtils::fieldElementToString( publ_key.Y.c0 );
         BLS_key_file["BLSPublicKey3"] =
-            crypto::ThresholdUtils::fieldElementToString( publ_key.Y.c1 );
+            libBLS::ThresholdUtils::fieldElementToString( publ_key.Y.c1 );
 
         if ( g_b_verbose_mode ) {
             std::cout << str_file_name << " file:\n" << BLS_key_file.dump( 4 ) << "\n\n";
@@ -151,13 +151,13 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
     common_public_key.to_affine_coordinates();
     nlohmann::json public_key_json;
     public_key_json["commonBLSPublicKey0"] =
-        crypto::ThresholdUtils::fieldElementToString( common_public_key.X.c0 );
+        libBLS::ThresholdUtils::fieldElementToString( common_public_key.X.c0 );
     public_key_json["commonBLSPublicKey1"] =
-        crypto::ThresholdUtils::fieldElementToString( common_public_key.X.c1 );
+        libBLS::ThresholdUtils::fieldElementToString( common_public_key.X.c1 );
     public_key_json["commonBLSPublicKey2"] =
-        crypto::ThresholdUtils::fieldElementToString( common_public_key.Y.c0 );
+        libBLS::ThresholdUtils::fieldElementToString( common_public_key.Y.c0 );
     public_key_json["commonBLSPublicKey3"] =
-        crypto::ThresholdUtils::fieldElementToString( common_public_key.Y.c1 );
+        libBLS::ThresholdUtils::fieldElementToString( common_public_key.Y.c1 );
 
     std::ofstream outfile_pk( "common_public_key.json" );
     outfile_pk << public_key_json.dump( 4 ) << "\n";

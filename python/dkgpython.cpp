@@ -68,7 +68,7 @@ static PyObject* MakePythonBool( bool value ) {
 /////////////////////////
 
 struct PyDkgObject {
-    PyObject_HEAD crypto::Dkg* pDKG;
+    PyObject_HEAD libBLS::Dkg* pDKG;
 };
 
 static int PyDkgObject_init( struct PyDkgObject* self, PyObject* args, PyObject* kwds ) {
@@ -77,7 +77,7 @@ static int PyDkgObject_init( struct PyDkgObject* self, PyObject* args, PyObject*
         return -1;
     }
 
-    self->pDKG = new crypto::Dkg( t, n );
+    self->pDKG = new libBLS::Dkg( t, n );
     return 0;
 }
 

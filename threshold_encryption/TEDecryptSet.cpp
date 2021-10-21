@@ -29,42 +29,42 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 TEDecryptSet::TEDecryptSet( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ), was_merged( false ) {
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libff::init_alt_bn128_params();
 }
 
 void TEDecryptSet::addDecrypt( size_t _signerIndex, std::shared_ptr< libff::alt_bn128_G2 > _el ) {
     if ( decrypts.count( _signerIndex ) > 0 ) {
-        throw crypto::ThresholdUtils::IncorrectInput(
+        throw libBLS::ThresholdUtils::IncorrectInput(
             "Already have this index:" + std::to_string( _signerIndex ) );
     }
 
     if ( was_merged ) {
-        throw crypto::ThresholdUtils::IncorrectInput( "Invalid state" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "Invalid state" );
     }
 
     if ( !_el ) {
-        throw crypto::ThresholdUtils::IncorrectInput( "try to add Null _element to decrypt set" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "try to add Null _element to decrypt set" );
     }
 
     if ( _el->is_zero() ) {
-        throw crypto::ThresholdUtils::IsNotWellFormed( "try to add zero _element to decrypt set" );
+        throw libBLS::ThresholdUtils::IsNotWellFormed( "try to add zero _element to decrypt set" );
     }
 
     decrypts[_signerIndex] = _el;
 }
 
-std::string TEDecryptSet::merge( const crypto::Ciphertext& cyphertext ) {
-    crypto::TE::checkCypher( cyphertext );
+std::string TEDecryptSet::merge( const libBLS::Ciphertext& cyphertext ) {
+    libBLS::TE::checkCypher( cyphertext );
 
     was_merged = true;
 
     if ( decrypts.size() < requiredSigners ) {
-        throw crypto::ThresholdUtils::IsNotWellFormed( "Not enough elements to decrypt message" );
+        throw libBLS::ThresholdUtils::IsNotWellFormed( "Not enough elements to decrypt message" );
     }
 
-    crypto::TE te( requiredSigners, totalSigners );
+    libBLS::TE te( requiredSigners, totalSigners );
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > decrypted;
     for ( auto&& item : decrypts ) {
         std::pair< libff::alt_bn128_G2, size_t > encr = std::make_pair( *item.second, item.first );

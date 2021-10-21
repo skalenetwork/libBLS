@@ -42,7 +42,7 @@ public:
 
     TEPublicKeyShare( TEPrivateKeyShare _p_key, size_t _requiredSigners, size_t _totalSigners );
 
-    bool Verify( const crypto::Ciphertext& ciphertext, const libff::alt_bn128_G2& decrypted );
+    bool Verify( const libBLS::Ciphertext& ciphertext, const libff::alt_bn128_G2& decrypted );
 
     std::shared_ptr< std::vector< std::string > > toString();
 

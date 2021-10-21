@@ -38,7 +38,7 @@
 BOOST_AUTO_TEST_SUITE( ThresholdEncryption )
 
 BOOST_AUTO_TEST_CASE( SimpleEncryption ) {
-    crypto::TE te_instance = crypto::TE( 1, 1 );
+    libBLS::TE te_instance = libBLS::TE( 1, 1 );
 
     std::string message =
         "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE( SimpleEncryption ) {
 }
 
 BOOST_AUTO_TEST_CASE( SimpleEncryptionWithAES ) {
-    crypto::TE te_instance = crypto::TE( 1, 1 );
+    libBLS::TE te_instance = libBLS::TE( 1, 1 );
 
     std::string message =
         "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
@@ -88,13 +88,13 @@ BOOST_AUTO_TEST_CASE( SimpleEncryptionWithAES ) {
     std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
 
     std::string plaintext =
-        crypto::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
+        libBLS::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
 
     BOOST_REQUIRE( plaintext == message );
 }
 
 BOOST_AUTO_TEST_CASE( encryptionWithAESWrongKey ) {
-    crypto::TE te_instance = crypto::TE( 1, 1 );
+    libBLS::TE te_instance = libBLS::TE( 1, 1 );
 
     std::string message =
         "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
@@ -117,18 +117,18 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongKey ) {
     shares.push_back( std::make_pair( decryption_share, size_t( 1 ) ) );
 
     // std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
-    crypto::ThresholdUtils::initAES();
+    libBLS::ThresholdUtils::initAES();
     unsigned char key_bytes[32];
     RAND_bytes( key_bytes, sizeof( key_bytes ) );
     std::string random_aes_key = std::string( ( char* ) key_bytes, sizeof( key_bytes ) );
 
-    std::string plaintext = crypto::ThresholdUtils::aesDecrypt( encrypted_message, random_aes_key );
+    std::string plaintext = libBLS::ThresholdUtils::aesDecrypt( encrypted_message, random_aes_key );
 
     BOOST_REQUIRE( plaintext != message );
 }
 
 BOOST_AUTO_TEST_CASE( encryptionWithAESWrongCiphertext ) {
-    crypto::TE te_instance = crypto::TE( 1, 1 );
+    libBLS::TE te_instance = libBLS::TE( 1, 1 );
 
     std::string message =
         "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
@@ -156,13 +156,13 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongCiphertext ) {
     auto bad_encrypted_message = te_instance.encryptWithAES( bad_message, public_key ).second;
 
     std::string plaintext =
-        crypto::ThresholdUtils::aesDecrypt( bad_encrypted_message, decrypted_aes_key );
+        libBLS::ThresholdUtils::aesDecrypt( bad_encrypted_message, decrypted_aes_key );
 
     BOOST_REQUIRE( plaintext != message );
 }
 
 BOOST_AUTO_TEST_CASE( ConvertionToStringAndBack ) {
-    crypto::ThresholdUtils::initCurve();
+    libBLS::ThresholdUtils::initCurve();
 
     std::string message =
         "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
@@ -172,12 +172,12 @@ BOOST_AUTO_TEST_CASE( ConvertionToStringAndBack ) {
 
     libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
 
-    auto ciphertext_with_aes = crypto::TE::encryptWithAES( message, public_key );
+    auto ciphertext_with_aes = libBLS::TE::encryptWithAES( message, public_key );
 
     auto str =
-        crypto::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second );
+        libBLS::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second );
 
-    auto ciphertext_from_string = crypto::TE::aesCiphertextFromString( str );
+    auto ciphertext_from_string = libBLS::TE::aesCiphertextFromString( str );
     auto V_old = std::get< 1 >( ciphertext_with_aes.first );
     auto V_new = std::get< 1 >( ciphertext_from_string.first );
 
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE( ConvertionToStringAndBack ) {
 }
 
 BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackTooShort ) {
-    crypto::ThresholdUtils::initCurve();
+    libBLS::ThresholdUtils::initCurve();
 
     // std::string message =
     //     "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be
@@ -207,18 +207,18 @@ BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackTooShort ) {
 
     // libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
 
-    // auto ciphertext_with_aes = crypto::TE::encryptWithAES( message, public_key );
+    // auto ciphertext_with_aes = libBLS::TE::encryptWithAES( message, public_key );
 
     // auto str =
-    //     crypto::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second
+    //     libBLS::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second
     //     );
 
-    BOOST_REQUIRE_THROW( crypto::TE::aesCiphertextFromString( "acefbdg11356" ),
-        crypto::ThresholdUtils::IncorrectInput );
+    BOOST_REQUIRE_THROW( libBLS::TE::aesCiphertextFromString( "acefbdg11356" ),
+        libBLS::ThresholdUtils::IncorrectInput );
 }
 
 BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackNonHex ) {
-    crypto::ThresholdUtils::initCurve();
+    libBLS::ThresholdUtils::initCurve();
 
     // std::string message =
     //     "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be
@@ -229,18 +229,18 @@ BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackNonHex ) {
 
     // libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
 
-    // auto ciphertext_with_aes = crypto::TE::encryptWithAES( message, public_key );
+    // auto ciphertext_with_aes = libBLS::TE::encryptWithAES( message, public_key );
 
     // auto str =
-    //     crypto::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second
+    //     libBLS::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second
     //     );
 
     BOOST_REQUIRE_THROW(
-        crypto::TE::aesCiphertextFromString( "qwerty" ), crypto::ThresholdUtils::IncorrectInput );
+        libBLS::TE::aesCiphertextFromString( "qwerty" ), libBLS::ThresholdUtils::IncorrectInput );
 }
 
 BOOST_AUTO_TEST_CASE( EncryptionCipherToString ) {
-    crypto::TE te_instance = crypto::TE( 1, 1 );
+    libBLS::TE te_instance = libBLS::TE( 1, 1 );
 
     std::string message =
         "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
@@ -250,7 +250,7 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToString ) {
 
     libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
 
-    auto str = crypto::ThresholdUtils::G2ToString( public_key, 16 );
+    auto str = libBLS::ThresholdUtils::G2ToString( public_key, 16 );
     std::string common_public_str = "";
     for ( auto& elem : str ) {
         while ( elem.size() < 64 ) {
@@ -276,13 +276,13 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToString ) {
     std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
 
     std::string plaintext =
-        crypto::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
+        libBLS::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
 
     BOOST_REQUIRE( plaintext == message );
 }
 
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
-    crypto::TE obj = crypto::TE( 11, 16 );
+    libBLS::TE obj = libBLS::TE( 11, 16 );
 
     std::vector< libff::alt_bn128_Fr > coeffs( 11 );
     for ( auto& elem : coeffs ) {
@@ -340,7 +340,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
 }
 
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomPK ) {
-    crypto::TE obj = crypto::TE( 11, 16 );
+    libBLS::TE obj = libBLS::TE( 11, 16 );
 
     std::vector< libff::alt_bn128_Fr > coeffs( 11 );
     for ( auto& elem : coeffs ) {
@@ -401,7 +401,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomPK ) {
 }
 
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomSK ) {
-    crypto::TE obj = crypto::TE( 11, 16 );
+    libBLS::TE obj = libBLS::TE( 11, 16 );
 
     std::vector< libff::alt_bn128_Fr > coeffs( 11 );
     for ( auto& elem : coeffs ) {
@@ -464,7 +464,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomSK ) {
 }
 
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionCorruptedCiphertext ) {
-    crypto::TE obj = crypto::TE( 11, 16 );
+    libBLS::TE obj = libBLS::TE( 11, 16 );
 
     std::vector< libff::alt_bn128_Fr > coeffs( 11 );
     for ( auto& elem : coeffs ) {
@@ -514,7 +514,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionCorruptedCiphertext ) {
 
         BOOST_REQUIRE_THROW(
             decrypted = obj.getDecryptionShare( corrupted_ciphertext, secret_keys[i] ),
-            crypto::ThresholdUtils::IncorrectInput );
+            libBLS::ThresholdUtils::IncorrectInput );
 
         decrypted = obj.getDecryptionShare( ciphertext, secret_keys[i] );
 
@@ -531,23 +531,23 @@ BOOST_AUTO_TEST_CASE( LagrangeInterpolationExceptions ) {
         size_t num_signed = rand_gen() % ( num_all - 1 ) + 2;
 
         {
-            crypto::TE obj( num_signed, num_all );
+            libBLS::TE obj( num_signed, num_all );
             std::vector< size_t > vect;
             for ( size_t i = 0; i < num_signed - 1; i++ )
                 vect.push_back( i + 1 );
-            BOOST_REQUIRE_THROW( crypto::ThresholdUtils::LagrangeCoeffs( vect, num_signed ),
-                crypto::ThresholdUtils::IncorrectInput );
+            BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::LagrangeCoeffs( vect, num_signed ),
+                libBLS::ThresholdUtils::IncorrectInput );
         }
 
         {
-            crypto::TE obj( num_signed, num_all );
+            libBLS::TE obj( num_signed, num_all );
             std::vector< size_t > vect;
             for ( size_t i = 0; i < num_signed; i++ ) {
                 vect.push_back( i + 1 );
             }
             vect.at( 1 ) = vect.at( 0 );
-            BOOST_REQUIRE_THROW( crypto::ThresholdUtils::LagrangeCoeffs( vect, num_signed ),
-                crypto::ThresholdUtils::IncorrectInput );
+            BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::LagrangeCoeffs( vect, num_signed ),
+                libBLS::ThresholdUtils::IncorrectInput );
         }
     }
 }

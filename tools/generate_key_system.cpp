@@ -39,8 +39,8 @@
 static bool g_b_verbose_mode = false;
 
 void GenerateKeys( const size_t t, const size_t n, std::ostream& outfile ) {
-    crypto::Bls bls_instance = crypto::Bls( t, n );
-    crypto::Dkg dkg_instance = crypto::Dkg( t, n );
+    libBLS::Bls bls_instance = libBLS::Bls( t, n );
+    libBLS::Dkg dkg_instance = libBLS::Dkg( t, n );
 
     auto polynomial = dkg_instance.GeneratePolynomial();
 
@@ -59,7 +59,7 @@ void GenerateKeys( const size_t t, const size_t n, std::ostream& outfile ) {
     for ( size_t i = 0; i < n; ++i ) {
         idx[i] = i + 1;
     }
-    auto lagrange_coeffs = crypto::ThresholdUtils::LagrangeCoeffs( idx, t );
+    auto lagrange_coeffs = libBLS::ThresholdUtils::LagrangeCoeffs( idx, t );
 
     auto common_keys = bls_instance.KeysRecover( lagrange_coeffs, secret_keys );
     common_keys.second.to_affine_coordinates();
@@ -67,26 +67,26 @@ void GenerateKeys( const size_t t, const size_t n, std::ostream& outfile ) {
     nlohmann::json outdata;
 
     outdata["commonBLSPublicKey"]["0"] =
-        crypto::ThresholdUtils::fieldElementToString( common_keys.second.X.c0 );
+        libBLS::ThresholdUtils::fieldElementToString( common_keys.second.X.c0 );
     outdata["commonBLSPublicKey"]["1"] =
-        crypto::ThresholdUtils::fieldElementToString( common_keys.second.X.c1 );
+        libBLS::ThresholdUtils::fieldElementToString( common_keys.second.X.c1 );
     outdata["commonBLSPublicKey"]["2"] =
-        crypto::ThresholdUtils::fieldElementToString( common_keys.second.Y.c0 );
+        libBLS::ThresholdUtils::fieldElementToString( common_keys.second.Y.c0 );
     outdata["commonBLSPublicKey"]["3"] =
-        crypto::ThresholdUtils::fieldElementToString( common_keys.second.Y.c1 );
+        libBLS::ThresholdUtils::fieldElementToString( common_keys.second.Y.c1 );
 
     for ( size_t i = 0; i < n; ++i ) {
         outdata["privateKey"][std::to_string( i )] =
-            crypto::ThresholdUtils::fieldElementToString( secret_keys[i] );
+            libBLS::ThresholdUtils::fieldElementToString( secret_keys[i] );
 
         outdata["BLSPublicKey"][std::to_string( i )]["0"] =
-            crypto::ThresholdUtils::fieldElementToString( public_keys[i].X.c0 );
+            libBLS::ThresholdUtils::fieldElementToString( public_keys[i].X.c0 );
         outdata["BLSPublicKey"][std::to_string( i )]["1"] =
-            crypto::ThresholdUtils::fieldElementToString( public_keys[i].X.c1 );
+            libBLS::ThresholdUtils::fieldElementToString( public_keys[i].X.c1 );
         outdata["BLSPublicKey"][std::to_string( i )]["2"] =
-            crypto::ThresholdUtils::fieldElementToString( public_keys[i].Y.c0 );
+            libBLS::ThresholdUtils::fieldElementToString( public_keys[i].Y.c0 );
         outdata["BLSPublicKey"][std::to_string( i )]["3"] =
-            crypto::ThresholdUtils::fieldElementToString( public_keys[i].Y.c1 );
+            libBLS::ThresholdUtils::fieldElementToString( public_keys[i].Y.c1 );
     }
 
     outfile << outdata.dump( 4 ) << '\n';

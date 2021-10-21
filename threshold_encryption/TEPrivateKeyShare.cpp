@@ -30,10 +30,10 @@ TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr< std::string > _key_str, s
     : signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str ) {
-        throw crypto::ThresholdUtils::IncorrectInput( "private key share is null" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "private key share is null" );
     }
 
     libff::init_alt_bn128_params();
@@ -41,7 +41,7 @@ TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr< std::string > _key_str, s
     privateKey = libff::alt_bn128_Fr( _key_str->c_str() );
 
     if ( privateKey.is_zero() ) {
-        throw crypto::ThresholdUtils::ZeroSecretKey( "Zero private key share" );
+        throw libBLS::ThresholdUtils::ZeroSecretKey( "Zero private key share" );
     }
 }
 
@@ -51,35 +51,35 @@ TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _s
       signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( _signerIndex > _totalSigners ) {
-        throw crypto::ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
     }
 
     libff::init_alt_bn128_params();
 
     if ( _skey_share.is_zero() ) {
-        throw crypto::ThresholdUtils::ZeroSecretKey( "Zero private key share" );
+        throw libBLS::ThresholdUtils::ZeroSecretKey( "Zero private key share" );
     }
 }
 
-libff::alt_bn128_G2 TEPrivateKeyShare::getDecryptionShare( crypto::Ciphertext& cipher ) {
-    crypto::TE::checkCypher( cipher );
+libff::alt_bn128_G2 TEPrivateKeyShare::getDecryptionShare( libBLS::Ciphertext& cipher ) {
+    libBLS::TE::checkCypher( cipher );
 
-    crypto::TE te( requiredSigners, totalSigners );
+    libBLS::TE te( requiredSigners, totalSigners );
 
     libff::alt_bn128_G2 decryption_share = te.getDecryptionShare( cipher, privateKey );
 
     if ( decryption_share.is_zero() || !decryption_share.is_well_formed() ) {
-        throw crypto::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
+        throw libBLS::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
     }
 
     return decryption_share;
 }
 
 std::string TEPrivateKeyShare::toString() const {
-    return crypto::ThresholdUtils::fieldElementToString( privateKey );
+    return libBLS::ThresholdUtils::fieldElementToString( privateKey );
 }
 
 size_t TEPrivateKeyShare::getSignerIndex() const {
@@ -93,7 +93,7 @@ libff::alt_bn128_Fr TEPrivateKeyShare::getPrivateKey() const {
 std::pair< std::shared_ptr< std::vector< std::shared_ptr< TEPrivateKeyShare > > >,
     std::shared_ptr< TEPublicKey > >
 TEPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSigners ) {
-    crypto::Dkg dkg_te( _requiredSigners, _totalSigners );
+    libBLS::Dkg dkg_te( _requiredSigners, _totalSigners );
 
     std::vector< libff::alt_bn128_Fr > poly = dkg_te.GeneratePolynomial();
 

@@ -29,28 +29,28 @@
 
 DKGTESecret::DKGTESecret( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libff::init_alt_bn128_params();
 
-    crypto::Dkg dkg_te( requiredSigners, totalSigners );
+    libBLS::Dkg dkg_te( requiredSigners, totalSigners );
     poly = dkg_te.GeneratePolynomial();
 }
 
 void DKGTESecret::setPoly( std::vector< libff::alt_bn128_Fr >& _poly ) {
     if ( _poly.size() != requiredSigners ) {
-        throw crypto::ThresholdUtils::IncorrectInput( "Wrong size of vector" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "Wrong size of vector" );
     }
 
     poly = _poly;
 }
 
 std::vector< libff::alt_bn128_Fr > DKGTESecret::getDKGTESecretShares() {
-    crypto::Dkg dkg_te( requiredSigners, totalSigners );
+    libBLS::Dkg dkg_te( requiredSigners, totalSigners );
     return dkg_te.SecretKeyContribution( poly );
 }
 
 std::vector< libff::alt_bn128_G2 > DKGTESecret::getDKGTEPublicShares() {
-    crypto::Dkg dkg_te( requiredSigners, totalSigners );
+    libBLS::Dkg dkg_te( requiredSigners, totalSigners );
     return dkg_te.VerificationVector( poly );
 }

@@ -30,7 +30,7 @@
 #include <tools/utils.h>
 
 
-namespace crypto {
+namespace libBLS {
 
 
 std::atomic< bool > ThresholdUtils::is_initialized = false;
@@ -402,4 +402,4 @@ std::string ThresholdUtils::aesDecrypt(
     return std::string( plaintext.begin(), plaintext.end() );
 }
 
-}  // namespace crypto
+}  // namespace libBLS

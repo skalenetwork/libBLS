@@ -32,7 +32,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 
-namespace crypto {
+namespace libBLS {
 
 typedef std::tuple< libff::alt_bn128_G2, std::string, libff::alt_bn128_G1 > Ciphertext;
 
@@ -80,4 +80,4 @@ private:
     const size_t n_ = 0;
 };
 
-}  // namespace crypto
+}  // namespace libBLS

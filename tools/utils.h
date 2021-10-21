@@ -32,7 +32,7 @@
 
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 
-namespace crypto {
+namespace libBLS {
 
 class ThresholdUtils {
 private:
@@ -137,6 +137,6 @@ std::string ThresholdUtils::fieldElementToString( const T& field_elem, int base 
     return output;
 }
 
-}  // namespace crypto
+}  // namespace libBLS
 
 #endif  // LIBBLS_UTILS_H

@@ -142,7 +142,7 @@ for (size_t i = 0; i < num_all; i++)      // Verifying shares for each participa
  }
 
  std::shared_ptr msg_ptr = std::make_shared<std::string>(message);
- crypto::Ciphertext cypher = common_public.encrypt(msg_ptr);
+ libBLS::Ciphertext cypher = common_public.encrypt(msg_ptr);
 
 // removing 1 random participant ( because only 3 of 4 will participate)
  size_t ind4del = rand_gen() % secret_shares_all.size();

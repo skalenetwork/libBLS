@@ -44,7 +44,7 @@ where i is an index of a participant.
 
 ```cpp
 TEPublic publicKey = *keys.second;
-crypto::Ciphertext cipher = publicKey.encrypt(message_ptr);
+libBLS::Ciphertext cipher = publicKey.encrypt(message_ptr);
 ```
 
  Where message_ptr is shared_ptr to string, cipher is encrypted message.

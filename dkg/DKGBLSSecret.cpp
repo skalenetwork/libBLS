@@ -28,26 +28,26 @@
 
 DKGBLSSecret::DKGBLSSecret( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    crypto::Dkg dkg( requiredSigners, totalSigners );
+    libBLS::Dkg dkg( requiredSigners, totalSigners );
     poly = dkg.GeneratePolynomial();
 }
 
 void DKGBLSSecret::setPoly( std::vector< libff::alt_bn128_Fr > _poly ) {
     if ( _poly.size() != requiredSigners ) {
-        throw crypto::ThresholdUtils::IncorrectInput( "Wrong size of vector" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "Wrong size of vector" );
     }
     poly = _poly;
 }
 
 std::vector< libff::alt_bn128_Fr > DKGBLSSecret::getDKGBLSSecretShares() {
-    crypto::Dkg dkg( requiredSigners, totalSigners );
+    libBLS::Dkg dkg( requiredSigners, totalSigners );
     return dkg.SecretKeyContribution( poly );
 }
 
 std::vector< libff::alt_bn128_G2 > DKGBLSSecret::getDKGBLSPublicShares() {
-    crypto::Dkg dkg( requiredSigners, totalSigners );
+    libBLS::Dkg dkg( requiredSigners, totalSigners );
     return dkg.VerificationVector( poly );
 }
 

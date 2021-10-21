@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         size_t num_all = rand_gen() % 16 + 1;
         size_t num_signed = rand_gen() % num_all + 1;
 
-        crypto::Dkg dkg_te( num_signed, num_all );
+        libBLS::Dkg dkg_te( num_signed, num_all );
 
         std::vector< libff::alt_bn128_Fr > poly = dkg_te.GeneratePolynomial();
 
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
 
         TEPublicKey common_public( common_private, num_signed, num_all );
         auto msg_ptr = std::make_shared< std::string >( message );
-        crypto::Ciphertext cypher = common_public.encrypt( msg_ptr );
+        libBLS::Ciphertext cypher = common_public.encrypt( msg_ptr );
 
         std::vector< libff::alt_bn128_Fr > skeys = dkg_te.SecretKeyContribution( poly );
         std::vector< TEPrivateKeyShare > skey_shares;
@@ -112,26 +112,26 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         std::string message_decrypted = decr_set.merge( cypher );
         BOOST_REQUIRE( message == message_decrypted );
 
-        crypto::Ciphertext bad_cypher = cypher;  // corrupt V in cypher
+        libBLS::Ciphertext bad_cypher = cypher;  // corrupt V in cypher
         std::get< 1 >( bad_cypher ) = spoilMessage( std::get< 1 >( cypher ) );
 
-        BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), crypto::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), libBLS::ThresholdUtils::IncorrectInput );
 
         // cannot add after merge
         BOOST_REQUIRE_THROW(
-            decr_set.addDecrypt( num_signed, nullptr ), crypto::ThresholdUtils::IncorrectInput );
+            decr_set.addDecrypt( num_signed, nullptr ), libBLS::ThresholdUtils::IncorrectInput );
 
         bad_cypher = cypher;  // corrupt U in cypher
         libff::alt_bn128_G2 rand_el = libff::alt_bn128_G2::random_element();
         std::get< 0 >( bad_cypher ) = rand_el;
 
-        BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), crypto::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), libBLS::ThresholdUtils::IncorrectInput );
 
         bad_cypher = cypher;  // corrupt W in cypher
         libff::alt_bn128_G1 rand_el2 = libff::alt_bn128_G1::random_element();
         std::get< 2 >( bad_cypher ) = rand_el2;
 
-        BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), crypto::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), libBLS::ThresholdUtils::IncorrectInput );
 
         size_t ind = rand_gen() % num_signed;  // corrupt random private key share
 
@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
         size_t num_all = rand_gen() % 16 + 1;
         size_t num_signed = rand_gen() % num_all + 1;
 
-        crypto::Dkg dkg_te( num_signed, num_all );
+        libBLS::Dkg dkg_te( num_signed, num_all );
 
         std::string message;
         size_t msg_length = 64;
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
 
 
         auto msg_ptr = std::make_shared< std::string >( message );
-        crypto::Ciphertext cypher = keys.second->encrypt( msg_ptr );
+        libBLS::Ciphertext cypher = keys.second->encrypt( msg_ptr );
 
         std::vector< TEPublicKeyShare > public_key_shares;
         for ( size_t i = 0; i < num_all; i++ ) {
@@ -251,7 +251,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
         for ( size_t i = 0; i < num_all; i++ ) {
             DKGTEWrapper dkg_wrap( num_signed, num_all );
 
-            crypto::Dkg dkg_te( num_signed, num_all );
+            libBLS::Dkg dkg_te( num_signed, num_all );
             std::vector< libff::alt_bn128_Fr > poly = dkg_te.GeneratePolynomial();
             auto shared_poly = std::make_shared< std::vector< libff::alt_bn128_Fr > >( poly );
             dkg_wrap.setDKGSecret( shared_poly );
@@ -302,7 +302,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
         }
 
         auto msg_ptr = std::make_shared< std::string >( message );
-        crypto::Ciphertext cypher = common_public.encrypt( msg_ptr );
+        libBLS::Ciphertext cypher = common_public.encrypt( msg_ptr );
 
         for ( size_t i = 0; i < num_all - num_signed; ++i ) {
             size_t ind4del = rand_gen() % secret_shares_all.size();
@@ -331,15 +331,15 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
     size_t num_all = rand_gen() % 15 + 2;
     size_t num_signed = rand_gen() % num_all + 1;
 
-    BOOST_REQUIRE_THROW( crypto::ThresholdUtils::checkSigners( 0, num_all ),
-        crypto::ThresholdUtils::IncorrectInput );
+    BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::checkSigners( 0, num_all ),
+        libBLS::ThresholdUtils::IncorrectInput );
 
     BOOST_REQUIRE_THROW(
-        crypto::ThresholdUtils::checkSigners( 0, 0 ), crypto::ThresholdUtils::IncorrectInput );
+        libBLS::ThresholdUtils::checkSigners( 0, 0 ), libBLS::ThresholdUtils::IncorrectInput );
 
     // null public key share
     BOOST_REQUIRE_THROW( TEPublicKeyShare( nullptr, 1, num_signed, num_all ),
-        crypto::ThresholdUtils::IncorrectInput );
+        libBLS::ThresholdUtils::IncorrectInput );
 
     {
         // 1 coord of public key share is not a number
@@ -347,7 +347,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         BOOST_REQUIRE_THROW(
             TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
                 num_signed, num_all ),
-            crypto::ThresholdUtils::IncorrectInput );
+            libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -356,7 +356,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         BOOST_REQUIRE_THROW(
             TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
                 num_signed, num_all ),
-            crypto::ThresholdUtils::IsNotWellFormed );
+            libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -365,7 +365,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         BOOST_REQUIRE_THROW(
             TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
                 num_signed, num_all ),
-            crypto::ThresholdUtils::IncorrectInput );
+            libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -378,12 +378,12 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
-        crypto::Ciphertext cypher;
+        libBLS::Ciphertext cypher;
         std::get< 0 >( cypher ) = U;
         std::get< 1 >( cypher ) = "tra-la-la";
         std::get< 2 >( cypher ) = W;
 
-        BOOST_REQUIRE_THROW( pkey.Verify( cypher, U ), crypto::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( pkey.Verify( cypher, U ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -396,12 +396,12 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
-        crypto::Ciphertext cypher;
+        libBLS::Ciphertext cypher;
         std::get< 0 >( cypher ) = U;
         std::get< 1 >( cypher ) = "tra-la-la";
         std::get< 2 >( cypher ) = W;
 
-        BOOST_REQUIRE_THROW( pkey.Verify( cypher, U ), crypto::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( pkey.Verify( cypher, U ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -414,7 +414,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
-        crypto::Ciphertext cypher;
+        libBLS::Ciphertext cypher;
         std::get< 0 >( cypher ) = U;
         std::get< 1 >( cypher ) =
             "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
@@ -423,13 +423,13 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         libff::alt_bn128_G2 decrypt = libff::alt_bn128_G2::zero();
 
         BOOST_REQUIRE_THROW(
-            pkey.Verify( cypher, decrypt ), crypto::ThresholdUtils::IsNotWellFormed );
+            pkey.Verify( cypher, decrypt ), libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
         // null private key share
         BOOST_REQUIRE_THROW( TEPrivateKeyShare( nullptr, 1, num_signed, num_all ),
-            crypto::ThresholdUtils::IncorrectInput );
+            libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -437,27 +437,27 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         std::string zero_str = "0";
         BOOST_REQUIRE_THROW( TEPrivateKeyShare( std::make_shared< std::string >( zero_str ), 1,
                                  num_signed, num_all ),
-            crypto::ThresholdUtils::ZeroSecretKey );
+            libBLS::ThresholdUtils::ZeroSecretKey );
     }
 
     {
         // zero private key share
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
         BOOST_REQUIRE_THROW( TEPrivateKeyShare( el, 1, num_signed, num_all ),
-            crypto::ThresholdUtils::ZeroSecretKey );
+            libBLS::ThresholdUtils::ZeroSecretKey );
     }
 
     {
         // wrong signer index
         BOOST_REQUIRE_THROW( TEPrivateKeyShare( libff::alt_bn128_Fr::random_element(), num_all + 1,
                                  num_signed, num_all ),
-            crypto::ThresholdUtils::IncorrectInput );
+            libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
         // null public key
         BOOST_REQUIRE_THROW(
-            TEPublicKey( nullptr, num_signed, num_all ), crypto::ThresholdUtils::IncorrectInput );
+            TEPublicKey( nullptr, num_signed, num_all ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -466,7 +466,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         BOOST_REQUIRE_THROW(
             TEPublicKey(
                 std::make_shared< std::vector< std::string > >( pkey_str ), num_signed, num_all ),
-            crypto::ThresholdUtils::IsNotWellFormed );
+            libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -474,14 +474,14 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
         BOOST_REQUIRE_THROW(
             TEPublicKey pkey( TEPrivateKey( el, num_signed, num_all ), num_signed, num_all ),
-            crypto::ThresholdUtils::IsNotWellFormed );
+            libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
         // zero public key
         libff::alt_bn128_G2 el = libff::alt_bn128_G2::zero();
         BOOST_REQUIRE_THROW(
-            TEPublicKey pkey( el, num_signed, num_all ), crypto::ThresholdUtils::IsNotWellFormed );
+            TEPublicKey pkey( el, num_signed, num_all ), libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -490,7 +490,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         TEPublicKey pkey( el, num_signed, num_all );
 
-        BOOST_REQUIRE_THROW( pkey.encrypt( nullptr ), crypto::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( pkey.encrypt( nullptr ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -500,13 +500,13 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         TEPublicKey pkey( el, num_signed, num_all );
 
         BOOST_REQUIRE_THROW( pkey.encrypt( std::make_shared< std::string >( "tra-la-la" ) ),
-            crypto::ThresholdUtils::IncorrectInput );
+            libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
         // null private key
         BOOST_REQUIRE_THROW(
-            TEPrivateKey( nullptr, num_signed, num_all ), crypto::ThresholdUtils::IncorrectInput );
+            TEPrivateKey( nullptr, num_signed, num_all ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -514,20 +514,20 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         std::string zero_str = "0";
         BOOST_REQUIRE_THROW(
             TEPrivateKey( std::make_shared< std::string >( zero_str ), num_signed, num_all ),
-            crypto::ThresholdUtils::IsNotWellFormed );
+            libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
         // zero private key
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
         BOOST_REQUIRE_THROW(
-            TEPrivateKey( el, num_signed, num_all ), crypto::ThresholdUtils::IsNotWellFormed );
+            TEPrivateKey( el, num_signed, num_all ), libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
         //_requiredSigners > _totalSigners
         BOOST_REQUIRE_THROW( TEDecryptSet decr_set( num_all + 1, num_signed ),
-            crypto::ThresholdUtils::IsNotWellFormed );
+            libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -542,7 +542,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         decr_set.addDecrypt( 1, el_ptr1 );
         BOOST_REQUIRE_THROW(
-            decr_set.addDecrypt( 1, el_ptr2 ), crypto::ThresholdUtils::IncorrectInput );
+            decr_set.addDecrypt( 1, el_ptr2 ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -553,7 +553,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
 
         BOOST_REQUIRE_THROW(
-            decr_set.addDecrypt( 1, el_ptr1 ), crypto::ThresholdUtils::IsNotWellFormed );
+            decr_set.addDecrypt( 1, el_ptr1 ), libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -562,7 +562,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         std::shared_ptr< libff::alt_bn128_G2 > el_ptr1 = nullptr;
         BOOST_REQUIRE_THROW(
-            decr_set.addDecrypt( 1, el_ptr1 ), crypto::ThresholdUtils::IncorrectInput );
+            decr_set.addDecrypt( 1, el_ptr1 ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -577,13 +577,13 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
-        crypto::Ciphertext cypher;
+        libBLS::Ciphertext cypher;
         std::get< 0 >( cypher ) = U;
         std::get< 1 >( cypher ) =
             "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
         std::get< 2 >( cypher ) = W;
 
-        BOOST_REQUIRE_THROW( decr_set.merge( cypher ), crypto::ThresholdUtils::IsNotWellFormed );
+        BOOST_REQUIRE_THROW( decr_set.merge( cypher ), libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -597,13 +597,13 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
-        crypto::Ciphertext cypher;
+        libBLS::Ciphertext cypher;
         std::get< 0 >( cypher ) = U;
         std::get< 1 >( cypher ) =
             "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
         std::get< 2 >( cypher ) = W;
 
-        BOOST_REQUIRE_THROW( decr_set.merge( cypher ), crypto::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( decr_set.merge( cypher ), libBLS::ThresholdUtils::IncorrectInput );
     }
 }
 
@@ -618,7 +618,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
 
         BOOST_REQUIRE_THROW( dkg_te.VerifyDKGShare( 1, el, dkg_te.createDKGPublicShares() ),
-            crypto::ThresholdUtils::ZeroSecretKey );
+            libBLS::ThresholdUtils::ZeroSecretKey );
     }
 
     {
@@ -627,7 +627,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
 
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
         BOOST_REQUIRE_THROW(
-            dkg_te.VerifyDKGShare( 1, el, nullptr ), crypto::ThresholdUtils::IncorrectInput );
+            dkg_te.VerifyDKGShare( 1, el, nullptr ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -641,7 +641,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
         BOOST_REQUIRE_THROW(
             dkg_te.VerifyDKGShare(
                 1, el, std::make_shared< std::vector< libff::alt_bn128_G2 > >( pub_shares ) ),
-            crypto::ThresholdUtils::IncorrectInput );
+            libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -650,7 +650,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
             dkg_te.createDKGSecretShares();
         shares = nullptr;
         BOOST_REQUIRE_THROW(
-            dkg_te.setDKGSecret( shares ), crypto::ThresholdUtils::IncorrectInput );
+            dkg_te.setDKGSecret( shares ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -660,13 +660,13 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
         shares->erase( shares->begin() + shares->size() - 2 );
         shares->shrink_to_fit();
         BOOST_REQUIRE_THROW(
-            dkg_te.setDKGSecret( shares ), crypto::ThresholdUtils::IncorrectInput );
+            dkg_te.setDKGSecret( shares ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
         DKGTEWrapper dkg_te( num_signed, num_all );
         BOOST_REQUIRE_THROW(
-            dkg_te.CreateTEPrivateKeyShare( 1, nullptr ), crypto::ThresholdUtils::IncorrectInput );
+            dkg_te.CreateTEPrivateKeyShare( 1, nullptr ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -674,20 +674,20 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
         auto wrong_size_vector = std::make_shared< std::vector< libff::alt_bn128_Fr > >();
         wrong_size_vector->resize( num_signed - 1 );
         BOOST_REQUIRE_THROW( dkg_te.CreateTEPrivateKeyShare( 1, wrong_size_vector ),
-            crypto::ThresholdUtils::IncorrectInput );
+            libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
         DKGTEWrapper dkg_te( num_signed, num_all );
         std::shared_ptr< std::vector< libff::alt_bn128_Fr > > shares;
         BOOST_REQUIRE_THROW(
-            dkg_te.setDKGSecret( shares ), crypto::ThresholdUtils::IncorrectInput );
+            dkg_te.setDKGSecret( shares ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
         DKGTEWrapper dkg_te( num_signed, num_all );
         BOOST_REQUIRE_THROW( dkg_te.CreateTEPublicKey( nullptr, num_signed, num_all ),
-            crypto::ThresholdUtils::IncorrectInput );
+            libBLS::ThresholdUtils::IncorrectInput );
     }
 }
 

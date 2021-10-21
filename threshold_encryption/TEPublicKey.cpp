@@ -31,22 +31,22 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str_ptr,
     size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !_key_str_ptr ) {
-        throw crypto::ThresholdUtils::IncorrectInput( "public key is null" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "public key is null" );
     }
 
     if ( _key_str_ptr->size() != 4 ) {
-        throw crypto::ThresholdUtils::IncorrectInput(
+        throw libBLS::ThresholdUtils::IncorrectInput(
             "wrong number of components in public key share" );
     }
 
-    if ( !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 0 ) ) ||
-         !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 1 ) ) ||
-         !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 2 ) ) ||
-         !crypto::ThresholdUtils::isStringNumber( _key_str_ptr->at( 3 ) ) ) {
-        throw crypto::ThresholdUtils::IncorrectInput(
+    if ( !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 0 ) ) ||
+         !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 1 ) ) ||
+         !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 2 ) ) ||
+         !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 3 ) ) ) {
+        throw libBLS::ThresholdUtils::IncorrectInput(
             "non-digit symbol or first zero in non-zero public key share" );
     }
 
@@ -59,19 +59,19 @@ TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str
     PublicKey.Y.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 3 ).c_str() );
 
     if ( PublicKey.is_zero() || !PublicKey.is_well_formed() ) {
-        throw crypto::ThresholdUtils::IsNotWellFormed( "corrupted string or zero public key" );
+        throw libBLS::ThresholdUtils::IsNotWellFormed( "corrupted string or zero public key" );
     }
 }
 
 TEPublicKey::TEPublicKey(
     TEPrivateKey _common_private, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     libff::init_alt_bn128_params();
 
     if ( _common_private.getPrivateKey().is_zero() ) {
-        throw crypto::ThresholdUtils::ZeroSecretKey( "zero key" );
+        throw libBLS::ThresholdUtils::ZeroSecretKey( "zero key" );
     }
 
     PublicKey = _common_private.getPrivateKey() * libff::alt_bn128_G2::one();
@@ -79,26 +79,26 @@ TEPublicKey::TEPublicKey(
 
 TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, size_t _totalSigners )
     : PublicKey( _pkey ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( _pkey.is_zero() || !_pkey.is_well_formed() ) {
-        throw crypto::ThresholdUtils::IsNotWellFormed( "zero or corrupted public key" );
+        throw libBLS::ThresholdUtils::IsNotWellFormed( "zero or corrupted public key" );
     }
 }
 
-crypto::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_ptr ) {
-    crypto::TE te( requiredSigners, totalSigners );
+libBLS::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_ptr ) {
+    libBLS::TE te( requiredSigners, totalSigners );
 
     if ( mes_ptr == nullptr ) {
-        throw crypto::ThresholdUtils::IncorrectInput( "Message is null" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "Message is null" );
     }
 
     if ( mes_ptr->length() != 64 ) {
-        throw crypto::ThresholdUtils::IncorrectInput( "Message length is not equal to 64" );
+        throw libBLS::ThresholdUtils::IncorrectInput( "Message length is not equal to 64" );
     }
 
-    crypto::Ciphertext cypher = te.getCiphertext( *mes_ptr, PublicKey );
-    crypto::TE::checkCypher( cypher );
+    libBLS::Ciphertext cypher = te.getCiphertext( *mes_ptr, PublicKey );
+    libBLS::TE::checkCypher( cypher );
 
     return std::make_tuple(
         std::get< 0 >( cypher ), std::get< 1 >( cypher ), std::get< 2 >( cypher ) );
@@ -106,7 +106,7 @@ crypto::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_ptr 
 
 std::shared_ptr< std::vector< std::string > > TEPublicKey::toString() {
     return std::make_shared< std::vector< std::string > >(
-        crypto::ThresholdUtils::G2ToString( PublicKey ) );
+        libBLS::ThresholdUtils::G2ToString( PublicKey ) );
 }
 
 libff::alt_bn128_G2 TEPublicKey::getPublicKey() const {

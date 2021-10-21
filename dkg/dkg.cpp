@@ -28,7 +28,7 @@
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 #include <libff/algebra/exponentiation/exponentiation.hpp>
 
-namespace crypto {
+namespace libBLS {
 
 typedef std::vector< libff::alt_bn128_Fr > Polynomial;
 
@@ -139,4 +139,4 @@ bool Dkg::isG2( const libff::alt_bn128_G2& point ) {
            libff::alt_bn128_G2::order() * point == libff::alt_bn128_G2::zero();
 }
 
-}  // namespace crypto
+}  // namespace libBLS
