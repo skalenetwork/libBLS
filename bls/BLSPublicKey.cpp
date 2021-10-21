@@ -147,7 +147,8 @@ bool BLSPublicKey::AggregatedVerifySig(
 
 BLSPublicKey::BLSPublicKey(
     std::shared_ptr< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > > koefs_pkeys_map,
-    size_t _requiredSigners, size_t _totalSigners ) : t( _requiredSigners ), n( _totalSigners ) {
+    size_t _requiredSigners, size_t _totalSigners )
+    : t( _requiredSigners ), n( _totalSigners ) {
     crypto::ThresholdUtils::initCurve();
 
     crypto::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
