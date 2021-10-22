@@ -66,7 +66,7 @@ elseif( CMAKE_BUILD_TYPE STREQUAL "Debug" )
     set( CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -O0" )
     set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0" )
 else()
-	message( INFO "---- CMAKE_BUILD_TYPE = ${DEPS_INSTALL_ROOT} is not supported explicitly" )
+	message( INFO "---- CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE} is not supported explicitly" )
 endif()
 
 if(BUILD_TESTS)
