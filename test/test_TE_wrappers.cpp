@@ -337,9 +337,12 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
     BOOST_REQUIRE_THROW(
         libBLS::ThresholdUtils::checkSigners( 0, 0 ), libBLS::ThresholdUtils::IncorrectInput );
 
-    // null public key share
-    BOOST_REQUIRE_THROW( TEPublicKeyShare( nullptr, 1, num_signed, num_all ),
-        libBLS::ThresholdUtils::IncorrectInput );
+    {
+        // null public key share
+        std::shared_ptr< std::vector< std::string > > share_ptr = nullptr;
+        BOOST_REQUIRE_THROW( TEPublicKeyShare( share_ptr, 1, num_signed, num_all ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
 
     {
         // 1 coord of public key share is not a number
@@ -568,10 +571,6 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
     {
         // not enough elements in decrypt set
         TEDecryptSet decr_set( num_signed, num_all );
-        libff::alt_bn128_G2 el1 = libff::alt_bn128_G2::random_element();
-
-        auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
-        decr_set.addDecrypt( 1, el_ptr1 );
 
         libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
 
@@ -582,7 +581,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         std::get< 1 >( cypher ) =
             "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
         std::get< 2 >( cypher ) = W;
-
+        
         BOOST_REQUIRE_THROW( decr_set.merge( cypher ), libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
@@ -602,6 +601,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         std::get< 1 >( cypher ) =
             "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
         std::get< 2 >( cypher ) = W;
+
         BOOST_REQUIRE_THROW( decr_set.merge( cypher ), libBLS::ThresholdUtils::IncorrectInput );
     }
 }
