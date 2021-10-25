@@ -602,7 +602,6 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         std::get< 1 >( cypher ) =
             "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
         std::get< 2 >( cypher ) = W;
-
         BOOST_REQUIRE_THROW( decr_set.merge( cypher ), libBLS::ThresholdUtils::IncorrectInput );
     }
 }
@@ -655,12 +654,12 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
 
     {
         DKGTEWrapper dkg_te( num_signed, num_all );
-        std::shared_ptr< std::vector< libff::alt_bn128_Fr > > shares =
-            dkg_te.createDKGSecretShares();
-        shares->erase( shares->begin() + shares->size() - 2 );
-        shares->shrink_to_fit();
+        dkg_te.createDKGSecretShares();
+
+        std::shared_ptr< std::vector< libff::alt_bn128_Fr > > v;
+
         BOOST_REQUIRE_THROW(
-            dkg_te.setDKGSecret( shares ), libBLS::ThresholdUtils::IncorrectInput );
+            dkg_te.setDKGSecret( v ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
