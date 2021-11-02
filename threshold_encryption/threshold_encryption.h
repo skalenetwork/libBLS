@@ -74,6 +74,8 @@ public:
     static std::pair< Ciphertext, std::vector< uint8_t > > aesCiphertextFromString(
         const std::string& str );
 
+    static const std::string MAGIC_STRING;
+
 private:
     const size_t t_ = 0;
 
