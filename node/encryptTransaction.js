@@ -51,3 +51,5 @@ async function encryptAndSend(eth, to, data) {
 
 
 module.exports.encryptAndSend = encryptAndSend
+module.exports.encrypt_data = encrypt_data
+module.exports.get_common_bls_public_key = get_common_bls_public_key
