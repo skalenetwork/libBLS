@@ -118,15 +118,6 @@ simple_find_tool_program () { # program_name, var_name_to_export_full_path, is_o
 			echo -e "....${COLOR_SUCCESS}SUCCESS: $2 found as $TMP_VAL" "${COLOR_RESET}"
 			return 0
 		fi
-		#TMP_CMD="export $2=/opt/local/bin/$1"
-		#$TMP_CMD
-		#TMP_CMD="echo ${!2}"
-		#TMP_VAL="$($TMP_CMD)"
-		#if [ -f "$TMP_VAL" ];
-		#then
-		#	#echo -e "${COLOR_SUCCESS}SUCCESS: $2 found as $TMP_VAL" "${COLOR_RESET}"
-		#	return 0
-		#fi
 	fi
 	if [ -f "$TMP_VAL" ];
 	then
@@ -320,12 +311,12 @@ then
 	else
 		if [ "$UNIX_SYSTEM_NAME" = "Linux" ];
 		then
-			export CC=$(which gcc-7)
+			export CC=$(which gcc-9)
 			if [ -z "${CC}" ];
 			then
 				export CC=$(which gcc)
 			fi
-			export CXX=$(which g++-7)
+			export CXX=$(which g++-9)
 			if [ -z "${CXX}" ];
 			then
 				export CXX=$(which g++)
@@ -577,14 +568,14 @@ then
 	if [ ! -d "emsdk" ];
 	then
 		echo -e "${COLOR_INFO}downloading it${COLOR_DOTS}...${COLOR_RESET}"
-		git clone https://github.com/emscripten-core/emsdk.git
+		eval git clone https://github.com/emscripten-core/emsdk.git
 	fi
 	cd emsdk
 	echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-	git pull
-	git checkout 2.0.31
-	./emsdk install latest
-	./emsdk activate latest
+	eval git pull
+	eval git checkout 2.0.31
+	eval ./emsdk install latest
+	eval ./emsdk activate latest
 	source ./emsdk_env.sh
 	cd ..	
 fi
@@ -600,9 +591,8 @@ then
 		then
 			if [ ! -f "boost_1_68_0.tar.bz2" ];
 			then
-				echo -e "${COLOR_INFO}downloading it${COLOR_DOTS}...${COLOR_RESET}"
-                # $WGET https://dl.bintray.com/boostorg/release/1.68.0/source/boost_1_68_0.tar.gz
-                $WGET  https://boostorg.jfrog.io/artifactory/main/release/1.68.0/source/boost_1_68_0.tar.bz2
+				eval echo -e "${COLOR_INFO}downloading it${COLOR_DOTS}...${COLOR_RESET}"
+                eval $WGET  https://boostorg.jfrog.io/artifactory/main/release/1.68.0/source/boost_1_68_0.tar.bz2
 			fi
 			echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
             tar -xf boost_1_68_0.tar.bz2
@@ -615,25 +605,25 @@ then
 		else
 			BOOST_LIBRARIES="system,thread,filesystem,regex,atomic,program_options"
 		fi
-		./bootstrap.sh --prefix="$INSTALL_ROOT" --with-libraries="$BOOST_LIBRARIES"
+		eval ./bootstrap.sh --prefix="$INSTALL_ROOT" --with-libraries="$BOOST_LIBRARIES"
 
 	if [ ${ARCH} = "arm" ]
 	then
 		sed -i -e 's#using gcc ;#using gcc : arm : /usr/local/toolchains/gcc7.2-arm/bin/arm-linux-gnueabihf-g++ ;#g' project-config.jam
-		./b2 "${CONF_CROSSCOMPILING_OPTS_BOOST}" cxxflags=-fPIC cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
+		eval ./b2 "${CONF_CROSSCOMPILING_OPTS_BOOST}" cxxflags=-fPIC cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 	else
 		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
 		then
-			./b2 cxxflags=-fPIC toolset=clang cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
+			eval ./b2 cxxflags=-fPIC toolset=clang cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 		else
 			if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 			then
-				./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=debug link=static install
+				eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=debug link=static install
 				cd bin.v2/libs/program_options/build/emscripten-2.0.31/debug/cxxstd-14-iso/link-static/threading-multi/
-				emar q libboost_program_options.a *.bc
-				cp libboost_program_options.a "${LIBRARIES_ROOT}"
+				eval emar q libboost_program_options.a *.bc
+				eval cp libboost_program_options.a "${LIBRARIES_ROOT}"
 			else
-				./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
+				eval ./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC ${PARALLEL_MAKE_OPTIONS} --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 			fi
 		fi
 	fi
@@ -660,17 +650,17 @@ then
 			if [ ! -f "openssl-from-git.tar.gz" ];
 			then
 				echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
-				git clone https://github.com/openssl/openssl.git
+				eval git clone https://github.com/openssl/openssl.git
 				echo -e "${COLOR_INFO}archiving it${COLOR_DOTS}...${COLOR_RESET}"
-				tar -czf openssl-from-git.tar.gz ./openssl
+				eval tar -czf openssl-from-git.tar.gz ./openssl
 			else
 				echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
-				tar -xzf openssl-from-git.tar.gz
+				eval tar -xzf openssl-from-git.tar.gz
 			fi
 			echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
 			cd openssl
-			git fetch
-			git checkout OpenSSL_1_1_1-stable
+			eval git fetch
+			eval git checkout OpenSSL_1_1_1-stable
 			if [ "$ARCH" = "x86_or_x64" ];
 			then
 				if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
@@ -680,14 +670,14 @@ then
 				else
 					if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 					then
-						emconfigure ./config -fPIC -no-asm -no-shared -no-threads --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+						eval emconfigure ./config -fPIC -no-asm -no-shared -no-threads --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
 						sed -i 's/CROSS_COMPILE=.*/CROSS_COMPILE=/' Makefile
 					else
-						./config -fPIC --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+						eval ./config -fPIC --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
 					fi
 				fi
 			else
-				./Configure linux-armv4 --prefix="$INSTALL_ROOT" "${ADDITIONAL_INCLUDES}" "${ADDITIONAL_LIBRARIES}" no-shared no-tests no-dso
+				eval ./Configure linux-armv4 --prefix="$INSTALL_ROOT" "${ADDITIONAL_INCLUDES}" "${ADDITIONAL_LIBRARIES}" no-shared no-tests no-dso
 			fi
 			cd ..
 		fi
@@ -695,13 +685,13 @@ then
 		cd openssl
 		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 		then
-			emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}" depend
-			emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
+			eval emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}" depend
+			eval emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
 		else
-			$MAKE ${PARALLEL_MAKE_OPTIONS} depend
-			$MAKE ${PARALLEL_MAKE_OPTIONS}
+			eval $MAKE ${PARALLEL_MAKE_OPTIONS} depend
+			eval $MAKE ${PARALLEL_MAKE_OPTIONS}
 		fi
-		$MAKE ${PARALLEL_MAKE_OPTIONS} install_sw
+		eval $MAKE ${PARALLEL_MAKE_OPTIONS} install_sw
 		cd "$SOURCES_ROOT"
 	else
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
@@ -721,32 +711,32 @@ then
 			if [ ! -f "gmp-6.1.2.tar.xz" ];
 				then
 			echo -e "${COLOR_INFO}getting it from gmp website${COLOR_DOTS}...${COLOR_RESET}"
-			$WGET https://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz
+			eval $WGET https://ftp.gnu.org/gnu/gmp/gmp-6.1.2.tar.xz
 			fi
 			echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
-			tar -xf gmp-6.1.2.tar.xz
+			eval tar -xf gmp-6.1.2.tar.xz
 		fi
 		cd gmp-6.1.2
 		echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
 		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
 		then
-			./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --build=x86_64-apple-darwin#{OS.kernel_version.major} --prefix="$INSTALL_ROOT"
+			eval ./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --build=x86_64-apple-darwin#{OS.kernel_version.major} --prefix="$INSTALL_ROOT"
 		else
 			if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 			then
-				emconfigure ./configure "${CONF_CROSSCOMPILING_OPTS_GENERIC}" "${CONF_CROSSCOMPILING_OPTS_GMP}" "${CONF_DEBUG_OPTIONS}" --disable-assembly --host none --enable-cxx --prefix="$INSTALL_ROOT"
+				eval emconfigure ./configure "${CONF_CROSSCOMPILING_OPTS_GENERIC}" "${CONF_CROSSCOMPILING_OPTS_GMP}" "${CONF_DEBUG_OPTIONS}" --disable-assembly --host none --enable-cxx --prefix="$INSTALL_ROOT"
 			else
-				./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_CROSSCOMPILING_OPTS_GMP} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --prefix="$INSTALL_ROOT"
+				eval ./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} ${CONF_CROSSCOMPILING_OPTS_GMP} ${CONF_DEBUG_OPTIONS} --enable-cxx --enable-static --disable-shared --prefix="$INSTALL_ROOT"
 			fi
 		fi
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 		then
-			emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
+			eval emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
 		else
-			$MAKE ${PARALLEL_MAKE_OPTIONS}
+			eval $MAKE ${PARALLEL_MAKE_OPTIONS}
 		fi
-		$MAKE ${PARALLEL_MAKE_OPTIONS} install
+		eval $MAKE ${PARALLEL_MAKE_OPTIONS} install
 		cd ..
 		cd "$SOURCES_ROOT"
 	else
@@ -764,25 +754,25 @@ then
 			if [ ! -d "libff" ];
 			then
 				echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
-				git clone https://github.com/scipr-lab/libff.git --recursive # libff
+				eval git clone https://github.com/scipr-lab/libff.git --recursive # libff
 			fi
 		cd libff
 		echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-		git fetch
-		git checkout 03b719a7c81757071f99fc60be1f7f7694e51390
-		mkdir -p build
+		eval git fetch
+		eval git checkout 03b719a7c81757071f99fc60be1f7f7694e51390
+		eval mkdir -p build
 		cd build
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 		then
 			simple_find_tool_program "cmake" "CMAKE" "no"
-			emcmake "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" -DGMP_INCLUDE_DIR="$INCLUDE_ROOT" -DGMP_LIBRARY="$LIBRARIES_ROOT" -DWITH_PROCPS=OFF -DCURVE=ALT_BN128 -DUSE_ASM=OFF ..
-			emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
+			eval emcmake "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" -DGMP_INCLUDE_DIR="$INCLUDE_ROOT" -DGMP_LIBRARY="$LIBRARIES_ROOT" -DWITH_PROCPS=OFF -DCURVE=ALT_BN128 -DUSE_ASM=OFF ..
+			eval emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
 		else
-			$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF
-			$MAKE ${PARALLEL_MAKE_OPTIONS}
+			eval $CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF
+			eval $MAKE ${PARALLEL_MAKE_OPTIONS}
 		fi
-		$MAKE ${PARALLEL_MAKE_OPTIONS} install
+		eval $MAKE ${PARALLEL_MAKE_OPTIONS} install
 		cd "$SOURCES_ROOT"
 	else
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
