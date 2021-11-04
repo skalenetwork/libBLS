@@ -24,9 +24,10 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.6
-
     - name: Update apt
-      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test; sudo apt-get update
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt-get update
     - name: Install packages
       run: |
         sudo apt-get install -y software-properties-common
@@ -35,7 +36,6 @@ jobs:
       run: |
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
         sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
-
     - name: Install more packages
       run: |
         sudo apt-get install -y clang-format-6.0 gawk sed shtool \
@@ -80,12 +80,12 @@ jobs:
         $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_test
         $NIGHTLY_BUILD_FLAGS ./dkg_attack
 
-        # - name: Run python test
-        #   run: |
-        #     cd python
-        #     ./setup.sh
-        #     ./test.sh
-        #     cd ..
+    # - name: Run python test
+    #   run: |
+    #     cd python
+    #     ./setup.sh
+    #     ./test.sh
+    #     cd ..
 
     - name: Run tools tests
       run: |
