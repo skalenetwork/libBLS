@@ -136,10 +136,10 @@ set(headers_bls
 set(PROJECT_VERSION 0.2.0)
 add_definitions(-DBLS_VERSION=${PROJECT_VERSION})
 if ( APPLE )
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wparentheses -Wunused -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=maybe-uninitialized -Wunreachable-code -Wextra -fPIC -std=c++17")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wparentheses -Wunused -Wno-error=deprecated-copy -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=maybe-uninitialized -Wunreachable-code -Wextra -fPIC -std=c++17")
 else()
 	if (EMSCRIPTEN)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++17")#-Werror -Wall -Wparentheses -Wunused -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=maybe-uninitialized -Wunreachable-code -Wextra -Wno-error=int-in-bool-context
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++17")#-Werror -Wall -Wparentheses -Wunused -Wno-error=deprecated-copy -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=maybe-uninitialized -Wunreachable-code -Wextra -Wno-error=int-in-bool-context
 	else()
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wunreachable-code -Wextra -Wno-error=deprecated-copy -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=maybe-uninitialized -Wno-error=int-in-bool-context -fPIC -std=c++17")
 		if( CMAKE_BUILD_TYPE STREQUAL "Debug" )
