@@ -688,10 +688,10 @@ then
 			eval emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}" depend
 			eval emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
 		else
-			eval $MAKE "${PARALLEL_MAKE_OPTIONS}" depend
-			eval $MAKE "${PARALLEL_MAKE_OPTIONS}"
+			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}" depend
+			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
 		fi
-		eval $MAKE "${PARALLEL_MAKE_OPTIONS}" install_sw
+		eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}" install_sw
 		cd "$SOURCES_ROOT"
 	else
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
@@ -734,9 +734,9 @@ then
 		then
 			eval emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
 		else
-			eval $MAKE "${PARALLEL_MAKE_OPTIONS}"
+			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
 		fi
-		eval $MAKE "${PARALLEL_MAKE_OPTIONS}" install
+		eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}" install
 		cd ..
 		cd "$SOURCES_ROOT"
 	else
@@ -770,9 +770,9 @@ then
 			eval emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
 		else
 			eval "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF
-			eval $MAKE "${PARALLEL_MAKE_OPTIONS}"
+			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
 		fi
-		eval $MAKE "${PARALLEL_MAKE_OPTIONS}" install
+		eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}" install
 		cd "$SOURCES_ROOT"
 	else
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
