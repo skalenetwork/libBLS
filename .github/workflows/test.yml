@@ -14,131 +14,131 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-      - name: Extract repo name
-        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
-        shell: bash
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-      - name: Checkout
-        uses: actions/checkout@v2
+    - name: Extract repo name
+      run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
+      shell: bash
+      env:
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    - name: Checkout
+      uses: actions/checkout@v2
 
-      - name: update apt
-        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test; sudo apt-get update
-      - name: install packages
-        run: |
-          sudo apt-get install -y software-properties-common
-          sudo apt-get install -y gcc-9 g++-9
-      - name: use g++-9 by default
-        run: |
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
+    - name: update apt
+      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test; sudo apt-get update
+    - name: install packages
+      run: |
+        sudo apt-get install -y software-properties-common
+        sudo apt-get install -y gcc-9 g++-9
+    - name: use g++-9 by default
+      run: |
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
 
-      - name: Update apt
-        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
-      - name: Install packages
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-9 g++-9 clang-format-6.0 gawk sed shtool \
-            libffi-dev yasm texinfo flex bison \
-            python3.6 lcov gcc-multilib
-          sudo apt-get update -qq
-          sudo apt-get install -y python3-pip
-          pip3 install --upgrade pip
-          sudo python3.6 -m pip install --upgrade pip
-          sudo python3.6 -m pip install pyopenssl ndg-httpsclient pyasn1
-          sudo python3.6 -m pip install requests[security]
-          sudo python3.6 -m pip install codecov --ignore-installed
+    - name: Update apt
+      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
+    - name: Install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-9 g++-9 clang-format-6.0 gawk sed shtool \
+          libffi-dev yasm texinfo flex bison \
+          python3.6 lcov gcc-multilib
+        sudo apt-get update -qq
+        sudo apt-get install -y python3-pip
+        pip3 install --upgrade pip
+        sudo python3.6 -m pip install --upgrade pip
+        sudo python3.6 -m pip install pyopenssl ndg-httpsclient pyasn1
+        sudo python3.6 -m pip install requests[security]
+        sudo python3.6 -m pip install codecov --ignore-installed
 
-      - name: Build dependencies
-        run: |
-          export CC=gcc-9
-          export CXX=g++-9
-          export TARGET=all
-          export CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
-          cd deps
-          ./build.sh
+    - name: Build dependencies
+      run: |
+        export CC=gcc-9
+        export CXX=g++-9
+        export TARGET=all
+        export CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+        cd deps
+        ./build.sh
 
-      - name: Configure all
-        run: |
-          export CC=gcc-9
-          export CXX=g++-9
-          export TARGET=all
-          CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
-          mkdir -p build && cd build
-          cmake $CMAKE_BUILD_FLAGS ..
-      
-      - name: Run format check
-        run: |
-          cd build
-          make bls-format-check
+    - name: Configure all
+      run: |
+        export CC=gcc-9
+        export CXX=g++-9
+        export TARGET=all
+        CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+        mkdir -p build && cd build
+        cmake $CMAKE_BUILD_FLAGS ..
+    
+    - name: Run format check
+      run: |
+        cd build
+        make bls-format-check
 
-      - name: Build all
-        run: |
-          export CC=gcc-9
-          export CXX=g++-9
-          export TARGET=all
-          CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
-          cd build
-          make -j$(nproc)
+    - name: Build all
+      run: |
+        export CC=gcc-9
+        export CXX=g++-9
+        export TARGET=all
+        CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+        cd build
+        make -j$(nproc)
 
-      - name: Run tests
-        run: |
-          cp scripts/parameters.json build/
-          cd build
-          ./bls_unit_test
-          ./dkg_unit_test
-          ./utils_unit_test
-          ./bls_test
-          ./threshold_encryption/te_unit_test
-          ./threshold_encryption/te_test
-          ./dkg_attack
+    - name: Run tests
+      run: |
+        cp scripts/parameters.json build/
+        cd build
+        ./bls_unit_test
+        ./dkg_unit_test
+        ./utils_unit_test
+        ./bls_test
+        ./threshold_encryption/te_unit_test
+        ./threshold_encryption/te_test
+        ./dkg_attack
 
-      - name: Upload coverage
-        run: |
-          cd build
-          lcov --capture --directory . --output-file coverage.info
-          lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
-          lcov --remove coverage.info 'deps/*' --output-file coverage.info # filter dependency files
+    - name: Upload coverage
+      run: |
+        cd build
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
+        lcov --remove coverage.info 'deps/*' --output-file coverage.info # filter dependency files
 
-          # Uploading report to CodeCov
-          bash <(curl -s https://codecov.io/bash) -f coverage.info -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports"
+        # Uploading report to CodeCov
+        bash <(curl -s https://codecov.io/bash) -f coverage.info -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports"
 
   osx_build_and_test:
     runs-on: macos-11
 
     steps:
-      - name: Extract repo name
-        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
-        shell: bash
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Install packages
-        run: |
-          brew install yasm texinfo shtool libtool coreutils
-      - name: Build dependencies
-        run: |
-          cd deps
-          ./build.sh
-      - name: Configure all
-        run: |
-          mkdir -p build && cd build
-          cmake ..
-      - name: Build all
-        run: |
-          cd build
-          make -j$(sysctl -n hw.ncpu)
-      - name: Run tests
-        run: |
-          cp scripts/parameters.json build/
-          cd build
-          ./bls_unit_test
-          ./dkg_unit_test
-          ./bls_test
-          ./threshold_encryption/te_unit_test
-          ./threshold_encryption/te_test
-          ./dkg_attack
+    - name: Extract repo name
+      run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
+      shell: bash
+      env:
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Install packages
+      run: |
+        brew install yasm texinfo shtool libtool coreutils
+    - name: Build dependencies
+      run: |
+        cd deps
+        ./build.sh
+    - name: Configure all
+      run: |
+        mkdir -p build && cd build
+        cmake ..
+    - name: Build all
+      run: |
+        cd build
+        make -j$(sysctl -n hw.ncpu)
+    - name: Run tests
+      run: |
+        cp scripts/parameters.json build/
+        cd build
+        ./bls_unit_test
+        ./dkg_unit_test
+        ./bls_test
+        ./threshold_encryption/te_unit_test
+        ./threshold_encryption/te_test
+        ./dkg_attack
 
     linux_build_with_emscripten:
       runs-on: ubuntu-18.04
