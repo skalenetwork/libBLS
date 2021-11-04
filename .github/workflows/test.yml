@@ -38,7 +38,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y gcc-9 g++-9 clang-format-6.0 gawk sed shtool \
           libffi-dev yasm texinfo flex bison \
-          python3.6 lcov gcc-multilib
+          python3.6 gcc-multilib
         sudo apt-get update -qq
         sudo apt-get install -y python3-pip
         pip3 install --upgrade pip
@@ -46,6 +46,17 @@ jobs:
         sudo python3.6 -m pip install pyopenssl ndg-httpsclient pyasn1
         sudo python3.6 -m pip install requests[security]
         sudo python3.6 -m pip install codecov --ignore-installed
+    - name: get newest lcov
+      run: |
+        rm -rf newer_lcov || true 
+        mkdir newer_lcov
+        cd newer_lcov
+        git clone https://github.com/linux-test-project/lcov --recursive --recurse-submodules
+        cd lcov
+        make install
+        cd ..
+        cd ..
+        lcov --version
 
     - name: Build dependencies
       run: |
@@ -138,74 +149,74 @@ jobs:
         ./threshold_encryption/te_test
         ./dkg_attack
 
-  linux_build_with_emscripten:
-    runs-on: ubuntu-18.04
+    linux_build_with_emscripten:
+      runs-on: ubuntu-18.04
 
-    strategy:
-      matrix:
-        node-version: [14.x]
+      strategy:
+        matrix:
+          node-version: [14.x]
 
-    steps:
-    - name: Extract repo name
-      run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
-      shell: bash
-      env:
-        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Update apt
-      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
-    - name: Install packages
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gcc-9 g++-9 clang-format-6.0 gawk sed shtool \
-          libffi-dev yasm texinfo flex bison \
-          python3.6 lcov gcc-multilib
-        sudo apt-get update -qq
-        sudo apt-get install -y python3-pip
-        pip3 install --upgrade pip
-        sudo python3.6 -m pip install --upgrade pip
-        sudo python3.6 -m pip install pyopenssl ndg-httpsclient pyasn1
-        sudo python3.6 -m pip install requests[security]
-        sudo python3.6 -m pip install codecov --ignore-installed
+      steps:
+      - name: Extract repo name
+        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
+        shell: bash
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Update apt
+        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-9 g++-9 clang-format-6.0 gawk sed shtool \
+            libffi-dev yasm texinfo flex bison \
+            python3.6 lcov gcc-multilib
+          sudo apt-get update -qq
+          sudo apt-get install -y python3-pip
+          pip3 install --upgrade pip
+          sudo python3.6 -m pip install --upgrade pip
+          sudo python3.6 -m pip install pyopenssl ndg-httpsclient pyasn1
+          sudo python3.6 -m pip install requests[security]
+          sudo python3.6 -m pip install codecov --ignore-installed
 
-    - name: Install NODE JS
-      uses: actions/setup-node@v2
-      with:
-        node-version: ${{ matrix.node-version }}
-  
-    - name: Build dependencies
-      run: |
-        export CC=gcc-9
-        export CXX=g++-9
-        export TARGET=all
-        export CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
-        cd deps
-        ./build.sh WITH_EMSCRIPTEN=1
-        cd ..
+      - name: Install NODE JS
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+    
+      - name: Build dependencies
+        run: |
+          export CC=gcc-9
+          export CXX=g++-9
+          export TARGET=all
+          export CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+          cd deps
+          ./build.sh WITH_EMSCRIPTEN=1
+          cd ..
 
-    - name: Build all
-      run: |
-        cd deps/emsdk
-        ./emsdk install latest
-        ./emsdk activate latest
-        source ./emsdk_env.sh
-        cd ../..
-        mkdir -p build_em
-        cd build_em
-        export LIBRARIES_ROOT=../deps/deps_inst/x86_or_x64/lib
-        emcmake cmake -DEMSCRIPTEN=ON .. -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a
-        emmake make -j$(nproc)
-        cd ..
+      - name: Build all
+        run: |
+          cd deps/emsdk
+          ./emsdk install latest
+          ./emsdk activate latest
+          source ./emsdk_env.sh
+          cd ../..
+          mkdir -p build_em
+          cd build_em
+          export LIBRARIES_ROOT=../deps/deps_inst/x86_or_x64/lib
+          emcmake cmake -DEMSCRIPTEN=ON .. -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a
+          emmake make -j$(nproc)
+          cd ..
 
-    - name: Run tests
-      run: |
-        cp tools/generate_bls_keys build_em/
-        cp tools/decrypt_message build_em/
-        cd build_em/
-        cp threshold_encryption/encrypt_message.* .
-        ./generate_bls_keys
-        MESSAGE=`cat message.txt`
-        PUBLIC_BLS_KEY=`cat bls_public_key.txt`
-        node encrypt_message.js $MESSAGE $PUBLIC_BLS_KEY > encrypted_data.txt
-        ./decrypt_message
+      - name: Run tests
+        run: |
+          cp tools/generate_bls_keys build_em/
+          cp tools/decrypt_message build_em/
+          cd build_em/
+          cp threshold_encryption/encrypt_message.* .
+          ./generate_bls_keys
+          MESSAGE=`cat message.txt`
+          PUBLIC_BLS_KEY=`cat bls_public_key.txt`
+          node encrypt_message.js $MESSAGE $PUBLIC_BLS_KEY > encrypted_data.txt
+          ./decrypt_message
