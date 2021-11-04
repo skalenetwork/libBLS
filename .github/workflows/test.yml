@@ -58,8 +58,8 @@ jobs:
         cd ..
         echo "Checking newest lcov version..."
         lcov --version
-        echo "Checking gcov tool version..."
-        gcov-tool-9 --version
+        # echo "Checking gcov tool version..."
+        # gcov-tool-9 --version
 
     - name: Build dependencies
       run: |
@@ -105,15 +105,18 @@ jobs:
         ./threshold_encryption/te_test
         ./dkg_attack
 
-    - name: Upload coverage
-      run: |
-        cd build
-        lcov --capture --directory . --gcov-tool /usr/bin/gcov-tool-9 --output-file coverage.info
-        lcov --remove coverage.info '/usr/*' --gcov-tool /usr/bin/gcov-tool-9 --output-file coverage.info # filter system-files
-        lcov --remove coverage.info 'deps/*' --gcov-tool /usr/bin/gcov-tool-9 --output-file coverage.info # filter dependency files
+    # - name: Upload coverage
+    #   run: |
+    #     cd build
+    #     # lcov --capture --directory . --gcov-tool /usr/bin/gcov-tool-9 --output-file coverage.info
+    #     # lcov --remove coverage.info '/usr/*' --gcov-tool /usr/bin/gcov-tool-9 --output-file coverage.info # filter system-files
+    #     # lcov --remove coverage.info 'deps/*' --gcov-tool /usr/bin/gcov-tool-9 --output-file coverage.info # filter dependency files
+    #     lcov --capture --directory . --output-file coverage.info
+    #     lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
+    #     lcov --remove coverage.info 'deps/*' --output-file coverage.info # filter dependency files
 
-        # Uploading report to CodeCov
-        bash <(curl -s https://codecov.io/bash) -f coverage.info -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports"
+    #     # Uploading report to CodeCov
+    #     bash <(curl -s https://codecov.io/bash) -f coverage.info -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports"
 
   osx_build_and_test:
     runs-on: macos-11
