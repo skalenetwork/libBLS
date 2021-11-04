@@ -79,7 +79,7 @@ jobs:
     - name: Run format check
       run: |
         cd build
-        make bls-format-check
+        #make bls-format-check
 
     - name: Build all
       run: |
