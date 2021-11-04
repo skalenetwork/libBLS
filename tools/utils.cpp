@@ -365,7 +365,6 @@ std::vector< uint8_t > ThresholdUtils::aesEncrypt(
 
     int actual_size = 0, final_size = 0;
     EVP_CIPHER_CTX* e_ctx = EVP_CIPHER_CTX_new();
-    // EVP_CIPHER_CTX_ctrl(e_ctx, EVP_CTRL_GCM_SET_IVLEN, 16, NULL);
     EVP_EncryptInit( e_ctx, EVP_aes_256_gcm(), ( const unsigned char* ) key.c_str(), iv );
     EVP_EncryptUpdate( e_ctx, &output[64], &actual_size, ( const unsigned char* ) plaintext.data(),
         plaintext.length() );
