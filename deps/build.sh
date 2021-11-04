@@ -620,7 +620,7 @@ then
 			then
 				eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=debug link=static install
 				cd bin.v2/libs/program_options/build/emscripten-2.0.31/debug/cxxstd-14-iso/link-static/threading-multi/
-				emar q "libboost_program_options.a" *.bc
+				eval emar q "libboost_program_options.a" ./*.bc
 				eval cp "libboost_program_options.a" "${LIBRARIES_ROOT}"
 			else
 				eval ./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
