@@ -27,10 +27,29 @@ jobs:
       run: |
         sudo apt-get install -y software-properties-common
         sudo apt-get install -y gcc-9 g++-9
-    - name: use g++-9 by default
+    - name: Use g++-9 and gcov-9 by default
       run: |
+        echo "Updating all needed alternatives"
         sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
         sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
+        sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-9 9
+        sudo update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-9 9
+        sudo update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-9 9
+        echo "Checking alternative for gcc"
+        which gcc
+        gcc --version
+        echo "Checking alternative for g++"
+        which g++
+        g++ --version
+        echo "Checking alternative for gcov"
+        which gcov
+        gcov --version
+        echo "Checking alternative for gcov-dump"
+        which gcov-dump
+        gcov-dump --version
+        echo "Checking alternative for gcov-tool"
+        which gcov-tool
+        gcov-tool --version
     - name: Update apt
       run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
     - name: Install packages
@@ -62,8 +81,6 @@ jobs:
         echo "Checking installed lcov version..."
         which lcov
         lcov --version
-        # echo "Checking gcov tool version..."
-        # gcov-tool-9 --version
 
     - name: Build dependencies
       run: |
@@ -112,13 +129,9 @@ jobs:
     - name: Upload coverage
       run: |
         cd build
-        # lcov --capture --directory . --gcov-tool /usr/bin/gcov-tool-9 --output-file coverage.info
-        # lcov --remove coverage.info '/usr/*' --gcov-tool /usr/bin/gcov-tool-9 --output-file coverage.info # filter system-files
-        # lcov --remove coverage.info 'deps/*' --gcov-tool /usr/bin/gcov-tool-9 --output-file coverage.info # filter dependency files
         lcov --capture --directory . --output-file coverage.info
         lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
         lcov --remove coverage.info 'deps/*' --output-file coverage.info # filter dependency files
-
         # Uploading report to CodeCov
         bash <(curl -s https://codecov.io/bash) -f coverage.info -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports"
 
