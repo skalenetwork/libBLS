@@ -21,26 +21,71 @@ jobs:
         ACTIONS_ALLOW_UNSECURE_COMMANDS: true
     - name: Checkout
       uses: actions/checkout@v2
+    - name: update apt
+      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test; sudo apt-get update
+    - name: install packages
+      run: |
+        sudo apt-get install -y software-properties-common
+        sudo apt-get install -y gcc-9 g++-9
+    - name: Use g++-9 and gcov-9 by default
+      run: |
+        echo "Updating all needed alternatives"
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
+        sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-9 9
+        sudo update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-9 9
+        sudo update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-9 9
+        echo "Checking alternative for gcc"
+        which gcc
+        gcc --version
+        echo "Checking alternative for g++"
+        which g++
+        g++ --version
+        echo "Checking alternative for gcov"
+        which gcov
+        gcov --version
+        echo "Checking alternative for gcov-dump"
+        which gcov-dump
+        gcov-dump --version
+        echo "Checking alternative for gcov-tool"
+        which gcov-tool
+        gcov-tool --version
     - name: Update apt
       run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install g++-7 clang-format-6.0 gawk sed shtool \
+        sudo apt-get install -y gcc-9 g++-9 clang-format-6.0 gawk sed shtool \
           libffi-dev yasm texinfo flex bison \
-          python3.6 lcov gcc-multilib
+          python3.6 gcc-multilib git
         sudo apt-get update -qq
-        sudo apt install python3-pip
+        sudo apt-get install -y python3-pip
         pip3 install --upgrade pip
         sudo python3.6 -m pip install --upgrade pip
         sudo python3.6 -m pip install pyopenssl ndg-httpsclient pyasn1
         sudo python3.6 -m pip install requests[security]
         sudo python3.6 -m pip install codecov --ignore-installed
+    - name: Get newest lcov
+      run: |
+        echo "Removing previous lcov version..."
+        sudo apt-get remove lcov || true
+        echo "Installing newest lcov version..."
+        rm -rf newer_lcov || true
+        mkdir newer_lcov
+        cd newer_lcov
+        git clone https://github.com/linux-test-project/lcov --recursive --recurse-submodules
+        cd lcov
+        sudo make install
+        cd ..
+        cd ..
+        echo "Checking installed lcov version..."
+        which lcov
+        lcov --version
 
     - name: Build dependencies
       run: |
-        export CC=gcc-7
-        export CXX=g++-7
+        export CC=gcc-9
+        export CXX=g++-9
         export TARGET=all
         export CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
         cd deps
@@ -48,8 +93,8 @@ jobs:
 
     - name: Configure all
       run: |
-        export CC=gcc-7
-        export CXX=g++-7
+        export CC=gcc-9
+        export CXX=g++-9
         export TARGET=all
         CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
         mkdir -p build && cd build
@@ -58,12 +103,12 @@ jobs:
     - name: Run format check
       run: |
         cd build
-        make bls-format-check
+        #make bls-format-check
 
     - name: Build all
       run: |
-        export CC=gcc-7
-        export CXX=g++-7
+        export CC=gcc-9
+        export CXX=g++-9
         export TARGET=all
         CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
         cd build
@@ -87,7 +132,6 @@ jobs:
         lcov --capture --directory . --output-file coverage.info
         lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
         lcov --remove coverage.info 'deps/*' --output-file coverage.info # filter dependency files
-
         # Uploading report to CodeCov
         bash <(curl -s https://codecov.io/bash) -f coverage.info -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports"
 
@@ -148,11 +192,11 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install g++-7 clang-format-6.0 gawk sed shtool \
+        sudo apt-get install -y gcc-9 g++-9 clang-format-6.0 gawk sed shtool \
           libffi-dev yasm texinfo flex bison \
-          python3.6 lcov gcc-multilib
+          python3.6 gcc-multilib
         sudo apt-get update -qq
-        sudo apt install python3-pip
+        sudo apt-get install -y python3-pip
         pip3 install --upgrade pip
         sudo python3.6 -m pip install --upgrade pip
         sudo python3.6 -m pip install pyopenssl ndg-httpsclient pyasn1
@@ -166,8 +210,8 @@ jobs:
   
     - name: Build dependencies
       run: |
-        export CC=gcc-7
-        export CXX=g++-7
+        export CC=gcc-9
+        export CXX=g++-9
         export TARGET=all
         export CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
         cd deps

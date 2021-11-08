@@ -25,11 +25,20 @@ jobs:
       with:
         python-version: 3.6
     - name: Update apt
-      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt-get update
     - name: Install packages
       run: |
-        sudo apt-get update
-        sudo apt-get install g++-7 clang-format-6.0 gawk sed shtool \
+        sudo apt-get install -y software-properties-common
+        sudo apt-get install -y gcc-9 g++-9
+    - name: use g++-9 by default
+      run: |
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
+    - name: Install more packages
+      run: |
+        sudo apt-get install -y clang-format-6.0 gawk sed shtool \
           libffi-dev yasm texinfo flex bison libc6-dbg gcc-multilib
         sudo snap install valgrind --classic
         python -m pip install --upgrade pip
@@ -37,24 +46,24 @@ jobs:
 
     - name: Build dependencies
       run: |
-        export CC=gcc-7
-        export CXX=g++-7
+        export CC=gcc-9
+        export CXX=g++-9
         export TARGET=all
         cd deps
         ./build.sh
 
     - name: Configure all
       run: |
-        export CC=gcc-7
-        export CXX=g++-7
+        export CC=gcc-9
+        export CXX=g++-9
         export TARGET=all
         mkdir -p build && cd build
         cmake ..
     
     - name: Build all
       run: |
-        export CC=gcc-7
-        export CXX=g++-7
+        export CC=gcc-9
+        export CXX=g++-9
         export TARGET=all
         cd build
         make -j$(nproc)
@@ -102,11 +111,11 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install g++-7 clang-format-6.0 gawk sed shtool \
+        sudo apt-get install -y gcc-9 g++-9 clang-format-6.0 gawk sed shtool \
           libffi-dev yasm texinfo flex bison \
           python3.6 lcov gcc-multilib
         sudo apt-get update -qq
-        sudo apt install python3-pip
+        sudo apt-get install -y python3-pip
         pip3 install --upgrade pip
         sudo python3.6 -m pip install --upgrade pip
         sudo python3.6 -m pip install pyopenssl ndg-httpsclient pyasn1
@@ -120,8 +129,8 @@ jobs:
   
     - name: Build dependencies
       run: |
-        export CC=gcc-7
-        export CXX=g++-7
+        export CC=gcc-9
+        export CXX=g++-9
         export TARGET=all
         export CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
         cd deps

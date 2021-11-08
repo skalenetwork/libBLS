@@ -22,32 +22,41 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Update apt
-      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
+      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test; sudo apt-get update
     - name: Install packages
       run: |
+        sudo apt-get install -y software-properties-common
+        sudo apt-get install -y gcc-9 g++-9
+    - name: use g++-9 by default
+      run: |
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
+
+    - name: Install more packages
+      run: |
         sudo apt-get update
-        sudo apt-get install g++-7 clang-format-6.0 gawk sed shtool \
+        sudo apt-get install -y clang-format-6.0 gawk sed shtool \
           libffi-dev yasm texinfo flex bison gcc-multilib
     - name: Build dependencies
       run: |
-        export CC=gcc-7
-        export CXX=g++-7
+        export CC=gcc-9
+        export CXX=g++-9
         export TARGET=all
         cd deps
         ./build.sh
 
     - name: Configure all
       run: |
-        export CC=gcc-7
-        export CXX=g++-7
+        export CC=gcc-9
+        export CXX=g++-9
         export TARGET=all
         mkdir -p build && cd build
         cmake ..
     
     - name: Build all
       run: |
-        export CC=gcc-7
-        export CXX=g++-7
+        export CC=gcc-9
+        export CXX=g++-9
         export TARGET=all
         cd build
         make -j$(nproc)
