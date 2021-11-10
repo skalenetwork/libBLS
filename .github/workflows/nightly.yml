@@ -132,7 +132,6 @@ jobs:
         export CC=gcc-9
         export CXX=g++-9
         export TARGET=all
-        export CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
         cd deps
         ./build.sh WITH_EMSCRIPTEN=1
         cd ..
