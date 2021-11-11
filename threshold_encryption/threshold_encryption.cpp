@@ -33,6 +33,8 @@
 
 namespace libBLS {
 
+const std::string TE::MAGIC_STRING = "8b1ba8JdPjeWd4G0bFRB0KBohPCULTHN";
+
 TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {
     libff::init_alt_bn128_params();
     libff::inhibit_profiling_info = true;
@@ -309,7 +311,7 @@ std::string TE::aesCiphertextToString(
 
     std::string w_str = x + y;
 
-    return u_str + v_str + w_str + encrypted_data;
+    return MAGIC_STRING + u_str + v_str + w_str + encrypted_data;
 }
 
 std::pair< Ciphertext, std::vector< uint8_t > > TE::aesCiphertextFromString(
@@ -317,7 +319,13 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::aesCiphertextFromString(
     ThresholdUtils::initCurve();
     ThresholdUtils::initAES();
 
-    if ( !ThresholdUtils::checkHex( str ) ) {
+    if ( str.substr( 0, 32 ) != MAGIC_STRING ) {
+        throw ThresholdUtils::IncorrectInput(
+            "Provided input was not encrypted properly: MAGIC_STRING doesn't match" );
+    }
+
+    std::string ciphertext = str.substr( 32, std::string::npos );
+    if ( !ThresholdUtils::checkHex( ciphertext ) ) {
         throw ThresholdUtils::IncorrectInput( "Provided string contains non-hex symbols" );
     }
 
@@ -326,11 +334,11 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::aesCiphertextFromString(
             "Incoming string is too short to convert to aes ciphertext" );
     }
 
-    std::string u_str = str.substr( 0, 256 );
-    std::string v_str = str.substr( 256, 128 );
-    std::string w_str = str.substr( 256 + 128, 128 );
+    std::string u_str = ciphertext.substr( 0, 256 );
+    std::string v_str = ciphertext.substr( 256, 128 );
+    std::string w_str = ciphertext.substr( 256 + 128, 128 );
 
-    std::string encrypted_data = str.substr( 256 + 128 + 128, std::string::npos );
+    std::string encrypted_data = ciphertext.substr( 256 + 128 + 128, std::string::npos );
 
     uint64_t bin_len;
     std::vector< uint8_t > aes_cipher( encrypted_data.size() / 2 );
