@@ -114,6 +114,11 @@ jobs:
         cd build
         make -j$(nproc)
 
+    - name: Run sgxwallet container
+      run: |
+        export SGX_WALLET_TAG=1.83.0-develop.5
+        ./scripts/run_sgx_simulator.sh
+
     - name: Run tests
       run: |
         cp scripts/parameters.json build/
@@ -125,6 +130,7 @@ jobs:
         ./threshold_encryption/te_unit_test
         ./threshold_encryption/te_test
         ./dkg_attack
+        ./threshold_encryption/te_sample_sgx
 
     - name: Upload coverage
       run: |
