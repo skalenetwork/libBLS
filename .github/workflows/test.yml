@@ -153,7 +153,7 @@ jobs:
       uses: actions/checkout@v2
     - name: Install packages
       run: |
-        brew install yasm texinfo shtool libtool coreutils
+        brew install yasm texinfo shtool libtool coreutils gnutls
     - name: Build dependencies
       run: |
         cd deps
