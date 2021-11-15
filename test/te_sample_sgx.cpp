@@ -23,38 +23,32 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 #include <cstdlib>
 
-#include <jsonrpccpp/client/connectors/httpclient.h>
 #include <jsonrpccpp/client/client.h>
+#include <jsonrpccpp/client/connectors/httpclient.h>
 
-#include <dkg/dkg.h>
 #include <bls/bls.h>
+#include <dkg/dkg.h>
 #include <threshold_encryption/threshold_encryption.h>
 #include <tools/utils.h>
 
-void importBLSKeys( const std::vector<libff::alt_bn128_Fr>& secret_keys, const std::string& sgx_url ) {
+void importBLSKeys(
+    const std::vector< libff::alt_bn128_Fr >& secret_keys, const std::string& sgx_url ) {
     jsonrpc::HttpClient* jsonRpcClient = new jsonrpc::HttpClient( sgx_url );
     jsonrpc::Client sgxClient( *jsonRpcClient );
 
-    for (size_t i = 0; i < secret_keys.size(); ++i) {
+    for ( size_t i = 0; i < secret_keys.size(); ++i ) {
         Json::Value p;
         p["keyShare"] = libBLS::ThresholdUtils::fieldElementToString( secret_keys[i], 16 );
         p["keyShareName"] = "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:0:DKG_ID:" + std::to_string( i );
 
-        Json::Value result = sgxClient.CallMethod("importBLSKeyShare", p);
-
-        // if ( result.isString() ) {
-        //     return;
-        // } else {
-        //     throw jsonrpc::JsonRpcException(
-        //         jsonrpc::Errors::ERROR_CLIENT_INVALID_RESPONSE, result.toStyledString() );
-        // }
+        Json::Value result = sgxClient.CallMethod( "importBLSKeyShare", p );
     }
 
     delete jsonRpcClient;
 }
 
-std::vector<libff::alt_bn128_Fr> generateSecretKeys(size_t t, size_t n, const std::string& sgx_url) {
-    libBLS::Bls bls_instance = libBLS::Bls( t, n );
+std::vector< libff::alt_bn128_Fr > generateSecretKeys(
+    size_t t, size_t n, const std::string& sgx_url ) {
     libBLS::Dkg dkg_instance = libBLS::Dkg( t, n );
 
     auto polynomial = dkg_instance.GeneratePolynomial();
@@ -69,7 +63,8 @@ std::vector<libff::alt_bn128_Fr> generateSecretKeys(size_t t, size_t n, const st
     return secret_keys;
 }
 
-libff::alt_bn128_G2 getDecryptionShare( const libBLS::Ciphertext& ciphertext, const std::string& key_name, const std::string& sgx_url ) {
+libff::alt_bn128_G2 getDecryptionShare( const libBLS::Ciphertext& ciphertext,
+    const std::string& key_name, const std::string& sgx_url ) {
     libBLS::TE::checkCypher( ciphertext );
 
     libff::alt_bn128_G2 U = std::get< 0 >( ciphertext );
@@ -77,9 +72,9 @@ libff::alt_bn128_G2 getDecryptionShare( const libBLS::Ciphertext& ciphertext, co
     U.to_affine_coordinates();
     auto u_splitted = libBLS::ThresholdUtils::G2ToString( U );
     std::string public_decryption_value = "";
-    for (size_t i = 0; i < u_splitted.size(); ++i) {
+    for ( size_t i = 0; i < u_splitted.size(); ++i ) {
         public_decryption_value += u_splitted[i];
-        if (i != u_splitted.size() - 1) {
+        if ( i != u_splitted.size() - 1 ) {
             public_decryption_value += ":";
         }
     }
@@ -107,12 +102,7 @@ libff::alt_bn128_G2 getDecryptionShare( const libBLS::Ciphertext& ciphertext, co
     p["blsKeyName"] = key_name;
     p["publicDecryptionValue"] = public_decryption_value;
 
-    Json::Value result = sgxClient.CallMethod("getDecryptionShare", p);
-
-    // if ( !result.isString() ) {
-    //     throw jsonrpc::JsonRpcException(
-    //         jsonrpc::Errors::ERROR_CLIENT_INVALID_RESPONSE, result.toStyledString() );
-    // }
+    Json::Value result = sgxClient.CallMethod( "getDecryptionShare", p );
 
     delete jsonRpcClient;
 
@@ -132,34 +122,34 @@ int main() {
     std::string sgxwallet_url;
     std::string plaintext;
 
-    if (const char* env_t = std::getenv("t")) {
-        t = std::stoi(env_t);
+    if ( const char* env_t = std::getenv( "t" ) ) {
+        t = std::stoi( env_t );
     } else {
         t = 11;
     }
 
-    if (const char* env_n = std::getenv("n")) {
-        n = std::stoi(env_n);
+    if ( const char* env_n = std::getenv( "n" ) ) {
+        n = std::stoi( env_n );
     } else {
         n = 16;
     }
 
-    if (const char* env_url = std::getenv("SGXWALLET_URL")) {
-        sgxwallet_url = std::string(env_url);
+    if ( const char* env_url = std::getenv( "SGXWALLET_URL" ) ) {
+        sgxwallet_url = std::string( env_url );
     } else {
         sgxwallet_url = "http://127.0.0.1:1029";
     }
 
-    if (const char* env_message = std::getenv("MESSAGE")) {
-        plaintext = std::string(env_message);
+    if ( const char* env_message = std::getenv( "MESSAGE" ) ) {
+        plaintext = std::string( env_message );
     } else {
         plaintext = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
     }
 
-    auto secret_keys = generateSecretKeys(t, n, sgxwallet_url);
+    auto secret_keys = generateSecretKeys( t, n, sgxwallet_url );
 
-    std::vector<libff::alt_bn128_G2> public_keys(n);
-    for (size_t i = 0; i < n; ++i) {
+    std::vector< libff::alt_bn128_G2 > public_keys( n );
+    for ( size_t i = 0; i < n; ++i ) {
         public_keys[i] = secret_keys[i] * libff::alt_bn128_G2::one();
     }
 
@@ -193,13 +183,15 @@ int main() {
     auto encrypted_message = ciphertext_with_aes.second;
 
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares;
-    for (size_t i = 0; i < n; ++i) {
+    for ( size_t i = 0; i < n; ++i ) {
         libff::alt_bn128_Fr secret_key = secret_keys[i];
         libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
 
-        std::string bls_key_name = "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:0:DKG_ID:" + std::to_string( i );
+        std::string bls_key_name =
+            "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:0:DKG_ID:" + std::to_string( i );
 
-        libff::alt_bn128_G2 decryption_share = getDecryptionShare( ciphertext, bls_key_name, sgxwallet_url );
+        libff::alt_bn128_G2 decryption_share =
+            getDecryptionShare( ciphertext, bls_key_name, sgxwallet_url );
 
         assert( te_instance.Verify( ciphertext, decryption_share, public_key ) );
 
