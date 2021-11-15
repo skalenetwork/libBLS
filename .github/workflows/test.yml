@@ -56,7 +56,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc-9 g++-9 clang-format-6.0 gawk sed shtool \
-          libffi-dev yasm texinfo flex bison gnutls-bin python3.6 gcc-multilib git
+          libffi-dev yasm texinfo flex bison libgnutls28-dev python3.6 gcc-multilib git
         sudo apt-get update -qq
         sudo apt-get install -y python3-pip
         pip3 install --upgrade pip
