@@ -131,6 +131,12 @@ rm -rf ./libcryptopp
 rm -rf ./gmp-6.1.2
 rm -rf ./libff
 rm -rf ./emsdk
+rm -rf ./jsoncpp
+rm -rf ./libjson-rpc-cpp*
+rm -rf ./zlib
+rm -rf ./argtable2
+rm -rf ./curl
+rm -rf ./libmicrohttpd
 echo "Done (all clean)."
 
 #finish

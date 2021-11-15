@@ -217,9 +217,22 @@ export CXXFLAGS="$CXXFLAGS -fPIC"
 WITH_OPENSSL="yes"
 
 WITH_BOOST="yes"
+WITH_ZLIB="no"
+WITH_ARGTABLE2="no"
+WITH_JSONRPC="no"
+WITH_JSONRPCCPP="no"
+WITH_CURL="no"
+WITH_MICRO_HTTP_D="no"
 if [ "$SKALED_DEPS_CHAIN" = "1" ];
 then
 	WITH_BOOST="no"
+else
+	WITH_ZLIB="yes"
+	WITH_ARGTABLE2="yes"
+	WITH_JSONRPC="yes"
+	WITH_JSONRPCCPP="yes"
+	WITH_CURL="yes"
+	WITH_MICRO_HTTP_D="yes"
 fi
 # if [ "$CONSENSUS_DEPS_CHAIN" = "1" ];
 # then
@@ -461,6 +474,12 @@ then
 	WITH_EMSCRIPTEN=0
 else
 	WITH_EMSCRIPTEN=1
+	WITH_ZLIB="no"
+	WITH_ARGTABLE2="no"
+	WITH_JSONRPC="no"
+	WITH_JSONRPCCPP="no"
+	WITH_CURL="no"
+	WITH_MICRO_HTTP_D="no"
 fi
 
 echo -e "${COLOR_VAR_NAME}WORKING_DIR_OLD${COLOR_DOTS}........${COLOR_VAR_DESC}Started in directory${COLOR_DOTS}...................${COLOR_VAR_VAL}$WORKING_DIR_OLD${COLOR_RESET}"
@@ -532,12 +551,13 @@ echo -e "${COLOR_VAR_NAME}WITH_TASN1${COLOR_DOTS}.............${COLOR_VAR_DESC}l
 echo -e "${COLOR_VAR_NAME}WITH_GNU_TLS${COLOR_DOTS}...........${COLOR_VAR_DESC}libGnuTLS${COLOR_DOTS}..............................${COLOR_VAR_VAL}$WITH_GNU_TLS${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_GPGERROR${COLOR_DOTS}..........${COLOR_VAR_DESC}libGpgError${COLOR_DOTS}............................${COLOR_VAR_VAL}$WITH_GPGERROR${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_GCRYPT${COLOR_DOTS}............${COLOR_VAR_DESC}libGCrypt${COLOR_DOTS}..............................${COLOR_VAR_VAL}$WITH_GCRYPT${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_MICRO_HTTP_D${COLOR_DOTS}......${COLOR_VAR_DESC}libMiniHttpD${COLOR_DOTS}...........................${COLOR_VAR_VAL}$WITH_MICRO_HTTP_D${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_JSONCPP${COLOR_DOTS}...........${COLOR_VAR_DESC}LibJsonC++${COLOR_DOTS}.............................${COLOR_VAR_VAL}$WITH_JSONCPP${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_JSONRPCCPP${COLOR_DOTS}........${COLOR_VAR_DESC}LibJsonRpcC++${COLOR_DOTS}..........................${COLOR_VAR_VAL}$WITH_JSONRPCCPP${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_CRYPTOPP${COLOR_DOTS}..........${COLOR_VAR_DESC}LibCrypto++${COLOR_DOTS}............................${COLOR_VAR_VAL}$WITH_CRYPTOPP${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_GMP${COLOR_DOTS}...............${COLOR_VAR_DESC}LibGMP${COLOR_DOTS}.................................${COLOR_VAR_VAL}$WITH_GMP${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_FF${COLOR_DOTS}................${COLOR_VAR_DESC}LibFF${COLOR_DOTS}..................................${COLOR_VAR_VAL}$WITH_FF${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_JSONRPC${COLOR_DOTS}...........${COLOR_VAR_DESC}LibJsonC++${COLOR_DOTS}.............................${COLOR_VAR_VAL}$WITH_JSONRPC${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_JSONRPCCPP${COLOR_DOTS}........${COLOR_VAR_DESC}LibJsonRpcC++${COLOR_DOTS}..........................${COLOR_VAR_VAL}$WITH_JSONRPCCPP${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_ZLIB${COLOR_DOTS}..............${COLOR_VAR_DESC}Zlib${COLOR_DOTS}...................................${COLOR_VAR_VAL}$WITH_ZLIB${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_ARGTABLE2${COLOR_DOTS}.........${COLOR_VAR_DESC}LibArgtable2${COLOR_DOTS}...........................${COLOR_VAR_VAL}$WITH_ARGTABLE2${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_MICRO_HTTP_D${COLOR_DOTS}......${COLOR_VAR_DESC}LibMicroHTTP${COLOR_DOTS}...........................${COLOR_VAR_VAL}$WITH_MICRO_HTTP_D${COLOR_RESET}"
 
 #
 #
@@ -773,6 +793,257 @@ then
 			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
 		fi
 		eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}" install
+		cd "$SOURCES_ROOT"
+	else
+		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+	fi
+fi
+
+if [ "$WITH_ZLIB" = "yes" ];
+then
+	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}ZLIB${COLOR_SEPARATOR} =========================================${COLOR_RESET}"
+	if [ ! -f "$INSTALL_ROOT/lib/libz.a" ];
+	then
+		## (required for libssh)
+		env_restore
+		cd "$SOURCES_ROOT"
+		if [ ! -d "zlib" ];
+		then
+			if [ ! -f "zlib-from-git.tar.gz" ];
+			then
+				echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
+				git clone https://github.com/madler/zlib.git
+				echo -e "${COLOR_INFO}archiving it${COLOR_DOTS}...${COLOR_RESET}"
+				tar -czf zlib-from-git.tar.gz ./zlib
+			else
+				echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
+				tar -xzf zlib-from-git.tar.gz
+			fi
+			echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+			cd zlib
+			./configure --static --prefix="$INSTALL_ROOT"
+			cd ..
+		fi
+		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+		cd zlib
+		$MAKE ${PARALLEL_MAKE_OPTIONS}
+		$MAKE ${PARALLEL_MAKE_OPTIONS} install
+		cd ..
+		cd "$SOURCES_ROOT"
+	else
+		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+	fi
+fi
+
+if [ "$WITH_ARGTABLE2" = "yes" ];
+then
+	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}libArgTable${COLOR_SEPARATOR} ==================================${COLOR_RESET}"
+	if [ ! -f "$INSTALL_ROOT/lib/libargtable2${DEBUG_D}.a" ];
+	then
+		env_restore
+		cd "$SOURCES_ROOT"
+		if [ ! -d "argtable2" ];
+		then
+			echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
+                        git clone https://github.com/jonathanmarvens/argtable2.git
+			echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+			cd argtable2
+			mkdir -p build
+			cd build
+			$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" ..
+			cd ..
+		else
+			cd argtable2
+		fi
+		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+		cd build
+		$MAKE ${PARALLEL_MAKE_OPTIONS}
+		$MAKE ${PARALLEL_MAKE_OPTIONS} install
+		cd "$SOURCES_ROOT"
+	else
+		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+	fi
+fi
+
+if [ "$WITH_CURL" = "yes" ];
+then
+	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}CURL${COLOR_SEPARATOR} =========================================${COLOR_RESET}"
+	if [ ! -f "$INSTALL_ROOT/lib/libcurl.a" ];
+	then
+		# https://github.com/curl/curl
+		env_restore
+		cd "$SOURCES_ROOT"
+		export PKG_CONFIG_PATH_SAVED=$PKG_CONFIG_PATH
+		export PKG_CONFIG_PATH=/$INSTALL_ROOT/lib/pkgconfig:$PKG_CONFIG_PATH
+		if [ ! -d "curl" ];
+		then
+			if [ ! -f "curl-from-git.tar.gz" ];
+			then
+				echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
+				git clone https://github.com/curl/curl.git
+				echo -e "${COLOR_INFO}archiving it${COLOR_DOTS}...${COLOR_RESET}"
+				tar -czf curl-from-git.tar.gz ./curl
+			else
+				echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
+				tar -xzf curl-from-git.tar.gz
+			fi
+			#
+			# l_sergiy: moved into $PREDOWNLOADED_ROOT
+			#
+	# # 		echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
+	# # 		tar -xzf $PREDOWNLOADED_ROOT/curl-from-git.tar.gz
+			#
+			#
+			#
+			echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+			cd curl
+			mkdir -p build
+			cd build
+			#$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DBUILD_CURL_EXE=OFF -DBUILD_TESTING=OFF -DCMAKE_USE_LIBSSH2=OFF -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCURL_STATICLIB=ON -DOPENSSL_CRYPTO_LIBRARY="$INSTALL_ROOT/lib/libcrypto.a" -DOPENSSL_INCLUDE_DIR="$INSTALL_ROOT/include" -DOPENSSL_SSL_LIBRARY="$INSTALL_ROOT/lib/libssl.a" CMAKE_C_COMPILER_WORKS=ON CMAKE_CXX_COMPILER_WORKS=ON ..
+			cmake "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DOPENSSL_ROOT_DIR="$SOURCES_ROOT/openssl" -DBUILD_CURL_EXE=OFF -DBUILD_TESTING=OFF -DCMAKE_USE_LIBSSH2=OFF -DBUILD_SHARED_LIBS=OFF -DCURL_DISABLE_LDAP=ON -DCURL_STATICLIB=ON -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" ..
+			echo " " >> lib/curl_config.h
+			echo "#define HAVE_POSIX_STRERROR_R 1" >> lib/curl_config.h
+			echo " " >> lib/curl_config.h
+			### Set HAVE_POSIX_STRERROR_R to 1 in build/lib/curl_config.h
+			cd ../..
+		fi
+		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+		cd curl/build
+		$MAKE ${PARALLEL_MAKE_OPTIONS}
+		$MAKE ${PARALLEL_MAKE_OPTIONS} install
+		if [ "$DEBUG" = "1" ];
+		then
+			mv "$INSTALL_ROOT/lib/libcurl-d.a" "$INSTALL_ROOT/lib/libcurl.a" &> /dev/null
+		fi
+		cd ..
+		export PKG_CONFIG_PATH=$PKG_CONFIG_PATH_SAVED
+		export PKG_CONFIG_PATH_SAVED=
+		cd "$SOURCES_ROOT"
+	else
+		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+	fi
+fi
+
+if [ "$WITH_MICRO_HTTP_D" = "yes" ];
+then
+	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}libMiniHttpD${COLOR_SEPARATOR} =================================${COLOR_RESET}"
+	if [ ! -f "$INSTALL_ROOT/lib/libmicrohttpd.a" ];
+	then
+		env_restore
+		cd "$SOURCES_ROOT"
+		if [ ! -d "libmicrohttpd" ];
+		then
+			echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
+            git clone https://github.com/scottjg/libmicrohttpd.git
+			echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+			cd libmicrohttpd
+			MHD_HTTPS_OPT=""
+			if [ "$WITH_GCRYPT" = "yes" ];
+			then
+				MHD_HTTPS_OPT="--enable-https"
+			fi
+			./bootstrap
+			./configure ${CONF_CROSSCOMPILING_OPTS_GENERIC} --enable-static --disable-shared --with-pic --prefix="$INSTALL_ROOT" ${MHD_HTTPS_OPT} ${CONF_DEBUG_OPTIONS}
+		else
+			cd libmicrohttpd
+		fi
+		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+		$MAKE
+		$MAKE install
+		cd "$SOURCES_ROOT"
+	else
+		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+	fi
+fi
+
+if [ "$WITH_JSONRPC" = "yes" ];
+then
+	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}libJsonC++${COLOR_SEPARATOR} ===================================${COLOR_RESET}"
+	if [ ! -f "$INSTALL_ROOT/lib/libjsoncpp.a" ];
+	then
+		env_restore
+		cd "$SOURCES_ROOT"
+		if [ ! -d "jsoncpp" ];
+		then
+			#
+			#echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
+			#git clone git@github.com:open-source-parsers/jsoncpp.git
+			#
+			echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
+			tar -xzf "$PREDOWNLOADED_ROOT/jsoncpp.tar.gz"
+			#
+			echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+			cd jsoncpp
+			mkdir -p build
+			cd build
+			$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" \
+				-DBUILD_SHARED_LIBS=NO \
+				-DBUILD_STATIC_LIBS=YES \
+				..
+			cd ..
+		else
+			cd jsoncpp
+		fi
+		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+		cd build
+		$MAKE ${PARALLEL_MAKE_OPTIONS}
+		$MAKE ${PARALLEL_MAKE_OPTIONS} install
+		cd "$SOURCES_ROOT"
+	else
+		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+	fi
+fi
+
+if [ "$WITH_JSONRPCCPP" = "yes" ];
+then
+	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}libJsonRpcC++${COLOR_SEPARATOR} ================================${COLOR_RESET}"
+	if [ ! -f "$INSTALL_ROOT/lib/libjsonrpccpp-server.a" ];
+	then
+		env_restore
+		cd "$SOURCES_ROOT"
+		if [ ! -d "libjson-rpc-cpp" ];
+		then
+			#
+			#echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
+			#git clone git@github.com:cinemast/libjson-rpc-cpp.git
+			#
+			echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
+			unzip -o "$PREDOWNLOADED_ROOT/libjson-rpc-cpp.zip"
+			cp -r libjson-rpc-cpp-develop libjson-rpc-cpp
+			#
+			echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+			cd libjson-rpc-cpp
+			mkdir -p build
+			cd build
+			$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" \
+				-DBUILD_SHARED_LIBS=NO \
+				-DBUILD_STATIC_LIBS=YES \
+				-DUNIX_DOMAIN_SOCKET_SERVER=YES \
+				-DUNIX_DOMAIN_SOCKET_CLIENT=YES \
+				-DFILE_DESCRIPTOR_SERVER=YES \
+				-DFILE_DESCRIPTOR_CLIENT=YES \
+				-DTCP_SOCKET_SERVER=YES \
+				-DTCP_SOCKET_CLIENT=YES \
+				-DREDIS_SERVER=NO \
+				-DREDIS_CLIENT=NO \
+				-DHTTP_SERVER=YES \
+				-DHTTP_CLIENT=YES \
+				-DCOMPILE_TESTS=NO \
+				-DCOMPILE_STUBGEN=YES \
+				-DCOMPILE_EXAMPLES=NO \
+				-DWITH_COVERAGE=NO \
+				-DARGTABLE_INCLUDE_DIR="$SOURCES_ROOT/argtable2/src" \
+				-DARGTABLE_LIBRARY="$INSTALL_ROOT/lib/libargtable2${DEBUG_D}.a" \
+				-DJSONCPP_INCLUDE_DIR="$INSTALL_ROOT/include" \
+				..
+			cd ..
+		else
+			cd libjson-rpc-cpp
+		fi
+		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+		cd build
+		$MAKE ${PARALLEL_MAKE_OPTIONS}
+		$MAKE ${PARALLEL_MAKE_OPTIONS} install
 		cd "$SOURCES_ROOT"
 	else
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
