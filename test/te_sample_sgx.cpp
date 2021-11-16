@@ -32,6 +32,106 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <tools/utils.h>
 
 void importBLSKeys(
+    const std::vector< libff::alt_bn128_Fr >& secret_keys, const std::string& sgx_url );
+
+std::vector< libff::alt_bn128_Fr > generateSecretKeys(
+    size_t t, size_t n, const std::string& sgx_url );
+
+libff::alt_bn128_G2 getDecryptionShare( const libBLS::Ciphertext& ciphertext,
+    const std::string& key_name, const std::string& sgx_url );
+
+int main() {
+    size_t t;
+    size_t n;
+    std::string sgxwallet_url;
+    std::string plaintext;
+
+    if ( const char* env_t = std::getenv( "t" ) ) {
+        t = std::stoi( env_t );
+    } else {
+        t = 11;
+    }
+
+    if ( const char* env_n = std::getenv( "n" ) ) {
+        n = std::stoi( env_n );
+    } else {
+        n = 16;
+    }
+
+    if ( const char* env_url = std::getenv( "SGXWALLET_URL" ) ) {
+        sgxwallet_url = std::string( env_url );
+    } else {
+        sgxwallet_url = "http://127.0.0.1:1029";
+    }
+
+    if ( const char* env_message = std::getenv( "MESSAGE" ) ) {
+        plaintext = std::string( env_message );
+    } else {
+        plaintext = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
+    }
+
+    auto secret_keys = generateSecretKeys( t, n, sgxwallet_url );
+
+    std::vector< libff::alt_bn128_G2 > public_keys( n );
+    for ( size_t i = 0; i < n; ++i ) {
+        public_keys[i] = secret_keys[i] * libff::alt_bn128_G2::one();
+    }
+
+    std::vector< size_t > idx( n );
+    for ( size_t i = 0; i < n; ++i ) {
+        idx[i] = i + 1;
+    }
+    auto lagrange_coeffs = libBLS::ThresholdUtils::LagrangeCoeffs( idx, t );
+
+    libBLS::Bls bls_instance = libBLS::Bls( t, n );
+    auto common_keys = bls_instance.KeysRecover( lagrange_coeffs, secret_keys );
+
+    auto vector_coordinates = libBLS::ThresholdUtils::G2ToString( common_keys.second, 16 );
+
+    std::string common_public_str = "";
+    for ( auto& coord : vector_coordinates ) {
+        while ( coord.size() < 64 ) {
+            coord = "0" + coord;
+        }
+        common_public_str += coord;
+    }
+
+    auto encrypted_string = libBLS::TE::encryptMessage( plaintext, common_public_str );
+
+    auto te_instance = libBLS::TE( t, n );
+
+    auto ciphertext_with_aes = te_instance.aesCiphertextFromString( encrypted_string );
+
+    auto ciphertext = ciphertext_with_aes.first;
+    auto encrypted_message = ciphertext_with_aes.second;
+
+    std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares;
+    for ( size_t i = 0; i < n; ++i ) {
+        libff::alt_bn128_Fr secret_key = secret_keys[i];
+        libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
+
+        std::string bls_key_name =
+            "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:0:DKG_ID:" + std::to_string( i );
+
+        libff::alt_bn128_G2 decryption_share =
+            getDecryptionShare( ciphertext, bls_key_name, sgxwallet_url );
+
+        assert( te_instance.Verify( ciphertext, decryption_share, public_key ) );
+
+        shares.push_back( std::make_pair( decryption_share, size_t( i + 1 ) ) );
+    }
+
+    std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
+
+    std::string decrypted_plaintext =
+        libBLS::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
+
+    assert( decrypted_plaintext == plaintext );
+
+    return 0;
+}
+
+void importBLSKeys(
     const std::vector< libff::alt_bn128_Fr >& secret_keys, const std::string& sgx_url ) {
     jsonrpc::HttpClient* jsonRpcClient = new jsonrpc::HttpClient( sgx_url );
     jsonrpc::Client sgxClient( *jsonRpcClient );
@@ -114,96 +214,4 @@ libff::alt_bn128_G2 getDecryptionShare( const libBLS::Ciphertext& ciphertext,
     ret_val.Y.c1 = libff::alt_bn128_Fq( result["decryptionShare"][3].asCString() );
 
     return ret_val;
-}
-
-int main() {
-    size_t t;
-    size_t n;
-    std::string sgxwallet_url;
-    std::string plaintext;
-
-    if ( const char* env_t = std::getenv( "t" ) ) {
-        t = std::stoi( env_t );
-    } else {
-        t = 11;
-    }
-
-    if ( const char* env_n = std::getenv( "n" ) ) {
-        n = std::stoi( env_n );
-    } else {
-        n = 16;
-    }
-
-    if ( const char* env_url = std::getenv( "SGXWALLET_URL" ) ) {
-        sgxwallet_url = std::string( env_url );
-    } else {
-        sgxwallet_url = "http://127.0.0.1:1029";
-    }
-
-    if ( const char* env_message = std::getenv( "MESSAGE" ) ) {
-        plaintext = std::string( env_message );
-    } else {
-        plaintext = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
-    }
-
-    auto secret_keys = generateSecretKeys( t, n, sgxwallet_url );
-
-    std::vector< libff::alt_bn128_G2 > public_keys( n );
-    for ( size_t i = 0; i < n; ++i ) {
-        public_keys[i] = secret_keys[i] * libff::alt_bn128_G2::one();
-    }
-
-    std::vector< size_t > idx( n );
-    for ( size_t i = 0; i < n; ++i ) {
-        idx[i] = i + 1;
-    }
-    auto lagrange_coeffs = libBLS::ThresholdUtils::LagrangeCoeffs( idx, t );
-
-    libBLS::Bls bls_instance = libBLS::Bls( t, n );
-    auto common_keys = bls_instance.KeysRecover( lagrange_coeffs, secret_keys );
-
-    auto vector_coordinates = libBLS::ThresholdUtils::G2ToString( common_keys.second, 16 );
-
-    std::string common_public_str = "";
-    for ( auto& coord : vector_coordinates ) {
-        while ( coord.size() < 64 ) {
-            coord = "0" + coord;
-        }
-        common_public_str += coord;
-    }
-
-    auto encrypted_string = libBLS::TE::encryptMessage( plaintext, common_public_str );
-
-
-    auto te_instance = libBLS::TE( t, n );
-
-    auto ciphertext_with_aes = te_instance.aesCiphertextFromString( encrypted_string );
-
-    auto ciphertext = ciphertext_with_aes.first;
-    auto encrypted_message = ciphertext_with_aes.second;
-
-    std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares;
-    for ( size_t i = 0; i < n; ++i ) {
-        libff::alt_bn128_Fr secret_key = secret_keys[i];
-        libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
-
-        std::string bls_key_name =
-            "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:0:DKG_ID:" + std::to_string( i );
-
-        libff::alt_bn128_G2 decryption_share =
-            getDecryptionShare( ciphertext, bls_key_name, sgxwallet_url );
-
-        assert( te_instance.Verify( ciphertext, decryption_share, public_key ) );
-
-        shares.push_back( std::make_pair( decryption_share, size_t( i + 1 ) ) );
-    }
-
-    std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
-
-    std::string decrypted_plaintext =
-        libBLS::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
-
-    assert( decrypted_plaintext == plaintext );
-
-    return 0;
 }
