@@ -39,7 +39,7 @@ jobs:
     - name: Install more packages
       run: |
         sudo apt-get install -y clang-format-6.0 gawk sed shtool \
-          libffi-dev yasm texinfo flex bison libc6-dbg gcc-multilib
+          libffi-dev yasm texinfo flex bison libgnutls28-dev libc6-dbg gcc-multilib
         sudo snap install valgrind --classic
         python -m pip install --upgrade pip
         pip install coincurve
