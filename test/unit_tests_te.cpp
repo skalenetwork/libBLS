@@ -195,48 +195,6 @@ BOOST_AUTO_TEST_CASE( ConvertionToStringAndBack ) {
     BOOST_REQUIRE( ciphertext_with_aes == ciphertext_from_string );
 }
 
-BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackWrongMagicString ) {
-    libBLS::ThresholdUtils::initCurve();
-
-    std::string message =
-        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
-                                                                             // length
-
-    libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
-
-    libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
-
-    auto ciphertext_with_aes = libBLS::TE::encryptWithAES( message, public_key );
-
-    auto str =
-        libBLS::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second );
-
-    auto ciphertext_from_string = libBLS::TE::aesCiphertextFromString( str );
-
-    std::string random_bytes = "ff7e0d516baae0301df502d886ed08bb";
-
-    str = random_bytes + str.substr( 32, std::string::npos );
-
-    // auto V_old = std::get< 1 >( ciphertext_with_aes.first );
-    // auto V_new = std::get< 1 >( ciphertext_from_string.first );
-
-    // auto W_old = std::get< 2 >( ciphertext_with_aes.first );
-    // auto W_new = std::get< 2 >( ciphertext_from_string.first );
-
-    // auto U_old = std::get< 0 >( ciphertext_with_aes.first );
-    // auto U_new = std::get< 0 >( ciphertext_from_string.first );
-
-    // BOOST_REQUIRE( U_old == U_new );
-    // BOOST_REQUIRE( W_old == W_new );
-    // BOOST_REQUIRE( V_old == V_new );
-    // BOOST_REQUIRE( ciphertext_with_aes.first == ciphertext_from_string.first );
-    // BOOST_REQUIRE( ciphertext_with_aes.second.size() == ciphertext_from_string.second.size() );
-    // BOOST_REQUIRE( ciphertext_with_aes == ciphertext_from_string );
-
-    BOOST_REQUIRE_THROW(
-        libBLS::TE::aesCiphertextFromString( str ), libBLS::ThresholdUtils::IncorrectInput );
-}
-
 BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackTooShort ) {
     libBLS::ThresholdUtils::initCurve();
 
