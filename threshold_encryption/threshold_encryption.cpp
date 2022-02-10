@@ -237,6 +237,29 @@ std::string TE::CombineShares( const Ciphertext& ciphertext,
         throw ThresholdUtils::IncorrectInput( "error during share combining" );
     }
 
+    auto aesKey = CombineSharesIntoAESKey( decryptionShares );
+    std::valarray< uint8_t > lhs_to_hash( aesKey.size() );
+    for ( size_t i = 0; i < aesKey.size(); ++i ) {
+        lhs_to_hash[i] = aesKey[i];
+    }
+
+    std::valarray< uint8_t > rhs_to_hash( V.size() );
+    for ( size_t i = 0; i < V.size(); ++i ) {
+        rhs_to_hash[i] = static_cast< uint8_t >( V[i] );
+    }
+
+    std::valarray< uint8_t > xor_res = lhs_to_hash ^ rhs_to_hash;
+
+    std::string message = "";
+    for ( size_t i = 0; i < xor_res.size(); ++i ) {
+        message += static_cast< char >( xor_res[i] );
+    }
+
+    return message;
+}
+
+std::vector< uint8_t > TE::CombineSharesIntoAESKey(
+    const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShares ) {
     std::vector< size_t > idx( this->t_ );
     for ( size_t i = 0; i < this->t_; ++i ) {
         idx[i] = decryptionShares[i].second;
@@ -254,24 +277,12 @@ std::string TE::CombineShares( const Ciphertext& ciphertext,
 
     std::string hash = this->Hash( sum );
 
-    std::valarray< uint8_t > lhs_to_hash( hash.size() );
+    std::vector< uint8_t > ret( hash.size() );
     for ( size_t i = 0; i < hash.size(); ++i ) {
-        lhs_to_hash[i] = static_cast< uint8_t >( hash[i] );
+        ret[i] = static_cast< uint8_t >( hash[i] );
     }
 
-    std::valarray< uint8_t > rhs_to_hash( V.size() );
-    for ( size_t i = 0; i < V.size(); ++i ) {
-        rhs_to_hash[i] = static_cast< uint8_t >( V[i] );
-    }
-
-    std::valarray< uint8_t > xor_res = lhs_to_hash ^ rhs_to_hash;
-
-    std::string message = "";
-    for ( size_t i = 0; i < xor_res.size(); ++i ) {
-        message += static_cast< char >( xor_res[i] );
-    }
-
-    return message;
+    return ret;
 }
 
 std::string TE::aesCiphertextToString(

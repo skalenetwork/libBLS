@@ -43,7 +43,7 @@ public:
 
     std::string merge( const libBLS::Ciphertext& ciphertext );
 
-    std::string merge( const std::string& ciphertext );
+    std::vector< uint8_t > mergeIntoAESKey();
 };
 
 

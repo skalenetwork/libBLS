@@ -76,8 +76,17 @@ std::string TEDecryptSet::merge( const libBLS::Ciphertext& cyphertext ) {
     return res;
 }
 
-std::string TEDecryptSet::merge( const std::string& ciphertext_str ) {
-    auto ciphertext = libBLS::TE::ciphertextFromString( ciphertext_str );
+std::vector< uint8_t > TEDecryptSet::mergeIntoAESKey() {
+    libBLS::TE te( requiredSigners, totalSigners );
+    std::vector< std::pair< libff::alt_bn128_G2, size_t > > decrypted;
+    for ( auto&& item : decrypts ) {
+        std::pair< libff::alt_bn128_G2, size_t > encr = std::make_pair( *item.second, item.first );
+        decrypted.push_back( encr );
+    }
 
-    return merge( ciphertext );
+    auto res = te.CombineSharesIntoAESKey( decrypted );
+
+    was_merged = true;
+
+    return res;
 }
