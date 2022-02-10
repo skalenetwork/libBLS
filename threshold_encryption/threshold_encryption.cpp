@@ -351,4 +351,35 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::aesCiphertextFromString(
     return {{U, V, W}, aes_cipher};
 }
 
+Ciphertext TE::ciphertextFromString( const std::string& ciphertext ) {
+    ThresholdUtils::initCurve();
+    ThresholdUtils::initAES();
+
+    if ( !ThresholdUtils::checkHex( ciphertext ) ) {
+        throw ThresholdUtils::IncorrectInput( "Provided string contains non-hex symbols" );
+    }
+
+    if ( ciphertext.size() < 256 + 128 + 128 + 1 ) {
+        throw ThresholdUtils::IncorrectInput(
+            "Incoming string is too short to convert to aes ciphertext" );
+    }
+
+    std::string u_str = ciphertext.substr( 0, 256 );
+    std::string v_str = ciphertext.substr( 256, 128 );
+    std::string w_str = ciphertext.substr( 256 + 128, 128 );
+    
+    libff::alt_bn128_G2 U = ThresholdUtils::stringToG2( u_str );
+
+    libff::alt_bn128_G1 W = ThresholdUtils::stringToG1( w_str );
+
+    std::string V;
+    V.resize( v_str.size() / 2 );
+    uint64_t bin_len;
+    if ( !ThresholdUtils::hex2carray( v_str.data(), &bin_len, ( unsigned char* ) &V[0] ) ) {
+        throw ThresholdUtils::IncorrectInput( "Bad encrypted aes key provided" );
+    }
+
+    return {U, V, W};
+}
+
 }  // namespace libBLS

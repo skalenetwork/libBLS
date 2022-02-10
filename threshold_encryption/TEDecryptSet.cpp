@@ -58,8 +58,6 @@ void TEDecryptSet::addDecrypt( size_t _signerIndex, std::shared_ptr< libff::alt_
 std::string TEDecryptSet::merge( const libBLS::Ciphertext& cyphertext ) {
     libBLS::TE::checkCypher( cyphertext );
 
-    was_merged = true;
-
     if ( decrypts.size() < requiredSigners ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Not enough elements to decrypt message" );
     }
@@ -71,5 +69,15 @@ std::string TEDecryptSet::merge( const libBLS::Ciphertext& cyphertext ) {
         decrypted.push_back( encr );
     }
 
-    return te.CombineShares( cyphertext, decrypted );
+    auto res = te.CombineShares( cyphertext, decrypted );
+
+    was_merged = true;
+
+    return res;
+}
+
+std::string TEDecryptSet::merge( const std::string& ciphertext_str ) {
+    auto ciphertext = libBLS::TE::aesCiphertextFromString( ciphertext_str ).first;
+
+    return merge( ciphertext );
 }
