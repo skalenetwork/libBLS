@@ -37,8 +37,8 @@ void importBLSKeys(
 std::vector< libff::alt_bn128_Fr > generateSecretKeys(
     size_t t, size_t n, const std::string& sgx_url );
 
-libff::alt_bn128_G2 getDecryptionShare( const libBLS::Ciphertext& ciphertext,
-    const std::string& key_name, const std::string& sgx_url );
+libff::alt_bn128_G2 getDecryptionShare(
+    const libBLS::Ciphertext& ciphertext, const std::string& key_name, const std::string& sgx_url );
 
 int main() {
     size_t t;

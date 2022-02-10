@@ -66,6 +66,9 @@ public:
     std::string CombineShares( const Ciphertext& ciphertext,
         const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShare );
 
+    std::vector< uint8_t > CombineSharesIntoAESKey(
+        const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShare );
+
     static void checkCypher( const Ciphertext& cypher );
 
     static std::string aesCiphertextToString(
@@ -73,6 +76,8 @@ public:
 
     static std::pair< Ciphertext, std::vector< uint8_t > > aesCiphertextFromString(
         const std::string& str );
+
+    static Ciphertext ciphertextFromString( const std::string& str );
 
 private:
     const size_t t_ = 0;
