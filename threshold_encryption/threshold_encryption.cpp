@@ -367,7 +367,7 @@ Ciphertext TE::ciphertextFromString( const std::string& ciphertext ) {
     std::string u_str = ciphertext.substr( 0, 256 );
     std::string v_str = ciphertext.substr( 256, 128 );
     std::string w_str = ciphertext.substr( 256 + 128, 128 );
-    
+
     libff::alt_bn128_G2 U = ThresholdUtils::stringToG2( u_str );
 
     libff::alt_bn128_G1 W = ThresholdUtils::stringToG1( w_str );

@@ -77,7 +77,7 @@ std::string TEDecryptSet::merge( const libBLS::Ciphertext& cyphertext ) {
 }
 
 std::string TEDecryptSet::merge( const std::string& ciphertext_str ) {
-    auto ciphertext = libBLS::TE::aesCiphertextFromString( ciphertext_str ).first;
+    auto ciphertext = libBLS::TE::ciphertextFromString( ciphertext_str );
 
     return merge( ciphertext );
 }
