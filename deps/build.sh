@@ -680,7 +680,7 @@ then
 			echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
 			cd openssl
 			eval git fetch
-			eval git checkout OpenSSL_1_1_1-stable
+			eval git checkout OpenSSL_1_1_1n
 			if [ "$ARCH" = "x86_or_x64" ];
 			then
 				if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
