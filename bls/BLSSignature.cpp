@@ -43,7 +43,7 @@ BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, st
     if ( sig->is_zero() ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Zero BLS signature" );
     }
-    if ( _hint.length() == 0 || _hint.length() > 76 ) {
+    if ( _hint.length() == 0 || _hint.length() > 2 * BLS_MAX_COMPONENT_LEN ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Wrong BLS hint" );
     }
 }

@@ -113,9 +113,10 @@ BLSSigShare::BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& _sigShar
         throw libBLS::ThresholdUtils::IncorrectInput( "Zero signer index" );
     }
 
-    if ( _hint.length() == 0 || _hint.length() > 76 ) {
+    if ( _hint.length() == 0 || _hint.length() > 2 * BLS_MAX_COMPONENT_LEN ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Wrong BLS hint" );
     }
+    libBLS::ThresholdUtils::ParseHint( _hint );
 
     if ( !_sigShare->is_well_formed() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );

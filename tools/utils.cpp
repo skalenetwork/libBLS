@@ -307,7 +307,7 @@ std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ThresholdUtils::ParseHint(
     const std::string& _hint ) {
     auto position = _hint.find( ":" );
 
-    if ( position == std::string::npos ) {
+    if ( position == std::string::npos || position > BLS_MAX_COMPONENT_LEN || _hint.length() - position - 1 > BLS_MAX_COMPONENT_LEN ) {
         throw IncorrectInput( "Misformatted hint" );
     }
 
