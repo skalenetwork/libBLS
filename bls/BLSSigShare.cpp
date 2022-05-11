@@ -37,14 +37,12 @@ size_t BLSSigShare::getSignerIndex() const {
 }
 
 std::shared_ptr< std::string > BLSSigShare::toString() {
-    char str[512];
-
     sigShare->to_affine_coordinates();
+    std::string ret = "";
+    ret += libBLS::ThresholdUtils::fieldElementToString( sigShare->X ) + ':' +
+           libBLS::ThresholdUtils::fieldElementToString( sigShare->Y ) + ':' + hint;
 
-    gmp_sprintf( str, "%Nd:%Nd:%s", sigShare->X.as_bigint().data, libff::alt_bn128_Fq::num_limbs,
-        sigShare->Y.as_bigint().data, libff::alt_bn128_Fq::num_limbs, hint.c_str() );
-
-    return std::make_shared< std::string >( str );
+    return std::make_shared< std::string >( ret );
 }
 
 BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _signerIndex,
@@ -116,9 +114,10 @@ BLSSigShare::BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& _sigShar
         throw libBLS::ThresholdUtils::IncorrectInput( "Zero signer index" );
     }
 
-    if ( _hint.length() == 0 ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Empty or misformatted hint" );
+    if ( _hint.length() == 0 || _hint.length() > 2 * BLS_MAX_COMPONENT_LEN ) {
+        throw libBLS::ThresholdUtils::IncorrectInput( "Wrong BLS hint" );
     }
+    libBLS::ThresholdUtils::ParseHint( _hint );
 
     if ( !_sigShare->is_well_formed() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
