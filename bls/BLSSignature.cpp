@@ -43,8 +43,8 @@ BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, st
     if ( sig->is_zero() ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Zero BLS signature" );
     }
-    if ( hint.length() == 0 ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Empty BLS hint" );
+    if ( _hint.length() == 0 || _hint.length() > 76 ) {
+        throw libBLS::ThresholdUtils::IncorrectInput( "Wrong BLS hint" );
     }
 }
 
@@ -92,14 +92,11 @@ BLSSignature::BLSSignature(
 }
 
 std::shared_ptr< std::string > BLSSignature::toString() {
-    char str[512];
-
     sig->to_affine_coordinates();
-
-    gmp_sprintf( str, "%Nd:%Nd:%s", sig->X.as_bigint().data, libff::alt_bn128_Fq::num_limbs,
-        sig->Y.as_bigint().data, libff::alt_bn128_Fq::num_limbs, hint.c_str() );
-
-    return std::make_shared< std::string >( str );
+    std::string ret = "";
+    ret += libBLS::ThresholdUtils::fieldElementToString(sig->X) + ':' + libBLS::ThresholdUtils::fieldElementToString(sig->Y) + ':' + hint;
+    
+    return std::make_shared< std::string >( ret );
 }
 
 std::string BLSSignature::getHint() const {
