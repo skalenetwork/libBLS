@@ -89,6 +89,7 @@ jobs:
         emcmake cmake -DEMSCRIPTEN=ON .. -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a
         emmake make -j$(nproc)
         cd ..
+        cp build_em/threshold_encryption/encrypt.js node/
     
     - name: Calculate version
       run: |
