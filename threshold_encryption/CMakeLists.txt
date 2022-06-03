@@ -89,7 +89,7 @@ if (BUILD_TESTS)
         add_executable(te_sample_sgx ../test/te_sample_sgx.cpp)
 	    target_include_directories(te_sample_sgx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
         target_link_libraries(te_sample_sgx PRIVATE te bls ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY}
-                              jsonrpccpp-client jsonrpccpp-server jsonrpccpp-common jsoncpp curl pthread ssl crypto z)
+                              jsonrpccpp-client jsonrpccpp-server jsonrpccpp-common jsoncpp curl pthread ssl crypto z idn2)
     endif()
 
     add_test(NAME te_wrap_tests COMMAND te_unit_test)
