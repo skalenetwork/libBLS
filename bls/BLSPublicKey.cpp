@@ -50,8 +50,12 @@ BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > 
     }
 }
 
-BLSPublicKey::BLSPublicKey( const libff::alt_bn128_G2& pkey ) {
+BLSPublicKey::BLSPublicKey( const libff::alt_bn128_G2& pkey, size_t t, size_t n )
+    : t( t ), n( n ) {
     libBLS::ThresholdUtils::initCurve();
+
+    // do not check signers for compatibility
+    // libBLS::ThresholdUtils::checkSigners( t, n );
 
     libffPublicKey = std::make_shared< libff::alt_bn128_G2 >( pkey );
     if ( libffPublicKey->is_zero() ) {
@@ -59,7 +63,11 @@ BLSPublicKey::BLSPublicKey( const libff::alt_bn128_G2& pkey ) {
     }
 }
 
-BLSPublicKey::BLSPublicKey( const libff::alt_bn128_Fr& skey ) {
+BLSPublicKey::BLSPublicKey(const libff::alt_bn128_Fr& skey, size_t t, size_t n )
+    : t( t ), n( n ) {
+    // do not check signers for compatibility
+    // libBLS::ThresholdUtils::checkSigners( t, n );
+
     libffPublicKey = std::make_shared< libff::alt_bn128_G2 >( skey * libff::alt_bn128_G2::one() );
     if ( libffPublicKey->is_zero() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Public Key is equal to zero or corrupt" );
