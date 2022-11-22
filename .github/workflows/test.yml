@@ -74,6 +74,7 @@ jobs:
         cd newer_lcov
         git clone https://github.com/linux-test-project/lcov --recursive --recurse-submodules
         cd lcov
+        git checkout 92e2121
         sudo make install
         cd ..
         cd ..
