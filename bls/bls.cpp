@@ -206,7 +206,7 @@ bool Bls::CoreVerify( const libff::alt_bn128_G2& public_key, const std::string& 
     if ( !ThresholdUtils::ValidateKey( public_key ) || !ThresholdUtils::ValidateKey( signature ) ) {
         throw ThresholdUtils::IsNotWellFormed( "Either signature or public key is malicious" );
     }
-    
+
     libff::alt_bn128_G1 hash = ThresholdUtils::HashtoG1( message );
 
     return libff::alt_bn128_ate_reduced_pairing( hash, public_key ) ==
