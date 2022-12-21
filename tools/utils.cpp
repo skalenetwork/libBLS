@@ -231,6 +231,17 @@ libff::alt_bn128_G1 ThresholdUtils::HashtoG1(
     return result;
 }
 
+libff::alt_bn128_G1 ThresholdUtils::HashtoG1( const std::string& message ) {
+    auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
+
+    uint64_t bin_len;
+    if ( !ThresholdUtils::hex2carray( message.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+        throw std::runtime_error( "Invalid hash" );
+    }
+
+    return ThresholdUtils::HashtoG1( hash_bytes_arr );
+}
+
 bool ThresholdUtils::isStringNumber( const std::string& str ) {
     if ( str.at( 0 ) == '0' && str.length() > 1 )
         return false;

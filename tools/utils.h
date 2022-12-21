@@ -86,6 +86,8 @@ public:
 
     static libff::alt_bn128_G1 HashtoG1(
         std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
+    
+    static libff::alt_bn128_G1 HashtoG1( const std::string& message );
 
     static std::vector< uint8_t > aesEncrypt( const std::string& message, const std::string& key );
 

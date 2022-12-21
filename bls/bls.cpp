@@ -181,14 +181,7 @@ libff::alt_bn128_G1 Bls::Signing(
 
 libff::alt_bn128_G1 Bls::CoreSignAggregated(
     const std::string& message, const libff::alt_bn128_Fr secret_key ) {
-    auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
-
-    uint64_t bin_len;
-    if ( !ThresholdUtils::hex2carray( message.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
-        throw std::runtime_error( "Invalid hash" );
-    }
-
-    libff::alt_bn128_G1 hash = ThresholdUtils::HashtoG1( hash_bytes_arr );
+    libff::alt_bn128_G1 hash = ThresholdUtils::HashtoG1( message );
 
     return secret_key * hash;
 }
@@ -213,15 +206,8 @@ bool Bls::CoreVerify( const libff::alt_bn128_G2& public_key, const std::string& 
     if ( !ThresholdUtils::ValidateKey( public_key ) || !ThresholdUtils::ValidateKey( signature ) ) {
         throw ThresholdUtils::IsNotWellFormed( "Either signature or public key is malicious" );
     }
-
-    auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
-
-    uint64_t bin_len;
-    if ( !ThresholdUtils::hex2carray( message.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
-        throw std::runtime_error( "Invalid hash" );
-    }
-
-    libff::alt_bn128_G1 hash = ThresholdUtils::HashtoG1( hash_bytes_arr );
+    
+    libff::alt_bn128_G1 hash = ThresholdUtils::HashtoG1( message );
 
     return libff::alt_bn128_ate_reduced_pairing( hash, public_key ) ==
            libff::alt_bn128_ate_reduced_pairing( signature, libff::alt_bn128_G2::one() );
