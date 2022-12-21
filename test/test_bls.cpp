@@ -850,7 +850,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        std::vector< std::string > coords = {"0", "0", "0", "0"};
+        std::vector< std::string > coords = { "0", "0", "0", "0" };
         auto vector_ptr_str = std::make_shared< std::vector< std::string > >( coords );
         BOOST_REQUIRE_THROW(
             BLSPublicKey pkey( vector_ptr_str ), libBLS::ThresholdUtils::IsNotWellFormed );
@@ -960,7 +960,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        std::vector< std::string > coords = {"0", "0", "0", "0"};
+        std::vector< std::string > coords = { "0", "0", "0", "0" };
         auto vector_str_ptr = std::make_shared< std::vector< std::string > >( coords );
         BOOST_REQUIRE_THROW( BLSPublicKeyShare pkey( vector_str_ptr, num_signed, num_all ),
             libBLS::ThresholdUtils::IsNotWellFormed );
@@ -1233,7 +1233,7 @@ BOOST_AUTO_TEST_CASE( DKGWrappersExceptions ) {
 
     {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
-        std::vector< libff::alt_bn128_G2 > vect = {libff::alt_bn128_G2::random_element()};
+        std::vector< libff::alt_bn128_G2 > vect = { libff::alt_bn128_G2::random_element() };
         BOOST_REQUIRE_THROW( dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::zero(),
                                  std::make_shared< std::vector< libff::alt_bn128_G2 > >( vect ) ),
             libBLS::ThresholdUtils::ZeroSecretKey );
@@ -1254,7 +1254,7 @@ BOOST_AUTO_TEST_CASE( DKGWrappersExceptions ) {
 
     {
         DKGBLSWrapper dkg_wrap( num_signed + 1, num_all + 1 );
-        std::vector< libff::alt_bn128_G2 > vect = {libff::alt_bn128_G2::random_element()};
+        std::vector< libff::alt_bn128_G2 > vect = { libff::alt_bn128_G2::random_element() };
         BOOST_REQUIRE_THROW( dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::random_element(),
                                  std::make_shared< std::vector< libff::alt_bn128_G2 > >( vect ) ),
             libBLS::ThresholdUtils::IncorrectInput );

@@ -140,15 +140,15 @@ public:
     }
 
     void final_bits( const boost::uint8_t message_bits, unsigned int length ) {
-        boost::uint8_t masks[8] = {/* 0 0b00000000 */ 0x00, /* 1 0b10000000 */ 0x80,
+        boost::uint8_t masks[8] = { /* 0 0b00000000 */ 0x00, /* 1 0b10000000 */ 0x80,
             /* 2 0b11000000 */ 0xC0, /* 3 0b11100000 */ 0xE0,
             /* 4 0b11110000 */ 0xF0, /* 5 0b11111000 */ 0xF8,
-            /* 6 0b11111100 */ 0xFC, /* 7 0b11111110 */ 0xFE};
+            /* 6 0b11111100 */ 0xFC, /* 7 0b11111110 */ 0xFE };
 
-        boost::uint8_t markbit[8] = {/* 0 0b10000000 */ 0x80, /* 1 0b01000000 */ 0x40,
+        boost::uint8_t markbit[8] = { /* 0 0b10000000 */ 0x80, /* 1 0b01000000 */ 0x40,
             /* 2 0b00100000 */ 0x20, /* 3 0b00010000 */ 0x10,
             /* 4 0b00001000 */ 0x08, /* 5 0b00000100 */ 0x04,
-            /* 6 0b00000010 */ 0x02, /* 7 0b00000001 */ 0x01};
+            /* 6 0b00000010 */ 0x02, /* 7 0b00000001 */ 0x01 };
 
         if ( !length )
             return;
@@ -250,7 +250,7 @@ private:
     }
 
     void process_message_block() {
-        static const boost::uint32_t K[64] = {0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
+        static const boost::uint32_t K[64] = { 0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
             0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be,
             0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786,
             0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152,
@@ -259,7 +259,7 @@ private:
             0x92722c85, 0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624,
             0xf40e3585, 0x106aa070, 0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3,
             0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208,
-            0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2};
+            0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2 };
         boost::uint32_t temp1, temp2;
         boost::uint32_t W[64];
         boost::uint32_t A, B, C, D, E, F, G, H;

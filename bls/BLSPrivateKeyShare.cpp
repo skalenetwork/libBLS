@@ -128,11 +128,8 @@ BLSPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSi
     std::vector< libff::alt_bn128_Fr > skeys = dkg_obj.SecretKeyContribution( pol );
 
     libff::alt_bn128_Fr common_skey = pol.at( 0 );
-    std::shared_ptr< BLSPublicKey > pkey_ptr = std::make_shared< BLSPublicKey >(
-        common_skey,
-        _requiredSigners,
-        _totalSigners
-        );
+    std::shared_ptr< BLSPublicKey > pkey_ptr =
+        std::make_shared< BLSPublicKey >( common_skey, _requiredSigners, _totalSigners );
 
     for ( size_t i = 0; i < _totalSigners; ++i ) {
         std::string key_str = libBLS::ThresholdUtils::fieldElementToString( skeys.at( i ) );

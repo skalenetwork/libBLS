@@ -58,14 +58,17 @@ public:
 
     static libff::alt_bn128_G1 Signing(
         const libff::alt_bn128_G1 hash, const libff::alt_bn128_Fr secret_key );
-    
-    static libff::alt_bn128_G1 CoreSignAggregated( const std::string& message, const libff::alt_bn128_Fr secret_key );
+
+    static libff::alt_bn128_G1 CoreSignAggregated(
+        const std::string& message, const libff::alt_bn128_Fr secret_key );
 
     static libff::alt_bn128_G1 Aggregate( const std::vector< libff::alt_bn128_G1 >& signatures );
 
-    static bool CoreVerify( const libff::alt_bn128_G2& public_key, const std::string& message, const libff::alt_bn128_G1& signature );
+    static bool CoreVerify( const libff::alt_bn128_G2& public_key, const std::string& message,
+        const libff::alt_bn128_G1& signature );
 
-    static bool FastAggregateVerify( const std::vector< libff::alt_bn128_G2 >& public_keys, const std::string& message, const libff::alt_bn128_G1& signature );
+    static bool FastAggregateVerify( const std::vector< libff::alt_bn128_G2 >& public_keys,
+        const std::string& message, const libff::alt_bn128_G1& signature );
 
     static bool Verification( const std::string& to_be_hashed, const libff::alt_bn128_G1 sign,
         const libff::alt_bn128_G2 public_key );
@@ -86,7 +89,8 @@ public:
 
     static libff::alt_bn128_G1 PopProve( const libff::alt_bn128_Fr& secret_key );
 
-    static bool PopVerify( const libff::alt_bn128_G2& public_key, const libff::alt_bn128_G1& proof );
+    static bool PopVerify(
+        const libff::alt_bn128_G2& public_key, const libff::alt_bn128_G1& proof );
 
 private:
     const size_t t_ = 0;

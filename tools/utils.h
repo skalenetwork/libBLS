@@ -119,7 +119,7 @@ public:
 
     static bool checkHex( const std::string& hex );
 
-    template <class T>
+    template < class T >
     static bool ValidateKey( const T& point );
 };
 

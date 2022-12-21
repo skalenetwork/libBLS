@@ -346,7 +346,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
     {
         // 1 coord of public key share is not a number
-        std::vector< std::string > pkey_str( {"123", "abc"} );
+        std::vector< std::string > pkey_str( { "123", "abc" } );
         BOOST_REQUIRE_THROW(
             TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
                 num_signed, num_all ),
@@ -355,7 +355,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
     {
         // wrong formated public key share
-        std::vector< std::string > pkey_str( {"0", "0", "0", "0"} );
+        std::vector< std::string > pkey_str( { "0", "0", "0", "0" } );
         BOOST_REQUIRE_THROW(
             TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
                 num_signed, num_all ),
@@ -364,7 +364,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
     {
         // one component public key share
-        std::vector< std::string > pkey_str( {"1232450"} );
+        std::vector< std::string > pkey_str( { "1232450" } );
         BOOST_REQUIRE_THROW(
             TEPublicKeyShare( std::make_shared< std::vector< std::string > >( pkey_str ), 1,
                 num_signed, num_all ),
@@ -465,7 +465,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
     {
         // wrong formated public key
-        std::vector< std::string > pkey_str( {"0", "0", "0", "0"} );
+        std::vector< std::string > pkey_str( { "0", "0", "0", "0" } );
         BOOST_REQUIRE_THROW(
             TEPublicKey(
                 std::make_shared< std::vector< std::string > >( pkey_str ), num_signed, num_all ),

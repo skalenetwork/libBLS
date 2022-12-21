@@ -1151,10 +1151,10 @@ Returns an ordering that is similar to Python:
 @since version 1.0.0
 */
 inline bool operator<( const value_t lhs, const value_t rhs ) noexcept {
-    static constexpr std::array< std::uint8_t, 8 > order = {{
+    static constexpr std::array< std::uint8_t, 8 > order = { {
         0 /* null */, 3 /* object */, 4 /* array */, 5 /* string */, 1 /* boolean */,
         2 /* integer */, 2 /* unsigned */, 2 /* float */
-    }};
+    } };
 
     const auto l_index = static_cast< std::size_t >( lhs );
     const auto r_index = static_cast< std::size_t >( rhs );
@@ -1432,7 +1432,7 @@ void from_json( const BasicJsonType& j, ArithmeticType& val ) {
 
 template < typename BasicJsonType, typename A1, typename A2 >
 void from_json( const BasicJsonType& j, std::pair< A1, A2 >& p ) {
-    p = {j.at( 0 ).template get< A1 >(), j.at( 1 ).template get< A2 >()};
+    p = { j.at( 0 ).template get< A1 >(), j.at( 1 ).template get< A2 >() };
 }
 
 template < typename BasicJsonType, typename Tuple, std::size_t... Idx >
@@ -1890,7 +1890,7 @@ void to_json( BasicJsonType& j, const T ( &arr )[N] ) {
 
 template < typename BasicJsonType, typename... Args >
 void to_json( BasicJsonType& j, const std::pair< Args... >& p ) {
-    j = {p.first, p.second};
+    j = { p.first, p.second };
 }
 
 // for https://github.com/nlohmann/json/pull/1134
@@ -1899,12 +1899,12 @@ template < typename BasicJsonType, typename T,
                                       iteration_proxy_internal >::value,
         int > = 0 >
 void to_json( BasicJsonType& j, const T& b ) {
-    j = {{b.key(), b.value()}};
+    j = { { b.key(), b.value() } };
 }
 
 template < typename BasicJsonType, typename Tuple, std::size_t... Idx >
 void to_json_tuple_impl( BasicJsonType& j, const Tuple& t, index_sequence< Idx... > /*unused*/ ) {
-    j = {std::get< Idx >( t )...};
+    j = { std::get< Idx >( t )... };
 }
 
 template < typename BasicJsonType, typename... Args >
@@ -2163,7 +2163,7 @@ private:
     std::size_t current_wchar = 0;
 
     /// a buffer for UTF-8 bytes
-    std::array< std::char_traits< char >::int_type, 4 > utf8_bytes = {{0, 0, 0, 0}};
+    std::array< std::char_traits< char >::int_type, 4 > utf8_bytes = { { 0, 0, 0, 0 } };
 
     /// index to the utf8_codes array for the next valid byte
     std::size_t utf8_bytes_index = 0;
@@ -2228,8 +2228,7 @@ public:
             [&first]( std::pair< bool, int > res, decltype( *first ) val ) {
                 res.first &= ( val == *( std::next( std::addressof( *first ), res.second++ ) ) );
                 return res;
-            } )
-                                       .first;
+            } ).first;
         assert( is_contiguous );
 #endif
 
@@ -2418,7 +2417,7 @@ private:
         assert( current == 'u' );
         int codepoint = 0;
 
-        const auto factors = {12, 8, 4, 0};
+        const auto factors = { 12, 8, 4, 0 };
         for ( const auto factor : factors ) {
             get();
 
@@ -2960,7 +2959,7 @@ private:
             case 0xDD:
             case 0xDE:
             case 0xDF: {
-                if ( JSON_UNLIKELY( not next_byte_in_range( {0x80, 0xBF} ) ) ) {
+                if ( JSON_UNLIKELY( not next_byte_in_range( { 0x80, 0xBF } ) ) ) {
                     return token_type::parse_error;
                 }
                 break;
@@ -2968,7 +2967,7 @@ private:
 
             // U+0800..U+0FFF: bytes E0 A0..BF 80..BF
             case 0xE0: {
-                if ( JSON_UNLIKELY( not( next_byte_in_range( {0xA0, 0xBF, 0x80, 0xBF} ) ) ) ) {
+                if ( JSON_UNLIKELY( not( next_byte_in_range( { 0xA0, 0xBF, 0x80, 0xBF } ) ) ) ) {
                     return token_type::parse_error;
                 }
                 break;
@@ -2990,7 +2989,7 @@ private:
             case 0xEC:
             case 0xEE:
             case 0xEF: {
-                if ( JSON_UNLIKELY( not( next_byte_in_range( {0x80, 0xBF, 0x80, 0xBF} ) ) ) ) {
+                if ( JSON_UNLIKELY( not( next_byte_in_range( { 0x80, 0xBF, 0x80, 0xBF } ) ) ) ) {
                     return token_type::parse_error;
                 }
                 break;
@@ -2998,7 +2997,7 @@ private:
 
             // U+D000..U+D7FF: bytes ED 80..9F 80..BF
             case 0xED: {
-                if ( JSON_UNLIKELY( not( next_byte_in_range( {0x80, 0x9F, 0x80, 0xBF} ) ) ) ) {
+                if ( JSON_UNLIKELY( not( next_byte_in_range( { 0x80, 0x9F, 0x80, 0xBF } ) ) ) ) {
                     return token_type::parse_error;
                 }
                 break;
@@ -3007,7 +3006,7 @@ private:
             // U+10000..U+3FFFF F0 90..BF 80..BF 80..BF
             case 0xF0: {
                 if ( JSON_UNLIKELY(
-                         not( next_byte_in_range( {0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF} ) ) ) ) {
+                         not( next_byte_in_range( { 0x90, 0xBF, 0x80, 0xBF, 0x80, 0xBF } ) ) ) ) {
                     return token_type::parse_error;
                 }
                 break;
@@ -3018,7 +3017,7 @@ private:
             case 0xF2:
             case 0xF3: {
                 if ( JSON_UNLIKELY(
-                         not( next_byte_in_range( {0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF} ) ) ) ) {
+                         not( next_byte_in_range( { 0x80, 0xBF, 0x80, 0xBF, 0x80, 0xBF } ) ) ) ) {
                     return token_type::parse_error;
                 }
                 break;
@@ -3027,7 +3026,7 @@ private:
             // U+100000..U+10FFFF F4 80..8F 80..BF 80..BF
             case 0xF4: {
                 if ( JSON_UNLIKELY(
-                         not( next_byte_in_range( {0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF} ) ) ) ) {
+                         not( next_byte_in_range( { 0x80, 0x8F, 0x80, 0xBF, 0x80, 0xBF } ) ) ) ) {
                     return token_type::parse_error;
                 }
                 break;
@@ -4287,7 +4286,7 @@ private:
         // do not handle this value if we know it would be added to a discarded
         // container
         if ( not keep_stack.back() ) {
-            return {false, nullptr};
+            return { false, nullptr };
         }
 
         // create value
@@ -4299,18 +4298,18 @@ private:
 
         // do not handle this value if we just learnt it shall be discarded
         if ( not keep ) {
-            return {false, nullptr};
+            return { false, nullptr };
         }
 
         if ( ref_stack.empty() ) {
             root = std::move( value );
-            return {true, &root};
+            return { true, &root };
         }
 
         // skip this value if we already decided to skip the parent
         // (https://github.com/nlohmann/json/issues/971#issuecomment-413678360)
         if ( not ref_stack.back() ) {
-            return {false, nullptr};
+            return { false, nullptr };
         }
 
         // we now only expect arrays and objects
@@ -4318,7 +4317,7 @@ private:
 
         if ( ref_stack.back()->is_array() ) {
             ref_stack.back()->m_value.array->push_back( std::move( value ) );
-            return {true, &( ref_stack.back()->m_value.array->back() )};
+            return { true, &( ref_stack.back()->m_value.array->back() ) };
         } else {
             // check if we should store an element for the current key
             assert( not key_keep_stack.empty() );
@@ -4326,12 +4325,12 @@ private:
             key_keep_stack.pop_back();
 
             if ( not store_element ) {
-                return {false, nullptr};
+                return { false, nullptr };
             }
 
             assert( object_element );
             *object_element = std::move( value );
-            return {true, object_element};
+            return { true, object_element };
         }
     }
 
@@ -7508,7 +7507,7 @@ private:
     std::string get_token_string() const {
         char cr[3];
         snprintf( cr, 3, "%.2hhX", static_cast< unsigned char >( current ) );
-        return std::string{cr};
+        return std::string{ cr };
     }
 
     /*!
@@ -8743,7 +8742,7 @@ struct diyfp  // f * 2^e
         assert( x.e == y.e );
         assert( x.f >= y.f );
 
-        return {x.f - y.f, x.e};
+        return { x.f - y.f, x.e };
     }
 
     /*!
@@ -8804,11 +8803,11 @@ struct diyfp  // f * 2^e
         // Effectively we only need to add the highest bit in p_lo to p_hi (and
         // Q_hi + 1 does not overflow).
 
-        Q += uint64_t{1} << ( 64 - 32 - 1 );  // round, ties up
+        Q += uint64_t{ 1 } << ( 64 - 32 - 1 );  // round, ties up
 
         const uint64_t h = p3 + p2_hi + p1_hi + ( Q >> 32 );
 
-        return {h, x.e + y.e + 64};
+        return { h, x.e + y.e + 64 };
     }
 
     /*!
@@ -8836,7 +8835,7 @@ struct diyfp  // f * 2^e
         assert( delta >= 0 );
         assert( ( ( x.f << delta ) >> delta ) == x.f );
 
-        return {x.f << delta, target_exponent};
+        return { x.f << delta, target_exponent };
     }
 };
 
@@ -8871,7 +8870,7 @@ boundaries compute_boundaries( FloatType value ) {
         std::numeric_limits< FloatType >::digits;  // = p (includes the hidden bit)
     constexpr int kBias = std::numeric_limits< FloatType >::max_exponent - 1 + ( kPrecision - 1 );
     constexpr int kMinExp = 1 - kBias;
-    constexpr uint64_t kHiddenBit = uint64_t{1} << ( kPrecision - 1 );  // = 2^(p-1)
+    constexpr uint64_t kHiddenBit = uint64_t{ 1 } << ( kPrecision - 1 );  // = 2^(p-1)
 
     using bits_type = typename std::conditional< kPrecision == 24, uint32_t, uint64_t >::type;
 
@@ -8916,7 +8915,7 @@ boundaries compute_boundaries( FloatType value ) {
     // Determine w- = m- such that e_(w-) = e_(w+).
     const diyfp w_minus = diyfp::normalize_to( m_minus, w_plus.e );
 
-    return {diyfp::normalize( v ), w_minus, w_plus};
+    return { diyfp::normalize( v ), w_minus, w_plus };
 }
 
 // Given normalized diyfp w, Grisu needs to find a (normalized) cached
@@ -9047,85 +9046,85 @@ inline cached_power get_cached_power_for_binary_exponent( int e ) {
     constexpr int kCachedPowersDecStep = 8;
 
     static constexpr cached_power kCachedPowers[] = {
-        {0xAB70FE17C79AC6CA, -1060, -300},
-        {0xFF77B1FCBEBCDC4F, -1034, -292},
-        {0xBE5691EF416BD60C, -1007, -284},
-        {0x8DD01FAD907FFC3C, -980, -276},
-        {0xD3515C2831559A83, -954, -268},
-        {0x9D71AC8FADA6C9B5, -927, -260},
-        {0xEA9C227723EE8BCB, -901, -252},
-        {0xAECC49914078536D, -874, -244},
-        {0x823C12795DB6CE57, -847, -236},
-        {0xC21094364DFB5637, -821, -228},
-        {0x9096EA6F3848984F, -794, -220},
-        {0xD77485CB25823AC7, -768, -212},
-        {0xA086CFCD97BF97F4, -741, -204},
-        {0xEF340A98172AACE5, -715, -196},
-        {0xB23867FB2A35B28E, -688, -188},
-        {0x84C8D4DFD2C63F3B, -661, -180},
-        {0xC5DD44271AD3CDBA, -635, -172},
-        {0x936B9FCEBB25C996, -608, -164},
-        {0xDBAC6C247D62A584, -582, -156},
-        {0xA3AB66580D5FDAF6, -555, -148},
-        {0xF3E2F893DEC3F126, -529, -140},
-        {0xB5B5ADA8AAFF80B8, -502, -132},
-        {0x87625F056C7C4A8B, -475, -124},
-        {0xC9BCFF6034C13053, -449, -116},
-        {0x964E858C91BA2655, -422, -108},
-        {0xDFF9772470297EBD, -396, -100},
-        {0xA6DFBD9FB8E5B88F, -369, -92},
-        {0xF8A95FCF88747D94, -343, -84},
-        {0xB94470938FA89BCF, -316, -76},
-        {0x8A08F0F8BF0F156B, -289, -68},
-        {0xCDB02555653131B6, -263, -60},
-        {0x993FE2C6D07B7FAC, -236, -52},
-        {0xE45C10C42A2B3B06, -210, -44},
-        {0xAA242499697392D3, -183, -36},
-        {0xFD87B5F28300CA0E, -157, -28},
-        {0xBCE5086492111AEB, -130, -20},
-        {0x8CBCCC096F5088CC, -103, -12},
-        {0xD1B71758E219652C, -77, -4},
-        {0x9C40000000000000, -50, 4},
-        {0xE8D4A51000000000, -24, 12},
-        {0xAD78EBC5AC620000, 3, 20},
-        {0x813F3978F8940984, 30, 28},
-        {0xC097CE7BC90715B3, 56, 36},
-        {0x8F7E32CE7BEA5C70, 83, 44},
-        {0xD5D238A4ABE98068, 109, 52},
-        {0x9F4F2726179A2245, 136, 60},
-        {0xED63A231D4C4FB27, 162, 68},
-        {0xB0DE65388CC8ADA8, 189, 76},
-        {0x83C7088E1AAB65DB, 216, 84},
-        {0xC45D1DF942711D9A, 242, 92},
-        {0x924D692CA61BE758, 269, 100},
-        {0xDA01EE641A708DEA, 295, 108},
-        {0xA26DA3999AEF774A, 322, 116},
-        {0xF209787BB47D6B85, 348, 124},
-        {0xB454E4A179DD1877, 375, 132},
-        {0x865B86925B9BC5C2, 402, 140},
-        {0xC83553C5C8965D3D, 428, 148},
-        {0x952AB45CFA97A0B3, 455, 156},
-        {0xDE469FBD99A05FE3, 481, 164},
-        {0xA59BC234DB398C25, 508, 172},
-        {0xF6C69A72A3989F5C, 534, 180},
-        {0xB7DCBF5354E9BECE, 561, 188},
-        {0x88FCF317F22241E2, 588, 196},
-        {0xCC20CE9BD35C78A5, 614, 204},
-        {0x98165AF37B2153DF, 641, 212},
-        {0xE2A0B5DC971F303A, 667, 220},
-        {0xA8D9D1535CE3B396, 694, 228},
-        {0xFB9B7CD9A4A7443C, 720, 236},
-        {0xBB764C4CA7A44410, 747, 244},
-        {0x8BAB8EEFB6409C1A, 774, 252},
-        {0xD01FEF10A657842C, 800, 260},
-        {0x9B10A4E5E9913129, 827, 268},
-        {0xE7109BFBA19C0C9D, 853, 276},
-        {0xAC2820D9623BF429, 880, 284},
-        {0x80444B5E7AA7CF85, 907, 292},
-        {0xBF21E44003ACDD2D, 933, 300},
-        {0x8E679C2F5E44FF8F, 960, 308},
-        {0xD433179D9C8CB841, 986, 316},
-        {0x9E19DB92B4E31BA9, 1013, 324},
+        { 0xAB70FE17C79AC6CA, -1060, -300 },
+        { 0xFF77B1FCBEBCDC4F, -1034, -292 },
+        { 0xBE5691EF416BD60C, -1007, -284 },
+        { 0x8DD01FAD907FFC3C, -980, -276 },
+        { 0xD3515C2831559A83, -954, -268 },
+        { 0x9D71AC8FADA6C9B5, -927, -260 },
+        { 0xEA9C227723EE8BCB, -901, -252 },
+        { 0xAECC49914078536D, -874, -244 },
+        { 0x823C12795DB6CE57, -847, -236 },
+        { 0xC21094364DFB5637, -821, -228 },
+        { 0x9096EA6F3848984F, -794, -220 },
+        { 0xD77485CB25823AC7, -768, -212 },
+        { 0xA086CFCD97BF97F4, -741, -204 },
+        { 0xEF340A98172AACE5, -715, -196 },
+        { 0xB23867FB2A35B28E, -688, -188 },
+        { 0x84C8D4DFD2C63F3B, -661, -180 },
+        { 0xC5DD44271AD3CDBA, -635, -172 },
+        { 0x936B9FCEBB25C996, -608, -164 },
+        { 0xDBAC6C247D62A584, -582, -156 },
+        { 0xA3AB66580D5FDAF6, -555, -148 },
+        { 0xF3E2F893DEC3F126, -529, -140 },
+        { 0xB5B5ADA8AAFF80B8, -502, -132 },
+        { 0x87625F056C7C4A8B, -475, -124 },
+        { 0xC9BCFF6034C13053, -449, -116 },
+        { 0x964E858C91BA2655, -422, -108 },
+        { 0xDFF9772470297EBD, -396, -100 },
+        { 0xA6DFBD9FB8E5B88F, -369, -92 },
+        { 0xF8A95FCF88747D94, -343, -84 },
+        { 0xB94470938FA89BCF, -316, -76 },
+        { 0x8A08F0F8BF0F156B, -289, -68 },
+        { 0xCDB02555653131B6, -263, -60 },
+        { 0x993FE2C6D07B7FAC, -236, -52 },
+        { 0xE45C10C42A2B3B06, -210, -44 },
+        { 0xAA242499697392D3, -183, -36 },
+        { 0xFD87B5F28300CA0E, -157, -28 },
+        { 0xBCE5086492111AEB, -130, -20 },
+        { 0x8CBCCC096F5088CC, -103, -12 },
+        { 0xD1B71758E219652C, -77, -4 },
+        { 0x9C40000000000000, -50, 4 },
+        { 0xE8D4A51000000000, -24, 12 },
+        { 0xAD78EBC5AC620000, 3, 20 },
+        { 0x813F3978F8940984, 30, 28 },
+        { 0xC097CE7BC90715B3, 56, 36 },
+        { 0x8F7E32CE7BEA5C70, 83, 44 },
+        { 0xD5D238A4ABE98068, 109, 52 },
+        { 0x9F4F2726179A2245, 136, 60 },
+        { 0xED63A231D4C4FB27, 162, 68 },
+        { 0xB0DE65388CC8ADA8, 189, 76 },
+        { 0x83C7088E1AAB65DB, 216, 84 },
+        { 0xC45D1DF942711D9A, 242, 92 },
+        { 0x924D692CA61BE758, 269, 100 },
+        { 0xDA01EE641A708DEA, 295, 108 },
+        { 0xA26DA3999AEF774A, 322, 116 },
+        { 0xF209787BB47D6B85, 348, 124 },
+        { 0xB454E4A179DD1877, 375, 132 },
+        { 0x865B86925B9BC5C2, 402, 140 },
+        { 0xC83553C5C8965D3D, 428, 148 },
+        { 0x952AB45CFA97A0B3, 455, 156 },
+        { 0xDE469FBD99A05FE3, 481, 164 },
+        { 0xA59BC234DB398C25, 508, 172 },
+        { 0xF6C69A72A3989F5C, 534, 180 },
+        { 0xB7DCBF5354E9BECE, 561, 188 },
+        { 0x88FCF317F22241E2, 588, 196 },
+        { 0xCC20CE9BD35C78A5, 614, 204 },
+        { 0x98165AF37B2153DF, 641, 212 },
+        { 0xE2A0B5DC971F303A, 667, 220 },
+        { 0xA8D9D1535CE3B396, 694, 228 },
+        { 0xFB9B7CD9A4A7443C, 720, 236 },
+        { 0xBB764C4CA7A44410, 747, 244 },
+        { 0x8BAB8EEFB6409C1A, 774, 252 },
+        { 0xD01FEF10A657842C, 800, 260 },
+        { 0x9B10A4E5E9913129, 827, 268 },
+        { 0xE7109BFBA19C0C9D, 853, 276 },
+        { 0xAC2820D9623BF429, 880, 284 },
+        { 0x80444B5E7AA7CF85, 907, 292 },
+        { 0xBF21E44003ACDD2D, 933, 300 },
+        { 0x8E679C2F5E44FF8F, 960, 308 },
+        { 0xD433179D9C8CB841, 986, 316 },
+        { 0x9E19DB92B4E31BA9, 1013, 324 },
     };
 
     // This computation gives exactly the same results for k as
@@ -9261,7 +9260,7 @@ inline void grisu2_digit_gen(
     //         = ((p1        ) * 2^-e + (p2        )) * 2^e
     //         = p1 + p2 * 2^e
 
-    const diyfp one( uint64_t{1} << -M_plus.e, M_plus.e );
+    const diyfp one( uint64_t{ 1 } << -M_plus.e, M_plus.e );
 
     auto p1 = static_cast< uint32_t >( M_plus.f >> -one.e );  // p1 = f div 2^-e (Since -e >= 32, p1
                                                               // fits into a 32-bit int.)
@@ -9326,7 +9325,7 @@ inline void grisu2_digit_gen(
         // Note:
         // Since rest and delta share the same exponent e, it suffices to
         // compare the significands.
-        const uint64_t rest = ( uint64_t{p1} << -one.e ) + p2;
+        const uint64_t rest = ( uint64_t{ p1 } << -one.e ) + p2;
         if ( rest <= delta ) {
             // V = buffer * 10^n, with M- <= V <= M+.
 
@@ -9341,7 +9340,7 @@ inline void grisu2_digit_gen(
             //
             //      10^n = (10^n * 2^-e) * 2^e = ulp * 2^e
             //
-            const uint64_t ten_n = uint64_t{pow10} << -one.e;
+            const uint64_t ten_n = uint64_t{ pow10 } << -one.e;
             grisu2_round( buffer, length, dist, delta, rest, ten_n );
 
             return;
@@ -10327,7 +10326,7 @@ private:
     @sa http://bjoern.hoehrmann.de/utf-8/decoder/dfa/
     */
     static uint8_t decode( uint8_t& state, uint32_t& codep, const uint8_t byte ) noexcept {
-        static const std::array< uint8_t, 400 > utf8d = {{
+        static const std::array< uint8_t, 400 > utf8d = { {
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0,  // 00..1F
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -10356,7 +10355,7 @@ private:
             1, 1, 1,  // s5..s6
             1, 3, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1, 1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
             1, 1, 1  // s7..s8
-        }};
+        } };
 
         const uint8_t type = utf8d[byte];
 
@@ -10372,7 +10371,7 @@ private:
     output_adapter_t< char > o = nullptr;
 
     /// a (hopefully) large enough character buffer
-    std::array< char, 64 > number_buffer{{}};
+    std::array< char, 64 > number_buffer{ {} };
 
     /// the locale
     const std::lconv* loc = nullptr;
@@ -10382,7 +10381,7 @@ private:
     const char decimal_point = '\0';
 
     /// string buffer
-    std::array< char, 512 > string_buffer{{}};
+    std::array< char, 512 > string_buffer{ {} };
 
     /// the indentation character
     const char indent_char;
@@ -10566,7 +10565,7 @@ private:
         }
 
         json_pointer result = *this;
-        result.reference_tokens = {reference_tokens[0]};
+        result.reference_tokens = { reference_tokens[0] };
         return result;
     }
 
@@ -11080,8 +11079,8 @@ struct adl_serializer {
     */
     template < typename BasicJsonType, typename ValueType >
     static auto from_json( BasicJsonType&& j, ValueType& val ) noexcept(
-        noexcept(::nlohmann::from_json( std::forward< BasicJsonType >( j ), val ) ) )
-        -> decltype(::nlohmann::from_json( std::forward< BasicJsonType >( j ), val ), void() ) {
+        noexcept( ::nlohmann::from_json( std::forward< BasicJsonType >( j ), val ) ) )
+        -> decltype( ::nlohmann::from_json( std::forward< BasicJsonType >( j ), val ), void() ) {
         ::nlohmann::from_json( std::forward< BasicJsonType >( j ), val );
     }
 
@@ -11096,8 +11095,8 @@ struct adl_serializer {
     */
     template < typename BasicJsonType, typename ValueType >
     static auto to_json( BasicJsonType& j, ValueType&& val ) noexcept(
-        noexcept(::nlohmann::to_json( j, std::forward< ValueType >( val ) ) ) )
-        -> decltype(::nlohmann::to_json( j, std::forward< ValueType >( val ) ), void() ) {
+        noexcept( ::nlohmann::to_json( j, std::forward< ValueType >( val ) ) ) )
+        -> decltype( ::nlohmann::to_json( j, std::forward< ValueType >( val ) ), void() ) {
         ::nlohmann::to_json( j, std::forward< ValueType >( val ) );
     }
 };
@@ -11379,25 +11378,25 @@ public:
 #endif
 
 #if defined( __ICC ) || defined( __INTEL_COMPILER )
-        result["compiler"] = {{"family", "icc"}, {"version", __INTEL_COMPILER}};
+        result["compiler"] = { { "family", "icc" }, { "version", __INTEL_COMPILER } };
 #elif defined( __clang__ )
-        result["compiler"] = {{"family", "clang"}, {"version", __clang_version__}};
+        result["compiler"] = { { "family", "clang" }, { "version", __clang_version__ } };
 #elif defined( __GNUC__ ) || defined( __GNUG__ )
-        result["compiler"] = {{"family", "gcc"},
-            {"version", std::to_string( __GNUC__ ) + "." + std::to_string( __GNUC_MINOR__ ) + "." +
-                            std::to_string( __GNUC_PATCHLEVEL__ )}};
+        result["compiler"] = { { "family", "gcc" },
+            { "version", std::to_string( __GNUC__ ) + "." + std::to_string( __GNUC_MINOR__ ) + "." +
+                             std::to_string( __GNUC_PATCHLEVEL__ ) } };
 #elif defined( __HP_cc ) || defined( __HP_aCC )
         result["compiler"] = "hp"
 #elif defined( __IBMCPP__ )
-        result["compiler"] = {{"family", "ilecpp"}, {"version", __IBMCPP__}};
+        result["compiler"] = { { "family", "ilecpp" }, { "version", __IBMCPP__ } };
 #elif defined( _MSC_VER )
-        result["compiler"] = {{"family", "msvc"}, {"version", _MSC_VER}};
+        result["compiler"] = { { "family", "msvc" }, { "version", _MSC_VER } };
 #elif defined( __PGI )
-        result["compiler"] = {{"family", "pgcpp"}, {"version", __PGI}};
+        result["compiler"] = { { "family", "pgcpp" }, { "version", __PGI } };
 #elif defined( __SUNPRO_CC )
-        result["compiler"] = {{"family", "sunpro"}, {"version", __SUNPRO_CC}};
+        result["compiler"] = { { "family", "sunpro" }, { "version", __SUNPRO_CC } };
 #else
-        result["compiler"] = {{"family", "unknown"}, {"version", "unknown"}};
+        result["compiler"] = { { "family", "unknown" }, { "version", "unknown" } };
 #endif
 
 #ifdef __cplusplus
@@ -12014,7 +12013,9 @@ private:
                 break;
             }
 
-            default: { break; }
+            default: {
+                break;
+            }
             }
         }
     };
@@ -13328,8 +13329,8 @@ private:
     }
 
     /// get a pointer to the value (integer number)
-    constexpr const number_integer_t* get_impl_ptr( const number_integer_t* /*unused*/ ) const
-        noexcept {
+    constexpr const number_integer_t* get_impl_ptr(
+        const number_integer_t* /*unused*/ ) const noexcept {
         return is_number_integer() ? &m_value.number_integer : nullptr;
     }
 
@@ -13339,8 +13340,8 @@ private:
     }
 
     /// get a pointer to the value (unsigned number)
-    constexpr const number_unsigned_t* get_impl_ptr( const number_unsigned_t* /*unused*/ ) const
-        noexcept {
+    constexpr const number_unsigned_t* get_impl_ptr(
+        const number_unsigned_t* /*unused*/ ) const noexcept {
         return is_number_unsigned() ? &m_value.number_unsigned : nullptr;
     }
 
@@ -13350,8 +13351,8 @@ private:
     }
 
     /// get a pointer to the value (floating-point number)
-    constexpr const number_float_t* get_impl_ptr( const number_float_t* /*unused*/ ) const
-        noexcept {
+    constexpr const number_float_t* get_impl_ptr(
+        const number_float_t* /*unused*/ ) const noexcept {
         return is_number_float() ? &m_value.number_float : nullptr;
     }
 
@@ -15717,7 +15718,7 @@ public:
         it.m_it.object_iterator = res.first;
 
         // return pair of iterator and boolean
-        return {it, res.second};
+        return { it, res.second };
     }
 
     /// Helper for insertion of an iterator
@@ -18298,7 +18299,7 @@ public:
 
         if ( source.type() != target.type() ) {
             // different types: replace value
-            result.push_back( {{"op", "replace"}, {"path", path}, {"value", target}} );
+            result.push_back( { { "op", "replace" }, { "path", path }, { "value", target } } );
         } else {
             switch ( source.type() ) {
             case value_t::array: {
@@ -18320,14 +18321,15 @@ public:
                     // add operations in reverse order to avoid invalid
                     // indices
                     result.insert( result.begin() + end_index,
-                        object( {{"op", "remove"}, {"path", path + "/" + std::to_string( i )}} ) );
+                        object( { { "op", "remove" },
+                            { "path", path + "/" + std::to_string( i ) } } ) );
                     ++i;
                 }
 
                 // add other remaining elements
                 while ( i < target.size() ) {
-                    result.push_back( {{"op", "add"}, {"path", path + "/" + std::to_string( i )},
-                        {"value", target[i]}} );
+                    result.push_back( { { "op", "add" },
+                        { "path", path + "/" + std::to_string( i ) }, { "value", target[i] } } );
                     ++i;
                 }
 
@@ -18347,7 +18349,7 @@ public:
                     } else {
                         // found a key that is not in o -> remove it
                         result.push_back(
-                            object( {{"op", "remove"}, {"path", path + "/" + key}} ) );
+                            object( { { "op", "remove" }, { "path", path + "/" + key } } ) );
                     }
                 }
 
@@ -18356,8 +18358,8 @@ public:
                     if ( source.find( it.key() ) == source.end() ) {
                         // found a key that is not in this -> add it
                         const auto key = json_pointer::escape( it.key() );
-                        result.push_back(
-                            {{"op", "add"}, {"path", path + "/" + key}, {"value", it.value()}} );
+                        result.push_back( { { "op", "add" }, { "path", path + "/" + key },
+                            { "value", it.value() } } );
                     }
                 }
 
@@ -18366,7 +18368,7 @@ public:
 
             default: {
                 // both primitive type: replace value
-                result.push_back( {{"op", "replace"}, {"path", path}, {"value", target}} );
+                result.push_back( { { "op", "replace" }, { "path", path }, { "value", target } } );
                 break;
             }
             }

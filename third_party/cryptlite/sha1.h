@@ -125,14 +125,14 @@ public:
     }
 
     void final_bits( const boost::uint8_t message_bits, unsigned int length ) {
-        boost::uint8_t masks[8] = {/* 0 0b00000000 */ 0x00, /* 1 0b10000000 */ 0x80,
+        boost::uint8_t masks[8] = { /* 0 0b00000000 */ 0x00, /* 1 0b10000000 */ 0x80,
             /* 2 0b11000000 */ 0xC0, /* 3 0b11100000 */ 0xE0,
             /* 4 0b11110000 */ 0xF0, /* 5 0b11111000 */ 0xF8,
-            /* 6 0b11111100 */ 0xFC, /* 7 0b11111110 */ 0xFE};
-        boost::uint8_t markbit[8] = {/* 0 0b10000000 */ 0x80, /* 1 0b01000000 */ 0x40,
+            /* 6 0b11111100 */ 0xFC, /* 7 0b11111110 */ 0xFE };
+        boost::uint8_t markbit[8] = { /* 0 0b10000000 */ 0x80, /* 1 0b01000000 */ 0x40,
             /* 2 0b00100000 */ 0x20, /* 3 0b00010000 */ 0x10,
             /* 4 0b00001000 */ 0x08, /* 5 0b00000100 */ 0x04,
-            /* 6 0b00000010 */ 0x02, /* 7 0b00000001 */ 0x01};
+            /* 6 0b00000010 */ 0x02, /* 7 0b00000001 */ 0x01 };
 
         if ( !length )
             return;
@@ -222,7 +222,7 @@ private:
     }
 
     void process_message_block() {
-        const boost::uint32_t K[4] = {0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6};
+        const boost::uint32_t K[4] = { 0x5A827999, 0x6ED9EBA1, 0x8F1BBCDC, 0xCA62C1D6 };
         boost::uint32_t temp;
         boost::uint32_t W[80];
         boost::uint32_t A, B, C, D, E;

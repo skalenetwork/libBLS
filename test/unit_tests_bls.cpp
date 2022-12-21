@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE( SimillarHashes ) {
 
     libBLS::Bls obj = libBLS::Bls( 1, 1 );
 
-    const char message[5] = {104, 101, 108, 108, 111};
+    const char message[5] = { 104, 101, 108, 108, 111 };
 
     BOOST_REQUIRE( obj.HashBytes( message, 5 ) == obj.Hashing( "hello" ) );
 
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignatures ) {
     libff::alt_bn128_Fr snd_secret = libff::alt_bn128_Fr(
         "1242918195122561069654878094438043001503525111785440814423171735067409748785" );
 
-    std::vector< libff::alt_bn128_Fr > secret_keys = {fst_secret, snd_secret};
+    std::vector< libff::alt_bn128_Fr > secret_keys = { fst_secret, snd_secret };
 
     // correct public key for this pair of secret keys
     libff::alt_bn128_Fq first_coord_x = libff::alt_bn128_Fq(
@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignatures ) {
 
     BOOST_CHECK( hash.is_well_formed() );  // hash belongs to group G1
 
-    std::vector< size_t > testing_nodes = {1, 2};
+    std::vector< size_t > testing_nodes = { 1, 2 };
 
     std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
         libBLS::ThresholdUtils::LagrangeCoeffs( testing_nodes, 2 );
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignatures ) {
     libff::alt_bn128_G1 fst_signature = obj.Signing( hash, fst_secret );
     libff::alt_bn128_G1 snd_signature = obj.Signing( hash, snd_secret );
 
-    std::vector< libff::alt_bn128_G1 > single_signatures = {fst_signature, snd_signature};
+    std::vector< libff::alt_bn128_G1 > single_signatures = { fst_signature, snd_signature };
 
     libff::alt_bn128_G1 common_signature =
         obj.SignatureRecover( single_signatures, lagrange_coeffs );
@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesFalse ) {
     libff::alt_bn128_Fr snd_secret = libff::alt_bn128_Fr(
         "1242918195122561069654878094438043001503525111785440814423171735067409748785" );
 
-    std::vector< libff::alt_bn128_Fr > secret_keys = {fst_secret, snd_secret};
+    std::vector< libff::alt_bn128_Fr > secret_keys = { fst_secret, snd_secret };
 
     // correct public key for secret keys from previous test
     libff::alt_bn128_Fq first_coord_x = libff::alt_bn128_Fq(
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesFalse ) {
 
     BOOST_CHECK( hash.is_well_formed() );  // hash belongs to group G1
 
-    std::vector< size_t > testing_nodes = {1, 2};
+    std::vector< size_t > testing_nodes = { 1, 2 };
 
     std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
         libBLS::ThresholdUtils::LagrangeCoeffs( testing_nodes, 2 );
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesFalse ) {
     libff::alt_bn128_G1 fst_signature = obj.Signing( hash, fst_secret );
     libff::alt_bn128_G1 snd_signature = obj.Signing( hash, snd_secret );
 
-    std::vector< libff::alt_bn128_G1 > single_signatures = {fst_signature, snd_signature};
+    std::vector< libff::alt_bn128_G1 > single_signatures = { fst_signature, snd_signature };
 
     libff::alt_bn128_G1 common_signature =
         obj.SignatureRecover( single_signatures, lagrange_coeffs );
@@ -513,13 +513,13 @@ BOOST_AUTO_TEST_CASE( SignVerification ) {
     BOOST_REQUIRE_THROW(
         obj_2_2.SignatureRecover( sig_shares, coeffs ), libBLS::ThresholdUtils::IsNotWellFormed );
 
-    std::vector< size_t > idx = {1};
+    std::vector< size_t > idx = { 1 };
 
     BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::LagrangeCoeffs( idx, num_signed ),
         libBLS::ThresholdUtils::IncorrectInput );
 
     idx.clear();
-    idx = {1, 1};
+    idx = { 1, 1 };
 
     BOOST_REQUIRE_THROW(
         libBLS::ThresholdUtils::LagrangeCoeffs( idx, 2 ), libBLS::ThresholdUtils::IncorrectInput );
