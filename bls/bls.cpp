@@ -158,6 +158,24 @@ libff::alt_bn128_G1 Bls::HashPublicKeyToG1( const libff::alt_bn128_G2& elem ) {
     return ThresholdUtils::HashtoG1( hash_bytes_arr );
 }
 
+std::pair< libff::alt_bn128_G1, std::string > Bls::HashPublicKeyToG1WithHint(
+    const libff::alt_bn128_G2& elem ) {
+    auto serialized_elem_vector = ThresholdUtils::G2ToString( elem, 16 );
+
+    std::string serialized_elem = std::accumulate(
+        serialized_elem_vector.begin(), serialized_elem_vector.end(), std::string( "" ) );
+
+    auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
+
+    uint64_t bin_len;
+    if ( !ThresholdUtils::hex2carray(
+             serialized_elem.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+        throw std::runtime_error( "Invalid hash" );
+    }
+
+    return Bls::HashtoG1withHint( hash_bytes_arr );
+}
+
 libff::alt_bn128_G1 Bls::Signing(
     const libff::alt_bn128_G1 hash, const libff::alt_bn128_Fr secret_key ) {
     // sign a message with its hash and secret key

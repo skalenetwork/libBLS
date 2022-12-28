@@ -56,6 +56,9 @@ public:
 
     static libff::alt_bn128_G1 HashPublicKeyToG1( const libff::alt_bn128_G2& elem );
 
+    static std::pair< libff::alt_bn128_G1, std::string > HashPublicKeyToG1WithHint(
+        const libff::alt_bn128_G2& elem );
+
     static libff::alt_bn128_G1 Signing(
         const libff::alt_bn128_G1 hash, const libff::alt_bn128_Fr secret_key );
 
