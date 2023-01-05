@@ -483,6 +483,14 @@ BOOST_AUTO_TEST_CASE( blsAggregatedSignatures ) {
     libff::alt_bn128_G1 aggregated_signature = libBLS::Bls::Aggregate( { first_signature, second_signature } );
     
     BOOST_REQUIRE( libBLS::Bls::FastAggregateVerify( { first_key.second, second_key.second }, hex_message, aggregated_signature ) );
+    
+    auto malicious_key = libBLS::Bls::KeyGeneration();
+    
+    libff::alt_bn128_G1 malicious_signature = libBLS::Bls::CoreSignAggregated( hex_message, malicious_key.first );
+    
+    auto malicious_aggregated_signature = libBLS::Bls::Aggregate( { first_signature, malicious_signature } );
+    
+    BOOST_REQUIRE( !libBLS::Bls::FastAggregateVerify( { first_key.second, second_key.second }, hex_message, malicious_aggregated_signature ) );
 }
 
 BOOST_AUTO_TEST_CASE( blsAggregatedSignaturesPopProveVerify ) {
@@ -495,6 +503,10 @@ BOOST_AUTO_TEST_CASE( blsAggregatedSignaturesPopProveVerify ) {
     auto pop_prove = libBLS::Bls::PopProve( key_pair.first );
     
     BOOST_REQUIRE( libBLS::Bls::PopVerify( key_pair.second, pop_prove ) );
+    
+    auto random_prove = libff::alt_bn128_G1::random_element();
+    
+    BOOST_REQUIRE( !libBLS::Bls::PopVerify( key_pair.second, random_prove ) );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

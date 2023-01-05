@@ -93,7 +93,7 @@ public:
     static libff::alt_bn128_G1 PopProve( const libff::alt_bn128_Fr& secret_key );
 
     static bool PopVerify(
-        const libff::alt_bn128_G2& public_key, const libff::alt_bn128_G1& proof );
+        const libff::alt_bn128_G2& public_key, const libff::alt_bn128_G1& prove );
 
 private:
     const size_t t_ = 0;

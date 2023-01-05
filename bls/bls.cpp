@@ -147,7 +147,6 @@ libff::alt_bn128_G1 Bls::HashPublicKeyToG1( const libff::alt_bn128_G2& elem ) {
     std::string serialized_elem = std::accumulate(
         serialized_elem_vector.begin(), serialized_elem_vector.end(), std::string( "" ) );\
 
-//    std::cout << serialized_elem.length() << '\n';
     std::string hashed_pubkey = cryptlite::sha256::hash_hex( serialized_elem );
     
     auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
@@ -387,8 +386,8 @@ libff::alt_bn128_G1 Bls::PopProve( const libff::alt_bn128_Fr& secret_key ) {
     return ret;
 }
 
-bool Bls::PopVerify( const libff::alt_bn128_G2& public_key, const libff::alt_bn128_G1& proof ) {
-    if ( !ThresholdUtils::ValidateKey( proof ) || !ThresholdUtils::ValidateKey( public_key ) ) {
+bool Bls::PopVerify( const libff::alt_bn128_G2& public_key, const libff::alt_bn128_G1& prove ) {
+    if ( !ThresholdUtils::ValidateKey( prove ) || !ThresholdUtils::ValidateKey( public_key ) ) {
         throw ThresholdUtils::IsNotWellFormed(
             "incorrect input data to verify proof of possession" );
     }
@@ -396,7 +395,7 @@ bool Bls::PopVerify( const libff::alt_bn128_G2& public_key, const libff::alt_bn1
     libff::alt_bn128_G1 hash = HashPublicKeyToG1( public_key );
 
     return libff::alt_bn128_ate_reduced_pairing( hash, public_key ) ==
-           libff::alt_bn128_ate_reduced_pairing( proof, libff::alt_bn128_G2::one() );
+           libff::alt_bn128_ate_reduced_pairing( prove, libff::alt_bn128_G2::one() );
 }
 
 }  // namespace libBLS
