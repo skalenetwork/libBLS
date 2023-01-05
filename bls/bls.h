@@ -43,7 +43,7 @@ class Bls {
 public:
     Bls( const size_t t, const size_t n );
 
-    std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > KeyGeneration();
+    static std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > KeyGeneration();
 
     static libff::alt_bn128_G1 Hashing( const std::string& message,
         std::string ( *hash_func )( const std::string& str ) = cryptlite::sha256::hash_hex );
