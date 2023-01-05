@@ -136,13 +136,14 @@ std::array< uint8_t, 32 > GenerateRandHash() {
 }
 
 std::string rand32HexStr() {
-    std::array<char, 16> s = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-    
+    std::array< char, 16 > s = {
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+
     std::string res = "";
-    for (size_t i = 0; i < 32; ++i) {
-        res.push_back( *(s.begin() + rand_gen() % 16) );
+    for ( size_t i = 0; i < 32; ++i ) {
+        res.push_back( *( s.begin() + rand_gen() % 16 ) );
     }
-    
+
     return res;
 }
 
@@ -761,7 +762,7 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDVERIFICATIONONLY ) {
 
 BOOST_AUTO_TEST_CASE( BLSAGGREGATEDSIGNATURESSCHEME ) {
     size_t num_all = rand_gen() % 100 + 2;
-    
+
     std::vector< libff::alt_bn128_Fr > private_keys( num_all );
     std::vector< libff::alt_bn128_G2 > public_keys( num_all );
     for ( size_t i = 0; i < num_all; ++i ) {
@@ -769,44 +770,51 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDSIGNATURESSCHEME ) {
         private_keys[i] = key_pair.first;
         public_keys[i] = key_pair.second;
     }
-    
+
     std::string hex_message = rand32HexStr();
-    
+
     std::vector< libff::alt_bn128_G1 > signatures( num_all );
     for ( size_t i = 0; i < num_all; ++i ) {
         signatures[i] = libBLS::Bls::CoreSignAggregated( hex_message, private_keys[i] );
         BOOST_REQUIRE( libBLS::Bls::CoreVerify( public_keys[i], hex_message, signatures[i] ) );
-        BOOST_REQUIRE_THROW( libBLS::Bls::CoreVerify( public_keys[i], hex_message, SpoilSignature( signatures[i] ) ), libBLS::ThresholdUtils::IsNotWellFormed );
+        BOOST_REQUIRE_THROW(
+            libBLS::Bls::CoreVerify( public_keys[i], hex_message, SpoilSignature( signatures[i] ) ),
+            libBLS::ThresholdUtils::IsNotWellFormed );
     }
-    
+
     for ( size_t i = 0; i < num_all; ++i ) {
         auto malicious_signatures = signatures;
         size_t rand_idx = rand_gen() % num_all;
-        malicious_signatures[ rand_idx ] = SpoilSignature( signatures[rand_idx] );
-        
-        BOOST_REQUIRE_THROW( libBLS::Bls::Aggregate( malicious_signatures ), libBLS::ThresholdUtils::IsNotWellFormed );
+        malicious_signatures[rand_idx] = SpoilSignature( signatures[rand_idx] );
+
+        BOOST_REQUIRE_THROW( libBLS::Bls::Aggregate( malicious_signatures ),
+            libBLS::ThresholdUtils::IsNotWellFormed );
     }
-    
+
     auto aggregated_signature = libBLS::Bls::Aggregate( signatures );
-    
-    BOOST_REQUIRE( libBLS::Bls::FastAggregateVerify( public_keys, hex_message, aggregated_signature ) );
-    
+
+    BOOST_REQUIRE(
+        libBLS::Bls::FastAggregateVerify( public_keys, hex_message, aggregated_signature ) );
+
     for ( size_t i = 0; i < num_all; ++i ) {
         auto malicious_public_keys = public_keys;
         size_t rand_idx = rand_gen() % num_all;
-        malicious_public_keys[ rand_idx ] = SpoilPublicKey( public_keys[rand_idx] );
-        
-        BOOST_REQUIRE_THROW( libBLS::Bls::FastAggregateVerify( malicious_public_keys, hex_message, aggregated_signature ), libBLS::ThresholdUtils::IsNotWellFormed );
+        malicious_public_keys[rand_idx] = SpoilPublicKey( public_keys[rand_idx] );
+
+        BOOST_REQUIRE_THROW( libBLS::Bls::FastAggregateVerify(
+                                 malicious_public_keys, hex_message, aggregated_signature ),
+            libBLS::ThresholdUtils::IsNotWellFormed );
     }
-    
+
     for ( size_t i = 0; i < num_all; ++i ) {
         auto malicious_public_keys = public_keys;
         size_t rand_idx = rand_gen() % num_all;
-        malicious_public_keys[ rand_idx ] = libff::alt_bn128_G2::random_element();
-        
-        BOOST_REQUIRE( !libBLS::Bls::FastAggregateVerify( malicious_public_keys, hex_message, aggregated_signature ) );
+        malicious_public_keys[rand_idx] = libff::alt_bn128_G2::random_element();
+
+        BOOST_REQUIRE( !libBLS::Bls::FastAggregateVerify(
+            malicious_public_keys, hex_message, aggregated_signature ) );
     }
-    
+
     std::cerr << "BLS AGGREGATED SIGNATURES SCHEME TEST FINISHED" << std::endl;
 }
 

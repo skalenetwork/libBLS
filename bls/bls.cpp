@@ -145,10 +145,10 @@ libff::alt_bn128_G1 Bls::HashPublicKeyToG1( const libff::alt_bn128_G2& elem ) {
     auto serialized_elem_vector = ThresholdUtils::G2ToString( elem, 16 );
 
     std::string serialized_elem = std::accumulate(
-        serialized_elem_vector.begin(), serialized_elem_vector.end(), std::string( "" ) );\
+        serialized_elem_vector.begin(), serialized_elem_vector.end(), std::string( "" ) );
 
     std::string hashed_pubkey = cryptlite::sha256::hash_hex( serialized_elem );
-    
+
     auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
 
     uint64_t bin_len;
