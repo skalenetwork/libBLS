@@ -499,6 +499,8 @@ BOOST_AUTO_TEST_CASE( blsAggregatedSignatures ) {
 
     BOOST_REQUIRE( !libBLS::Bls::FastAggregateVerify(
         { first_key.second, second_key.second }, hex_message, malicious_aggregated_signature ) );
+
+    std::cout << "DONE\n";
 }
 
 BOOST_AUTO_TEST_CASE( blsAggregatedSignaturesPopProveVerify ) {
@@ -515,6 +517,8 @@ BOOST_AUTO_TEST_CASE( blsAggregatedSignaturesPopProveVerify ) {
     auto random_prove = libff::alt_bn128_G1::random_element();
 
     BOOST_REQUIRE( !libBLS::Bls::PopVerify( key_pair.second, random_prove ) );
+
+    std::cout << "DONE\n";
 }
 
 BOOST_AUTO_TEST_SUITE_END()
