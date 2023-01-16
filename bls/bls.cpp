@@ -166,11 +166,12 @@ std::pair< libff::alt_bn128_G1, std::string > Bls::HashPublicKeyToG1WithHint(
     std::string serialized_elem = std::accumulate(
         serialized_elem_vector.begin(), serialized_elem_vector.end(), std::string( "" ) );
 
+    std::string hashed_pubkey = cryptlite::sha256::hash_hex( serialized_elem );
+
     auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
 
     uint64_t bin_len;
-    if ( !ThresholdUtils::hex2carray(
-             serialized_elem.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+    if ( !ThresholdUtils::hex2carray( hashed_pubkey.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
         throw std::runtime_error( "Invalid hash" );
     }
 
