@@ -264,6 +264,8 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToString ) {
     auto ciphertext_with_aes = te_instance.aesCiphertextFromString( ciphertext_string );
 
     auto ciphertext = ciphertext_with_aes.first;
+    BOOST_REQUIRE( ciphertext == te_instance.ciphertextFromString( ciphertext_string ) );
+
     auto encrypted_message = ciphertext_with_aes.second;
 
     libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
