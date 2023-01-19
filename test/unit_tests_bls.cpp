@@ -503,24 +503,6 @@ BOOST_AUTO_TEST_CASE( blsAggregatedSignatures ) {
     std::cout << "DONE\n";
 }
 
-BOOST_AUTO_TEST_CASE( blsAggregatedSignaturesPopProveVerify ) {
-    std::cout << "Testing blsAggregatedSignaturesPopProveVerify\n";
-
-    libBLS::ThresholdUtils::initCurve();
-
-    auto key_pair = libBLS::Bls::KeyGeneration();
-
-    auto pop_prove = libBLS::Bls::PopProve( key_pair.first );
-
-    BOOST_REQUIRE( libBLS::Bls::PopVerify( key_pair.second, pop_prove ) );
-
-    auto random_prove = libff::alt_bn128_G1::random_element();
-
-    BOOST_REQUIRE( !libBLS::Bls::PopVerify( key_pair.second, random_prove ) );
-
-    std::cout << "DONE\n";
-}
-
 BOOST_AUTO_TEST_SUITE_END()
 
 

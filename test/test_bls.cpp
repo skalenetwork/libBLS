@@ -97,32 +97,32 @@ libff::alt_bn128_G1 SpoilSignature( libff::alt_bn128_G1& sign ) {
     return bad_sign;
 }
 
-libff::alt_bn128_G2 SpoilPublicKey( libff::alt_bn128_G2& sign ) {
-    libff::alt_bn128_G2 bad_sign = sign;
-    while ( bad_sign.is_well_formed() ) {
+libff::alt_bn128_G2 SpoilPublicKey( libff::alt_bn128_G2& elem ) {
+    libff::alt_bn128_G2 bad_elem = elem;
+    while ( bad_elem.is_well_formed() ) {
         size_t bad_coord_num = rand_gen() % 6;
         switch ( bad_coord_num ) {
         case 0:
-            bad_sign.X.c0 = SpoilSignCoord( sign.X.c0 );
+            bad_elem.X.c0 = SpoilSignCoord( elem.X.c0 );
             break;
         case 1:
-            bad_sign.X.c1 = SpoilSignCoord( sign.X.c1 );
+            bad_elem.X.c1 = SpoilSignCoord( elem.X.c1 );
             break;
         case 2:
-            bad_sign.Y.c0 = SpoilSignCoord( sign.Y.c0 );
+            bad_elem.Y.c0 = SpoilSignCoord( elem.Y.c0 );
             break;
         case 3:
-            bad_sign.Y.c1 = SpoilSignCoord( sign.Y.c1 );
+            bad_elem.Y.c1 = SpoilSignCoord( elem.Y.c1 );
             break;
         case 4:
-            bad_sign.Z.c0 = SpoilSignCoord( sign.Z.c0 );
+            bad_elem.Z.c0 = SpoilSignCoord( elem.Z.c0 );
             break;
         case 5:
-            bad_sign.Z.c1 = SpoilSignCoord( sign.Z.c1 );
+            bad_elem.Z.c1 = SpoilSignCoord( elem.Z.c1 );
             break;
         }
     }
-    return bad_sign;
+    return bad_elem;
 }
 
 std::array< uint8_t, 32 > GenerateRandHash() {
@@ -816,6 +816,35 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDSIGNATURESSCHEME ) {
     }
 
     std::cerr << "BLS AGGREGATED SIGNATURES SCHEME TEST FINISHED" << std::endl;
+}
+
+BOOST_AUTO_TEST_CASE( BLSAGGREGATEDPOPPROVEVERIFY ) {
+    std::cout << "Testing blsAggregatedSignaturesPopProveVerify\n";
+
+    libBLS::ThresholdUtils::initCurve();
+
+    auto key_pair = libBLS::Bls::KeyGeneration();
+
+    auto pop_prove = libBLS::Bls::PopProve( key_pair.first );
+
+    BOOST_REQUIRE( libBLS::Bls::PopVerify( key_pair.second, pop_prove ) );
+
+    auto random_prove = libff::alt_bn128_G1::random_element();
+
+    BOOST_REQUIRE( !libBLS::Bls::PopVerify( key_pair.second, random_prove ) );
+
+    BOOST_REQUIRE( libBLS::Bls::HashPublicKeyToG1WithHint( key_pair.second ).first ==
+                   libBLS::Bls::HashPublicKeyToG1( key_pair.second ) );
+
+    auto spoiled_public_key = SpoilPublicKey( key_pair.second );
+    auto spoiled_pop_prove = SpoilSignature( pop_prove );
+
+    BOOST_REQUIRE_THROW( libBLS::Bls::PopVerify( spoiled_public_key, pop_prove ),
+        libBLS::ThresholdUtils::IsNotWellFormed );
+    BOOST_REQUIRE_THROW( libBLS::Bls::PopVerify( key_pair.second, spoiled_pop_prove ),
+        libBLS::ThresholdUtils::IsNotWellFormed );
+
+    std::cout << "BLS AGGREGATED POP PROVE VERIFY TEST PASSED\n";
 }
 
 BOOST_AUTO_TEST_CASE( Exceptions ) {
