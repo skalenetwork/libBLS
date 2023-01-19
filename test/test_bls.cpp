@@ -97,6 +97,34 @@ libff::alt_bn128_G1 SpoilSignature( libff::alt_bn128_G1& sign ) {
     return bad_sign;
 }
 
+libff::alt_bn128_G2 SpoilPublicKey( libff::alt_bn128_G2& elem ) {
+    libff::alt_bn128_G2 bad_elem = elem;
+    while ( bad_elem.is_well_formed() ) {
+        size_t bad_coord_num = rand_gen() % 6;
+        switch ( bad_coord_num ) {
+        case 0:
+            bad_elem.X.c0 = SpoilSignCoord( elem.X.c0 );
+            break;
+        case 1:
+            bad_elem.X.c1 = SpoilSignCoord( elem.X.c1 );
+            break;
+        case 2:
+            bad_elem.Y.c0 = SpoilSignCoord( elem.Y.c0 );
+            break;
+        case 3:
+            bad_elem.Y.c1 = SpoilSignCoord( elem.Y.c1 );
+            break;
+        case 4:
+            bad_elem.Z.c0 = SpoilSignCoord( elem.Z.c0 );
+            break;
+        case 5:
+            bad_elem.Z.c1 = SpoilSignCoord( elem.Z.c1 );
+            break;
+        }
+    }
+    return bad_elem;
+}
+
 std::array< uint8_t, 32 > GenerateRandHash() {
     // generates random hexadermical hash
     std::array< uint8_t, 32 > hash_byte_arr;
@@ -105,6 +133,18 @@ std::array< uint8_t, 32 > GenerateRandHash() {
     }
 
     return hash_byte_arr;
+}
+
+std::string rand32HexStr() {
+    std::array< char, 16 > s = {
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+
+    std::string res = "";
+    for ( size_t i = 0; i < 32; ++i ) {
+        res.push_back( *( s.begin() + rand_gen() % 16 ) );
+    }
+
+    return res;
 }
 
 BOOST_AUTO_TEST_CASE( libBls ) {
@@ -587,7 +627,7 @@ BOOST_AUTO_TEST_CASE( BLSWITHDKG ) {
     std::cerr << "BLS WITH DKG TEST FINISHED" << std::endl;
 }
 
-BOOST_AUTO_TEST_CASE( BLSAGGREGATEDVERIFICATION ) {
+BOOST_AUTO_TEST_CASE( BLSAGGREGATEDVERIFICATIONONLY ) {
     for ( size_t i = 0; i < 10; ++i ) {
         size_t num_all = rand_gen() % 15 + 2;
         size_t num_signed = rand_gen() % ( num_all - 1 ) + 1;
@@ -717,7 +757,92 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDVERIFICATION ) {
             BOOST_REQUIRE( common_pkey.AggregatedVerifySig( hash_ptrs, common_sig_ptrs ) );
         }
     }
-    std::cerr << "BLS AGGREGATED VERIFICATION TEST FINISHED" << std::endl;
+    std::cerr << "BLS AGGREGATED VERIFICATION ONLY TEST FINISHED" << std::endl;
+}
+
+BOOST_AUTO_TEST_CASE( BLSAGGREGATEDSIGNATURESSCHEME ) {
+    size_t num_all = rand_gen() % 100 + 2;
+
+    std::vector< libff::alt_bn128_Fr > private_keys( num_all );
+    std::vector< libff::alt_bn128_G2 > public_keys( num_all );
+    for ( size_t i = 0; i < num_all; ++i ) {
+        auto key_pair = libBLS::Bls::KeyGeneration();
+        private_keys[i] = key_pair.first;
+        public_keys[i] = key_pair.second;
+    }
+
+    std::string hex_message = rand32HexStr();
+
+    std::vector< libff::alt_bn128_G1 > signatures( num_all );
+    for ( size_t i = 0; i < num_all; ++i ) {
+        signatures[i] = libBLS::Bls::CoreSignAggregated( hex_message, private_keys[i] );
+        BOOST_REQUIRE( libBLS::Bls::CoreVerify( public_keys[i], hex_message, signatures[i] ) );
+        BOOST_REQUIRE_THROW(
+            libBLS::Bls::CoreVerify( public_keys[i], hex_message, SpoilSignature( signatures[i] ) ),
+            libBLS::ThresholdUtils::IsNotWellFormed );
+    }
+
+    for ( size_t i = 0; i < num_all; ++i ) {
+        auto malicious_signatures = signatures;
+        size_t rand_idx = rand_gen() % num_all;
+        malicious_signatures[rand_idx] = SpoilSignature( signatures[rand_idx] );
+
+        BOOST_REQUIRE_THROW( libBLS::Bls::Aggregate( malicious_signatures ),
+            libBLS::ThresholdUtils::IsNotWellFormed );
+    }
+
+    auto aggregated_signature = libBLS::Bls::Aggregate( signatures );
+
+    BOOST_REQUIRE(
+        libBLS::Bls::FastAggregateVerify( public_keys, hex_message, aggregated_signature ) );
+
+    for ( size_t i = 0; i < num_all; ++i ) {
+        auto malicious_public_keys = public_keys;
+        size_t rand_idx = rand_gen() % num_all;
+        malicious_public_keys[rand_idx] = SpoilPublicKey( public_keys[rand_idx] );
+
+        BOOST_REQUIRE_THROW( libBLS::Bls::FastAggregateVerify(
+                                 malicious_public_keys, hex_message, aggregated_signature ),
+            libBLS::ThresholdUtils::IsNotWellFormed );
+    }
+
+    for ( size_t i = 0; i < num_all; ++i ) {
+        auto malicious_public_keys = public_keys;
+        size_t rand_idx = rand_gen() % num_all;
+        malicious_public_keys[rand_idx] = libff::alt_bn128_G2::random_element();
+
+        BOOST_REQUIRE( !libBLS::Bls::FastAggregateVerify(
+            malicious_public_keys, hex_message, aggregated_signature ) );
+    }
+
+    std::cerr << "BLS AGGREGATED SIGNATURES SCHEME TEST FINISHED" << std::endl;
+}
+
+BOOST_AUTO_TEST_CASE( BLSAGGREGATEDPOPPROVEVERIFY ) {
+    libBLS::ThresholdUtils::initCurve();
+
+    auto key_pair = libBLS::Bls::KeyGeneration();
+
+    auto pop_prove = libBLS::Bls::PopProve( key_pair.first );
+
+    BOOST_REQUIRE( libBLS::Bls::PopVerify( key_pair.second, pop_prove ) );
+
+    auto random_prove = libff::alt_bn128_G1::random_element();
+
+    BOOST_REQUIRE( !libBLS::Bls::PopVerify( key_pair.second, random_prove ) );
+
+    BOOST_REQUIRE( libBLS::Bls::HashPublicKeyToG1WithHint( key_pair.second ).first ==
+                   libBLS::Bls::HashPublicKeyToG1( key_pair.second ) );
+
+    auto spoiled_public_key = SpoilPublicKey( key_pair.second );
+    auto spoiled_pop_prove = SpoilSignature( pop_prove );
+
+    BOOST_REQUIRE_THROW( libBLS::Bls::PopVerify( spoiled_public_key, pop_prove ),
+        libBLS::ThresholdUtils::IsNotWellFormed );
+    BOOST_REQUIRE_THROW( libBLS::Bls::PopVerify( key_pair.second, spoiled_pop_prove ),
+        libBLS::ThresholdUtils::IsNotWellFormed );
+
+    std::cout << "BLS AGGREGATED POP PROVE VERIFY TEST PASSED\n";
 }
 
 BOOST_AUTO_TEST_CASE( Exceptions ) {
@@ -850,7 +975,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        std::vector< std::string > coords = {"0", "0", "0", "0"};
+        std::vector< std::string > coords = { "0", "0", "0", "0" };
         auto vector_ptr_str = std::make_shared< std::vector< std::string > >( coords );
         BOOST_REQUIRE_THROW(
             BLSPublicKey pkey( vector_ptr_str ), libBLS::ThresholdUtils::IsNotWellFormed );
@@ -960,7 +1085,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        std::vector< std::string > coords = {"0", "0", "0", "0"};
+        std::vector< std::string > coords = { "0", "0", "0", "0" };
         auto vector_str_ptr = std::make_shared< std::vector< std::string > >( coords );
         BOOST_REQUIRE_THROW( BLSPublicKeyShare pkey( vector_str_ptr, num_signed, num_all ),
             libBLS::ThresholdUtils::IsNotWellFormed );
@@ -1233,7 +1358,7 @@ BOOST_AUTO_TEST_CASE( DKGWrappersExceptions ) {
 
     {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
-        std::vector< libff::alt_bn128_G2 > vect = {libff::alt_bn128_G2::random_element()};
+        std::vector< libff::alt_bn128_G2 > vect = { libff::alt_bn128_G2::random_element() };
         BOOST_REQUIRE_THROW( dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::zero(),
                                  std::make_shared< std::vector< libff::alt_bn128_G2 > >( vect ) ),
             libBLS::ThresholdUtils::ZeroSecretKey );
@@ -1254,7 +1379,7 @@ BOOST_AUTO_TEST_CASE( DKGWrappersExceptions ) {
 
     {
         DKGBLSWrapper dkg_wrap( num_signed + 1, num_all + 1 );
-        std::vector< libff::alt_bn128_G2 > vect = {libff::alt_bn128_G2::random_element()};
+        std::vector< libff::alt_bn128_G2 > vect = { libff::alt_bn128_G2::random_element() };
         BOOST_REQUIRE_THROW( dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::random_element(),
                                  std::make_shared< std::vector< libff::alt_bn128_G2 > >( vect ) ),
             libBLS::ThresholdUtils::IncorrectInput );

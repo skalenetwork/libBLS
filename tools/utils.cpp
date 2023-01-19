@@ -231,6 +231,17 @@ libff::alt_bn128_G1 ThresholdUtils::HashtoG1(
     return result;
 }
 
+libff::alt_bn128_G1 ThresholdUtils::HashtoG1( const std::string& message ) {
+    auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
+
+    uint64_t bin_len;
+    if ( !ThresholdUtils::hex2carray( message.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+        throw std::runtime_error( "Invalid hash" );
+    }
+
+    return ThresholdUtils::HashtoG1( hash_bytes_arr );
+}
+
 bool ThresholdUtils::isStringNumber( const std::string& str ) {
     if ( str.at( 0 ) == '0' && str.length() > 1 )
         return false;
@@ -247,7 +258,7 @@ std::string ThresholdUtils::carray2Hex( const unsigned char* d, uint64_t len ) {
     _hexArray.resize( 2 * len );
 
     char hexval[16] = {
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
     for ( uint64_t j = 0; j < len; j++ ) {
         _hexArray[j * 2] = hexval[( ( d[j] >> 4 ) & 0xF )];
@@ -296,11 +307,6 @@ bool ThresholdUtils::checkHex( const std::string& hex ) {
     mpz_clear( num );
 
     return true;
-}
-
-bool ThresholdUtils::isG2( const libff::alt_bn128_G2& point ) {
-    return point.is_well_formed() &&
-           libff::alt_bn128_G2::order() * point == libff::alt_bn128_G2::zero();
 }
 
 std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ThresholdUtils::ParseHint(

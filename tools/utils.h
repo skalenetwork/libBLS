@@ -87,6 +87,8 @@ public:
     static libff::alt_bn128_G1 HashtoG1(
         std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
 
+    static libff::alt_bn128_G1 HashtoG1( const std::string& message );
+
     static std::vector< uint8_t > aesEncrypt( const std::string& message, const std::string& key );
 
     static std::string aesDecrypt(
@@ -119,7 +121,8 @@ public:
 
     static bool checkHex( const std::string& hex );
 
-    static bool isG2( const libff::alt_bn128_G2& point );
+    template < class T >
+    static bool ValidateKey( const T& point );
 };
 
 template < class T >
@@ -137,6 +140,11 @@ std::string ThresholdUtils::fieldElementToString( const T& field_elem, int base 
     std::string output = tmp;
 
     return output;
+}
+
+template < class T >
+bool ThresholdUtils::ValidateKey( const T& point ) {
+    return point.is_well_formed() && T::order() * point == T::zero();
 }
 
 }  // namespace libBLS

@@ -141,7 +141,7 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::encryptWithAES(
     auto V = std::get< 1 >( ciphertext );
     auto W = std::get< 2 >( ciphertext );
 
-    return {{U, V, W}, encrypted_message};
+    return { { U, V, W }, encrypted_message };
 }
 
 std::string TE::encryptMessage( const std::string& message, const std::string& common_public_str ) {
@@ -359,7 +359,7 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::aesCiphertextFromString(
         throw ThresholdUtils::IncorrectInput( "Bad encrypted aes key provided" );
     }
 
-    return {{U, V, W}, aes_cipher};
+    return { { U, V, W }, aes_cipher };
 }
 
 Ciphertext TE::ciphertextFromString( const std::string& ciphertext ) {
@@ -390,7 +390,7 @@ Ciphertext TE::ciphertextFromString( const std::string& ciphertext ) {
         throw ThresholdUtils::IncorrectInput( "Bad encrypted aes key provided" );
     }
 
-    return {U, V, W};
+    return { U, V, W };
 }
 
 }  // namespace libBLS

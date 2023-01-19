@@ -43,7 +43,7 @@ class Bls {
 public:
     Bls( const size_t t, const size_t n );
 
-    std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > KeyGeneration();
+    static std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > KeyGeneration();
 
     static libff::alt_bn128_G1 Hashing( const std::string& message,
         std::string ( *hash_func )( const std::string& str ) = cryptlite::sha256::hash_hex );
@@ -54,8 +54,24 @@ public:
     static std::pair< libff::alt_bn128_G1, std::string > HashtoG1withHint(
         std::shared_ptr< std::array< uint8_t, 32 > > );
 
+    static libff::alt_bn128_G1 HashPublicKeyToG1( const libff::alt_bn128_G2& elem );
+
+    static std::pair< libff::alt_bn128_G1, std::string > HashPublicKeyToG1WithHint(
+        const libff::alt_bn128_G2& elem );
+
     static libff::alt_bn128_G1 Signing(
         const libff::alt_bn128_G1 hash, const libff::alt_bn128_Fr secret_key );
+
+    static libff::alt_bn128_G1 CoreSignAggregated(
+        const std::string& message, const libff::alt_bn128_Fr secret_key );
+
+    static libff::alt_bn128_G1 Aggregate( const std::vector< libff::alt_bn128_G1 >& signatures );
+
+    static bool CoreVerify( const libff::alt_bn128_G2& public_key, const std::string& message,
+        const libff::alt_bn128_G1& signature );
+
+    static bool FastAggregateVerify( const std::vector< libff::alt_bn128_G2 >& public_keys,
+        const std::string& message, const libff::alt_bn128_G1& signature );
 
     static bool Verification( const std::string& to_be_hashed, const libff::alt_bn128_G1 sign,
         const libff::alt_bn128_G2 public_key );
@@ -73,6 +89,11 @@ public:
 
     libff::alt_bn128_G1 SignatureRecover( const std::vector< libff::alt_bn128_G1 >& shares,
         const std::vector< libff::alt_bn128_Fr >& coeffs );
+
+    static libff::alt_bn128_G1 PopProve( const libff::alt_bn128_Fr& secret_key );
+
+    static bool PopVerify(
+        const libff::alt_bn128_G2& public_key, const libff::alt_bn128_G1& prove );
 
 private:
     const size_t t_ = 0;

@@ -43,7 +43,7 @@ Bls::Bls( const size_t t, const size_t n ) : t_( t ), n_( n ) {
 }
 
 std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > Bls::KeyGeneration() {
-    // generate secret and public KeysRecover
+    // generate sample secret and public keys
     libff::alt_bn128_Fr secret_key =
         libff::alt_bn128_Fr::random_element();  // secret key generation
 
@@ -141,6 +141,43 @@ libff::alt_bn128_G1 Bls::HashBytes(
     return hash;
 }
 
+libff::alt_bn128_G1 Bls::HashPublicKeyToG1( const libff::alt_bn128_G2& elem ) {
+    auto serialized_elem_vector = ThresholdUtils::G2ToString( elem, 16 );
+
+    std::string serialized_elem = std::accumulate(
+        serialized_elem_vector.begin(), serialized_elem_vector.end(), std::string( "" ) );
+
+    std::string hashed_pubkey = cryptlite::sha256::hash_hex( serialized_elem );
+
+    auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
+
+    uint64_t bin_len;
+    if ( !ThresholdUtils::hex2carray( hashed_pubkey.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+        throw std::runtime_error( "Invalid hash" );
+    }
+
+    return ThresholdUtils::HashtoG1( hash_bytes_arr );
+}
+
+std::pair< libff::alt_bn128_G1, std::string > Bls::HashPublicKeyToG1WithHint(
+    const libff::alt_bn128_G2& elem ) {
+    auto serialized_elem_vector = ThresholdUtils::G2ToString( elem, 16 );
+
+    std::string serialized_elem = std::accumulate(
+        serialized_elem_vector.begin(), serialized_elem_vector.end(), std::string( "" ) );
+
+    std::string hashed_pubkey = cryptlite::sha256::hash_hex( serialized_elem );
+
+    auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
+
+    uint64_t bin_len;
+    if ( !ThresholdUtils::hex2carray( hashed_pubkey.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+        throw std::runtime_error( "Invalid hash" );
+    }
+
+    return Bls::HashtoG1withHint( hash_bytes_arr );
+}
+
 libff::alt_bn128_G1 Bls::Signing(
     const libff::alt_bn128_G1 hash, const libff::alt_bn128_Fr secret_key ) {
     // sign a message with its hash and secret key
@@ -160,6 +197,48 @@ libff::alt_bn128_G1 Bls::Signing(
         std::chrono::microseconds( 10000 - 1000000 * ( c_end - c_start ) / CLOCKS_PER_SEC ) );
 
     return sign;
+}
+
+libff::alt_bn128_G1 Bls::CoreSignAggregated(
+    const std::string& message, const libff::alt_bn128_Fr secret_key ) {
+    libff::alt_bn128_G1 hash = ThresholdUtils::HashtoG1( message );
+
+    return secret_key * hash;
+}
+
+libff::alt_bn128_G1 Bls::Aggregate( const std::vector< libff::alt_bn128_G1 >& signatures ) {
+    libff::alt_bn128_G1 res = libff::alt_bn128_G1::zero();
+
+    for ( const auto& signature : signatures ) {
+        if ( !ThresholdUtils::ValidateKey( signature ) ) {
+            throw ThresholdUtils::IsNotWellFormed(
+                "One of the signatures to be aggregated is malicious" );
+        }
+
+        res = res + signature;
+    }
+
+    return res;
+}
+
+bool Bls::CoreVerify( const libff::alt_bn128_G2& public_key, const std::string& message,
+    const libff::alt_bn128_G1& signature ) {
+    if ( !ThresholdUtils::ValidateKey( public_key ) || !ThresholdUtils::ValidateKey( signature ) ) {
+        throw ThresholdUtils::IsNotWellFormed( "Either signature or public key is malicious" );
+    }
+
+    libff::alt_bn128_G1 hash = ThresholdUtils::HashtoG1( message );
+
+    return libff::alt_bn128_ate_reduced_pairing( hash, public_key ) ==
+           libff::alt_bn128_ate_reduced_pairing( signature, libff::alt_bn128_G2::one() );
+}
+
+bool Bls::FastAggregateVerify( const std::vector< libff::alt_bn128_G2 >& public_keys,
+    const std::string& message, const libff::alt_bn128_G1& signature ) {
+    libff::alt_bn128_G2 sum =
+        std::accumulate( public_keys.begin(), public_keys.end(), libff::alt_bn128_G2::zero() );
+
+    return CoreVerify( sum, message, signature );
 }
 
 bool Bls::Verification( const std::string& to_be_hashed, const libff::alt_bn128_G1 sign,
@@ -239,7 +318,7 @@ bool Bls::AggregatedVerification(
         throw ThresholdUtils::IsNotWellFormed( "Error, public key is invalid" );
     }
 
-    if ( !ThresholdUtils::isG2( public_key ) ) {
+    if ( !ThresholdUtils::ValidateKey( public_key ) ) {
         throw ThresholdUtils::IsNotWellFormed( "Error, public key is not member of G2" );
     }
 
@@ -296,6 +375,28 @@ libff::alt_bn128_G1 Bls::SignatureRecover( const std::vector< libff::alt_bn128_G
     }
 
     return sign;  // first element is hash of a receiving message
+}
+
+libff::alt_bn128_G1 Bls::PopProve( const libff::alt_bn128_Fr& secret_key ) {
+    libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
+
+    libff::alt_bn128_G1 hash = HashPublicKeyToG1( public_key );
+
+    libff::alt_bn128_G1 ret = secret_key * hash;
+
+    return ret;
+}
+
+bool Bls::PopVerify( const libff::alt_bn128_G2& public_key, const libff::alt_bn128_G1& prove ) {
+    if ( !ThresholdUtils::ValidateKey( prove ) || !ThresholdUtils::ValidateKey( public_key ) ) {
+        throw ThresholdUtils::IsNotWellFormed(
+            "incorrect input data to verify proof of possession" );
+    }
+
+    libff::alt_bn128_G1 hash = HashPublicKeyToG1( public_key );
+
+    return libff::alt_bn128_ate_reduced_pairing( hash, public_key ) ==
+           libff::alt_bn128_ate_reduced_pairing( prove, libff::alt_bn128_G2::one() );
 }
 
 }  // namespace libBLS
