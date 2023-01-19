@@ -757,7 +757,7 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDVERIFICATIONONLY ) {
             BOOST_REQUIRE( common_pkey.AggregatedVerifySig( hash_ptrs, common_sig_ptrs ) );
         }
     }
-    std::cerr << "BLS AGGREGATED VERIFICATION TEST FINISHED" << std::endl;
+    std::cerr << "BLS AGGREGATED VERIFICATION ONLY TEST FINISHED" << std::endl;
 }
 
 BOOST_AUTO_TEST_CASE( BLSAGGREGATEDSIGNATURESSCHEME ) {
@@ -819,8 +819,6 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDSIGNATURESSCHEME ) {
 }
 
 BOOST_AUTO_TEST_CASE( BLSAGGREGATEDPOPPROVEVERIFY ) {
-    std::cout << "Testing blsAggregatedSignaturesPopProveVerify\n";
-
     libBLS::ThresholdUtils::initCurve();
 
     auto key_pair = libBLS::Bls::KeyGeneration();
