@@ -31,7 +31,7 @@ jobs:
           PERSONAL_ACCESS_TOKEN : ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
           path-to-signatures: 'signatures/version1/cla.json'
-          path-to-document: 'https://skale.network/cla.txt'
+          path-to-document: 'https://skale.space/cla-txt'
           remote-organization-name: 'skalenetwork'
           remote-repository-name: cla-sigs
           allowlist: '${{ steps.team.outputs.result }},*[bot]'
