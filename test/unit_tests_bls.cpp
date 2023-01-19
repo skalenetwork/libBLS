@@ -43,16 +43,6 @@
 
 std::default_random_engine rand_gen( ( unsigned int ) time( 0 ) );
 
-std::array< uint8_t, 32 > GenerateRandHash() {
-    // generates random hexadermical hash
-    std::array< uint8_t, 32 > hash_byte_arr;
-    for ( size_t i = 0; i < 32; i++ ) {
-        hash_byte_arr.at( i ) = rand_gen() % 256;
-    }
-
-    return hash_byte_arr;
-}
-
 std::string rand32HexStr() {
     std::array< char, 16 > s = {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
