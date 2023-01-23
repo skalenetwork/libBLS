@@ -294,9 +294,11 @@ std::string TE::aesCiphertextToString(
     auto V = std::get< 1 >( cipher );
     auto W = std::get< 2 >( cipher );
 
-    std::string v_str = ThresholdUtils::carray2Hex( ( unsigned char* ) ( V.data() ), V.size() );
+    std::vector<uint8_t> vTemp( V.cbegin(), V.cend() );
 
-    std::string encrypted_data = ThresholdUtils::carray2Hex( data.data(), data.size() );
+    std::string v_str = ThresholdUtils::carray2Hex( vTemp );
+
+    std::string encrypted_data = ThresholdUtils::carray2Hex( data );
 
     auto str = ThresholdUtils::G2ToString( U, 16 );
     std::string u_str = "";

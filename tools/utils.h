@@ -98,7 +98,7 @@ public:
 
     static int char2int( char _input );
 
-    static std::string carray2Hex( const unsigned char* d, uint64_t len );
+    static std::string carray2Hex( const std::vector<uint8_t>& d );
 
     template <typename T>
     static bool hex2carray( const std::string& hex, T* _bin );
