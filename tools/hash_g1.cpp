@@ -21,11 +21,13 @@
   @date 2019
 */
 
+#include <fstream>
+
 #include <bls/BLSPublicKey.h>
 #include <bls/bls.h>
 #include <tools/utils.h>
+
 #include <boost/program_options.hpp>
-#include <fstream>
 #include <libff/common/profiling.hpp>
 #include <third_party/json.hpp>
 
@@ -54,9 +56,7 @@ void hash_g1( const size_t t, const size_t n ) {
             hash_bytes_arr->at( i ) = static_cast< uint8_t >( hash_str[i] );
         }
     } else {
-        uint64_t bin_len;
-        if ( !libBLS::ThresholdUtils::hex2carray(
-                 to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+        if ( !libBLS::ThresholdUtils::hex2carray( to_be_hashed, hash_bytes_arr.get() ) ) {
             throw std::runtime_error( "Invalid hash" );
         }
     }

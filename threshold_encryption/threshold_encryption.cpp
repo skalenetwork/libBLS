@@ -343,9 +343,8 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::aesCiphertextFromString(
 
     std::string encrypted_data = ciphertext.substr( 256 + 128 + 128, std::string::npos );
 
-    uint64_t bin_len;
     std::vector< uint8_t > aes_cipher( encrypted_data.size() / 2 );
-    if ( !ThresholdUtils::hex2carray( encrypted_data.data(), &bin_len, &aes_cipher[0] ) ) {
+    if ( !ThresholdUtils::hex2carray( encrypted_data, &aes_cipher ) ) {
         throw ThresholdUtils::IncorrectInput( "Bad aes_cipher provided" );
     }
 
@@ -353,11 +352,12 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::aesCiphertextFromString(
 
     libff::alt_bn128_G1 W = ThresholdUtils::stringToG1( w_str );
 
-    std::string V;
-    V.resize( v_str.size() / 2 );
-    if ( !ThresholdUtils::hex2carray( v_str.data(), &bin_len, ( unsigned char* ) &V[0] ) ) {
+    std::vector<uint8_t> vTemp( v_str.size() / 2 );
+    if ( !ThresholdUtils::hex2carray( v_str, &vTemp ) ) {
         throw ThresholdUtils::IncorrectInput( "Bad encrypted aes key provided" );
     }
+
+    std::string V( vTemp.cbegin(), vTemp.cend() );
 
     return { { U, V, W }, aes_cipher };
 }
@@ -383,12 +383,12 @@ Ciphertext TE::ciphertextFromString( const std::string& ciphertext ) {
 
     libff::alt_bn128_G1 W = ThresholdUtils::stringToG1( w_str );
 
-    std::string V;
-    V.resize( v_str.size() / 2 );
-    uint64_t bin_len;
-    if ( !ThresholdUtils::hex2carray( v_str.data(), &bin_len, ( unsigned char* ) &V[0] ) ) {
+    std::vector<uint8_t> vTemp( v_str.size() / 2 );
+    if ( !ThresholdUtils::hex2carray( v_str, &vTemp ) ) {
         throw ThresholdUtils::IncorrectInput( "Bad encrypted aes key provided" );
     }
+
+    std::string V( vTemp.cbegin(), vTemp.cend() );
 
     return { U, V, W };
 }

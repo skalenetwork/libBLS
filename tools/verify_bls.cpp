@@ -29,11 +29,11 @@
 #include <libff/common/profiling.hpp>
 
 #include <bls/bls.h>
+#include <bls/BLSPublicKey.h>
+#include <tools/utils.h>
 
 #include <third_party/json.hpp>
 
-
-#include <bls/BLSPublicKey.h>
 
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
 #define __EXPAND_AS_STR__( x ) #x
@@ -43,33 +43,6 @@ static bool g_b_verbose_mode = false;
 static bool g_b_rehash = false;
 
 static bool g_b_common = true;
-
-int char2int( char _input ) {
-    if ( _input >= '0' && _input <= '9' )
-        return _input - '0';
-    if ( _input >= 'A' && _input <= 'F' )
-        return _input - 'A' + 10;
-    if ( _input >= 'a' && _input <= 'f' )
-        return _input - 'a' + 10;
-    return -1;
-}
-
-bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin ) {
-    int len = strnlen( _hex, 2 * 1024 );
-
-    if ( len == 0 && len % 2 == 1 )
-        return false;
-    *_bin_len = len / 2;
-    for ( int i = 0; i < len / 2; i++ ) {
-        int high = char2int( ( char ) _hex[i * 2] );
-        int low = char2int( ( char ) _hex[i * 2 + 1] );
-        if ( high < 0 || low < 0 ) {
-            return false;
-        }
-        _bin[i] = ( unsigned char ) ( high * 16 + low );
-    }
-    return true;
-}
 
 void Verify( const size_t t, const size_t n, std::istream& sign_file, int j = -1 ) {
     libff::inhibit_profiling_info = true;
@@ -98,8 +71,7 @@ void Verify( const size_t t, const size_t n, std::istream& sign_file, int j = -1
             hash_bytes_arr->at( i ) = static_cast< uint8_t >( hash_str[i] );
         }
     } else {
-        uint64_t bin_len;
-        if ( !hex2carray( to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+        if ( !libBLS::ThresholdUtils::hex2carray( to_be_hashed, hash_bytes_arr.get() ) ) {
             throw std::runtime_error( "Invalid hash" );
         }
     }

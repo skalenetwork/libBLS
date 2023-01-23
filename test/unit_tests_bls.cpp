@@ -43,12 +43,12 @@
 
 std::default_random_engine rand_gen( ( unsigned int ) time( 0 ) );
 
-std::string rand32HexStr() {
+std::string rand64HexStr() {
     std::array< char, 16 > s = {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
     std::string res = "";
-    for ( size_t i = 0; i < 32; ++i ) {
+    for ( size_t i = 0; i < 64; ++i ) {
         res.push_back( *( s.begin() + rand_gen() % 16 ) );
     }
 
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE( zeroSecretKey ) {
 
     libBLS::Bls obj = libBLS::Bls( 1, 1 );
 
-    std::string message = rand32HexStr();
+    std::string message = rand64HexStr();
 
     libff::alt_bn128_G1 hash = obj.Hashing( message );
 
@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE( singleBlsrun ) {
     libff::alt_bn128_Fr secret_key = keys.first;
     libff::alt_bn128_G2 public_key = keys.second;
 
-    std::string message = rand32HexStr();
+    std::string message = rand64HexStr();
 
     libff::alt_bn128_G1 hash = obj.Hashing( message );
 
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignatures ) {
     libff::alt_bn128_G2 public_key =
         libff::alt_bn128_G2( first_coord, second_coord, libff::alt_bn128_Fq2::one() );
 
-    std::string message = rand32HexStr();
+    std::string message = rand64HexStr();
 
     libff::alt_bn128_G1 hash = obj.Hashing( message );
 
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesFalse ) {
     libff::alt_bn128_G2 public_key =
         libff::alt_bn128_G2( first_coord, second_coord, libff::alt_bn128_Fq2::one() );
 
-    std::string message = rand32HexStr();
+    std::string message = rand64HexStr();
 
     libff::alt_bn128_G1 hash = obj.Hashing( message );
 
@@ -250,7 +250,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesReal ) {
         }
     }
 
-    std::string message = rand32HexStr();
+    std::string message = rand64HexStr();
 
     libff::alt_bn128_G1 hash = obj.Hashing( message );
 
@@ -316,7 +316,7 @@ BOOST_AUTO_TEST_CASE( simillarSignatures ) {
         }
     }
 
-    std::string message = rand32HexStr();
+    std::string message = rand64HexStr();
 
     libff::alt_bn128_G1 hash = obj.Hashing( message );
 
@@ -463,7 +463,7 @@ BOOST_AUTO_TEST_CASE( blsAggregatedSignatures ) {
     auto first_key = libBLS::Bls::KeyGeneration();
     auto second_key = libBLS::Bls::KeyGeneration();
 
-    std::string hex_message = rand32HexStr();  // random hex
+    std::string hex_message = rand64HexStr();  // random hex
 
     libff::alt_bn128_G1 first_signature =
         libBLS::Bls::CoreSignAggregated( hex_message, first_key.first );

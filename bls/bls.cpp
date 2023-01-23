@@ -86,7 +86,6 @@ std::pair< libff::alt_bn128_G1, std::string > Bls::HashtoG1withHint(
     libff::alt_bn128_Fq counter = libff::alt_bn128_Fq::zero();
     libff::alt_bn128_Fq x1( ThresholdUtils::HashToFq( hash_byte_arr ) );
 
-
     while ( true ) {
         libff::alt_bn128_Fq y1_sqr = x1 ^ 3;
         y1_sqr = y1_sqr + libff::alt_bn128_coeff_b;
@@ -132,8 +131,6 @@ libff::alt_bn128_G1 Bls::HashBytes(
     CHECK( raw_bytes );
     CHECK( hash_func );
 
-    CHECK( raw_bytes );
-
     std::string from_bytes( raw_bytes, length );
 
     libff::alt_bn128_G1 hash = Hashing( from_bytes, *hash_func );
@@ -151,8 +148,7 @@ libff::alt_bn128_G1 Bls::HashPublicKeyToG1( const libff::alt_bn128_G2& elem ) {
 
     auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
 
-    uint64_t bin_len;
-    if ( !ThresholdUtils::hex2carray( hashed_pubkey.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+    if ( !ThresholdUtils::hex2carray( hashed_pubkey, hash_bytes_arr.get() ) ) {
         throw std::runtime_error( "Invalid hash" );
     }
 
@@ -170,8 +166,7 @@ std::pair< libff::alt_bn128_G1, std::string > Bls::HashPublicKeyToG1WithHint(
 
     auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
 
-    uint64_t bin_len;
-    if ( !ThresholdUtils::hex2carray( hashed_pubkey.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+    if ( !ThresholdUtils::hex2carray( hashed_pubkey, hash_bytes_arr.get() ) ) {
         throw std::runtime_error( "Invalid hash" );
     }
 
