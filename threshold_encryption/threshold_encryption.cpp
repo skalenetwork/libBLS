@@ -294,7 +294,7 @@ std::string TE::aesCiphertextToString(
     auto V = std::get< 1 >( cipher );
     auto W = std::get< 2 >( cipher );
 
-    std::vector<uint8_t> vTemp( V.cbegin(), V.cend() );
+    std::vector< uint8_t > vTemp( V.cbegin(), V.cend() );
 
     std::string v_str = ThresholdUtils::carray2Hex( vTemp );
 
@@ -354,7 +354,7 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::aesCiphertextFromString(
 
     libff::alt_bn128_G1 W = ThresholdUtils::stringToG1( w_str );
 
-    std::vector<uint8_t> vTemp( v_str.size() / 2 );
+    std::vector< uint8_t > vTemp( v_str.size() / 2 );
     if ( !ThresholdUtils::hex2carray( v_str, &vTemp ) ) {
         throw ThresholdUtils::IncorrectInput( "Bad encrypted aes key provided" );
     }
@@ -385,7 +385,7 @@ Ciphertext TE::ciphertextFromString( const std::string& ciphertext ) {
 
     libff::alt_bn128_G1 W = ThresholdUtils::stringToG1( w_str );
 
-    std::vector<uint8_t> vTemp( v_str.size() / 2 );
+    std::vector< uint8_t > vTemp( v_str.size() / 2 );
     if ( !ThresholdUtils::hex2carray( v_str, &vTemp ) ) {
         throw ThresholdUtils::IncorrectInput( "Bad encrypted aes key provided" );
     }

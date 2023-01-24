@@ -28,8 +28,8 @@
 
 #include <libff/common/profiling.hpp>
 
-#include <bls/bls.h>
 #include <bls/BLSPublicKey.h>
+#include <bls/bls.h>
 #include <tools/utils.h>
 
 #include <third_party/json.hpp>

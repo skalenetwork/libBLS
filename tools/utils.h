@@ -98,9 +98,9 @@ public:
 
     static int char2int( char _input );
 
-    static std::string carray2Hex( const std::vector<uint8_t>& d );
+    static std::string carray2Hex( const std::vector< uint8_t >& d );
 
-    template <typename T>
+    template < typename T >
     static bool hex2carray( const std::string& hex, T* _bin );
 
     static std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ParseHint(
@@ -126,21 +126,21 @@ public:
     static bool ValidateKey( const T& point );
 };
 
-template <typename T>
+template < typename T >
 bool ThresholdUtils::hex2carray( const std::string& _hex, T* _bin ) {
-    int len = _hex.size();
+    size_t len = _hex.size();
 
     if ( len % 2 == 1 || _bin->size() != len / 2 ) {
         return false;
     }
 
-    for ( int i = 0; i < len / 2; i++ ) {
+    for ( size_t i = 0; i < len / 2; i++ ) {
         int high = char2int( ( char ) _hex[i * 2] );
         int low = char2int( ( char ) _hex[i * 2 + 1] );
         if ( high < 0 || low < 0 ) {
             return false;
         }
-        _bin->at(i) = ( unsigned char ) ( high * 16 + low );
+        _bin->at( i ) = ( unsigned char ) ( high * 16 + low );
     }
     return true;
 }
