@@ -332,9 +332,9 @@ static PyObject* PyDkgObject_GetPublicKeyFromSecretKey(
     return pyPublicKey;
 }
 
-static PyMethodDef PyDkgObject_methods[] = {
-    { "GeneratePolynomial", ( PyCFunction ) PyDkgObject_GeneratePolynomial, METH_NOARGS,
-        "generate random polynomial" },
+static PyMethodDef PyDkgObject_methods[] = { { "GeneratePolynomial",
+                                                 ( PyCFunction ) PyDkgObject_GeneratePolynomial,
+                                                 METH_NOARGS, "generate random polynomial" },
     { "VerificationVector", ( PyCFunction ) PyDkgObject_VerificationVector, METH_VARARGS,
         "generate public values" },
     { "PolynomialValue", ( PyCFunction ) PyDkgObject_PolynomialValue, METH_VARARGS,
@@ -418,7 +418,8 @@ static PyMethodDef dkgpython_methods[] = {
         "Print 'Hi dkgpython world' from a method defined in a C extension." },
     { "say_hi_dkgpython_world2", say_hi_dkgpython_world2, METH_VARARGS,
         "Print 'say_hi_dkgpython_world2 xxx' from a method defined in a C extension." },
-    { nullptr, nullptr, 0, nullptr } };
+    { nullptr, nullptr, 0, nullptr }
+};
 
 static struct PyModuleDef dkgpython_definition = { PyModuleDef_HEAD_INIT, "dkgpython",
     "A Python module that prints 'Hi dkgpython world' from C code.", -1, dkgpython_methods };

@@ -136,8 +136,8 @@ std::array< uint8_t, 32 > GenerateRandHash() {
 }
 
 std::string rand32HexStr() {
-    std::array< char, 16 > s = {
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+    std::array< char, 16 > s = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c',
+        'd', 'e', 'f' };
 
     std::string res = "";
     for ( size_t i = 0; i < 32; ++i ) {
