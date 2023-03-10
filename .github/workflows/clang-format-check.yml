@@ -1,0 +1,14 @@
+name: clang-format Check
+on: [push]
+jobs:
+  formatting-check:
+    name: Formatting Check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: DoozyX/clang-format-lint-action@v0.14
+      with:
+        source: '.'
+        exclude: './CMakeFiles ./cmake ./deps ./build ./node ./python'
+        extensions: 'h,hpp,hxx,cpp,cxx,cc,ipp'
+        clangFormatVersion: 10

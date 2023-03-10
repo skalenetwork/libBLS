@@ -100,10 +100,10 @@ jobs:
         mkdir -p build && cd build
         cmake $CMAKE_BUILD_FLAGS ..
     
-    - name: Run format check
-      run: |
-        cd build
-        make bls-format-check
+    # - name: Run format check
+    #   run: |
+    #     cd build
+    #     make bls-format-check
 
     - name: Build all
       run: |
