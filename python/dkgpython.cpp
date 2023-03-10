@@ -332,24 +332,24 @@ static PyObject* PyDkgObject_GetPublicKeyFromSecretKey(
     return pyPublicKey;
 }
 
-static PyMethodDef PyDkgObject_methods[] = {
-    {"GeneratePolynomial", ( PyCFunction ) PyDkgObject_GeneratePolynomial, METH_NOARGS,
-        "generate random polynomial"},
-    {"VerificationVector", ( PyCFunction ) PyDkgObject_VerificationVector, METH_VARARGS,
-        "generate public values"},
-    {"PolynomialValue", ( PyCFunction ) PyDkgObject_PolynomialValue, METH_VARARGS,
-        "calculate value at point"},
-    {"SecretKeyContribution", ( PyCFunction ) PyDkgObject_SecretKeyContribution, METH_VARARGS,
-        "generate shares for others"},
-    {"SecretKeyShareCreate", ( PyCFunction ) PyDkgObject_SecretKeyShareCreate, METH_VARARGS,
-        "get a secret key from pieces"},
-    {"Verification", ( PyCFunction ) PyDkgObject_Verification, METH_VARARGS,
-        "verify recieved data"},
-    {"GetPublicKeyFromSecretKey", ( PyCFunction ) PyDkgObject_GetPublicKeyFromSecretKey,
-        METH_VARARGS, "get public key from secret key"},
-    {"GetPublicKeyFromSecretKey", ( PyCFunction ) PyDkgObject_GetPublicKeyFromSecretKey,
-        METH_VARARGS, "compute verification value"},
-    {nullptr}};
+static PyMethodDef PyDkgObject_methods[] = { { "GeneratePolynomial",
+                                                 ( PyCFunction ) PyDkgObject_GeneratePolynomial,
+                                                 METH_NOARGS, "generate random polynomial" },
+    { "VerificationVector", ( PyCFunction ) PyDkgObject_VerificationVector, METH_VARARGS,
+        "generate public values" },
+    { "PolynomialValue", ( PyCFunction ) PyDkgObject_PolynomialValue, METH_VARARGS,
+        "calculate value at point" },
+    { "SecretKeyContribution", ( PyCFunction ) PyDkgObject_SecretKeyContribution, METH_VARARGS,
+        "generate shares for others" },
+    { "SecretKeyShareCreate", ( PyCFunction ) PyDkgObject_SecretKeyShareCreate, METH_VARARGS,
+        "get a secret key from pieces" },
+    { "Verification", ( PyCFunction ) PyDkgObject_Verification, METH_VARARGS,
+        "verify recieved data" },
+    { "GetPublicKeyFromSecretKey", ( PyCFunction ) PyDkgObject_GetPublicKeyFromSecretKey,
+        METH_VARARGS, "get public key from secret key" },
+    { "GetPublicKeyFromSecretKey", ( PyCFunction ) PyDkgObject_GetPublicKeyFromSecretKey,
+        METH_VARARGS, "compute verification value" },
+    { nullptr } };
 
 static PyTypeObject PyDkgType = {
 #if PY_MAJOR_VERSION >= 3
@@ -414,14 +414,15 @@ static PyObject* say_hi_dkgpython_world2( PyObject* self, PyObject* args ) {
 }
 
 static PyMethodDef dkgpython_methods[] = {
-    {"say_hi_dkgpython_world", say_hi_dkgpython_world, METH_NOARGS,
-        "Print 'Hi dkgpython world' from a method defined in a C extension."},
-    {"say_hi_dkgpython_world2", say_hi_dkgpython_world2, METH_VARARGS,
-        "Print 'say_hi_dkgpython_world2 xxx' from a method defined in a C extension."},
-    {nullptr, nullptr, 0, nullptr}};
+    { "say_hi_dkgpython_world", say_hi_dkgpython_world, METH_NOARGS,
+        "Print 'Hi dkgpython world' from a method defined in a C extension." },
+    { "say_hi_dkgpython_world2", say_hi_dkgpython_world2, METH_VARARGS,
+        "Print 'say_hi_dkgpython_world2 xxx' from a method defined in a C extension." },
+    { nullptr, nullptr, 0, nullptr }
+};
 
-static struct PyModuleDef dkgpython_definition = {PyModuleDef_HEAD_INIT, "dkgpython",
-    "A Python module that prints 'Hi dkgpython world' from C code.", -1, dkgpython_methods};
+static struct PyModuleDef dkgpython_definition = { PyModuleDef_HEAD_INIT, "dkgpython",
+    "A Python module that prints 'Hi dkgpython world' from C code.", -1, dkgpython_methods };
 
 PyMODINIT_FUNC PyInit_dkgpython() {
     Py_Initialize();
