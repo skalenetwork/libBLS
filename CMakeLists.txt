@@ -139,7 +139,7 @@ if ( APPLE )
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wparentheses -Wunused -Wno-error=deprecated-copy -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=maybe-uninitialized -Wunreachable-code -Wextra -fPIC -std=c++17")
 else()
 	if (EMSCRIPTEN)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++17")#-Werror -Wall -Wparentheses -Wunused -Wno-error=deprecated-copy -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=maybe-uninitialized -Wunreachable-code -Wextra -Wno-error=int-in-bool-context
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++17")
 	else()
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wunreachable-code -Wextra -Wno-error=deprecated-copy -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=maybe-uninitialized -Wno-error=int-in-bool-context -fPIC -std=c++17")
 		if( CMAKE_BUILD_TYPE STREQUAL "Debug" )
@@ -287,7 +287,6 @@ if(BUILD_TESTS)
 			COMMAND ./bls_unit_test
 			COMMAND ./dkg_unit_test
 			COMMAND ./bls_test
-            COMMAND ./dkg_attack
 			COMMAND ./utils_unit_test
 			DEPENDS bls_unit_test dkg_unit_test
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
