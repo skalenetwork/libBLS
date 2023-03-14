@@ -55,7 +55,7 @@ jobs:
     - name: Install packages
       run: |
         sudo apt-get update
-        sudo apt-get install -y gcc-9 g++-9 clang-format-10 gawk sed shtool \
+        sudo apt-get install -y gcc-9 g++-9 gawk sed shtool \
           libffi-dev yasm texinfo flex bison libgnutls28-dev python3.6 gcc-multilib git
         sudo apt-get update -qq
         sudo apt-get install -y python3-pip

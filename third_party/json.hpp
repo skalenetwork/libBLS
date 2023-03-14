@@ -2262,7 +2262,9 @@ public:
     input_adapter( const ContiguousContainer& c )
         : input_adapter( std::begin( c ), std::end( c ) ) {}
 
-    operator input_adapter_t() { return ia; }
+    operator input_adapter_t() {
+        return ia;
+    }
 
 private:
     /// the actual adapter
@@ -3684,8 +3686,8 @@ using number_unsigned_function_t =
     decltype( std::declval< T& >().number_unsigned( std::declval< Unsigned >() ) );
 
 template < typename T, typename Float, typename String >
-using number_float_function_t = decltype(
-    std::declval< T& >().number_float( std::declval< Float >(), std::declval< const String& >() ) );
+using number_float_function_t = decltype( std::declval< T& >().number_float(
+    std::declval< Float >(), std::declval< const String& >() ) );
 
 template < typename T, typename String >
 using string_function_t = decltype( std::declval< T& >().string( std::declval< String& >() ) );
@@ -12150,7 +12152,9 @@ public:
 
     @since version 1.0.0
     */
-    basic_json( const value_t v ) : m_type( v ), m_value( v ) { assert_invariant(); }
+    basic_json( const value_t v ) : m_type( v ), m_value( v ) {
+        assert_invariant();
+    }
 
     /*!
     @brief create a null object
@@ -12962,7 +12966,9 @@ public:
 
     @since version 1.0.0
     */
-    constexpr value_t type() const noexcept { return m_type; }
+    constexpr value_t type() const noexcept {
+        return m_type;
+    }
 
     /*!
     @brief return whether type is primitive
@@ -13015,7 +13021,9 @@ public:
 
     @since version 1.0.0
     */
-    constexpr bool is_structured() const noexcept { return is_array() or is_object(); }
+    constexpr bool is_structured() const noexcept {
+        return is_array() or is_object();
+    }
 
     /*!
     @brief return whether value is null
@@ -13034,7 +13042,9 @@ public:
 
     @since version 1.0.0
     */
-    constexpr bool is_null() const noexcept { return ( m_type == value_t::null ); }
+    constexpr bool is_null() const noexcept {
+        return ( m_type == value_t::null );
+    }
 
     /*!
     @brief return whether value is a boolean
@@ -13053,7 +13063,9 @@ public:
 
     @since version 1.0.0
     */
-    constexpr bool is_boolean() const noexcept { return ( m_type == value_t::boolean ); }
+    constexpr bool is_boolean() const noexcept {
+        return ( m_type == value_t::boolean );
+    }
 
     /*!
     @brief return whether value is a number
@@ -13080,7 +13092,9 @@ public:
 
     @since version 1.0.0
     */
-    constexpr bool is_number() const noexcept { return is_number_integer() or is_number_float(); }
+    constexpr bool is_number() const noexcept {
+        return is_number_integer() or is_number_float();
+    }
 
     /*!
     @brief return whether value is an integer number
@@ -13160,7 +13174,9 @@ public:
 
     @since version 1.0.0
     */
-    constexpr bool is_number_float() const noexcept { return ( m_type == value_t::number_float ); }
+    constexpr bool is_number_float() const noexcept {
+        return ( m_type == value_t::number_float );
+    }
 
     /*!
     @brief return whether value is an object
@@ -13179,7 +13195,9 @@ public:
 
     @since version 1.0.0
     */
-    constexpr bool is_object() const noexcept { return ( m_type == value_t::object ); }
+    constexpr bool is_object() const noexcept {
+        return ( m_type == value_t::object );
+    }
 
     /*!
     @brief return whether value is an array
@@ -13198,7 +13216,9 @@ public:
 
     @since version 1.0.0
     */
-    constexpr bool is_array() const noexcept { return ( m_type == value_t::array ); }
+    constexpr bool is_array() const noexcept {
+        return ( m_type == value_t::array );
+    }
 
     /*!
     @brief return whether value is a string
@@ -13217,7 +13237,9 @@ public:
 
     @since version 1.0.0
     */
-    constexpr bool is_string() const noexcept { return ( m_type == value_t::string ); }
+    constexpr bool is_string() const noexcept {
+        return ( m_type == value_t::string );
+    }
 
     /*!
     @brief return whether value is discarded
@@ -13241,7 +13263,9 @@ public:
 
     @since version 1.0.0
     */
-    constexpr bool is_discarded() const noexcept { return ( m_type == value_t::discarded ); }
+    constexpr bool is_discarded() const noexcept {
+        return ( m_type == value_t::discarded );
+    }
 
     /*!
     @brief return the type of the JSON value (implicit)
@@ -13264,7 +13288,9 @@ public:
 
     @since version 1.0.0
     */
-    constexpr operator value_t() const noexcept { return m_type; }
+    constexpr operator value_t() const noexcept {
+        return m_type;
+    }
 
     /// @}
 
@@ -13606,8 +13632,8 @@ public:
     */
     template < typename PointerType,
         typename std::enable_if< std::is_pointer< PointerType >::value, int >::type = 0 >
-    auto get_ptr() noexcept -> decltype(
-        std::declval< basic_json_t& >().get_impl_ptr( std::declval< PointerType >() ) ) {
+    auto get_ptr() noexcept -> decltype( std::declval< basic_json_t& >().get_impl_ptr(
+        std::declval< PointerType >() ) ) {
         // delegate the call to get_impl_ptr<>()
         return get_impl_ptr( static_cast< PointerType >( nullptr ) );
     }
@@ -13621,8 +13647,9 @@ public:
             std::is_pointer< PointerType >::value and
                 std::is_const< typename std::remove_pointer< PointerType >::type >::value,
             int >::type = 0 >
-    constexpr auto get_ptr() const noexcept -> decltype(
-        std::declval< const basic_json_t& >().get_impl_ptr( std::declval< PointerType >() ) ) {
+    constexpr auto get_ptr() const noexcept
+        -> decltype( std::declval< const basic_json_t& >().get_impl_ptr(
+            std::declval< PointerType >() ) ) {
         // delegate the call to get_impl_ptr<>() const
         return get_impl_ptr( static_cast< PointerType >( nullptr ) );
     }
@@ -13811,7 +13838,9 @@ public:
     reference at( size_type idx ) {
         // at only works for arrays
         if ( JSON_LIKELY( is_array() ) ) {
-            JSON_TRY { return m_value.array->at( idx ); }
+            JSON_TRY {
+                return m_value.array->at( idx );
+            }
             JSON_CATCH( std::out_of_range& ) {
                 // create better exception explanation
                 JSON_THROW( out_of_range::create(
@@ -13852,7 +13881,9 @@ public:
     const_reference at( size_type idx ) const {
         // at only works for arrays
         if ( JSON_LIKELY( is_array() ) ) {
-            JSON_TRY { return m_value.array->at( idx ); }
+            JSON_TRY {
+                return m_value.array->at( idx );
+            }
             JSON_CATCH( std::out_of_range& ) {
                 // create better exception explanation
                 JSON_THROW( out_of_range::create(
@@ -13897,7 +13928,9 @@ public:
     reference at( const typename object_t::key_type& key ) {
         // at only works for objects
         if ( JSON_LIKELY( is_object() ) ) {
-            JSON_TRY { return m_value.object->at( key ); }
+            JSON_TRY {
+                return m_value.object->at( key );
+            }
             JSON_CATCH( std::out_of_range& ) {
                 // create better exception explanation
                 JSON_THROW( out_of_range::create( 403, "key '" + key + "' not found" ) );
@@ -13941,7 +13974,9 @@ public:
     const_reference at( const typename object_t::key_type& key ) const {
         // at only works for objects
         if ( JSON_LIKELY( is_object() ) ) {
-            JSON_TRY { return m_value.object->at( key ); }
+            JSON_TRY {
+                return m_value.object->at( key );
+            }
             JSON_CATCH( std::out_of_range& ) {
                 // create better exception explanation
                 JSON_THROW( out_of_range::create( 403, "key '" + key + "' not found" ) );
@@ -14325,8 +14360,12 @@ public:
         // at only works for objects
         if ( JSON_LIKELY( is_object() ) ) {
             // if pointer resolves a value, return it or use default value
-            JSON_TRY { return ptr.get_checked( this ); }
-            JSON_INTERNAL_CATCH( out_of_range& ) { return default_value; }
+            JSON_TRY {
+                return ptr.get_checked( this );
+            }
+            JSON_INTERNAL_CATCH( out_of_range& ) {
+                return default_value;
+            }
         }
 
         JSON_THROW(
@@ -14366,12 +14405,16 @@ public:
 
     @since version 1.0.0
     */
-    reference front() { return *begin(); }
+    reference front() {
+        return *begin();
+    }
 
     /*!
     @copydoc basic_json::front()
     */
-    const_reference front() const { return *cbegin(); }
+    const_reference front() const {
+        return *cbegin();
+    }
 
     /*!
     @brief access the last element
@@ -14826,7 +14869,9 @@ public:
     /*!
     @copydoc basic_json::cbegin()
     */
-    const_iterator begin() const noexcept { return cbegin(); }
+    const_iterator begin() const noexcept {
+        return cbegin();
+    }
 
     /*!
     @brief returns a const iterator to the first element
@@ -14892,7 +14937,9 @@ public:
     /*!
     @copydoc basic_json::cend()
     */
-    const_iterator end() const noexcept { return cend(); }
+    const_iterator end() const noexcept {
+        return cend();
+    }
 
     /*!
     @brief returns a const iterator to one past the last element
@@ -14948,12 +14995,16 @@ public:
 
     @since version 1.0.0
     */
-    reverse_iterator rbegin() noexcept { return reverse_iterator( end() ); }
+    reverse_iterator rbegin() noexcept {
+        return reverse_iterator( end() );
+    }
 
     /*!
     @copydoc basic_json::crbegin()
     */
-    const_reverse_iterator rbegin() const noexcept { return crbegin(); }
+    const_reverse_iterator rbegin() const noexcept {
+        return crbegin();
+    }
 
     /*!
     @brief returns an iterator to the reverse-end
@@ -14979,12 +15030,16 @@ public:
 
     @since version 1.0.0
     */
-    reverse_iterator rend() noexcept { return reverse_iterator( begin() ); }
+    reverse_iterator rend() noexcept {
+        return reverse_iterator( begin() );
+    }
 
     /*!
     @copydoc basic_json::crend()
     */
-    const_reverse_iterator rend() const noexcept { return crend(); }
+    const_reverse_iterator rend() const noexcept {
+        return crend();
+    }
 
     /*!
     @brief returns a const reverse iterator to the last element
@@ -15010,7 +15065,9 @@ public:
 
     @since version 1.0.0
     */
-    const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator( cend() ); }
+    const_reverse_iterator crbegin() const noexcept {
+        return const_reverse_iterator( cend() );
+    }
 
     /*!
     @brief returns a const reverse iterator to one before the first
@@ -15036,7 +15093,9 @@ public:
 
     @since version 1.0.0
     */
-    const_reverse_iterator crend() const noexcept { return const_reverse_iterator( cbegin() ); }
+    const_reverse_iterator crend() const noexcept {
+        return const_reverse_iterator( cbegin() );
+    }
 
 public:
     /*!
@@ -15161,7 +15220,9 @@ public:
 
     @since version 3.1.0.
     */
-    iteration_proxy< iterator > items() noexcept { return iteration_proxy< iterator >( *this ); }
+    iteration_proxy< iterator > items() noexcept {
+        return iteration_proxy< iterator >( *this );
+    }
 
     /*!
     @copydoc items()
@@ -15783,7 +15844,9 @@ public:
     @brief inserts element
     @copydoc insert(const_iterator, const basic_json&)
     */
-    iterator insert( const_iterator pos, basic_json&& val ) { return insert( pos, val ); }
+    iterator insert( const_iterator pos, basic_json&& val ) {
+        return insert( pos, val );
+    }
 
     /*!
     @brief inserts elements
@@ -16643,7 +16706,9 @@ public:
     @since version 1.0.0; deprecated since version 3.0.0
     */
     JSON_DEPRECATED
-    friend std::ostream& operator>>( const basic_json& j, std::ostream& o ) { return o << j; }
+    friend std::ostream& operator>>( const basic_json& j, std::ostream& o ) {
+        return o << j;
+    }
 
     /// @}
 
@@ -16726,7 +16791,9 @@ public:
         return result;
     }
 
-    static bool accept( detail::input_adapter&& i ) { return parser( i ).accept( true ); }
+    static bool accept( detail::input_adapter&& i ) {
+        return parser( i ).accept( true );
+    }
 
     /*!
     @brief generate SAX events
@@ -16883,7 +16950,9 @@ public:
     @since version 1.0.0; deprecated since version 3.0.0
     */
     JSON_DEPRECATED
-    friend std::istream& operator<<( basic_json& j, std::istream& i ) { return operator>>( i, j ); }
+    friend std::istream& operator<<( basic_json& j, std::istream& i ) {
+        return operator>>( i, j );
+    }
 
     /*!
     @brief deserialize from stream
@@ -17804,7 +17873,9 @@ public:
 
     @since version 2.0.0
     */
-    reference operator[]( const json_pointer& ptr ) { return ptr.get_unchecked( this ); }
+    reference operator[]( const json_pointer& ptr ) {
+        return ptr.get_unchecked( this );
+    }
 
     /*!
     @brief access specified element via JSON Pointer
@@ -17871,7 +17942,9 @@ public:
 
     @liveexample{The behavior is shown in the example.,at_json_pointer}
     */
-    reference at( const json_pointer& ptr ) { return ptr.get_checked( this ); }
+    reference at( const json_pointer& ptr ) {
+        return ptr.get_checked( this );
+    }
 
     /*!
     @brief access specified element via JSON Pointer
@@ -17911,7 +17984,9 @@ public:
 
     @liveexample{The behavior is shown in the example.,at_json_pointer_const}
     */
-    const_reference at( const json_pointer& ptr ) const { return ptr.get_checked( this ); }
+    const_reference at( const json_pointer& ptr ) const {
+        return ptr.get_checked( this );
+    }
 
     /*!
     @brief return flattened JSON value
@@ -17971,7 +18046,9 @@ public:
 
     @since version 2.0.0
     */
-    basic_json unflatten() const { return json_pointer::unflatten( *this ); }
+    basic_json unflatten() const {
+        return json_pointer::unflatten( *this );
+    }
 
     /// @}
 
@@ -18475,7 +18552,7 @@ struct hash< nlohmann::json > {
 /// @note: do not remove the space after '<',
 ///        see https://github.com/nlohmann/json/pull/679
 template <>
-struct less<::nlohmann::detail::value_t > {
+struct less< ::nlohmann::detail::value_t > {
     /*!
     @brief compare two value_t enum values
     @since version 3.0.0
