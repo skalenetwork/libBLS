@@ -11,7 +11,7 @@ defaults:
     shell: bash
 jobs:
   linux_build_and_test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
 
     steps:
     - name: Extract repo name
@@ -180,7 +180,7 @@ jobs:
         ./dkg_attack
 
   linux_build_with_emscripten:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
 
     strategy:
       matrix:
