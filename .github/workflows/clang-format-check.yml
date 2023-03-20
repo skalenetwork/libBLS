@@ -11,4 +11,4 @@ jobs:
         source: '.'
         exclude: './CMakeFiles ./cmake ./deps ./build ./node ./python'
         extensions: 'h,hpp,hxx,cpp,cxx,cc,ipp'
-        clangFormatVersion: 10
+        clangFormatVersion: 14

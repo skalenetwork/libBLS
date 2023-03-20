@@ -8,7 +8,7 @@ on:
 
 jobs:
   main_job:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     env:
       NIGHTLY_BUILD_FLAGS: "valgrind --leak-check=yes"
 
@@ -20,10 +20,10 @@ jobs:
         ACTIONS_ALLOW_UNSECURE_COMMANDS: true
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Set up Python 3.6
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.6
+    # - name: Set up Python 3.6
+    #   uses: actions/setup-python@v1
+    #   with:
+    #     python-version: 3.6
     - name: Update apt
       run: |
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test
@@ -92,7 +92,7 @@ jobs:
         ./scripts/run_tools_test.sh
   
   linux_build_with_emscripten:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     strategy:
       matrix:
