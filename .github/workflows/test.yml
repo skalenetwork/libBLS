@@ -208,7 +208,6 @@ jobs:
         sudo python3 -m pip install --upgrade pip
         sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
         sudo python3 -m pip install requests[security]
-        sudo python3 -m pip install codecov --ignore-installed
 
     - name: Install NODE JS
       uses: actions/setup-node@v2
