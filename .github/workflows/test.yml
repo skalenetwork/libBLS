@@ -63,7 +63,6 @@ jobs:
         sudo python3 -m pip install --upgrade pip
         sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
         sudo python3 -m pip install requests[security]
-        sudo python3 -m pip install codecov --ignore-installed
     - name: Get newest lcov
       run: |
         echo "Removing previous lcov version..."
@@ -133,14 +132,18 @@ jobs:
         ./dkg_attack
         ./threshold_encryption/te_sample_sgx
 
-    - name: Upload coverage
-      run: |
-        cd build
-        lcov --capture --directory . --output-file coverage.info
-        lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
-        lcov --remove coverage.info 'deps/*' --output-file coverage.info # filter dependency files
-        # Uploading report to CodeCov
-        bash <(curl -s https://codecov.io/bash) -f coverage.info -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports"
+    - name: Create lcov report
+        run: |
+          cd build
+          lcov --capture --directory . --output-file coverage.info
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
+          lcov --remove coverage.info 'deps/*' --output-file coverage.info # filter dependency files
+
+    - name: Upload to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.info
 
   osx_build_and_test:
     runs-on: macos-11
@@ -201,7 +204,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y gcc-9 g++-9 gawk sed shtool \
           libffi-dev yasm texinfo flex bison \
-          python3.6 gcc-multilib
+          python3 gcc-multilib
         sudo apt-get update -qq
         sudo apt-get install -y python3-pip
         pip3 install --upgrade pip
