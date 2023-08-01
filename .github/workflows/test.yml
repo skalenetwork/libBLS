@@ -1,251 +1,289 @@
+---
 name: Build and test libBLS
 on:
   push:
     branches-ignore:
-      - 'develop'
-      - 'master'
-      - 'beta'
-      - 'stable'
+      - develop
+      - master
+      - beta
+      - stable
 defaults:
   run:
     shell: bash
 jobs:
   linux_build_and_test:
     runs-on: ubuntu-20.04
-
     steps:
-    - name: Extract repo name
-      run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
-      shell: bash
-      env:
-        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: update apt
-      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test; sudo apt-get update
-    - name: install packages
-      run: |
-        sudo apt-get install -y software-properties-common
-        sudo apt-get install -y gcc-9 g++-9
-    - name: Use g++-9 and gcov-9 by default
-      run: |
-        echo "Updating all needed alternatives"
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
-        sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-9 9
-        sudo update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-9 9
-        sudo update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-9 9
-        echo "Checking alternative for gcc"
-        which gcc
-        gcc --version
-        echo "Checking alternative for g++"
-        which g++
-        g++ --version
-        echo "Checking alternative for gcov"
-        which gcov
-        gcov --version
-        echo "Checking alternative for gcov-dump"
-        which gcov-dump
-        gcov-dump --version
-        echo "Checking alternative for gcov-tool"
-        which gcov-tool
-        gcov-tool --version
-    - name: Update apt
-      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
-    - name: Install packages
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gcc-9 g++-9 gawk sed shtool \
-          libffi-dev yasm texinfo flex bison libgnutls28-dev python3 gcc-multilib git
-        sudo apt-get update -qq
-        sudo apt-get install -y python3-pip
-        pip3 install --upgrade pip
-        sudo python3 -m pip install --upgrade pip
-        sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
-        sudo python3 -m pip install requests[security]
-        sudo python3 -m pip install codecov --ignore-installed
-    - name: Get newest lcov
-      run: |
-        echo "Removing previous lcov version..."
-        sudo apt-get remove lcov || true
-        echo "Installing newest lcov version..."
-        rm -rf newer_lcov || true
-        mkdir newer_lcov
-        cd newer_lcov
-        git clone https://github.com/linux-test-project/lcov --recursive --recurse-submodules
-        cd lcov
-        git checkout 92e2121
-        sudo make install
-        cd ..
-        cd ..
-        echo "Checking installed lcov version..."
-        which lcov
-        lcov --version
+      - name: Extract repo name
+        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
+          '{print $2}')
+        shell: bash
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: update apt
+        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test; sudo apt-get update
+      - name: install packages
+        run: |
+          sudo apt-get install -y software-properties-common
+          sudo apt-get install -y gcc-9 g++-9
+      - name: Use g++-9 and gcov-9 by default
+        run: >
+          echo "Updating all needed alternatives"
 
-    - name: Build dependencies
-      run: |
-        export CC=gcc-9
-        export CXX=g++-9
-        export TARGET=all
-        export CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
-        cd deps
-        ./build.sh
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
 
-    - name: Configure all
-      run: |
-        export CC=gcc-9
-        export CXX=g++-9
-        export TARGET=all
-        CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
-        mkdir -p build && cd build
-        cmake $CMAKE_BUILD_FLAGS ..
-    
-    # - name: Run format check
-    #   run: |
-    #     cd build
-    #     make bls-format-check
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
 
-    - name: Build all
-      run: |
-        export CC=gcc-9
-        export CXX=g++-9
-        export TARGET=all
-        CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
-        cd build
-        make -j$(nproc)
+          sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-9 9
 
-    - name: Run sgxwallet container
-      run: |
-        export SGX_WALLET_TAG=1.83.0-develop.5
-        ./scripts/run_sgx_simulator.sh
-        sleep 60
+          sudo update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-9 9
 
-    - name: Run tests
-      run: |
-        cp scripts/parameters.json build/
-        cd build
-        ./bls_unit_test
-        ./dkg_unit_test
-        ./utils_unit_test
-        ./bls_test
-        ./threshold_encryption/te_unit_test
-        ./threshold_encryption/te_test
-        ./dkg_attack
-        ./threshold_encryption/te_sample_sgx
+          sudo update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-9 9
 
-    - name: Upload coverage
-      run: |
-        cd build
-        lcov --capture --directory . --output-file coverage.info
-        lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
-        lcov --remove coverage.info 'deps/*' --output-file coverage.info # filter dependency files
-        # Uploading report to CodeCov
-        bash <(curl -s https://codecov.io/bash) -f coverage.info -t $CODECOV_TOKEN || echo "Codecov did not collect coverage reports"
+          echo "Checking alternative for gcc"
 
+          which gcc
+
+          gcc --version
+
+          echo "Checking alternative for g++"
+
+          which g++
+
+          g++ --version
+
+          echo "Checking alternative for gcov"
+
+          which gcov
+
+          gcov --version
+
+          echo "Checking alternative for gcov-dump"
+
+          which gcov-dump
+
+          gcov-dump --version
+
+          echo "Checking alternative for gcov-tool"
+
+          which gcov-tool
+
+          gcov-tool --version
+      - name: Update apt
+        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
+      - name: Install packages
+        run: >
+          sudo apt-get update
+
+          sudo apt-get install -y gcc-9 g++-9 gawk sed shtool \
+            libffi-dev yasm texinfo flex bison libgnutls28-dev python3 gcc-multilib git
+          sudo apt-get update -qq
+
+          sudo apt-get install -y python3-pip
+
+          pip3 install --upgrade pip
+
+          sudo python3 -m pip install --upgrade pip
+
+          sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
+
+          sudo python3 -m pip install requests[security]
+      - name: Get newest lcov
+        run: >
+          echo "Removing previous lcov version..."
+
+          sudo apt-get remove lcov || true
+
+          echo "Installing newest lcov version..."
+
+          rm -rf newer_lcov || true
+
+          mkdir newer_lcov
+
+          cd newer_lcov
+
+          git clone https://github.com/linux-test-project/lcov --recursive --recurse-submodules
+
+          cd lcov
+
+          git checkout 92e2121
+
+          sudo make install
+
+          cd ..
+
+          cd ..
+
+          echo "Checking installed lcov version..."
+
+          which lcov
+
+          lcov --version
+      - name: Build dependencies
+        run: |
+          export CC=gcc-9
+          export CXX=g++-9
+          export TARGET=all
+          export CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+          cd deps
+          ./build.sh
+      - name: Configure all
+        run: |
+          export CC=gcc-9
+          export CXX=g++-9
+          export TARGET=all
+          CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+          mkdir -p build && cd build
+          cmake $CMAKE_BUILD_FLAGS ..
+      - name: Build all
+        run: |
+          export CC=gcc-9
+          export CXX=g++-9
+          export TARGET=all
+          CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+          cd build
+          make -j$(nproc)
+      - name: Run sgxwallet container
+        run: |
+          export SGX_WALLET_TAG=1.83.0-develop.5
+          ./scripts/run_sgx_simulator.sh
+          sleep 60
+      - name: Run tests
+        run: |
+          cp scripts/parameters.json build/
+          cd build
+          ./bls_unit_test
+          ./dkg_unit_test
+          ./utils_unit_test
+          ./bls_test
+          ./threshold_encryption/te_unit_test
+          ./threshold_encryption/te_test
+          ./dkg_attack
+          ./threshold_encryption/te_sample_sgx
+      - name: Create lcov report
+        run: >
+          cd build
+
+          lcov --capture --directory . --output-file coverage.info
+
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
+
+          lcov --remove coverage.info 'deps/*' --output-file coverage.info # filter dependency files
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.info
   osx_build_and_test:
     runs-on: macos-11
-
     steps:
-    - name: Extract repo name
-      run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
-      shell: bash
-      env:
-        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Install packages
-      run: |
-        brew install yasm texinfo shtool libtool coreutils
-    - name: Build dependencies
-      run: |
-        cd deps
-        ./build.sh
-    - name: Configure all
-      run: |
-        mkdir -p build && cd build
-        cmake ..
-    - name: Build all
-      run: |
-        cd build
-        make -j$(sysctl -n hw.ncpu)
-    - name: Run tests
-      run: |
-        cp scripts/parameters.json build/
-        cd build
-        ./bls_unit_test
-        ./dkg_unit_test
-        ./bls_test
-        ./threshold_encryption/te_unit_test
-        ./threshold_encryption/te_test
-        ./dkg_attack
-
+      - name: Extract repo name
+        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
+          '{print $2}')
+        shell: bash
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install packages
+        run: |
+          brew install yasm texinfo shtool libtool coreutils
+      - name: Build dependencies
+        run: |
+          cd deps
+          ./build.sh
+      - name: Configure all
+        run: |
+          mkdir -p build && cd build
+          cmake ..
+      - name: Build all
+        run: |
+          cd build
+          make -j$(sysctl -n hw.ncpu)
+      - name: Run tests
+        run: |
+          cp scripts/parameters.json build/
+          cd build
+          ./bls_unit_test
+          ./dkg_unit_test
+          ./bls_test
+          ./threshold_encryption/te_unit_test
+          ./threshold_encryption/te_test
+          ./dkg_attack
   linux_build_with_emscripten:
     runs-on: ubuntu-20.04
-
     strategy:
       matrix:
-        node-version: [14.x]
-
+        node-version:
+          - 14.x
     steps:
-    - name: Extract repo name
-      run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
-      shell: bash
-      env:
-        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-    - name: Checkout
-      uses: actions/checkout@v2
-    - name: Update apt
-      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
-    - name: Install packages
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gcc-9 g++-9 gawk sed shtool \
-          libffi-dev yasm texinfo flex bison \
-          python3.6 gcc-multilib
-        sudo apt-get update -qq
-        sudo apt-get install -y python3-pip
-        pip3 install --upgrade pip
-        sudo python3 -m pip install --upgrade pip
-        sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
-        sudo python3 -m pip install requests[security]
-        sudo python3 -m pip install codecov --ignore-installed
+      - name: Extract repo name
+        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
+          '{print $2}')
+        shell: bash
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Update apt
+        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-9 g++-9 gawk sed shtool \
+            libffi-dev yasm texinfo flex bison \
+            python3 gcc-multilib
+          sudo apt-get update -qq
+          sudo apt-get install -y python3-pip
+          pip3 install --upgrade pip
+          sudo python3 -m pip install --upgrade pip
+          sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
+          sudo python3 -m pip install requests[security]
+      - name: Install NODE JS
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Build dependencies
+        run: |
+          export CC=gcc-9
+          export CXX=g++-9
+          export TARGET=all
+          cd deps
+          ./build.sh WITH_EMSCRIPTEN=1
+          cd ..
+      - name: Build all
+        run: >
+          cd deps/emsdk
 
-    - name: Install NODE JS
-      uses: actions/setup-node@v2
-      with:
-        node-version: ${{ matrix.node-version }}
-  
-    - name: Build dependencies
-      run: |
-        export CC=gcc-9
-        export CXX=g++-9
-        export TARGET=all
-        cd deps
-        ./build.sh WITH_EMSCRIPTEN=1
-        cd ..
+          ./emsdk install latest
 
-    - name: Build all
-      run: |
-        cd deps/emsdk
-        ./emsdk install latest
-        ./emsdk activate latest
-        source ./emsdk_env.sh
-        cd ../..
-        mkdir -p build_em
-        cd build_em
-        export LIBRARIES_ROOT=../deps/deps_inst/x86_or_x64/lib
-        emcmake cmake -DEMSCRIPTEN=ON .. -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a
-        emmake make -j$(nproc)
-        cd ..
+          ./emsdk activate latest
 
-    - name: Run tests
-      run: |
-        cp tools/generate_bls_keys build_em/
-        cp tools/decrypt_message build_em/
-        cd build_em/
-        cp threshold_encryption/encrypt_message.* .
-        ./generate_bls_keys
-        MESSAGE=`cat message.txt`
-        PUBLIC_BLS_KEY=`cat bls_public_key.txt`
-        node encrypt_message.js $MESSAGE $PUBLIC_BLS_KEY > encrypted_data.txt
-        ./decrypt_message
+          source ./emsdk_env.sh
+
+          cd ../..
+
+          mkdir -p build_em
+
+          cd build_em
+
+          export LIBRARIES_ROOT=../deps/deps_inst/x86_or_x64/lib
+
+          emcmake cmake -DEMSCRIPTEN=ON .. -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a
+
+          emmake make -j$(nproc)
+
+          cd ..
+      - name: Run tests
+        run: |
+          cp tools/generate_bls_keys build_em/
+          cp tools/decrypt_message build_em/
+          cd build_em/
+          cp threshold_encryption/encrypt_message.* .
+          ./generate_bls_keys
+          MESSAGE=`cat message.txt`
+          PUBLIC_BLS_KEY=`cat bls_public_key.txt`
+          node encrypt_message.js $MESSAGE $PUBLIC_BLS_KEY > encrypted_data.txt
+          ./decrypt_message
