@@ -611,7 +611,7 @@ then
 		then
 			if [ ! -f "boost_1_68_0.tar.bz2" ];
 			then
-				eval echo -e "${COLOR_INFO}downloading it${COLOR_DOTS}...${COLOR_RESET}"
+				echo -e "${COLOR_INFO}downloading it${COLOR_DOTS}...${COLOR_RESET}"
                 eval "$WGET"  https://boostorg.jfrog.io/artifactory/main/release/1.68.0/source/boost_1_68_0.tar.bz2
 			fi
 			echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
