@@ -896,6 +896,9 @@ then
 				then
 					echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
 					git clone https://github.com/curl/curl.git
+                                        cd curl
+                                        git checkout curl-8_2_1
+                                        cd ..
 					echo -e "${COLOR_INFO}archiving it${COLOR_DOTS}...${COLOR_RESET}"
 					tar -czf curl-from-git.tar.gz ./curl
 				else
