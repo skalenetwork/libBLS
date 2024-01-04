@@ -177,7 +177,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.info
   osx_build_and_test:
-    runs-on: macos-15
+    runs-on: macos-12
     steps:
       - name: Extract repo name
         run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
