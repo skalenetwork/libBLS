@@ -634,7 +634,7 @@ then
 	else
 		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
 		then
-			sed -i '' 's/std::unary_function/__unary_function/g' $CUSTOM_BUILD_ROOT/boost_1_68_0/boost/container_hash/hash.hpp
+			sed -i '' 's/std::unary_function/std::__unary_function/g' $CUSTOM_BUILD_ROOT/boost_1_68_0/boost/container_hash/hash.hpp
 			eval ./b2 cxxflags=-fPIC toolset=clang cxxstd=14 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=debug link=static threading=multi install
 		else
 			if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
