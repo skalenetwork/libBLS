@@ -45,7 +45,8 @@ libBLS allows to sign about 3000 messages per second on a single thread (Intel®
 
 libBLS has been built and tested on Ubuntu and Mac.
 
-GitHub is used to maintain this source code. Clone this repository by:
+GitHub is used to maintain this source code.
+Clone this repository by:
 
 ```shell
 git clone https://github.com/skalenetwork/libBLS.git
@@ -102,6 +103,7 @@ cmake --build build -- -j$(nproc)
 ```
 
 ### Documentation
+
 
 See [docs](docs) for libBLS documentation.
 
