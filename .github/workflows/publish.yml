@@ -48,6 +48,7 @@ jobs:
         export CC=gcc-11
         export CXX=g++-11
         export TARGET=all
+        export CMAKE_BUILD_TYPE=Release
         cd deps
         ./build.sh
 
