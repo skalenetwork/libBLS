@@ -578,7 +578,7 @@ then
 				eval "$WGET" https://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/${BOOST_NAME}.tar.bz2
 			fi
 			echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
-                tar -xf ${BOOST_NAME}.tar.bz2
+            tar -xf ${BOOST_NAME}.tar.bz2
 		fi
 		cd ${BOOST_NAME}
 		echo -e "${COLOR_INFO}configuring and building it${COLOR_DOTS}...${COLOR_RESET}"
