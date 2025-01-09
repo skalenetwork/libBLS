@@ -589,7 +589,7 @@ then
 			BOOST_LIBRARIES="system,thread,filesystem,regex,atomic,program_options"
 			if [ "$SKALED_DEPS_CHAIN" = "1" ];
 			then
-					BOOST_LIBRARIES="${BOOST_LIBRARIES},context,iostreams,fiber,log,chrono"
+				BOOST_LIBRARIES="${BOOST_LIBRARIES},context,iostreams,fiber,log,chrono"
 			fi
 		fi
 		eval ./bootstrap.sh --prefix="$INSTALL_ROOT" --with-libraries="$BOOST_LIBRARIES"
