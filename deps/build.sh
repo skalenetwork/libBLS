@@ -595,32 +595,32 @@ then
 		fi
 		eval ./bootstrap.sh --prefix="$INSTALL_ROOT" --with-libraries="$BOOST_LIBRARIES"
 
-                if [ "$DEBUG" = "1" ]; then
-                    variant=debug
-                else
-                    variant=release
-                fi
+		if [ "$DEBUG" = "1" ]; then
+			variant=debug
+		else
+			variant=release
+		fi
 
-                if [ ${ARCH} = "arm" ]
-                then
-                        sed -i -e 's#using gcc ;#using gcc : arm : /usr/local/toolchains/gcc7.2-arm/bin/arm-linux-gnueabihf-g++ ;#g' project-config.jam
-                        eval ./b2 "${CONF_CROSSCOMPILING_OPTS_BOOST}" cxxflags=-fPIC cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
-                else
-                        if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
-                        then
-                                eval ./b2 cxxflags=-fPIC toolset=clang cxxstd=17 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
-                        else
-                                if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
-                                then
-                                        eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=${variant} link=static install
-                                        cd bin.v2/libs/program_options/build/emscripten-2.0.31/${variant}/cxxstd-14-iso/link-static/threading-multi/
-                                        eval emar q "libboost_program_options.a" ./*.bc
-                                        eval cp "libboost_program_options.a" "${LIBRARIES_ROOT}"
-                                else
-                                        eval ./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
-                                fi
-                        fi
-                fi
+		if [ ${ARCH} = "arm" ]
+		then
+				sed -i -e 's#using gcc ;#using gcc : arm : /usr/local/toolchains/gcc7.2-arm/bin/arm-linux-gnueabihf-g++ ;#g' project-config.jam
+				eval ./b2 "${CONF_CROSSCOMPILING_OPTS_BOOST}" cxxflags=-fPIC cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
+		else
+				if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
+				then
+						eval ./b2 cxxflags=-fPIC toolset=clang cxxstd=17 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
+				else
+						if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
+						then
+								eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=${variant} link=static install
+								cd bin.v2/libs/program_options/build/emscripten-2.0.31/${variant}/cxxstd-14-iso/link-static/threading-multi/
+								eval emar q "libboost_program_options.a" ./*.bc
+								eval cp "libboost_program_options.a" "${LIBRARIES_ROOT}"
+						else
+								eval ./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
+						fi
+				fi
+		fi
 		cd ..
 		cd "$SOURCES_ROOT"
 	else
