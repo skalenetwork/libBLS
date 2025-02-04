@@ -6,7 +6,7 @@
 
 **TEPrivateKey** - class for common private key
 
-**TEPublicKey** - class for common public key. Has method _encrypt_ to encrypt the message. (Message length should be 64) .
+**TEPublicKey** - class for common public key. Has method _encrypt_ to encrypt the message. (Message should be in string format, with length of 64 characters) .
 
 **TEPrivateKeyShare** - class for private key for each participant. Has method _decrypt_ to decrypt CipherText and to get a part of decrypted message.
 
@@ -40,10 +40,10 @@ TEPublicKeyShare publicKeyShare ( privateKeyShare, t, n);
 
 where i is an index of a participant.
 
-4.  Decrypt message with common public key. Message length should be 64.
+4.  Encrypt message with common public key. Message length should be 64.
 
 ```cpp
-TEPublic publicKey = *keys.second;
+TEPublicKey publicKey = *keys.second;
 libBLS::Ciphertext cipher = publicKey.encrypt(message_ptr);
 ```
 
