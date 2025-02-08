@@ -55,7 +55,7 @@ std::shared_ptr < std::vector < libff::alt_bn128_Fr >>  private_shares =
 assert(dkg_obj. VerifyDKGShare( signerIndex, secret_share, public_shares_vector));
 ```
 
-where public_shares_vector is shared_ptr to vector of public shares, signerIndex is the index of participants from which secret and public shares were received.
+where public_shares_vector is shared_ptr to vector of public shares, signerIndex is the index of participants receiving the secret and public shares from all other participants.
 
 6.  If verification passed each participant may create private key from secret shares that it received
 
@@ -108,7 +108,7 @@ for (size_t i = 0; i < num_all; i++) {
 
 for (size_t i = 0; i < num_all; i++)      // Verifying shares for each participant
  for (size_t j = 0; j < num_all; j++) {
-   assert(dkgs.at(i).VerifyDKGShare(j, secret_shares_all.at(i).at(j),
+   assert(dkgs.at(j).VerifyDKGShare(j, secret_shares_all.at(i).at(j),
                     std::make_shared<std::vector<libff::alt_bn128_G2>>(public_shares_all.at(i))));
  }
  std::vector<std::vector<libff::alt_bn128_Fr>> secret_key_shares;
