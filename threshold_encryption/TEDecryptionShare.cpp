@@ -39,7 +39,7 @@ size_t TEDecryptionShare::getSignerIndex() const {
     return signerIndex;
 }
 
-libff::alt_bn128_G2 TEDecryptionShare::getShare() const {
+libff::alt_bn128_G2 TEDecryptionShare::getShareRaw() const {
     return share;
 }
 

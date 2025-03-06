@@ -29,14 +29,12 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 
 TEDecryptSet::TEDecryptSet( size_t _requiredSigners, size_t _totalSigners )
-    : TEBase(_requiredSigners, _totalSigners ), was_merged( false ) {
-    libff::init_alt_bn128_params();
-}
+    : TEBase(_requiredSigners, _totalSigners ), mergeStatus( MergeStatus::NOT_ENOUGH_SHARES ) {}
 
-void TEDecryptSet::addDecrypt( TEDecryptionShare _share ) {
+void TEDecryptSet::addDecryptShare( TEDecryptionShare _share ) {
 
-    if ( was_merged ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Invalid state" );
+    if ( mergeStatus == MergeStatus::ALREADY_MERGED ) {
+        throw libBLS::ThresholdUtils::IncorrectInput( "Already Merged" );
     }
 
    if ( decrypts.find( _share ) != decrypts.end() ) {
@@ -45,28 +43,33 @@ void TEDecryptSet::addDecrypt( TEDecryptionShare _share ) {
     }
 
     decrypts.insert( _share );
+
+    // only need to be set once - for the minimum amount of shares needed
+    if ( decrypts.size() == requiredSigners ) {
+        mergeStatus = MergeStatus::READY_TO_MERGE;
+    }
 }
 
-std::string TEDecryptSet::merge( const libBLS::Ciphertext& cyphertext ) {
-    libBLS::TE::checkCypher( cyphertext );
+// std::string TEDecryptSet::merge( const libBLS::Ciphertext& cyphertext ) {
+//     libBLS::TE::checkCypher( cyphertext );
 
-    if ( decrypts.size() < requiredSigners ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "Not enough elements to decrypt message" );
-    }
+//     if ( decrypts.size() < requiredSigners ) {
+//         throw libBLS::ThresholdUtils::IsNotWellFormed( "Not enough elements to decrypt message" );
+//     }
 
-    libBLS::TE te( *this );
+//     libBLS::TE te( *this );
 
-    std::vector< std::pair< libff::alt_bn128_G2, size_t > > decrypted;
-    for ( auto&& share : decrypts ) {
-        decrypted.push_back( share );
-    }
+//     std::vector< std::pair< libff::alt_bn128_G2, size_t > > decrypted;
+//     for ( auto&& share : decrypts ) {
+//         decrypted.push_back( share );
+//     }
 
-    auto res = te.CombineShares( cyphertext, decrypted );
+//     auto res = te.CombineShares( cyphertext, decrypted );
 
-    was_merged = true;
+//     was_merged = true;
 
-    return res;
-}
+//     return res;
+// }
 
 std::vector< uint8_t > TEDecryptSet::mergeIntoAESKey() {
     libBLS::TE te( *this );
@@ -78,7 +81,33 @@ std::vector< uint8_t > TEDecryptSet::mergeIntoAESKey() {
 
     auto res = te.CombineSharesIntoAESKey( decrypted );
 
-    was_merged = true;
+    mergeStatus = MergeStatus::ALREADY_MERGED;
 
     return res;
+}
+
+size_t TEDecryptSet::size() const {
+    return decrypts.size();
+}
+
+bool TEDecryptSet::canMerge() const {
+    return mergeStatus == MergeStatus::READY_TO_MERGE;
+}
+
+void TEDecryptSet::markAsMerged() {
+    mergeStatus = MergeStatus::ALREADY_MERGED;
+}
+
+TEDecryptSet::MergeStatus TEDecryptSet::getMergeStatus() const {
+    return mergeStatus;
+}
+
+
+std::vector< std::pair< libff::alt_bn128_G2, size_t > > TEDecryptSet::getSharesRaw() const {
+    std::vector< std::pair< libff::alt_bn128_G2, size_t > > decrypted;
+    for ( auto&& share : decrypts ) {
+        decrypted.push_back( share );
+    }
+
+    return std::move(decrypted);
 }

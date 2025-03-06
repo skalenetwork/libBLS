@@ -50,7 +50,7 @@ public:
 
     size_t getSignerIndex() const;
 
-    libff::alt_bn128_G2 getShare() const;
+    libff::alt_bn128_G2 getShareRaw() const;
 
     bool validate() const;
 

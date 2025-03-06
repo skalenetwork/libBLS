@@ -31,7 +31,11 @@ protected:
     size_t requiredSigners;
     size_t totalSigners;
 
+    static bool libffInitialized;
+
 public:
+    static void initializeIfNecessary();
+    
     TEBase( size_t _requiredSigners, size_t _totalSigners );
 
     size_t getRequiredSigners() const;

@@ -33,8 +33,6 @@ TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr< std::string > _key_str, s
         throw libBLS::ThresholdUtils::IncorrectInput( "private key share is null" );
     }
 
-    libff::init_alt_bn128_params();
-
     privateKey = libff::alt_bn128_Fr( _key_str->c_str() );
 
     if ( privateKey.is_zero() ) {
@@ -52,28 +50,26 @@ TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _s
         throw libBLS::ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
     }
 
-    libff::init_alt_bn128_params();
-
     if ( _skey_share.is_zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "Zero private key share" );
     }
 }
 
-TEDecryptionShare TEPrivateKeyShare::getDecryptionShare( libBLS::Ciphertext& cipher ) {
-    libBLS::TE::checkCypher( cipher );
+// TEDecryptionShare TEPrivateKeyShare::getDecryptionShare( libBLS::Ciphertext& cipher ) {
+//     libBLS::TE::checkCypher( cipher );
 
-    libBLS::TE te( *this );
+//     libBLS::TE te( *this );
 
-    libff::alt_bn128_G2 decryption_share = te.getDecryptionShare( cipher, privateKey );
+//     libff::alt_bn128_G2 decryption_share = te.getDecryptionShare( cipher, privateKey );
 
-    if ( decryption_share.is_zero() || !decryption_share.is_well_formed() ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
-    }
+//     if ( decryption_share.is_zero() || !decryption_share.is_well_formed() ) {
+//         throw libBLS::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
+//     }
 
-    TEDecryptionShare share(signerIndex, decryption_share);
+//     TEDecryptionShare share(signerIndex, decryption_share);
 
-    return share;
-}
+//     return share;
+// }
 
 std::string TEPrivateKeyShare::toString() const {
     return libBLS::ThresholdUtils::fieldElementToString( privateKey );
@@ -83,7 +79,7 @@ size_t TEPrivateKeyShare::getSignerIndex() const {
     return signerIndex;
 }
 
-libff::alt_bn128_Fr TEPrivateKeyShare::getPrivateKey() const {
+libff::alt_bn128_Fr TEPrivateKeyShare::getPrivateKeyRaw() const {
     return privateKey;
 }
 

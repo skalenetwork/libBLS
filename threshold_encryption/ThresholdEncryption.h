@@ -26,25 +26,72 @@
 
 #include <cstddef>
 #include <threshold_encryption/threshold_encryption.h>
-#include "TEPublicKey.h"
+#include "TEPublicKeyShare.h"
 #include "TEPrivateKeyShare.h"
+#include "TEDecryptSet.h"
 
 
 /**
  * @brief Contains all algorthimtic logic for threshold encryption
+ * The order of the below function declarations follow the algorithm's natural order
  */
 class ThresholdEncryption {
 
 public:
-    static libBLS::Ciphertext encrypt(const std::string& message, const TEPublicKey& common_public);
 
-    static bool validateEncryption(const libBLS::Ciphertext& ciphertext, const TEPrivateKeyShare& pkey_share);
-    
-    static TEDecryptionShare partialDecrypt(const libBLS::Ciphertext& cyphertext, const TEPrivateKeyShare& pkey_share);
-    
-    static bool validateDecryptionShare(const libBLS::Ciphertext& cipherText, const TEDecryptionShare& decryption_share);
-    
-    static std::string combineShares(const libBLS::Ciphertext& cyphertext, const std::vector<TEDecryptionShare>& decryption_shares);
+  /**
+   * @brief Encrypts a message using a common public key
+   * 
+   * @param message The message to be encrypted
+   * @param common_public The common public key used for encryption
+   * @return libBLS::Ciphertext The encrypted message
+   */
+  static libBLS::Ciphertext encrypt(const std::string& message, const TEPublicKey& commonPublic);
+
+  /**
+   * @brief Validates the encryption of a message
+   * 
+   * @param ciphertext The encrypted message
+   * @param pkey_share The private key share
+   * @return bool True if the encryption is valid, false otherwise
+   */
+  static bool validateEncryption(const libBLS::Ciphertext& ciphertext, const TEPrivateKeyShare& pkeyShare);
+
+  /**
+   * @brief Generates a decryption share for the given cyphertext
+   * 
+   * @param cyphertext The encrypted message
+   * @param pkey_share The private key share
+   * @return TEDecryptionShare The partial decryption share
+   */
+  static TEDecryptionShare partialDecrypt(const libBLS::Ciphertext& cyphertext, const TEPrivateKeyShare& pkeyShare);
+
+  /**
+   * @brief Validates a decryption share
+   * 
+   * @param cipherText The encrypted message
+   * @param decryption_share The decryption share
+   * @return bool True if the decryption share is valid, false otherwise
+   */
+  static bool validateDecryptionShare(const libBLS::Ciphertext& cipherText, const TEDecryptionShare& decryptionShare, const TEPublicKeyShare& publicKey);
+
+  /**
+   * @brief Combines decryption shares to reconstruct the original message
+   * 
+   * @param cyphertext The encrypted message
+   * @param decryption_set The decryption set containing the decryption shares
+   * @return std::string The original message
+   */
+  static std::string combineShares(const libBLS::Ciphertext& cyphertext, TEDecryptSet& decryptionSet);
+
+  /**
+   * @brief Validates if the cyphertext corresponds to the given message
+   * 
+   * @param cyphertext The encrypted message
+   * @param message The original message
+   * @return bool True if the message corresponds to the cyphertext. False otherwise.
+   */
+  static bool validateCombinedDecryption(const libBLS::Ciphertext& cyphertext, const std::string& message); 
 };
 
 

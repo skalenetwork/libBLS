@@ -49,8 +49,6 @@ TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str
             "non-digit symbol or first zero in non-zero public key share" );
     }
 
-    libff::init_alt_bn128_params();
-
     PublicKey.Z = libff::alt_bn128_Fq2::one();
     PublicKey.X.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 0 ).c_str() );
     PublicKey.X.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 1 ).c_str() );
@@ -65,8 +63,6 @@ TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str
 TEPublicKey::TEPublicKey(
     TEPrivateKey _common_private, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ){
-
-    libff::init_alt_bn128_params();
 
     if ( _common_private.getPrivateKey().is_zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "zero key" );

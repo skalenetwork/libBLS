@@ -30,7 +30,7 @@
 
 class TEPublicKeyShare : public TEBase {
 private:
-    libff::alt_bn128_G2 PublicKey;
+    libff::alt_bn128_G2 publicKey;
 
     size_t signerIndex;
 
@@ -44,7 +44,7 @@ public:
 
     std::shared_ptr< std::vector< std::string > > toString();
 
-    libff::alt_bn128_G2 getPublicKey() const;
+    libff::alt_bn128_G2 getPublicKeyRaw() const;
 };
 
 

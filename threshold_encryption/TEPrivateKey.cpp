@@ -32,8 +32,6 @@ TEPrivateKey::TEPrivateKey(
         throw libBLS::ThresholdUtils::IncorrectInput( "private key is null" );
     }
 
-    libff::init_alt_bn128_params();
-
     privateKey = libff::alt_bn128_Fr( _key_str->c_str() );
 
     if ( privateKey.is_zero() ) {
@@ -44,8 +42,6 @@ TEPrivateKey::TEPrivateKey(
 TEPrivateKey::TEPrivateKey(
     libff::alt_bn128_Fr _skey, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), privateKey( _skey ) {
-
-    libff::init_alt_bn128_params();
 
     if ( _skey.is_zero() )
         throw libBLS::ThresholdUtils::IsNotWellFormed( "private key is zero" );
