@@ -24,16 +24,16 @@
 #ifndef LIBBLS_TEPRIVATEKEYSHARE_H
 #define LIBBLS_TEPRIVATEKEYSHARE_H
 
+#include <threshold_encryption/TEBase.h>
 #include <threshold_encryption/TEPublicKey.h>
+#include <threshold_encryption/TEDecryptionShare.h>
 #include <threshold_encryption/threshold_encryption.h>
 
-class TEPrivateKeyShare {
+class TEPrivateKeyShare : public TEBase {
 private:
     libff::alt_bn128_Fr privateKey;
 
     size_t signerIndex;
-    size_t requiredSigners;
-    size_t totalSigners;
 
 public:
     TEPrivateKeyShare( std::shared_ptr< std::string > _key_str_ptr, size_t _signerIndex,
@@ -42,7 +42,7 @@ public:
     TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _signerIndex,
         size_t _requiredSigners, size_t _totalSigners );
 
-    libff::alt_bn128_G2 getDecryptionShare( libBLS::Ciphertext& cipher );
+    TEDecryptionShare getDecryptionShare( libBLS::Ciphertext& cipher );
 
     static std::pair< std::shared_ptr< std::vector< std::shared_ptr< TEPrivateKeyShare > > >,
         std::shared_ptr< TEPublicKey > >

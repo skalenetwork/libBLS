@@ -27,10 +27,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr< std::string > _key_str, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
-    : signerIndex( _signerIndex ),
-      requiredSigners( _requiredSigners ),
-      totalSigners( _totalSigners ) {
-    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    : TEBase(_requiredSigners, _totalSigners), signerIndex( _signerIndex ) {
 
     if ( !_key_str ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "private key share is null" );
@@ -47,11 +44,9 @@ TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr< std::string > _key_str, s
 
 TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
-    : privateKey( _skey_share ),
-      signerIndex( _signerIndex ),
-      requiredSigners( _requiredSigners ),
-      totalSigners( _totalSigners ) {
-    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    : TEBase(_requiredSigners, _totalSigners),
+      privateKey( _skey_share ),
+      signerIndex( _signerIndex ) {
 
     if ( _signerIndex > _totalSigners ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
@@ -64,7 +59,7 @@ TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _s
     }
 }
 
-libff::alt_bn128_G2 TEPrivateKeyShare::getDecryptionShare( libBLS::Ciphertext& cipher ) {
+TEDecryptionShare TEPrivateKeyShare::getDecryptionShare( libBLS::Ciphertext& cipher ) {
     libBLS::TE::checkCypher( cipher );
 
     libBLS::TE te( requiredSigners, totalSigners );
@@ -75,7 +70,9 @@ libff::alt_bn128_G2 TEPrivateKeyShare::getDecryptionShare( libBLS::Ciphertext& c
         throw libBLS::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
     }
 
-    return decryption_share;
+    TEDecryptionShare share(signerIndex, decryption_share);
+
+    return share;
 }
 
 std::string TEPrivateKeyShare::toString() const {

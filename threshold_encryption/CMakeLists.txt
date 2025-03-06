@@ -10,6 +10,8 @@ endif()
 
 set(sources
     threshold_encryption.cpp
+    TEBase.cpp
+    TEDecryptionShare.cpp
     TEDecryptSet.cpp
     TEPrivateKeyShare.cpp
     TEPrivateKey.cpp
@@ -23,6 +25,8 @@ set(sources
 
 set(headers
     threshold_encryption.h
+    TEBase.h
+    TEDecryptionShare.h
     TEDecryptSet.h
     TEPrivateKeyShare.h
     TEPrivateKey.h

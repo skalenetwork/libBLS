@@ -24,16 +24,13 @@
 #ifndef LIBBLS_TEPUBLICKEY_H
 #define LIBBLS_TEPUBLICKEY_H
 
+#include <threshold_encryption/TEBase.h>
 #include <threshold_encryption/TEPrivateKey.h>
 #include <threshold_encryption/threshold_encryption.h>
 
-class TEPublicKey {
+class TEPublicKey : public TEBase {
 private:
     libff::alt_bn128_G2 PublicKey;
-
-    size_t requiredSigners;
-    size_t totalSigners;
-
 
 public:
     TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str_ptr,

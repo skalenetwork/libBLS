@@ -104,10 +104,9 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
 
         TEDecryptSet decr_set( num_signed, num_all );
         for ( size_t i = 0; i < num_signed; i++ ) {
-            libff::alt_bn128_G2 decrypt = skey_shares[i].getDecryptionShare( cypher );
-            BOOST_REQUIRE( public_key_shares[i].Verify( cypher, decrypt ) );
-            auto decr_ptr = std::make_shared< libff::alt_bn128_G2 >( decrypt );
-            decr_set.addDecrypt( skey_shares[i].getSignerIndex(), decr_ptr );
+            TEDecryptionShare share = skey_shares[i].getDecryptionShare( cypher );
+            BOOST_REQUIRE( public_key_shares[i].Verify( cypher, share ) );
+            decr_set.addDecrypt( share );
         }
         std::string message_decrypted = decr_set.merge( cypher );
         BOOST_REQUIRE( message == message_decrypted );
@@ -119,7 +118,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
 
         // cannot add after merge
         BOOST_REQUIRE_THROW(
-            decr_set.addDecrypt( num_signed, nullptr ), libBLS::ThresholdUtils::IncorrectInput );
+            decr_set.addDecrypt( TEDecryptionShare(1, libff::alt_bn128_G2::random_element() )), libBLS::ThresholdUtils::IncorrectInput );
 
         bad_cypher = cypher;  // corrupt U in cypher
         libff::alt_bn128_G2 rand_el = libff::alt_bn128_G2::random_element();
@@ -142,11 +141,10 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
 
         TEDecryptSet bad_decr_set( num_signed, num_all );
         for ( size_t i = 0; i < num_signed; i++ ) {
-            libff::alt_bn128_G2 decrypt = skey_shares[i].getDecryptionShare( cypher );
+            TEDecryptionShare decr_share = skey_shares[i].getDecryptionShare( cypher );
             if ( i == ind )
-                BOOST_REQUIRE( !public_key_shares[i].Verify( cypher, decrypt ) );
-            auto decr_ptr = std::make_shared< libff::alt_bn128_G2 >( decrypt );
-            bad_decr_set.addDecrypt( skey_shares[i].getSignerIndex(), decr_ptr );
+                BOOST_REQUIRE( !public_key_shares[i].Verify( cypher, decr_share ) );
+            bad_decr_set.addDecrypt( decr_share );
         }
 
         std::string bad_message_decrypted = bad_decr_set.merge( cypher );
@@ -193,10 +191,9 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
 
         TEDecryptSet decr_set( num_signed, num_all );
         for ( size_t i = 0; i < num_signed; i++ ) {
-            libff::alt_bn128_G2 decrypt = ( *keys.first->at( i ) ).getDecryptionShare( cypher );
-            BOOST_REQUIRE( public_key_shares.at( i ).Verify( cypher, decrypt ) );
-            auto decr_ptr = std::make_shared< libff::alt_bn128_G2 >( decrypt );
-            decr_set.addDecrypt( ( *keys.first->at( i ) ).getSignerIndex(), decr_ptr );
+            TEDecryptionShare decr_share = ( *keys.first->at( i ) ).getDecryptionShare( cypher );
+            BOOST_REQUIRE( public_key_shares.at( i ).Verify( cypher, decr_share ) );
+            decr_set.addDecrypt( decr_share );
         }
         std::string message_decrypted = decr_set.merge( cypher );
         BOOST_REQUIRE( message == message_decrypted );
@@ -316,10 +313,9 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
 
         TEDecryptSet decr_set( num_signed, num_all );
         for ( size_t i = 0; i < num_signed; i++ ) {
-            libff::alt_bn128_G2 decrypt = skeys[i].getDecryptionShare( cypher );
-            BOOST_REQUIRE( pkeys[i].Verify( cypher, decrypt ) );
-            auto decr_ptr = std::make_shared< libff::alt_bn128_G2 >( decrypt );
-            decr_set.addDecrypt( skeys[i].getSignerIndex(), decr_ptr );
+            TEDecryptionShare decr_share = skeys[i].getDecryptionShare( cypher );
+            BOOST_REQUIRE( pkeys[i].Verify( cypher, decr_share ) );
+            decr_set.addDecrypt( decr_share );
         }
 
         std::string message_decrypted = decr_set.merge( cypher );
@@ -386,7 +382,9 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         std::get< 1 >( cypher ) = "tra-la-la";
         std::get< 2 >( cypher ) = W;
 
-        BOOST_REQUIRE_THROW( pkey.Verify( cypher, U ), libBLS::ThresholdUtils::IncorrectInput );
+        TEDecryptionShare decr_share(1, libff::alt_bn128_G2::random_element());
+
+        BOOST_REQUIRE_THROW( pkey.Verify( cypher, decr_share ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -404,29 +402,16 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         std::get< 1 >( cypher ) = "tra-la-la";
         std::get< 2 >( cypher ) = W;
 
-        BOOST_REQUIRE_THROW( pkey.Verify( cypher, U ), libBLS::ThresholdUtils::IncorrectInput );
+        TEDecryptionShare decr_share(1, U);
+
+        BOOST_REQUIRE_THROW( pkey.Verify( cypher, decr_share), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
-        // zero decrypted
-        libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
-        TEPublicKeyShare pkey(
-            TEPrivateKeyShare( el, 1, num_signed, num_all ), num_signed, num_all );
-
-        libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
-
-        libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
-
-        libBLS::Ciphertext cypher;
-        std::get< 0 >( cypher ) = U;
-        std::get< 1 >( cypher ) =
-            "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
-        std::get< 2 >( cypher ) = W;
-
-        libff::alt_bn128_G2 decrypt = libff::alt_bn128_G2::zero();
-
+        // decryption share built with zero decrypted share
+        libff::alt_bn128_G2 secr_share = libff::alt_bn128_G2::zero();
         BOOST_REQUIRE_THROW(
-            pkey.Verify( cypher, decrypt ), libBLS::ThresholdUtils::IsNotWellFormed );
+            TEDecryptionShare decr_share(1, secr_share), libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -537,35 +522,13 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         // same indices in decrypt set
         TEDecryptSet decr_set( num_signed, num_all );
 
-        libff::alt_bn128_G2 el1 = libff::alt_bn128_G2::random_element();
-        auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
+        TEDecryptionShare decr_share1(1, libff::alt_bn128_G2::random_element() );
 
-        libff::alt_bn128_G2 el2 = libff::alt_bn128_G2::random_element();
-        auto el_ptr2 = std::make_shared< libff::alt_bn128_G2 >( el2 );
+        TEDecryptionShare decr_share2(1, libff::alt_bn128_G2::random_element() );
 
-        decr_set.addDecrypt( 1, el_ptr1 );
+        decr_set.addDecrypt( decr_share1 );
         BOOST_REQUIRE_THROW(
-            decr_set.addDecrypt( 1, el_ptr2 ), libBLS::ThresholdUtils::IncorrectInput );
-    }
-
-    {
-        // zero element in decrypt set
-        TEDecryptSet decr_set( num_signed, num_all );
-
-        libff::alt_bn128_G2 el1 = libff::alt_bn128_G2::zero();
-        auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
-
-        BOOST_REQUIRE_THROW(
-            decr_set.addDecrypt( 1, el_ptr1 ), libBLS::ThresholdUtils::IsNotWellFormed );
-    }
-
-    {
-        // null element in decrypt set
-        TEDecryptSet decr_set( num_signed, num_all );
-
-        std::shared_ptr< libff::alt_bn128_G2 > el_ptr1 = nullptr;
-        BOOST_REQUIRE_THROW(
-            decr_set.addDecrypt( 1, el_ptr1 ), libBLS::ThresholdUtils::IncorrectInput );
+            decr_set.addDecrypt( decr_share2 ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -588,9 +551,8 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
     {
         // cannot combine shares
         TEDecryptSet decr_set( 1, 1 );
-        libff::alt_bn128_G2 el1 = libff::alt_bn128_G2::random_element();
-        auto el_ptr1 = std::make_shared< libff::alt_bn128_G2 >( el1 );
-        decr_set.addDecrypt( 1, el_ptr1 );
+        TEDecryptionShare decr_share(1, libff::alt_bn128_G2::random_element() );
+        decr_set.addDecrypt( decr_share );
 
         libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
 

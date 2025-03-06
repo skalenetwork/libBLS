@@ -26,10 +26,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > > _key_str_ptr,
     size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
-    : signerIndex( _signerIndex ),
-      requiredSigners( _requiredSigners ),
-      totalSigners( _totalSigners ) {
-    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
 
     if ( !_key_str_ptr ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "public key share is null" );
@@ -65,8 +62,7 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
 
 TEPublicKeyShare::TEPublicKeyShare(
     TEPrivateKeyShare _p_key, size_t _requiredSigners, size_t _totalSigners )
-    : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    : TEBase( _requiredSigners, _totalSigners ) {
 
     libff::init_alt_bn128_params();
 
@@ -75,15 +71,15 @@ TEPublicKeyShare::TEPublicKeyShare(
 }
 
 bool TEPublicKeyShare::Verify(
-    const libBLS::Ciphertext& cyphertext, const libff::alt_bn128_G2& decryptionShare ) {
+    const libBLS::Ciphertext& cyphertext, const TEDecryptionShare& decryptionShare ) {
     libBLS::TE::checkCypher( cyphertext );
-    if ( decryptionShare.is_zero() || !decryptionShare.is_well_formed() ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
+    if ( !decryptionShare.validate() ) {
+        throw libBLS::ThresholdUtils::IsNotWellFormed( "Invalid decryption share" );
     }
 
     libBLS::TE te( requiredSigners, totalSigners );
 
-    return te.Verify( cyphertext, decryptionShare, PublicKey );
+    return te.Verify( cyphertext, decryptionShare.getShare(), PublicKey );
 }
 
 std::shared_ptr< std::vector< std::string > > TEPublicKeyShare::toString() {

@@ -24,23 +24,48 @@
 #ifndef LIBBLS_TEDECRYPTSET_H
 #define LIBBLS_TEDECRYPTSET_H
 
+#include <threshold_encryption/TEBase.h>
+#include <threshold_encryption/TEDecryptionShare.h>
 #include <threshold_encryption/threshold_encryption.h>
-#include <map>
+#include <unordered_set>
 
-class TEDecryptSet {
+/**
+ * @brief A class to manage threshold encryption decryption sets
+ * 
+ * TEDecryptSet handles partial decryption shares from multiple signers in a threshold encryption scheme.
+ * It collects and combines these shares to reconstruct the original encrypted message.
+ * 
+ * 
+ * @details The class maintains a collection of partial decrypts from different participants and provides
+ * functionality to merge them once sufficient shares are collected.
+ * 
+ * @param requiredSigners The minimum number of participants needed for successful decryption
+ * @param totalSigners The total number of participants in the system
+ */
+class TEDecryptSet : public TEBase {
 private:
-    size_t requiredSigners;
-    size_t totalSigners;
-
     bool was_merged;
 
-    std::map< size_t, std::shared_ptr< libff::alt_bn128_G2 > > decrypts;
+    std::unordered_set< TEDecryptionShare, TEDecryptionShareHash > decrypts;
 
 public:
     TEDecryptSet( size_t _requiredSigners, size_t _totalSigners );
 
-    void addDecrypt( size_t _signerIndex, std::shared_ptr< libff::alt_bn128_G2 > _el );
 
+    /**
+     * @brief Adds a decryption share to the set
+     * @param _signerIndex Index of the signer contributing the decryption share
+     * @param _el Decryption share element in G2 group
+     */
+    void addDecrypt( TEDecryptionShare _share );
+
+
+    /**
+     * @brief Merges the decrypted shares from this DecryptSet with the given ciphertext
+     * @param ciphertext The encrypted text to be merged with decryption shares
+     * @return The final decrypted message as a string
+     * @throw ThresholdEcryptionError if merge operation fails or insufficient valid shares
+     */
     std::string merge( const libBLS::Ciphertext& ciphertext );
 
     std::vector< uint8_t > mergeIntoAESKey();
