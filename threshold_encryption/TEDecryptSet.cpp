@@ -54,7 +54,7 @@ std::string TEDecryptSet::merge( const libBLS::Ciphertext& cyphertext ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Not enough elements to decrypt message" );
     }
 
-    libBLS::TE te( requiredSigners, totalSigners );
+    libBLS::TE te( *this );
 
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > decrypted;
     for ( auto&& share : decrypts ) {
@@ -69,7 +69,7 @@ std::string TEDecryptSet::merge( const libBLS::Ciphertext& cyphertext ) {
 }
 
 std::vector< uint8_t > TEDecryptSet::mergeIntoAESKey() {
-    libBLS::TE te( requiredSigners, totalSigners );
+    libBLS::TE te( *this );
 
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > decrypted;
     for ( auto&& share : decrypts ) {

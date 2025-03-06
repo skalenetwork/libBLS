@@ -30,8 +30,14 @@
 
 #include <openssl/rand.h>
 #include <libff/common/profiling.hpp>
+#include "TEBase.h"
 
 namespace libBLS {
+
+TE::TE( const TEBase& base ) : t_( base.getRequiredSigners() ), n_( base.getTotalSigners() ) {
+    libff::init_alt_bn128_params();
+    libff::inhibit_profiling_info = true;
+}
 
 TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {
     libff::init_alt_bn128_params();
@@ -41,11 +47,11 @@ TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {
 TE::~TE() {}
 
 void TE::checkCypher(
-    const std::tuple< libff::alt_bn128_G2, std::string, libff::alt_bn128_G1 >& cyphertext ) {
-    if ( std::get< 0 >( cyphertext ).is_zero() || std::get< 2 >( cyphertext ).is_zero() )
+    const Ciphertext& cyphertext ) {
+    if ( cyphertext.U.is_zero() || cyphertext.W.is_zero() )
         throw ThresholdUtils::IncorrectInput( "zero element in cyphertext" );
 
-    if ( std::get< 1 >( cyphertext ).length() != 64 )
+    if ( cyphertext.V.length() != 64 )
         throw ThresholdUtils::IncorrectInput( "wrong string length in cyphertext" );
 }
 
@@ -133,12 +139,7 @@ Ciphertext TE::getCiphertext(
     H = HashToGroup( U, V );
     W = r * H;
 
-    Ciphertext result;
-    std::get< 0 >( result ) = U;
-    std::get< 1 >( result ) = V;
-    std::get< 2 >( result ) = W;
-
-    return result;
+    return {U, V, W};
 }
 
 /**
@@ -170,11 +171,7 @@ std::pair< Ciphertext, std::vector< uint8_t > > TE::encryptWithAES(
 
     auto ciphertext = getCiphertext( random_aes_key, common_public );
 
-    auto U = std::get< 0 >( ciphertext );
-    auto V = std::get< 1 >( ciphertext );
-    auto W = std::get< 2 >( ciphertext );
-
-    return { { U, V, W }, encrypted_message };
+    return { ciphertext, encrypted_message };
 }
 
 
@@ -228,11 +225,7 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
     if ( secret_key.is_zero() )
         throw ThresholdUtils::ZeroSecretKey( "zero secret key" );
 
-    libff::alt_bn128_G2 U = std::get< 0 >( ciphertext );
-
-    std::string V = std::get< 1 >( ciphertext );
-
-    libff::alt_bn128_G1 W = std::get< 2 >( ciphertext );
+    auto [U, V, W] = ciphertext;
 
     libff::alt_bn128_G1 H = HashToGroup( U, V );
 
@@ -269,11 +262,8 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
  */
 bool TE::Verify( const Ciphertext& ciphertext, const libff::alt_bn128_G2& decryptionShare,
     const libff::alt_bn128_G2& public_key ) {
-    libff::alt_bn128_G2 U = std::get< 0 >( ciphertext );
 
-    std::string V = std::get< 1 >( ciphertext );
-
-    libff::alt_bn128_G1 W = std::get< 2 >( ciphertext );
+    auto [U, V, W] = ciphertext;
 
     libff::alt_bn128_G1 H = HashToGroup( U, V );
 
@@ -326,11 +316,8 @@ bool TE::Verify( const Ciphertext& ciphertext, const libff::alt_bn128_G2& decryp
  */
 std::string TE::CombineShares( const Ciphertext& ciphertext,
     const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShares ) {
-    libff::alt_bn128_G2 U = std::get< 0 >( ciphertext );
 
-    std::string V = std::get< 1 >( ciphertext );
-
-    libff::alt_bn128_G1 W = std::get< 2 >( ciphertext );
+    auto [U, V, W] = ciphertext;
 
     libff::alt_bn128_G1 H = this->HashToGroup( U, V );
 
@@ -412,9 +399,7 @@ std::string TE::aesCiphertextToString(
     ThresholdUtils::initCurve();
     ThresholdUtils::initAES();
 
-    auto U = std::get< 0 >( cipher );
-    auto V = std::get< 1 >( cipher );
-    auto W = std::get< 2 >( cipher );
+    auto [ U, V, W ] = cipher;
 
     std::string v_str = ThresholdUtils::carray2Hex( ( unsigned char* ) ( V.data() ), V.size() );
 

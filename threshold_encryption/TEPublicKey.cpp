@@ -83,29 +83,29 @@ TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, si
     }
 }
 
-libBLS::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_ptr ) {
-    libBLS::TE te( requiredSigners, totalSigners );
+// libBLS::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_ptr ) {
+//     libBLS::TE te( requiredSigners, totalSigners );
 
-    if ( mes_ptr == nullptr ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Message is null" );
-    }
+//     if ( mes_ptr == nullptr ) {
+//         throw libBLS::ThresholdUtils::IncorrectInput( "Message is null" );
+//     }
 
-    if ( mes_ptr->length() != 64 ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Message length is not equal to 64" );
-    }
+//     if ( mes_ptr->length() != 64 ) {
+//         throw libBLS::ThresholdUtils::IncorrectInput( "Message length is not equal to 64" );
+//     }
 
-    libBLS::Ciphertext cypher = te.getCiphertext( *mes_ptr, PublicKey );
-    libBLS::TE::checkCypher( cypher );
+//     libBLS::Ciphertext cypher = te.getCiphertext( *mes_ptr, PublicKey );
+//     libBLS::TE::checkCypher( cypher );
 
-    return std::make_tuple(
-        std::get< 0 >( cypher ), std::get< 1 >( cypher ), std::get< 2 >( cypher ) );
-}
+//     return std::make_tuple(
+//         std::get< 0 >( cypher ), std::get< 1 >( cypher ), std::get< 2 >( cypher ) );
+// }
 
 std::shared_ptr< std::vector< std::string > > TEPublicKey::toString() {
     return std::make_shared< std::vector< std::string > >(
         libBLS::ThresholdUtils::G2ToString( PublicKey ) );
 }
 
-libff::alt_bn128_G2 TEPublicKey::getPublicKey() const {
+libff::alt_bn128_G2 TEPublicKey::getPublicKeyRaw() const {
     return PublicKey;
 }

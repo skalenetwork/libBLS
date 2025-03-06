@@ -62,7 +62,7 @@ TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _s
 TEDecryptionShare TEPrivateKeyShare::getDecryptionShare( libBLS::Ciphertext& cipher ) {
     libBLS::TE::checkCypher( cipher );
 
-    libBLS::TE te( requiredSigners, totalSigners );
+    libBLS::TE te( *this );
 
     libff::alt_bn128_G2 decryption_share = te.getDecryptionShare( cipher, privateKey );
 

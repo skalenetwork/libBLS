@@ -77,7 +77,7 @@ bool TEPublicKeyShare::Verify(
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Invalid decryption share" );
     }
 
-    libBLS::TE te( requiredSigners, totalSigners );
+    libBLS::TE te( *this );
 
     return te.Verify( cyphertext, decryptionShare.getShare(), PublicKey );
 }

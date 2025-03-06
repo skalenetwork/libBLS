@@ -17,6 +17,7 @@ set(sources
     TEPrivateKey.cpp
     TEPublicKey.cpp
     TEPublicKeyShare.cpp
+    ThresholdEncryption.cpp
     ${DKG_DIR}/dkg.cpp
     ${DKG_DIR}/DKGTEWrapper.cpp
     ${DKG_DIR}/DKGTESecret.cpp
@@ -32,6 +33,7 @@ set(headers
     TEPrivateKey.h
     TEPublicKey.h
     TEPublicKeyShare.h
+    ThresholdEncryption.h
     ${DKG_DIR}/dkg.h
     ${DKG_DIR}/DKGTEWrapper.h
     ${DKG_DIR}/DKGTESecret.h

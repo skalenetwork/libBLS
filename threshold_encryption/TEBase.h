@@ -33,6 +33,9 @@ protected:
 
 public:
     TEBase( size_t _requiredSigners, size_t _totalSigners );
+
+    size_t getRequiredSigners() const;
+    size_t getTotalSigners() const;
 };
 
 

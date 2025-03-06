@@ -178,14 +178,9 @@ BOOST_AUTO_TEST_CASE( ConvertionToStringAndBack ) {
         libBLS::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second );
 
     auto ciphertext_from_string = libBLS::TE::aesCiphertextFromString( str );
-    auto V_old = std::get< 1 >( ciphertext_with_aes.first );
-    auto V_new = std::get< 1 >( ciphertext_from_string.first );
 
-    auto W_old = std::get< 2 >( ciphertext_with_aes.first );
-    auto W_new = std::get< 2 >( ciphertext_from_string.first );
-
-    auto U_old = std::get< 0 >( ciphertext_with_aes.first );
-    auto U_new = std::get< 0 >( ciphertext_from_string.first );
+    auto [U_old, V_old, W_old] = ciphertext_with_aes.first;
+    auto [U_new, V_new, W_new] = ciphertext_from_string.first;
 
     BOOST_REQUIRE( U_old == U_new );
     BOOST_REQUIRE( W_old == W_new );
@@ -506,10 +501,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionCorruptedCiphertext ) {
 
     libff::alt_bn128_G1 rand = libff::alt_bn128_G1::random_element();
 
-    std::tuple< libff::alt_bn128_G2, std::string, libff::alt_bn128_G1 > corrupted_ciphertext;
-    std::get< 0 >( corrupted_ciphertext ) = std::get< 0 >( ciphertext );
-    std::get< 1 >( corrupted_ciphertext ) = std::get< 1 >( ciphertext );
-    std::get< 2 >( corrupted_ciphertext ) = rand;
+    libBLS::Ciphertext corrupted_ciphertext = {ciphertext.U, ciphertext.V, rand};
 
     for ( size_t i = 0; i < 11; ++i ) {
         libff::alt_bn128_G2 decrypted;

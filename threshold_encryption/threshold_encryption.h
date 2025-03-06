@@ -31,13 +31,25 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <third_party/cryptlite/sha256.h>
 
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
+#include <threshold_encryption/TEBase.h>
+
 
 namespace libBLS {
 
-typedef std::tuple< libff::alt_bn128_G2, std::string, libff::alt_bn128_G1 > Ciphertext;
+struct Ciphertext {
+    libff::alt_bn128_G2 U;
+    std::string V;
+    libff::alt_bn128_G1 W;
+
+    bool operator==(const Ciphertext& other) const {
+        return (U == other.U) && (V == other.V) && (W == other.W);
+    }
+};
 
 class TE {
 public:
+    TE( const TEBase& base );
+
     TE( const size_t t, const size_t n );
 
     ~TE();

@@ -28,3 +28,11 @@ TEBase::TEBase( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 }
+
+size_t TEBase::getRequiredSigners() const {
+    return requiredSigners;
+}
+
+size_t TEBase::getTotalSigners() const {
+    return totalSigners;
+}

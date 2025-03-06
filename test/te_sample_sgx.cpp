@@ -167,7 +167,7 @@ libff::alt_bn128_G2 getDecryptionShare( const libBLS::Ciphertext& ciphertext,
     const std::string& key_name, const std::string& sgx_url ) {
     libBLS::TE::checkCypher( ciphertext );
 
-    libff::alt_bn128_G2 U = std::get< 0 >( ciphertext );
+    auto [U, V, W] = ciphertext;
 
     U.to_affine_coordinates();
     auto u_splitted = libBLS::ThresholdUtils::G2ToString( U );
@@ -178,10 +178,6 @@ libff::alt_bn128_G2 getDecryptionShare( const libBLS::Ciphertext& ciphertext,
             public_decryption_value += ":";
         }
     }
-
-    std::string V = std::get< 1 >( ciphertext );
-
-    libff::alt_bn128_G1 W = std::get< 2 >( ciphertext );
 
     libff::alt_bn128_G1 H = libBLS::TE::HashToGroup( U, V );
 

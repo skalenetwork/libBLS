@@ -33,6 +33,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <threshold_encryption/TEPrivateKeyShare.h>
 #include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/TEPublicKeyShare.h>
+#include <threshold_encryption/ThresholdEncryption.h>
 #include <threshold_encryption/threshold_encryption.h>
 #include <tools/utils.h>
 #include <boost/test/included/unit_test.hpp>
@@ -80,8 +81,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         }
 
         TEPublicKey common_public( common_private, num_signed, num_all );
-        auto msg_ptr = std::make_shared< std::string >( message );
-        libBLS::Ciphertext cypher = common_public.encrypt( msg_ptr );
+        libBLS::Ciphertext cypher = ThresholdEncryption::encrypt( message, common_public );
 
         std::vector< libff::alt_bn128_Fr > skeys = dkg_te.SecretKeyContribution( poly );
         std::vector< TEPrivateKeyShare > skey_shares;
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         BOOST_REQUIRE( message == message_decrypted );
 
         libBLS::Ciphertext bad_cypher = cypher;  // corrupt V in cypher
-        std::get< 1 >( bad_cypher ) = spoilMessage( std::get< 1 >( cypher ) );
+        bad_cypher.V = spoilMessage( cypher.V );
 
         BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), libBLS::ThresholdUtils::IncorrectInput );
 
@@ -122,13 +122,13 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
 
         bad_cypher = cypher;  // corrupt U in cypher
         libff::alt_bn128_G2 rand_el = libff::alt_bn128_G2::random_element();
-        std::get< 0 >( bad_cypher ) = rand_el;
+        bad_cypher.U = rand_el;
 
         BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), libBLS::ThresholdUtils::IncorrectInput );
 
         bad_cypher = cypher;  // corrupt W in cypher
         libff::alt_bn128_G1 rand_el2 = libff::alt_bn128_G1::random_element();
-        std::get< 2 >( bad_cypher ) = rand_el2;
+        bad_cypher.W = rand_el2;
 
         BOOST_REQUIRE_THROW( decr_set.merge( bad_cypher ), libBLS::ThresholdUtils::IncorrectInput );
 
@@ -170,8 +170,7 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
             keys = TEPrivateKeyShare::generateSampleKeys( num_signed, num_all );
 
 
-        auto msg_ptr = std::make_shared< std::string >( message );
-        libBLS::Ciphertext cypher = keys.second->encrypt( msg_ptr );
+        libBLS::Ciphertext cypher =  ThresholdEncryption::encrypt(message, *(keys.second));
 
         std::vector< TEPublicKeyShare > public_key_shares;
         for ( size_t i = 0; i < num_all; i++ ) {
@@ -209,7 +208,7 @@ BOOST_AUTO_TEST_CASE( WrappersFromString ) {
         TEPublicKey common_pkey( test0, num_signed, num_all );
 
         TEPublicKey common_pkey_from_str( common_pkey.toString(), num_signed, num_all );
-        BOOST_REQUIRE( common_pkey.getPublicKey() == common_pkey_from_str.getPublicKey() );
+        BOOST_REQUIRE( common_pkey.getPublicKeyRaw() == common_pkey_from_str.getPublicKeyRaw() );
 
         libff::alt_bn128_Fr test = libff::alt_bn128_Fr::random_element();
         TEPrivateKey private_key( test, num_signed, num_all );
@@ -298,8 +297,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
             message += char( rand_gen() % 128 );
         }
 
-        auto msg_ptr = std::make_shared< std::string >( message );
-        libBLS::Ciphertext cypher = common_public.encrypt( msg_ptr );
+        libBLS::Ciphertext cypher = ThresholdEncryption::encrypt(message, common_public);
 
         for ( size_t i = 0; i < num_all - num_signed; ++i ) {
             size_t ind4del = rand_gen() % secret_shares_all.size();
@@ -377,10 +375,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
-        libBLS::Ciphertext cypher;
-        std::get< 0 >( cypher ) = U;
-        std::get< 1 >( cypher ) = "tra-la-la";
-        std::get< 2 >( cypher ) = W;
+        libBLS::Ciphertext cypher = { U, "tra-la-la", W};
 
         TEDecryptionShare decr_share(1, libff::alt_bn128_G2::random_element());
 
@@ -397,10 +392,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
-        libBLS::Ciphertext cypher;
-        std::get< 0 >( cypher ) = U;
-        std::get< 1 >( cypher ) = "tra-la-la";
-        std::get< 2 >( cypher ) = W;
+        libBLS::Ciphertext cypher = { U, "tra-la-la", W};
 
         TEDecryptionShare decr_share(1, U);
 
@@ -472,14 +464,14 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
             TEPublicKey pkey( el, num_signed, num_all ), libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
-    {
-        // null message
-        libff::alt_bn128_G2 el = libff::alt_bn128_G2::random_element();
+    // {
+    //     // null message
+    //     libff::alt_bn128_G2 el = libff::alt_bn128_G2::random_element();
 
-        TEPublicKey pkey( el, num_signed, num_all );
+    //     TEPublicKey pkey( el, num_signed, num_all );
 
-        BOOST_REQUIRE_THROW( pkey.encrypt( nullptr ), libBLS::ThresholdUtils::IncorrectInput );
-    }
+    //     BOOST_REQUIRE_THROW( ThresholdEncryption::encrypt()  pkey.encrypt( nullptr ), libBLS::ThresholdUtils::IncorrectInput );
+    // }
 
     {
         // message length is not 64
@@ -487,7 +479,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
         TEPublicKey pkey( el, num_signed, num_all );
 
-        BOOST_REQUIRE_THROW( pkey.encrypt( std::make_shared< std::string >( "tra-la-la" ) ),
+        BOOST_REQUIRE_THROW( ThresholdEncryption::encrypt("tra-la-la", pkey),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
@@ -540,10 +532,10 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
         libBLS::Ciphertext cypher;
-        std::get< 0 >( cypher ) = U;
-        std::get< 1 >( cypher ) =
+        cypher.U = U;
+        cypher.V =
             "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
-        std::get< 2 >( cypher ) = W;
+        cypher.W = W;
 
         BOOST_REQUIRE_THROW( decr_set.merge( cypher ), libBLS::ThresholdUtils::IsNotWellFormed );
     }
@@ -559,10 +551,10 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
         libBLS::Ciphertext cypher;
-        std::get< 0 >( cypher ) = U;
-        std::get< 1 >( cypher ) =
+        cypher.U = U;
+        cypher.V =
             "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
-        std::get< 2 >( cypher ) = W;
+        cypher.W = W;
 
         BOOST_REQUIRE_THROW( decr_set.merge( cypher ), libBLS::ThresholdUtils::IncorrectInput );
     }
