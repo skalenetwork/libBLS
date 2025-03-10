@@ -75,8 +75,8 @@ BOOST_AUTO_TEST_CASE( SimpleEncryptionWithAES ) {
 
     auto ciphertext_with_aes = te_instance.encryptWithAES( message, public_key );
 
-    auto ciphertext = ciphertext_with_aes.first;
-    auto encrypted_message = ciphertext_with_aes.second;
+    auto ciphertext = ciphertext_with_aes.key;
+    auto encrypted_message = ciphertext_with_aes.data;
 
     libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
 
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE( SimpleEncryptionWithAES ) {
     std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
 
     std::string plaintext =
-        libBLS::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
+        libBLS::ThresholdUtils::aesDecrypt( *encrypted_message, decrypted_aes_key );
 
     BOOST_REQUIRE( plaintext == message );
 }
@@ -106,8 +106,8 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongKey ) {
 
     auto ciphertext_with_aes = te_instance.encryptWithAES( message, public_key );
 
-    auto ciphertext = ciphertext_with_aes.first;
-    auto encrypted_message = ciphertext_with_aes.second;
+    auto ciphertext = ciphertext_with_aes.key;
+    auto encrypted_message = ciphertext_with_aes.data;
 
     libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
 
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongKey ) {
     RAND_bytes( key_bytes, sizeof( key_bytes ) );
     std::string random_aes_key = std::string( ( char* ) key_bytes, sizeof( key_bytes ) );
 
-    std::string plaintext = libBLS::ThresholdUtils::aesDecrypt( encrypted_message, random_aes_key );
+    std::string plaintext = libBLS::ThresholdUtils::aesDecrypt( *encrypted_message, random_aes_key );
 
     BOOST_REQUIRE( plaintext != message );
 }
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongCiphertext ) {
 
     auto ciphertext_with_aes = te_instance.encryptWithAES( message, public_key );
 
-    auto ciphertext = ciphertext_with_aes.first;
+    auto ciphertext = ciphertext_with_aes.key;
     // auto encrypted_message = ciphertext_with_aes.second;
 
     libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
@@ -153,10 +153,10 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongCiphertext ) {
     std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
 
     std::string bad_message = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
-    auto bad_encrypted_message = te_instance.encryptWithAES( bad_message, public_key ).second;
+    auto bad_encrypted_message = te_instance.encryptWithAES( bad_message, public_key ).data;
 
     std::string plaintext =
-        libBLS::ThresholdUtils::aesDecrypt( bad_encrypted_message, decrypted_aes_key );
+        libBLS::ThresholdUtils::aesDecrypt( *bad_encrypted_message, decrypted_aes_key );
 
     BOOST_REQUIRE( plaintext != message );
 }
@@ -175,18 +175,18 @@ BOOST_AUTO_TEST_CASE( ConvertionToStringAndBack ) {
     auto ciphertext_with_aes = libBLS::TE::encryptWithAES( message, public_key );
 
     auto str =
-        libBLS::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second );
+        libBLS::TE::aesCiphertextToString( ciphertext_with_aes );
 
     auto ciphertext_from_string = libBLS::TE::aesCiphertextFromString( str );
 
-    auto [U_old, V_old, W_old] = ciphertext_with_aes.first;
-    auto [U_new, V_new, W_new] = ciphertext_from_string.first;
+    auto [U_old, V_old, W_old] = ciphertext_with_aes.key;
+    auto [U_new, V_new, W_new] = ciphertext_from_string.key;
 
     BOOST_REQUIRE( U_old == U_new );
     BOOST_REQUIRE( W_old == W_new );
     BOOST_REQUIRE( V_old == V_new );
-    BOOST_REQUIRE( ciphertext_with_aes.first == ciphertext_from_string.first );
-    BOOST_REQUIRE( ciphertext_with_aes.second.size() == ciphertext_from_string.second.size() );
+    BOOST_REQUIRE( ciphertext_with_aes.key == ciphertext_from_string.key );
+    BOOST_REQUIRE( ciphertext_with_aes.data->size() == ciphertext_from_string.data->size() );
     BOOST_REQUIRE( ciphertext_with_aes == ciphertext_from_string );
 }
 
@@ -258,10 +258,10 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToString ) {
 
     auto ciphertext_with_aes = te_instance.aesCiphertextFromString( ciphertext_string );
 
-    auto ciphertext = ciphertext_with_aes.first;
+    auto ciphertext = ciphertext_with_aes.key;
     BOOST_REQUIRE( ciphertext == te_instance.ciphertextFromString( ciphertext_string ) );
 
-    auto encrypted_message = ciphertext_with_aes.second;
+    auto encrypted_message = ciphertext_with_aes.data;
 
     libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
 
@@ -273,7 +273,7 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToString ) {
     std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
 
     std::string plaintext =
-        libBLS::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
+        libBLS::ThresholdUtils::aesDecrypt( *encrypted_message, decrypted_aes_key );
 
     BOOST_REQUIRE( plaintext == message );
 }
@@ -501,20 +501,20 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionCorruptedCiphertext ) {
 
     libff::alt_bn128_G1 rand = libff::alt_bn128_G1::random_element();
 
-    libBLS::Ciphertext corrupted_ciphertext = {ciphertext.U, ciphertext.V, rand};
+    libBLS::CipheredKey corrupted_ciphered_key = {ciphertext.U, ciphertext.V, rand};
 
     for ( size_t i = 0; i < 11; ++i ) {
         libff::alt_bn128_G2 decrypted;
 
         BOOST_REQUIRE_THROW(
-            decrypted = obj.getDecryptionShare( corrupted_ciphertext, secret_keys[i] ),
+            decrypted = obj.getDecryptionShare( corrupted_ciphered_key, secret_keys[i] ),
             libBLS::ThresholdUtils::IncorrectInput );
 
         decrypted = obj.getDecryptionShare( ciphertext, secret_keys[i] );
 
         libff::alt_bn128_G2 public_key = secret_keys[i] * libff::alt_bn128_G2::one();
 
-        BOOST_REQUIRE( !obj.Verify( corrupted_ciphertext, decrypted, public_key ) );
+        BOOST_REQUIRE( !obj.Verify( corrupted_ciphered_key, decrypted, public_key ) );
     }
 }
 

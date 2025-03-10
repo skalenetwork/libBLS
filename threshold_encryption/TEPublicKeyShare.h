@@ -40,7 +40,7 @@ public:
 
     TEPublicKeyShare( TEPrivateKeyShare _p_key, size_t _requiredSigners, size_t _totalSigners );
 
-    bool Verify( const libBLS::Ciphertext& ciphertext, const TEDecryptionShare& decryptionShare );
+    bool Verify( const libBLS::CipheredKey& ciphertext, const TEDecryptionShare& decryptionShare );
 
     std::shared_ptr< std::vector< std::string > > toString();
 

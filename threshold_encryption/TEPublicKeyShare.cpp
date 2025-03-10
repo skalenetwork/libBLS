@@ -67,7 +67,7 @@ TEPublicKeyShare::TEPublicKeyShare(
 }
 
 bool TEPublicKeyShare::Verify(
-    const libBLS::Ciphertext& cyphertext, const TEDecryptionShare& decryptionShare ) {
+    const libBLS::CipheredKey& cyphertext, const TEDecryptionShare& decryptionShare ) {
     libBLS::TE::checkCypher( cyphertext );
     if ( !decryptionShare.validate() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Invalid decryption share" );

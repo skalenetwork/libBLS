@@ -36,14 +36,32 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
-struct Ciphertext {
+
+
+struct CipheredKey {
     libff::alt_bn128_G2 U;
     std::string V;
     libff::alt_bn128_G1 W;
 
-    bool operator==(const Ciphertext& other) const {
+    bool operator==(const CipheredKey& other) const {
         return (U == other.U) && (V == other.V) && (W == other.W);
     }
+};
+
+struct Ciphertext {
+    CipheredKey key;
+    std::shared_ptr< std::vector<uint8_t> > data;
+
+    bool operator==(const Ciphertext& other) const {
+        bool baseParams = key == other.key;
+        if (data && other.data) {
+            return baseParams && (*data == *other.data);
+        }
+        return baseParams;
+    }
+
+    Ciphertext( const CipheredKey &_key, const std::vector<uint8_t> &_data) : 
+    key(_key), data(std::make_shared<std::vector<uint8_t>>(_data)) {}
 };
 
 class TE {
@@ -54,17 +72,17 @@ public:
 
     ~TE();
 
-    static Ciphertext getCiphertext(
+    static CipheredKey getCiphertext(
         const std::string& message, const libff::alt_bn128_G2& common_public );
 
-    static std::pair< Ciphertext, std::vector< uint8_t > > encryptWithAES(
+    static Ciphertext encryptWithAES(
         const std::string& message, const libff::alt_bn128_G2& common_public );
 
     static std::string encryptMessage(
         const std::string& message, const std::string& common_public );
 
     static libff::alt_bn128_G2 getDecryptionShare(
-        const Ciphertext& ciphertext, const libff::alt_bn128_Fr& secret_key );
+        const CipheredKey& ciphertext, const libff::alt_bn128_Fr& secret_key );
 
     static libff::alt_bn128_G1 HashToGroup( const libff::alt_bn128_G2& U, const std::string& V,
         std::string ( *hash_func )( const std::string& str ) = cryptlite::sha256::hash_hex );
@@ -72,24 +90,23 @@ public:
     static std::string Hash( const libff::alt_bn128_G2& Y,
         std::string ( *hash_func )( const std::string& str ) = cryptlite::sha256::hash_hex );
 
-    static bool Verify( const Ciphertext& ciphertext, const libff::alt_bn128_G2& decryptionShare,
+    static bool Verify( const CipheredKey& ciphertext, const libff::alt_bn128_G2& decryptionShare,
         const libff::alt_bn128_G2& public_key );
 
-    std::string CombineShares( const Ciphertext& ciphertext,
+    std::string CombineShares( const CipheredKey& ciphertext,
         const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShare );
 
     std::vector< uint8_t > CombineSharesIntoAESKey(
         const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShare );
 
-    static void checkCypher( const Ciphertext& cypher );
+    static void checkCypher( const CipheredKey& cypher );
 
-    static std::string aesCiphertextToString(
-        const Ciphertext& cipher, const std::vector< uint8_t >& data );
+    static std::string aesCiphertextToString( const Ciphertext& cipher );
 
-    static std::pair< Ciphertext, std::vector< uint8_t > > aesCiphertextFromString(
+    static Ciphertext aesCiphertextFromString(
         const std::string& str );
 
-    static Ciphertext ciphertextFromString( const std::string& str );
+    static CipheredKey ciphertextFromString( const std::string& str );
 
 private:
     const size_t t_ = 0;

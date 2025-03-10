@@ -102,8 +102,8 @@ int main() {
 
     auto ciphertext_with_aes = te_instance.aesCiphertextFromString( encrypted_string );
 
-    auto ciphertext = ciphertext_with_aes.first;
-    auto encrypted_message = ciphertext_with_aes.second;
+    auto ciphertext = ciphertext_with_aes.key;
+    auto encrypted_message = ciphertext_with_aes.data;
 
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares;
     for ( size_t i = 0; i < n; ++i ) {
@@ -114,7 +114,7 @@ int main() {
             "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:0:DKG_ID:" + std::to_string( i );
 
         libff::alt_bn128_G2 decryption_share =
-            getDecryptionShare( ciphertext, bls_key_name, sgxwallet_url );
+            getDecryptionShare( ciphertext_with_aes, bls_key_name, sgxwallet_url );
 
         assert( te_instance.Verify( ciphertext, decryption_share, public_key ) );
 
@@ -124,7 +124,7 @@ int main() {
     std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
 
     std::string decrypted_plaintext =
-        libBLS::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
+        libBLS::ThresholdUtils::aesDecrypt( *encrypted_message, decrypted_aes_key );
 
     assert( decrypted_plaintext == plaintext );
 
@@ -165,9 +165,9 @@ std::vector< libff::alt_bn128_Fr > generateSecretKeys(
 
 libff::alt_bn128_G2 getDecryptionShare( const libBLS::Ciphertext& ciphertext,
     const std::string& key_name, const std::string& sgx_url ) {
-    libBLS::TE::checkCypher( ciphertext );
+    libBLS::TE::checkCypher( ciphertext.key );
 
-    auto [U, V, W] = ciphertext;
+    auto [U, V, W] = ciphertext.key;
 
     U.to_affine_coordinates();
     auto u_splitted = libBLS::ThresholdUtils::G2ToString( U );

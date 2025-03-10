@@ -26,6 +26,7 @@
 
 #include <cstddef>
 #include <threshold_encryption/threshold_encryption.h>
+#include <tools/utils.h>
 #include "TEPublicKeyShare.h"
 #include "TEPrivateKeyShare.h"
 #include "TEDecryptSet.h"
@@ -34,6 +35,9 @@
 /**
  * @brief Contains all algorthimtic logic for threshold encryption
  * The order of the below function declarations follow the algorithm's natural order
+ * 
+ * @note TEncryption of the actual message is made using an AES key. This key is encrypted using threshold encryption.
+ * When this key is decrypted, the original message can be decrypted using the AES key.
  */
 class ThresholdEncryption {
 
@@ -41,6 +45,8 @@ public:
 
   /**
    * @brief Encrypts a message using a common public key
+   * This function generates a random AES key, and encrypts the message using this key
+   * This AES key is then encrypted using the common public key from threshold encryption.
    * 
    * @param message The message to be encrypted
    * @param common_public The common public key used for encryption
@@ -49,22 +55,22 @@ public:
   static libBLS::Ciphertext encrypt(const std::string& message, const TEPublicKey& commonPublic);
 
   /**
-   * @brief Validates the encryption of a message
+   * @brief Validates the encryption of a message (the ciphered AES key)
    * 
    * @param ciphertext The encrypted message
    * @param pkey_share The private key share
    * @return bool True if the encryption is valid, false otherwise
    */
-  static bool validateEncryption(const libBLS::Ciphertext& ciphertext, const TEPrivateKeyShare& pkeyShare);
+  static bool validateEncryption(const libBLS::CipheredKey& ciphertext, const TEPrivateKeyShare& pkeyShare);
 
   /**
-   * @brief Generates a decryption share for the given cyphertext
+   * @brief Generates a decryption share for the given cyphertext (ciphered AES key)
    * 
    * @param cyphertext The encrypted message
    * @param pkey_share The private key share
    * @return TEDecryptionShare The partial decryption share
    */
-  static TEDecryptionShare partialDecrypt(const libBLS::Ciphertext& cyphertext, const TEPrivateKeyShare& pkeyShare);
+  static TEDecryptionShare partialDecrypt(const libBLS::CipheredKey& cyphertext, const TEPrivateKeyShare& pkeyShare);
 
   /**
    * @brief Validates a decryption share
@@ -73,16 +79,17 @@ public:
    * @param decryption_share The decryption share
    * @return bool True if the decryption share is valid, false otherwise
    */
-  static bool validateDecryptionShare(const libBLS::Ciphertext& cipherText, const TEDecryptionShare& decryptionShare, const TEPublicKeyShare& publicKey);
+  static bool validateDecryptionShare(const libBLS::CipheredKey& cipherText, const TEDecryptionShare& decryptionShare, const TEPublicKeyShare& publicKey);
 
   /**
-   * @brief Combines decryption shares to reconstruct the original message
+   * @brief Combines decryption shares to reconstruct the original message.
+   * It first combines all shares to derive the AES key, and then uses the AES key to decrypt the message.
    * 
-   * @param cyphertext The encrypted message
+   * @param cyphertext The encrypted AES key + encrypted message
    * @param decryption_set The decryption set containing the decryption shares
    * @return std::string The original message
    */
-  static std::string combineShares(const libBLS::Ciphertext& cyphertext, TEDecryptSet& decryptionSet);
+  static std::string combineShares(const libBLS::Ciphertext& cyphertext, TEDecryptSet& decryptionSet );
 
   /**
    * @brief Validates if the cyphertext corresponds to the given message

@@ -361,24 +361,38 @@ std::vector< uint8_t > ThresholdUtils::aesEncrypt(
     const std::string& plaintext, const std::string& key ) {
     initAES();
 
-    size_t enc_length = plaintext.length() * 3;
+    // Make sure there is enough space for: IV + plaintext + padding
+    size_t enc_length = AES_BLOCK_SIZE + plaintext.length() + AES_BLOCK_SIZE;
+
     std::vector< unsigned char > output;
     output.resize( enc_length, '\0' );
 
+    // Initialize IV vector
     unsigned char iv[AES_BLOCK_SIZE];
     RAND_bytes( iv, sizeof( iv ) );
-    std::copy( iv, iv + 16, output.begin() );
+    // Place IV at start of output
+    std::copy( iv, iv + AES_BLOCK_SIZE, output.begin() );
 
-    int actual_size = 0, final_size = 0;
+    // Account offset for the IV already stored in output vec
+    size_t offset = AES_BLOCK_SIZE;
+    int outlen = 0;
+
     EVP_CIPHER_CTX* e_ctx = EVP_CIPHER_CTX_new();
     EVP_EncryptInit( e_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.c_str(), iv );
-    EVP_EncryptUpdate( e_ctx, &output[64], &actual_size, ( const unsigned char* ) plaintext.data(),
+    // Cypher data and store in output
+    EVP_EncryptUpdate( e_ctx, &output[offset], &outlen, ( const unsigned char* ) plaintext.data(),
         plaintext.length() );
-    EVP_EncryptFinal( e_ctx, &output[64 + actual_size], &final_size );
-    std::copy( iv, iv + 16, output.begin() + 16 );
-    output.resize( 64 + actual_size + final_size );
+    // offset for the data written
+    offset += outlen;
+    // Finalize encryption - take care of padding
+    EVP_EncryptFinal( e_ctx, &output[offset], &outlen );
+    offset += outlen;
+    
+    output.resize( offset );
+
     EVP_CIPHER_CTX_free( e_ctx );
-    return output;
+
+    return std::vector<uint8_t>(output);
 }
 
 std::string ThresholdUtils::aesDecrypt(
@@ -386,7 +400,7 @@ std::string ThresholdUtils::aesDecrypt(
     initAES();
 
     unsigned char iv[AES_BLOCK_SIZE];
-    std::copy( ciphertext.begin(), ciphertext.begin() + 16, iv );
+    std::copy( ciphertext.begin(), ciphertext.begin() + AES_BLOCK_SIZE, iv );
     std::vector< unsigned char > plaintext;
     plaintext.resize( ciphertext.size(), '\0' );
 
@@ -394,12 +408,13 @@ std::string ThresholdUtils::aesDecrypt(
     EVP_CIPHER_CTX* d_ctx = EVP_CIPHER_CTX_new();
     EVP_DecryptInit( d_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.c_str(), iv );
     EVP_DecryptUpdate(
-        d_ctx, &plaintext[0], &actual_size, &ciphertext[64], ciphertext.size() - 64 );
+        d_ctx, &plaintext[0], &actual_size, &ciphertext[AES_BLOCK_SIZE], ciphertext.size() - AES_BLOCK_SIZE );
     EVP_DecryptFinal( d_ctx, &plaintext[actual_size], &final_size );
     EVP_CIPHER_CTX_free( d_ctx );
     plaintext.resize( actual_size + final_size, '\0' );
 
     return std::string( plaintext.begin(), plaintext.end() );
 }
+
 
 }  // namespace libBLS
