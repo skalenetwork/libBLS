@@ -24,9 +24,8 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <threshold_encryption/TEDecryptionShare.h>
 #include <tools/utils.h>
 
-TEDecryptionShare::TEDecryptionShare( size_t _signerIndex,  libff::alt_bn128_G2 _share )
+TEDecryptionShare::TEDecryptionShare( size_t _signerIndex, libff::alt_bn128_G2 _share )
     : signerIndex( _signerIndex ), share( _share ) {
-    
     if ( _share.is_zero() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "decryption share is zero" );
     }
@@ -47,20 +46,21 @@ bool TEDecryptionShare::validate() const {
     return !share.is_zero() && share.is_well_formed();
 }
 
-bool TEDecryptionShare::operator==(const TEDecryptionShare& other) const {
+bool TEDecryptionShare::operator==( const TEDecryptionShare& other ) const {
     return signerIndex == other.signerIndex;
 }
 
-TEDecryptionShare::operator std::pair<libff::alt_bn128_G2, size_t>() const {
-    return std::make_pair(share, signerIndex);
+TEDecryptionShare::operator std::pair< libff::alt_bn128_G2, size_t >() const {
+    return std::make_pair( share, signerIndex );
 }
 
 std::string TEDecryptionShare::toString() const {
-    std::vector<std::string> str = libBLS::ThresholdUtils::G2ToString( share );
+    std::vector< std::string > str = libBLS::ThresholdUtils::G2ToString( share );
     std::ostringstream oss;
     oss << signerIndex;
-    for (size_t i = 0; i < str.size(); ++i) {
-        if (i > 0) oss << " ";
+    for ( size_t i = 0; i < str.size(); ++i ) {
+        if ( i > 0 )
+            oss << " ";
         oss << str[i];
     }
     return oss.str();

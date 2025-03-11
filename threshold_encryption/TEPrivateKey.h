@@ -24,8 +24,8 @@
 #ifndef LIBBLS_TEPRIVATEKEY_H
 #define LIBBLS_TEPRIVATEKEY_H
 
-#include <threshold_encryption/threshold_encryption.h>
 #include <threshold_encryption/TEBase.h>
+#include <threshold_encryption/threshold_encryption.h>
 
 class TEPrivateKey : public TEBase {
 private:

@@ -171,6 +171,7 @@ libff::alt_bn128_G2 getDecryptionShare( const libBLS::Ciphertext& ciphertext,
 
     U.to_affine_coordinates();
     auto u_splitted = libBLS::ThresholdUtils::G2ToString( U );
+    // convert to string
     std::string public_decryption_value = "";
     for ( size_t i = 0; i < u_splitted.size(); ++i ) {
         public_decryption_value += u_splitted[i];

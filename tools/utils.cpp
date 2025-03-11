@@ -387,12 +387,12 @@ std::vector< uint8_t > ThresholdUtils::aesEncrypt(
     // Finalize encryption - take care of padding
     EVP_EncryptFinal( e_ctx, &output[offset], &outlen );
     offset += outlen;
-    
+
     output.resize( offset );
 
     EVP_CIPHER_CTX_free( e_ctx );
 
-    return std::vector<uint8_t>(output);
+    return std::vector< uint8_t >( output );
 }
 
 std::string ThresholdUtils::aesDecrypt(
@@ -407,8 +407,8 @@ std::string ThresholdUtils::aesDecrypt(
     int actual_size = 0, final_size = 0;
     EVP_CIPHER_CTX* d_ctx = EVP_CIPHER_CTX_new();
     EVP_DecryptInit( d_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.c_str(), iv );
-    EVP_DecryptUpdate(
-        d_ctx, &plaintext[0], &actual_size, &ciphertext[AES_BLOCK_SIZE], ciphertext.size() - AES_BLOCK_SIZE );
+    EVP_DecryptUpdate( d_ctx, &plaintext[0], &actual_size, &ciphertext[AES_BLOCK_SIZE],
+        ciphertext.size() - AES_BLOCK_SIZE );
     EVP_DecryptFinal( d_ctx, &plaintext[actual_size], &final_size );
     EVP_CIPHER_CTX_free( d_ctx );
     plaintext.resize( actual_size + final_size, '\0' );

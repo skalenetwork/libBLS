@@ -30,12 +30,11 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 #include <third_party/cryptlite/sha256.h>
 
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 #include <threshold_encryption/TEBase.h>
+#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 
 
 namespace libBLS {
-
 
 
 struct CipheredKey {
@@ -43,25 +42,25 @@ struct CipheredKey {
     std::string V;
     libff::alt_bn128_G1 W;
 
-    bool operator==(const CipheredKey& other) const {
-        return (U == other.U) && (V == other.V) && (W == other.W);
+    bool operator==( const CipheredKey& other ) const {
+        return ( U == other.U ) && ( V == other.V ) && ( W == other.W );
     }
 };
 
 struct Ciphertext {
     CipheredKey key;
-    std::shared_ptr< std::vector<uint8_t> > data;
+    std::shared_ptr< std::vector< uint8_t > > data;
 
-    bool operator==(const Ciphertext& other) const {
+    bool operator==( const Ciphertext& other ) const {
         bool baseParams = key == other.key;
-        if (data && other.data) {
-            return baseParams && (*data == *other.data);
+        if ( data && other.data ) {
+            return baseParams && ( *data == *other.data );
         }
         return baseParams;
     }
 
-    Ciphertext( const CipheredKey &_key, const std::vector<uint8_t> &_data) : 
-    key(_key), data(std::make_shared<std::vector<uint8_t>>(_data)) {}
+    Ciphertext( const CipheredKey& _key, const std::vector< uint8_t >& _data )
+        : key( _key ), data( std::make_shared< std::vector< uint8_t > >( _data ) ) {}
 };
 
 class TE {
@@ -103,8 +102,7 @@ public:
 
     static std::string aesCiphertextToString( const Ciphertext& cipher );
 
-    static Ciphertext aesCiphertextFromString(
-        const std::string& str );
+    static Ciphertext aesCiphertextFromString( const std::string& str );
 
     static CipheredKey ciphertextFromString( const std::string& str );
 

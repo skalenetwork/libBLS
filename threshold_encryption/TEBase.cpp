@@ -22,8 +22,8 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <threshold_encryption/TEBase.h>
-#include <libff/common/profiling.hpp>
 #include <tools/utils.h>
+#include <libff/common/profiling.hpp>
 
 bool TEBase::libffInitialized = false;
 
@@ -48,5 +48,3 @@ size_t TEBase::getRequiredSigners() const {
 size_t TEBase::getTotalSigners() const {
     return totalSigners;
 }
-
-

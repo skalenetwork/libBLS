@@ -27,7 +27,6 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > > _key_str_ptr,
     size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
-
     if ( !_key_str_ptr ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "public key share is null" );
     }
@@ -61,7 +60,6 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
 TEPublicKeyShare::TEPublicKeyShare(
     TEPrivateKeyShare _p_key, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ) {
-
     publicKey = _p_key.getPrivateKeyRaw() * libff::alt_bn128_G2::one();
     signerIndex = _p_key.getSignerIndex();
 }

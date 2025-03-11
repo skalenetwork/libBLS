@@ -28,9 +28,9 @@
 #include <threshold_encryption.h>
 #include <tools/utils.h>
 
+#include "TEBase.h"
 #include <openssl/rand.h>
 #include <libff/common/profiling.hpp>
-#include "TEBase.h"
 
 namespace libBLS {
 
@@ -46,8 +46,7 @@ TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {
 
 TE::~TE() {}
 
-void TE::checkCypher(
-    const CipheredKey& cyphertext ) {
+void TE::checkCypher( const CipheredKey& cyphertext ) {
     if ( cyphertext.U.is_zero() || cyphertext.W.is_zero() )
         throw ThresholdUtils::IncorrectInput( "zero element in cyphertext" );
 
@@ -88,17 +87,17 @@ libff::alt_bn128_G1 TE::HashToGroup( const libff::alt_bn128_G2& U, const std::st
 
 /**
  * @brief Encrypts a message using threshold encryption scheme
- * 
+ *
  * Slow in comparison to encryptWithAES - Use only to cipher
  * AES key. Not the message itself
- * 
+ *
  * @param message The message to encrypt
  * @param common_public The public key in G2 group
  * @return CipheredKey Triple (U,V,W) where:
  *         U is element of G2
- *         V is the encrypted message 
+ *         V is the encrypted message
  *         W is element of G1
- * 
+ *
  * @note This is an auxiliar function, used within `encryptWithAES`
  */
 CipheredKey TE::getCiphertext(
@@ -139,25 +138,26 @@ CipheredKey TE::getCiphertext(
     H = HashToGroup( U, V );
     W = r * H;
 
-    return {U, V, W};
+    return { U, V, W };
 }
 
 /**
  * @brief Encrypts a message using AES with a randomly generated key and threshold encryption
- * 
+ *
  * @param message The plaintext message to be encrypted
  * @param common_public The common public key used for threshold encryption (G2 group element)
- * 
+ *
  * @return A pair containing:
- *         - First: CipheredKey struct with (U,V,W) components of the threshold encryption -> Ciphered AES key
+ *         - First: CipheredKey struct with (U,V,W) components of the threshold encryption ->
+ * Ciphered AES key
  *         - Second: The AES-encrypted message as a byte vector
- * 
+ *
  * @details The function:
  * 1. Generates a random 32-byte AES key
  * 2. Encrypts the input message with AES using the random key
  * 3. Threshold-encrypts the random AES key using the common public key
  * 4. Returns both the threshold-encrypted key and AES-encrypted message
- * 
+ *
  * @note Initializes AES before encryption
  */
 Ciphertext TE::encryptWithAES(
@@ -171,7 +171,7 @@ Ciphertext TE::encryptWithAES(
 
     auto ciphertext = getCiphertext( random_aes_key, common_public );
 
-    return  Ciphertext( ciphertext, encrypted_message );
+    return Ciphertext( ciphertext, encrypted_message );
 }
 
 
@@ -180,12 +180,12 @@ Ciphertext TE::encryptWithAES(
  * @param message The plaintext message to be encrypted
  * @param common_public_str The common public key in string format
  * @return The encrypted ciphertext as a string
- * 
+ *
  * This function performs threshold encryption by:
  * 1. Creating a random AES key, and encrypting the message with it
  * 2. Ciphering the AES key using threshold encryption
  * 3. Converting the pair { PubCommKey(AES), AES(cipheredMessage) } to a string
- * 
+ *
  * The encryption is performed using a combination of elliptic curve cryptography
  * and symmetric AES encryption for efficiency.
  */
@@ -196,13 +196,12 @@ std::string TE::encryptMessage( const std::string& message, const std::string& c
 }
 
 
-
 /**
  * @brief Generates a decryption share for threshold encryption using a secret key
- * 
- * This function creates a decryption share by validating the ciphertext and performing pairing-based 
- * cryptographic operations. It implements part of the threshold encryption scheme using the BLS12-381 
- * elliptic curve.
+ *
+ * This function creates a decryption share by validating the ciphertext and performing
+ * pairing-based cryptographic operations. It implements part of the threshold encryption scheme
+ * using the BLS12-381 elliptic curve.
  *
  * @param ciphertext A tuple containing encryption components (U, V, W) where:
  *        - U is an element of G2
@@ -215,7 +214,7 @@ std::string TE::encryptMessage( const std::string& message, const std::string& c
  *
  * @throws ThresholdUtils::ZeroSecretKey if the provided secret key is zero
  * @throws ThresholdUtils::IncorrectInput if the ciphertext fails validation checks
- * 
+ *
  * @note The function verifies the ciphertext integrity using pairing-based checks before generating
  *       the decryption share
  */
@@ -246,7 +245,7 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
 
 /**
  * @brief Verifies a ciphertext and decryption share against a public key
- * 
+ *
  * This function performs verification of a threshold encryption decryption share.
  * It checks two main conditions:
  * 1. Whether the ciphertext is valid by verifying the pairing equality e(W,1) = e(H(U,V),U)
@@ -262,7 +261,6 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
  */
 bool TE::Verify( const CipheredKey& ciphertext, const libff::alt_bn128_G2& decryptionShare,
     const libff::alt_bn128_G2& public_key ) {
-
     auto [U, V, W] = ciphertext;
 
     libff::alt_bn128_G1 H = HashToGroup( U, V );
@@ -282,13 +280,13 @@ bool TE::Verify( const CipheredKey& ciphertext, const libff::alt_bn128_G2& decry
 
         return pp1 == pp2;
     }
-    
+
     return false;
 }
 
 /**
  * @brief Combines decryption shares to recover the original message from a ciphertext
- * 
+ *
  * This function performs the following steps:
  * 1. Verifies the ciphertext validity using bilinear pairing
  * 2. Combines the decryption shares to derive the AES key
@@ -307,7 +305,6 @@ bool TE::Verify( const CipheredKey& ciphertext, const libff::alt_bn128_G2& decry
  */
 std::string TE::CombineShares( const CipheredKey& ciphertext,
     const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShares ) {
-
     auto [U, V, W] = ciphertext;
 
     libff::alt_bn128_G1 H = this->HashToGroup( U, V );
@@ -345,18 +342,20 @@ std::string TE::CombineShares( const CipheredKey& ciphertext,
 
 /**
  * @brief Combines decryption shares into an AES key using Lagrange interpolation
- * 
+ *
  * This function performs the following steps:
  * 1. Extracts indices from decryption shares
  * 2. Calculates Lagrange coefficients
  * 3. Computes the sum of products of Lagrange coefficients and decryption shares
  * 4. Hashes the result and converts it to a byte vector
  *
- * @param decryptionShares Vector of pairs containing decryption shares (G2 points) and their indices
+ * @param decryptionShares Vector of pairs containing decryption shares (G2 points) and their
+ * indices
  * @return std::vector<uint8_t> The resulting AES key as a byte vector
  *
  * @note The number of decryption shares must be equal to the threshold (t_)
- * @note This is an auxiliar function used by `combineShares` to combine shares & get original message
+ * @note This is an auxiliar function used by `combineShares` to combine shares & get original
+ * message
  */
 std::vector< uint8_t > TE::CombineSharesIntoAESKey(
     const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShares ) {
@@ -385,13 +384,12 @@ std::vector< uint8_t > TE::CombineSharesIntoAESKey(
     return ret;
 }
 
-std::string TE::aesCiphertextToString(
-    const Ciphertext& cipher ) {
+std::string TE::aesCiphertextToString( const Ciphertext& cipher ) {
     ThresholdUtils::initCurve();
     ThresholdUtils::initAES();
 
-    auto [ cipheredKey, data ] = cipher;
-    auto [ U, V, W ] = cipheredKey;
+    auto [cipheredKey, data] = cipher;
+    auto [U, V, W] = cipheredKey;
 
     std::string v_str = ThresholdUtils::carray2Hex( ( unsigned char* ) ( V.data() ), V.size() );
 
@@ -422,8 +420,7 @@ std::string TE::aesCiphertextToString(
     return u_str + v_str + w_str + encrypted_data;
 }
 
-Ciphertext TE::aesCiphertextFromString(
-    const std::string& ciphertext ) {
+Ciphertext TE::aesCiphertextFromString( const std::string& ciphertext ) {
     ThresholdUtils::initCurve();
     ThresholdUtils::initAES();
 

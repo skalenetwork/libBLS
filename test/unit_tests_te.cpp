@@ -122,7 +122,8 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongKey ) {
     RAND_bytes( key_bytes, sizeof( key_bytes ) );
     std::string random_aes_key = std::string( ( char* ) key_bytes, sizeof( key_bytes ) );
 
-    std::string plaintext = libBLS::ThresholdUtils::aesDecrypt( *encrypted_message, random_aes_key );
+    std::string plaintext =
+        libBLS::ThresholdUtils::aesDecrypt( *encrypted_message, random_aes_key );
 
     BOOST_REQUIRE( plaintext != message );
 }
@@ -174,8 +175,7 @@ BOOST_AUTO_TEST_CASE( ConvertionToStringAndBack ) {
 
     auto ciphertext_with_aes = libBLS::TE::encryptWithAES( message, public_key );
 
-    auto str =
-        libBLS::TE::aesCiphertextToString( ciphertext_with_aes );
+    auto str = libBLS::TE::aesCiphertextToString( ciphertext_with_aes );
 
     auto ciphertext_from_string = libBLS::TE::aesCiphertextFromString( str );
 
@@ -501,7 +501,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionCorruptedCiphertext ) {
 
     libff::alt_bn128_G1 rand = libff::alt_bn128_G1::random_element();
 
-    libBLS::CipheredKey corrupted_ciphered_key = {ciphertext.U, ciphertext.V, rand};
+    libBLS::CipheredKey corrupted_ciphered_key = { ciphertext.U, ciphertext.V, rand };
 
     for ( size_t i = 0; i < 11; ++i ) {
         libff::alt_bn128_G2 decrypted;

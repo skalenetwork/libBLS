@@ -24,8 +24,8 @@
 #ifndef LIBBLS_TEDECRYPTIONSHARE_H
 #define LIBBLS_TEDECRYPTIONSHARE_H
 
-#include <cstddef>
 #include <threshold_encryption/threshold_encryption.h>
+#include <cstddef>
 
 /**
  * @brief Represents a single decryption share
@@ -36,14 +36,13 @@ private:
     libff::alt_bn128_G2 share;
 
 public:
-
     /**
-     * @brief Validates that the share is well formed and non-zero. 
+     * @brief Validates that the share is well formed and non-zero.
      * @param _signerIndex Index of the signer
      * @param _share Decryption share
-     * 
-     * @note This creates a contract of correctness for each TEDecryptionShare 
-     * object in-memory. It can thereafter be assumed for each TEDecryptionShare 
+     *
+     * @note This creates a contract of correctness for each TEDecryptionShare
+     * object in-memory. It can thereafter be assumed for each TEDecryptionShare
      * object to be correct syntatically.
      */
     TEDecryptionShare( size_t _signerIndex, libff::alt_bn128_G2 _share );
@@ -57,16 +56,16 @@ public:
     /**
      * @brief Converts the decryption share to a pair
      */
-    operator std::pair<libff::alt_bn128_G2, size_t>() const;
+    operator std::pair< libff::alt_bn128_G2, size_t >() const;
 
-    bool operator==(const TEDecryptionShare& other) const;
+    bool operator==( const TEDecryptionShare& other ) const;
 
     std::string toString() const;
 };
 
 struct TEDecryptionShareHash {
-    std::size_t operator()(const TEDecryptionShare& obj) const {
-        return std::hash<int>()(obj.getSignerIndex());
+    std::size_t operator()( const TEDecryptionShare& obj ) const {
+        return std::hash< int >()( obj.getSignerIndex() );
     }
 };
 

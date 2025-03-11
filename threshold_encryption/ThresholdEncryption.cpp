@@ -21,22 +21,24 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 @date 2019
 */
 
-#include <tools/utils.h>
-#include "TEBase.h"
 #include "ThresholdEncryption.h"
+#include "TEBase.h"
 #include "TEDecryptSet.h"
+#include <tools/utils.h>
 
-libBLS::Ciphertext ThresholdEncryption::encrypt(const std::string& message, const TEPublicKey& commonPublic) {
+libBLS::Ciphertext ThresholdEncryption::encrypt(
+    const std::string& message, const TEPublicKey& commonPublic ) {
     TEBase::initializeIfNecessary();
 
-    libBLS::Ciphertext cypher = libBLS::TE::encryptWithAES( message, commonPublic.getPublicKeyRaw() );
+    libBLS::Ciphertext cypher =
+        libBLS::TE::encryptWithAES( message, commonPublic.getPublicKeyRaw() );
 
     libBLS::TE::checkCypher( cypher.key );
 
     return cypher;
 }
 
-bool ThresholdEncryption::validateEncryption(const libBLS::CipheredKey& ciphertext, const TEPrivateKeyShare& pkeyShare) {
+bool ThresholdEncryption::validateEncryption( const libBLS::CipheredKey& ciphertext ) {
     TEBase::initializeIfNecessary();
 
     auto [U, V, W] = ciphertext;
@@ -44,7 +46,7 @@ bool ThresholdEncryption::validateEncryption(const libBLS::CipheredKey& cipherte
     libff::alt_bn128_G1 H = libBLS::TE::HashToGroup( U, V );
 
     libff::alt_bn128_GT fst, snd;
-    
+
     // pairing( W, P ) == pairing( H, U )
     fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
     snd = libff::alt_bn128_ate_reduced_pairing( H, U );
@@ -52,23 +54,26 @@ bool ThresholdEncryption::validateEncryption(const libBLS::CipheredKey& cipherte
     return fst == snd;
 }
 
-TEDecryptionShare ThresholdEncryption::partialDecrypt(const libBLS::CipheredKey& ciphertext, const TEPrivateKeyShare& pkeyShare) {
+TEDecryptionShare ThresholdEncryption::partialDecrypt(
+    const libBLS::CipheredKey& ciphertext, const TEPrivateKeyShare& pkeyShare ) {
     TEBase::initializeIfNecessary();
 
     libBLS::TE::checkCypher( ciphertext );
 
-    libff::alt_bn128_G2 decryption_share = libBLS::TE::getDecryptionShare( ciphertext, pkeyShare.getPrivateKeyRaw() );
+    libff::alt_bn128_G2 decryption_share =
+        libBLS::TE::getDecryptionShare( ciphertext, pkeyShare.getPrivateKeyRaw() );
 
     if ( decryption_share.is_zero() || !decryption_share.is_well_formed() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
     }
 
-    TEDecryptionShare share(pkeyShare.getSignerIndex(), decryption_share);
+    TEDecryptionShare share( pkeyShare.getSignerIndex(), decryption_share );
 
     return share;
 }
 
-bool ThresholdEncryption::validateDecryptionShare(const libBLS::CipheredKey& cipherText, const TEDecryptionShare& decryptionShare, const TEPublicKeyShare& publicKey) {
+bool ThresholdEncryption::validateDecryptionShare( const libBLS::CipheredKey& cipherText,
+    const TEDecryptionShare& decryptionShare, const TEPublicKeyShare& publicKey ) {
     TEBase::initializeIfNecessary();
 
     libBLS::TE::checkCypher( cipherText );
@@ -77,10 +82,12 @@ bool ThresholdEncryption::validateDecryptionShare(const libBLS::CipheredKey& cip
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Invalid decryption share" );
     }
 
-    return libBLS::TE::Verify( cipherText, decryptionShare.getShareRaw(), publicKey.getPublicKeyRaw() );
+    return libBLS::TE::Verify(
+        cipherText, decryptionShare.getShareRaw(), publicKey.getPublicKeyRaw() );
 }
 
-std::string ThresholdEncryption::combineShares(const libBLS::Ciphertext& cyphertext, TEDecryptSet& decryptionSet) {
+std::string ThresholdEncryption::combineShares(
+    const libBLS::Ciphertext& cyphertext, TEDecryptSet& decryptionSet ) {
     TEBase::initializeIfNecessary();
 
     libBLS::TE::checkCypher( cyphertext.key );
@@ -88,7 +95,8 @@ std::string ThresholdEncryption::combineShares(const libBLS::Ciphertext& cyphert
     if ( !decryptionSet.canMerge() ) {
         auto status = decryptionSet.getMergeStatus();
         if ( status == TEDecryptSet::MergeStatus::NOT_ENOUGH_SHARES ) {
-            throw libBLS::ThresholdUtils::IsNotWellFormed( "Not enough elements to decrypt message" );
+            throw libBLS::ThresholdUtils::IsNotWellFormed(
+                "Not enough elements to decrypt message" );
         } else if ( status == TEDecryptSet::MergeStatus::ALREADY_MERGED ) {
             throw libBLS::ThresholdUtils::IsNotWellFormed( "Already merged" );
         }
@@ -103,8 +111,9 @@ std::string ThresholdEncryption::combineShares(const libBLS::Ciphertext& cyphert
     return decriptedMessage;
 }
 
-bool ThresholdEncryption::validateCombinedDecryption(const libBLS::Ciphertext& cyphertext, const std::string& message) {
+bool ThresholdEncryption::validateCombinedDecryption(
+    const libBLS::Ciphertext& cyphertext, const std::string& message ) {
     TEBase::initializeIfNecessary();
 
-    throw std::runtime_error("Not implemented");
+    throw std::runtime_error( "Not implemented" );
 }

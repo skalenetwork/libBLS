@@ -21,23 +21,22 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 @date 2019
 */
 
-#include <threshold_encryption/TEDecryptSet.h>
 #include <threshold_encryption/TEBase.h>
+#include <threshold_encryption/TEDecryptSet.h>
 #include <utility>
 
 #include <tools/utils.h>
 
 
 TEDecryptSet::TEDecryptSet( size_t _requiredSigners, size_t _totalSigners )
-    : TEBase(_requiredSigners, _totalSigners ), mergeStatus( MergeStatus::NOT_ENOUGH_SHARES ) {}
+    : TEBase( _requiredSigners, _totalSigners ), mergeStatus( MergeStatus::NOT_ENOUGH_SHARES ) {}
 
 void TEDecryptSet::addDecryptShare( TEDecryptionShare _share ) {
-
     if ( mergeStatus == MergeStatus::ALREADY_MERGED ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Already Merged" );
     }
 
-   if ( decrypts.find( _share ) != decrypts.end() ) {
+    if ( decrypts.find( _share ) != decrypts.end() ) {
         throw libBLS::ThresholdUtils::IncorrectInput(
             "Already have this secret share:" + _share.toString() );
     }
@@ -54,7 +53,8 @@ void TEDecryptSet::addDecryptShare( TEDecryptionShare _share ) {
 //     libBLS::TE::checkCypher( cyphertext );
 
 //     if ( decrypts.size() < requiredSigners ) {
-//         throw libBLS::ThresholdUtils::IsNotWellFormed( "Not enough elements to decrypt message" );
+//         throw libBLS::ThresholdUtils::IsNotWellFormed( "Not enough elements to decrypt message"
+//         );
 //     }
 
 //     libBLS::TE te( *this );
@@ -109,5 +109,5 @@ std::vector< std::pair< libff::alt_bn128_G2, size_t > > TEDecryptSet::getSharesR
         decrypted.push_back( share );
     }
 
-    return std::move(decrypted);
+    return std::move( decrypted );
 }

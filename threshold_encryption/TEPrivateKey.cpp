@@ -27,7 +27,6 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 TEPrivateKey::TEPrivateKey(
     std::shared_ptr< std::string > _key_str, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ) {
-
     if ( !_key_str ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "private key is null" );
     }
@@ -42,7 +41,6 @@ TEPrivateKey::TEPrivateKey(
 TEPrivateKey::TEPrivateKey(
     libff::alt_bn128_Fr _skey, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), privateKey( _skey ) {
-
     if ( _skey.is_zero() )
         throw libBLS::ThresholdUtils::IsNotWellFormed( "private key is zero" );
 }

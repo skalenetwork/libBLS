@@ -31,20 +31,20 @@
 
 /**
  * @brief A class to manage threshold encryption's decryption sets
- * 
- * TEDecryptSet handles partial decryption shares from multiple signers in a threshold encryption scheme.
- * It collects and combines these shares to reconstruct the original encrypted message.
- * 
- * 
- * @details The class maintains a collection of partial decrypts from different participants and keeps track
- * of merging status on this set of decryption shares.
+ *
+ * TEDecryptSet handles partial decryption shares from multiple signers in a threshold encryption
+ * scheme. It collects and combines these shares to reconstruct the original encrypted message.
+ *
+ *
+ * @details The class maintains a collection of partial decrypts from different participants and
+ * keeps track of merging status on this set of decryption shares.
  */
 class TEDecryptSet : public TEBase {
 public:
     enum class MergeStatus {
-      NOT_ENOUGH_SHARES,
-      READY_TO_MERGE,
-      ALREADY_MERGED,
+        NOT_ENOUGH_SHARES,
+        READY_TO_MERGE,
+        ALREADY_MERGED,
     };
 
 private:
@@ -77,8 +77,6 @@ public:
     MergeStatus getMergeStatus() const;
 
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > getSharesRaw() const;
-
-
 };
 
 
