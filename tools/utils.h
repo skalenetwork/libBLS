@@ -119,7 +119,7 @@ public:
 
     static std::string convertHexToDec( const std::string& hex_str );
 
-    static std::string convertDecToHex(std::string dec, int numBytes);
+    static std::string convertDecToHex( std::string dec, int numBytes );
 
     static bool checkHex( const std::string& hex );
 

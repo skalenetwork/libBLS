@@ -51,7 +51,8 @@ public:
      * Used when building from serialized decription share
      * TODO - in future should receive string directly and convert from string back to the class
      */
-    TEDecryptionShare( size_t _signerIndex, const char *x0, const char *x1, const char* y0, const char* y1 );
+    TEDecryptionShare(
+        size_t _signerIndex, const char* x0, const char* x1, const char* y0, const char* y1 );
 
     size_t getSignerIndex() const;
 

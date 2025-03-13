@@ -57,8 +57,7 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
     }
 }
 
-TEPublicKeyShare::TEPublicKeyShare(
-    TEPrivateKeyShare _p_key )
+TEPublicKeyShare::TEPublicKeyShare( TEPrivateKeyShare _p_key )
     : TEBase( _p_key.getRequiredSigners(), _p_key.getTotalSigners() ) {
     publicKey = _p_key.getPrivateKeyRaw() * libff::alt_bn128_G2::one();
     signerIndex = _p_key.getSignerIndex();

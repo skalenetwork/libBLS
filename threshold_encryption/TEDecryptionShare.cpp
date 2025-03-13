@@ -34,8 +34,9 @@ TEDecryptionShare::TEDecryptionShare( size_t _signerIndex, libff::alt_bn128_G2 _
     }
 }
 
-TEDecryptionShare::TEDecryptionShare( size_t _signerIndex, const char* x0, const char* x1, const char* y0, const char* y1 ) 
-    : signerIndex(_signerIndex) {
+TEDecryptionShare::TEDecryptionShare(
+    size_t _signerIndex, const char* x0, const char* x1, const char* y0, const char* y1 )
+    : signerIndex( _signerIndex ) {
     libff::alt_bn128_G2 val;
     val.Z = libff::alt_bn128_Fq2::one();
     val.X.c0 = libff::alt_bn128_Fq( x0 );
@@ -44,7 +45,7 @@ TEDecryptionShare::TEDecryptionShare( size_t _signerIndex, const char* x0, const
     val.Y.c1 = libff::alt_bn128_Fq( y1 );
 
     share = val;
-} 
+}
 
 size_t TEDecryptionShare::getSignerIndex() const {
     return signerIndex;

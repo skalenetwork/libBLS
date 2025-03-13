@@ -67,14 +67,15 @@ struct Ciphertext {
      * Converts U component of the key to string
      */
     std::string toStringU() {
-        auto U = key.U; 
+        auto U = key.U;
         U.to_affine_coordinates();
         auto u_splitted = ThresholdUtils::G2ToString( U );
 
         // convert to string
         std::string public_decryption_value;
         for ( size_t j = 0; j < u_splitted.size(); ++j ) {
-            public_decryption_value += ThresholdUtils::convertDecToHex(u_splitted[j], 32);;
+            public_decryption_value += ThresholdUtils::convertDecToHex( u_splitted[j], 32 );
+            ;
         }
 
         return public_decryption_value;

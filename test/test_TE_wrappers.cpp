@@ -89,8 +89,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         std::vector< TEPublicKeyShare > public_key_shares;
         for ( size_t i = 0; i < num_all; i++ ) {
             skey_shares.emplace_back( TEPrivateKeyShare( skeys[i], i + 1, num_signed, num_all ) );
-            public_key_shares.emplace_back(
-                TEPublicKeyShare( skey_shares[i] ) );
+            public_key_shares.emplace_back( TEPublicKeyShare( skey_shares[i] ) );
         }
 
         for ( size_t i = 0; i < num_all - num_signed; ++i ) {
@@ -187,8 +186,7 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
 
         std::vector< TEPublicKeyShare > public_key_shares;
         for ( size_t i = 0; i < num_all; i++ ) {
-            public_key_shares.emplace_back(
-                TEPublicKeyShare( *keys.first->at( i ) ) );
+            public_key_shares.emplace_back( TEPublicKeyShare( *keys.first->at( i ) ) );
         }
 
         for ( size_t i = 0; i < num_all - num_signed; ++i ) {
@@ -391,8 +389,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
     {
         // one zero component in cypher
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
-        TEPublicKeyShare pkey(
-            TEPrivateKeyShare( el, 1, num_signed, num_all ) );
+        TEPublicKeyShare pkey( TEPrivateKeyShare( el, 1, num_signed, num_all ) );
 
         libff::alt_bn128_G2 U = libff::alt_bn128_G2::zero();
 
@@ -410,8 +407,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         // wrong string length in cypher
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
 
-        TEPublicKeyShare pkey(
-            TEPrivateKeyShare( el, 1, num_signed, num_all ) );
+        TEPublicKeyShare pkey( TEPrivateKeyShare( el, 1, num_signed, num_all ) );
         libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
 
         libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
