@@ -47,6 +47,12 @@ public:
      */
     TEDecryptionShare( size_t _signerIndex, libff::alt_bn128_G2 _share );
 
+    /**
+     * Used when building from serialized decription share
+     * TODO - in future should receive string directly and convert from string back to the class
+     */
+    TEDecryptionShare( size_t _signerIndex, const char *x0, const char *x1, const char* y0, const char* y1 );
+
     size_t getSignerIndex() const;
 
     libff::alt_bn128_G2 getShareRaw() const;

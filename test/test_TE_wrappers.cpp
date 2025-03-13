@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         for ( size_t i = 0; i < num_all; i++ ) {
             skey_shares.emplace_back( TEPrivateKeyShare( skeys[i], i + 1, num_signed, num_all ) );
             public_key_shares.emplace_back(
-                TEPublicKeyShare( skey_shares[i], num_signed, num_all ) );
+                TEPublicKeyShare( skey_shares[i] ) );
         }
 
         for ( size_t i = 0; i < num_all - num_signed; ++i ) {
@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
         std::vector< TEPublicKeyShare > public_key_shares;
         for ( size_t i = 0; i < num_all; i++ ) {
             public_key_shares.emplace_back(
-                TEPublicKeyShare( *keys.first->at( i ), num_signed, num_all ) );
+                TEPublicKeyShare( *keys.first->at( i ) ) );
         }
 
         for ( size_t i = 0; i < num_all - num_signed; ++i ) {
@@ -214,6 +214,8 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
 }
 
 BOOST_AUTO_TEST_CASE( WrappersFromString ) {
+    TEBase::initializeIfNecessary();
+
     for ( size_t i = 0; i < 100; i++ ) {
         size_t num_all = rand_gen() % 16 + 1;
         size_t num_signed = rand_gen() % num_all + 1;
@@ -229,7 +231,7 @@ BOOST_AUTO_TEST_CASE( WrappersFromString ) {
 
         TEPrivateKey private_key_from_str(
             std::make_shared< std::string >( private_key.toString() ), num_signed, num_all );
-        BOOST_REQUIRE( private_key.getPrivateKey() == private_key_from_str.getPrivateKey() );
+        BOOST_REQUIRE( private_key.getPrivateKeyRaw() == private_key_from_str.getPrivateKeyRaw() );
 
         libff::alt_bn128_Fr test2 = libff::alt_bn128_Fr::random_element();
         size_t signer = rand_gen() % num_all;
@@ -241,12 +243,11 @@ BOOST_AUTO_TEST_CASE( WrappersFromString ) {
         BOOST_REQUIRE(
             pr_key_share.getPrivateKeyRaw() == pr_key_share_from_str.getPrivateKeyRaw() );
 
-        TEPublicKeyShare pkey( pr_key_share, num_signed, num_all );
+        TEPublicKeyShare pkey( pr_key_share );
         TEPublicKeyShare pkey_from_str(
             pkey.toString(), pr_key_share.getSignerIndex(), num_signed, num_all );
         BOOST_REQUIRE( pkey.getPublicKeyRaw() == pkey_from_str.getPublicKeyRaw() );
     }
-    std::cerr << "TE wrappers tests finished" << std::endl;
 }
 
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
@@ -298,7 +299,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
                 i + 1, std::make_shared< std::vector< libff::alt_bn128_Fr > >(
                            secret_key_shares.at( i ) ) );
             skeys.push_back( pkey_share );
-            pkeys.push_back( TEPublicKeyShare( pkey_share, num_signed, num_all ) );
+            pkeys.push_back( TEPublicKeyShare( pkey_share ) );
         }
 
         TEPublicKey common_public = DKGTEWrapper::CreateTEPublicKey(
@@ -391,7 +392,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         // one zero component in cypher
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
         TEPublicKeyShare pkey(
-            TEPrivateKeyShare( el, 1, num_signed, num_all ), num_signed, num_all );
+            TEPrivateKeyShare( el, 1, num_signed, num_all ) );
 
         libff::alt_bn128_G2 U = libff::alt_bn128_G2::zero();
 
@@ -410,7 +411,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
 
         TEPublicKeyShare pkey(
-            TEPrivateKeyShare( el, 1, num_signed, num_all ), num_signed, num_all );
+            TEPrivateKeyShare( el, 1, num_signed, num_all ) );
         libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
 
         libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();

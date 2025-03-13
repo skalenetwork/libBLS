@@ -70,7 +70,7 @@ TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _s
 // }
 
 std::string TEPrivateKeyShare::toString() const {
-    return libBLS::ThresholdUtils::fieldElementToString( privateKey );
+    return libBLS::ThresholdUtils::fieldElementToString( privateKey, 10 );
 }
 
 size_t TEPrivateKeyShare::getSignerIndex() const {

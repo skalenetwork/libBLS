@@ -119,6 +119,8 @@ public:
 
     static std::string convertHexToDec( const std::string& hex_str );
 
+    static std::string convertDecToHex(std::string dec, int numBytes);
+
     static bool checkHex( const std::string& hex );
 
     template < class T >
@@ -135,9 +137,10 @@ std::string ThresholdUtils::fieldElementToString( const T& field_elem, int base 
     char arr[mpz_sizeinbase( t, base ) + 2];
 
     char* tmp = mpz_get_str( arr, base, t );
-    mpz_clear( t );
 
     std::string output = tmp;
+    // std::cout << "Private Key String: '" << output << "'" << std::endl;
+    mpz_clear( t );
 
     return output;
 }

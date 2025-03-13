@@ -86,9 +86,9 @@ std::string ThresholdUtils::convertHexToDec( const std::string& hex_str ) {
 
         char arr[mpz_sizeinbase( dec, 10 ) + 2];
         char* tmp = mpz_get_str( arr, 10, dec );
-        mpz_clear( dec );
-
         output = tmp;
+        
+        mpz_clear( dec );
     } catch ( std::exception& e ) {
         mpz_clear( dec );
         throw IsNotWellFormed( e.what() );
@@ -98,6 +98,21 @@ std::string ThresholdUtils::convertHexToDec( const std::string& hex_str ) {
     }
 
     return output;
+}
+
+std::string ThresholdUtils::convertDecToHex(std::string dec, int numBytes) {
+  mpz_t num;
+  mpz_init(num);
+
+  mpz_set_str(num, dec.c_str(), 10);
+  std::vector<char> tmp(mpz_sizeinbase(num, 16) + 2, 0);
+  char *hex = mpz_get_str(tmp.data(), 16, num);
+  std::string result = hex;
+  int n_zeroes = numBytes * 2 - result.length();
+  result.insert(0, n_zeroes, '0');
+
+  mpz_clear(num);
+  return result;
 }
 
 libff::alt_bn128_G2 ThresholdUtils::stringToG2( const std::string& str ) {

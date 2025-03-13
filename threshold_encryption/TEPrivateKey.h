@@ -39,7 +39,7 @@ public:
 
     std::string toString() const;
 
-    libff::alt_bn128_Fr getPrivateKey() const;
+    libff::alt_bn128_Fr getPrivateKeyRaw() const;
 };
 
 

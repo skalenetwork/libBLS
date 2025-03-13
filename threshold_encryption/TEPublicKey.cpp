@@ -62,11 +62,11 @@ TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str
 TEPublicKey::TEPublicKey(
     TEPrivateKey _common_private, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ) {
-    if ( _common_private.getPrivateKey().is_zero() ) {
+    if ( _common_private.getPrivateKeyRaw().is_zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "zero key" );
     }
 
-    PublicKey = _common_private.getPrivateKey() * libff::alt_bn128_G2::one();
+    PublicKey = _common_private.getPrivateKeyRaw() * libff::alt_bn128_G2::one();
 }
 
 TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, size_t _totalSigners )

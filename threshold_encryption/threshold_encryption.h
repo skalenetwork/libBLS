@@ -31,6 +31,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <third_party/cryptlite/sha256.h>
 
 #include <threshold_encryption/TEBase.h>
+#include <tools/utils.h>
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 
 
@@ -61,6 +62,23 @@ struct Ciphertext {
 
     Ciphertext( const CipheredKey& _key, const std::vector< uint8_t >& _data )
         : key( _key ), data( std::make_shared< std::vector< uint8_t > >( _data ) ) {}
+
+    /**
+     * Converts U component of the key to string
+     */
+    std::string toStringU() {
+        auto U = key.U; 
+        U.to_affine_coordinates();
+        auto u_splitted = ThresholdUtils::G2ToString( U );
+
+        // convert to string
+        std::string public_decryption_value;
+        for ( size_t j = 0; j < u_splitted.size(); ++j ) {
+            public_decryption_value += ThresholdUtils::convertDecToHex(u_splitted[j], 32);;
+        }
+
+        return public_decryption_value;
+    }
 };
 
 class TE {

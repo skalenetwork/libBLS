@@ -49,6 +49,6 @@ std::string TEPrivateKey::toString() const {
     return libBLS::ThresholdUtils::fieldElementToString( privateKey );
 }
 
-libff::alt_bn128_Fr TEPrivateKey::getPrivateKey() const {
+libff::alt_bn128_Fr TEPrivateKey::getPrivateKeyRaw() const {
     return privateKey;
 }
