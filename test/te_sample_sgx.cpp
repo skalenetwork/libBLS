@@ -180,7 +180,7 @@ void importBLSKeys( const std::vector< TEPrivateKeyShare >& secret_keys, const s
 
     for ( size_t i = 0; i < secret_keys.size(); ++i ) {
         Json::Value p;
-        p["keyShare"] = secret_keys[i].toString();
+        p["keyShare"] = secret_keys[i].toStringHex();
         p["keyShareName"] = "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:" + std::to_string( i + 1 ) +
                             ":DKG_ID:" + dkg_rand_id;
 
@@ -231,8 +231,6 @@ std::vector< TEDecryptionShare > getDecryptionShares(
     }
 
     p["publicDecryptionValues"] = batch;
-
-    std::cout << "Batch being sent" << p << std::endl;
 
     jsonrpc::HttpClient* jsonRpcClient = new jsonrpc::HttpClient( sgx_url );
     jsonrpc::Client sgxClient( *jsonRpcClient );

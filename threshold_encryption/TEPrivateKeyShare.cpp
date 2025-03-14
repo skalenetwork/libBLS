@@ -73,6 +73,10 @@ std::string TEPrivateKeyShare::toString() const {
     return libBLS::ThresholdUtils::fieldElementToString( privateKey, 10 );
 }
 
+std::string TEPrivateKeyShare::toStringHex() const {
+    return libBLS::ThresholdUtils::fieldElementToString( privateKey, 16 );
+}
+
 size_t TEPrivateKeyShare::getSignerIndex() const {
     return signerIndex;
 }

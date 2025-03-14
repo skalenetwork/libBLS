@@ -49,6 +49,7 @@ public:
     generateSampleKeys( size_t _requiredSigners, size_t _totalSigners );
 
     std::string toString() const;
+    std::string toStringHex() const;
 
     size_t getSignerIndex() const;
 
