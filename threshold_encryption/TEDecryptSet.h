@@ -57,17 +57,6 @@ public:
 
     void addDecryptShare( TEDecryptionShare _share );
 
-
-    /**
-     * @brief Merges the decrypted shares from this DecryptSet with the given ciphertext
-     * @param ciphertext The encrypted text to be merged with decryption shares
-     * @return The final decrypted message as a string
-     * @throw ThresholdEcryptionError if merge operation fails or insufficient valid shares
-     */
-    // std::string merge( const libBLS::Ciphertext& ciphertext );
-
-    std::vector< uint8_t > mergeIntoAESKey();
-
     size_t size() const;
 
     bool canMerge() const;

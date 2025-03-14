@@ -49,43 +49,6 @@ void TEDecryptSet::addDecryptShare( TEDecryptionShare _share ) {
     }
 }
 
-// std::string TEDecryptSet::merge( const libBLS::Ciphertext& cyphertext ) {
-//     libBLS::TE::checkCypher( cyphertext );
-
-//     if ( decrypts.size() < requiredSigners ) {
-//         throw libBLS::ThresholdUtils::IsNotWellFormed( "Not enough elements to decrypt message"
-//         );
-//     }
-
-//     libBLS::TE te( *this );
-
-//     std::vector< std::pair< libff::alt_bn128_G2, size_t > > decrypted;
-//     for ( auto&& share : decrypts ) {
-//         decrypted.push_back( share );
-//     }
-
-//     auto res = te.CombineShares( cyphertext, decrypted );
-
-//     was_merged = true;
-
-//     return res;
-// }
-
-std::vector< uint8_t > TEDecryptSet::mergeIntoAESKey() {
-    libBLS::TE te( *this );
-
-    std::vector< std::pair< libff::alt_bn128_G2, size_t > > decrypted;
-    for ( auto&& share : decrypts ) {
-        decrypted.push_back( share );
-    }
-
-    auto res = te.CombineSharesIntoAESKey( decrypted );
-
-    mergeStatus = MergeStatus::ALREADY_MERGED;
-
-    return res;
-}
-
 size_t TEDecryptSet::size() const {
     return decrypts.size();
 }

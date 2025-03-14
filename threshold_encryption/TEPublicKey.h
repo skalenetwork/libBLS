@@ -42,8 +42,6 @@ public:
 
     std::shared_ptr< std::vector< std::string > > toString();
 
-    // libBLS::Ciphertext encrypt( std::shared_ptr< std::string > message );
-
     libff::alt_bn128_G2 getPublicKeyRaw() const;
 };
 

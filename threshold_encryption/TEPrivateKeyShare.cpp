@@ -53,22 +53,6 @@ TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _s
     }
 }
 
-// TEDecryptionShare TEPrivateKeyShare::getDecryptionShare( libBLS::Ciphertext& cipher ) {
-//     libBLS::TE::checkCypher( cipher );
-
-//     libBLS::TE te( *this );
-
-//     libff::alt_bn128_G2 decryption_share = te.getDecryptionShare( cipher, privateKey );
-
-//     if ( decryption_share.is_zero() || !decryption_share.is_well_formed() ) {
-//         throw libBLS::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
-//     }
-
-//     TEDecryptionShare share(signerIndex, decryption_share);
-
-//     return share;
-// }
-
 std::string TEPrivateKeyShare::toString() const {
     return libBLS::ThresholdUtils::fieldElementToString( privateKey, 10 );
 }
