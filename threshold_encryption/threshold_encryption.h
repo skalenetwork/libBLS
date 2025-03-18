@@ -47,8 +47,8 @@ struct CipheredKey {
     libff::alt_bn128_G1 W;
 
     CipheredKey() = default;
-    CipheredKey(libff::alt_bn128_G2 _U, std::string _V, libff::alt_bn128_G1 _W)
-        : U(_U), V(std::move(_V)), W(_W) {}
+    CipheredKey( libff::alt_bn128_G2 _U, std::string _V, libff::alt_bn128_G1 _W )
+        : U( _U ), V( std::move( _V ) ), W( _W ) {}
 
     bool operator==( const CipheredKey& other ) const {
         return ( U == other.U ) && ( V == other.V ) && ( W == other.W );
@@ -102,13 +102,13 @@ using rand_secret = std::string;
  * `random_secret` should never be shared.
  */
 struct CipherResult {
-    std::shared_ptr<Ciphertext> ciphertext;
-    std::shared_ptr<rand_secret> random_secret;
+    std::shared_ptr< Ciphertext > ciphertext;
+    std::shared_ptr< rand_secret > random_secret;
 };
 
 struct CipheredKeyResult {
-    std::shared_ptr<CipheredKey> ciphertext;
-    std::shared_ptr<rand_secret> random_secret;
+    std::shared_ptr< CipheredKey > ciphertext;
+    std::shared_ptr< rand_secret > random_secret;
 };
 
 class TE {
@@ -142,7 +142,7 @@ public:
     static CipherResult encryptWithAES(
         const std::string& message, const libff::alt_bn128_G2& common_public );
 
-    static std::pair<std::string, rand_secret> encryptMessage(
+    static std::pair< std::string, rand_secret > encryptMessage(
         const std::string& message, const std::string& common_public );
 
     static libff::alt_bn128_G2 getDecryptionShare(

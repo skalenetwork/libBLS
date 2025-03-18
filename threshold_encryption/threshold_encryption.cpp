@@ -23,8 +23,8 @@
 
 #include <string.h>
 #include <iostream>
-#include <valarray>
 #include <utility>
+#include <valarray>
 
 #include <threshold_encryption.h>
 #include <tools/utils.h>
@@ -125,9 +125,9 @@ CipheredKeyResult TE::getCiphertext(
     H = HashToGroup( U, V );
     W = r * H;
 
-    std::shared_ptr<CipheredKey> key = std::make_shared<CipheredKey>( U, V, W );
-    std::shared_ptr<rand_secret> random_secret = std::make_shared<rand_secret>( 
-        ThresholdUtils::fieldElementToString( r, BASE_HEXA ) );
+    std::shared_ptr< CipheredKey > key = std::make_shared< CipheredKey >( U, V, W );
+    std::shared_ptr< rand_secret > random_secret =
+        std::make_shared< rand_secret >( ThresholdUtils::fieldElementToString( r, BASE_HEXA ) );
 
     return { key, random_secret };
 }
@@ -157,15 +157,16 @@ CipherResult TE::encryptWithAES(
     unsigned char key_bytes[32];
     RAND_bytes( key_bytes, sizeof( key_bytes ) );
     std::string random_aes_key = std::string( ( char* ) key_bytes, sizeof( key_bytes ) );
-    
+
     auto result = getCiphertext( random_aes_key, common_public );
-    
+
     // append random secret to message
     std::string message_to_cipher = message + *result.random_secret;
-    
+
     auto encrypted_message = ThresholdUtils::aesEncrypt( message_to_cipher, random_aes_key );
 
-    std::shared_ptr<Ciphertext> ciphertext = std::make_shared<Ciphertext>( *result.ciphertext, encrypted_message );
+    std::shared_ptr< Ciphertext > ciphertext =
+        std::make_shared< Ciphertext >( *result.ciphertext, encrypted_message );
 
     return { ciphertext, result.random_secret };
 }
@@ -185,13 +186,14 @@ CipherResult TE::encryptWithAES(
  * The encryption is performed using a combination of elliptic curve cryptography
  * and symmetric AES encryption for efficiency.
  */
-std::pair<std::string, rand_secret> TE::encryptMessage( const std::string& message, const std::string& common_public_str ) {
+std::pair< std::string, rand_secret > TE::encryptMessage(
+    const std::string& message, const std::string& common_public_str ) {
     libff::alt_bn128_G2 common_public = ThresholdUtils::stringToG2( common_public_str );
     auto ciphertext_with_aes = encryptWithAES( message, common_public );
     std::string cipheredtext = aesCiphertextToString( *ciphertext_with_aes.ciphertext );
     std::string random_secret = *ciphertext_with_aes.random_secret;
-    return std::make_pair<std::string, rand_secret>(
-        std::move(cipheredtext),  std::move(random_secret));
+    return std::make_pair< std::string, rand_secret >(
+        std::move( cipheredtext ), std::move( random_secret ) );
 }
 
 

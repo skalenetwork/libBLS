@@ -102,29 +102,29 @@ public:
      * @param message The original message
      * @return bool True if the message corresponds to the cyphertext. False otherwise.
      */
-    static bool validateCombinedDecryption(
-        const libBLS::Ciphertext& cyphertext, const std::string& message, const TEPublicKey& publicKey );
+    static bool validateCombinedDecryption( const libBLS::Ciphertext& cyphertext,
+        const std::string& message, const TEPublicKey& publicKey );
 
     static inline std::string mergeRandomSecretWithMessage(
-        std::string message, libBLS::rand_secret random_secret) {
+        std::string message, libBLS::rand_secret random_secret ) {
         message += random_secret;
         return message;
     }
 
 private:
-    static inline std::string xorStrings(const std::string& str1, const std::string& str2) {
+    static inline std::string xorStrings( const std::string& str1, const std::string& str2 ) {
         std::string result;
-        result.reserve(str1.size());
-        for (size_t i = 0; i < str1.size(); ++i) {
-            result.push_back(str1[i] ^ str2[i]);
+        result.reserve( str1.size() );
+        for ( size_t i = 0; i < str1.size(); ++i ) {
+            result.push_back( str1[i] ^ str2[i] );
         }
         return result;
     }
 
-    static inline libBLS::rand_secret extractRandomSecretFromMessage(const std::string& message) {
+    static inline libBLS::rand_secret extractRandomSecretFromMessage( const std::string& message ) {
         size_t msg_length = message.length();
-        return message.substr(msg_length - libBLS::RANDOM_SECRET_SIZE, libBLS::RANDOM_SECRET_SIZE);
-        
+        return message.substr(
+            msg_length - libBLS::RANDOM_SECRET_SIZE, libBLS::RANDOM_SECRET_SIZE );
     }
 };
 

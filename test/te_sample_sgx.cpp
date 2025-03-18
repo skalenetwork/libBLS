@@ -54,11 +54,11 @@ void importBLSKeys( const std::vector< TEPrivateKeyShare >& secret_keys, const s
 keys generateKeys( size_t t, size_t n, const std::string& sgx_url, const std::string& dkg_rand_id );
 
 std::vector< TEDecryptionShare > getDecryptionShares(
-    const std::vector< std::shared_ptr< libBLS::Ciphertext > >& ciphertexts, const std::string& key_name,
-    const std::string& sgx_url, const size_t signerIndex );
+    const std::vector< std::shared_ptr< libBLS::Ciphertext > >& ciphertexts,
+    const std::string& key_name, const std::string& sgx_url, const size_t signerIndex );
 
-std::pair< std::vector< std::string >, std::vector< std::shared_ptr< libBLS::Ciphertext > > > cipherRandomMessageBatch(
-    const TEPublicKey& common_public_key, size_t n_messages_batch );
+std::pair< std::vector< std::string >, std::vector< std::shared_ptr< libBLS::Ciphertext > > >
+cipherRandomMessageBatch( const TEPublicKey& common_public_key, size_t n_messages_batch );
 
 
 int64_t total_time = 0;
@@ -155,8 +155,8 @@ int main() {
     return 0;
 }
 
-std::pair< std::vector< std::string >, std::vector< std::shared_ptr< libBLS::Ciphertext > > > cipherRandomMessageBatch(
-    const TEPublicKey& common_public_key, size_t n_messages_batch ) {
+std::pair< std::vector< std::string >, std::vector< std::shared_ptr< libBLS::Ciphertext > > >
+cipherRandomMessageBatch( const TEPublicKey& common_public_key, size_t n_messages_batch ) {
     std::vector< std::string > plaintexts;
     std::vector< std::shared_ptr< libBLS::Ciphertext > > ciphertexts;
 
@@ -222,8 +222,8 @@ keys generateKeys(
 }
 
 std::vector< TEDecryptionShare > getDecryptionShares(
-    const std::vector< std::shared_ptr< libBLS::Ciphertext > >& ciphertexts, const std::string& key_name,
-    const std::string& sgx_url, const size_t signerIndex ) {
+    const std::vector< std::shared_ptr< libBLS::Ciphertext > >& ciphertexts,
+    const std::string& key_name, const std::string& sgx_url, const size_t signerIndex ) {
     Json::Value p;
     p["blsKeyName"] = key_name;
 
