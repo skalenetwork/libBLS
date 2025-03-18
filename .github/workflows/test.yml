@@ -146,7 +146,7 @@ jobs:
           make -j$(nproc)
       - name: Run sgxwallet container
         run: |
-          export SGX_WALLET_TAG=1.83.0-develop.5
+          export SGX_WALLET_TAG=latest
           ./scripts/run_sgx_simulator.sh
           sleep 60
       - name: Run tests
