@@ -501,20 +501,10 @@ echo -e "${COLOR_VAR_NAME}NM${COLOR_DOTS}.......................................
 echo -e "${COLOR_VAR_NAME}OBJCOPY${COLOR_DOTS}.......................................................${COLOR_VAR_VAL}$OBJCOPY${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}OBJDUMP${COLOR_DOTS}.......................................................${COLOR_VAR_VAL}$OBJDUMP${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_EMSCRIPTEN${COLOR_DOTS}........${COLOR_VAR_DESC}Emscripten${COLOR_DOTS}.............................${COLOR_VAR_VAL}$WITH_EMSCRIPTEN${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_ZLIB${COLOR_DOTS}..............${COLOR_VAR_DESC}Zlib${COLOR_DOTS}...................................${COLOR_VAR_VAL}$WITH_ZLIB${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_OPENSSL${COLOR_DOTS}...........${COLOR_VAR_DESC}OpenSSL${COLOR_DOTS}................................${COLOR_VAR_VAL}$WITH_OPENSSL${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_CURL${COLOR_DOTS}..............${COLOR_VAR_DESC}CURL${COLOR_DOTS}...................................${COLOR_VAR_VAL}$WITH_CURL${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_SSH${COLOR_DOTS}...............${COLOR_VAR_DESC}SSH${COLOR_DOTS}....................................${COLOR_VAR_VAL}$WITH_SSH${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_UV${COLOR_DOTS}................${COLOR_VAR_DESC}libUV${COLOR_DOTS}..................................${COLOR_VAR_VAL}$WITH_UV${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_LWS${COLOR_DOTS}...............${COLOR_VAR_DESC}libWevSockets${COLOR_DOTS}..........................${COLOR_VAR_VAL}$WITH_LWS${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_BOOST${COLOR_DOTS}.............${COLOR_VAR_DESC}libBoostC++${COLOR_DOTS}............................${COLOR_VAR_VAL}$WITH_BOOST${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_PUPNP${COLOR_DOTS}.............${COLOR_VAR_DESC}libpupnp${COLOR_DOTS}...............................${COLOR_VAR_VAL}$WITH_PUPNP${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_ARGTABLE2${COLOR_DOTS}.........${COLOR_VAR_DESC}libArgTable${COLOR_DOTS}............................${COLOR_VAR_VAL}$WITH_ARGTABLE2${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_NETTLE${COLOR_DOTS}............${COLOR_VAR_DESC}LibNettle${COLOR_DOTS}..............................${COLOR_VAR_VAL}$WITH_NETTLE${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_TASN1${COLOR_DOTS}.............${COLOR_VAR_DESC}libTASN1${COLOR_DOTS}...............................${COLOR_VAR_VAL}$WITH_TASN1${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_GNU_TLS${COLOR_DOTS}...........${COLOR_VAR_DESC}libGnuTLS${COLOR_DOTS}..............................${COLOR_VAR_VAL}$WITH_GNU_TLS${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_GPGERROR${COLOR_DOTS}..........${COLOR_VAR_DESC}libGpgError${COLOR_DOTS}............................${COLOR_VAR_VAL}$WITH_GPGERROR${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_GCRYPT${COLOR_DOTS}............${COLOR_VAR_DESC}libGCrypt${COLOR_DOTS}..............................${COLOR_VAR_VAL}$WITH_GCRYPT${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_GMP${COLOR_DOTS}...............${COLOR_VAR_DESC}LibGMP${COLOR_DOTS}.................................${COLOR_VAR_VAL}$WITH_GMP${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_FF${COLOR_DOTS}................${COLOR_VAR_DESC}LibFF${COLOR_DOTS}..................................${COLOR_VAR_VAL}$WITH_FF${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_JSONRPC${COLOR_DOTS}...........${COLOR_VAR_DESC}LibJsonC++${COLOR_DOTS}.............................${COLOR_VAR_VAL}$WITH_JSONRPC${COLOR_RESET}"
@@ -549,7 +539,7 @@ then
 	cd emsdk
 	echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
 	eval git pull
-	eval git checkout 2.0.31
+	eval git checkout 4.0.5
 	eval ./emsdk install latest
 	eval ./emsdk activate latest
 	source ./emsdk_env.sh
@@ -565,7 +555,7 @@ then
 		cd "$SOURCES_ROOT"
 		BOOST_NAME="boost_1_68_0"
 		BOOST_VERSION="1.68.0"
-		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
+		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ] || [ "${WITH_EMSCRIPTEN}" -eq 1 ];
 		then
 			BOOST_NAME="boost_1_82_0"
 			BOOST_VERSION="1.82.0"
@@ -612,7 +602,7 @@ then
 				if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 				then
 					eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=${variant} link=static install
-					cd bin.v2/libs/program_options/build/emscripten-2.0.31/${variant}/cxxstd-14-iso/link-static/threading-multi/
+					cd bin.v2/libs/program_options/build/emscripten-4.0.5/${variant}/cxxstd-14-iso/link-static/threading-multi/visibility-hidden/
 					eval emar q "libboost_program_options.a" ./*.bc
 					eval cp "libboost_program_options.a" "${LIBRARIES_ROOT}"
 				else
@@ -660,7 +650,7 @@ then
 				else
 					if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 					then
-						eval emconfigure ./config -fPIC -no-asm -no-shared -no-threads --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+						eval emconfigure ./config -fPIC -no-asm -no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT" # -no-threads
 						sed -i 's/CROSS_COMPILE=.*/CROSS_COMPILE=/' Makefile
 					else
 						eval ./config -fPIC --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
@@ -760,7 +750,7 @@ then
 		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
 		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 		then
-			simple_find_tool_program "cmake" "CMAKE" "no"
+			# simple_find_tool_program "cmake" "CMAKE" "no"
 			eval emcmake "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" -DGMP_INCLUDE_DIR="$INCLUDE_ROOT" -DGMP_LIBRARY="$LIBRARIES_ROOT" -DWITH_PROCPS=OFF -DCURVE=ALT_BN128 -DUSE_ASM=OFF ..
 			eval emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
 		else
