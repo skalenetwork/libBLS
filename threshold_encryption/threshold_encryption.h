@@ -37,16 +37,28 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
+/**
+ * @brief Holds the AES key ciphered via
+ * Thresgold Encryption
+ */
 struct CipheredKey {
     libff::alt_bn128_G2 U;
     std::string V;
     libff::alt_bn128_G1 W;
+
+    CipheredKey() = default;
+    CipheredKey(libff::alt_bn128_G2 _U, std::string _V, libff::alt_bn128_G1 _W)
+        : U(_U), V(std::move(_V)), W(_W) {}
 
     bool operator==( const CipheredKey& other ) const {
         return ( U == other.U ) && ( V == other.V ) && ( W == other.W );
     }
 };
 
+/**
+ * @brief Holds the ciphered AES key, as well as the data
+ * ciphered with AES key.
+ */
 struct Ciphertext {
     CipheredKey key;
     std::shared_ptr< std::vector< uint8_t > > data;
@@ -80,6 +92,25 @@ struct Ciphertext {
     }
 };
 
+const size_t RANDOM_SECRET_SIZE = 64;
+// Might be useful in future to change to char[64] & keep it in stack
+using rand_secret = std::string;
+
+/**
+ * @brief The result of the encryption process
+ * Only accessible by the party that cyphers the text.
+ * `random_secret` should never be shared.
+ */
+struct CipherResult {
+    std::shared_ptr<Ciphertext> ciphertext;
+    std::shared_ptr<rand_secret> random_secret;
+};
+
+struct CipheredKeyResult {
+    std::shared_ptr<CipheredKey> ciphertext;
+    std::shared_ptr<rand_secret> random_secret;
+};
+
 class TE {
 public:
     TE( const TEBase& base );
@@ -88,13 +119,30 @@ public:
 
     ~TE();
 
-    static CipheredKey getCiphertext(
+
+    /**
+     * @brief Encrypts a message using threshold encryption scheme
+     *
+     * Slow in comparison to encryptWithAES - Use only to cipher
+     * AES key. Not the message itself
+     *
+     * @param message The message to encrypt
+     * @param common_public The public key in G2 group
+     * @return CipheredKey Triple (U,V,W) where:
+     *         U is element of G2
+     *         V is the encrypted message
+     *         W is element of G1
+     * @return string - random secret used for encryption. Mostly used for testing.
+     *
+     * @note This is an auxiliar function, used within `encryptWithAES`
+     */
+    static CipheredKeyResult getCiphertext(
         const std::string& message, const libff::alt_bn128_G2& common_public );
 
-    static Ciphertext encryptWithAES(
+    static CipherResult encryptWithAES(
         const std::string& message, const libff::alt_bn128_G2& common_public );
 
-    static std::string encryptMessage(
+    static std::pair<std::string, rand_secret> encryptMessage(
         const std::string& message, const std::string& common_public );
 
     static libff::alt_bn128_G2 getDecryptionShare(

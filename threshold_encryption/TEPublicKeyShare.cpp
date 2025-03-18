@@ -63,18 +63,6 @@ TEPublicKeyShare::TEPublicKeyShare( TEPrivateKeyShare _p_key )
     signerIndex = _p_key.getSignerIndex();
 }
 
-bool TEPublicKeyShare::Verify(
-    const libBLS::CipheredKey& cyphertext, const TEDecryptionShare& decryptionShare ) {
-    libBLS::TE::checkCypher( cyphertext );
-    if ( !decryptionShare.validate() ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "Invalid decryption share" );
-    }
-
-    libBLS::TE te( *this );
-
-    return te.Verify( cyphertext, decryptionShare.getShareRaw(), publicKey );
-}
-
 std::shared_ptr< std::vector< std::string > > TEPublicKeyShare::toString() {
     return std::make_shared< std::vector< std::string > >(
         libBLS::ThresholdUtils::G2ToString( publicKey ) );

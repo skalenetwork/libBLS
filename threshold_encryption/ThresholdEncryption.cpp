@@ -25,15 +25,16 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include "TEBase.h"
 #include "TEDecryptSet.h"
 #include <tools/utils.h>
+#include <valarray>
 
-libBLS::Ciphertext ThresholdEncryption::encrypt(
+libBLS::CipherResult ThresholdEncryption::encrypt(
     const std::string& message, const TEPublicKey& commonPublic ) {
     TEBase::initializeIfNecessary();
 
-    libBLS::Ciphertext cypher =
+    libBLS::CipherResult cypher =
         libBLS::TE::encryptWithAES( message, commonPublic.getPublicKeyRaw() );
 
-    libBLS::TE::checkCypher( cypher.key );
+    libBLS::TE::checkCypher( cypher.ciphertext->key );
 
     return cypher;
 }
@@ -112,8 +113,26 @@ std::string ThresholdEncryption::combineShares(
 }
 
 bool ThresholdEncryption::validateCombinedDecryption(
-    const libBLS::Ciphertext& cyphertext, const std::string& message ) {
+    const libBLS::Ciphertext& cyphertext, const std::string& message, const TEPublicKey& publicKey ) {
     TEBase::initializeIfNecessary();
+    
+    // get random secret
+    libBLS::rand_secret secret = extractRandomSecretFromMessage(message);
 
-    throw std::runtime_error( "Not implemented" );
+    // get ciphered AES key
+    std::string ciphered_aes_key = cyphertext.key.V;
+    
+    // Compute G(r'Y)
+    libff::alt_bn128_Fq r(libBLS::ThresholdUtils::convertHexToDec(secret).c_str());
+    libff::alt_bn128_G2 Y = r * publicKey.getPublicKeyRaw();
+    std::string hash = libBLS::TE::Hash( Y );
+
+    // Compute V xor G(r'Y) to get M (AES key)
+    std::string aes_key = xorStrings(ciphered_aes_key, hash);
+
+    // Decrypt message with this key
+    std::string decrypted_message = libBLS::ThresholdUtils::aesDecrypt(*cyphertext.data, aes_key);
+    
+    // compare decyphered message against the one given
+    return decrypted_message == message;
 }

@@ -54,10 +54,10 @@ void importBLSKeys( const std::vector< TEPrivateKeyShare >& secret_keys, const s
 keys generateKeys( size_t t, size_t n, const std::string& sgx_url, const std::string& dkg_rand_id );
 
 std::vector< TEDecryptionShare > getDecryptionShares(
-    const std::vector< libBLS::Ciphertext >& ciphertexts, const std::string& key_name,
+    const std::vector< std::shared_ptr< libBLS::Ciphertext > >& ciphertexts, const std::string& key_name,
     const std::string& sgx_url, const size_t signerIndex );
 
-std::pair< std::vector< std::string >, std::vector< libBLS::Ciphertext > > cipherRandomMessageBatch(
+std::pair< std::vector< std::string >, std::vector< std::shared_ptr< libBLS::Ciphertext > > > cipherRandomMessageBatch(
     const TEPublicKey& common_public_key, size_t n_messages_batch );
 
 
@@ -133,7 +133,7 @@ int main() {
 
             // verify all shares
             for ( size_t msg = 0; msg < batched_decryption_shares.size(); ++msg ) {
-                assert( ThresholdEncryption::validateDecryptionShare( ciphertexts[msg].key,
+                assert( ThresholdEncryption::validateDecryptionShare( ciphertexts[msg]->key,
                     batched_decryption_shares[msg], keys.public_keys[node_id] ) );
 
                 decription_sets[msg].addDecryptShare( batched_decryption_shares[msg] );
@@ -143,7 +143,7 @@ int main() {
         // combine shares from each individual message on the batch
         for ( size_t msg = 0; msg < n_messages_batch; ++msg ) {
             std::string decrypted_msg =
-                ThresholdEncryption::combineShares( ciphertexts[msg], decription_sets[msg] );
+                ThresholdEncryption::combineShares( *ciphertexts[msg], decription_sets[msg] );
             assert( decrypted_msg == plaintexts[msg] );
         }
     }
@@ -155,10 +155,10 @@ int main() {
     return 0;
 }
 
-std::pair< std::vector< std::string >, std::vector< libBLS::Ciphertext > > cipherRandomMessageBatch(
+std::pair< std::vector< std::string >, std::vector< std::shared_ptr< libBLS::Ciphertext > > > cipherRandomMessageBatch(
     const TEPublicKey& common_public_key, size_t n_messages_batch ) {
     std::vector< std::string > plaintexts;
-    std::vector< libBLS::Ciphertext > ciphertexts;
+    std::vector< std::shared_ptr< libBLS::Ciphertext > > ciphertexts;
 
     // create the batch of messages
     for ( size_t j = 0; j < n_messages_batch; ++j ) {
@@ -172,7 +172,7 @@ std::pair< std::vector< std::string >, std::vector< libBLS::Ciphertext > > ciphe
 
         // build corresponding ciphertexts
         auto encrypted_string = ThresholdEncryption::encrypt( plaintext, common_public_key );
-        ciphertexts.push_back( encrypted_string );
+        ciphertexts.push_back( encrypted_string.ciphertext );
     }
     return { std::move( plaintexts ), std::move( ciphertexts ) };
 }
@@ -222,7 +222,7 @@ keys generateKeys(
 }
 
 std::vector< TEDecryptionShare > getDecryptionShares(
-    const std::vector< libBLS::Ciphertext >& ciphertexts, const std::string& key_name,
+    const std::vector< std::shared_ptr< libBLS::Ciphertext > >& ciphertexts, const std::string& key_name,
     const std::string& sgx_url, const size_t signerIndex ) {
     Json::Value p;
     p["blsKeyName"] = key_name;
@@ -230,9 +230,9 @@ std::vector< TEDecryptionShare > getDecryptionShares(
     Json::Value batch;
     // batch.reserve( 256 * ciphertexts.size());
     for ( size_t i = 0; i < ciphertexts.size(); i++ ) {
-        libBLS::Ciphertext ciphertext = ciphertexts[i];
-        ThresholdEncryption::validateEncryption( ciphertexts[i].key );
-        batch.append( ciphertext.getPublicDecryptionValue() );
+        std::shared_ptr< libBLS::Ciphertext > ciphertext = ciphertexts[i];
+        ThresholdEncryption::validateEncryption( ciphertexts[i]->key );
+        batch.append( ciphertext->getPublicDecryptionValue() );
     }
 
     TIMER(

@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         }
 
         TEPublicKey common_public( common_private, num_signed, num_all );
-        libBLS::Ciphertext cypher = ThresholdEncryption::encrypt( message, common_public );
+        libBLS::CipherResult cypher = ThresholdEncryption::encrypt( message, common_public );
 
         std::vector< libff::alt_bn128_Fr > skeys = dkg_te.SecretKeyContribution( poly );
         std::vector< TEPrivateKeyShare > skey_shares;
@@ -105,8 +105,8 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         TEDecryptSet decr_set( num_signed, num_all );
         for ( size_t i = 0; i < num_signed; i++ ) {
             TEDecryptionShare share =
-                ThresholdEncryption::partialDecrypt( cypher.key, skey_shares[i] );
-            BOOST_REQUIRE( public_key_shares[i].Verify( cypher.key, share ) );
+                ThresholdEncryption::partialDecrypt( cypher.ciphertext->key, skey_shares[i] );
+            BOOST_REQUIRE( ThresholdEncryption::validateDecryptionShare( cypher.ciphertext->key, share, public_key_shares[i] ) );
             decr_set.addDecryptShare( share );
         }
         // each can only combine the shares once - thus several copies
@@ -114,11 +114,14 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         TEDecryptSet decr_set3 = decr_set;
         TEDecryptSet decr_set4 = decr_set;
 
-        std::string message_decrypted = ThresholdEncryption::combineShares( cypher, decr_set );
-        BOOST_REQUIRE( message == message_decrypted );
+        std::string message_decrypted = ThresholdEncryption::combineShares( *cypher.ciphertext, decr_set );
+        std::string original_plaintext = ThresholdEncryption::mergeRandomSecretWithMessage(message, *cypher.random_secret);
 
-        libBLS::Ciphertext bad_cypher = cypher;  // corrupt V in cypher
-        bad_cypher.key.V = spoilMessage( cypher.key.V );
+        BOOST_REQUIRE( original_plaintext == message_decrypted );
+        BOOST_REQUIRE( ThresholdEncryption::validateCombinedDecryption(*cypher.ciphertext, original_plaintext, common_public) );
+
+        libBLS::Ciphertext bad_cypher = *cypher.ciphertext;  // corrupt V in cypher
+        bad_cypher.key.V = spoilMessage( cypher.ciphertext->key.V );
 
         BOOST_REQUIRE_THROW( ThresholdEncryption::combineShares( bad_cypher, decr_set2 ),
             libBLS::ThresholdUtils::IncorrectInput );
@@ -128,14 +131,14 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
                                  TEDecryptionShare( 1, libff::alt_bn128_G2::random_element() ) ),
             libBLS::ThresholdUtils::IncorrectInput );
 
-        bad_cypher = cypher;  // corrupt U in cypher
+        bad_cypher = *cypher.ciphertext;  // corrupt U in cypher
         libff::alt_bn128_G2 rand_el = libff::alt_bn128_G2::random_element();
         bad_cypher.key.U = rand_el;
 
         BOOST_REQUIRE_THROW( ThresholdEncryption::combineShares( bad_cypher, decr_set3 ),
             libBLS::ThresholdUtils::IncorrectInput );
 
-        bad_cypher = cypher;  // corrupt W in cypher
+        bad_cypher = *cypher.ciphertext;  // corrupt W in cypher
         libff::alt_bn128_G1 rand_el2 = libff::alt_bn128_G1::random_element();
         bad_cypher.key.W = rand_el2;
 
@@ -152,14 +155,14 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         TEDecryptSet bad_decr_set( num_signed, num_all );
         for ( size_t i = 0; i < num_signed; i++ ) {
             TEDecryptionShare decr_share =
-                ThresholdEncryption::partialDecrypt( cypher.key, skey_shares[i] );
+                ThresholdEncryption::partialDecrypt( cypher.ciphertext->key, skey_shares[i] );
             if ( i == ind )
-                BOOST_REQUIRE( !public_key_shares[i].Verify( cypher.key, decr_share ) );
+                BOOST_REQUIRE( !ThresholdEncryption::validateDecryptionShare( cypher.ciphertext->key, decr_share, public_key_shares[i] ) );
             bad_decr_set.addDecryptShare( decr_share );
         }
 
         std::string bad_message_decrypted =
-            ThresholdEncryption::combineShares( cypher, bad_decr_set );
+            ThresholdEncryption::combineShares( *cypher.ciphertext, bad_decr_set );
         BOOST_REQUIRE( message != bad_message_decrypted );
     }
 }
@@ -181,8 +184,7 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
             std::shared_ptr< TEPublicKey > >
             keys = TEPrivateKeyShare::generateSampleKeys( num_signed, num_all );
 
-
-        libBLS::Ciphertext cypher = ThresholdEncryption::encrypt( message, *( keys.second ) );
+        libBLS::CipherResult cypher = ThresholdEncryption::encrypt( message, *( keys.second ) );
 
         std::vector< TEPublicKeyShare > public_key_shares;
         for ( size_t i = 0; i < num_all; i++ ) {
@@ -202,14 +204,83 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
         TEDecryptSet decr_set( num_signed, num_all );
         for ( size_t i = 0; i < num_signed; i++ ) {
             TEDecryptionShare decr_share =
-                ThresholdEncryption::partialDecrypt( cypher.key, *keys.first->at( i ) );
-            BOOST_REQUIRE( public_key_shares.at( i ).Verify( cypher.key, decr_share ) );
+                ThresholdEncryption::partialDecrypt( cypher.ciphertext->key, *keys.first->at( i ) );
+            BOOST_REQUIRE( ThresholdEncryption::validateDecryptionShare( cypher.ciphertext->key, decr_share, public_key_shares.at( i ) ) );
             decr_set.addDecryptShare( decr_share );
         }
-        std::string message_decrypted = ThresholdEncryption::combineShares( cypher, decr_set );
-        BOOST_REQUIRE( message == message_decrypted );
+        std::string message_decrypted = ThresholdEncryption::combineShares( *cypher.ciphertext, decr_set );
+        std::string original_plaintext = ThresholdEncryption::mergeRandomSecretWithMessage(message, *cypher.random_secret);
+
+        BOOST_REQUIRE( original_plaintext == message_decrypted );
+        BOOST_REQUIRE( ThresholdEncryption::validateCombinedDecryption(
+            *cypher.ciphertext, original_plaintext, *keys.second ) );
     }
 }
+
+
+BOOST_AUTO_TEST_CASE( TEFailingValidation ) {
+    for ( size_t i = 0; i < 10; ++i ) {
+        size_t num_all = rand_gen() % 16 + 1;
+        size_t num_signed = rand_gen() % num_all + 1;
+
+        libBLS::Dkg dkg_te( num_signed, num_all );
+
+        std::string message;
+        size_t msg_length = 100;
+        for ( size_t length = 0; length < msg_length; ++length ) {
+            message += char( rand_gen() % 128 );
+        }
+
+        std::pair< std::shared_ptr< std::vector< std::shared_ptr< TEPrivateKeyShare > > >,
+            std::shared_ptr< TEPublicKey > >
+            keys = TEPrivateKeyShare::generateSampleKeys( num_signed, num_all );
+
+        libBLS::CipherResult cypher = ThresholdEncryption::encrypt( message, *( keys.second ) );
+
+        libBLS::CipheredKey bad_key = cypher.ciphertext->key;
+        bad_key.V.replace( 0, 3, "ABC" );
+        BOOST_REQUIRE( !ThresholdEncryption::validateEncryption( bad_key ) );
+        BOOST_REQUIRE( ThresholdEncryption::validateEncryption( cypher.ciphertext->key ) );
+
+        std::vector< TEPublicKeyShare > public_key_shares;
+        for ( size_t i = 0; i < num_all; i++ ) {
+            public_key_shares.emplace_back( TEPublicKeyShare( *keys.first->at( i ) ) );
+        }
+
+        for ( size_t i = 0; i < num_all - num_signed; ++i ) {
+            size_t ind4del = rand_gen() % ( *keys.first ).size();
+            auto pos4del = ( *keys.first ).begin();
+            advance( pos4del, ind4del );
+            ( *keys.first ).erase( pos4del );
+            auto pos2 = public_key_shares.begin();
+            advance( pos2, ind4del );
+            public_key_shares.erase( pos2 );
+        }
+
+        TEDecryptSet decr_set( num_signed, num_all );
+        for ( size_t i = 0; i < num_signed; i++ ) {
+            TEDecryptionShare decr_share =
+                ThresholdEncryption::partialDecrypt( cypher.ciphertext->key, *keys.first->at( i ) );
+            BOOST_REQUIRE( ThresholdEncryption::validateDecryptionShare( cypher.ciphertext->key, decr_share , public_key_shares.at( i )) );
+
+            decr_set.addDecryptShare( decr_share );
+        }
+        std::string message_decrypted = ThresholdEncryption::combineShares( *cypher.ciphertext, decr_set );
+        
+        // change the message part
+        std::string copy = message_decrypted;
+        copy.replace(0, 3, "ABC");
+        BOOST_REQUIRE( !ThresholdEncryption::validateCombinedDecryption(
+            *cypher.ciphertext, copy, *keys.second ) );
+        
+        // change the random secret
+        std::string copy2 = message_decrypted;
+        copy2.replace(message_decrypted.size() - 3, 3, "a51");
+        BOOST_REQUIRE( !ThresholdEncryption::validateCombinedDecryption(
+            *cypher.ciphertext, copy2, *keys.second ) );
+    }
+}
+
 
 BOOST_AUTO_TEST_CASE( WrappersFromString ) {
     TEBase::initializeIfNecessary();
@@ -312,9 +383,9 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
             message += char( rand_gen() % 128 );
         }
 
-        libBLS::Ciphertext cypher = ThresholdEncryption::encrypt( message, common_public );
+        libBLS::CipherResult cypher = ThresholdEncryption::encrypt( message, common_public );
 
-        BOOST_REQUIRE( ThresholdEncryption::validateEncryption( cypher.key ) );
+        BOOST_REQUIRE( ThresholdEncryption::validateEncryption( cypher.ciphertext->key ) );
 
         for ( size_t i = 0; i < num_all - num_signed; ++i ) {
             size_t ind4del = rand_gen() % secret_shares_all.size();
@@ -329,16 +400,19 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
         TEDecryptSet decr_set( num_signed, num_all );
         for ( size_t i = 0; i < num_signed; i++ ) {
             TEDecryptionShare decr_share =
-                ThresholdEncryption::partialDecrypt( cypher.key, skeys[i] );
+                ThresholdEncryption::partialDecrypt( cypher.ciphertext->key, skeys[i] );
 
             BOOST_REQUIRE(
-                ThresholdEncryption::validateDecryptionShare( cypher.key, decr_share, pkeys[i] ) );
+                ThresholdEncryption::validateDecryptionShare( cypher.ciphertext->key, decr_share, pkeys[i] ) );
 
             decr_set.addDecryptShare( decr_share );
         }
 
-        std::string message_decrypted = ThresholdEncryption::combineShares( cypher, decr_set );
-        BOOST_REQUIRE( message == message_decrypted );
+        std::string message_decrypted = ThresholdEncryption::combineShares( *cypher.ciphertext, decr_set );
+        std::string original_plaintext = ThresholdEncryption::mergeRandomSecretWithMessage(message, *cypher.random_secret);
+        BOOST_REQUIRE( original_plaintext == message_decrypted );
+        BOOST_REQUIRE( ThresholdEncryption::validateCombinedDecryption(
+            *cypher.ciphertext, original_plaintext, common_public ) );
     }
 }
 
@@ -400,7 +474,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         TEDecryptionShare decr_share( 1, libff::alt_bn128_G2::random_element() );
 
         BOOST_REQUIRE_THROW(
-            pkey.Verify( cypher, decr_share ), libBLS::ThresholdUtils::IncorrectInput );
+            ThresholdEncryption::validateDecryptionShare( cypher, decr_share, pkey ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -417,7 +491,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         TEDecryptionShare decr_share( 1, U );
 
         BOOST_REQUIRE_THROW(
-            pkey.Verify( cypher, decr_share ), libBLS::ThresholdUtils::IncorrectInput );
+            ThresholdEncryption::validateDecryptionShare( cypher, decr_share, pkey ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {

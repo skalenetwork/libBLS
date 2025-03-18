@@ -40,8 +40,6 @@ public:
 
     TEPublicKeyShare( TEPrivateKeyShare _p_key );
 
-    bool Verify( const libBLS::CipheredKey& ciphertext, const TEDecryptionShare& decryptionShare );
-
     std::shared_ptr< std::vector< std::string > > toString();
 
     libff::alt_bn128_G2 getPublicKeyRaw() const;

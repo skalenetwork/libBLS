@@ -15,7 +15,7 @@ int main( int argc, char* argv[] ) {
     libBLS::ThresholdUtils::initCurve();
     auto ciphertext_string = libBLS::TE::encryptMessage( message, common_public_str );
 
-    std::cout << ciphertext_string;
+    std::cout << ciphertext_string.first;
 
     return 0;
 }
