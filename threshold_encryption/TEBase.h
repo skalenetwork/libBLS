@@ -26,6 +26,12 @@
 
 #include <cstddef>
 
+/**
+ * Base class for threshold encryption
+ * Keeps track of the number of required signers and total signers.
+ *
+ * Ensures libff is initialized for any subclass.
+ */
 class TEBase {
 protected:
     size_t requiredSigners;
@@ -34,8 +40,17 @@ protected:
     static bool libffInitialized;
 
 public:
+    /**
+     * Initializes libff if it has not been initialized yet.
+     */
     static void initializeIfNecessary();
 
+    /**
+     * @brief Constructor for TEBase
+     * @param _requiredSigners Number of signers required to decrypt
+     * @param _totalSigners Total number of signers
+     * @note Invokes the method `initializeIfNecessary` to ensure libff is initialized
+     */
     TEBase( size_t _requiredSigners, size_t _totalSigners );
 
     size_t getRequiredSigners() const;

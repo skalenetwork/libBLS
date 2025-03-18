@@ -30,7 +30,7 @@
 
 class TEPublicKey : public TEBase {
 private:
-    libff::alt_bn128_G2 PublicKey;
+    libff::alt_bn128_G2 publicKey;
 
 public:
     TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str_ptr,

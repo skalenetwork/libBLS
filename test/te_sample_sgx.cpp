@@ -33,6 +33,13 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <tools/utils.h>
 #include <chrono>
 
+#define TIMER( variable, code_block )                                                   \
+    auto start_##variable = std::chrono::high_resolution_clock::now();                  \
+    code_block auto end_##variable = std::chrono::high_resolution_clock::now();         \
+    auto duration_##variable = std::chrono::duration_cast< std::chrono::microseconds >( \
+        end_##variable - start_##variable )                                             \
+                                   .count();                                            \
+    variable += duration_##variable;
 
 struct keys {
     TEPublicKey common_public;
@@ -52,6 +59,12 @@ std::vector< TEDecryptionShare > getDecryptionShares(
 
 std::pair< std::vector< std::string >, std::vector< libBLS::Ciphertext > > cipherRandomMessageBatch(
     const TEPublicKey& common_public_key, size_t n_messages_batch );
+
+
+int64_t total_time = 0;
+int64_t total_time_building_request = 0;
+int64_t total_time_awaiting_resp = 0;
+int64_t total_time_parsing_resp = 0;
 
 int main() {
     size_t t;
@@ -81,13 +94,13 @@ int main() {
     if ( const char* env_n_messages_batch = std::getenv( "N_MESSAGES_BATCH" ) ) {
         n_messages_batch = std::stoi( env_n_messages_batch );
     } else {
-        n_messages_batch = 30;
+        n_messages_batch = 100;
     }
 
     if ( const char* env_batch_size = std::getenv( "N_BATCHES" ) ) {
         n_batches = std::stoi( env_batch_size );
     } else {
-        n_batches = 2;
+        n_batches = 1;
     }
 
     // generate random dkg id - have different key names for each run
@@ -98,7 +111,6 @@ int main() {
 
     keys keys = generateKeys( t, n, sgxwallet_url, dkg_rand_id );
 
-    int64_t total_time = 0;
 
     for ( size_t i = 0; i < n_batches; ++i ) {
         auto [plaintexts, ciphertexts] =
@@ -115,13 +127,9 @@ int main() {
                 "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:" + std::to_string( actual_node_id ) +
                 ":DKG_ID:" + dkg_rand_id;
 
-            auto start = std::chrono::high_resolution_clock::now();  // Start time
+
             std::vector< TEDecryptionShare > batched_decryption_shares =
                 getDecryptionShares( ciphertexts, bls_key_name, sgxwallet_url, actual_node_id );
-            auto end = std::chrono::high_resolution_clock::now();  // End time
-            auto duration = std::chrono::duration_cast< std::chrono::microseconds >( end - start )
-                                .count();  // Time in microseconds
-            total_time += duration;
 
             // verify all shares
             for ( size_t msg = 0; msg < batched_decryption_shares.size(); ++msg ) {
@@ -141,13 +149,9 @@ int main() {
     }
 
     float elapsed_time = total_time / ( float ) 1'000'000;  // convert to seconds
-    std::cout << "Total share decryption time: " << elapsed_time << " seconds" << std::endl;
-    std::cout << "Average processing time per batch (for each node): "
-              << elapsed_time / ( n_batches * n ) << " seconds" << std::endl;
-    std::cout << "Average processing time per message (for each node): "
-              << elapsed_time / ( n_batches * n_messages_batch * n ) << " seconds" << std::endl;
-    std::cout << "Throughput (messages / second): "
-              << ( n_batches * n_messages_batch * n ) / elapsed_time << std::endl;
+    std::cout << "Total time: " << elapsed_time << " seconds" << std::endl;
+    std::cout << "Throughput / node: " << ( n_messages_batch * n_batches * n ) / elapsed_time
+              << " seconds" << std::endl;
     return 0;
 }
 
@@ -224,30 +228,29 @@ std::vector< TEDecryptionShare > getDecryptionShares(
     p["blsKeyName"] = key_name;
 
     Json::Value batch;
+    // batch.reserve( 256 * ciphertexts.size());
     for ( size_t i = 0; i < ciphertexts.size(); i++ ) {
         libBLS::Ciphertext ciphertext = ciphertexts[i];
         ThresholdEncryption::validateEncryption( ciphertexts[i].key );
-        batch.append( ciphertext.toStringU() );
+        batch.append( ciphertext.getPublicDecryptionValue() );
     }
 
-    p["publicDecryptionValues"] = batch;
+    TIMER(
+        total_time, p["publicDecryptionValues"] = batch;
+        jsonrpc::HttpClient* jsonRpcClient = new jsonrpc::HttpClient( sgx_url );
+        jsonRpcClient->SetTimeout( 1000000 ); jsonrpc::Client sgxClient( *jsonRpcClient );
 
-    jsonrpc::HttpClient* jsonRpcClient = new jsonrpc::HttpClient( sgx_url );
-    jsonrpc::Client sgxClient( *jsonRpcClient );
+        Json::Value result = sgxClient.CallMethod( "getDecryptionShares", p );
 
-    Json::Value result = sgxClient.CallMethod( "getDecryptionShares", p );
+        delete jsonRpcClient;
 
-    delete jsonRpcClient;
+        std::vector< TEDecryptionShare > ret_values;
 
-    std::vector< TEDecryptionShare > ret_values;
+        for ( size_t i = 0; i < ciphertexts.size(); i++ ) {
+            int i_int = ( int ) i;
+            ret_values.push_back(
+                TEDecryptionShare( signerIndex, result["decryptionShares"][i_int].asCString() ) );
+        } );
 
-    for ( size_t i = 0; i < ciphertexts.size(); i++ ) {
-        int i_int = ( int ) i;
-        ret_values.push_back(
-            TEDecryptionShare( signerIndex, result["decryptionShares"][i_int][0].asCString(),
-                result["decryptionShares"][i_int][1].asCString(),
-                result["decryptionShares"][i_int][2].asCString(),
-                result["decryptionShares"][i_int][3].asCString() ) );
-    }
     return ret_values;
 }

@@ -55,10 +55,25 @@ private:
 public:
     TEDecryptSet( size_t _requiredSigners, size_t _totalSigners );
 
+
+    /**
+     * @brief Adds a decryption share to the decryption set. Once enough shares are added, its
+     * `mergeStatus` is updated to `READY_TO_MERGE`, and the shares can be merged.
+     * @param _share The decryption share to be added to the set
+     * @details This function adds a single decryption share to the collection of shares
+     * that will be used in the threshold decryption process. Each share represents
+     * a partial decryption from a participant in the threshold encryption scheme.
+     * @note The share must be valid and correspond to the same ciphertext as other shares
+     * in the set
+     */
     void addDecryptShare( TEDecryptionShare _share );
 
     size_t size() const;
 
+
+    /**
+     * @return true if the set has enough shares for decryption, false otherwise
+     */
     bool canMerge() const;
 
     void markAsMerged();

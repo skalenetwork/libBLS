@@ -34,17 +34,9 @@ TEDecryptionShare::TEDecryptionShare( size_t _signerIndex, libff::alt_bn128_G2 _
     }
 }
 
-TEDecryptionShare::TEDecryptionShare(
-    size_t _signerIndex, const char* x0, const char* x1, const char* y0, const char* y1 )
+TEDecryptionShare::TEDecryptionShare( size_t _signerIndex, const std::string& hexaEncoded )
     : signerIndex( _signerIndex ) {
-    libff::alt_bn128_G2 val;
-    val.Z = libff::alt_bn128_Fq2::one();
-    val.X.c0 = libff::alt_bn128_Fq( x0 );
-    val.X.c1 = libff::alt_bn128_Fq( x1 );
-    val.Y.c0 = libff::alt_bn128_Fq( y0 );
-    val.Y.c1 = libff::alt_bn128_Fq( y1 );
-
-    share = val;
+    share = libBLS::ThresholdUtils::stringToG2( hexaEncoded );
 }
 
 size_t TEDecryptionShare::getSignerIndex() const {

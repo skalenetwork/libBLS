@@ -36,6 +36,9 @@ static constexpr size_t BLS_MAX_COMPONENT_LEN = 77;
 
 namespace libBLS {
 
+const size_t BASE_HEXA = 16;
+const size_t BASE_DEC = 10;
+
 class ThresholdUtils {
 private:
     class Exception : public std::exception {
@@ -109,9 +112,9 @@ public:
         const std::shared_ptr< std::string >, const std::string& delim );
 
     template < class T >
-    static std::string fieldElementToString( const T& field_elem, int base = 10 );
+    static std::string fieldElementToString( const T& field_elem, int base = BASE_DEC );
 
-    static std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem, int base = 10 );
+    static std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem, int base = BASE_DEC );
 
     static libff::alt_bn128_G2 stringToG2( const std::string& str );
 
@@ -139,9 +142,13 @@ std::string ThresholdUtils::fieldElementToString( const T& field_elem, int base 
     char* tmp = mpz_get_str( arr, base, t );
 
     std::string output = tmp;
-    // std::cout << "Private Key String: '" << output << "'" << std::endl;
-    mpz_clear( t );
+    if ( base == libBLS::BASE_HEXA ) {
+        // 64-characters long - fill 0's if needed
+        int n_zeroes = 64 - output.length();
+        output.insert( 0, n_zeroes, '0' );
+    }
 
+    mpz_clear( t );
     return output;
 }
 

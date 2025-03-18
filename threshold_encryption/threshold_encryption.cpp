@@ -395,25 +395,16 @@ std::string TE::aesCiphertextToString( const Ciphertext& cipher ) {
 
     std::string encrypted_data = ThresholdUtils::carray2Hex( data->data(), data->size() );
 
-    auto str = ThresholdUtils::G2ToString( U, 16 );
+    auto str = ThresholdUtils::G2ToString( U, BASE_HEXA );
     std::string u_str = "";
     for ( auto& elem : str ) {
-        while ( elem.size() < 64 ) {
-            elem = "0" + elem;
-        }
         u_str += elem;
     }
 
     W.to_affine_coordinates();
-    std::string x = ThresholdUtils::fieldElementToString( W.X, 16 );
-    while ( x.size() < 64 ) {
-        x = "0" + x;
-    }
+    std::string x = ThresholdUtils::fieldElementToString( W.X, BASE_HEXA );
 
-    std::string y = ThresholdUtils::fieldElementToString( W.Y, 16 );
-    while ( y.size() < 64 ) {
-        y = "0" + y;
-    }
+    std::string y = ThresholdUtils::fieldElementToString( W.Y, BASE_HEXA );
 
     std::string w_str = x + y;
 

@@ -28,7 +28,8 @@
 #include <cstddef>
 
 /**
- * @brief Represents a single decryption share
+ * @brief Represents a single decryption share. That is, the result of some party
+ * decrypting a ciphertext using their private key share.
  */
 class TEDecryptionShare {
 private:
@@ -37,27 +38,30 @@ private:
 
 public:
     /**
-     * @brief Validates that the share is well formed and non-zero.
      * @param _signerIndex Index of the signer
      * @param _share Decryption share
-     *
-     * @note This creates a contract of correctness for each TEDecryptionShare
-     * object in-memory. It can thereafter be assumed for each TEDecryptionShare
-     * object to be correct syntatically.
+     * @note Validates that the share is well formed and non-zero.
      */
     TEDecryptionShare( size_t _signerIndex, libff::alt_bn128_G2 _share );
 
     /**
-     * Used when building from serialized decription share
+     * @param _signerIndex Index of the signer
+     * @param x0 x0-coordinate of the share
+     * @param x1 x2-coordinate of the share
+     * @param y0 y0-coordinate of the share
+     * @param y1 y1-coordinate of the share
+     * @note Used when building from serialized decription share
      * TODO - in future should receive string directly and convert from string back to the class
      */
-    TEDecryptionShare(
-        size_t _signerIndex, const char* x0, const char* x1, const char* y0, const char* y1 );
+    TEDecryptionShare( size_t _signerIndex, const std::string& hexaEncoded );
 
     size_t getSignerIndex() const;
 
     libff::alt_bn128_G2 getShareRaw() const;
 
+    /**
+     * Basic validation on the share (G2 point)
+     */
     bool validate() const;
 
     /**

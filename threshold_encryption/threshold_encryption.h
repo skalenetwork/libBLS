@@ -37,7 +37,6 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
-
 struct CipheredKey {
     libff::alt_bn128_G2 U;
     std::string V;
@@ -66,16 +65,15 @@ struct Ciphertext {
     /**
      * Converts U component of the key to string
      */
-    std::string toStringU() {
+    std::string getPublicDecryptionValue() {
         auto U = key.U;
         U.to_affine_coordinates();
-        auto u_splitted = ThresholdUtils::G2ToString( U );
+        auto u_splitted = ThresholdUtils::G2ToString( U, BASE_HEXA );
 
         // convert to string
         std::string public_decryption_value;
         for ( size_t j = 0; j < u_splitted.size(); ++j ) {
-            public_decryption_value += ThresholdUtils::convertDecToHex( u_splitted[j], 32 );
-            ;
+            public_decryption_value += u_splitted[j];
         }
 
         return public_decryption_value;

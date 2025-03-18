@@ -48,13 +48,13 @@ TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str
             "non-digit symbol or first zero in non-zero public key share" );
     }
 
-    PublicKey.Z = libff::alt_bn128_Fq2::one();
-    PublicKey.X.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 0 ).c_str() );
-    PublicKey.X.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 1 ).c_str() );
-    PublicKey.Y.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 2 ).c_str() );
-    PublicKey.Y.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 3 ).c_str() );
+    publicKey.Z = libff::alt_bn128_Fq2::one();
+    publicKey.X.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 0 ).c_str() );
+    publicKey.X.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 1 ).c_str() );
+    publicKey.Y.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 2 ).c_str() );
+    publicKey.Y.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 3 ).c_str() );
 
-    if ( PublicKey.is_zero() || !PublicKey.is_well_formed() ) {
+    if ( publicKey.is_zero() || !publicKey.is_well_formed() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "corrupted string or zero public key" );
     }
 }
@@ -66,11 +66,11 @@ TEPublicKey::TEPublicKey(
         throw libBLS::ThresholdUtils::ZeroSecretKey( "zero key" );
     }
 
-    PublicKey = _common_private.getPrivateKeyRaw() * libff::alt_bn128_G2::one();
+    publicKey = _common_private.getPrivateKeyRaw() * libff::alt_bn128_G2::one();
 }
 
 TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, size_t _totalSigners )
-    : PublicKey( _pkey ), TEBase( _requiredSigners, _totalSigners ) {
+    : publicKey( _pkey ), TEBase( _requiredSigners, _totalSigners ) {
     if ( _pkey.is_zero() || !_pkey.is_well_formed() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "zero or corrupted public key" );
     }
@@ -78,9 +78,9 @@ TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, si
 
 std::shared_ptr< std::vector< std::string > > TEPublicKey::toString() {
     return std::make_shared< std::vector< std::string > >(
-        libBLS::ThresholdUtils::G2ToString( PublicKey ) );
+        libBLS::ThresholdUtils::G2ToString( publicKey ) );
 }
 
 libff::alt_bn128_G2 TEPublicKey::getPublicKeyRaw() const {
-    return PublicKey;
+    return publicKey;
 }
