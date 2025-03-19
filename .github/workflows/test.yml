@@ -216,7 +216,7 @@ jobs:
     strategy:
       matrix:
         node-version:
-          - 14.x
+          - 18.x
     steps:
       - name: Extract repo name
         run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
