@@ -144,8 +144,8 @@ int main() {
         for ( size_t msg = 0; msg < n_messages_batch; ++msg ) {
             std::string decrypted_msg =
                 ThresholdEncryption::combineShares( *ciphertexts[msg], decription_sets[msg] );
-            ThresholdEncryption::validateCombinedDecryption( *ciphertexts[msg], decrypted_msg,
-                keys.common_public );
+            ThresholdEncryption::validateCombinedDecryption(
+                *ciphertexts[msg], decrypted_msg, keys.common_public );
         }
     }
 
