@@ -152,7 +152,7 @@ jobs:
       run: |
         cp tools/generate_bls_keys build_em/
         cp tools/decrypt_message build_em/
-        cp test/test.js .
+        cp test/test.js build_em/
         cd build_em/
         cp threshold_encryption/encrypt.* .
         ./generate_bls_keys
