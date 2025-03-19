@@ -656,13 +656,13 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
     }
 
     {
-        // Cyphertext message length != decyphered message length
+        // Cyphertext message length < decyphered message length
         libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
         libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
 
         libBLS::CipheredKey key;
         key.U = U;
-        key.V = "He";
+        key.V = "This does not exceed 64 chars";
         key.W = W;
 
         std::vector< uint8_t > data;
@@ -671,7 +671,9 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
         TEPublicKey pkey( TEPrivateKey( el, num_signed, num_all ) );
 
-        BOOST_REQUIRE_THROW( ThresholdEncryption::validateCombinedDecryption( cypher, "S", pkey ),
+        BOOST_REQUIRE_THROW(
+            ThresholdEncryption::validateCombinedDecryption( cypher,
+                "This is a sample message that exceeds sixty-four characters easily.", pkey ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
