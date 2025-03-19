@@ -25,13 +25,13 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <tools/utils.h>
 #include <libff/common/profiling.hpp>
 
-bool TEBase::libffInitialized = false;
+std::atomic< bool > TEBase::isLibffInitialized{ false };
 
 void TEBase::initializeIfNecessary() {
-    if ( !libffInitialized ) {
+    bool expected = false;
+    if ( isLibffInitialized.compare_exchange_strong( expected, true ) ) {
         libff::init_alt_bn128_params();
         libff::inhibit_profiling_info = true;
-        libffInitialized = true;
     }
 }
 

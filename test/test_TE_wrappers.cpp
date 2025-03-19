@@ -600,16 +600,28 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
     }
 
     {
-        // same indices in decrypt set
+        // signer index is too high
         TEDecryptSet decr_set( num_signed, num_all );
 
-        TEDecryptionShare decr_share1( 1, libff::alt_bn128_G2::random_element() );
+        TEDecryptionShare decr_share( num_all + 1, libff::alt_bn128_G2::random_element() );
 
-        TEDecryptionShare decr_share2( 1, libff::alt_bn128_G2::random_element() );
-
-        decr_set.addDecryptShare( decr_share1 );
         BOOST_REQUIRE_THROW(
-            decr_set.addDecryptShare( decr_share2 ), libBLS::ThresholdUtils::IncorrectInput );
+            decr_set.addDecryptShare( decr_share ), libBLS::ThresholdUtils::IncorrectInput );
+    }
+
+    {
+        // trying to add more shares than total signers - can only happen if signer index starts
+        // at 0
+        TEDecryptSet decr_set( num_signed, num_all );
+
+        for ( size_t i = 0; i < num_all; i++ ) {
+            TEDecryptionShare decr_share( i, libff::alt_bn128_G2::random_element() );
+            decr_set.addDecryptShare( decr_share );
+        }
+
+        TEDecryptionShare decr_share( num_all, libff::alt_bn128_G2::random_element() );
+        BOOST_REQUIRE_THROW(
+            decr_set.addDecryptShare( decr_share ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {

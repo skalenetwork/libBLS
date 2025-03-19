@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE( SimpleEncryptionWithAES ) {
     auto ciphertext_with_aes = te_instance.encryptWithAES( message, public_key );
 
     auto ciphertext = ciphertext_with_aes.ciphertext->key;
-    auto encrypted_message = ciphertext_with_aes.ciphertext->data;
+    auto encrypted_message = ciphertext_with_aes.ciphertext->getData();
 
     libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
 
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE( SimpleEncryptionWithAES ) {
     std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
 
     std::string plaintext =
-        libBLS::ThresholdUtils::aesDecrypt( *encrypted_message, decrypted_aes_key );
+        libBLS::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
 
     BOOST_REQUIRE( plaintext == message + *ciphertext_with_aes.random_secret );
 }
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongKey ) {
     auto ciphertext_with_aes = te_instance.encryptWithAES( message, public_key );
 
     auto ciphertext = ciphertext_with_aes.ciphertext->key;
-    auto encrypted_message = ciphertext_with_aes.ciphertext->data;
+    auto encrypted_message = ciphertext_with_aes.ciphertext->getData();
 
     libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
 
@@ -123,8 +123,7 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongKey ) {
     RAND_bytes( key_bytes, sizeof( key_bytes ) );
     std::string random_aes_key = std::string( ( char* ) key_bytes, sizeof( key_bytes ) );
 
-    std::string plaintext =
-        libBLS::ThresholdUtils::aesDecrypt( *encrypted_message, random_aes_key );
+    std::string plaintext = libBLS::ThresholdUtils::aesDecrypt( encrypted_message, random_aes_key );
 
     BOOST_REQUIRE( plaintext != message );
 }
@@ -156,10 +155,10 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongCiphertext ) {
 
     std::string bad_message = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
     auto bad_encrypted_message =
-        te_instance.encryptWithAES( bad_message, public_key ).ciphertext->data;
+        te_instance.encryptWithAES( bad_message, public_key ).ciphertext->getData();
 
     std::string plaintext =
-        libBLS::ThresholdUtils::aesDecrypt( *bad_encrypted_message, decrypted_aes_key );
+        libBLS::ThresholdUtils::aesDecrypt( bad_encrypted_message, decrypted_aes_key );
 
     BOOST_REQUIRE( plaintext != message );
 }
@@ -188,8 +187,8 @@ BOOST_AUTO_TEST_CASE( ConvertionToStringAndBack ) {
     BOOST_REQUIRE( W_old == W_new );
     BOOST_REQUIRE( V_old == V_new );
     BOOST_REQUIRE( ciphertext_with_aes.ciphertext->key == ciphertext_from_string.key );
-    BOOST_REQUIRE(
-        ciphertext_with_aes.ciphertext->data->size() == ciphertext_from_string.data->size() );
+    BOOST_REQUIRE( ciphertext_with_aes.ciphertext->getData().size() ==
+                   ciphertext_from_string.getData().size() );
     BOOST_REQUIRE( *ciphertext_with_aes.ciphertext == ciphertext_from_string );
 }
 
@@ -264,7 +263,7 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToString ) {
     auto ciphertext = ciphertext_with_aes.key;
     BOOST_REQUIRE( ciphertext == te_instance.ciphertextFromString( result.first ) );
 
-    auto encrypted_message = ciphertext_with_aes.data;
+    auto encrypted_message = ciphertext_with_aes.getData();
 
     libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
 
@@ -276,7 +275,7 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToString ) {
     std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
 
     std::string plaintext =
-        libBLS::ThresholdUtils::aesDecrypt( *encrypted_message, decrypted_aes_key );
+        libBLS::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
 
     BOOST_REQUIRE( plaintext == message + result.second );
 }

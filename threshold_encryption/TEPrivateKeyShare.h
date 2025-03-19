@@ -36,11 +36,11 @@ private:
     size_t signerIndex;
 
 public:
-    TEPrivateKeyShare( std::shared_ptr< std::string > _key_str_ptr, size_t _signerIndex,
+    TEPrivateKeyShare( std::shared_ptr< std::string > _keyStrPtr, size_t _signerIndex,
         size_t _requiredSigners, size_t _totalSigners );
 
-    TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _signerIndex,
-        size_t _requiredSigners, size_t _totalSigners );
+    TEPrivateKeyShare( libff::alt_bn128_Fr _skeyShare, size_t _signerIndex, size_t _requiredSigners,
+        size_t _totalSigners );
 
     static std::pair< std::shared_ptr< std::vector< std::shared_ptr< TEPrivateKeyShare > > >,
         std::shared_ptr< TEPublicKey > >

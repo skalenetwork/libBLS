@@ -33,12 +33,12 @@ private:
     libff::alt_bn128_G2 publicKey;
 
 public:
-    TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str_ptr,
-        size_t _requiredSigners, size_t _totalSigners );
+    TEPublicKey( std::shared_ptr< std::vector< std::string > > _keyStrPtr, size_t _requiredSigners,
+        size_t _totalSigners );
 
     TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, size_t _totalSigners );
 
-    TEPublicKey( TEPrivateKey _comon_private );
+    TEPublicKey( TEPrivateKey _comonPrivate );
 
     std::shared_ptr< std::vector< std::string > > toString();
 

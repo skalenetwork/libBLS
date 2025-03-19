@@ -52,7 +52,7 @@ public:
      * @return libBLS::Ciphertext The encrypted message
      */
     static libBLS::CipherResult encrypt(
-        const std::string& message, const TEPublicKey& commonPublic );
+        const std::string& _message, const TEPublicKey& _commonPublic );
 
     /**
      * @brief Validates the encryption of a message (the ciphered AES key)
@@ -61,7 +61,7 @@ public:
      * @param pkey_share The private key share
      * @return bool True if the encryption is valid, false otherwise
      */
-    static bool validateEncryption( const libBLS::CipheredKey& ciphertext );
+    static bool validateEncryption( const libBLS::CipheredKey& _ciphertext );
 
     /**
      * @brief Generates a decryption share for the given cyphertext (ciphered AES key)
@@ -71,7 +71,7 @@ public:
      * @return TEDecryptionShare The partial decryption share
      */
     static TEDecryptionShare partialDecrypt(
-        const libBLS::CipheredKey& cyphertext, const TEPrivateKeyShare& pkeyShare );
+        const libBLS::CipheredKey& _cyphertext, const TEPrivateKeyShare& _pkeyShare );
 
     /**
      * @brief Validates a decryption share
@@ -80,8 +80,8 @@ public:
      * @param decryption_share The decryption share
      * @return bool True if the decryption share is valid, false otherwise
      */
-    static bool validateDecryptionShare( const libBLS::CipheredKey& cipherText,
-        const TEDecryptionShare& decryptionShare, const TEPublicKeyShare& publicKey );
+    static bool validateDecryptionShare( const libBLS::CipheredKey& _cipherText,
+        const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey );
 
     /**
      * @brief Combines decryption shares to reconstruct the original message.
@@ -93,7 +93,7 @@ public:
      * @return std::string The original message
      */
     static std::string combineShares(
-        const libBLS::Ciphertext& cyphertext, TEDecryptSet& decryptionSet );
+        const libBLS::Ciphertext& _cyphertext, TEDecryptSet& _decryptionSet );
 
     /**
      * @brief Validates if the cyphertext corresponds to the given message
@@ -102,33 +102,34 @@ public:
      * @param message The original message
      * @return bool True if the message corresponds to the cyphertext. False otherwise.
      */
-    static bool validateCombinedDecryption( const libBLS::Ciphertext& cyphertext,
-        const std::string& message, const TEPublicKey& publicKey );
+    static bool validateCombinedDecryption( const libBLS::Ciphertext& _cyphertext,
+        const std::string& _message, const TEPublicKey& _publicKey );
 
     static inline std::string mergeRandomSecretWithMessage(
-        std::string message, libBLS::rand_secret random_secret ) {
-        message += random_secret;
-        return message;
+        std::string _message, libBLS::rand_secret _randomSecret ) {
+        _message += _randomSecret;
+        return _message;
     }
 
 private:
-    static inline std::string xorStrings( const std::string& str1, const std::string& str2 ) {
+    static inline std::string xorStrings( const std::string& _str1, const std::string& _str2 ) {
         std::string result;
-        result.reserve( str1.size() );
-        for ( size_t i = 0; i < str1.size(); ++i ) {
-            result.push_back( str1[i] ^ str2[i] );
+        result.reserve( _str1.size() );
+        for ( size_t i = 0; i < _str1.size(); ++i ) {
+            result.push_back( _str1[i] ^ _str2[i] );
         }
         return result;
     }
 
-    static inline libBLS::rand_secret extractRandomSecretFromMessage( const std::string& message ) {
-        size_t msg_length = message.length();
+    static inline libBLS::rand_secret extractRandomSecretFromMessage(
+        const std::string& _message ) {
+        size_t msg_length = _message.length();
 
         if ( msg_length < libBLS::RANDOM_SECRET_SIZE ) {
             throw libBLS::ThresholdUtils::IncorrectInput( "Message is too short" );
         }
 
-        return message.substr(
+        return _message.substr(
             msg_length - libBLS::RANDOM_SECRET_SIZE, libBLS::RANDOM_SECRET_SIZE );
     }
 };

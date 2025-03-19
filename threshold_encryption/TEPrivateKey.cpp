@@ -25,13 +25,13 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <tools/utils.h>
 
 TEPrivateKey::TEPrivateKey(
-    std::shared_ptr< std::string > _key_str, size_t _requiredSigners, size_t _totalSigners )
+    std::shared_ptr< std::string > _keyStrPtr, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ) {
-    if ( !_key_str ) {
+    if ( !_keyStrPtr ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "private key is null" );
     }
 
-    privateKey = libff::alt_bn128_Fr( _key_str->c_str() );
+    privateKey = libff::alt_bn128_Fr( _keyStrPtr->c_str() );
 
     if ( privateKey.is_zero() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "private key is zero" );

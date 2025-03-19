@@ -24,6 +24,7 @@
 #ifndef LIBBLS_TEBASE_H
 #define LIBBLS_TEBASE_H
 
+#include <atomic>
 #include <cstddef>
 
 /**
@@ -37,7 +38,7 @@ protected:
     size_t requiredSigners;
     size_t totalSigners;
 
-    static bool libffInitialized;
+    static std::atomic< bool > isLibffInitialized;
 
 public:
     /**

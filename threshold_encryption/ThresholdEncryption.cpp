@@ -28,21 +28,21 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <valarray>
 
 libBLS::CipherResult ThresholdEncryption::encrypt(
-    const std::string& message, const TEPublicKey& commonPublic ) {
+    const std::string& _message, const TEPublicKey& _commonPublic ) {
     TEBase::initializeIfNecessary();
 
     libBLS::CipherResult cypher =
-        libBLS::TE::encryptWithAES( message, commonPublic.getPublicKeyRaw() );
+        libBLS::TE::encryptWithAES( _message, _commonPublic.getPublicKeyRaw() );
 
     libBLS::TE::checkCypher( cypher.ciphertext->key );
 
     return cypher;
 }
 
-bool ThresholdEncryption::validateEncryption( const libBLS::CipheredKey& ciphertext ) {
+bool ThresholdEncryption::validateEncryption( const libBLS::CipheredKey& _ciphertext ) {
     TEBase::initializeIfNecessary();
 
-    auto [U, V, W] = ciphertext;
+    auto [U, V, W] = _ciphertext;
 
     libff::alt_bn128_G1 H = libBLS::TE::HashToGroup( U, V );
 
@@ -56,45 +56,45 @@ bool ThresholdEncryption::validateEncryption( const libBLS::CipheredKey& ciphert
 }
 
 TEDecryptionShare ThresholdEncryption::partialDecrypt(
-    const libBLS::CipheredKey& ciphertext, const TEPrivateKeyShare& pkeyShare ) {
+    const libBLS::CipheredKey& _ciphertext, const TEPrivateKeyShare& _pkeyShare ) {
     TEBase::initializeIfNecessary();
 
-    libBLS::TE::checkCypher( ciphertext );
+    libBLS::TE::checkCypher( _ciphertext );
 
     libff::alt_bn128_G2 decryption_share =
-        libBLS::TE::getDecryptionShare( ciphertext, pkeyShare.getPrivateKeyRaw() );
+        libBLS::TE::getDecryptionShare( _ciphertext, _pkeyShare.getPrivateKeyRaw() );
 
     if ( decryption_share.is_zero() || !decryption_share.is_well_formed() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
     }
 
-    TEDecryptionShare share( pkeyShare.getSignerIndex(), decryption_share );
+    TEDecryptionShare share( _pkeyShare.getSignerIndex(), decryption_share );
 
     return share;
 }
 
-bool ThresholdEncryption::validateDecryptionShare( const libBLS::CipheredKey& cipherText,
-    const TEDecryptionShare& decryptionShare, const TEPublicKeyShare& publicKey ) {
+bool ThresholdEncryption::validateDecryptionShare( const libBLS::CipheredKey& _cipherText,
+    const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey ) {
     TEBase::initializeIfNecessary();
 
-    libBLS::TE::checkCypher( cipherText );
+    libBLS::TE::checkCypher( _cipherText );
 
-    if ( !decryptionShare.validate() ) {
+    if ( !_decryptionShare.validate() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Invalid decryption share" );
     }
 
     return libBLS::TE::Verify(
-        cipherText, decryptionShare.getShareRaw(), publicKey.getPublicKeyRaw() );
+        _cipherText, _decryptionShare.getShareRaw(), _publicKey.getPublicKeyRaw() );
 }
 
 std::string ThresholdEncryption::combineShares(
-    const libBLS::Ciphertext& cyphertext, TEDecryptSet& decryptionSet ) {
+    const libBLS::Ciphertext& _cyphertext, TEDecryptSet& _decryptionSet ) {
     TEBase::initializeIfNecessary();
 
-    libBLS::TE::checkCypher( cyphertext.key );
+    libBLS::TE::checkCypher( _cyphertext.key );
 
-    if ( !decryptionSet.canMerge() ) {
-        auto status = decryptionSet.getMergeStatus();
+    if ( !_decryptionSet.canMerge() ) {
+        auto status = _decryptionSet.getMergeStatus();
         if ( status == TEDecryptSet::MergeStatus::NOT_ENOUGH_SHARES ) {
             throw libBLS::ThresholdUtils::IsNotWellFormed(
                 "Not enough elements to decrypt message" );
@@ -103,45 +103,46 @@ std::string ThresholdEncryption::combineShares(
         }
     }
 
-    libBLS::TE te( decryptionSet );
-    auto aesKey = te.CombineShares( cyphertext.key, decryptionSet.getSharesRaw() );
-    auto decriptedMessage = libBLS::ThresholdUtils::aesDecrypt( *cyphertext.data, aesKey );
+    libBLS::TE te( _decryptionSet );
+    auto aesKey = te.CombineShares( _cyphertext.key, _decryptionSet.getSharesRaw() );
+    auto decriptedMessage = libBLS::ThresholdUtils::aesDecrypt( _cyphertext.getData(), aesKey );
 
-    decryptionSet.markAsMerged();
+    _decryptionSet.markAsMerged();
 
     return decriptedMessage;
 }
 
-bool ThresholdEncryption::validateCombinedDecryption( const libBLS::Ciphertext& cyphertext,
-    const std::string& message, const TEPublicKey& publicKey ) {
+bool ThresholdEncryption::validateCombinedDecryption( const libBLS::Ciphertext& _cyphertext,
+    const std::string& _message, const TEPublicKey& _publicKey ) {
     TEBase::initializeIfNecessary();
 
-    libBLS::TE::checkCypher( cyphertext.key );
+    libBLS::TE::checkCypher( _cyphertext.key );
 
     // byte format of the cyphertext should occupy at least the same space as the message in string
     // format
-    if ( cyphertext.data->size() < message.size() ) {
+    if ( _cyphertext.getData().size() < _message.size() ) {
         throw libBLS::ThresholdUtils::IncorrectInput(
             "Cyphertext should be at least as big as plaintext message" );
     }
 
     // get random secret
-    libBLS::rand_secret secret = extractRandomSecretFromMessage( message );
+    libBLS::rand_secret secret = extractRandomSecretFromMessage( _message );
 
     // get ciphered AES key
-    std::string ciphered_aes_key = cyphertext.key.V;
+    std::string ciphered_aes_key = _cyphertext.key.V;
 
     // Compute G(r'Y)
     libff::alt_bn128_Fq r( libBLS::ThresholdUtils::convertHexToDec( secret ).c_str() );
-    libff::alt_bn128_G2 Y = r * publicKey.getPublicKeyRaw();
+    libff::alt_bn128_G2 Y = r * _publicKey.getPublicKeyRaw();
     std::string hash = libBLS::TE::Hash( Y );
 
     // Compute V xor G(r'Y) to get M (AES key)
     std::string aes_key = xorStrings( ciphered_aes_key, hash );
 
     // Decrypt message with this key
-    std::string decrypted_message = libBLS::ThresholdUtils::aesDecrypt( *cyphertext.data, aes_key );
+    std::string decrypted_message =
+        libBLS::ThresholdUtils::aesDecrypt( _cyphertext.getData(), aes_key );
 
     // compare decyphered message against the one given
-    return decrypted_message == message;
+    return decrypted_message == _message;
 }

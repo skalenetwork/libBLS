@@ -24,32 +24,32 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <threshold_encryption/TEPublicKeyShare.h>
 #include <tools/utils.h>
 
-TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > > _key_str_ptr,
+TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > > _keyStrPtr,
     size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
-    if ( !_key_str_ptr ) {
+    if ( !_keyStrPtr ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "public key share is null" );
     }
 
     // assume only using affine coordinates
-    if ( _key_str_ptr->size() != 4 ) {
+    if ( _keyStrPtr->size() != 4 ) {
         throw libBLS::ThresholdUtils::IncorrectInput(
             "wrong number of components in public key share" );
     }
 
-    if ( !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 0 ) ) ||
-         !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 1 ) ) ||
-         !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 2 ) ) ||
-         !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 3 ) ) ) {
+    if ( !libBLS::ThresholdUtils::isStringNumber( _keyStrPtr->at( 0 ) ) ||
+         !libBLS::ThresholdUtils::isStringNumber( _keyStrPtr->at( 1 ) ) ||
+         !libBLS::ThresholdUtils::isStringNumber( _keyStrPtr->at( 2 ) ) ||
+         !libBLS::ThresholdUtils::isStringNumber( _keyStrPtr->at( 3 ) ) ) {
         throw libBLS::ThresholdUtils::IncorrectInput(
             "non-digit symbol or first zero in non-zero public key share" );
     }
 
     publicKey.Z = libff::alt_bn128_Fq2::one();
-    publicKey.X.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 0 ).c_str() );
-    publicKey.X.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 1 ).c_str() );
-    publicKey.Y.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 2 ).c_str() );
-    publicKey.Y.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 3 ).c_str() );
+    publicKey.X.c0 = libff::alt_bn128_Fq( _keyStrPtr->at( 0 ).c_str() );
+    publicKey.X.c1 = libff::alt_bn128_Fq( _keyStrPtr->at( 1 ).c_str() );
+    publicKey.Y.c0 = libff::alt_bn128_Fq( _keyStrPtr->at( 2 ).c_str() );
+    publicKey.Y.c1 = libff::alt_bn128_Fq( _keyStrPtr->at( 3 ).c_str() );
 
     if ( publicKey.is_zero() || !publicKey.is_well_formed() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed(
@@ -57,10 +57,10 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
     }
 }
 
-TEPublicKeyShare::TEPublicKeyShare( TEPrivateKeyShare _p_key )
-    : TEBase( _p_key.getRequiredSigners(), _p_key.getTotalSigners() ) {
-    publicKey = _p_key.getPrivateKeyRaw() * libff::alt_bn128_G2::one();
-    signerIndex = _p_key.getSignerIndex();
+TEPublicKeyShare::TEPublicKeyShare( TEPrivateKeyShare _pKey )
+    : TEBase( _pKey.getRequiredSigners(), _pKey.getTotalSigners() ) {
+    publicKey = _pKey.getPrivateKeyRaw() * libff::alt_bn128_G2::one();
+    signerIndex = _pKey.getSignerIndex();
 }
 
 std::shared_ptr< std::vector< std::string > > TEPublicKeyShare::toString() {

@@ -46,14 +46,10 @@ public:
 
     /**
      * @param _signerIndex Index of the signer
-     * @param x0 x0-coordinate of the share
-     * @param x1 x2-coordinate of the share
-     * @param y0 y0-coordinate of the share
-     * @param y1 y1-coordinate of the share
+     * @param _hexaEncoded Hexa encoded string of the share
      * @note Used when building from serialized decription share
-     * TODO - in future should receive string directly and convert from string back to the class
      */
-    TEDecryptionShare( size_t _signerIndex, const std::string& hexaEncoded );
+    TEDecryptionShare( size_t _signerIndex, const std::string& _hexaEncoded );
 
     size_t getSignerIndex() const;
 
@@ -69,14 +65,14 @@ public:
      */
     operator std::pair< libff::alt_bn128_G2, size_t >() const;
 
-    bool operator==( const TEDecryptionShare& other ) const;
+    bool operator==( const TEDecryptionShare& _other ) const;
 
     std::string toString() const;
 };
 
 struct TEDecryptionShareHash {
-    std::size_t operator()( const TEDecryptionShare& obj ) const {
-        return std::hash< int >()( obj.getSignerIndex() );
+    std::size_t operator()( const TEDecryptionShare& _obj ) const {
+        return std::hash< int >()( _obj.getSignerIndex() );
     }
 };
 

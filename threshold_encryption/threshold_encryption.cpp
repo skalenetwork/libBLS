@@ -35,6 +35,8 @@
 
 namespace libBLS {
 
+const size_t CYPHERTEXT_LENGTH = 64;
+
 TE::TE( const TEBase& base ) : t_( base.getRequiredSigners() ), n_( base.getTotalSigners() ) {
     libff::init_alt_bn128_params();
     libff::inhibit_profiling_info = true;
@@ -51,7 +53,7 @@ void TE::checkCypher( const CipheredKey& cyphertext ) {
     if ( cyphertext.U.is_zero() || cyphertext.W.is_zero() )
         throw ThresholdUtils::IncorrectInput( "zero element in cyphertext" );
 
-    if ( cyphertext.V.length() != 64 )
+    if ( cyphertext.V.length() != CYPHERTEXT_LENGTH )
         throw ThresholdUtils::IncorrectInput( "wrong string length in cyphertext" );
 }
 
@@ -88,7 +90,7 @@ libff::alt_bn128_G1 TE::HashToGroup( const libff::alt_bn128_G2& U, const std::st
 
 
 CipheredKeyResult TE::getCiphertext(
-    const std::string& message, const libff::alt_bn128_G2& common_public ) {
+    const std::string& message, const libff::alt_bn128_G2& commonPublic ) {
     libff::alt_bn128_Fr r = libff::alt_bn128_Fr::random_element();
 
     while ( r.is_zero() ) {
@@ -97,7 +99,7 @@ CipheredKeyResult TE::getCiphertext(
 
     libff::alt_bn128_G2 U, Y;
     U = r * libff::alt_bn128_G2::one();
-    Y = r * common_public;
+    Y = r * commonPublic;
 
     std::string hash = Hash( Y );
 
@@ -136,7 +138,7 @@ CipheredKeyResult TE::getCiphertext(
  * @brief Encrypts a message using AES with a randomly generated key and threshold encryption
  *
  * @param message The plaintext message to be encrypted
- * @param common_public The common public key used for threshold encryption (G2 group element)
+ * @param commonPublic The common public key used for threshold encryption (G2 group element)
  *
  * @return A pair containing:
  *         - First: CipheredKey struct with (U,V,W) components of the threshold encryption ->
@@ -152,13 +154,13 @@ CipheredKeyResult TE::getCiphertext(
  * @note Initializes AES before encryption
  */
 CipherResult TE::encryptWithAES(
-    const std::string& message, const libff::alt_bn128_G2& common_public ) {
+    const std::string& message, const libff::alt_bn128_G2& commonPublic ) {
     ThresholdUtils::initAES();
     unsigned char key_bytes[32];
     RAND_bytes( key_bytes, sizeof( key_bytes ) );
     std::string random_aes_key = std::string( ( char* ) key_bytes, sizeof( key_bytes ) );
 
-    auto result = getCiphertext( random_aes_key, common_public );
+    auto result = getCiphertext( random_aes_key, commonPublic );
 
     // append random secret to message
     std::string message_to_cipher = message + *result.random_secret;
@@ -175,7 +177,7 @@ CipherResult TE::encryptWithAES(
 /**
  * @brief Encrypts a message using threshold encryption scheme with AES
  * @param message The plaintext message to be encrypted
- * @param common_public_str The common public key in string format
+ * @param commonPublic_str The common public key in string format
  * @return The encrypted ciphertext as a string
  *
  * This function performs threshold encryption by:
@@ -187,9 +189,9 @@ CipherResult TE::encryptWithAES(
  * and symmetric AES encryption for efficiency.
  */
 std::pair< std::string, rand_secret > TE::encryptMessage(
-    const std::string& message, const std::string& common_public_str ) {
-    libff::alt_bn128_G2 common_public = ThresholdUtils::stringToG2( common_public_str );
-    auto ciphertext_with_aes = encryptWithAES( message, common_public );
+    const std::string& message, const std::string& commonPublic_str ) {
+    libff::alt_bn128_G2 commonPublic = ThresholdUtils::stringToG2( commonPublic_str );
+    auto ciphertext_with_aes = encryptWithAES( message, commonPublic );
     std::string cipheredtext = aesCiphertextToString( *ciphertext_with_aes.ciphertext );
     std::string random_secret = *ciphertext_with_aes.random_secret;
     return std::make_pair< std::string, rand_secret >(
@@ -389,15 +391,16 @@ std::string TE::aesCiphertextToString( const Ciphertext& cipher ) {
     ThresholdUtils::initCurve();
     ThresholdUtils::initAES();
 
-    auto [cipheredKey, data] = cipher;
+    auto cipheredKey = cipher.key;
+    auto data = cipher.getData();
     auto [U, V, W] = cipheredKey;
 
     std::string v_str = ThresholdUtils::carray2Hex( ( unsigned char* ) ( V.data() ), V.size() );
 
-    std::string encrypted_data = ThresholdUtils::carray2Hex( data->data(), data->size() );
+    std::string encrypted_data = ThresholdUtils::carray2Hex( data.data(), data.size() );
 
     auto str = ThresholdUtils::G2ToString( U, BASE_HEXA );
-    std::string u_str = "";
+    std::string u_str;
     for ( auto& elem : str ) {
         u_str += elem;
     }

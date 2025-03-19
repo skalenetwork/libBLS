@@ -61,8 +61,11 @@ struct CipheredKey {
  */
 struct Ciphertext {
     CipheredKey key;
+
+private:
     std::shared_ptr< std::vector< uint8_t > > data;
 
+public:
     bool operator==( const Ciphertext& other ) const {
         bool baseParams = key == other.key;
         if ( data && other.data ) {
@@ -89,6 +92,13 @@ struct Ciphertext {
         }
 
         return public_decryption_value;
+    }
+
+    const std::vector< uint8_t >& getData() const {
+        if ( !data ) {
+            throw ThresholdUtils::IncorrectInput( "Cyphertext data is not initialized" );
+        }
+        return *data;
     }
 };
 
@@ -137,10 +147,10 @@ public:
      * @note This is an auxiliar function, used within `encryptWithAES`
      */
     static CipheredKeyResult getCiphertext(
-        const std::string& message, const libff::alt_bn128_G2& common_public );
+        const std::string& message, const libff::alt_bn128_G2& commonPublic );
 
     static CipherResult encryptWithAES(
-        const std::string& message, const libff::alt_bn128_G2& common_public );
+        const std::string& message, const libff::alt_bn128_G2& commonPublic );
 
     static std::pair< std::string, rand_secret > encryptMessage(
         const std::string& message, const std::string& common_public );

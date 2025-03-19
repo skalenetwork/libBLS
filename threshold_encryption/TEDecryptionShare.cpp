@@ -34,9 +34,9 @@ TEDecryptionShare::TEDecryptionShare( size_t _signerIndex, libff::alt_bn128_G2 _
     }
 }
 
-TEDecryptionShare::TEDecryptionShare( size_t _signerIndex, const std::string& hexaEncoded )
+TEDecryptionShare::TEDecryptionShare( size_t _signerIndex, const std::string& _hexaEncoded )
     : signerIndex( _signerIndex ) {
-    share = libBLS::ThresholdUtils::stringToG2( hexaEncoded );
+    share = libBLS::ThresholdUtils::stringToG2( _hexaEncoded );
 }
 
 size_t TEDecryptionShare::getSignerIndex() const {
@@ -51,8 +51,8 @@ bool TEDecryptionShare::validate() const {
     return !share.is_zero() && share.is_well_formed();
 }
 
-bool TEDecryptionShare::operator==( const TEDecryptionShare& other ) const {
-    return signerIndex == other.signerIndex;
+bool TEDecryptionShare::operator==( const TEDecryptionShare& _other ) const {
+    return signerIndex == _other.signerIndex;
 }
 
 TEDecryptionShare::operator std::pair< libff::alt_bn128_G2, size_t >() const {

@@ -36,9 +36,13 @@ void TEDecryptSet::addDecryptShare( TEDecryptionShare _share ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Already Merged" );
     }
 
-    if ( decrypts.find( _share ) != decrypts.end() ) {
+    if ( _share.getSignerIndex() > totalSigners ) {
         throw libBLS::ThresholdUtils::IncorrectInput(
-            "Already have this secret share:" + _share.toString() );
+            "Signer index is greater than total signers" );
+    }
+
+    if ( decrypts.size() == totalSigners ) {
+        throw libBLS::ThresholdUtils::IncorrectInput( "Cannot add more shares than total signers" );
     }
 
     decrypts.insert( _share );

@@ -25,40 +25,40 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <threshold_encryption/TEPrivateKeyShare.h>
 #include <tools/utils.h>
 
-TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr< std::string > _key_str, size_t _signerIndex,
-    size_t _requiredSigners, size_t _totalSigners )
+TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr< std::string > _keyStrPtr,
+    size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
-    if ( !_key_str ) {
+    if ( !_keyStrPtr ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "private key share is null" );
     }
 
-    privateKey = libff::alt_bn128_Fr( _key_str->c_str() );
+    privateKey = libff::alt_bn128_Fr( _keyStrPtr->c_str() );
 
     if ( privateKey.is_zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "Zero private key share" );
     }
 }
 
-TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _signerIndex,
+TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skeyShare, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ),
-      privateKey( _skey_share ),
+      privateKey( _skeyShare ),
       signerIndex( _signerIndex ) {
     if ( _signerIndex > _totalSigners ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
     }
 
-    if ( _skey_share.is_zero() ) {
+    if ( _skeyShare.is_zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "Zero private key share" );
     }
 }
 
 std::string TEPrivateKeyShare::toString() const {
-    return libBLS::ThresholdUtils::fieldElementToString( privateKey, 10 );
+    return libBLS::ThresholdUtils::fieldElementToString( privateKey, libBLS::BASE_DEC );
 }
 
 std::string TEPrivateKeyShare::toStringHex() const {
-    return libBLS::ThresholdUtils::fieldElementToString( privateKey, 16 );
+    return libBLS::ThresholdUtils::fieldElementToString( privateKey, libBLS::BASE_HEXA );
 }
 
 size_t TEPrivateKeyShare::getSignerIndex() const {
@@ -72,25 +72,25 @@ libff::alt_bn128_Fr TEPrivateKeyShare::getPrivateKeyRaw() const {
 std::pair< std::shared_ptr< std::vector< std::shared_ptr< TEPrivateKeyShare > > >,
     std::shared_ptr< TEPublicKey > >
 TEPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSigners ) {
-    libBLS::Dkg dkg_te( _requiredSigners, _totalSigners );
+    libBLS::Dkg dkgTe( _requiredSigners, _totalSigners );
 
-    std::vector< libff::alt_bn128_Fr > poly = dkg_te.GeneratePolynomial();
+    std::vector< libff::alt_bn128_Fr > poly = dkgTe.GeneratePolynomial();
 
-    libff::alt_bn128_Fr common_skey = dkg_te.PolynomialValue( poly, libff::alt_bn128_Fr::zero() );
-    TEPrivateKey common_private( common_skey, _requiredSigners, _totalSigners );
-    TEPublicKey common_public( common_private );
+    libff::alt_bn128_Fr commonSkey = dkgTe.PolynomialValue( poly, libff::alt_bn128_Fr::zero() );
+    TEPrivateKey commonPrivate( commonSkey, _requiredSigners, _totalSigners );
+    TEPublicKey commonPublic( commonPrivate );
 
-    std::vector< libff::alt_bn128_Fr > skeys = dkg_te.SecretKeyContribution( poly );
+    std::vector< libff::alt_bn128_Fr > skeys = dkgTe.SecretKeyContribution( poly );
 
-    std::vector< std::shared_ptr< TEPrivateKeyShare > > skey_shares;
+    std::vector< std::shared_ptr< TEPrivateKeyShare > > skeyShares;
 
     for ( size_t i = 0; i < _totalSigners; i++ ) {
         TEPrivateKeyShare skey( skeys[i], i + 1, _requiredSigners, _totalSigners );
-        skey_shares.emplace_back( std::make_shared< TEPrivateKeyShare >( skey ) );
+        skeyShares.emplace_back( std::make_shared< TEPrivateKeyShare >( skey ) );
     }
 
     auto keys = std::make_pair(
-        std::make_shared< std::vector< std::shared_ptr< TEPrivateKeyShare > > >( skey_shares ),
-        std::make_shared< TEPublicKey >( common_public ) );
+        std::make_shared< std::vector< std::shared_ptr< TEPrivateKeyShare > > >( skeyShares ),
+        std::make_shared< TEPublicKey >( commonPublic ) );
     return keys;
 }

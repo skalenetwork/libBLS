@@ -35,10 +35,10 @@ private:
     size_t signerIndex;
 
 public:
-    TEPublicKeyShare( std::shared_ptr< std::vector< std::string > > _key_str_ptr,
-        size_t signerIndex, size_t _requiredSigners, size_t _totalSigners );
+    TEPublicKeyShare( std::shared_ptr< std::vector< std::string > > _keyStrPtr, size_t signerIndex,
+        size_t _requiredSigners, size_t _totalSigners );
 
-    TEPublicKeyShare( TEPrivateKeyShare _p_key );
+    TEPublicKeyShare( TEPrivateKeyShare _pKey );
 
     std::shared_ptr< std::vector< std::string > > toString();
 

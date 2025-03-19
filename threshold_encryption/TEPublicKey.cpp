@@ -28,44 +28,44 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <utility>
 
 
-TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str_ptr,
+TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _keyStrPtr,
     size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ) {
-    if ( !_key_str_ptr ) {
+    if ( !_keyStrPtr ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "public key is null" );
     }
 
-    if ( _key_str_ptr->size() != 4 ) {
+    if ( _keyStrPtr->size() != 4 ) {
         throw libBLS::ThresholdUtils::IncorrectInput(
             "wrong number of components in public key share" );
     }
 
-    if ( !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 0 ) ) ||
-         !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 1 ) ) ||
-         !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 2 ) ) ||
-         !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 3 ) ) ) {
+    if ( !libBLS::ThresholdUtils::isStringNumber( _keyStrPtr->at( 0 ) ) ||
+         !libBLS::ThresholdUtils::isStringNumber( _keyStrPtr->at( 1 ) ) ||
+         !libBLS::ThresholdUtils::isStringNumber( _keyStrPtr->at( 2 ) ) ||
+         !libBLS::ThresholdUtils::isStringNumber( _keyStrPtr->at( 3 ) ) ) {
         throw libBLS::ThresholdUtils::IncorrectInput(
             "non-digit symbol or first zero in non-zero public key share" );
     }
 
     publicKey.Z = libff::alt_bn128_Fq2::one();
-    publicKey.X.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 0 ).c_str() );
-    publicKey.X.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 1 ).c_str() );
-    publicKey.Y.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 2 ).c_str() );
-    publicKey.Y.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 3 ).c_str() );
+    publicKey.X.c0 = libff::alt_bn128_Fq( _keyStrPtr->at( 0 ).c_str() );
+    publicKey.X.c1 = libff::alt_bn128_Fq( _keyStrPtr->at( 1 ).c_str() );
+    publicKey.Y.c0 = libff::alt_bn128_Fq( _keyStrPtr->at( 2 ).c_str() );
+    publicKey.Y.c1 = libff::alt_bn128_Fq( _keyStrPtr->at( 3 ).c_str() );
 
     if ( publicKey.is_zero() || !publicKey.is_well_formed() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "corrupted string or zero public key" );
     }
 }
 
-TEPublicKey::TEPublicKey( TEPrivateKey _common_private )
-    : TEBase( _common_private.getRequiredSigners(), _common_private.getTotalSigners() ) {
-    if ( _common_private.getPrivateKeyRaw().is_zero() ) {
+TEPublicKey::TEPublicKey( TEPrivateKey _commonPrivate )
+    : TEBase( _commonPrivate.getRequiredSigners(), _commonPrivate.getTotalSigners() ) {
+    if ( _commonPrivate.getPrivateKeyRaw().is_zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "zero key" );
     }
 
-    publicKey = _common_private.getPrivateKeyRaw() * libff::alt_bn128_G2::one();
+    publicKey = _commonPrivate.getPrivateKeyRaw() * libff::alt_bn128_G2::one();
 }
 
 TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, size_t _totalSigners )

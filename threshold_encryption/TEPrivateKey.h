@@ -32,8 +32,8 @@ private:
     libff::alt_bn128_Fr privateKey;
 
 public:
-    TEPrivateKey( std::shared_ptr< std::string > _key_str_ptr, size_t _requiredSigners,
-        size_t _totalSigners );
+    TEPrivateKey(
+        std::shared_ptr< std::string > _keyStrPtr, size_t _requiredSigners, size_t _totalSigners );
 
     TEPrivateKey( libff::alt_bn128_Fr _skey, size_t _requiredSigners, size_t _totalSigners );
 

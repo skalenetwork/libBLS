@@ -361,14 +361,14 @@ std::shared_ptr< std::vector< std::string > > ThresholdUtils::SplitString(
 }
 
 void ThresholdUtils::initAES() {
-    static int init = 0;
-    if ( init == 0 ) {
+    static std::atomic< bool > init{ false };
+    bool expected = false;
+    if ( init.compare_exchange_strong( expected, true ) ) {
         // initialize openssl ciphers
         OpenSSL_add_all_ciphers();
 
         // initialize random number generator (for IVs)
         RAND_load_file( "/dev/urandom", 32 );
-        ++init;
     }
 }
 
