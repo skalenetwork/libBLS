@@ -121,7 +121,7 @@ int main() {
             size_t actualNodeId = nodeId + 1;
 
             std::string bls_key_name =
-                "BLS_KEY:SCHAIN_ID:123456789:nodeId:" + std::to_string( actualNodeId ) +
+                "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:" + std::to_string( actualNodeId ) +
                 ":DKG_ID:" + dkgRandId;
 
 
@@ -183,7 +183,7 @@ void importBLSKeys( const std::vector< TEPrivateKeyShare >& secretKeys, const st
     for ( size_t i = 0; i < secretKeys.size(); ++i ) {
         Json::Value p;
         p["keyShare"] = secretKeys[i].toStringHex();
-        p["keyShareName"] = "BLS_KEY:SCHAIN_ID:123456789:nodeId:" + std::to_string( i + 1 ) +
+        p["keyShareName"] = "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:" + std::to_string( i + 1 ) +
                             ":DKG_ID:" + dkgRandId;
 
         Json::Value result = sgxClient.CallMethod( "importBLSKeyShare", p );
