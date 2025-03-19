@@ -59,9 +59,8 @@ TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str
     }
 }
 
-TEPublicKey::TEPublicKey(
-    TEPrivateKey _common_private, size_t _requiredSigners, size_t _totalSigners )
-    : TEBase( _requiredSigners, _totalSigners ) {
+TEPublicKey::TEPublicKey( TEPrivateKey _common_private )
+    : TEBase( _common_private.getRequiredSigners(), _common_private.getTotalSigners() ) {
     if ( _common_private.getPrivateKeyRaw().is_zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "zero key" );
     }

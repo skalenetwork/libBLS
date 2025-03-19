@@ -207,7 +207,7 @@ keys generateKeys(
 
     TEPrivateKey common_private( common_skey, t, n );
 
-    TEPublicKey common_public( common_private, t, n );
+    TEPublicKey common_public( common_private );
 
     std::vector< libff::alt_bn128_Fr > skeys = dkg_te.SecretKeyContribution( poly );
     std::vector< TEPrivateKeyShare > secret_keys;

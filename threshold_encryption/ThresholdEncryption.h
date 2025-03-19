@@ -123,6 +123,11 @@ private:
 
     static inline libBLS::rand_secret extractRandomSecretFromMessage( const std::string& message ) {
         size_t msg_length = message.length();
+
+        if (msg_length < libBLS::RANDOM_SECRET_SIZE) {
+            throw libBLS::ThresholdUtils::IncorrectInput( "Message is too short" );
+        }
+
         return message.substr(
             msg_length - libBLS::RANDOM_SECRET_SIZE, libBLS::RANDOM_SECRET_SIZE );
     }

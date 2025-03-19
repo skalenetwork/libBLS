@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
             message += char( rand_gen() % 128 );
         }
 
-        TEPublicKey common_public( common_private, num_signed, num_all );
+        TEPublicKey common_public( common_private );
         libBLS::CipherResult cypher = ThresholdEncryption::encrypt( message, common_public );
 
         std::vector< libff::alt_bn128_Fr > skeys = dkg_te.SecretKeyContribution( poly );
@@ -562,7 +562,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         // zero public key
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
         BOOST_REQUIRE_THROW(
-            TEPublicKey pkey( TEPrivateKey( el, num_signed, num_all ), num_signed, num_all ),
+            TEPublicKey pkey( TEPrivateKey( el, num_signed, num_all ) ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
@@ -635,7 +635,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
     }
 
     {
-        // cannot combine shares
+        // cannot combine shares - wrong cypher
         TEDecryptSet decr_set( 1, 1 );
         TEDecryptionShare decr_share( 1, libff::alt_bn128_G2::random_element() );
         decr_set.addDecryptShare( decr_share );
@@ -653,6 +653,48 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         libBLS::Ciphertext cypher = libBLS::Ciphertext( key, data );
 
         BOOST_REQUIRE_THROW( ThresholdEncryption::combineShares( cypher, decr_set ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+
+    {
+        // Cyphertext message length != decyphered message length
+        libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
+        libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
+
+        libBLS::CipheredKey key;
+        key.U = U;
+        key.V = "He";
+        key.W = W;
+
+        std::vector< uint8_t > data;
+        libBLS::Ciphertext cypher = libBLS::Ciphertext( key, data );
+
+        libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
+        TEPublicKey pkey( TEPrivateKey( el, num_signed, num_all ) );
+
+        BOOST_REQUIRE_THROW( ThresholdEncryption::validateCombinedDecryption(
+            cypher, "S", pkey ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+
+    {
+        // Message is too short (cannot contain random secret)
+        libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
+        libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
+
+        libBLS::CipheredKey key;
+        key.U = U;
+        key.V = "He";
+        key.W = W;
+
+        std::vector< uint8_t > data;
+        libBLS::Ciphertext cypher = libBLS::Ciphertext( key, data );
+
+        libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
+        TEPublicKey pkey( TEPrivateKey( el, num_signed, num_all ) );
+
+        BOOST_REQUIRE_THROW( ThresholdEncryption::validateCombinedDecryption(
+            cypher, "He", pkey ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 }

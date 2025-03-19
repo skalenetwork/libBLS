@@ -38,7 +38,7 @@ public:
 
     TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, size_t _totalSigners );
 
-    TEPublicKey( TEPrivateKey _comon_private, size_t _requiredSigners, size_t _totalSigners );
+    TEPublicKey( TEPrivateKey _comon_private );
 
     std::shared_ptr< std::vector< std::string > > toString();
 
