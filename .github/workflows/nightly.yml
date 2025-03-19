@@ -152,10 +152,11 @@ jobs:
       run: |
         cp tools/generate_bls_keys build_em/
         cp tools/decrypt_message build_em/
+        cp tests/test.js .
         cd build_em/
-        cp threshold_encryption/encrypt_message.* .
+        cp threshold_encryption/encrypt.* .
         ./generate_bls_keys
         MESSAGE=`cat message.txt`
         PUBLIC_BLS_KEY=`cat bls_public_key.txt`
-        node encrypt_message.js $MESSAGE $PUBLIC_BLS_KEY > encrypted_data.txt
+        node test.js $PUBLIC_BLS_KEY $MESSAGE > encrypted_data.txt
         ./decrypt_message
