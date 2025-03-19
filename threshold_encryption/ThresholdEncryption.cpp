@@ -94,14 +94,14 @@ std::string ThresholdEncryption::combineShares(
     libBLS::TE::checkCypher( _cyphertext.key );
 
     switch ( _decryptionSet.getMergeStatus() ) {
-        case TEDecryptSet::MergeStatus::READY_TO_MERGE:
-            break;
-        case TEDecryptSet::MergeStatus::ALREADY_MERGED:
-            throw libBLS::ThresholdUtils::IsNotWellFormed( "Already merged" );
-        case TEDecryptSet::MergeStatus::NOT_ENOUGH_SHARES:
-            throw libBLS::ThresholdUtils::IsNotWellFormed( "Not enough shares" );
-        default:
-            throw libBLS::ThresholdUtils::IsNotWellFormed( "Unknown merging status" );
+    case TEDecryptSet::MergeStatus::READY_TO_MERGE:
+        break;
+    case TEDecryptSet::MergeStatus::ALREADY_MERGED:
+        throw libBLS::ThresholdUtils::IsNotWellFormed( "Already merged" );
+    case TEDecryptSet::MergeStatus::NOT_ENOUGH_SHARES:
+        throw libBLS::ThresholdUtils::IsNotWellFormed( "Not enough shares" );
+    default:
+        throw libBLS::ThresholdUtils::IsNotWellFormed( "Unknown merging status" );
     }
 
     libBLS::TE te( _decryptionSet );
