@@ -82,19 +82,19 @@ int main() {
         n = 16;
     }
 
-    if ( const char* envUrl = std::getenv( "sgxWalletUrl" ) ) {
+    if ( const char* envUrl = std::getenv( "SGXWALLET_URL" ) ) {
         sgxWalletUrl = std::string( envUrl );
     } else {
         sgxWalletUrl = "http://127.0.0.1:1029";
     }
 
-    if ( const char* envNmessagesBatch = std::getenv( "nMessagesBatch" ) ) {
+    if ( const char* envNmessagesBatch = std::getenv( "N_MESSAGES_BATCH" ) ) {
         nMessagesBatch = std::stoi( envNmessagesBatch );
     } else {
         nMessagesBatch = 100;
     }
 
-    if ( const char* envBatchSize = std::getenv( "nBatches" ) ) {
+    if ( const char* envBatchSize = std::getenv( "N_BATCHES" ) ) {
         nBatches = std::stoi( envBatchSize );
     } else {
         nBatches = 1;
