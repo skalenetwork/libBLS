@@ -117,10 +117,12 @@ bool ThresholdEncryption::validateCombinedDecryption( const libBLS::Ciphertext& 
     TEBase::initializeIfNecessary();
 
     libBLS::TE::checkCypher( cyphertext.key );
-    
-    // byte format of the cyphertext should occupy at least the same space as the message in string format
-    if (cyphertext.data->size() < message.size()) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Cyphertext should be at least as big as plaintext message" );
+
+    // byte format of the cyphertext should occupy at least the same space as the message in string
+    // format
+    if ( cyphertext.data->size() < message.size() ) {
+        throw libBLS::ThresholdUtils::IncorrectInput(
+            "Cyphertext should be at least as big as plaintext message" );
     }
 
     // get random secret

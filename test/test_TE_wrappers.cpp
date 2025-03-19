@@ -561,8 +561,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
     {
         // zero public key
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
-        BOOST_REQUIRE_THROW(
-            TEPublicKey pkey( TEPrivateKey( el, num_signed, num_all ) ),
+        BOOST_REQUIRE_THROW( TEPublicKey pkey( TEPrivateKey( el, num_signed, num_all ) ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
@@ -672,8 +671,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
         TEPublicKey pkey( TEPrivateKey( el, num_signed, num_all ) );
 
-        BOOST_REQUIRE_THROW( ThresholdEncryption::validateCombinedDecryption(
-            cypher, "S", pkey ),
+        BOOST_REQUIRE_THROW( ThresholdEncryption::validateCombinedDecryption( cypher, "S", pkey ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
@@ -693,8 +691,7 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
         TEPublicKey pkey( TEPrivateKey( el, num_signed, num_all ) );
 
-        BOOST_REQUIRE_THROW( ThresholdEncryption::validateCombinedDecryption(
-            cypher, "He", pkey ),
+        BOOST_REQUIRE_THROW( ThresholdEncryption::validateCombinedDecryption( cypher, "He", pkey ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 }
