@@ -50,8 +50,6 @@ link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 target_include_directories(te PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
 target_link_libraries(te PRIVATE ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
-message(INFO "Cryptopp ibrary path: ${CRYPTOPP_LIBRARY}")
-
 if (BUILD_TESTS)
     add_executable(te_unit_test ../test/unit_tests_te.cpp)
     target_include_directories(te_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
