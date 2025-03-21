@@ -87,7 +87,7 @@ jobs:
         cd ../..
         mkdir -p build_em && cd build_em
         export LIBRARIES_ROOT=../deps/deps_inst/x86_or_x64/lib
-        emcmake cmake -DEMSCRIPTEN=ON .. -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a
+        emcmake cmake -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a ..
         emmake make -j$(nproc)
         cd ..
         cp build_em/threshold_encryption/encrypt.js node/
@@ -110,7 +110,8 @@ jobs:
       if: github.ref != 'refs/heads/stable'
       run: |
         cd node
-        npm version --no-git-tag-version ${{ env.VERSION }}
+        export JS_LIBRARY_VERSION="$(npm run --silent version)-$BRANCH"
+        npm version --no-git-tag-version ${{ JS_LIBRARY_VERSION }}
         npm publish --access public --tag ${{ env.BRANCH }}
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
