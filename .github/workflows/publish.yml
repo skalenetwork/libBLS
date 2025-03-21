@@ -111,7 +111,7 @@ jobs:
       run: |
         cd node
         export JS_LIBRARY_VERSION="$(npm run --silent version)-$BRANCH"
-        npm version --no-git-tag-version ${{ JS_LIBRARY_VERSION }}
+        npm version --no-git-tag-version $JS_LIBRARY_VERSION
         npm publish --access public --tag ${{ env.BRANCH }}
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
