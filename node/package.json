@@ -2,21 +2,23 @@
   "name": "@skalenetwork/t-encrypt",
   "version": "0.1.0",
   "keywords": [
-      "SKALE",
-      "blockchain",
-      "ethereum",
-      "threshold",
-      "cryptography",
-      "encryption"
-    ],
-    "homepage": "https://github.com/skalenetwork/libBLS",
-    "license": "AGPL-3.0",
-    "author": "SKALE Labs and contributors",
-    "publishConfig": {
-      "access": "public"
-    },
-    "scripts": {
-      "version": "node -e \"console.log(require('./package.json').version);\""
-    }
+    "SKALE",
+    "blockchain",
+    "BITE",
+    "threshold",
+    "cryptography",
+    "encryption",
+    "wasm"
+  ],
+  "homepage": "https://github.com/skalenetwork/libBLS",
+  "license": "AGPL-3.0",
+  "author": "SKALE Labs and contributors",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "version": "node -e \"console.log(require('./package.json').version);\""
+  },
+  "description": "A Node.js module to encrypt messages using WebAssembly",
+  "main": "EncryptMessage.js"
 }
-  
