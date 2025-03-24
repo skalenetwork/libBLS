@@ -43,7 +43,7 @@ jobs:
         export PACKAGE_NAME=$(jq -r '.name' package.json)
         export JS_LIBRARY_BASE_VERSION="$(npm run --silent version)"
         export JS_LIBRARY_VERSION=$(bash ./../scripts/calculate_version_npm.sh $PACKAGE_NAME $JS_LIBRARY_BASE_VERSION $BRANCH)
-        echo $JS_LIBRARY_VERSION
+        echo "Version: $JS_LIBRARY_VERSION"
         npm version "0.2.2-develop.0" --no-git-tag-version
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
