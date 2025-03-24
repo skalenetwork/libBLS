@@ -31,7 +31,7 @@ then
     LABEL="beta"
 fi
 
-for (( VERSION_NUMBER=0; ; VERSION_NUMBER<1000; VERSION_NUMBER++ )); do
+for (( VERSION_NUMBER=0; VERSION_NUMBER<1000; VERSION_NUMBER++ )); do
     RESULT_VERSION="${BASE_VERSION}-${LABEL}.${VERSION_NUMBER}"
     echo "Checking version: $RESULT_VERSION"
     if ! npm view "$PACKAGE_NAME@$RESULT_VERSION" > /dev/null 2>&1; then
