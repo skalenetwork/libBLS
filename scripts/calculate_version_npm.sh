@@ -31,10 +31,18 @@ then
     LABEL="beta"
 fi
 
-for (( VERSION_NUMBER=0; ; VERSION_NUMBER++ )); do
+for (( VERSION_NUMBER=0; ; VERSION_NUMBER<1000; VERSION_NUMBER++ )); do
     RESULT_VERSION="${BASE_VERSION}-${LABEL}.${VERSION_NUMBER}"
+    echo "Checking version: $RESULT_VERSION"
     if ! npm view "$PACKAGE_NAME@$RESULT_VERSION" > /dev/null 2>&1; then
         echo "$RESULT_VERSION" | tr / -
         break
     fi
+    sleep 0.1
 done
+
+# If the loop reaches its limit, exit with an error
+if [ $VERSION_NUMBER -eq 1000 ]; then
+    echo "Error: Could not find a unique version after 1000 attempts."
+    exit 1
+fi
