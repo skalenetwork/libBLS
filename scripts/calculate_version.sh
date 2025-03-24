@@ -17,17 +17,14 @@ fi
 
 git fetch --tags
 
-if [ "$BRANCH" = "master" ]
+if [ "$BRANCH" = "stable" ]
 then
     echo "$VERSION"
     exit 0
 fi
 
 LABEL="develop"
-if [ "$BRANCH" = "stable" ]
-then
-    LABEL="stable"
-elif [ "$BRANCH" = "beta" ]
+if [ "$BRANCH" = "beta" ]
 then
     LABEL="beta"
 fi

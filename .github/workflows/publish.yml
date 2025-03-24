@@ -110,7 +110,9 @@ jobs:
       if: github.ref != 'refs/heads/stable'
       run: |
         cd node
-        export JS_LIBRARY_VERSION="$(npm run --silent version)-$BRANCH"
+        export PACKAGE_NAME=$(jq -r '.name' package.json)
+        export JS_LIBRARY_BASE_VERSION="$(npm run --silent version)"
+        export JS_LIBRARY_VERSION=$(bash ./scripts/calculate_version_npm.sh $PACKAGE_NAME $JS_LIBRARY_BASE_VERSION $BRANCH)
         npm version --no-git-tag-version $JS_LIBRARY_VERSION
         npm publish --access public --tag ${{ env.BRANCH }}
       env:

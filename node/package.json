@@ -1,6 +1,6 @@
 {
   "name": "@skalenetwork/t-encrypt",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "keywords": [
     "SKALE",
     "blockchain",
@@ -20,5 +20,10 @@
     "version": "node -e \"console.log(require('./package.json').version);\""
   },
   "description": "A Node.js module to encrypt messages using WebAssembly",
-  "main": "EncryptMessage.js"
+  "main": "EncryptMessage.js",
+  "files": [
+    "EncryptMessage.js",
+    "encrypt.js",
+    "encrypt.wasm"
+  ]
 }
