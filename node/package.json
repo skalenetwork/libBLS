@@ -20,5 +20,10 @@
     "version": "node -e \"console.log(require('./package.json').version);\""
   },
   "description": "A Node.js module to encrypt messages using WebAssembly",
-  "main": "EncryptMessage.js"
+  "main": "EncryptMessage.js",
+  "files": [
+    "EncryptMessage.js",
+    "encrypt.js",
+    "encrypt.wasm"
+  ]
 }
