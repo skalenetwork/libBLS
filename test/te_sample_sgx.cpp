@@ -32,26 +32,10 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <threshold_encryption/threshold_encryption.h>
 #include <tools/utils.h>
 #include <chrono>
-
-#define TIMER( variable, code_block )                                                   \
-    auto start_##variable = std::chrono::high_resolution_clock::now();                  \
-    code_block auto end_##variable = std::chrono::high_resolution_clock::now();         \
-    auto duration_##variable = std::chrono::duration_cast< std::chrono::microseconds >( \
-        end_##variable - start_##variable )                                             \
-                                   .count();                                            \
-    variable += duration_##variable;
-
-struct keys {
-    libBLS::TEPublicKey commonPublic;
-    libBLS::TEPrivateKey commonPrivate;
-    std::vector< libBLS::TEPrivateKeyShare > secretKeys;
-    std::vector< libBLS::TEPublicKeyShare > publicKeys;
-};
+#include "utils.h"
 
 void importBLSKeys( const std::vector< libBLS::TEPrivateKeyShare >& secretKeys,
     const std::string& sgxUrl, const std::string& dkgRandId );
-
-keys generateKeys( size_t t, size_t n, const std::string& sgxUrl, const std::string& dkgRandId );
 
 std::vector< libBLS::TEDecryptionShare > getDecryptionShares(
     const std::vector< std::shared_ptr< libBLS::Ciphertext > >& ciphertexts,
@@ -107,7 +91,8 @@ int main() {
         std::chrono::duration_cast< std::chrono::milliseconds >( now.time_since_epoch() ).count();
     auto dkgRandId = std::to_string( now_ms );
 
-    const keys keys = generateKeys( t, n, sgxWalletUrl, dkgRandId );
+    const keys keys = generateKeys( t, n );
+    importBLSKeys( keys.secretKeys, sgxWalletUrl, dkgRandId );
 
 
     for ( size_t i = 0; i < nBatches; ++i ) {
@@ -197,32 +182,6 @@ void importBLSKeys( const std::vector< libBLS::TEPrivateKeyShare >& secretKeys,
     }
 
     delete jsonRpcClient;
-}
-
-keys generateKeys( size_t t, size_t n, const std::string& sgxUrl, const std::string& dkgRandId ) {
-    libBLS::Dkg dkgTe( t, n );
-
-    std::vector< libff::alt_bn128_Fr > poly = dkgTe.GeneratePolynomial();
-
-    libff::alt_bn128_Fr zero_el = libff::alt_bn128_Fr::zero();
-
-    libff::alt_bn128_Fr common_skey = dkgTe.PolynomialValue( poly, zero_el );
-
-    libBLS::TEPrivateKey commonPrivate( common_skey );
-
-    libBLS::TEPublicKey commonPublic( commonPrivate );
-
-    std::vector< libff::alt_bn128_Fr > skeys = dkgTe.SecretKeyContribution( poly );
-    std::vector< libBLS::TEPrivateKeyShare > secretKeys;
-    std::vector< libBLS::TEPublicKeyShare > publicKeys;
-    for ( size_t i = 0; i < n; i++ ) {
-        secretKeys.emplace_back( libBLS::TEPrivateKeyShare( skeys[i], i + 1, t, n ) );
-        publicKeys.emplace_back( libBLS::TEPublicKeyShare( secretKeys[i] ) );
-    }
-
-    importBLSKeys( secretKeys, sgxUrl, dkgRandId );
-
-    return { commonPublic, commonPrivate, secretKeys, publicKeys };
 }
 
 std::vector< libBLS::TEDecryptionShare > getDecryptionShares(
