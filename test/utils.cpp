@@ -1,6 +1,6 @@
 #include "utils.h"
-#include <threshold_encryption/threshold_encryption.h>
 #include <dkg/dkg.h>
+#include <threshold_encryption/threshold_encryption.h>
 
 
 keys generateKeys( size_t t, size_t n ) {

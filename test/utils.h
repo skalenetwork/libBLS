@@ -1,9 +1,9 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/TEPrivateKey.h>
 #include <threshold_encryption/TEPrivateKeyShare.h>
+#include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/TEPublicKeyShare.h>
 #include <chrono>
 
@@ -21,7 +21,6 @@ struct keys {
     std::vector< libBLS::TEPrivateKeyShare > secretKeys;
     std::vector< libBLS::TEPublicKeyShare > publicKeys;
 };
-
 
 
 keys generateKeys( size_t t, size_t n );

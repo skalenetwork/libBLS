@@ -26,13 +26,13 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <jsonrpccpp/client/client.h>
 #include <jsonrpccpp/client/connectors/httpclient.h>
 
+#include "utils.h"
 #include <bls/bls.h>
 #include <dkg/dkg.h>
 #include <threshold_encryption/ThresholdEncryption.h>
 #include <threshold_encryption/threshold_encryption.h>
 #include <tools/utils.h>
 #include <chrono>
-#include "utils.h"
 
 void importBLSKeys( const std::vector< libBLS::TEPrivateKeyShare >& secretKeys,
     const std::string& sgxUrl, const std::string& dkgRandId );
