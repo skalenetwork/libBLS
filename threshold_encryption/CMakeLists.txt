@@ -9,6 +9,7 @@ if(BUILD_TESTS)
 endif()
 
 set(sources
+    encryptMessage.cpp
     threshold_encryption.cpp
     TEBase.cpp
     TEDecryptionShare.cpp
@@ -25,6 +26,7 @@ set(sources
 )
 
 set(headers
+    encryptMessage.h
     threshold_encryption.h
     TEBase.h
     TEDecryptionShare.h
@@ -85,6 +87,16 @@ if (BUILD_TESTS)
         target_compile_options(te_test PRIVATE -Wno-format-overflow)
     endif()
     target_link_libraries(te_test PRIVATE te ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+
+    add_executable(te_encrypt_message ../test/test_encrypt_message.cpp)
+    target_include_directories(te_encrypt_message PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
+    if (EMSCRIPTEN)
+        target_compile_options(te_encrypt_message PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
+        set_target_properties(te_encrypt_message PROPERTIES LINK_FLAGS "-s DISABLE_EXCEPTION_CATCHING=1")
+    else()
+        target_compile_options(te_encrypt_message PRIVATE -Wno-format-overflow)
+    endif()
+    target_link_libraries(te_encrypt_message PRIVATE te ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
     if (EMSCRIPTEN)
         add_executable(encrypt_message ../test/encryptMessageJS.cpp)

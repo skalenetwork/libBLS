@@ -208,7 +208,7 @@ keys generateKeys( size_t t, size_t n, const std::string& sgxUrl, const std::str
 
     libff::alt_bn128_Fr common_skey = dkgTe.PolynomialValue( poly, zero_el );
 
-    libBLS::TEPrivateKey commonPrivate( common_skey, t, n );
+    libBLS::TEPrivateKey commonPrivate( common_skey );
 
     libBLS::TEPublicKey commonPublic( commonPrivate );
 

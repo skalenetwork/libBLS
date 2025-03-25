@@ -14,35 +14,29 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
   @file TEPublicKey.h
-  @author Sveta Rogova
-  @date 2019
+  @author Sidnei Teixeira
+  @date 2025
 */
 
-#ifndef LIBBLS_TEPRIVATEKEY_H
-#define LIBBLS_TEPRIVATEKEY_H
+#ifndef LIBBLS_ENCRYPT_MESSAGE_JS_H
+#define LIBBLS_ENCRYPT_MESSAGE_JS_H
 
-#include <threshold_encryption/TEBase.h>
-#include <threshold_encryption/threshold_encryption.h>
+#include <atomic>
+#include <cstddef>
 
-namespace libBLS {
+extern "C" {
 
-class TEPrivateKey {
-private:
-    libff::alt_bn128_Fr privateKey;
+/**
+ * @brief Encrypts a message using a common public key. Returns the ciphered data bytes in
+ * hexadecimal format.
+ * @param data The message to be encrypted in hexadecimal format that encodes the underlying bytes
+ * @param key The common public key used for encryption in hexadecimal
+ */
+const char* encryptMessage( const char* data, const char* key );
+}
 
-public:
-    TEPrivateKey( std::shared_ptr< std::string > _keyStrPtr );
 
-    TEPrivateKey( libff::alt_bn128_Fr _skey );
-
-    std::string toString() const;
-
-    libff::alt_bn128_Fr getPrivateKeyRaw() const;
-};
-
-}  // namespace libBLS
-
-#endif  // LIBBLS_TEPRIVATEKEY_H
+#endif  // LIBBLS_ENCRYPT_MESSAGE_JS_H

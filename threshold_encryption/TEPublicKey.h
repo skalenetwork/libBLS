@@ -30,15 +30,16 @@
 
 namespace libBLS {
 
-class TEPublicKey : public TEBase {
+class TEPublicKey {
 private:
     libff::alt_bn128_G2 publicKey;
 
 public:
-    TEPublicKey( std::shared_ptr< std::vector< std::string > > _keyStrPtr, size_t _requiredSigners,
-        size_t _totalSigners );
+    TEPublicKey( std::shared_ptr< std::vector< std::string > > _keyStrPtr );
 
-    TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, size_t _totalSigners );
+    TEPublicKey( const std::string& _keyStr );
+
+    TEPublicKey( libff::alt_bn128_G2 _pkey );
 
     TEPublicKey( TEPrivateKey _comonPrivate );
 

@@ -29,9 +29,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
-TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _keyStrPtr,
-    size_t _requiredSigners, size_t _totalSigners )
-    : TEBase( _requiredSigners, _totalSigners ) {
+TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _keyStrPtr ) {
     if ( !_keyStrPtr ) {
         throw ThresholdUtils::IncorrectInput( "public key is null" );
     }
@@ -59,8 +57,10 @@ TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _keyStrP
     }
 }
 
-TEPublicKey::TEPublicKey( TEPrivateKey _commonPrivate )
-    : TEBase( _commonPrivate.getRequiredSigners(), _commonPrivate.getTotalSigners() ) {
+TEPublicKey::TEPublicKey( const std::string& _keyStr )
+    : TEPublicKey( ThresholdUtils::stringToG2( _keyStr ) ) {}
+
+TEPublicKey::TEPublicKey( TEPrivateKey _commonPrivate ) {
     if ( _commonPrivate.getPrivateKeyRaw().is_zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "zero key" );
     }
@@ -68,8 +68,7 @@ TEPublicKey::TEPublicKey( TEPrivateKey _commonPrivate )
     publicKey = _commonPrivate.getPrivateKeyRaw() * libff::alt_bn128_G2::one();
 }
 
-TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, size_t _totalSigners )
-    : TEBase( _requiredSigners, _totalSigners ), publicKey( _pkey ) {
+TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey ) : publicKey( _pkey ) {
     if ( _pkey.is_zero() || !_pkey.is_well_formed() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "zero or corrupted public key" );
     }

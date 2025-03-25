@@ -21,18 +21,26 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 @date 2021
 */
 
+#include "encryptMessage.h"
+#include "ThresholdEncryption.h"
 #include <threshold_encryption.h>
 #include <tools/utils.h>
 
-extern "C" {
-
 const char* encryptMessage( const char* data, const char* key ) {
     libBLS::ThresholdUtils::initCurve();
-    size_t dataSize = strlen( data );
-    std::vector< uint8_t > keyData;
-    std::memcpy( keyData.data(), data, dataSize );
-    auto ciphertext_string = libBLS::TE::encryptMessage( keyData, key );
 
-    return std::move( ciphertext_string.first.c_str() );
-}
+    // convert from char into vec of bytes
+    std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
+
+    // build public key
+    std::string keyStr( key );
+    libBLS::TEPublicKey commonPublic( keyStr );
+
+    // encrypt message
+    libBLS::Ciphertext cipheredMessage =
+        libBLS::ThresholdEncryption::encrypt( messageBytes, commonPublic );
+    std::vector< uint8_t > cipheredMessageBytes = cipheredMessage.toBytes();
+
+    // Convert bytes to a heap-allocated C-string
+    return libBLS::ThresholdUtils::bytesToHexCString( cipheredMessageBytes );
 }

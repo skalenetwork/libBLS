@@ -230,51 +230,6 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongCiphertext ) {
     BOOST_REQUIRE( plaintext_bytes != message_bytes );
 }
 
-// BOOST_AUTO_TEST_CASE( ConvertionToStringAndBack ) {
-//     libBLS::ThresholdUtils::initCurve();
-
-//     std::string message =
-//         "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
-//     std::vector<uint8_t> message_bytes(message.begin(), message.end());
-
-//     libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
-
-//     libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
-
-//     libBLS::CipherResult ciphertext_with_aes = libBLS::TE::encryptWithAES( message_bytes,
-//     public_key );
-
-//     std::string str = libBLS::TE::aesCiphertextToString( *ciphertext_with_aes.ciphertext );
-
-//     auto ciphertext_from_string = libBLS::TE::aesCiphertextFromString( str );
-
-//     auto [U_old, V_old, W_old] = ciphertext_with_aes.ciphertext->key;
-//     auto [U_new, V_new, W_new] = ciphertext_from_string.key;
-
-//     BOOST_REQUIRE( U_old == U_new );
-//     BOOST_REQUIRE( W_old == W_new );
-//     BOOST_REQUIRE( V_old == V_new );
-//     BOOST_REQUIRE( ciphertext_with_aes.ciphertext->key == ciphertext_from_string.key );
-//     BOOST_REQUIRE( ciphertext_with_aes.ciphertext->getData().size() ==
-//                    ciphertext_from_string.getData().size() );
-//     BOOST_REQUIRE( *ciphertext_with_aes.ciphertext == ciphertext_from_string );
-// }
-
-// BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackTooShort ) {
-//     libBLS::ThresholdUtils::initCurve();
-
-//     BOOST_REQUIRE_THROW( libBLS::TE::aesCiphertextFromString( "acefbdg11356" ),
-//         libBLS::ThresholdUtils::IncorrectInput );
-// }
-
-// BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackNonHex ) {
-//     libBLS::ThresholdUtils::initCurve();
-
-//     BOOST_REQUIRE_THROW(
-//         libBLS::TE::aesCiphertextFromString( "qwerty" ), libBLS::ThresholdUtils::IncorrectInput
-//         );
-// }
-
 BOOST_AUTO_TEST_CASE( EncryptionCipherToBytes ) {
     libBLS::TE te_instance = libBLS::TE( 1, 1 );
 

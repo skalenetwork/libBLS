@@ -34,6 +34,10 @@ TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr< std::string > _keyStrPtr,
         throw ThresholdUtils::IncorrectInput( "private key share is null" );
     }
 
+    if ( _signerIndex > _totalSigners ) {
+        throw ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
+    }
+
     privateKey = libff::alt_bn128_Fr( _keyStrPtr->c_str() );
 
     if ( privateKey.is_zero() ) {
@@ -79,7 +83,7 @@ TEPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSig
     std::vector< libff::alt_bn128_Fr > poly = dkgTe.GeneratePolynomial();
 
     libff::alt_bn128_Fr commonSkey = dkgTe.PolynomialValue( poly, libff::alt_bn128_Fr::zero() );
-    TEPrivateKey commonPrivate( commonSkey, _requiredSigners, _totalSigners );
+    TEPrivateKey commonPrivate( commonSkey );
     TEPublicKey commonPublic( commonPrivate );
 
     std::vector< libff::alt_bn128_Fr > skeys = dkgTe.SecretKeyContribution( poly );

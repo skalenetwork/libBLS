@@ -28,6 +28,7 @@
 #include <openssl/rand.h>
 
 #include <tools/utils.h>
+#include <iomanip>
 
 
 namespace libBLS {
@@ -525,6 +526,44 @@ std::vector< uint8_t > ThresholdUtils::aesDecrypt(
     plaintext.resize( actual_size + final_size, '\0' );
 
     return plaintext;
+}
+
+
+char* ThresholdUtils::bytesToHexCString( const std::vector< uint8_t >& bytes ) {
+    std::stringstream ss;
+    ss << std::hex << std::setfill( '0' );
+
+    for ( uint8_t byte : bytes ) {
+        ss << std::setw( 2 ) << static_cast< int >( byte );  // Format each byte as 2-char hex
+    }
+
+    std::string hexStr = ss.str();    // Get the hex string
+    return strdup( hexStr.c_str() );  // Convert std::string to char*
+}
+
+std::vector< uint8_t > ThresholdUtils::hexCStringToBytes( const char* hexStr ) {
+    size_t len = std::strlen( hexStr );
+
+    // Ensure the hex string length is even
+    if ( len % 2 != 0 ) {
+        throw std::invalid_argument( "Hex string length must be even." );
+    }
+
+    // Ensure the string contains only valid hexadecimal characters
+    for ( size_t i = 0; i < len; i++ ) {
+        if ( !std::isxdigit( hexStr[i] ) ) {
+            throw std::invalid_argument( "Hex string contains invalid characters." );
+        }
+    }
+
+    std::vector< uint8_t > bytes( len / 2 );
+
+    // Convert hex string to byte array
+    for ( size_t i = 0; i < len; i += 2 ) {
+        bytes[i / 2] = ( std::stoi( std::string( hexStr + i, 2 ), nullptr, 16 ) );
+    }
+
+    return bytes;
 }
 
 

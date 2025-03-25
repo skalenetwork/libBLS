@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         libff::alt_bn128_Fr common_skey = dkg_te.PolynomialValue( poly, zero_el );
         BOOST_REQUIRE( common_skey == poly.at( 0 ) );
 
-        libBLS::TEPrivateKey common_private( common_skey, num_signed, num_all );
+        libBLS::TEPrivateKey common_private( common_skey );
 
         std::vector< uint8_t > message;
         size_t msg_length = 64;
@@ -292,12 +292,11 @@ BOOST_AUTO_TEST_CASE( TEFailingValidation ) {
 
         // change some bytes from key_decrypted
         libBLS::AES256Key copy = key_decrypted;
-        copy[0] = 0xAA;
+        copy[0] = key_decrypted[0] + 1;
         BOOST_REQUIRE( !libBLS::ThresholdEncryption::validateCombinedDecryption(
             cypher, copy, *keys.second ) );
 
-        std::vector< uint8_t > decipheredMsg =
-            libBLS::ThresholdEncryption::decrypt( cypher, key_decrypted );
+        std::vector< uint8_t > decipheredMsg = libBLS::ThresholdEncryption::decrypt( cypher, copy );
         BOOST_REQUIRE( decipheredMsg != message );
     }
 }
@@ -311,16 +310,16 @@ BOOST_AUTO_TEST_CASE( WrappersFromString ) {
         size_t num_signed = rand_gen() % num_all + 1;
 
         libff::alt_bn128_G2 test0 = libff::alt_bn128_G2::random_element();
-        libBLS::TEPublicKey common_pkey( test0, num_signed, num_all );
+        libBLS::TEPublicKey common_pkey( test0 );
 
-        libBLS::TEPublicKey common_pkey_from_str( common_pkey.toString(), num_signed, num_all );
+        libBLS::TEPublicKey common_pkey_from_str( common_pkey.toString() );
         BOOST_REQUIRE( common_pkey.getPublicKeyRaw() == common_pkey_from_str.getPublicKeyRaw() );
 
         libff::alt_bn128_Fr test = libff::alt_bn128_Fr::random_element();
-        libBLS::TEPrivateKey private_key( test, num_signed, num_all );
+        libBLS::TEPrivateKey private_key( test );
 
         libBLS::TEPrivateKey private_key_from_str(
-            std::make_shared< std::string >( private_key.toString() ), num_signed, num_all );
+            std::make_shared< std::string >( private_key.toString() ) );
         BOOST_REQUIRE( private_key.getPrivateKeyRaw() == private_key_from_str.getPrivateKeyRaw() );
 
         libff::alt_bn128_Fr test2 = libff::alt_bn128_Fr::random_element();
@@ -459,6 +458,14 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
     }
 
     {
+        // wrong signer index public key share
+        std::shared_ptr< std::vector< std::string > > share_ptr = nullptr;
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPublicKeyShare( share_ptr, num_all + 1, num_signed, num_all ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+
+    {
         // 1 coord of public key share is not a number
         std::vector< std::string > pkey_str( { "123", "abc" } );
         BOOST_REQUIRE_THROW(
@@ -506,24 +513,6 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
-    // {
-    //     // wrong string length in cypher
-    //     libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
-
-    //     libBLS::TEPublicKeyShare pkey( libBLS::TEPrivateKeyShare( el, 1, num_signed, num_all ) );
-    //     libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
-
-    //     libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
-
-    //     libBLS::CipheredKey cypher = { U, "tra-la-la", W };
-
-    //     libBLS::TEDecryptionShare decr_share( 1, U );
-
-    //     BOOST_REQUIRE_THROW(
-    //         libBLS::ThresholdEncryption::validateDecryptionShare( cypher, decr_share, pkey ),
-    //         libBLS::ThresholdUtils::IncorrectInput );
-    // }
-
     {
         // decryption share built with zero decrypted share
         libff::alt_bn128_G2 secr_share = libff::alt_bn128_G2::zero();
@@ -561,7 +550,9 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
 
     {
         // null public key
-        BOOST_REQUIRE_THROW( libBLS::TEPublicKey( nullptr, num_signed, num_all ),
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPublicKey(
+                static_cast< std::shared_ptr< std::vector< std::string > > >( nullptr ) ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
@@ -569,49 +560,46 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         // wrong formated public key
         std::vector< std::string > pkey_str( { "0", "0", "0", "0" } );
         BOOST_REQUIRE_THROW(
-            libBLS::TEPublicKey(
-                std::make_shared< std::vector< std::string > >( pkey_str ), num_signed, num_all ),
+            libBLS::TEPublicKey( std::make_shared< std::vector< std::string > >( pkey_str ) ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
         // zero public key
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
-        BOOST_REQUIRE_THROW(
-            libBLS::TEPublicKey pkey( libBLS::TEPrivateKey( el, num_signed, num_all ) ),
+        BOOST_REQUIRE_THROW( libBLS::TEPublicKey( libBLS::TEPrivateKey( el ) ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
         // zero public key
         libff::alt_bn128_G2 el = libff::alt_bn128_G2::zero();
-        BOOST_REQUIRE_THROW( libBLS::TEPublicKey pkey( el, num_signed, num_all ),
-            libBLS::ThresholdUtils::IsNotWellFormed );
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPublicKey pkey( el ), libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
         // null private key
-        BOOST_REQUIRE_THROW( libBLS::TEPrivateKey( nullptr, num_signed, num_all ),
-            libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPrivateKey( nullptr ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
         // zero private key
         std::string zero_str = "0";
-        BOOST_REQUIRE_THROW( libBLS::TEPrivateKey(
-                                 std::make_shared< std::string >( zero_str ), num_signed, num_all ),
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKey( std::make_shared< std::string >( zero_str ) ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
         // zero private key
         libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
-        BOOST_REQUIRE_THROW( libBLS::TEPrivateKey( el, num_signed, num_all ),
-            libBLS::ThresholdUtils::IsNotWellFormed );
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPrivateKey pKey( el ), libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
-        //_requiredSigners > _totalSigners
+        // DecryptSet _requiredSigners > _totalSigners
         BOOST_REQUIRE_THROW( libBLS::TEDecryptSet decr_set( num_all + 1, num_signed ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }

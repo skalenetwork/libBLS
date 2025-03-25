@@ -278,12 +278,6 @@ public:
 
     static void checkCypher( const CipheredKey& cypher );
 
-    // static std::string aesCiphertextToString( const Ciphertext& cipher );
-
-    // static Ciphertext aesCiphertextFromString( const std::string& str );
-
-    // static CipheredKey ciphertextFromString( const std::string& str );
-
 private:
     const size_t t_ = 0;
 

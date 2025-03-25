@@ -30,7 +30,7 @@
 
 namespace libBLS {
 
-class TEPublicKeyShare : public TEBase {
+class TEPublicKeyShare : TEBase {
 private:
     libff::alt_bn128_G2 publicKey;
 

@@ -38,6 +38,10 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
         throw ThresholdUtils::IncorrectInput( "wrong number of components in public key share" );
     }
 
+    if ( _signerIndex > _totalSigners ) {
+        throw ThresholdUtils::IncorrectInput( "Signer index must be <= total signers" );
+    }
+
     if ( !ThresholdUtils::isStringNumber( _keyStrPtr->at( 0 ) ) ||
          !ThresholdUtils::isStringNumber( _keyStrPtr->at( 1 ) ) ||
          !ThresholdUtils::isStringNumber( _keyStrPtr->at( 2 ) ) ||

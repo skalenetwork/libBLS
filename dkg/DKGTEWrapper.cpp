@@ -92,7 +92,7 @@ libBLS::TEPublicKey DKGTEWrapper::CreateTEPublicKey(
         public_key = public_key + public_shares_all->at( i ).at( 0 );
     }
 
-    libBLS::TEPublicKey common_public( public_key, _requiredSigners, _totalSigners );
+    libBLS::TEPublicKey common_public( public_key );
 
     return common_public;
 }

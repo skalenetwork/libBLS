@@ -152,6 +152,10 @@ public:
 
     static bool checkHex( const std::string& hex );
 
+    static char* bytesToHexCString( const std::vector< uint8_t >& bytes );
+
+    static std::vector< uint8_t > hexCStringToBytes( const char* hexStr );
+
     template < class T >
     static bool ValidateKey( const T& point );
 };
