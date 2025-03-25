@@ -252,7 +252,8 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToBytes ) {
     auto result = te_instance.encryptMessage( message_bytes, common_public_str );
     libBLS::RandSecret rand_secret = result.second;
 
-    std::vector< uint8_t > encrypted_msg_bytes = libBLS::ThresholdUtils::hexCStringToBytes(result.first.c_str());
+    std::vector< uint8_t > encrypted_msg_bytes =
+        libBLS::ThresholdUtils::hexCStringToBytes( result.first.c_str() );
 
     libBLS::Ciphertext ciphertext = libBLS::Ciphertext::fromBytes( encrypted_msg_bytes );
 

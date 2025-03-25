@@ -45,5 +45,4 @@ const char* encryptMessage( const char* data, const char* key ) {
     // Convert bytes to a heap-allocated C-string
     return libBLS::ThresholdUtils::bytesToHexCString( cipheredMessageBytes );
 }
-
 }

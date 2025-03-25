@@ -80,10 +80,12 @@ libff::alt_bn128_G1 TE::HashToGroup( const libff::alt_bn128_G2& U, const std::st
 
     std::string hash_str = cryptlite::sha256::hash_hex( sha256hex );
     std::vector< uint8_t > bytes = ThresholdUtils::hexCStringToBytes( hash_str.c_str() );
-    
+
     // copy first 32 bytes
-    auto hash_bytes_arr = std::make_shared< std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > >();
-    std::copy( bytes.begin(), bytes.begin() + libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES, hash_bytes_arr->begin() );
+    auto hash_bytes_arr =
+        std::make_shared< std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > >();
+    std::copy( bytes.begin(), bytes.begin() + libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES,
+        hash_bytes_arr->begin() );
 
     return ThresholdUtils::HashtoG1( hash_bytes_arr );
 }
@@ -226,7 +228,7 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
         throw ThresholdUtils::ZeroSecretKey( "zero secret key" );
 
     auto [U, V, W] = ciphertext;
-    
+
     std::string v_str = ThresholdUtils::bytesToHexCString( V );
     libff::alt_bn128_G1 H = HashToGroup( U, v_str );
 

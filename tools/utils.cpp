@@ -529,7 +529,6 @@ std::vector< uint8_t > ThresholdUtils::aesDecrypt(
 }
 
 
-
 char* ThresholdUtils::bytesToHexCString( const std::vector< uint8_t >& bytes ) {
     std::stringstream ss;
     ss << std::hex << std::setfill( '0' );
@@ -542,7 +541,8 @@ char* ThresholdUtils::bytesToHexCString( const std::vector< uint8_t >& bytes ) {
     return strdup( hexStr.c_str() );  // Convert std::string to char*
 }
 
-char* ThresholdUtils::bytesToHexCString( const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES>& bytes ) {
+char* ThresholdUtils::bytesToHexCString(
+    const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& bytes ) {
     std::stringstream ss;
     ss << std::hex << std::setfill( '0' );
 
