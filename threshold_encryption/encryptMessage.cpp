@@ -28,7 +28,10 @@ extern "C" {
 
 const char* encryptMessage( const char* data, const char* key ) {
     libBLS::ThresholdUtils::initCurve();
-    auto ciphertext_string = libBLS::TE::encryptMessage( data, key );
+    size_t dataSize = strlen( data );
+    std::vector< uint8_t > keyData;
+    std::memcpy( keyData.data(), data, dataSize );
+    auto ciphertext_string = libBLS::TE::encryptMessage( keyData, key );
 
     return std::move( ciphertext_string.first.c_str() );
 }

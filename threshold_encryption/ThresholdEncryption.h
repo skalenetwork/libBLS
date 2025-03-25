@@ -16,9 +16,9 @@
   You should have received a copy of the GNU Affero General Public License
   along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-  @file TEPublicKey.h
-  @author Sveta Rogova
-  @date 2019
+  @file ThresholdEncryption.h
+  @author Sidnei Teixeira
+  @date 2025
 */
 
 #ifndef LIBBLS_THRESHOLDENCRYPTION_H
@@ -31,6 +31,7 @@
 #include <tools/utils.h>
 #include <cstddef>
 
+namespace libBLS {
 
 /**
  * @brief Contains all algorthimtic logic for threshold encryption
@@ -49,10 +50,10 @@ public:
      *
      * @param message The message to be encrypted
      * @param common_public The common public key used for encryption
-     * @return libBLS::Ciphertext The encrypted message
+     * @return Ciphertext The encrypted message
      */
-    static libBLS::CipherResult encrypt(
-        const std::string& _message, const TEPublicKey& _commonPublic );
+    static Ciphertext encrypt(
+        const std::vector< uint8_t >& _message, const TEPublicKey& _commonPublic );
 
     /**
      * @brief Validates the encryption of a message (the ciphered AES key)
@@ -61,7 +62,7 @@ public:
      * @param pkey_share The private key share
      * @return bool True if the encryption is valid, false otherwise
      */
-    static bool validateEncryption( const libBLS::CipheredKey& _ciphertext );
+    static bool validateEncryption( const CipheredKey& _ciphertext );
 
     /**
      * @brief Generates a decryption share for the given cyphertext (ciphered AES key)
@@ -71,7 +72,7 @@ public:
      * @return TEDecryptionShare The partial decryption share
      */
     static TEDecryptionShare partialDecrypt(
-        const libBLS::CipheredKey& _cyphertext, const TEPrivateKeyShare& _pkeyShare );
+        const CipheredKey& _cyphertext, const TEPrivateKeyShare& _pkeyShare );
 
     /**
      * @brief Validates a decryption share
@@ -80,20 +81,18 @@ public:
      * @param decryption_share The decryption share
      * @return bool True if the decryption share is valid, false otherwise
      */
-    static bool validateDecryptionShare( const libBLS::CipheredKey& _cipherText,
+    static bool validateDecryptionShare( const CipheredKey& _cipherText,
         const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey );
 
     /**
-     * @brief Combines decryption shares to reconstruct the original message.
-     * It first combines all shares to derive the AES key, and then uses the AES key to decrypt the
-     * message.
+     * @brief Combines decryption shares to reconstruct the original AES key.
+     * It combines all shares to derive the AES key.
      *
      * @param cyphertext The encrypted AES key + encrypted message
      * @param decryption_set The decryption set containing the decryption shares
-     * @return std::string The original message
+     * @return std::string The deciphered AES key in hexadecimal format
      */
-    static std::string combineShares(
-        const libBLS::Ciphertext& _cyphertext, TEDecryptSet& _decryptionSet );
+    static AES256Key combineShares( const CipheredKey& _cypheredKey, TEDecryptSet& _decryptionSet );
 
     /**
      * @brief Validates if the cyphertext corresponds to the given message
@@ -102,37 +101,51 @@ public:
      * @param message The original message
      * @return bool True if the message corresponds to the cyphertext. False otherwise.
      */
-    static bool validateCombinedDecryption( const libBLS::Ciphertext& _cyphertext,
-        const std::string& _message, const TEPublicKey& _publicKey );
+    static bool validateCombinedDecryption(
+        const Ciphertext& _cyphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey );
 
-    static inline std::string mergeRandomSecretWithMessage(
-        std::string _message, libBLS::rand_secret _randomSecret ) {
-        _message += _randomSecret;
+    /**
+     * @brief Decrypts a message using the AES key
+     *
+     * @param cyphertext The encrypted message
+     * @param aesKey The AES key
+     * @return std::vector<uint8_t> The decrypted message apart from the random secret
+     */
+    static std::vector< uint8_t > decrypt(
+        const Ciphertext& _cyphertext, const AES256Key& _aesKey );
+
+
+    static inline std::vector< uint8_t > mergeRandomSecretWithMessage(
+        std::vector< uint8_t > _message, RandSecret _randomSecret ) {
+        _message.insert( _message.end(), _randomSecret.begin(), _randomSecret.end() );
         return _message;
     }
 
 private:
-    static inline std::string xorStrings( const std::string& _str1, const std::string& _str2 ) {
-        std::string result;
-        result.reserve( _str1.size() );
-        for ( size_t i = 0; i < _str1.size(); ++i ) {
-            result.push_back( _str1[i] ^ _str2[i] );
+    static std::string bytesToHexaString( const std::vector< uint8_t >& bytes ) {
+        std::stringstream ss;
+        for ( auto byte : bytes ) {
+            ss << std::setw( 2 ) << std::setfill( '0' ) << std::hex << ( int ) byte;
         }
-        return result;
+        return ss.str();
     }
 
-    static inline libBLS::rand_secret extractRandomSecretFromMessage(
-        const std::string& _message ) {
-        size_t msg_length = _message.length();
+    static inline RandSecret extractRandomSecretFromMessage(
+        const std::vector< uint8_t >& _message ) {
+        size_t msg_length = _message.size();
 
-        if ( msg_length < libBLS::RANDOM_SECRET_SIZE ) {
-            throw libBLS::ThresholdUtils::IncorrectInput( "Message is too short" );
+        if ( msg_length < RANDOM_SECRET_SIZE_BYTES ) {
+            throw ThresholdUtils::IncorrectInput( "Message is too short" );
         }
 
-        return _message.substr(
-            msg_length - libBLS::RANDOM_SECRET_SIZE, libBLS::RANDOM_SECRET_SIZE );
+        RandSecret randSecret;
+        std::copy_n( _message.end() - RANDOM_SECRET_SIZE_BYTES, RANDOM_SECRET_SIZE_BYTES,
+            randSecret.begin() );
+
+        return randSecret;
     }
 };
 
+}  // namespace libBLS
 
 #endif  // LIBBLS_THRESHOLDENCRYPTION_H

@@ -24,17 +24,19 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <threshold_encryption/TEPrivateKey.h>
 #include <tools/utils.h>
 
+namespace libBLS {
+
 TEPrivateKey::TEPrivateKey(
     std::shared_ptr< std::string > _keyStrPtr, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ) {
     if ( !_keyStrPtr ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "private key is null" );
+        throw ThresholdUtils::IncorrectInput( "private key is null" );
     }
 
     privateKey = libff::alt_bn128_Fr( _keyStrPtr->c_str() );
 
     if ( privateKey.is_zero() ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "private key is zero" );
+        throw ThresholdUtils::IsNotWellFormed( "private key is zero" );
     }
 }
 
@@ -42,13 +44,15 @@ TEPrivateKey::TEPrivateKey(
     libff::alt_bn128_Fr _skey, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), privateKey( _skey ) {
     if ( _skey.is_zero() )
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "private key is zero" );
+        throw ThresholdUtils::IsNotWellFormed( "private key is zero" );
 }
 
 std::string TEPrivateKey::toString() const {
-    return libBLS::ThresholdUtils::fieldElementToString( privateKey );
+    return ThresholdUtils::fieldElementToString( privateKey );
 }
 
 libff::alt_bn128_Fr TEPrivateKey::getPrivateKeyRaw() const {
     return privateKey;
 }
+
+}  // namespace libBLS

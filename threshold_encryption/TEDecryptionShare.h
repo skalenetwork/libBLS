@@ -27,6 +27,8 @@
 #include <threshold_encryption/threshold_encryption.h>
 #include <cstddef>
 
+namespace libBLS {
+
 /**
  * @brief Represents a single decryption share. That is, the result of some party
  * decrypting a ciphertext using their private key share.
@@ -76,5 +78,6 @@ struct TEDecryptionShareHash {
     }
 };
 
+}  // namespace libBLS
 
 #endif  // LIBBLS_TEDECRYPTIONSHARE_H

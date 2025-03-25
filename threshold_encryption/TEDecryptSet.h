@@ -29,6 +29,8 @@
 #include <threshold_encryption/threshold_encryption.h>
 #include <unordered_set>
 
+namespace libBLS {
+
 /**
  * @brief A class to manage threshold encryption's decryption sets
  *
@@ -66,7 +68,7 @@ public:
      * @note The share must be valid and correspond to the same ciphertext as other shares
      * in the set
      */
-    void addDecryptShare( TEDecryptionShare _share );
+    void addDecryptShare( const TEDecryptionShare& _share );
 
     size_t size() const;
 
@@ -83,5 +85,6 @@ public:
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > getSharesRaw() const;
 };
 
+}  // namespace libBLS
 
 #endif  // LIBBLS_TEDECRYPTSET_H

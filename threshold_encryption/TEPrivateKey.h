@@ -27,6 +27,8 @@
 #include <threshold_encryption/TEBase.h>
 #include <threshold_encryption/threshold_encryption.h>
 
+namespace libBLS {
+
 class TEPrivateKey : public TEBase {
 private:
     libff::alt_bn128_Fr privateKey;
@@ -42,5 +44,6 @@ public:
     libff::alt_bn128_Fr getPrivateKeyRaw() const;
 };
 
+}  // namespace libBLS
 
 #endif  // LIBBLS_TEPRIVATEKEY_H

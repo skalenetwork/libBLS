@@ -16,9 +16,9 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
-@file TEPublicKey.h
-@author Sveta Rogova
-@date 2019
+@file ThresholdEncryption.h
+@author Sidnei Teixeira
+@date 2025
 */
 
 #include "ThresholdEncryption.h"
@@ -27,24 +27,30 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <tools/utils.h>
 #include <valarray>
 
-libBLS::CipherResult ThresholdEncryption::encrypt(
-    const std::string& _message, const TEPublicKey& _commonPublic ) {
+namespace libBLS {
+
+Ciphertext ThresholdEncryption::encrypt(
+    const std::vector< uint8_t >& _message, const TEPublicKey& _commonPublic ) {
     TEBase::initializeIfNecessary();
 
-    libBLS::CipherResult cypher =
-        libBLS::TE::encryptWithAES( _message, _commonPublic.getPublicKeyRaw() );
+    CipherResult cypher = TE::encryptWithAES( _message, _commonPublic.getPublicKeyRaw() );
 
-    libBLS::TE::checkCypher( cypher.ciphertext->key );
+    TE::checkCypher( cypher.ciphertext->key );
 
-    return cypher;
+    if ( !cypher.ciphertext ) {
+        throw ThresholdUtils::IsNotWellFormed( "ciphertext is null" );
+    }
+
+    return *cypher.ciphertext;
 }
 
-bool ThresholdEncryption::validateEncryption( const libBLS::CipheredKey& _ciphertext ) {
+bool ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
     TEBase::initializeIfNecessary();
 
     auto [U, V, W] = _ciphertext;
+    std::string v_str( reinterpret_cast< const char* >( V.data() ), V.size() );
 
-    libff::alt_bn128_G1 H = libBLS::TE::HashToGroup( U, V );
+    libff::alt_bn128_G1 H = TE::HashToGroup( U, v_str );
 
     libff::alt_bn128_GT fst, snd;
 
@@ -56,16 +62,16 @@ bool ThresholdEncryption::validateEncryption( const libBLS::CipheredKey& _cipher
 }
 
 TEDecryptionShare ThresholdEncryption::partialDecrypt(
-    const libBLS::CipheredKey& _ciphertext, const TEPrivateKeyShare& _pkeyShare ) {
+    const CipheredKey& _ciphertext, const TEPrivateKeyShare& _pkeyShare ) {
     TEBase::initializeIfNecessary();
 
-    libBLS::TE::checkCypher( _ciphertext );
+    TE::checkCypher( _ciphertext );
 
     libff::alt_bn128_G2 decryption_share =
-        libBLS::TE::getDecryptionShare( _ciphertext, _pkeyShare.getPrivateKeyRaw() );
+        TE::getDecryptionShare( _ciphertext, _pkeyShare.getPrivateKeyRaw() );
 
     if ( decryption_share.is_zero() || !decryption_share.is_well_formed() ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "zero decrypt" );
+        throw ThresholdUtils::IsNotWellFormed( "zero decrypt" );
     }
 
     TEDecryptionShare share( _pkeyShare.getSignerIndex(), decryption_share );
@@ -73,77 +79,91 @@ TEDecryptionShare ThresholdEncryption::partialDecrypt(
     return share;
 }
 
-bool ThresholdEncryption::validateDecryptionShare( const libBLS::CipheredKey& _cipherText,
+bool ThresholdEncryption::validateDecryptionShare( const CipheredKey& _cipherText,
     const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey ) {
     TEBase::initializeIfNecessary();
 
-    libBLS::TE::checkCypher( _cipherText );
+    TE::checkCypher( _cipherText );
 
     if ( !_decryptionShare.validate() ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "Invalid decryption share" );
+        throw ThresholdUtils::IsNotWellFormed( "Invalid decryption share" );
     }
 
-    return libBLS::TE::Verify(
-        _cipherText, _decryptionShare.getShareRaw(), _publicKey.getPublicKeyRaw() );
+    return TE::Verify( _cipherText, _decryptionShare.getShareRaw(), _publicKey.getPublicKeyRaw() );
 }
 
-std::string ThresholdEncryption::combineShares(
-    const libBLS::Ciphertext& _cyphertext, TEDecryptSet& _decryptionSet ) {
+AES256Key ThresholdEncryption::combineShares(
+    const CipheredKey& _cypheredKey, TEDecryptSet& _decryptionSet ) {
     TEBase::initializeIfNecessary();
 
-    libBLS::TE::checkCypher( _cyphertext.key );
+    TE::checkCypher( _cypheredKey );
 
     switch ( _decryptionSet.getMergeStatus() ) {
     case TEDecryptSet::MergeStatus::READY_TO_MERGE:
         break;
     case TEDecryptSet::MergeStatus::ALREADY_MERGED:
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "Already merged" );
+        throw ThresholdUtils::IsNotWellFormed( "Already merged" );
     case TEDecryptSet::MergeStatus::NOT_ENOUGH_SHARES:
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "Not enough shares" );
+        throw ThresholdUtils::IsNotWellFormed( "Not enough shares" );
     default:
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "Unknown merging status" );
+        throw ThresholdUtils::IsNotWellFormed( "Unknown merging status" );
     }
 
-    libBLS::TE te( _decryptionSet );
-    auto aesKey = te.CombineShares( _cyphertext.key, _decryptionSet.getSharesRaw() );
-    auto decriptedMessage = libBLS::ThresholdUtils::aesDecrypt( _cyphertext.getData(), aesKey );
+    TE te( _decryptionSet );
+    AES256Key aesKey = te.CombineShares( _cypheredKey, _decryptionSet.getSharesRaw() );
 
     _decryptionSet.markAsMerged();
 
-    return decriptedMessage;
+    return aesKey;
 }
 
-bool ThresholdEncryption::validateCombinedDecryption( const libBLS::Ciphertext& _cyphertext,
-    const std::string& _message, const TEPublicKey& _publicKey ) {
+bool ThresholdEncryption::validateCombinedDecryption(
+    const Ciphertext& _cyphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
     TEBase::initializeIfNecessary();
 
-    libBLS::TE::checkCypher( _cyphertext.key );
+    TE::checkCypher( _cyphertext.key );
 
-    // byte format of the cyphertext should occupy at least the same space as the message in string
+    std::vector< uint8_t > deciphered_message =
+        ThresholdUtils::aesDecrypt( _cyphertext.getData(), _aesKey );
+
+    // cyphertext should occupy at least the same space as the message in string
     // format
-    if ( _cyphertext.getData().size() < _message.size() ) {
-        throw libBLS::ThresholdUtils::IncorrectInput(
+    if ( _cyphertext.getData().size() < deciphered_message.size() ) {
+        throw ThresholdUtils::IncorrectInput(
             "Cyphertext should be at least as big as plaintext message" );
     }
 
     // get random secret
-    libBLS::rand_secret secret = extractRandomSecretFromMessage( _message );
+    RandSecret secret = extractRandomSecretFromMessage( deciphered_message );
 
     // get ciphered AES key
-    std::string ciphered_aes_key = _cyphertext.key.V;
+    const AES256Key& cipheredAesKey = _cyphertext.key.V;
 
     // Compute G(r'Y)
-    libff::alt_bn128_Fq r( libBLS::ThresholdUtils::convertHexToDec( secret ).c_str() );
+    libff::alt_bn128_Fq r = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( secret );
     libff::alt_bn128_G2 Y = r * _publicKey.getPublicKeyRaw();
-    std::string hash = libBLS::TE::Hash( Y );
+    std::string hash = TE::Hash( Y );
 
     // Compute V xor G(r'Y) to get M (AES key)
-    std::string aes_key = xorStrings( ciphered_aes_key, hash );
+    AES256Key decipheredAesKey;
+    for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
+        decipheredAesKey[i] = cipheredAesKey[i] ^ static_cast< uint8_t >( hash[i] );
+    }
 
-    // Decrypt message with this key
-    std::string decrypted_message =
-        libBLS::ThresholdUtils::aesDecrypt( _cyphertext.getData(), aes_key );
-
-    // compare decyphered message against the one given
-    return decrypted_message == _message;
+    // compare the aes keys
+    return decipheredAesKey == _aesKey;
 }
+
+
+std::vector< uint8_t > ThresholdEncryption::decrypt(
+    const Ciphertext& _cyphertext, const AES256Key& _aesKey ) {
+    TEBase::initializeIfNecessary();
+
+    TE::checkCypher( _cyphertext.key );
+    std::vector< uint8_t > data = ThresholdUtils::aesDecrypt( _cyphertext.getData(), _aesKey );
+    data.resize( data.size() - RANDOM_SECRET_SIZE_BYTES );
+    return data;
+}
+
+
+}  // namespace libBLS

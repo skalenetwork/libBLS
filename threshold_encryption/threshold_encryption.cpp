@@ -35,8 +35,6 @@
 
 namespace libBLS {
 
-const size_t CYPHERTEXT_LENGTH = 64;
-
 TE::TE( const TEBase& base ) : t_( base.getRequiredSigners() ), n_( base.getTotalSigners() ) {
     libff::init_alt_bn128_params();
     libff::inhibit_profiling_info = true;
@@ -53,7 +51,7 @@ void TE::checkCypher( const CipheredKey& cyphertext ) {
     if ( cyphertext.U.is_zero() || cyphertext.W.is_zero() )
         throw ThresholdUtils::IncorrectInput( "zero element in cyphertext" );
 
-    if ( cyphertext.V.length() != CYPHERTEXT_LENGTH )
+    if ( cyphertext.V.size() != AES_256_KEY_SIZE_BYTES )
         throw ThresholdUtils::IncorrectInput( "wrong string length in cyphertext" );
 }
 
@@ -90,7 +88,7 @@ libff::alt_bn128_G1 TE::HashToGroup( const libff::alt_bn128_G2& U, const std::st
 
 
 CipheredKeyResult TE::getCiphertext(
-    const std::string& message, const libff::alt_bn128_G2& commonPublic ) {
+    const AES256Key& key, const libff::alt_bn128_G2& commonPublic ) {
     libff::alt_bn128_Fr r = libff::alt_bn128_Fr::random_element();
 
     while ( r.is_zero() ) {
@@ -103,35 +101,27 @@ CipheredKeyResult TE::getCiphertext(
 
     std::string hash = Hash( Y );
 
-    size_t size = std::max( message.size(), hash.size() );
-    std::valarray< uint8_t > lhs_to_hash( size );
-    for ( size_t i = 0; i < size; ++i ) {
-        lhs_to_hash[i] = i < hash.size() ? static_cast< uint8_t >( hash[i] ) : 0;
+    if ( hash.size() < AES_256_KEY_SIZE_BYTES ) {
+        throw ThresholdUtils::IsNotWellFormed( "Hash cannot be less than key size" );
     }
 
-    std::valarray< uint8_t > rhs_to_hash( size );
-    for ( size_t i = 0; i < size; ++i ) {
-        rhs_to_hash[i] = i < message.size() ? static_cast< uint8_t >( message[i] ) : 0;
+    AES256Key V;
+
+    for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
+        V[i] = key[i] ^ static_cast< uint8_t >( hash[i] );
     }
 
-    std::valarray< uint8_t > res = lhs_to_hash ^ rhs_to_hash;
-
-    std::string V;
-    V.resize( size );
-    for ( size_t i = 0; i < size; ++i ) {
-        V[i] = static_cast< uint8_t >( res[i] );
-    }
+    std::string v_str( reinterpret_cast< const char* >( V.data() ), V.size() );
 
     libff::alt_bn128_G1 W, H;
 
-    H = HashToGroup( U, V );
+    H = HashToGroup( U, v_str );
     W = r * H;
 
-    std::shared_ptr< CipheredKey > key = std::make_shared< CipheredKey >( U, V, W );
-    std::shared_ptr< rand_secret > random_secret =
-        std::make_shared< rand_secret >( ThresholdUtils::fieldElementToString( r, BASE_HEXA ) );
+    std::shared_ptr< CipheredKey > ciphered = std::make_shared< CipheredKey >( U, V, W );
+    RandSecret random_secret = ThresholdUtils::fieldElementToBytes( r );
 
-    return { key, random_secret };
+    return { ciphered, std::move( random_secret ) };
 }
 
 /**
@@ -154,18 +144,24 @@ CipheredKeyResult TE::getCiphertext(
  * @note Initializes AES before encryption
  */
 CipherResult TE::encryptWithAES(
-    const std::string& message, const libff::alt_bn128_G2& commonPublic ) {
+    const std::vector< uint8_t >& message, const libff::alt_bn128_G2& commonPublic ) {
     ThresholdUtils::initAES();
-    unsigned char key_bytes[32];
-    RAND_bytes( key_bytes, sizeof( key_bytes ) );
-    std::string random_aes_key = std::string( ( char* ) key_bytes, sizeof( key_bytes ) );
 
-    auto result = getCiphertext( random_aes_key, commonPublic );
+    // create random AES key
+    AES256Key key;
+    if ( RAND_bytes( key.data(), key.size() ) != 1 ) {
+        throw ThresholdUtils::IsNotWellFormed( "Failed to generate random key" );
+    }
+    // cipher aes key
+    CipheredKeyResult result = getCiphertext( key, commonPublic );
 
-    // append random secret to message
-    std::string message_to_cipher = message + *result.random_secret;
+    // append random secret to end of message
+    std::vector< uint8_t > message_to_cipher( message );
+    message_to_cipher.insert(
+        message_to_cipher.end(), result.random_secret.begin(), result.random_secret.end() );
 
-    auto encrypted_message = ThresholdUtils::aesEncrypt( message_to_cipher, random_aes_key );
+    // cipher message + random secret using AES key
+    auto encrypted_message = ThresholdUtils::aesEncrypt( message_to_cipher, key );
 
     std::shared_ptr< Ciphertext > ciphertext =
         std::make_shared< Ciphertext >( *result.ciphertext, encrypted_message );
@@ -188,14 +184,15 @@ CipherResult TE::encryptWithAES(
  * The encryption is performed using a combination of elliptic curve cryptography
  * and symmetric AES encryption for efficiency.
  */
-std::pair< std::string, rand_secret > TE::encryptMessage(
-    const std::string& message, const std::string& commonPublic_str ) {
+std::pair< std::string, RandSecret > TE::encryptMessage(
+    const std::vector< uint8_t >& message, const std::string& commonPublic_str ) {
     libff::alt_bn128_G2 commonPublic = ThresholdUtils::stringToG2( commonPublic_str );
-    auto ciphertext_with_aes = encryptWithAES( message, commonPublic );
-    std::string cipheredtext = aesCiphertextToString( *ciphertext_with_aes.ciphertext );
-    std::string random_secret = *ciphertext_with_aes.random_secret;
-    return std::make_pair< std::string, rand_secret >(
-        std::move( cipheredtext ), std::move( random_secret ) );
+    libBLS::CipherResult ciphertext = encryptWithAES( message, commonPublic );
+    std::vector< uint8_t > ciphertextBytes = ciphertext.ciphertext->toBytes();
+
+    std::string ciphertextStr(
+        reinterpret_cast< const char* >( ciphertextBytes.data() ), ciphertextBytes.size() );
+    return std::make_pair( ciphertextStr, ciphertext.random_secret );
 }
 
 
@@ -228,8 +225,8 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
         throw ThresholdUtils::ZeroSecretKey( "zero secret key" );
 
     auto [U, V, W] = ciphertext;
-
-    libff::alt_bn128_G1 H = HashToGroup( U, V );
+    std::string v_str( reinterpret_cast< const char* >( V.data() ), V.size() );
+    libff::alt_bn128_G1 H = HashToGroup( U, v_str );
 
     libff::alt_bn128_GT fst, snd;
     fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
@@ -265,8 +262,8 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
 bool TE::Verify( const CipheredKey& ciphertext, const libff::alt_bn128_G2& decryptionShare,
     const libff::alt_bn128_G2& public_key ) {
     auto [U, V, W] = ciphertext;
-
-    libff::alt_bn128_G1 H = HashToGroup( U, V );
+    std::string v_str( reinterpret_cast< const char* >( V.data() ), V.size() );
+    libff::alt_bn128_G1 H = HashToGroup( U, v_str );
 
     libff::alt_bn128_GT fst, snd;
     fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
@@ -306,11 +303,11 @@ bool TE::Verify( const CipheredKey& ciphertext, const libff::alt_bn128_G2& decry
  *
  * @throws ThresholdUtils::IncorrectInput if the ciphertext validation fails
  */
-std::string TE::CombineShares( const CipheredKey& ciphertext,
+AES256Key TE::CombineShares( const CipheredKey& ciphertext,
     const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShares ) {
     auto [U, V, W] = ciphertext;
-
-    libff::alt_bn128_G1 H = this->HashToGroup( U, V );
+    std::string v_str( reinterpret_cast< const char* >( V.data() ), V.size() );
+    libff::alt_bn128_G1 H = this->HashToGroup( U, v_str );
 
     libff::alt_bn128_GT fst, snd;
     fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
@@ -322,25 +319,23 @@ std::string TE::CombineShares( const CipheredKey& ciphertext,
         throw ThresholdUtils::IncorrectInput( "error during share combining" );
     }
 
-    auto aesKey = CombineSharesIntoAESKey( decryptionShares );
-    std::valarray< uint8_t > lhs_to_hash( aesKey.size() );
-    for ( size_t i = 0; i < aesKey.size(); ++i ) {
-        lhs_to_hash[i] = aesKey[i];
+    auto secret = CombineSharesIntoAESKey( decryptionShares );
+
+    if ( V.size() != AES_256_KEY_SIZE_BYTES ) {
+        throw ThresholdUtils::IncorrectInput( "Invalid key size" );
     }
 
-    std::valarray< uint8_t > rhs_to_hash( V.size() );
-    for ( size_t i = 0; i < V.size(); ++i ) {
-        rhs_to_hash[i] = static_cast< uint8_t >( V[i] );
+    if ( secret.size() < AES_256_KEY_SIZE_BYTES ) {
+        throw ThresholdUtils::IncorrectInput( "Invalid secret size" );
     }
 
-    std::valarray< uint8_t > xor_res = lhs_to_hash ^ rhs_to_hash;
+    AES256Key aesKey;
 
-    std::string message = "";
-    for ( size_t i = 0; i < xor_res.size(); ++i ) {
-        message += static_cast< char >( xor_res[i] );
+    for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
+        aesKey[i] = secret[i] ^ static_cast< uint8_t >( V[i] );
     }
 
-    return message;
+    return aesKey;
 }
 
 /**
@@ -387,101 +382,101 @@ std::vector< uint8_t > TE::CombineSharesIntoAESKey(
     return ret;
 }
 
-std::string TE::aesCiphertextToString( const Ciphertext& cipher ) {
-    ThresholdUtils::initCurve();
-    ThresholdUtils::initAES();
+// std::string TE::aesCiphertextToString( const Ciphertext& cipher ) {
+//     ThresholdUtils::initCurve();
+//     ThresholdUtils::initAES();
 
-    auto cipheredKey = cipher.key;
-    auto data = cipher.getData();
-    auto [U, V, W] = cipheredKey;
+//     auto cipheredKey = cipher.key;
+//     auto data = cipher.getData();
+//     auto [U, V, W] = cipheredKey;
 
-    std::string v_str = ThresholdUtils::carray2Hex( ( unsigned char* ) ( V.data() ), V.size() );
+//     std::string v_str = ThresholdUtils::carray2Hex( ( unsigned char* ) ( V.data() ), V.size() );
 
-    std::string encrypted_data = ThresholdUtils::carray2Hex( data.data(), data.size() );
+//     std::string encrypted_data = ThresholdUtils::carray2Hex( data.data(), data.size() );
 
-    auto str = ThresholdUtils::G2ToString( U, BASE_HEXA );
-    std::string u_str;
-    for ( auto& elem : str ) {
-        u_str += elem;
-    }
+//     auto str = ThresholdUtils::G2ToString( U, BASE_HEXA );
+//     std::string u_str;
+//     for ( auto& elem : str ) {
+//         u_str += elem;
+//     }
 
-    W.to_affine_coordinates();
-    std::string x = ThresholdUtils::fieldElementToString( W.X, BASE_HEXA );
+//     W.to_affine_coordinates();
+//     std::string x = ThresholdUtils::fieldElementToString( W.X, BASE_HEXA );
 
-    std::string y = ThresholdUtils::fieldElementToString( W.Y, BASE_HEXA );
+//     std::string y = ThresholdUtils::fieldElementToString( W.Y, BASE_HEXA );
 
-    std::string w_str = x + y;
+//     std::string w_str = x + y;
 
-    return u_str + v_str + w_str + encrypted_data;
-}
+//     return u_str + v_str + w_str + encrypted_data;
+// }
 
-Ciphertext TE::aesCiphertextFromString( const std::string& ciphertext ) {
-    ThresholdUtils::initCurve();
-    ThresholdUtils::initAES();
+// Ciphertext TE::aesCiphertextFromString( const std::string& ciphertext ) {
+//     ThresholdUtils::initCurve();
+//     ThresholdUtils::initAES();
 
-    if ( !ThresholdUtils::checkHex( ciphertext ) ) {
-        throw ThresholdUtils::IncorrectInput( "Provided string contains non-hex symbols" );
-    }
+//     if ( !ThresholdUtils::checkHex( ciphertext ) ) {
+//         throw ThresholdUtils::IncorrectInput( "Provided string contains non-hex symbols" );
+//     }
 
-    if ( ciphertext.size() < 256 + 128 + 128 + 1 ) {
-        throw ThresholdUtils::IncorrectInput(
-            "Incoming string is too short to convert to aes ciphertext" );
-    }
+//     if ( ciphertext.size() < 256 + 128 + 128 + 1 ) {
+//         throw ThresholdUtils::IncorrectInput(
+//             "Incoming string is too short to convert to aes ciphertext" );
+//     }
 
-    std::string u_str = ciphertext.substr( 0, 256 );
-    std::string v_str = ciphertext.substr( 256, 128 );
-    std::string w_str = ciphertext.substr( 256 + 128, 128 );
+//     std::string u_str = ciphertext.substr( 0, 256 );
+//     std::string v_str = ciphertext.substr( 256, 128 );
+//     std::string w_str = ciphertext.substr( 256 + 128, 128 );
 
-    std::string encrypted_data = ciphertext.substr( 256 + 128 + 128, std::string::npos );
+//     std::string encrypted_data = ciphertext.substr( 256 + 128 + 128, std::string::npos );
 
-    uint64_t bin_len;
-    std::vector< uint8_t > aes_cipher( encrypted_data.size() / 2 );
-    if ( !ThresholdUtils::hex2carray( encrypted_data.data(), &bin_len, &aes_cipher[0] ) ) {
-        throw ThresholdUtils::IncorrectInput( "Bad aes_cipher provided" );
-    }
+//     uint64_t bin_len;
+//     std::vector< uint8_t > aes_cipher( encrypted_data.size() / 2 );
+//     if ( !ThresholdUtils::hex2carray( encrypted_data.data(), &bin_len, &aes_cipher[0] ) ) {
+//         throw ThresholdUtils::IncorrectInput( "Bad aes_cipher provided" );
+//     }
 
-    libff::alt_bn128_G2 U = ThresholdUtils::stringToG2( u_str );
+//     libff::alt_bn128_G2 U = ThresholdUtils::stringToG2( u_str );
 
-    libff::alt_bn128_G1 W = ThresholdUtils::stringToG1( w_str );
+//     libff::alt_bn128_G1 W = ThresholdUtils::stringToG1( w_str );
 
-    std::string V;
-    V.resize( v_str.size() / 2 );
-    if ( !ThresholdUtils::hex2carray( v_str.data(), &bin_len, ( unsigned char* ) &V[0] ) ) {
-        throw ThresholdUtils::IncorrectInput( "Bad encrypted aes key provided" );
-    }
+//     std::string V;
+//     V.resize( v_str.size() / 2 );
+//     if ( !ThresholdUtils::hex2carray( v_str.data(), &bin_len, ( unsigned char* ) &V[0] ) ) {
+//         throw ThresholdUtils::IncorrectInput( "Bad encrypted aes key provided" );
+//     }
 
-    return Ciphertext( { U, V, W }, aes_cipher );
-}
+//     return Ciphertext( { U, V, W }, aes_cipher );
+// }
 
-CipheredKey TE::ciphertextFromString( const std::string& ciphertext ) {
-    ThresholdUtils::initCurve();
-    ThresholdUtils::initAES();
+// CipheredKey TE::ciphertextFromString( const std::string& ciphertext ) {
+//     ThresholdUtils::initCurve();
+//     ThresholdUtils::initAES();
 
-    if ( !ThresholdUtils::checkHex( ciphertext ) ) {
-        throw ThresholdUtils::IncorrectInput( "Provided string contains non-hex symbols" );
-    }
+//     if ( !ThresholdUtils::checkHex( ciphertext ) ) {
+//         throw ThresholdUtils::IncorrectInput( "Provided string contains non-hex symbols" );
+//     }
 
-    if ( ciphertext.size() < 256 + 128 + 128 + 1 ) {
-        throw ThresholdUtils::IncorrectInput(
-            "Incoming string is too short to convert to aes ciphertext" );
-    }
+//     if ( ciphertext.size() < 256 + 128 + 128 + 1 ) {
+//         throw ThresholdUtils::IncorrectInput(
+//             "Incoming string is too short to convert to aes ciphertext" );
+//     }
 
-    std::string u_str = ciphertext.substr( 0, 256 );
-    std::string v_str = ciphertext.substr( 256, 128 );
-    std::string w_str = ciphertext.substr( 256 + 128, 128 );
+//     std::string u_str = ciphertext.substr( 0, 256 );
+//     std::string v_str = ciphertext.substr( 256, 128 );
+//     std::string w_str = ciphertext.substr( 256 + 128, 128 );
 
-    libff::alt_bn128_G2 U = ThresholdUtils::stringToG2( u_str );
+//     libff::alt_bn128_G2 U = ThresholdUtils::stringToG2( u_str );
 
-    libff::alt_bn128_G1 W = ThresholdUtils::stringToG1( w_str );
+//     libff::alt_bn128_G1 W = ThresholdUtils::stringToG1( w_str );
 
-    std::string V;
-    V.resize( v_str.size() / 2 );
-    uint64_t bin_len;
-    if ( !ThresholdUtils::hex2carray( v_str.data(), &bin_len, ( unsigned char* ) &V[0] ) ) {
-        throw ThresholdUtils::IncorrectInput( "Bad encrypted aes key provided" );
-    }
+//     std::string V;
+//     V.resize( v_str.size() / 2 );
+//     uint64_t bin_len;
+//     if ( !ThresholdUtils::hex2carray( v_str.data(), &bin_len, ( unsigned char* ) &V[0] ) ) {
+//         throw ThresholdUtils::IncorrectInput( "Bad encrypted aes key provided" );
+//     }
 
-    return { U, V, W };
-}
+//     return { U, V, W };
+// }
 
 }  // namespace libBLS

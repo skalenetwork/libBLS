@@ -27,6 +27,8 @@
 #include <atomic>
 #include <cstddef>
 
+namespace libBLS {
+
 /**
  * Base class for threshold encryption
  * Keeps track of the number of required signers and total signers.
@@ -58,5 +60,6 @@ public:
     size_t getTotalSigners() const;
 };
 
+}  // namespace libBLS
 
 #endif  // LIBBLS_TEBASE_H

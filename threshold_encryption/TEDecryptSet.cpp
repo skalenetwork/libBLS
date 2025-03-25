@@ -27,22 +27,22 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 #include <tools/utils.h>
 
+namespace libBLS {
 
 TEDecryptSet::TEDecryptSet( size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), mergeStatus( MergeStatus::NOT_ENOUGH_SHARES ) {}
 
-void TEDecryptSet::addDecryptShare( TEDecryptionShare _share ) {
+void TEDecryptSet::addDecryptShare( const TEDecryptionShare& _share ) {
     if ( mergeStatus == MergeStatus::ALREADY_MERGED ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Already Merged" );
+        throw ThresholdUtils::IncorrectInput( "Already Merged" );
     }
 
     if ( _share.getSignerIndex() > totalSigners ) {
-        throw libBLS::ThresholdUtils::IncorrectInput(
-            "Signer index is greater than total signers" );
+        throw ThresholdUtils::IncorrectInput( "Signer index is greater than total signers" );
     }
 
     if ( decrypts.size() == totalSigners ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Cannot add more shares than total signers" );
+        throw ThresholdUtils::IncorrectInput( "Cannot add more shares than total signers" );
     }
 
     decrypts.insert( _share );
@@ -76,5 +76,7 @@ std::vector< std::pair< libff::alt_bn128_G2, size_t > > TEDecryptSet::getSharesR
         decrypted.push_back( share );
     }
 
-    return std::move( decrypted );
+    return decrypted;
 }
+
+}  // namespace libBLS

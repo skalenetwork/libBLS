@@ -72,6 +72,102 @@ std::vector< std::string > ThresholdUtils::G2ToString( libff::alt_bn128_G2 elem,
     return pkey_str_vect;
 }
 
+std::array< uint8_t, G2_SIZE_BYTES > ThresholdUtils::G2ToBytes( libff::alt_bn128_G2 elem ) {
+    std::array< uint8_t, G2_SIZE_BYTES > G2Bytes;
+
+    elem.to_affine_coordinates();
+    uint8_t* dest = G2Bytes.data();
+
+    // Get x.c0 bytes
+    auto x_c0_bytes = fieldElementToBytes( elem.X.c0 );
+    std::memcpy( dest, x_c0_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
+    dest += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    // Get x.c1 bytes
+    auto x_c1_bytes = fieldElementToBytes( elem.X.c1 );
+    std::memcpy( dest, x_c1_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
+    dest += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    // Get y.c0 bytes
+    auto y_c0_bytes = fieldElementToBytes( elem.Y.c0 );
+    std::memcpy( dest, y_c0_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
+    dest += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    // Get y.c1 bytes
+    auto y_c1_bytes = fieldElementToBytes( elem.Y.c1 );
+    std::memcpy( dest, y_c1_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
+
+    return G2Bytes;
+}
+
+libff::alt_bn128_G2 ThresholdUtils::bytesToG2( std::array< uint8_t, G2_SIZE_BYTES > bytes ) {
+    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > currentField;
+
+    libff::alt_bn128_G2 ret;
+    ret.Z = libff::alt_bn128_Fq2::one();
+
+    uint8_t* source = bytes.data();
+    // Get x.c0
+    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
+    ret.X.c0 = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    // Get x.c1
+    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
+    ret.X.c1 = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    // Get y.c0
+    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
+    ret.Y.c0 = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    // Get y.c1
+    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
+    ret.Y.c1 = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+
+    return ret;
+}
+
+std::array< uint8_t, G1_SIZE_BYTES > ThresholdUtils::G1ToBytes( libff::alt_bn128_G1 elem ) {
+    std::array< uint8_t, G1_SIZE_BYTES > G1Bytes;
+
+    elem.to_affine_coordinates();
+    uint8_t* source = G1Bytes.data();
+
+    // Get X bytes
+    auto x_bytes = fieldElementToBytes( elem.X );
+    std::memcpy( source, x_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
+    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    // Get Y bytes
+    auto y_bytes = fieldElementToBytes( elem.Y );
+    std::memcpy( source, y_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
+    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    return G1Bytes;
+}
+
+libff::alt_bn128_G1 ThresholdUtils::bytesToG1( std::array< uint8_t, G1_SIZE_BYTES > bytes ) {
+    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > currentField;
+
+    libff::alt_bn128_G1 ret;
+    ret.Z = libff::alt_bn128_Fq::one();
+
+    uint8_t* source = bytes.data();
+
+    // Get X
+    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
+    ret.X = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    // Get Y
+    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
+    ret.Y = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+
+    return ret;
+}
+
 std::string ThresholdUtils::convertHexToDec( const std::string& hex_str ) {
     mpz_t dec;
     mpz_init( dec );
@@ -373,11 +469,11 @@ void ThresholdUtils::initAES() {
 }
 
 std::vector< uint8_t > ThresholdUtils::aesEncrypt(
-    const std::string& plaintext, const std::string& key ) {
+    const std::vector< uint8_t >& plaintext, const AES256Key& key ) {
     initAES();
 
     // Make sure there is enough space for: IV + plaintext + padding
-    size_t enc_length = AES_BLOCK_SIZE + plaintext.length() + AES_BLOCK_SIZE;
+    size_t enc_length = AES_BLOCK_SIZE + plaintext.size() + AES_BLOCK_SIZE;
 
     std::vector< unsigned char > output;
     output.resize( enc_length, '\0' );
@@ -393,10 +489,10 @@ std::vector< uint8_t > ThresholdUtils::aesEncrypt(
     int outlen = 0;
 
     EVP_CIPHER_CTX* e_ctx = EVP_CIPHER_CTX_new();
-    EVP_EncryptInit( e_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.c_str(), iv );
+    EVP_EncryptInit( e_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.data(), iv );
     // Cypher data and store in output
     EVP_EncryptUpdate( e_ctx, &output[offset], &outlen, ( const unsigned char* ) plaintext.data(),
-        plaintext.length() );
+        plaintext.size() );
     // offset for the data written
     offset += outlen;
     // Finalize encryption - take care of padding
@@ -410,8 +506,8 @@ std::vector< uint8_t > ThresholdUtils::aesEncrypt(
     return std::vector< uint8_t >( output );
 }
 
-std::string ThresholdUtils::aesDecrypt(
-    const std::vector< uint8_t >& ciphertext, const std::string& key ) {
+std::vector< uint8_t > ThresholdUtils::aesDecrypt(
+    const std::vector< uint8_t >& ciphertext, const AES256Key& key ) {
     initAES();
 
     unsigned char iv[AES_BLOCK_SIZE];
@@ -421,14 +517,14 @@ std::string ThresholdUtils::aesDecrypt(
 
     int actual_size = 0, final_size = 0;
     EVP_CIPHER_CTX* d_ctx = EVP_CIPHER_CTX_new();
-    EVP_DecryptInit( d_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.c_str(), iv );
+    EVP_DecryptInit( d_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.data(), iv );
     EVP_DecryptUpdate( d_ctx, &plaintext[0], &actual_size, &ciphertext[AES_BLOCK_SIZE],
         ciphertext.size() - AES_BLOCK_SIZE );
     EVP_DecryptFinal( d_ctx, &plaintext[actual_size], &final_size );
     EVP_CIPHER_CTX_free( d_ctx );
     plaintext.resize( actual_size + final_size, '\0' );
 
-    return std::string( plaintext.begin(), plaintext.end() );
+    return plaintext;
 }
 
 

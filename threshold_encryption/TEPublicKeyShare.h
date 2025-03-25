@@ -28,6 +28,8 @@
 #include <threshold_encryption/TEPrivateKeyShare.h>
 #include <threshold_encryption/threshold_encryption.h>
 
+namespace libBLS {
+
 class TEPublicKeyShare : public TEBase {
 private:
     libff::alt_bn128_G2 publicKey;
@@ -45,5 +47,6 @@ public:
     libff::alt_bn128_G2 getPublicKeyRaw() const;
 };
 
+}  // namespace libBLS
 
 #endif  // LIBBLS_TEPUBLICKEYSHARE_H

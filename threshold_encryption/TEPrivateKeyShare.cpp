@@ -25,17 +25,19 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <threshold_encryption/TEPrivateKeyShare.h>
 #include <tools/utils.h>
 
+namespace libBLS {
+
 TEPrivateKeyShare::TEPrivateKeyShare( std::shared_ptr< std::string > _keyStrPtr,
     size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
     if ( !_keyStrPtr ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "private key share is null" );
+        throw ThresholdUtils::IncorrectInput( "private key share is null" );
     }
 
     privateKey = libff::alt_bn128_Fr( _keyStrPtr->c_str() );
 
     if ( privateKey.is_zero() ) {
-        throw libBLS::ThresholdUtils::ZeroSecretKey( "Zero private key share" );
+        throw ThresholdUtils::ZeroSecretKey( "Zero private key share" );
     }
 }
 
@@ -45,20 +47,20 @@ TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skeyShare, size_t _si
       privateKey( _skeyShare ),
       signerIndex( _signerIndex ) {
     if ( _signerIndex > _totalSigners ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
+        throw ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
     }
 
     if ( _skeyShare.is_zero() ) {
-        throw libBLS::ThresholdUtils::ZeroSecretKey( "Zero private key share" );
+        throw ThresholdUtils::ZeroSecretKey( "Zero private key share" );
     }
 }
 
 std::string TEPrivateKeyShare::toString() const {
-    return libBLS::ThresholdUtils::fieldElementToString( privateKey, libBLS::BASE_DEC );
+    return ThresholdUtils::fieldElementToString( privateKey, BASE_DEC );
 }
 
 std::string TEPrivateKeyShare::toStringHex() const {
-    return libBLS::ThresholdUtils::fieldElementToString( privateKey, libBLS::BASE_HEXA );
+    return ThresholdUtils::fieldElementToString( privateKey, BASE_HEXA );
 }
 
 size_t TEPrivateKeyShare::getSignerIndex() const {
@@ -72,7 +74,7 @@ libff::alt_bn128_Fr TEPrivateKeyShare::getPrivateKeyRaw() const {
 std::pair< std::shared_ptr< std::vector< std::shared_ptr< TEPrivateKeyShare > > >,
     std::shared_ptr< TEPublicKey > >
 TEPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSigners ) {
-    libBLS::Dkg dkgTe( _requiredSigners, _totalSigners );
+    Dkg dkgTe( _requiredSigners, _totalSigners );
 
     std::vector< libff::alt_bn128_Fr > poly = dkgTe.GeneratePolynomial();
 
@@ -94,3 +96,5 @@ TEPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSig
         std::make_shared< TEPublicKey >( commonPublic ) );
     return keys;
 }
+
+}  // namespace libBLS

@@ -24,19 +24,21 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <threshold_encryption/TEDecryptionShare.h>
 #include <tools/utils.h>
 
+namespace libBLS {
+
 TEDecryptionShare::TEDecryptionShare( size_t _signerIndex, libff::alt_bn128_G2 _share )
     : signerIndex( _signerIndex ), share( _share ) {
     if ( _share.is_zero() ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "decryption share is zero" );
+        throw ThresholdUtils::IsNotWellFormed( "decryption share is zero" );
     }
     if ( !_share.is_well_formed() ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "decryption share is not well formed" );
+        throw ThresholdUtils::IsNotWellFormed( "decryption share is not well formed" );
     }
 }
 
 TEDecryptionShare::TEDecryptionShare( size_t _signerIndex, const std::string& _hexaEncoded )
     : signerIndex( _signerIndex ) {
-    share = libBLS::ThresholdUtils::stringToG2( _hexaEncoded );
+    share = ThresholdUtils::stringToG2( _hexaEncoded );
 }
 
 size_t TEDecryptionShare::getSignerIndex() const {
@@ -60,7 +62,7 @@ TEDecryptionShare::operator std::pair< libff::alt_bn128_G2, size_t >() const {
 }
 
 std::string TEDecryptionShare::toString() const {
-    std::vector< std::string > str = libBLS::ThresholdUtils::G2ToString( share );
+    std::vector< std::string > str = ThresholdUtils::G2ToString( share );
     std::ostringstream oss;
     oss << signerIndex;
     for ( size_t i = 0; i < str.size(); ++i ) {
@@ -70,3 +72,5 @@ std::string TEDecryptionShare::toString() const {
     }
     return oss.str();
 }
+
+}  // namespace libBLS

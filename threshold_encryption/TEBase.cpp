@@ -25,6 +25,8 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <tools/utils.h>
 #include <libff/common/profiling.hpp>
 
+namespace libBLS {
+
 std::atomic< bool > TEBase::isLibffInitialized{ false };
 
 void TEBase::initializeIfNecessary() {
@@ -37,7 +39,7 @@ void TEBase::initializeIfNecessary() {
 
 TEBase::TEBase( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
     initializeIfNecessary();
 }
 
@@ -48,3 +50,5 @@ size_t TEBase::getRequiredSigners() const {
 size_t TEBase::getTotalSigners() const {
     return totalSigners;
 }
+
+}  // namespace libBLS

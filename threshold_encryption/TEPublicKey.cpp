@@ -27,24 +27,24 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <iostream>
 #include <utility>
 
+namespace libBLS {
 
 TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _keyStrPtr,
     size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ) {
     if ( !_keyStrPtr ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "public key is null" );
+        throw ThresholdUtils::IncorrectInput( "public key is null" );
     }
 
     if ( _keyStrPtr->size() != 4 ) {
-        throw libBLS::ThresholdUtils::IncorrectInput(
-            "wrong number of components in public key share" );
+        throw ThresholdUtils::IncorrectInput( "wrong number of components in public key share" );
     }
 
-    if ( !libBLS::ThresholdUtils::isStringNumber( _keyStrPtr->at( 0 ) ) ||
-         !libBLS::ThresholdUtils::isStringNumber( _keyStrPtr->at( 1 ) ) ||
-         !libBLS::ThresholdUtils::isStringNumber( _keyStrPtr->at( 2 ) ) ||
-         !libBLS::ThresholdUtils::isStringNumber( _keyStrPtr->at( 3 ) ) ) {
-        throw libBLS::ThresholdUtils::IncorrectInput(
+    if ( !ThresholdUtils::isStringNumber( _keyStrPtr->at( 0 ) ) ||
+         !ThresholdUtils::isStringNumber( _keyStrPtr->at( 1 ) ) ||
+         !ThresholdUtils::isStringNumber( _keyStrPtr->at( 2 ) ) ||
+         !ThresholdUtils::isStringNumber( _keyStrPtr->at( 3 ) ) ) {
+        throw ThresholdUtils::IncorrectInput(
             "non-digit symbol or first zero in non-zero public key share" );
     }
 
@@ -69,7 +69,7 @@ TEPublicKey::TEPublicKey( TEPrivateKey _commonPrivate )
 }
 
 TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, size_t _totalSigners )
-    : publicKey( _pkey ), TEBase( _requiredSigners, _totalSigners ) {
+    : TEBase( _requiredSigners, _totalSigners ), publicKey( _pkey ) {
     if ( _pkey.is_zero() || !_pkey.is_well_formed() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "zero or corrupted public key" );
     }
@@ -77,9 +77,11 @@ TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, si
 
 std::shared_ptr< std::vector< std::string > > TEPublicKey::toString() {
     return std::make_shared< std::vector< std::string > >(
-        libBLS::ThresholdUtils::G2ToString( publicKey ) );
+        ThresholdUtils::G2ToString( publicKey ) );
 }
 
 libff::alt_bn128_G2 TEPublicKey::getPublicKeyRaw() const {
     return publicKey;
 }
+
+}  // namespace libBLS

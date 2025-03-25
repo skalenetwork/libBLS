@@ -36,8 +36,17 @@ static constexpr size_t BLS_MAX_COMPONENT_LEN = 77;
 
 namespace libBLS {
 
-const size_t BASE_HEXA = 16;
-const size_t BASE_DEC = 10;
+constexpr size_t AES_256_KEY_SIZE_BYTES = 32;
+using AES256Key = std::array< uint8_t, AES_256_KEY_SIZE_BYTES >;
+
+constexpr size_t MAX_FIELD_ELEMENT_SIZE_BYTES = 32;
+// 4 x 32 bytes
+constexpr size_t G2_SIZE_BYTES = 128;
+// 2 x 32 bytes
+constexpr size_t G1_SIZE_BYTES = 64;
+
+constexpr size_t BASE_HEXA = 16;
+constexpr size_t BASE_DEC = 10;
 
 class ThresholdUtils {
 private:
@@ -92,10 +101,11 @@ public:
 
     static libff::alt_bn128_G1 HashtoG1( const std::string& message );
 
-    static std::vector< uint8_t > aesEncrypt( const std::string& message, const std::string& key );
+    static std::vector< uint8_t > aesEncrypt(
+        const std::vector< uint8_t >& message, const AES256Key& key );
 
-    static std::string aesDecrypt(
-        const std::vector< uint8_t >& ciphertext, const std::string& key );
+    static std::vector< uint8_t > aesDecrypt(
+        const std::vector< uint8_t >& ciphertext, const AES256Key& key );
 
     static bool isStringNumber( const std::string& str );
 
@@ -114,7 +124,23 @@ public:
     template < class T >
     static std::string fieldElementToString( const T& field_elem, int base = BASE_DEC );
 
+    template < class T >
+    static std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > fieldElementToBytes(
+        const T& field_elem );
+
+    template < class T >
+    static T bytesToFieldElement(
+        const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& byte_array );
+
     static std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem, int base = BASE_DEC );
+
+    static std::array< uint8_t, G2_SIZE_BYTES > G2ToBytes( libff::alt_bn128_G2 elem );
+
+    static std::array< uint8_t, G1_SIZE_BYTES > G1ToBytes( libff::alt_bn128_G1 elem );
+
+    static libff::alt_bn128_G2 bytesToG2( std::array< uint8_t, G2_SIZE_BYTES > elem );
+
+    static libff::alt_bn128_G1 bytesToG1( std::array< uint8_t, G1_SIZE_BYTES > elem );
 
     static libff::alt_bn128_G2 stringToG2( const std::string& str );
 
@@ -151,6 +177,46 @@ std::string ThresholdUtils::fieldElementToString( const T& field_elem, int base 
     mpz_clear( t );
     return output;
 }
+
+template < class T >
+std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > ThresholdUtils::fieldElementToBytes(
+    const T& field_elem ) {
+    mpz_t t;
+    mpz_init( t );
+
+    field_elem.as_bigint().to_mpz( t );
+
+    // Determine the number of bytes required to store the number
+    size_t byte_count = std::max< size_t >( 1, ( mpz_sizeinbase( t, 2 ) + 7 ) / 8 );
+    // Start with 32 bytes, initialized to 0
+    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > byte_array = {};
+    // Export the number into the byte array, starting from the least significant byte
+    mpz_export(
+        byte_array.data() + ( MAX_FIELD_ELEMENT_SIZE_BYTES - byte_count ), nullptr, 1, 1, 0, 0, t );
+
+    mpz_clear( t );
+    return byte_array;
+}
+
+// Convert a 32-byte array back to a libff::alt_bn128_Fq field element
+template < class T >
+T ThresholdUtils::bytesToFieldElement(
+    const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& byte_array ) {
+    mpz_t t;
+    mpz_init( t );
+
+    // Import the byte array into the mpz_t (in little-endian order)
+    mpz_import( t, byte_array.size(), 1, 1, 0, 0, byte_array.data() );
+
+    // Convert the mpz_t back to a libff::alt_bn128_Fq field element
+    T field_elem( t );
+
+    // Clear mpz_t
+    mpz_clear( t );
+
+    return field_elem;
+}
+
 
 template < class T >
 bool ThresholdUtils::ValidateKey( const T& point ) {

@@ -24,24 +24,25 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <threshold_encryption/TEPublicKeyShare.h>
 #include <tools/utils.h>
 
+namespace libBLS {
+
 TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > > _keyStrPtr,
     size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
     if ( !_keyStrPtr ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "public key share is null" );
+        throw ThresholdUtils::IncorrectInput( "public key share is null" );
     }
 
     // assume only using affine coordinates
     if ( _keyStrPtr->size() != 4 ) {
-        throw libBLS::ThresholdUtils::IncorrectInput(
-            "wrong number of components in public key share" );
+        throw ThresholdUtils::IncorrectInput( "wrong number of components in public key share" );
     }
 
-    if ( !libBLS::ThresholdUtils::isStringNumber( _keyStrPtr->at( 0 ) ) ||
-         !libBLS::ThresholdUtils::isStringNumber( _keyStrPtr->at( 1 ) ) ||
-         !libBLS::ThresholdUtils::isStringNumber( _keyStrPtr->at( 2 ) ) ||
-         !libBLS::ThresholdUtils::isStringNumber( _keyStrPtr->at( 3 ) ) ) {
-        throw libBLS::ThresholdUtils::IncorrectInput(
+    if ( !ThresholdUtils::isStringNumber( _keyStrPtr->at( 0 ) ) ||
+         !ThresholdUtils::isStringNumber( _keyStrPtr->at( 1 ) ) ||
+         !ThresholdUtils::isStringNumber( _keyStrPtr->at( 2 ) ) ||
+         !ThresholdUtils::isStringNumber( _keyStrPtr->at( 3 ) ) ) {
+        throw ThresholdUtils::IncorrectInput(
             "non-digit symbol or first zero in non-zero public key share" );
     }
 
@@ -52,8 +53,7 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
     publicKey.Y.c1 = libff::alt_bn128_Fq( _keyStrPtr->at( 3 ).c_str() );
 
     if ( publicKey.is_zero() || !publicKey.is_well_formed() ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed(
-            "corrupted string or zero public key share" );
+        throw ThresholdUtils::IsNotWellFormed( "corrupted string or zero public key share" );
     }
 }
 
@@ -65,9 +65,11 @@ TEPublicKeyShare::TEPublicKeyShare( TEPrivateKeyShare _pKey )
 
 std::shared_ptr< std::vector< std::string > > TEPublicKeyShare::toString() {
     return std::make_shared< std::vector< std::string > >(
-        libBLS::ThresholdUtils::G2ToString( publicKey ) );
+        ThresholdUtils::G2ToString( publicKey ) );
 }
 
 libff::alt_bn128_G2 TEPublicKeyShare::getPublicKeyRaw() const {
     return publicKey;
 }
+
+}  // namespace libBLS

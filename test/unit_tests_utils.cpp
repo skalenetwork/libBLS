@@ -106,58 +106,107 @@ BOOST_AUTO_TEST_CASE( RandomPolynomial ) {
 
 BOOST_AUTO_TEST_SUITE_END()
 
+
+BOOST_AUTO_TEST_SUITE( TestFieldConversions )
+
+BOOST_AUTO_TEST_CASE( G1ToAndFromBytes ) {
+    libBLS::ThresholdUtils::initCurve();
+
+    for ( size_t i = 0; i < 10000; i++ ) {
+        libff::alt_bn128_G1 point = libff::alt_bn128_G1::random_element();
+        std::array< uint8_t, libBLS::G1_SIZE_BYTES > point_bytes =
+            libBLS::ThresholdUtils::G1ToBytes( point );
+        libff::alt_bn128_G1 restored_point = libBLS::ThresholdUtils::bytesToG1( point_bytes );
+        BOOST_REQUIRE( point == restored_point );
+    }
+}
+
+BOOST_AUTO_TEST_CASE( G2ToAndFromBytes ) {
+    libBLS::ThresholdUtils::initCurve();
+
+    for ( size_t i = 0; i < 10000; i++ ) {
+        libff::alt_bn128_G2 point = libff::alt_bn128_G2::random_element();
+        std::array< uint8_t, libBLS::G2_SIZE_BYTES > point_bytes =
+            libBLS::ThresholdUtils::G2ToBytes( point );
+        libff::alt_bn128_G2 restored_point = libBLS::ThresholdUtils::bytesToG2( point_bytes );
+        BOOST_REQUIRE( point == restored_point );
+    }
+}
+
+BOOST_AUTO_TEST_CASE( FieldElementToAndFromBytes ) {
+    libBLS::ThresholdUtils::initCurve();
+
+    for ( size_t i = 0; i < 10000; i++ ) {
+        libff::alt_bn128_Fr element = libff::alt_bn128_Fr::random_element();
+        auto bytes = libBLS::ThresholdUtils::fieldElementToBytes( element );
+        libff::alt_bn128_Fr restored_element =
+            libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( bytes );
+        BOOST_REQUIRE( element == restored_element );
+    }
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+
 BOOST_AUTO_TEST_SUITE( TestAES )
 
 BOOST_AUTO_TEST_CASE( SimpleAES ) {
     libBLS::ThresholdUtils::initAES();
     unsigned char key_bytes[32];
     RAND_bytes( key_bytes, sizeof( key_bytes ) );
-    std::string random_aes_key = std::string( ( char* ) key_bytes, sizeof( key_bytes ) );
+    libBLS::AES256Key random_aes_key;
+    std::copy( key_bytes, key_bytes + libBLS::AES_256_KEY_SIZE_BYTES, random_aes_key.begin() );
 
     const std::string message = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
 
-    auto ciphertext = libBLS::ThresholdUtils::aesEncrypt( message, random_aes_key );
+    auto ciphertext = libBLS::ThresholdUtils::aesEncrypt( message_bytes, random_aes_key );
     auto decrypted_text = libBLS::ThresholdUtils::aesDecrypt( ciphertext, random_aes_key );
 
-    BOOST_REQUIRE( decrypted_text == message );
+    BOOST_REQUIRE( decrypted_text == message_bytes );
 }
 
 BOOST_AUTO_TEST_CASE( wrongCiphertext ) {
     libBLS::ThresholdUtils::initAES();
-    unsigned char key_bytes[32];
-    RAND_bytes( key_bytes, sizeof( key_bytes ) );
-    std::string random_aes_key = std::string( ( char* ) key_bytes, sizeof( key_bytes ) );
+    libBLS::AES256Key random_aes_key;
+    RAND_bytes( random_aes_key.data(), random_aes_key.size() );
 
     const std::string message = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-
-    auto ciphertext = libBLS::ThresholdUtils::aesEncrypt( message, random_aes_key );
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
 
     const std::string bad_message =
         "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
-    auto bad_ciphertext = libBLS::ThresholdUtils::aesEncrypt( bad_message, random_aes_key );
+    std::vector< uint8_t > bad_message_bytes( bad_message.begin(), bad_message.end() );
+
+    auto bad_ciphertext = libBLS::ThresholdUtils::aesEncrypt( bad_message_bytes, random_aes_key );
 
     auto decrypted_text = libBLS::ThresholdUtils::aesDecrypt( bad_ciphertext, random_aes_key );
 
-    BOOST_REQUIRE( decrypted_text != message );
+    BOOST_REQUIRE( decrypted_text != message_bytes );
+    BOOST_REQUIRE( decrypted_text == bad_message_bytes );
 }
 
 BOOST_AUTO_TEST_CASE( wrongKey ) {
     libBLS::ThresholdUtils::initAES();
     unsigned char key_bytes[32];
     RAND_bytes( key_bytes, sizeof( key_bytes ) );
-    std::string random_aes_key = std::string( ( char* ) key_bytes, sizeof( key_bytes ) );
+    libBLS::AES256Key random_aes_key;
+    std::copy( key_bytes, key_bytes + libBLS::AES_256_KEY_SIZE_BYTES, random_aes_key.begin() );
 
     const std::string message = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
 
-    auto ciphertext = libBLS::ThresholdUtils::aesEncrypt( message, random_aes_key );
+    auto ciphertext = libBLS::ThresholdUtils::aesEncrypt( message_bytes, random_aes_key );
 
     unsigned char bad_key_bytes[32];
     RAND_bytes( bad_key_bytes, sizeof( bad_key_bytes ) );
-    std::string bad_key = std::string( ( char* ) bad_key_bytes, sizeof( bad_key_bytes ) );
+    libBLS::AES256Key random_bad_aes_key;
+    std::copy(
+        bad_key_bytes, bad_key_bytes + libBLS::AES_256_KEY_SIZE_BYTES, random_bad_aes_key.begin() );
 
-    auto decrypted_text = libBLS::ThresholdUtils::aesDecrypt( ciphertext, bad_key );
+    auto decrypted_text = libBLS::ThresholdUtils::aesDecrypt( ciphertext, random_bad_aes_key );
 
-    BOOST_REQUIRE( decrypted_text != message );
+    BOOST_REQUIRE( decrypted_text != message_bytes );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
