@@ -48,7 +48,7 @@ bool ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
     TEBase::initializeIfNecessary();
 
     auto [U, V, W] = _ciphertext;
-    std::string v_str( reinterpret_cast< const char* >( V.data() ), V.size() );
+    std::string v_str = ThresholdUtils::bytesToHexCString( V );
 
     libff::alt_bn128_G1 H = TE::HashToGroup( U, v_str );
 

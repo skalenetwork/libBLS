@@ -21,10 +21,11 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 @date 2021
 */
 
-#include "encryptMessage.h"
 #include "ThresholdEncryption.h"
 #include <threshold_encryption.h>
 #include <tools/utils.h>
+
+extern "C" {
 
 const char* encryptMessage( const char* data, const char* key ) {
     libBLS::ThresholdUtils::initCurve();
@@ -43,4 +44,6 @@ const char* encryptMessage( const char* data, const char* key ) {
 
     // Convert bytes to a heap-allocated C-string
     return libBLS::ThresholdUtils::bytesToHexCString( cipheredMessageBytes );
+}
+
 }

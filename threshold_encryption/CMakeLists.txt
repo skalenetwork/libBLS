@@ -26,7 +26,6 @@ set(sources
 )
 
 set(headers
-    encryptMessage.h
     threshold_encryption.h
     TEBase.h
     TEDecryptionShare.h

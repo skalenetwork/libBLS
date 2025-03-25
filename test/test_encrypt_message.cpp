@@ -24,7 +24,7 @@
 #include <random>
 
 #include <threshold_encryption.h>
-#include <threshold_encryption/encryptMessage.h>
+#include <threshold_encryption/encryptMessage.cpp>
 #include <tools/utils.h>
 
 #include <openssl/rand.h>

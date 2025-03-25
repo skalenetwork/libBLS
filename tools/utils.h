@@ -153,6 +153,7 @@ public:
     static bool checkHex( const std::string& hex );
 
     static char* bytesToHexCString( const std::vector< uint8_t >& bytes );
+    static char* bytesToHexCString( const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES>& bytes );
 
     static std::vector< uint8_t > hexCStringToBytes( const char* hexStr );
 
