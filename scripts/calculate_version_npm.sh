@@ -33,7 +33,12 @@ fi
 
 for (( VERSION_NUMBER=0; ; VERSION_NUMBER++ )); do
     RESULT_VERSION="${BASE_VERSION}-${LABEL}.${VERSION_NUMBER}"
-    if ! npm view "$PACKAGE_NAME@$RESULT_VERSION" > /dev/null 2>&1; then
+    # if ! npm view "$PACKAGE_NAME@$RESULT_VERSION" > /dev/null 2>&1; then
+    #     echo "$RESULT_VERSION" | tr / -
+    #     break
+    # fi
+    if ! npm view "$PACKAGE_NAME" versions | grep "$PACKAGE_NAME@$RESULT_VERSION"
+    then
         echo "$RESULT_VERSION" | tr / -
         break
     fi

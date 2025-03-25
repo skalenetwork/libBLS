@@ -24,7 +24,7 @@ jobs:
 
     - uses: actions/setup-node@v1
       with:
-        node-version: '14.x'
+        node-version: '18.x'
         registry-url: 'https://registry.npmjs.org'
 
     - name: Update apt
@@ -111,9 +111,12 @@ jobs:
       run: |
         cd node
         export PACKAGE_NAME=$(jq -r '.name' package.json)
+        echo "Package name: $PACKAGE_NAME"
         export JS_LIBRARY_BASE_VERSION="$(npm run --silent version)"
+        echo "Base version: $JS_LIBRARY_BASE_VERSION"        
         export JS_LIBRARY_VERSION=$(bash ./../scripts/calculate_version_npm.sh $PACKAGE_NAME $JS_LIBRARY_BASE_VERSION $BRANCH)
-        npm version --no-git-tag-version $JS_LIBRARY_VERSION
+        echo "Version: $JS_LIBRARY_VERSION"
+        npm version $JS_LIBRARY_VERSION --no-git-tag-version
         npm publish --access public --tag ${{ env.BRANCH }}
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

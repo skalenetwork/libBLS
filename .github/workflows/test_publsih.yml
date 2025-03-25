@@ -1,0 +1,50 @@
+name: Debug publish libBLS
+on:
+  push:
+defaults:
+  run:
+    shell: bash
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Extract repo name
+      run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
+      shell: bash
+      env:
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '18.x'
+        registry-url: 'https://registry.npmjs.org'
+
+    - name: Calculate version
+      run: |
+        export BRANCH=${GITHUB_REF##*/}
+        echo "Branch $BRANCH"
+        echo "::set-env name=BRANCH::$BRANCH"
+        export VERSION=$(cat VERSION.txt)
+        export VERSION=$(bash ./scripts/calculate_version.sh $BRANCH $VERSION)
+        echo "::set-env name=VERSION::$VERSION"
+        echo "Version $VERSION"
+        export RELEASE=true
+        echo "::set-env name=RELEASE::$RELEASE"
+      env:
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+
+    - name: Publish on npm
+      if: github.ref != 'refs/heads/stable'
+      run: |
+        cd node
+        export PACKAGE_NAME=$(jq -r '.name' package.json)
+        export JS_LIBRARY_BASE_VERSION="$(npm run --silent version)"
+        export JS_LIBRARY_VERSION=$(bash ./../scripts/calculate_version_npm.sh $PACKAGE_NAME $JS_LIBRARY_BASE_VERSION $BRANCH)
+        echo "Version: $JS_LIBRARY_VERSION"
+        npm version "$JS_LIBRARY_VERSION" --no-git-tag-version
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
