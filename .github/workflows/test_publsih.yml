@@ -1,4 +1,4 @@
-name: Build and publish libBLS
+name: Debug publish libBLS
 on:
   push:
 defaults:
