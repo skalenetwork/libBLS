@@ -285,9 +285,8 @@ BOOST_AUTO_TEST_CASE( wrongKey ) {
     std::copy(
         bad_key_bytes, bad_key_bytes + libBLS::AES_256_KEY_SIZE_BYTES, random_bad_aes_key.begin() );
 
-    auto decrypted_text = libBLS::ThresholdUtils::aesDecrypt( ciphertext, random_bad_aes_key );
-
-    BOOST_REQUIRE( decrypted_text != message_bytes );
+    BOOST_REQUIRE_THROW(
+        libBLS::ThresholdUtils::aesDecrypt( ciphertext, random_bad_aes_key ), std::runtime_error );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
