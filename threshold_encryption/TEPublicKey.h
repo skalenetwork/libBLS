@@ -35,15 +35,38 @@ private:
     libff::alt_bn128_G2 publicKey;
 
 public:
-    TEPublicKey( std::shared_ptr< std::vector< std::string > > _keyStrPtr );
+    TEPublicKey( const libff::alt_bn128_G2& _pkey );
 
+    /**
+     * @brief Construct a public key from a vector of strings,
+     * each representing a coordinate of the public key in
+     * hexadecimal format.
+     */
+    TEPublicKey( const std::vector< std::string >& _keyStrPtr );
+
+    /**
+     * @brief Construct a public key from a string containing
+     * the 4 components concatenated, and encoded in hexadecimal
+     * format.
+     */
     TEPublicKey( const std::string& _keyStr );
 
-    TEPublicKey( libff::alt_bn128_G2 _pkey );
+    TEPublicKey( const TEPrivateKey& _comonPrivate );
 
-    TEPublicKey( TEPrivateKey _comonPrivate );
+    TEPublicKey( const std::array< uint8_t, G2_SIZE_BYTES >& _keyBytes );
 
-    std::shared_ptr< std::vector< std::string > > toString();
+    TEPublicKey( const std::vector< uint8_t >& _keyBytes );
+
+    /**
+     * @brief Returns the public key as a single string, with
+     * with all 4 components concatenated and encoded in hexadecimal.AES256Key
+     * String size is always 256 characters long.
+     */
+    std::string toString();
+
+    std::array< uint8_t, G2_SIZE_BYTES > toBytesArray() const;
+
+    std::vector< uint8_t > toBytesVec() const;
 
     libff::alt_bn128_G2 getPublicKeyRaw() const;
 };

@@ -44,7 +44,7 @@ Ciphertext ThresholdEncryption::encrypt(
     return *cypher.ciphertext;
 }
 
-bool ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
+void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
     TEBase::initializeIfNecessary();
 
     auto [U, V, W] = _ciphertext;
@@ -58,7 +58,9 @@ bool ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
     fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
     snd = libff::alt_bn128_ate_reduced_pairing( H, U );
 
-    return fst == snd;
+    if ( fst != snd ) {
+        throw ThresholdUtils::IsNotWellFormed( "Invalid encryption" );
+    }
 }
 
 TEDecryptionShare ThresholdEncryption::partialDecrypt(
@@ -79,7 +81,7 @@ TEDecryptionShare ThresholdEncryption::partialDecrypt(
     return share;
 }
 
-bool ThresholdEncryption::validateDecryptionShare( const CipheredKey& _cipherText,
+void ThresholdEncryption::validateDecryptionShare( const CipheredKey& _cipherText,
     const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey ) {
     TEBase::initializeIfNecessary();
 
@@ -89,7 +91,10 @@ bool ThresholdEncryption::validateDecryptionShare( const CipheredKey& _cipherTex
         throw ThresholdUtils::IsNotWellFormed( "Invalid decryption share" );
     }
 
-    return TE::Verify( _cipherText, _decryptionShare.getShareRaw(), _publicKey.getPublicKeyRaw() );
+    if ( !TE::Verify(
+             _cipherText, _decryptionShare.getShareRaw(), _publicKey.getPublicKeyRaw() ) ) {
+        throw ThresholdUtils::IsNotWellFormed( "Invalid decryption share" );
+    }
 }
 
 AES256Key ThresholdEncryption::combineShares(
@@ -117,7 +122,7 @@ AES256Key ThresholdEncryption::combineShares(
     return aesKey;
 }
 
-bool ThresholdEncryption::validateCombinedDecryption(
+void ThresholdEncryption::validateCombinedDecryption(
     const Ciphertext& _cyphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
     TEBase::initializeIfNecessary();
 
@@ -151,7 +156,9 @@ bool ThresholdEncryption::validateCombinedDecryption(
     }
 
     // compare the aes keys
-    return decipheredAesKey == _aesKey;
+    if ( decipheredAesKey != _aesKey ) {
+        throw ThresholdUtils::IsNotWellFormed( "Deciphered AES key is not equal to the original" );
+    }
 }
 
 

@@ -210,6 +210,7 @@ jobs:
           ./bls_test
           ./threshold_encryption/te_unit_test
           ./threshold_encryption/te_test
+          ./threshold_encryption/te_encrypt_message
           ./dkg_attack
   linux_build_with_emscripten:
     runs-on: ubuntu-22.04

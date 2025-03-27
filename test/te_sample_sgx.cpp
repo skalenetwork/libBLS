@@ -117,8 +117,8 @@ int main() {
 
             // verify all shares
             for ( size_t msg = 0; msg < batchedDecryptionShares.size(); ++msg ) {
-                assert( libBLS::ThresholdEncryption::validateDecryptionShare( ciphertexts[msg]->key,
-                    batchedDecryptionShares[msg], keys.publicKeys[nodeId] ) );
+                libBLS::ThresholdEncryption::validateDecryptionShare(
+                    ciphertexts[msg]->key, batchedDecryptionShares[msg], keys.publicKeys[nodeId] );
 
                 decription_sets[msg].addDecryptShare( batchedDecryptionShares[msg] );
             }

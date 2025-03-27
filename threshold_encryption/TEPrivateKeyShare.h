@@ -38,17 +38,25 @@ private:
     size_t signerIndex;
 
 public:
-    TEPrivateKeyShare( std::shared_ptr< std::string > _keyStrPtr, size_t _signerIndex,
-        size_t _requiredSigners, size_t _totalSigners );
+    TEPrivateKeyShare( const std::string& _hexaField, size_t _signerIndex, size_t _requiredSigners,
+        size_t _totalSigners );
 
     TEPrivateKeyShare( libff::alt_bn128_Fr _skeyShare, size_t _signerIndex, size_t _requiredSigners,
         size_t _totalSigners );
 
-    static std::pair< std::shared_ptr< std::vector< std::shared_ptr< TEPrivateKeyShare > > >,
-        std::shared_ptr< TEPublicKey > >
-    generateSampleKeys( size_t _requiredSigners, size_t _totalSigners );
+    TEPrivateKeyShare( const std::vector< uint8_t >& _bytes, size_t _signerIndex,
+        size_t _requiredSigners, size_t _totalSigners );
+
+    TEPrivateKeyShare( const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& bytes,
+        size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners );
+
+
+    std::vector< uint8_t > toBytesVec() const;
+
+    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > toBytesArray() const;
 
     std::string toString() const;
+
     std::string toStringHex() const;
 
     size_t getSignerIndex() const;

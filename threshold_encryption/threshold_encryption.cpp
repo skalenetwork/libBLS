@@ -123,7 +123,7 @@ CipheredKeyResult TE::getCiphertext(
     W = r * H;
 
     std::shared_ptr< CipheredKey > ciphered = std::make_shared< CipheredKey >( U, V, W );
-    RandSecret random_secret = ThresholdUtils::fieldElementToBytes( r );
+    RandSecret random_secret = ThresholdUtils::fieldElementToBytesArray( r );
 
     return { ciphered, std::move( random_secret ) };
 }

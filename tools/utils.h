@@ -125,12 +125,18 @@ public:
     static std::string fieldElementToString( const T& field_elem, int base = BASE_DEC );
 
     template < class T >
-    static std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > fieldElementToBytes(
+    static std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > fieldElementToBytesArray(
         const T& field_elem );
+
+    template < class T >
+    static std::vector< uint8_t > fieldElementToBytes( const T& field_elem );
 
     template < class T >
     static T bytesToFieldElement(
         const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& byte_array );
+
+    template < class T >
+    static T bytesToFieldElement( const std::vector< uint8_t >& byte_array );
 
     static std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem, int base = BASE_DEC );
 
@@ -139,6 +145,8 @@ public:
     static std::array< uint8_t, G1_SIZE_BYTES > G1ToBytes( libff::alt_bn128_G1 elem );
 
     static libff::alt_bn128_G2 bytesToG2( std::array< uint8_t, G2_SIZE_BYTES > elem );
+
+    static libff::alt_bn128_G2 bytesToG2( std::vector< uint8_t > elem );
 
     static libff::alt_bn128_G1 bytesToG1( std::array< uint8_t, G1_SIZE_BYTES > elem );
 
@@ -158,8 +166,19 @@ public:
 
     static std::vector< uint8_t > hexCStringToBytes( const char* hexStr );
 
+    static std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > hexCStringToBytesArray(
+        const char* hexStr );
+
     template < class T >
     static bool ValidateKey( const T& point );
+
+private:
+    /**
+     * @brief Helper function that validates input char*
+     * as a valid hex string, and returns its length.
+     * @throw IncorrectInput if the input is not a valid hex string.
+     */
+    static size_t validateHexCString( const char* hexStr );
 };
 
 template < class T >
@@ -185,7 +204,7 @@ std::string ThresholdUtils::fieldElementToString( const T& field_elem, int base 
 }
 
 template < class T >
-std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > ThresholdUtils::fieldElementToBytes(
+std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > ThresholdUtils::fieldElementToBytesArray(
     const T& field_elem ) {
     mpz_t t;
     mpz_init( t );
@@ -202,6 +221,14 @@ std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > ThresholdUtils::fieldElement
 
     mpz_clear( t );
     return byte_array;
+}
+
+template < class T >
+std::vector< uint8_t > ThresholdUtils::fieldElementToBytes( const T& field_elem ) {
+    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > bytes =
+        fieldElementToBytesArray( field_elem );
+    std::vector< uint8_t > bytesVec( bytes.begin(), bytes.end() );
+    return bytesVec;
 }
 
 // Convert a 32-byte array back to a libff::alt_bn128_Fq field element
@@ -221,6 +248,18 @@ T ThresholdUtils::bytesToFieldElement(
     mpz_clear( t );
 
     return field_elem;
+}
+
+// Converts the first 32 bytes from the vector into a field element
+template < class T >
+T ThresholdUtils::bytesToFieldElement( const std::vector< uint8_t >& byte_array ) {
+    if ( byte_array.size() < MAX_FIELD_ELEMENT_SIZE_BYTES ) {
+        throw ThresholdUtils::IncorrectInput( "Incorrect number of bytes in vector" );
+    }
+
+    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > bytes;
+    std::copy( byte_array.begin(), byte_array.end(), bytes.begin() );
+    return bytesToFieldElement< T >( bytes );
 }
 
 

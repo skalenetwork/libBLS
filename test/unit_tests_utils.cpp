@@ -137,12 +137,93 @@ BOOST_AUTO_TEST_CASE( FieldElementToAndFromBytes ) {
     libBLS::ThresholdUtils::initCurve();
 
     for ( size_t i = 0; i < 10000; i++ ) {
+        // Fr element
         libff::alt_bn128_Fr element = libff::alt_bn128_Fr::random_element();
         auto bytes = libBLS::ThresholdUtils::fieldElementToBytes( element );
         libff::alt_bn128_Fr restored_element =
             libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( bytes );
         BOOST_REQUIRE( element == restored_element );
+        // Fq element
+        libff::alt_bn128_Fq element2 = libff::alt_bn128_Fq::random_element();
+        auto bytes2 = libBLS::ThresholdUtils::fieldElementToBytes( element2 );
+        libff::alt_bn128_Fq restored_element2 =
+            libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( bytes2 );
+        BOOST_REQUIRE( element2 == restored_element2 );
     }
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE( TestBytesToHexCString )
+
+BOOST_AUTO_TEST_CASE( BytesToAndFromHexCString ) {
+    libBLS::ThresholdUtils::initCurve();
+
+    for ( size_t i = 0; i < 10000; i++ ) {
+        size_t len = rand() % 1000 + libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES;
+        std::vector< uint8_t > bytes( len );
+        RAND_bytes( bytes.data(), bytes.size() );
+
+        std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > bytes2;
+        std::copy_n( bytes.begin(), libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES, bytes2.begin() );
+
+        // using vector
+        std::string hex = libBLS::ThresholdUtils::bytesToHexCString( bytes );
+        BOOST_REQUIRE( hex.size() == 2 * len );
+        std::vector< uint8_t > restored_bytes =
+            libBLS::ThresholdUtils::hexCStringToBytes( hex.c_str() );
+        BOOST_REQUIRE( bytes == restored_bytes );
+
+        // using fixed-size array
+        std::string hex2 = libBLS::ThresholdUtils::bytesToHexCString( bytes2 );
+        std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > restored_bytes2 =
+            libBLS::ThresholdUtils::hexCStringToBytesArray( hex2.c_str() );
+        BOOST_REQUIRE( bytes2 == restored_bytes2 );
+    }
+}
+
+BOOST_AUTO_TEST_CASE( HexCStringToBytesException ) {
+    std::string hexa = "0123456789abcdefABCDEF";
+
+    for ( size_t i = 0; i < 100; ++i ) {
+        // Odd length
+        size_t len = rand() % 1000 + 1;
+        if ( len % 2 == 0 ) {
+            len++;
+        }
+
+        std::string oddHex;
+        for ( size_t j = 0; j < len; ++j ) {
+            oddHex += hexa[rand() % hexa.length()];
+        }
+
+        BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytes( oddHex.c_str() ),
+            libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytesArray( oddHex.c_str() ),
+            libBLS::ThresholdUtils::IncorrectInput );
+
+        // String with invalid hexa characters
+        size_t len2 = rand() % 1000 + 1;
+        std::string invalidHex;
+        for ( size_t j = 0; j < len2; ++j ) {
+            invalidHex += rand() % 256;
+        }
+
+        BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytes( invalidHex.c_str() ),
+            libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytesArray( invalidHex.c_str() ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+
+    // Empty string
+    BOOST_REQUIRE_THROW(
+        libBLS::ThresholdUtils::hexCStringToBytes( "" ), libBLS::ThresholdUtils::IncorrectInput );
+    BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytesArray( "" ),
+        libBLS::ThresholdUtils::IncorrectInput );
+
+    // Empty byte vector
+    BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::bytesToHexCString( std::vector< uint8_t >() ),
+        libBLS::ThresholdUtils::IncorrectInput );
 }
 
 BOOST_AUTO_TEST_SUITE_END()

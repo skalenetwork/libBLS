@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <dkg/dkg.h>
+#include <openssl/rand.h>
 #include <threshold_encryption/threshold_encryption.h>
 
 
@@ -25,4 +26,32 @@ keys generateKeys( size_t t, size_t n ) {
     }
 
     return { commonPublic, commonPrivate, secretKeys, publicKeys };
+}
+
+
+std::string randomHexaString( size_t length ) {
+    const static std::string hexadecimal = "0123456789abcdefABCDEF";
+
+    std::string randomString;
+    randomString.reserve( length );
+    for ( size_t i = 0; i < length; ++i ) {
+        randomString += hexadecimal[rand() % hexadecimal.size()];
+    }
+    return randomString;
+}
+
+
+std::vector< uint8_t > randomByteVec( size_t length ) {
+    std::vector< uint8_t > bytes( length );
+    RAND_bytes( bytes.data(), length );
+    return bytes;
+}
+
+
+void spoilRandomChar( std::string& str, size_t numCharsToSpoil, char charToReplace ) {
+    size_t chars = numCharsToSpoil;
+    while ( chars >= 1 ) {
+        str[rand() % str.length()] = charToReplace;
+        chars--;
+    }
 }

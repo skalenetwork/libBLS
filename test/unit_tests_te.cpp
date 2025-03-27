@@ -188,10 +188,8 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongKey ) {
     libBLS::AES256Key random_aes_key;
     RAND_bytes( random_aes_key.data(), random_aes_key.size() );
 
-    std::vector< uint8_t > plaintext =
-        libBLS::ThresholdUtils::aesDecrypt( encrypted_message, random_aes_key );
-
-    BOOST_REQUIRE( plaintext != message_bytes );
+    BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::aesDecrypt( encrypted_message, random_aes_key ),
+        std::runtime_error );
 }
 
 BOOST_AUTO_TEST_CASE( encryptionWithAESWrongCiphertext ) {
@@ -224,10 +222,9 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongCiphertext ) {
     auto bad_encrypted_message =
         te_instance.encryptWithAES( bad_message_bytes, public_key ).ciphertext->getData();
 
-    std::vector< uint8_t > plaintext_bytes =
-        libBLS::ThresholdUtils::aesDecrypt( bad_encrypted_message, decrypted_aes_key );
-
-    BOOST_REQUIRE( plaintext_bytes != message_bytes );
+    BOOST_REQUIRE_THROW(
+        libBLS::ThresholdUtils::aesDecrypt( bad_encrypted_message, decrypted_aes_key ),
+        std::runtime_error );
 }
 
 BOOST_AUTO_TEST_CASE( EncryptionCipherToBytes ) {

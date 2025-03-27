@@ -39,6 +39,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <threshold_encryption/threshold_encryption.h>
 #include <tools/utils.h>
 
+#include "utils.h"
 #include <dkg/DKGTEWrapper.h>
 #include <openssl/rand.h>
 #include <stdio.h>
@@ -58,7 +59,15 @@ std::string spoilMessage( std::string& message ) {
     return mes;
 }
 
-BOOST_AUTO_TEST_SUITE( ThresholdEncryptionWrappers )
+// initialize before each test
+class TestFixture {
+public:
+    TestFixture() { libBLS::TEBase::initializeIfNecessary(); }
+
+    ~TestFixture() {}
+};
+
+BOOST_FIXTURE_TEST_SUITE( ThresholdEncryptionWrappers, TestFixture )
 
 BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
     for ( size_t i = 0; i < 10; i++ ) {
@@ -108,8 +117,8 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         for ( size_t i = 0; i < num_signed; i++ ) {
             libBLS::TEDecryptionShare share =
                 libBLS::ThresholdEncryption::partialDecrypt( cypher.key, skey_shares[i] );
-            BOOST_REQUIRE( libBLS::ThresholdEncryption::validateDecryptionShare(
-                cypher.key, share, public_key_shares[i] ) );
+            libBLS::ThresholdEncryption::validateDecryptionShare(
+                cypher.key, share, public_key_shares[i] );
             decr_set.addDecryptShare( share );
         }
         // each can only combine the shares once - thus several copies
@@ -119,8 +128,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
 
         libBLS::AES256Key key = libBLS::ThresholdEncryption::combineShares( cypher.key, decr_set );
 
-        BOOST_REQUIRE(
-            libBLS::ThresholdEncryption::validateCombinedDecryption( cypher, key, common_public ) );
+        libBLS::ThresholdEncryption::validateCombinedDecryption( cypher, key, common_public );
 
         std::vector< uint8_t > decipheredMsg = libBLS::ThresholdEncryption::decrypt( cypher, key );
         BOOST_REQUIRE( decipheredMsg == message );
@@ -170,8 +178,9 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
             libBLS::TEDecryptionShare decr_share =
                 libBLS::ThresholdEncryption::partialDecrypt( cypher.key, skey_shares[i] );
             if ( i == ind )
-                BOOST_REQUIRE( !libBLS::ThresholdEncryption::validateDecryptionShare(
-                    cypher.key, decr_share, public_key_shares[i] ) );
+                BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateDecryptionShare(
+                                         cypher.key, decr_share, public_key_shares[i] ),
+                    libBLS::ThresholdUtils::IsNotWellFormed );
             bad_decr_set.addDecryptShare( decr_share );
         }
 
@@ -188,29 +197,23 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
 
         libBLS::Dkg dkg_te( num_signed, num_all );
 
-        std::vector< uint8_t > message;
-        size_t msg_length = 64;
-        for ( size_t length = 0; length < msg_length; ++length ) {
-            message.push_back( rand_gen() % 256 );
-        }
+        std::vector< uint8_t > message = randomByteVec( 64 );
 
-        std::pair< std::shared_ptr< std::vector< std::shared_ptr< libBLS::TEPrivateKeyShare > > >,
-            std::shared_ptr< libBLS::TEPublicKey > >
-            keys = libBLS::TEPrivateKeyShare::generateSampleKeys( num_signed, num_all );
+        keys keys = generateKeys( num_signed, num_all );
 
         libBLS::Ciphertext cypher =
-            libBLS::ThresholdEncryption::encrypt( message, *( keys.second ) );
+            libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
 
         std::vector< libBLS::TEPublicKeyShare > public_key_shares;
         for ( size_t i = 0; i < num_all; i++ ) {
-            public_key_shares.emplace_back( libBLS::TEPublicKeyShare( *keys.first->at( i ) ) );
+            public_key_shares.emplace_back( libBLS::TEPublicKeyShare( keys.secretKeys[i] ) );
         }
 
         for ( size_t i = 0; i < num_all - num_signed; ++i ) {
-            size_t ind4del = rand_gen() % ( *keys.first ).size();
-            auto pos4del = ( *keys.first ).begin();
+            size_t ind4del = rand_gen() % keys.secretKeys.size();
+            auto pos4del = keys.secretKeys.begin();
             advance( pos4del, ind4del );
-            ( *keys.first ).erase( pos4del );
+            keys.secretKeys.erase( pos4del );
             auto pos2 = public_key_shares.begin();
             advance( pos2, ind4del );
             public_key_shares.erase( pos2 );
@@ -219,17 +222,17 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
         libBLS::TEDecryptSet decr_set( num_signed, num_all );
         for ( size_t i = 0; i < num_signed; i++ ) {
             libBLS::TEDecryptionShare decr_share =
-                libBLS::ThresholdEncryption::partialDecrypt( cypher.key, *keys.first->at( i ) );
-            BOOST_REQUIRE( libBLS::ThresholdEncryption::validateDecryptionShare(
-                cypher.key, decr_share, public_key_shares.at( i ) ) );
+                libBLS::ThresholdEncryption::partialDecrypt( cypher.key, keys.secretKeys[i] );
+            libBLS::ThresholdEncryption::validateDecryptionShare(
+                cypher.key, decr_share, public_key_shares.at( i ) );
             decr_set.addDecryptShare( decr_share );
         }
 
         libBLS::AES256Key key_decrypted =
             libBLS::ThresholdEncryption::combineShares( cypher.key, decr_set );
 
-        BOOST_REQUIRE( libBLS::ThresholdEncryption::validateCombinedDecryption(
-            cypher, key_decrypted, *keys.second ) );
+        libBLS::ThresholdEncryption::validateCombinedDecryption(
+            cypher, key_decrypted, keys.commonPublic );
 
         std::vector< uint8_t > decipheredMsg =
             libBLS::ThresholdEncryption::decrypt( cypher, key_decrypted );
@@ -245,34 +248,29 @@ BOOST_AUTO_TEST_CASE( TEFailingValidation ) {
 
         libBLS::Dkg dkg_te( num_signed, num_all );
 
-        std::vector< uint8_t > message;
-        size_t msg_length = 100;
-        for ( size_t length = 0; length < msg_length; ++length ) {
-            message.push_back( rand_gen() % 256 );
-        }
+        std::vector< uint8_t > message = randomByteVec( 100 );
 
-        std::pair< std::shared_ptr< std::vector< std::shared_ptr< libBLS::TEPrivateKeyShare > > >,
-            std::shared_ptr< libBLS::TEPublicKey > >
-            keys = libBLS::TEPrivateKeyShare::generateSampleKeys( num_signed, num_all );
+        keys keys = generateKeys( num_signed, num_all );
 
         libBLS::Ciphertext cypher =
-            libBLS::ThresholdEncryption::encrypt( message, *( keys.second ) );
+            libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
 
         libBLS::CipheredKey bad_key = cypher.key;
         bad_key.V[0] = 0xAA;  // spoil the ciphered key
-        BOOST_REQUIRE( !libBLS::ThresholdEncryption::validateEncryption( bad_key ) );
-        BOOST_REQUIRE( libBLS::ThresholdEncryption::validateEncryption( cypher.key ) );
+        BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateEncryption( bad_key ),
+            libBLS::ThresholdUtils::IsNotWellFormed );
+        libBLS::ThresholdEncryption::validateEncryption( cypher.key );
 
         std::vector< libBLS::TEPublicKeyShare > public_key_shares;
         for ( size_t i = 0; i < num_all; i++ ) {
-            public_key_shares.emplace_back( libBLS::TEPublicKeyShare( *keys.first->at( i ) ) );
+            public_key_shares.emplace_back( libBLS::TEPublicKeyShare( keys.secretKeys[i] ) );
         }
 
         for ( size_t i = 0; i < num_all - num_signed; ++i ) {
-            size_t ind4del = rand_gen() % ( *keys.first ).size();
-            auto pos4del = ( *keys.first ).begin();
+            size_t ind4del = rand_gen() % keys.secretKeys.size();
+            auto pos4del = keys.secretKeys.begin();
             advance( pos4del, ind4del );
-            ( *keys.first ).erase( pos4del );
+            keys.secretKeys.erase( pos4del );
             auto pos2 = public_key_shares.begin();
             advance( pos2, ind4del );
             public_key_shares.erase( pos2 );
@@ -281,9 +279,9 @@ BOOST_AUTO_TEST_CASE( TEFailingValidation ) {
         libBLS::TEDecryptSet decr_set( num_signed, num_all );
         for ( size_t i = 0; i < num_signed; i++ ) {
             libBLS::TEDecryptionShare decr_share =
-                libBLS::ThresholdEncryption::partialDecrypt( cypher.key, *keys.first->at( i ) );
-            BOOST_REQUIRE( libBLS::ThresholdEncryption::validateDecryptionShare(
-                cypher.key, decr_share, public_key_shares.at( i ) ) );
+                libBLS::ThresholdEncryption::partialDecrypt( cypher.key, keys.secretKeys[i] );
+            libBLS::ThresholdEncryption::validateDecryptionShare(
+                cypher.key, decr_share, public_key_shares.at( i ) );
 
             decr_set.addDecryptShare( decr_share );
         }
@@ -292,12 +290,13 @@ BOOST_AUTO_TEST_CASE( TEFailingValidation ) {
 
         // change some bytes from key_decrypted
         libBLS::AES256Key copy = key_decrypted;
-        copy[0] = key_decrypted[0] + 1;
-        BOOST_REQUIRE( !libBLS::ThresholdEncryption::validateCombinedDecryption(
-            cypher, copy, *keys.second ) );
+        copy[0] = ( key_decrypted[0] + 1 ) % 256;
+        BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateCombinedDecryption(
+                                 cypher, copy, keys.commonPublic ),
+            std::runtime_error );
 
-        std::vector< uint8_t > decipheredMsg = libBLS::ThresholdEncryption::decrypt( cypher, copy );
-        BOOST_REQUIRE( decipheredMsg != message );
+        BOOST_REQUIRE_THROW(
+            libBLS::ThresholdEncryption::decrypt( cypher, copy ), std::runtime_error );
     }
 }
 
@@ -326,9 +325,8 @@ BOOST_AUTO_TEST_CASE( WrappersFromString ) {
         size_t signer = rand_gen() % num_all;
         libBLS::TEPrivateKeyShare pr_key_share( test2, signer, num_signed, num_all );
 
-        libBLS::TEPrivateKeyShare pr_key_share_from_str(
-            std::make_shared< std::string >( pr_key_share.toString() ), signer, num_signed,
-            num_all );
+        std::string a( pr_key_share.toStringHex() );
+        libBLS::TEPrivateKeyShare pr_key_share_from_str( a, signer, num_signed, num_all );
         BOOST_REQUIRE(
             pr_key_share.getPrivateKeyRaw() == pr_key_share_from_str.getPrivateKeyRaw() );
 
@@ -405,7 +403,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
 
         libBLS::Ciphertext cypher = libBLS::ThresholdEncryption::encrypt( message, common_public );
 
-        BOOST_REQUIRE( libBLS::ThresholdEncryption::validateEncryption( cypher.key ) );
+        libBLS::ThresholdEncryption::validateEncryption( cypher.key );
 
         for ( size_t i = 0; i < num_all - num_signed; ++i ) {
             size_t ind4del = rand_gen() % secret_shares_all.size();
@@ -422,8 +420,8 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
             libBLS::TEDecryptionShare decr_share =
                 libBLS::ThresholdEncryption::partialDecrypt( cypher.key, skeys[i] );
 
-            BOOST_REQUIRE( libBLS::ThresholdEncryption::validateDecryptionShare(
-                cypher.key, decr_share, pkeys[i] ) );
+            libBLS::ThresholdEncryption::validateDecryptionShare(
+                cypher.key, decr_share, pkeys[i] );
 
             decr_set.addDecryptShare( decr_share );
         }
@@ -431,8 +429,8 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
         libBLS::AES256Key key_deciphered =
             libBLS::ThresholdEncryption::combineShares( cypher.key, decr_set );
 
-        BOOST_REQUIRE( libBLS::ThresholdEncryption::validateCombinedDecryption(
-            cypher, key_deciphered, common_public ) );
+        libBLS::ThresholdEncryption::validateCombinedDecryption(
+            cypher, key_deciphered, common_public );
 
         std::vector< uint8_t > decipheredMsg =
             libBLS::ThresholdEncryption::decrypt( cypher, key_deciphered );
@@ -518,64 +516,6 @@ BOOST_AUTO_TEST_CASE( ExceptionsTest ) {
         libff::alt_bn128_G2 secr_share = libff::alt_bn128_G2::zero();
         BOOST_REQUIRE_THROW( libBLS::TEDecryptionShare decr_share( 1, secr_share ),
             libBLS::ThresholdUtils::IsNotWellFormed );
-    }
-
-    {
-        // null private key share
-        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare( nullptr, 1, num_signed, num_all ),
-            libBLS::ThresholdUtils::IncorrectInput );
-    }
-
-    {
-        // zero private key share
-        std::string zero_str = "0";
-        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare( std::make_shared< std::string >( zero_str ),
-                                 1, num_signed, num_all ),
-            libBLS::ThresholdUtils::ZeroSecretKey );
-    }
-
-    {
-        // zero private key share
-        libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
-        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare( el, 1, num_signed, num_all ),
-            libBLS::ThresholdUtils::ZeroSecretKey );
-    }
-
-    {
-        // wrong signer index
-        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare( libff::alt_bn128_Fr::random_element(),
-                                 num_all + 1, num_signed, num_all ),
-            libBLS::ThresholdUtils::IncorrectInput );
-    }
-
-    {
-        // null public key
-        BOOST_REQUIRE_THROW(
-            libBLS::TEPublicKey(
-                static_cast< std::shared_ptr< std::vector< std::string > > >( nullptr ) ),
-            libBLS::ThresholdUtils::IncorrectInput );
-    }
-
-    {
-        // wrong formated public key
-        std::vector< std::string > pkey_str( { "0", "0", "0", "0" } );
-        BOOST_REQUIRE_THROW(
-            libBLS::TEPublicKey( std::make_shared< std::vector< std::string > >( pkey_str ) ),
-            libBLS::ThresholdUtils::IsNotWellFormed );
-    }
-
-    {
-        // zero public key
-        libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
-        BOOST_REQUIRE_THROW( libBLS::TEPublicKey( libBLS::TEPrivateKey( el ) ),
-            libBLS::ThresholdUtils::IsNotWellFormed );
-    }
-
-    {
-        // zero public key
-        libff::alt_bn128_G2 el = libff::alt_bn128_G2::zero();
-        BOOST_REQUIRE_THROW(
-            libBLS::TEPublicKey pkey( el ), libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -761,5 +701,231 @@ BOOST_AUTO_TEST_CASE( ExceptionsDKGWrappersTest ) {
             libBLS::ThresholdUtils::IncorrectInput );
     }
 }
+
+BOOST_AUTO_TEST_CASE( TEPublicKey ) {
+    // Well constructed inputs
+    for ( size_t i = 0; i < 30; ++i ) {
+        libff::alt_bn128_Fr priv = libff::alt_bn128_Fr::random_element();
+        libff::alt_bn128_G2 pub = priv * libff::alt_bn128_G2::one();
+
+        // consruct from field element
+        libBLS::TEPublicKey pkey( pub );
+        BOOST_REQUIRE( pkey.getPublicKeyRaw() == pub );
+
+        // construct from vec of hexadecimal strings
+        std::vector< std::string > vecOfStrings =
+            libBLS::ThresholdUtils::G2ToString( pub, libBLS::BASE_HEXA );
+        libBLS::TEPublicKey pkey2( vecOfStrings );
+        BOOST_REQUIRE( pkey.getPublicKeyRaw() == pkey2.getPublicKeyRaw() );
+
+        // Convert To and From concatenated string
+        std::string concatenatedPubKey;
+        for ( const auto& str : vecOfStrings ) {
+            concatenatedPubKey += str;
+        }
+        libBLS::TEPublicKey pkey3( concatenatedPubKey );
+        BOOST_REQUIRE( pkey.getPublicKeyRaw() == pkey3.getPublicKeyRaw() );
+        std::string concatenatedPubKey2 = pkey3.toString();
+        libBLS::TEPublicKey pkey4( concatenatedPubKey2 );
+        BOOST_REQUIRE( pkey.getPublicKeyRaw() == pkey4.getPublicKeyRaw() );
+
+        // construct from private key
+        libBLS::TEPrivateKey privKey( priv );
+        libBLS::TEPublicKey pkey5( privKey );
+        BOOST_REQUIRE( pkey.getPublicKeyRaw() == pkey5.getPublicKeyRaw() );
+
+        // convert To and From array of bytes
+        std::array< uint8_t, libBLS::G2_SIZE_BYTES > pubKeyBytes =
+            libBLS::ThresholdUtils::G2ToBytes( pub );
+        libBLS::TEPublicKey pkey6( pubKeyBytes );
+        BOOST_REQUIRE( pkey.getPublicKeyRaw() == pkey6.getPublicKeyRaw() );
+        std::array< uint8_t, libBLS::G2_SIZE_BYTES > bytes6 = pkey6.toBytesArray();
+        BOOST_REQUIRE( pubKeyBytes == bytes6 );
+
+        // convert To and From vec of bytes
+        std::vector< uint8_t > pubKeyBytesVec( pubKeyBytes.begin(), pubKeyBytes.end() );
+        libBLS::TEPublicKey pkey7( pubKeyBytesVec );
+        BOOST_REQUIRE( pkey.getPublicKeyRaw() == pkey7.getPublicKeyRaw() );
+        std::vector< uint8_t > bytes7 = pkey7.toBytesVec();
+        BOOST_REQUIRE( pubKeyBytesVec == bytes7 );
+    }
+}
+
+BOOST_AUTO_TEST_CASE( TEPublicKeyExceptions ) {
+    // From G2
+    {
+        // zero public key
+        libff::alt_bn128_G2 el = libff::alt_bn128_G2::zero();
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPublicKey pkey( el ), libBLS::ThresholdUtils::IsNotWellFormed );
+    }
+
+    // From vec of strings
+    {
+        // Vec has incorrect length
+        std::vector< std::string > pkey_str( { "0", "0", "0" } );
+        BOOST_REQUIRE_THROW( libBLS::TEPublicKey( std::vector< std::string >( pkey_str ) ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+    {
+        // Components are not 64-char length
+        std::vector< std::string > pkey_str( { "0", "0", "0", "0" } );
+        BOOST_REQUIRE_THROW( libBLS::TEPublicKey( std::vector< std::string >( pkey_str ) ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+    {
+        // Components are not hexadecimal
+        std::vector< std::string > pkey_str(
+            { "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
+                randomHexaString( 64 ), randomHexaString( 64 ), randomHexaString( 64 ) } );
+        BOOST_REQUIRE_THROW( libBLS::TEPublicKey( std::vector< std::string >( pkey_str ) ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+
+    // From string
+    {
+        // string has wrong length
+        std::string pkey = "a";
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPublicKey p( pkey ), libBLS::ThresholdUtils::IncorrectInput );
+    }
+    {
+        // not hexa
+        std::string hexa = randomHexaString( 256 );
+        spoilRandomChar( hexa, 1, 'U' );
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPublicKey p( hexa ), libBLS::ThresholdUtils::IncorrectInput );
+    }
+
+    // From byte vector
+    {
+        // wrong size
+        // necessary length + 1
+        std::vector< uint8_t > randBytes = randomByteVec( libBLS::G2_SIZE_BYTES + 1 );
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPublicKey p( randBytes ), libBLS::ThresholdUtils::IncorrectInput );
+        // necessary length - 1
+        std::vector< uint8_t > randBytes2 = randomByteVec( libBLS::G2_SIZE_BYTES - 1 );
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPublicKey p( randBytes2 ), libBLS::ThresholdUtils::IncorrectInput );
+        // length 0
+        std::vector< uint8_t > randBytes3;
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPublicKey p( randBytes3 ), libBLS::ThresholdUtils::IncorrectInput );
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE( TEPrivateKeyShare ) {
+    // Well constructed inputs
+    for ( size_t i = 0; i < 30; ++i ) {
+        libff::alt_bn128_Fr priv = libff::alt_bn128_Fr::random_element();
+        size_t signer = 1;
+        size_t num_signed = 10;
+        size_t num_all = 15;
+
+        // consruct from field element
+        libBLS::TEPrivateKeyShare share( priv, signer, num_signed, num_all );
+        BOOST_REQUIRE( share.getPrivateKeyRaw() == priv );
+
+        // construct from hexadecimal string
+        std::string stringField =
+            libBLS::ThresholdUtils::fieldElementToString( priv, libBLS::BASE_HEXA );
+        libBLS::TEPrivateKeyShare share2( stringField, signer, num_signed, num_all );
+        BOOST_REQUIRE( share.getPrivateKeyRaw() == share2.getPrivateKeyRaw() );
+
+        // convert To and From array of bytes
+        std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > privBytes =
+            libBLS::ThresholdUtils::fieldElementToBytesArray( priv );
+        libBLS::TEPrivateKeyShare share3( privBytes, signer, num_signed, num_all );
+        BOOST_REQUIRE( share.getPrivateKeyRaw() == share3.getPrivateKeyRaw() );
+        std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > bytes3 = share3.toBytesArray();
+        BOOST_REQUIRE( privBytes == bytes3 );
+
+        // convert To and From vec of bytes
+        std::vector< uint8_t > privKeyBytesVec( privBytes.begin(), privBytes.end() );
+        libBLS::TEPrivateKeyShare share4( privKeyBytesVec, signer, num_signed, num_all );
+        BOOST_REQUIRE( share.getPrivateKeyRaw() == share4.getPrivateKeyRaw() );
+        std::vector< uint8_t > bytes4 = share4.toBytesVec();
+        BOOST_REQUIRE( privKeyBytesVec == bytes4 );
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE( TEPrivateKeyShareExceptions ) {
+    // From field element
+    {
+        // zero private key
+        libff::alt_bn128_Fr el = libff::alt_bn128_Fr::zero();
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( el, 1, 10, 15 ),
+            libBLS::ThresholdUtils::ZeroSecretKey );
+    }
+    {
+        // signer index > total signers
+        libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( el, 11, 10, 10 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+    {
+        // required signers > total signers
+        libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( el, 1, 12, 11 ),
+            libBLS::ThresholdUtils::IsNotWellFormed );
+    }
+    {
+        // zero required signer & total signers
+        libff::alt_bn128_Fr el = libff::alt_bn128_Fr::random_element();
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( el, 1, 0, 0 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+
+    // From string
+    {
+        // string has wrong length
+        std::string priv = "a";
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare p( priv, 1, 10, 15 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+    {
+        // not hexa
+        std::string hexa = randomHexaString( 64 );
+        spoilRandomChar( hexa, 1, 'U' );
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare p( hexa, 1, 10, 15 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+    {
+        // signer index > total signers
+        std::string hexa = randomHexaString( 64 );
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( hexa, 11, 10, 10 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+    {
+        // required signers > total signers
+        std::string hexa = randomHexaString( 64 );
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( hexa, 1, 12, 11 ),
+            libBLS::ThresholdUtils::IsNotWellFormed );
+    }
+    {
+        // zero required signer & total signers
+        std::string hexa = randomHexaString( 64 );
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( hexa, 1, 0, 0 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+
+    // From byte vector
+    {
+        // wrong size
+        // necessary length - 1
+        std::vector< uint8_t > randBytes2 =
+            randomByteVec( libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES - 1 );
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare p( randBytes2, 1, 10, 15 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+        // length 0
+        std::vector< uint8_t > randBytes3;
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare p( randBytes3, 1, 10, 15 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+}
+
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -130,6 +130,17 @@ libff::alt_bn128_G2 ThresholdUtils::bytesToG2( std::array< uint8_t, G2_SIZE_BYTE
     return ret;
 }
 
+libff::alt_bn128_G2 ThresholdUtils::bytesToG2( std::vector< uint8_t > bytes ) {
+    if ( bytes.size() != G2_SIZE_BYTES ) {
+        throw ThresholdUtils::IncorrectInput( "Incorrect number of bytes" );
+    }
+
+    std::array< uint8_t, G2_SIZE_BYTES > G2Bytes;
+    std::copy( bytes.begin(), bytes.end(), G2Bytes.begin() );
+
+    return bytesToG2( G2Bytes );
+}
+
 std::array< uint8_t, G1_SIZE_BYTES > ThresholdUtils::G1ToBytes( libff::alt_bn128_G1 elem ) {
     std::array< uint8_t, G1_SIZE_BYTES > G1Bytes;
 
@@ -177,23 +188,22 @@ std::string ThresholdUtils::convertHexToDec( const std::string& hex_str ) {
 
     try {
         if ( mpz_set_str( dec, hex_str.c_str(), 16 ) == -1 ) {
-            mpz_clear( dec );
-            throw IsNotWellFormed( "Bad formatted hex string provided" );
+            throw IncorrectInput( "Bad formatted hex string provided" );
         }
 
         char arr[mpz_sizeinbase( dec, 10 ) + 2];
         char* tmp = mpz_get_str( arr, 10, dec );
         output = tmp;
 
-        mpz_clear( dec );
     } catch ( std::exception& e ) {
         mpz_clear( dec );
-        throw IsNotWellFormed( e.what() );
+        throw IncorrectInput( e.what() );
     } catch ( ... ) {
         mpz_clear( dec );
-        throw IsNotWellFormed( "Exception in convert hex to dec" );
+        throw IncorrectInput( "Exception in convert hex to dec" );
     }
 
+    mpz_clear( dec );
     return output;
 }
 
@@ -465,7 +475,9 @@ void ThresholdUtils::initAES() {
         OpenSSL_add_all_ciphers();
 
         // initialize random number generator (for IVs)
-        RAND_load_file( "/dev/urandom", 32 );
+        if ( RAND_load_file( "/dev/urandom", 32 ) != 32 ) {
+            throw std::runtime_error( "Failed to initialize random number generator" );
+        }
     }
 }
 
@@ -490,14 +502,32 @@ std::vector< uint8_t > ThresholdUtils::aesEncrypt(
     int outlen = 0;
 
     EVP_CIPHER_CTX* e_ctx = EVP_CIPHER_CTX_new();
-    EVP_EncryptInit( e_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.data(), iv );
+    if ( !e_ctx ) {
+        throw std::runtime_error( "Failed to create new EVP_CIPHER_CTX" );
+    }
+
+    if ( EVP_EncryptInit( e_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.data(), iv ) !=
+         1 ) {
+        EVP_CIPHER_CTX_free( e_ctx );
+        throw std::runtime_error( "Failed to initialize encryption" );
+    }
+
     // Cypher data and store in output
-    EVP_EncryptUpdate( e_ctx, &output[offset], &outlen, ( const unsigned char* ) plaintext.data(),
-        plaintext.size() );
+    if ( EVP_EncryptUpdate( e_ctx, &output[offset], &outlen,
+             ( const unsigned char* ) plaintext.data(), plaintext.size() ) != 1 ) {
+        EVP_CIPHER_CTX_free( e_ctx );
+        throw std::runtime_error( "Failed to encrypt data" );
+    }
+
     // offset for the data written
     offset += outlen;
+
     // Finalize encryption - take care of padding
-    EVP_EncryptFinal( e_ctx, &output[offset], &outlen );
+    if ( EVP_EncryptFinal( e_ctx, &output[offset], &outlen ) != 1 ) {
+        EVP_CIPHER_CTX_free( e_ctx );
+        throw std::runtime_error( "Failed to finalize encryption" );
+    }
+
     offset += outlen;
 
     output.resize( offset );
@@ -511,17 +541,38 @@ std::vector< uint8_t > ThresholdUtils::aesDecrypt(
     const std::vector< uint8_t >& ciphertext, const AES256Key& key ) {
     initAES();
 
+    if ( ciphertext.size() < AES_BLOCK_SIZE ) {
+        throw IncorrectInput( "Ciphertext is too short" );
+    }
+
     unsigned char iv[AES_BLOCK_SIZE];
     std::copy( ciphertext.begin(), ciphertext.begin() + AES_BLOCK_SIZE, iv );
-    std::vector< unsigned char > plaintext;
-    plaintext.resize( ciphertext.size(), '\0' );
+    std::vector< unsigned char > plaintext( ciphertext.size() );
 
     int actual_size = 0, final_size = 0;
+
     EVP_CIPHER_CTX* d_ctx = EVP_CIPHER_CTX_new();
-    EVP_DecryptInit( d_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.data(), iv );
-    EVP_DecryptUpdate( d_ctx, &plaintext[0], &actual_size, &ciphertext[AES_BLOCK_SIZE],
-        ciphertext.size() - AES_BLOCK_SIZE );
-    EVP_DecryptFinal( d_ctx, &plaintext[actual_size], &final_size );
+    if ( !d_ctx ) {
+        throw std::runtime_error( "Failed to create new EVP_CIPHER_CTX" );
+    }
+
+    if ( EVP_DecryptInit( d_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.data(), iv ) !=
+         1 ) {
+        EVP_CIPHER_CTX_free( d_ctx );
+        throw std::runtime_error( "Failed to initialize decryption" );
+    }
+
+    if ( EVP_DecryptUpdate( d_ctx, &plaintext[0], &actual_size, &ciphertext[AES_BLOCK_SIZE],
+             ciphertext.size() - AES_BLOCK_SIZE ) != 1 ) {
+        EVP_CIPHER_CTX_free( d_ctx );
+        throw std::runtime_error( "Failed to decrypt data" );
+    }
+
+    if ( EVP_DecryptFinal( d_ctx, &plaintext[actual_size], &final_size ) != 1 ) {
+        EVP_CIPHER_CTX_free( d_ctx );
+        throw std::runtime_error( "Failed to finalize decryption" );
+    }
+
     EVP_CIPHER_CTX_free( d_ctx );
     plaintext.resize( actual_size + final_size, '\0' );
 
@@ -530,6 +581,10 @@ std::vector< uint8_t > ThresholdUtils::aesDecrypt(
 
 
 char* ThresholdUtils::bytesToHexCString( const std::vector< uint8_t >& bytes ) {
+    if ( bytes.size() == 0 ) {
+        throw IncorrectInput( "Byte array is empty." );
+    }
+
     std::stringstream ss;
     ss << std::hex << std::setfill( '0' );
 
@@ -555,19 +610,7 @@ char* ThresholdUtils::bytesToHexCString(
 }
 
 std::vector< uint8_t > ThresholdUtils::hexCStringToBytes( const char* hexStr ) {
-    size_t len = std::strlen( hexStr );
-
-    // Ensure the hex string length is even
-    if ( len % 2 != 0 ) {
-        throw std::invalid_argument( "Hex string length must be even." );
-    }
-
-    // Ensure the string contains only valid hexadecimal characters
-    for ( size_t i = 0; i < len; i++ ) {
-        if ( !std::isxdigit( hexStr[i] ) ) {
-            throw std::invalid_argument( "Hex string contains invalid characters." );
-        }
-    }
+    size_t len = validateHexCString( hexStr );
 
     std::vector< uint8_t > bytes( len / 2 );
 
@@ -577,6 +620,45 @@ std::vector< uint8_t > ThresholdUtils::hexCStringToBytes( const char* hexStr ) {
     }
 
     return bytes;
+}
+
+std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > ThresholdUtils::hexCStringToBytesArray(
+    const char* hexStr ) {
+    size_t characterCountNeeded = MAX_FIELD_ELEMENT_SIZE_BYTES * 2;
+    if ( validateHexCString( hexStr ) < characterCountNeeded ) {
+        throw IncorrectInput( "Hex string length must be at least 64 characters." );
+    }
+
+    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > bytes;
+
+    // Convert hex string to byte array
+    for ( size_t i = 0; i < characterCountNeeded; i += 2 ) {
+        bytes[i / 2] = ( std::stoi( std::string( hexStr + i, 2 ), nullptr, 16 ) );
+    }
+
+    return bytes;
+}
+
+
+size_t ThresholdUtils::validateHexCString( const char* hexStr ) {
+    size_t len = std::strlen( hexStr );
+
+    if ( len == 0 ) {
+        throw IncorrectInput( "Hex string is empty." );
+    }
+
+    // Ensure the hex string length is even
+    if ( len % 2 != 0 ) {
+        throw IncorrectInput( "Hex string length must be even." );
+    }
+
+    // Ensure the string contains only valid hexadecimal characters
+    for ( size_t i = 0; i < len; i++ ) {
+        if ( !std::isxdigit( hexStr[i] ) ) {
+            throw IncorrectInput( "Hex string contains invalid characters." );
+        }
+    }
+    return len;
 }
 
 

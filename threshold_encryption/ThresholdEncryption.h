@@ -60,9 +60,9 @@ public:
      *
      * @param ciphertext The encrypted message
      * @param pkey_share The private key share
-     * @return bool True if the encryption is valid, false otherwise
+     * @throws Exceptions in case validation fails
      */
-    static bool validateEncryption( const CipheredKey& _ciphertext );
+    static void validateEncryption( const CipheredKey& _ciphertext );
 
     /**
      * @brief Generates a decryption share for the given cyphertext (ciphered AES key)
@@ -79,9 +79,9 @@ public:
      *
      * @param cipherText The encrypted message
      * @param decryption_share The decryption share
-     * @return bool True if the decryption share is valid, false otherwise
+     * @throws Exception if the decryption share is not valid
      */
-    static bool validateDecryptionShare( const CipheredKey& _cipherText,
+    static void validateDecryptionShare( const CipheredKey& _cipherText,
         const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey );
 
     /**
@@ -99,9 +99,12 @@ public:
      *
      * @param cyphertext The encrypted message
      * @param message The original message
-     * @return bool True if the message corresponds to the cyphertext. False otherwise.
+     * @throws IncorrectInput If the cyphertext is too short
+     * @throws IsNotWellFormed If the validation fails
+     * @throws runtime_exception If the decryption using the AES fails (should only happen if the
+     * key is tampered)
      */
-    static bool validateCombinedDecryption(
+    static void validateCombinedDecryption(
         const Ciphertext& _cyphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey );
 
     /**

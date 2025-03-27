@@ -25,4 +25,11 @@ struct keys {
 
 keys generateKeys( size_t t, size_t n );
 
+std::string randomHexaString( size_t length );
+
+std::vector< uint8_t > randomByteVec( size_t length );
+
+void spoilRandomChar( std::string& str, size_t numCharsToSpoil, char charToReplace );
+
+
 #endif
