@@ -173,7 +173,6 @@ target_link_libraries(bls PRIVATE ff ${CRYPTOPP_LIBRARY} ${GMPXX_LIBRARY} ${GMP_
 add_subdirectory(threshold_encryption)
 
 if (BUILD_UTILS)
-
 	# Helper function for utils setup
 	function(add_bls_tool name source)
 		add_executable(${name} ${source})

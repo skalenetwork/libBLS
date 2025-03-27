@@ -24,7 +24,7 @@ jobs:
 
     - uses: actions/setup-node@v1
       with:
-        node-version: '14.x'
+        node-version: '18.x'
         registry-url: 'https://registry.npmjs.org'
 
     - name: Update apt
@@ -87,10 +87,10 @@ jobs:
         cd ../..
         mkdir -p build_em && cd build_em
         export LIBRARIES_ROOT=../deps/deps_inst/x86_or_x64/lib
-        emcmake cmake -DEMSCRIPTEN=ON .. -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a
+        emcmake cmake -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a ..
         emmake make -j$(nproc)
         cd ..
-        cp build_em/threshold_encryption/encrypt.js node/
+        cp build_em/threshold_encryption/encrypt.* node/
     
     - name: Calculate version
       run: |
@@ -110,7 +110,10 @@ jobs:
       if: github.ref != 'refs/heads/stable'
       run: |
         cd node
-        npm version --no-git-tag-version ${{ env.VERSION }}
+        export PACKAGE_NAME=$(jq -r '.name' package.json)
+        export JS_LIBRARY_BASE_VERSION="$(npm run --silent version)"    
+        export JS_LIBRARY_VERSION=$(bash ./../scripts/calculate_version_npm.sh $PACKAGE_NAME $JS_LIBRARY_BASE_VERSION $BRANCH)
+        npm version $JS_LIBRARY_VERSION --no-git-tag-version
         npm publish --access public --tag ${{ env.BRANCH }}
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
