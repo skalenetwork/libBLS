@@ -21,11 +21,11 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 @date 2021
 */
 
-#include <threshold_encryption.h>
-#include <ThresholdEncryption.h>
+#include <TEDecryptSet.h>
 #include <TEPrivateKeyShare.h>
 #include <TEPublicKeyShare.h>
-#include <TEDecryptSet.h>
+#include <ThresholdEncryption.h>
+#include <threshold_encryption.h>
 #include <tools/utils.h>
 #include <fstream>
 
@@ -56,22 +56,28 @@ int main() {
     libBLS::TEPrivateKeyShare privateKeyShare( secretKey, 0, 1, 1 );
     libBLS::TEPublicKeyShare publicKeyShare( privateKeyShare );
 
-    libBLS::TEDecryptionShare decryptionShare = libBLS::ThresholdEncryption::partialDecrypt( aesKeyEncrypted, privateKeyShare );
+    libBLS::TEDecryptionShare decryptionShare =
+        libBLS::ThresholdEncryption::partialDecrypt( aesKeyEncrypted, privateKeyShare );
 
-    libBLS::ThresholdEncryption::validateDecryptionShare( aesKeyEncrypted, decryptionShare, publicKeyShare );
+    libBLS::ThresholdEncryption::validateDecryptionShare(
+        aesKeyEncrypted, decryptionShare, publicKeyShare );
 
     libBLS::TEDecryptSet decryptSet( 1, 1 );
     decryptSet.addDecryptShare( decryptionShare );
 
-    auto aesKeyDecrypted = libBLS::ThresholdEncryption::combineShares( aesKeyEncrypted, decryptSet );
+    auto aesKeyDecrypted =
+        libBLS::ThresholdEncryption::combineShares( aesKeyEncrypted, decryptSet );
 
     libBLS::TEPublicKey publicKey( publicKeyShare.getPublicKeyRaw() );
 
-    libBLS::ThresholdEncryption::validateCombinedDecryption( ciphertext, aesKeyDecrypted, publicKey );
+    libBLS::ThresholdEncryption::validateCombinedDecryption(
+        ciphertext, aesKeyDecrypted, publicKey );
 
-    auto decryptedMessageBytes = libBLS::ThresholdEncryption::decrypt( ciphertext, aesKeyDecrypted );
+    auto decryptedMessageBytes =
+        libBLS::ThresholdEncryption::decrypt( ciphertext, aesKeyDecrypted );
 
-    auto plaintext = std::string( libBLS::ThresholdUtils::bytesToHexCString( decryptedMessageBytes ) );
+    auto plaintext =
+        std::string( libBLS::ThresholdUtils::bytesToHexCString( decryptedMessageBytes ) );
 
     std::ifstream messageFile;
     messageFile.open( "message.txt" );
