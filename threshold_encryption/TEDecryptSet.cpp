@@ -16,9 +16,9 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
-@file TEPublicKey.h
-@author Sveta Rogova
-@date 2019
+@file TEDecryptSet.h
+@author Sidnei Teixeira
+@date 2025
 */
 
 #include <threshold_encryption/TEBase.h>
@@ -33,6 +33,8 @@ TEDecryptSet::TEDecryptSet( size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), mergeStatus( MergeStatus::NOT_ENOUGH_SHARES ) {}
 
 void TEDecryptSet::addDecryptShare( const TEDecryptionShare& _share ) {
+    _share.validate();
+
     if ( mergeStatus == MergeStatus::ALREADY_MERGED ) {
         throw ThresholdUtils::IncorrectInput( "Already Merged" );
     }

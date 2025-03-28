@@ -37,17 +37,23 @@
 
 BOOST_AUTO_TEST_SUITE( ThresholdEncryption )
 
-BOOST_AUTO_TEST_CASE( CipheredKeyToAndFromBytes ) {
+BOOST_AUTO_TEST_CASE( CipheredKey ) {
     libBLS::TEBase::initializeIfNecessary();
 
-    for ( size_t i = 0; i < 1000; i++ ) {
+    for ( size_t i = 0; i < 20; i++ ) {
         // random key data
         libff::alt_bn128_G2 u = libff::alt_bn128_G2::random_element();
         libBLS::AES256Key ciphered_key;
         RAND_bytes( ciphered_key.data(), ciphered_key.size() );
         libff::alt_bn128_G1 w = libff::alt_bn128_G1::random_element();
-        // convert to bytes & back
+        // check constructor
         libBLS::CipheredKey key = libBLS::CipheredKey( u, ciphered_key, w );
+
+        BOOST_REQUIRE( key.U == u );
+        BOOST_REQUIRE( key.V == ciphered_key );
+        BOOST_REQUIRE( key.W == w );
+
+        // convert to bytes & back
         std::array< uint8_t, libBLS::CipheredKey::CIPHERED_KEY_SIZE_BYTES > bytes = key.toBytes();
         libBLS::CipheredKey restored_key = libBLS::CipheredKey::fromBytes( bytes );
 
@@ -55,10 +61,39 @@ BOOST_AUTO_TEST_CASE( CipheredKeyToAndFromBytes ) {
     }
 }
 
-BOOST_AUTO_TEST_CASE( CiphertextToAndFromBytes ) {
+BOOST_AUTO_TEST_CASE( CipheredKeyException ) {
     libBLS::TEBase::initializeIfNecessary();
 
-    for ( size_t i = 0; i < 1000; i++ ) {
+    // zero u element
+    libff::alt_bn128_G2 u = libff::alt_bn128_G2::zero();
+    libBLS::AES256Key ciphered_key;
+    RAND_bytes( ciphered_key.data(), ciphered_key.size() );
+    libff::alt_bn128_G1 w = libff::alt_bn128_G1::random_element();
+    BOOST_REQUIRE_THROW( libBLS::CipheredKey( u, ciphered_key, w ), 
+        libBLS::ThresholdUtils::IncorrectInput );
+
+    // zero w element
+    u = libff::alt_bn128_G2::random_element();
+    w = libff::alt_bn128_G1::zero();
+    BOOST_REQUIRE_THROW( libBLS::CipheredKey( u, ciphered_key, w ), 
+        libBLS::ThresholdUtils::IncorrectInput );
+
+    // correct ciphered key, but changed U mid-execution
+    w = libff::alt_bn128_G1::random_element();
+    libBLS::CipheredKey key = libBLS::CipheredKey( u, ciphered_key, w );
+    key.U = libff::alt_bn128_G2::zero();
+    BOOST_REQUIRE_THROW( key.validate(), libBLS::ThresholdUtils::IncorrectInput );
+
+    // correct ciphered key, but changed W mid-execution
+    key.U = libff::alt_bn128_G2::random_element();
+    key.W = libff::alt_bn128_G1::zero();
+    BOOST_REQUIRE_THROW( key.validate(), libBLS::ThresholdUtils::IncorrectInput );
+}
+
+BOOST_AUTO_TEST_CASE( Ciphertext ) {
+    libBLS::TEBase::initializeIfNecessary();
+
+    for ( size_t i = 0; i < 20; i++ ) {
         // random key data
         libff::alt_bn128_G2 u = libff::alt_bn128_G2::random_element();
         libBLS::AES256Key ciphered_key;
@@ -69,7 +104,7 @@ BOOST_AUTO_TEST_CASE( CiphertextToAndFromBytes ) {
 
         // random 1000 bytes
         std::vector< uint8_t > data;
-        data.resize( rand() % 1000 + 1 );  // must be at least 1 byte
+        data.resize( rand() % 1000 + libBLS::RANDOM_SECRET_SIZE_BYTES );  // must be at least rand secret bytes
         RAND_bytes( data.data(), data.size() );
 
         libBLS::Ciphertext ciphertext = libBLS::Ciphertext( key, data );
@@ -77,10 +112,37 @@ BOOST_AUTO_TEST_CASE( CiphertextToAndFromBytes ) {
         libBLS::Ciphertext restoredCiphertext = libBLS::Ciphertext::fromBytes( bytes );
 
         BOOST_REQUIRE( ciphertext == restoredCiphertext );
+
+        // getPublicDecryptionValue
+        auto uCopy = u;
+        uCopy.to_affine_coordinates();
+        auto U = libBLS::ThresholdUtils::G2ToString( uCopy, libBLS::BASE_HEXA );
+        std::string concatenated;
+        for ( size_t j = 0; j < U.size(); ++j ) {
+            concatenated += U[j];
+        }
+        BOOST_REQUIRE( ciphertext.getPublicDecryptionValue() == concatenated );
     }
 }
 
-BOOST_AUTO_TEST_CASE( CiphertextFromBytesException ) {
+BOOST_AUTO_TEST_CASE( CiphertextException ) {
+
+    // constructor
+    // data is too short
+    auto key = libBLS::CipheredKey::random();
+    std::vector< uint8_t > data;
+    BOOST_REQUIRE_THROW( libBLS::Ciphertext( key, data ), libBLS::ThresholdUtils::IsNotWellFormed );
+
+    // still too short - should have at least +1 byte of actual data
+    data.resize( libBLS::RANDOM_SECRET_SIZE_BYTES );
+    BOOST_REQUIRE_THROW( libBLS::Ciphertext( key, data ), libBLS::ThresholdUtils::IsNotWellFormed );
+    
+    // getPublicDecryptionValue - U element from key is not well formed
+    libBLS::Ciphertext ciphertext;
+    ciphertext.key.U = libff::alt_bn128_G2::zero();
+    BOOST_REQUIRE_THROW( ciphertext.getPublicDecryptionValue(), libBLS::ThresholdUtils::IncorrectInput );
+    
+    // from bytes
     // bytes only allow for key bytes. No data
     std::vector< uint8_t > bytes( libBLS::CipheredKey::CIPHERED_KEY_SIZE_BYTES );
     RAND_bytes( bytes.data(), bytes.size() );
@@ -93,12 +155,12 @@ BOOST_AUTO_TEST_CASE( CiphertextFromBytesException ) {
     BOOST_REQUIRE_THROW(
         libBLS::Ciphertext::fromBytes( bytes2 ), libBLS::ThresholdUtils::IncorrectInput );
 
-    // bytes allow at least 1 byte of data
-    std::vector< uint8_t > bytes3( libBLS::CipheredKey::CIPHERED_KEY_SIZE_BYTES + 1 );
+    // bytes allow for ciphered key + random secret, but no data
+    std::vector< uint8_t > bytes3( libBLS::RANDOM_SECRET_SIZE_BYTES );
     RAND_bytes( bytes3.data(), bytes3.size() );
     libBLS::Ciphertext cipher;
-    BOOST_REQUIRE_NO_THROW( cipher = libBLS::Ciphertext::fromBytes( bytes3 ) );
-    BOOST_REQUIRE( cipher.getData().size() == 1 );
+    BOOST_REQUIRE_THROW(
+        libBLS::Ciphertext::fromBytes( bytes2 ), libBLS::ThresholdUtils::IncorrectInput );
 }
 
 BOOST_AUTO_TEST_CASE( SimpleEncryption ) {

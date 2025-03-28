@@ -62,7 +62,11 @@ public:
      * with all 4 components concatenated and encoded in hexadecimal.AES256Key
      * String size is always 256 characters long.
      */
-    std::string toString();
+    std::string toString() const;
+
+    inline void validate() const {
+      ThresholdUtils::validateG2( publicKey );
+    }
 
     std::array< uint8_t, G2_SIZE_BYTES > toBytesArray() const;
 

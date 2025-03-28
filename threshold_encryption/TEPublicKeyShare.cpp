@@ -56,18 +56,23 @@ TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > 
     publicKey.Y.c0 = libff::alt_bn128_Fq( _keyStrPtr->at( 2 ).c_str() );
     publicKey.Y.c1 = libff::alt_bn128_Fq( _keyStrPtr->at( 3 ).c_str() );
 
-    if ( publicKey.is_zero() || !publicKey.is_well_formed() ) {
-        throw ThresholdUtils::IsNotWellFormed( "corrupted string or zero public key share" );
-    }
+    ThresholdUtils::validateG2( publicKey );
 }
 
 TEPublicKeyShare::TEPublicKeyShare( TEPrivateKeyShare _pKey )
     : TEBase( _pKey.getRequiredSigners(), _pKey.getTotalSigners() ) {
+    _pKey.validate();
     publicKey = _pKey.getPrivateKeyRaw() * libff::alt_bn128_G2::one();
     signerIndex = _pKey.getSignerIndex();
 }
 
-std::shared_ptr< std::vector< std::string > > TEPublicKeyShare::toString() {
+TEPublicKeyShare::TEPublicKeyShare( libff::alt_bn128_G2 _point, size_t _signerIndex,
+    size_t _requiredSigners, size_t _totalSigners )
+    : TEBase( _requiredSigners, _totalSigners ), publicKey( _point ), signerIndex( _signerIndex ) {
+    ThresholdUtils::validateG2( publicKey );
+}
+
+std::shared_ptr< std::vector< std::string > > TEPublicKeyShare::toString() const {
     return std::make_shared< std::vector< std::string > >(
         ThresholdUtils::G2ToString( publicKey ) );
 }

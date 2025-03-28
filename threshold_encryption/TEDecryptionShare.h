@@ -16,9 +16,9 @@
   You should have received a copy of the GNU Affero General Public License
   along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
-  @file TEPublicKey.h
-  @author Sveta Rogova
-  @date 2019
+  @file TEDecryptionShare.h
+  @author Sidnei Teixeira
+  @date 2025
 */
 
 #ifndef LIBBLS_TEDECRYPTIONSHARE_H
@@ -60,7 +60,7 @@ public:
     /**
      * Basic validation on the share (G2 point)
      */
-    bool validate() const;
+    void validate() const;
 
     /**
      * @brief Converts the decryption share to a pair
