@@ -23,11 +23,11 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include <openssl/rand.h>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <openssl/rand.h>
 
 #include <third_party/cryptlite/sha256.h>
 
@@ -56,7 +56,6 @@ struct CipheredKey {
     libff::alt_bn128_G1 W;
 
 public:
-
     CipheredKey() = default;
     CipheredKey( libff::alt_bn128_G2 _U, AES256Key _V, libff::alt_bn128_G1 _W )
         : U( _U ), V( std::move( _V ) ), W( _W ) {
@@ -247,7 +246,8 @@ public:
 
         // actual data without random secret must be at least 1 byte long
         if ( data->size() <= RANDOM_SECRET_SIZE_BYTES ) {
-            throw ThresholdUtils::IsNotWellFormed( "Cyphertext data is too short to hold random secret and at least 1 byte of data." );
+            throw ThresholdUtils::IsNotWellFormed(
+                "Cyphertext data is too short to hold random secret and at least 1 byte of data." );
         }
     }
 };

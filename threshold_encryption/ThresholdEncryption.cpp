@@ -35,8 +35,8 @@ Ciphertext ThresholdEncryption::encrypt(
 
     _commonPublic.validate();
 
-    if (_message.empty()) {
-        throw ThresholdUtils::IncorrectInput("Empty message");
+    if ( _message.empty() ) {
+        throw ThresholdUtils::IncorrectInput( "Empty message" );
     }
 
     CipherResult cypher = TE::encryptWithAES( _message, _commonPublic.getPublicKeyRaw() );
@@ -77,7 +77,7 @@ TEDecryptionShare ThresholdEncryption::partialDecrypt(
 
     _ciphertext.validate();
     _pkeyShare.validate();
-    
+
     // ciphertext is validated in getDecryptionShare
     libff::alt_bn128_G2 decryption_share =
         TE::getDecryptionShare( _ciphertext, _pkeyShare.getPrivateKeyRaw() );
@@ -133,7 +133,7 @@ void ThresholdEncryption::validateCombinedDecryption(
     TEBase::initializeIfNecessary();
 
     _cyphertext.validate();
-    
+
     // decipher & validate plaintext
     std::vector< uint8_t > deciphered_message = decipherAESAndValidate( _cyphertext, _aesKey );
 
@@ -169,14 +169,14 @@ std::vector< uint8_t > ThresholdEncryption::decrypt(
 
     // decipher & validate plaintext
     std::vector< uint8_t > data = decipherAESAndValidate( _cyphertext, _aesKey );
-    
+
     // safe - size of decipheredMessage was already validated
     data.resize( data.size() - RANDOM_SECRET_SIZE_BYTES );
     return data;
 }
 
 std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
-    const Ciphertext& _cyphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey) {
+    const Ciphertext& _cyphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
     _cyphertext.validate();
 
     // decipher & validate plaintext
@@ -209,7 +209,8 @@ std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
     return decipheredMessage;
 }
 
-std::vector< uint8_t > ThresholdEncryption::decipherAESAndValidate( const Ciphertext& _ciphertext, const AES256Key& key ) {
+std::vector< uint8_t > ThresholdEncryption::decipherAESAndValidate(
+    const Ciphertext& _ciphertext, const AES256Key& key ) {
     std::vector< uint8_t > data = ThresholdUtils::aesDecrypt( _ciphertext.getData(), key );
 
     // validate output
@@ -223,8 +224,10 @@ std::vector< uint8_t > ThresholdEncryption::decipherAESAndValidate( const Cipher
             "Cyphertext should be at least as big as plaintext message" );
     }
 
-    if (plainSize <= RANDOM_SECRET_SIZE_BYTES) {
-        throw ThresholdUtils::IncorrectInput( "Message decription size is too short - cannot include random secret + at least 1 byte of data" );
+    if ( plainSize <= RANDOM_SECRET_SIZE_BYTES ) {
+        throw ThresholdUtils::IncorrectInput(
+            "Message decription size is too short - cannot include random secret + at least 1 byte "
+            "of data" );
     }
 
     return data;

@@ -1,8 +1,8 @@
 #include "utils.h"
 #include <dkg/dkg.h>
 #include <openssl/rand.h>
-#include <threshold_encryption/threshold_encryption.h>
 #include <threshold_encryption/ThresholdEncryption.h>
+#include <threshold_encryption/threshold_encryption.h>
 
 
 keys generateKeys( size_t t, size_t n ) {
@@ -64,5 +64,5 @@ libBLS::Ciphertext generateRandomCiphertext( size_t dataSize, keys& keys ) {
 
 void tamperCipheredKeyV( libBLS::CipheredKey& key ) {
     size_t randomIdxToTamper = rand() % key.V.size();
-    key.V[randomIdxToTamper] = (key.V[randomIdxToTamper] + 1) % 256;
+    key.V[randomIdxToTamper] = ( key.V[randomIdxToTamper] + 1 ) % 256;
 }

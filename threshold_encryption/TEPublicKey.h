@@ -64,9 +64,7 @@ public:
      */
     std::string toString() const;
 
-    inline void validate() const {
-      ThresholdUtils::validateG2( publicKey );
-    }
+    inline void validate() const { ThresholdUtils::validateG2( publicKey ); }
 
     std::array< uint8_t, G2_SIZE_BYTES > toBytesArray() const;
 

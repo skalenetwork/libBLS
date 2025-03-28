@@ -42,12 +42,10 @@ public:
 
     TEPublicKeyShare( TEPrivateKeyShare _pKey );
 
-    TEPublicKeyShare( libff::alt_bn128_G2 _point, size_t signerIndex,
-        size_t _requiredSigners, size_t _totalSigners );
+    TEPublicKeyShare( libff::alt_bn128_G2 _point, size_t signerIndex, size_t _requiredSigners,
+        size_t _totalSigners );
 
-    inline void validate() const {
-        ThresholdUtils::validateG2( publicKey );
-    }
+    inline void validate() const { ThresholdUtils::validateG2( publicKey ); }
 
     std::shared_ptr< std::vector< std::string > > toString() const;
 

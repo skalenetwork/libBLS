@@ -66,8 +66,8 @@ TEPublicKeyShare::TEPublicKeyShare( TEPrivateKeyShare _pKey )
     signerIndex = _pKey.getSignerIndex();
 }
 
-TEPublicKeyShare::TEPublicKeyShare( libff::alt_bn128_G2 _point, size_t _signerIndex,
-    size_t _requiredSigners, size_t _totalSigners )
+TEPublicKeyShare::TEPublicKeyShare(
+    libff::alt_bn128_G2 _point, size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), publicKey( _point ), signerIndex( _signerIndex ) {
     ThresholdUtils::validateG2( publicKey );
 }

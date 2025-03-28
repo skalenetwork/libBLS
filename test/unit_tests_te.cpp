@@ -69,14 +69,14 @@ BOOST_AUTO_TEST_CASE( CipheredKeyException ) {
     libBLS::AES256Key ciphered_key;
     RAND_bytes( ciphered_key.data(), ciphered_key.size() );
     libff::alt_bn128_G1 w = libff::alt_bn128_G1::random_element();
-    BOOST_REQUIRE_THROW( libBLS::CipheredKey( u, ciphered_key, w ), 
-        libBLS::ThresholdUtils::IncorrectInput );
+    BOOST_REQUIRE_THROW(
+        libBLS::CipheredKey( u, ciphered_key, w ), libBLS::ThresholdUtils::IncorrectInput );
 
     // zero w element
     u = libff::alt_bn128_G2::random_element();
     w = libff::alt_bn128_G1::zero();
-    BOOST_REQUIRE_THROW( libBLS::CipheredKey( u, ciphered_key, w ), 
-        libBLS::ThresholdUtils::IncorrectInput );
+    BOOST_REQUIRE_THROW(
+        libBLS::CipheredKey( u, ciphered_key, w ), libBLS::ThresholdUtils::IncorrectInput );
 
     // correct ciphered key, but changed U mid-execution
     w = libff::alt_bn128_G1::random_element();
@@ -104,7 +104,8 @@ BOOST_AUTO_TEST_CASE( Ciphertext ) {
 
         // random 1000 bytes
         std::vector< uint8_t > data;
-        data.resize( rand() % 1000 + libBLS::RANDOM_SECRET_SIZE_BYTES );  // must be at least rand secret bytes
+        data.resize( rand() % 1000 + libBLS::RANDOM_SECRET_SIZE_BYTES );  // must be at least rand
+                                                                          // secret bytes
         RAND_bytes( data.data(), data.size() );
 
         libBLS::Ciphertext ciphertext = libBLS::Ciphertext( key, data );
@@ -126,7 +127,6 @@ BOOST_AUTO_TEST_CASE( Ciphertext ) {
 }
 
 BOOST_AUTO_TEST_CASE( CiphertextException ) {
-
     // constructor
     // data is too short
     auto key = libBLS::CipheredKey::random();
@@ -136,12 +136,13 @@ BOOST_AUTO_TEST_CASE( CiphertextException ) {
     // still too short - should have at least +1 byte of actual data
     data.resize( libBLS::RANDOM_SECRET_SIZE_BYTES );
     BOOST_REQUIRE_THROW( libBLS::Ciphertext( key, data ), libBLS::ThresholdUtils::IsNotWellFormed );
-    
+
     // getPublicDecryptionValue - U element from key is not well formed
     libBLS::Ciphertext ciphertext;
     ciphertext.key.U = libff::alt_bn128_G2::zero();
-    BOOST_REQUIRE_THROW( ciphertext.getPublicDecryptionValue(), libBLS::ThresholdUtils::IncorrectInput );
-    
+    BOOST_REQUIRE_THROW(
+        ciphertext.getPublicDecryptionValue(), libBLS::ThresholdUtils::IncorrectInput );
+
     // from bytes
     // bytes only allow for key bytes. No data
     std::vector< uint8_t > bytes( libBLS::CipheredKey::CIPHERED_KEY_SIZE_BYTES );

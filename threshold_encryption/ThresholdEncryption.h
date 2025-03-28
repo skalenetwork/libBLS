@@ -49,7 +49,7 @@ public:
      * This AES key is then encrypted using the common public key from threshold encryption.
      *
      * @param message The message to be encrypted
-     * @param common_public The common public key used for encryption. 
+     * @param common_public The common public key used for encryption.
      * Public key is validated on constructor. Thus it is assumed to be always valid.
      * @return Ciphertext The encrypted message
      */
@@ -127,7 +127,7 @@ public:
      * but avoids deciphering twice - more performant alternative
      */
     static std::vector< uint8_t > validateAndDecrypt(
-            const Ciphertext& _cyphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey);
+        const Ciphertext& _cyphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey );
 
 
     static inline std::vector< uint8_t > mergeRandomSecretWithMessage(
@@ -163,11 +163,11 @@ private:
     /**
      * @brief Deciphers the AES key and validates the message
      * Checks for deciphered message length
-     * 
+     *
      * Helper function
      */
-    static std::vector< uint8_t > decipherAESAndValidate( const Ciphertext& _ciphertext, const AES256Key& key );
-
+    static std::vector< uint8_t > decipherAESAndValidate(
+        const Ciphertext& _ciphertext, const AES256Key& key );
 };
 
 }  // namespace libBLS

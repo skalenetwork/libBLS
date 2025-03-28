@@ -88,9 +88,9 @@ public:
 
     static void initAES();
 
-    static void validateG1(const libff::alt_bn128_G1& point);
+    static void validateG1( const libff::alt_bn128_G1& point );
 
-    static void validateG2(const libff::alt_bn128_G2& point);
+    static void validateG2( const libff::alt_bn128_G2& point );
 
     static void checkSigners( size_t _requiredSigners, size_t _totalSigners );
 
