@@ -49,7 +49,8 @@ public:
      * This AES key is then encrypted using the common public key from threshold encryption.
      *
      * @param message The message to be encrypted
-     * @param common_public The common public key used for encryption
+     * @param common_public The common public key used for encryption.
+     * Public key is validated on constructor. Thus it is assumed to be always valid.
      * @return Ciphertext The encrypted message
      */
     static Ciphertext encrypt(
@@ -88,9 +89,12 @@ public:
      * @brief Combines decryption shares to reconstruct the original AES key.
      * It combines all shares to derive the AES key.
      *
-     * @param cyphertext The encrypted AES key + encrypted message
+     * @param cyphertext The encrypted AES key
      * @param decryption_set The decryption set containing the decryption shares
-     * @return std::string The deciphered AES key in hexadecimal format
+     * @return The deciphered AES key in byte array
+     * @throws In case ciphertext is corrupted, or decription set is not ready to be merged
+     * @note Does not throw error in case there is a corrupted share. But the output
+     * will not be the correct deciphered key, since one of the shares is corrupted.
      */
     static AES256Key combineShares( const CipheredKey& _cypheredKey, TEDecryptSet& _decryptionSet );
 
@@ -116,6 +120,14 @@ public:
      */
     static std::vector< uint8_t > decrypt(
         const Ciphertext& _cyphertext, const AES256Key& _aesKey );
+
+    /**
+     * @brief Validates the cyphertext and decrypts the message
+     * Same as calling `validateCombinedDecryption` and `decrypt` in sequence,
+     * but avoids deciphering twice - more performant alternative
+     */
+    static std::vector< uint8_t > validateAndDecrypt(
+        const Ciphertext& _cyphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey );
 
 
     static inline std::vector< uint8_t > mergeRandomSecretWithMessage(
@@ -147,6 +159,15 @@ private:
 
         return randSecret;
     }
+
+    /**
+     * @brief Deciphers the AES key and validates the message
+     * Checks for deciphered message length
+     *
+     * Helper function
+     */
+    static std::vector< uint8_t > decipherAESAndValidate(
+        const Ciphertext& _ciphertext, const AES256Key& key );
 };
 
 }  // namespace libBLS

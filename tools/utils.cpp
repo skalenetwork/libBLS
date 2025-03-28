@@ -661,5 +661,23 @@ size_t ThresholdUtils::validateHexCString( const char* hexStr ) {
     return len;
 }
 
+void ThresholdUtils::validateG1( const libff::alt_bn128_G1& point ) {
+    if ( point.is_zero() ) {
+        throw IncorrectInput( "Point is zero" );
+    }
+    if ( !point.is_well_formed() ) {
+        throw IncorrectInput( "Point is not well formed" );
+    }
+}
+
+void ThresholdUtils::validateG2( const libff::alt_bn128_G2& point ) {
+    if ( point.is_zero() ) {
+        throw IncorrectInput( "Point is zero" );
+    }
+    if ( !point.is_well_formed() ) {
+        throw IncorrectInput( "Point is not well formed" );
+    }
+}
+
 
 }  // namespace libBLS

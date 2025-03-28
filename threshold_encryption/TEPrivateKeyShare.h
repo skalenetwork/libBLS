@@ -55,6 +55,13 @@ public:
 
     std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > toBytesArray() const;
 
+    inline void validate() const {
+        if ( privateKey.is_zero() ) {
+            throw ThresholdUtils::IsNotWellFormed(
+                "Zero private key share, with signer index " + signerIndex );
+        }
+    }
+
     std::string toString() const;
 
     std::string toStringHex() const;

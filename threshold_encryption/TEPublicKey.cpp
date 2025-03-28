@@ -56,12 +56,7 @@ TEPublicKey::TEPublicKey( const std::vector< std::string >& _keyStrPtr ) {
     publicKey.Y.c1 =
         libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[3] );
 
-    if ( publicKey.is_zero() ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "G2 element is zero" );
-    }
-    if ( !publicKey.is_well_formed() ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "G2 element is not well formed" );
-    }
+    ThresholdUtils::validateG2( publicKey );
 }
 
 TEPublicKey::TEPublicKey( const std::string& _keyStr )
@@ -76,9 +71,7 @@ TEPublicKey::TEPublicKey( const TEPrivateKey& _commonPrivate ) {
 }
 
 TEPublicKey::TEPublicKey( const libff::alt_bn128_G2& _pkey ) : publicKey( _pkey ) {
-    if ( _pkey.is_zero() || !_pkey.is_well_formed() ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "zero or corrupted public key" );
-    }
+    ThresholdUtils::validateG2( publicKey );
 }
 
 TEPublicKey::TEPublicKey( const std::array< uint8_t, G2_SIZE_BYTES >& _keyBytes )
@@ -87,7 +80,7 @@ TEPublicKey::TEPublicKey( const std::array< uint8_t, G2_SIZE_BYTES >& _keyBytes 
 TEPublicKey::TEPublicKey( const std::vector< uint8_t >& _keyBytes )
     : TEPublicKey( ThresholdUtils::bytesToG2( _keyBytes ) ) {}
 
-std::string TEPublicKey::toString() {
+std::string TEPublicKey::toString() const {
     std::vector< std::string > res = ThresholdUtils::G2ToString( publicKey, libBLS::BASE_HEXA );
     std::string concatenated;
     // Nbr of hexa digits = 2 x byte size

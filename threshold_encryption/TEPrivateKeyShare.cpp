@@ -70,6 +70,7 @@ TEPrivateKeyShare::TEPrivateKeyShare(
           libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( _bytes ),
           _signerIndex, _requiredSigners, _totalSigners ) {}
 
+
 std::string TEPrivateKeyShare::toString() const {
     return ThresholdUtils::fieldElementToString( privateKey, BASE_DEC );
 }

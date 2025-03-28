@@ -47,14 +47,6 @@ TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {
 
 TE::~TE() {}
 
-void TE::checkCypher( const CipheredKey& cyphertext ) {
-    if ( cyphertext.U.is_zero() || cyphertext.W.is_zero() )
-        throw ThresholdUtils::IncorrectInput( "zero element in cyphertext" );
-
-    if ( cyphertext.V.size() != AES_256_KEY_SIZE_BYTES )
-        throw ThresholdUtils::IncorrectInput( "wrong string length in cyphertext" );
-}
-
 std::string TE::Hash(
     const libff::alt_bn128_G2& Y, std::string ( *hash_func )( const std::string& str ) ) {
     auto vectorCoordinates = ThresholdUtils::G2ToString( Y );
@@ -223,7 +215,8 @@ std::pair< std::string, RandSecret > TE::encryptMessage(
  */
 libff::alt_bn128_G2 TE::getDecryptionShare(
     const CipheredKey& ciphertext, const libff::alt_bn128_Fr& secret_key ) {
-    checkCypher( ciphertext );
+    ciphertext.validate();
+
     if ( secret_key.is_zero() )
         throw ThresholdUtils::ZeroSecretKey( "zero secret key" );
 
@@ -275,8 +268,6 @@ bool TE::Verify( const CipheredKey& ciphertext, const libff::alt_bn128_G2& decry
 
     bool res = fst == snd;
 
-    bool ret_val = true;
-
     if ( res && !decryptionShare.is_zero() ) {
         libff::alt_bn128_GT pp1, pp2;
         pp1 = libff::alt_bn128_ate_reduced_pairing( W, public_key );
@@ -325,9 +316,6 @@ AES256Key TE::CombineShares( const CipheredKey& ciphertext,
 
     auto secret = CombineSharesIntoAESKey( decryptionShares );
 
-    if ( V.size() != AES_256_KEY_SIZE_BYTES ) {
-        throw ThresholdUtils::IncorrectInput( "Invalid key size" );
-    }
 
     if ( secret.size() < AES_256_KEY_SIZE_BYTES ) {
         throw ThresholdUtils::IncorrectInput( "Invalid secret size" );

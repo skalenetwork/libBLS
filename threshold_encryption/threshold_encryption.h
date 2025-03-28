@@ -23,6 +23,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include <openssl/rand.h>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -54,9 +55,12 @@ struct CipheredKey {
     AES256Key V;
     libff::alt_bn128_G1 W;
 
+public:
     CipheredKey() = default;
     CipheredKey( libff::alt_bn128_G2 _U, AES256Key _V, libff::alt_bn128_G1 _W )
-        : U( _U ), V( std::move( _V ) ), W( _W ) {}
+        : U( _U ), V( std::move( _V ) ), W( _W ) {
+        validate();
+    }
 
     bool operator==( const CipheredKey& other ) const {
         return ( U == other.U ) && ( V == other.V ) && ( W == other.W );
@@ -78,9 +82,8 @@ struct CipheredKey {
         std::memcpy( source, u_bytes.data(), u_bytes.size() );
         source += u_bytes.size();
         // set V commponent
-        auto v_bytes = std::vector< uint8_t >( V.begin(), V.end() );
-        std::memcpy( source, v_bytes.data(), v_bytes.size() );
-        source += v_bytes.size();
+        std::memcpy( source, V.data(), V.size() );
+        source += V.size();
         // set W component
         auto w_bytes = ThresholdUtils::G1ToBytes( W );
         std::memcpy( source, w_bytes.data(), w_bytes.size() );
@@ -110,7 +113,25 @@ struct CipheredKey {
         libff::alt_bn128_G2 U = ThresholdUtils::bytesToG2( u_bytes );
         libff::alt_bn128_G1 W = ThresholdUtils::bytesToG1( w_bytes );
 
+        // constructor performs validation
         return CipheredKey( U, v_bytes, W );
+    }
+
+    /**
+     * @brief Validates the CipheredKey
+     * @throw NotWellFormed if the key is not well formed
+     */
+    void validate() const {
+        ThresholdUtils::validateG1( W );
+        ThresholdUtils::validateG2( U );
+    }
+
+    static CipheredKey random() {
+        libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
+        AES256Key V;
+        RAND_bytes( V.data(), V.size() );
+        libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
+        return CipheredKey( U, V, W );
     }
 };
 
@@ -120,8 +141,6 @@ struct CipheredKey {
  */
 struct Ciphertext {
     CipheredKey key;
-
-private:
     std::shared_ptr< std::vector< uint8_t > > data;
 
 public:
@@ -136,7 +155,9 @@ public:
     Ciphertext() = default;
 
     Ciphertext( const CipheredKey& _key, const std::vector< uint8_t >& _data )
-        : key( _key ), data( std::make_shared< std::vector< uint8_t > >( _data ) ) {}
+        : key( _key ), data( std::make_shared< std::vector< uint8_t > >( _data ) ) {
+        validate();
+    }
 
     /**
      * Converts U component of the key to string
@@ -144,6 +165,10 @@ public:
     std::string getPublicDecryptionValue() {
         auto U = key.U;
         U.to_affine_coordinates();
+
+        // validate U
+        ThresholdUtils::validateG2( U );
+
         auto u_splitted = ThresholdUtils::G2ToString( U, BASE_HEXA );
 
         // convert to string
@@ -189,8 +214,8 @@ public:
      * @brief Converts bytes to Ciphertext
      */
     static Ciphertext fromBytes( std::vector< uint8_t >& bytes ) {
-        // we require data field to have at least 1 byte
-        if ( bytes.size() <= CipheredKey::CIPHERED_KEY_SIZE_BYTES ) {
+        // we require at least key size + random secret size + 1 byte for data field
+        if ( bytes.size() <= CipheredKey::CIPHERED_KEY_SIZE_BYTES + RANDOM_SECRET_SIZE_BYTES ) {
             throw ThresholdUtils::IncorrectInput( "Cyphertext data is too short" );
         }
 
@@ -206,6 +231,24 @@ public:
         CipheredKey key = CipheredKey::fromBytes( keyBytes );
 
         return Ciphertext( key, data );
+    }
+
+    /**
+     * @brief Validates the Ciphertext
+     * @throw NotWellFormed if the it fails the validation
+     */
+    void validate() const {
+        key.validate();
+
+        if ( !data ) {
+            throw ThresholdUtils::IsNotWellFormed( "Cyphertext data is not initialized" );
+        }
+
+        // actual data without random secret must be at least 1 byte long
+        if ( data->size() <= RANDOM_SECRET_SIZE_BYTES ) {
+            throw ThresholdUtils::IsNotWellFormed(
+                "Cyphertext data is too short to hold random secret and at least 1 byte of data." );
+        }
     }
 };
 
@@ -275,8 +318,6 @@ public:
 
     std::vector< uint8_t > CombineSharesIntoAESKey(
         const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShare );
-
-    static void checkCypher( const CipheredKey& cypher );
 
 private:
     const size_t t_ = 0;

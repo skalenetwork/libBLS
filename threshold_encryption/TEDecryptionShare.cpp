@@ -16,9 +16,9 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
-@file TEPublicKey.h
-@author Sveta Rogova
-@date 2019
+@file TEDecryptionShare.h
+@author Sidnei Teixeira
+@date 2025
 */
 
 #include <threshold_encryption/TEDecryptionShare.h>
@@ -28,17 +28,13 @@ namespace libBLS {
 
 TEDecryptionShare::TEDecryptionShare( size_t _signerIndex, libff::alt_bn128_G2 _share )
     : signerIndex( _signerIndex ), share( _share ) {
-    if ( _share.is_zero() ) {
-        throw ThresholdUtils::IsNotWellFormed( "decryption share is zero" );
-    }
-    if ( !_share.is_well_formed() ) {
-        throw ThresholdUtils::IsNotWellFormed( "decryption share is not well formed" );
-    }
+    ThresholdUtils::validateG2( share );
 }
 
 TEDecryptionShare::TEDecryptionShare( size_t _signerIndex, const std::string& _hexaEncoded )
     : signerIndex( _signerIndex ) {
     share = ThresholdUtils::stringToG2( _hexaEncoded );
+    ThresholdUtils::validateG2( share );
 }
 
 size_t TEDecryptionShare::getSignerIndex() const {
@@ -49,8 +45,8 @@ libff::alt_bn128_G2 TEDecryptionShare::getShareRaw() const {
     return share;
 }
 
-bool TEDecryptionShare::validate() const {
-    return !share.is_zero() && share.is_well_formed();
+void TEDecryptionShare::validate() const {
+    ThresholdUtils::validateG2( share );
 }
 
 bool TEDecryptionShare::operator==( const TEDecryptionShare& _other ) const {

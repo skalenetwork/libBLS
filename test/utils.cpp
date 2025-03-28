@@ -1,6 +1,7 @@
 #include "utils.h"
 #include <dkg/dkg.h>
 #include <openssl/rand.h>
+#include <threshold_encryption/ThresholdEncryption.h>
 #include <threshold_encryption/threshold_encryption.h>
 
 
@@ -54,4 +55,14 @@ void spoilRandomChar( std::string& str, size_t numCharsToSpoil, char charToRepla
         str[rand() % str.length()] = charToReplace;
         chars--;
     }
+}
+
+libBLS::Ciphertext generateRandomCiphertext( size_t dataSize, keys& keys ) {
+    std::vector< uint8_t > data = randomByteVec( dataSize + libBLS::RANDOM_SECRET_SIZE_BYTES );
+    return libBLS::ThresholdEncryption::encrypt( data, keys.commonPublic );
+}
+
+void tamperCipheredKeyV( libBLS::CipheredKey& key ) {
+    size_t randomIdxToTamper = rand() % key.V.size();
+    key.V[randomIdxToTamper] = ( key.V[randomIdxToTamper] + 1 ) % 256;
 }

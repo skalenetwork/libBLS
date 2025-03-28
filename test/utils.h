@@ -31,5 +31,9 @@ std::vector< uint8_t > randomByteVec( size_t length );
 
 void spoilRandomChar( std::string& str, size_t numCharsToSpoil, char charToReplace );
 
+libBLS::Ciphertext generateRandomCiphertext( size_t dataSize, keys& keys );
+
+void tamperCipheredKeyV( libBLS::CipheredKey& key );
+
 
 #endif
