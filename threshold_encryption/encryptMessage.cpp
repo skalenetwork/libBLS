@@ -29,7 +29,7 @@ extern "C" {
 
 const char* encryptMessage( const char* data, const char* key ) {
     static std::string cipheredMessageStr;
-    
+
     libBLS::ThresholdUtils::initCurve();
 
     // convert from char into vec of bytes

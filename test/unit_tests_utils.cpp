@@ -177,7 +177,8 @@ BOOST_AUTO_TEST_CASE( BytesToAndFromHexCString ) {
         // using fixed-size array
         std::string hex2 = libBLS::ThresholdUtils::bytesToHexString( bytes2 );
         std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > restored_bytes2 =
-            libBLS::ThresholdUtils::hexCStringToBytesArray<libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES>( hex2.c_str() );
+            libBLS::ThresholdUtils::hexCStringToBytesArray< libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES >(
+                hex2.c_str() );
         BOOST_REQUIRE( bytes2 == restored_bytes2 );
     }
 }
@@ -199,7 +200,9 @@ BOOST_AUTO_TEST_CASE( HexCStringToBytesException ) {
 
         BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytes( oddHex.c_str() ),
             libBLS::ThresholdUtils::IncorrectInput );
-        BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytesArray<libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES>( oddHex.c_str() ),
+        BOOST_REQUIRE_THROW(
+            libBLS::ThresholdUtils::hexCStringToBytesArray< libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES >(
+                oddHex.c_str() ),
             libBLS::ThresholdUtils::IncorrectInput );
 
         // String with invalid hexa characters
@@ -211,14 +214,18 @@ BOOST_AUTO_TEST_CASE( HexCStringToBytesException ) {
 
         BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytes( invalidHex.c_str() ),
             libBLS::ThresholdUtils::IncorrectInput );
-        BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytesArray<libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES>( invalidHex.c_str() ),
+        BOOST_REQUIRE_THROW(
+            libBLS::ThresholdUtils::hexCStringToBytesArray< libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES >(
+                invalidHex.c_str() ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
     // Empty string
     BOOST_REQUIRE_THROW(
         libBLS::ThresholdUtils::hexCStringToBytes( "" ), libBLS::ThresholdUtils::IncorrectInput );
-    BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytesArray<libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES>( "" ),
+    BOOST_REQUIRE_THROW(
+        libBLS::ThresholdUtils::hexCStringToBytesArray< libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES >(
+            "" ),
         libBLS::ThresholdUtils::IncorrectInput );
 
     // Empty byte vector

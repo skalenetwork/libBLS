@@ -37,7 +37,6 @@ private:
     size_t signerIndex;
 
 public:
- 
     TEPublicKeyShare( TEPrivateKeyShare _pKey );
 
     TEPublicKeyShare( libff::alt_bn128_G2 _point, size_t signerIndex, size_t _requiredSigners,
@@ -45,7 +44,7 @@ public:
 
     TEPublicKeyShare( const std::vector< uint8_t >& _bytes, size_t signerIndex,
         size_t _requiredSigners, size_t _totalSigners );
-    
+
     TEPublicKeyShare( const std::array< uint8_t, libBLS::G2_SIZE_BYTES >& bytes, size_t signerIndex,
         size_t _requiredSigners, size_t _totalSigners );
 

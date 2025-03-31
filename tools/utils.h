@@ -172,7 +172,7 @@ public:
 
     static std::vector< uint8_t > hexCStringToBytes( const char* hexStr );
 
-    template <size_t N>
+    template < size_t N >
     static std::array< uint8_t, N > hexCStringToBytesArray( const char* hexStr );
 
 
@@ -189,9 +189,8 @@ private:
 };
 
 
-template <size_t N>
+template < size_t N >
 std::array< uint8_t, N > ThresholdUtils::hexCStringToBytesArray( const char* hexStr ) {
-
     size_t characterCountNeeded = N * 2;
     if ( validateHexCString( hexStr ) < characterCountNeeded ) {
         throw IncorrectInput( "Hex string length must be at least 64 characters." );

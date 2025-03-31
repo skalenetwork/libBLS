@@ -43,7 +43,8 @@ TEPublicKey::TEPublicKey( const std::vector< std::string >& _keyStrPtr ) {
             throw ThresholdUtils::IncorrectInput( "wrong string length in public key share" );
         }
         // throws if cannot hexa is not valid
-        components[i] = ThresholdUtils::hexCStringToBytesArray<MAX_FIELD_ELEMENT_SIZE_BYTES>( _keyStrPtr[i].c_str() );
+        components[i] = ThresholdUtils::hexCStringToBytesArray< MAX_FIELD_ELEMENT_SIZE_BYTES >(
+            _keyStrPtr[i].c_str() );
     }
 
     publicKey.Z = libff::alt_bn128_Fq2::one();

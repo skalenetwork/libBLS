@@ -27,10 +27,10 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 namespace libBLS {
 
 TEPrivateKey::TEPrivateKey( const std::string& _keyStr ) {
-    
     // already validates the string
     std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > privBytes =
-        ThresholdUtils::hexCStringToBytesArray<libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES>( _keyStr.c_str() );
+        ThresholdUtils::hexCStringToBytesArray< libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES >(
+            _keyStr.c_str() );
 
     privateKey = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( privBytes );
 
@@ -46,14 +46,15 @@ TEPrivateKey::TEPrivateKey( libff::alt_bn128_Fr _skey ) : privateKey( _skey ) {
 
 TEPrivateKey::TEPrivateKey( const std::vector< uint8_t > _keyBytes ) {
     privateKey = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( _keyBytes );
-    if (privateKey.is_zero()) {
+    if ( privateKey.is_zero() ) {
         throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
     }
 }
 
-TEPrivateKey::TEPrivateKey( const std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > _keyBytes ) {
+TEPrivateKey::TEPrivateKey(
+    const std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > _keyBytes ) {
     privateKey = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( _keyBytes );
-    if (privateKey.is_zero()) {
+    if ( privateKey.is_zero() ) {
         throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
     }
 }

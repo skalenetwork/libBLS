@@ -42,7 +42,6 @@ TEPublicKeyShare::TEPublicKeyShare(
 TEPublicKeyShare::TEPublicKeyShare( const std::vector< uint8_t >& _bytes, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
-
     publicKey = ThresholdUtils::bytesToG2( _bytes );
     ThresholdUtils::validateG2( publicKey );
 }
@@ -50,7 +49,6 @@ TEPublicKeyShare::TEPublicKeyShare( const std::vector< uint8_t >& _bytes, size_t
 TEPublicKeyShare::TEPublicKeyShare( const std::array< uint8_t, libBLS::G2_SIZE_BYTES >& bytes,
     size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
-
     publicKey = ThresholdUtils::bytesToG2( bytes );
     ThresholdUtils::validateG2( publicKey );
 }

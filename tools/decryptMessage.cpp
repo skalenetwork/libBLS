@@ -76,8 +76,7 @@ int main() {
     auto decryptedMessageBytes =
         libBLS::ThresholdEncryption::decrypt( ciphertext, aesKeyDecrypted );
 
-    auto plaintext =
-        std::string( libBLS::ThresholdUtils::bytesToHexCString( decryptedMessageBytes ) );
+    auto plaintext = libBLS::ThresholdUtils::bytesToHexString( decryptedMessageBytes );
 
     std::ifstream messageFile;
     messageFile.open( "message.txt" );
