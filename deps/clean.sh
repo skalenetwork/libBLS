@@ -113,7 +113,6 @@ rm -f ./*.tar.xz
 rm -f ./*.tar.bz2
 rm -f ./*.zip
 echo "Cleaning upacked library folders..."
-rm -rf ./libiconv-1.15
 rm -rf ./openssl
 rm -rf ./curl
 rm -rf ./libuv

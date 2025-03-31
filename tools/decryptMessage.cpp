@@ -37,8 +37,6 @@ int main() {
     std::string encryptedData;
     encryptedDataFile >> encryptedData;
 
-    std::cout << "Encrypted data: " << encryptedData << '\n';
-
     std::string secretKey;
     secretKeyFile >> secretKey;
 
@@ -53,7 +51,7 @@ int main() {
 
     libBLS::ThresholdEncryption::validateEncryption( aesKeyEncrypted );
 
-    libBLS::TEPrivateKeyShare privateKeyShare( secretKey, 0, 1, 1 );
+    libBLS::TEPrivateKeyShare privateKeyShare( libff::alt_bn128_Fr( secretKey.c_str() ), 1, 1, 1 );
     libBLS::TEPublicKeyShare publicKeyShare( privateKeyShare );
 
     libBLS::TEDecryptionShare decryptionShare =
