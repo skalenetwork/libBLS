@@ -49,8 +49,11 @@ int main() {
     publicKeyFile.open( "bls_public_key.txt" );
     publicKeyFile << result;
 
-    libff::alt_bn128_Fr message_number = libff::alt_bn128_Fr::random_element();
-    std::string message = libBLS::ThresholdUtils::fieldElementToString( message_number, 16 );
+    std::string message = "";
+    while ( message.size() != 64 ) {
+        libff::alt_bn128_Fr message_number = libff::alt_bn128_Fr::random_element();
+        message = libBLS::ThresholdUtils::fieldElementToString( message_number, 16 );
+    }
 
     std::ofstream messageFile;
     messageFile.open( "message.txt" );
