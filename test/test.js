@@ -11,7 +11,7 @@ ModuleFactory().then((Module) => {
         ['string', 'string'], // Argument types
         [TX_DATA, BLS_PUBLIC_KEY] // Arguments
     );
-    console.log("Encrypted Message:", result);
+    console.log(result);
 }).catch((error) => {
     console.error("Failed to initialize the module:", error);
 });

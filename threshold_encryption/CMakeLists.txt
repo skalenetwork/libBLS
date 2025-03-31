@@ -84,6 +84,12 @@ if (BUILD_TESTS)
         target_link_libraries(te_sample_sgx PRIVATE te bls ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} jsonrpccpp-client jsonrpccpp-server jsonrpccpp-common jsoncpp curl pthread ssl crypto z idn2)
     endif()
 
+    if(NOT EMSCRIPTEN AND NOT APPLE)
+        add_executable(decrypt_message ../tools/decryptMessage.cpp) 
+        target_include_directories(decrypt_message PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
+        target_link_libraries(decrypt_message PRIVATE te ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+    endif()
+
     add_test(NAME te_wrap_tests COMMAND te_unit_test)
 
     add_custom_target(all_te_tests
@@ -97,7 +103,7 @@ endif()
 
 if (EMSCRIPTEN)
     add_executable(encrypt ../threshold_encryption/encryptMessage.cpp)
-    set_target_properties(encrypt PROPERTIES LINK_FLAGS "-s EXIT_RUNTIME=1 -s USE_PTHREADS=0 -s MODULARIZE -s ALLOW_MEMORY_GROWTH=1 -s NO_DISABLE_EXCEPTION_CATCHING=1 -s EXPORTED_RUNTIME_METHODS='[\"ccall\", \"allocate\", \"intArrayFromString\", \"ALLOC_NORMAL\", \"UTF8ToString\"]' -s EXPORTED_FUNCTIONS=['_encryptMessage'] -s MAIN_MODULE=1 --bind")
+    set_target_properties(encrypt PROPERTIES LINK_FLAGS "-s EXIT_RUNTIME=1 -s USE_PTHREADS=0 -s MODULARIZE -s ALLOW_MEMORY_GROWTH=1 -s NO_DISABLE_EXCEPTION_CATCHING=1 -s EXPORTED_RUNTIME_METHODS='[\"ccall\"]' -s EXPORTED_FUNCTIONS=['_encryptMessage'] -s MAIN_MODULE=1 --bind")
     target_include_directories(encrypt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
     target_link_libraries(encrypt PRIVATE te ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
 
