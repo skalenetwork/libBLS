@@ -144,7 +144,9 @@ public:
 
     static std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem, int base = BASE_DEC );
 
-    static std::array< uint8_t, G2_SIZE_BYTES > G2ToBytes( libff::alt_bn128_G2 elem );
+    static std::vector< uint8_t > G2ToBytes( libff::alt_bn128_G2 elem );
+
+    static std::array< uint8_t, G2_SIZE_BYTES > G2ToBytesArray( libff::alt_bn128_G2 elem );
 
     static std::array< uint8_t, G1_SIZE_BYTES > G1ToBytes( libff::alt_bn128_G1 elem );
 
@@ -164,14 +166,15 @@ public:
 
     static bool checkHex( const std::string& hex );
 
-    static char* bytesToHexCString( const std::vector< uint8_t >& bytes );
-    static char* bytesToHexCString(
+    static std::string bytesToHexString( const std::vector< uint8_t >& bytes );
+    static std::string bytesToHexString(
         const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& bytes );
 
     static std::vector< uint8_t > hexCStringToBytes( const char* hexStr );
 
-    static std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > hexCStringToBytesArray(
-        const char* hexStr );
+    template <size_t N>
+    static std::array< uint8_t, N > hexCStringToBytesArray( const char* hexStr );
+
 
     template < class T >
     static bool ValidateKey( const T& point );
@@ -184,6 +187,26 @@ private:
      */
     static size_t validateHexCString( const char* hexStr );
 };
+
+
+template <size_t N>
+std::array< uint8_t, N > ThresholdUtils::hexCStringToBytesArray( const char* hexStr ) {
+
+    size_t characterCountNeeded = N * 2;
+    if ( validateHexCString( hexStr ) < characterCountNeeded ) {
+        throw IncorrectInput( "Hex string length must be at least 64 characters." );
+    }
+
+    std::array< uint8_t, N > bytes;
+
+    // Convert hex string to byte array
+    for ( size_t i = 0; i < characterCountNeeded; i += 2 ) {
+        bytes[i / 2] = ( std::stoi( std::string( hexStr + i, 2 ), nullptr, 16 ) );
+    }
+
+    return bytes;
+}
+
 
 template < class T >
 std::string ThresholdUtils::fieldElementToString( const T& field_elem, int base ) {

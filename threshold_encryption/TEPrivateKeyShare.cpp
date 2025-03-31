@@ -35,7 +35,7 @@ TEPrivateKeyShare::TEPrivateKeyShare( const std::string& _hexaField, size_t _sig
     }
 
     std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > fieldBytes =
-        ThresholdUtils::hexCStringToBytesArray( _hexaField.c_str() );
+        ThresholdUtils::hexCStringToBytesArray<MAX_FIELD_ELEMENT_SIZE_BYTES>( _hexaField.c_str() );
     privateKey = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( fieldBytes );
 
     if ( privateKey.is_zero() ) {

@@ -44,14 +44,15 @@ public:
      * @param _share Decryption share
      * @note Validates that the share is well formed and non-zero.
      */
-    TEDecryptionShare( size_t _signerIndex, libff::alt_bn128_G2 _share );
+    TEDecryptionShare( libff::alt_bn128_G2 _share, size_t _signerIndex );
 
     /**
      * @param _signerIndex Index of the signer
      * @param _hexaEncoded Hexa encoded string of the share
      * @note Used when building from serialized decription share
      */
-    TEDecryptionShare( size_t _signerIndex, const std::string& _hexaEncoded );
+    TEDecryptionShare( const std::string& _hexaEncoded, size_t _signerIndex );
+
 
     size_t getSignerIndex() const;
 

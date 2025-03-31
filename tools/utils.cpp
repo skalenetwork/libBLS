@@ -73,7 +73,7 @@ std::vector< std::string > ThresholdUtils::G2ToString( libff::alt_bn128_G2 elem,
     return pkey_str_vect;
 }
 
-std::array< uint8_t, G2_SIZE_BYTES > ThresholdUtils::G2ToBytes( libff::alt_bn128_G2 elem ) {
+std::array< uint8_t, G2_SIZE_BYTES > ThresholdUtils::G2ToBytesArray( libff::alt_bn128_G2 elem ) {
     std::array< uint8_t, G2_SIZE_BYTES > G2Bytes;
 
     elem.to_affine_coordinates();
@@ -99,6 +99,11 @@ std::array< uint8_t, G2_SIZE_BYTES > ThresholdUtils::G2ToBytes( libff::alt_bn128
     std::memcpy( dest, y_c1_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
 
     return G2Bytes;
+}
+
+std::vector< uint8_t > ThresholdUtils::G2ToBytes( libff::alt_bn128_G2 elem ) {
+    std::array< uint8_t, G2_SIZE_BYTES > G2Bytes = G2ToBytesArray( elem );
+    return std::vector< uint8_t >( G2Bytes.begin(), G2Bytes.end() );
 }
 
 libff::alt_bn128_G2 ThresholdUtils::bytesToG2( std::array< uint8_t, G2_SIZE_BYTES > bytes ) {
@@ -580,7 +585,7 @@ std::vector< uint8_t > ThresholdUtils::aesDecrypt(
 }
 
 
-char* ThresholdUtils::bytesToHexCString( const std::vector< uint8_t >& bytes ) {
+std::string ThresholdUtils::bytesToHexString( const std::vector< uint8_t >& bytes ) {
     if ( bytes.size() == 0 ) {
         throw IncorrectInput( "Byte array is empty." );
     }
@@ -592,11 +597,10 @@ char* ThresholdUtils::bytesToHexCString( const std::vector< uint8_t >& bytes ) {
         ss << std::setw( 2 ) << static_cast< int >( byte );  // Format each byte as 2-char hex
     }
 
-    std::string hexStr = ss.str();    // Get the hex string
-    return strdup( hexStr.c_str() );  // Convert std::string to char*
+    return ss.str();
 }
 
-char* ThresholdUtils::bytesToHexCString(
+std::string ThresholdUtils::bytesToHexString(
     const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& bytes ) {
     std::stringstream ss;
     ss << std::hex << std::setfill( '0' );
@@ -605,8 +609,7 @@ char* ThresholdUtils::bytesToHexCString(
         ss << std::setw( 2 ) << static_cast< int >( byte );  // Format each byte as 2-char hex
     }
 
-    std::string hexStr = ss.str();    // Get the hex string
-    return strdup( hexStr.c_str() );  // Convert std::string to char*
+    return ss.str();
 }
 
 std::vector< uint8_t > ThresholdUtils::hexCStringToBytes( const char* hexStr ) {
@@ -621,24 +624,6 @@ std::vector< uint8_t > ThresholdUtils::hexCStringToBytes( const char* hexStr ) {
 
     return bytes;
 }
-
-std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > ThresholdUtils::hexCStringToBytesArray(
-    const char* hexStr ) {
-    size_t characterCountNeeded = MAX_FIELD_ELEMENT_SIZE_BYTES * 2;
-    if ( validateHexCString( hexStr ) < characterCountNeeded ) {
-        throw IncorrectInput( "Hex string length must be at least 64 characters." );
-    }
-
-    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > bytes;
-
-    // Convert hex string to byte array
-    for ( size_t i = 0; i < characterCountNeeded; i += 2 ) {
-        bytes[i / 2] = ( std::stoi( std::string( hexStr + i, 2 ), nullptr, 16 ) );
-    }
-
-    return bytes;
-}
-
 
 size_t ThresholdUtils::validateHexCString( const char* hexStr ) {
     size_t len = std::strlen( hexStr );
@@ -655,7 +640,7 @@ size_t ThresholdUtils::validateHexCString( const char* hexStr ) {
     // Ensure the string contains only valid hexadecimal characters
     for ( size_t i = 0; i < len; i++ ) {
         if ( !std::isxdigit( hexStr[i] ) ) {
-            throw IncorrectInput( "Hex string contains invalid characters." );
+            throw IncorrectInput( "Hex string contains invalid characters." + hexStr[i] );
         }
     }
     return len;

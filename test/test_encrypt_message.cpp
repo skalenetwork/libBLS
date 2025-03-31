@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
     for ( size_t i = 0; i < 50; ++i ) {
         keys keys = generateKeys( required, total );
         // random message & pKey
-        std::vector< uint8_t > data( rand() % 1000 + 1 );
+        std::vector< uint8_t > data( (rand() % 1000) + 1 );
         RAND_bytes( data.data(), data.size() );
 
         // convert key & data to string
@@ -60,7 +60,8 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
             pKeyStr += str;
         }
 
-        char* dataStr = libBLS::ThresholdUtils::bytesToHexCString( data );
+        std::string str = libBLS::ThresholdUtils::bytesToHexString( data );
+        const char* dataStr = str.c_str();
 
         // call encrypt message
         const char* cipheredMessage = encryptMessage( dataStr, pKeyStr.c_str() );
@@ -95,6 +96,8 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
             libBLS::ThresholdEncryption::decrypt( cipheredMessageObj, key_deciphered );
 
         BOOST_REQUIRE( decipheredMsg == data );
+
+        // delete cipheredMessage;
     }
 }
 

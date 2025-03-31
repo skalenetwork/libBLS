@@ -107,7 +107,7 @@ CipheredKeyResult TE::getCiphertext(
         V[i] = key[i] ^ static_cast< uint8_t >( hash[i] );
     }
 
-    std::string v_str = ThresholdUtils::bytesToHexCString( V );
+    std::string v_str = ThresholdUtils::bytesToHexString( V );
 
     libff::alt_bn128_G1 W, H;
 
@@ -186,7 +186,7 @@ std::pair< std::string, RandSecret > TE::encryptMessage(
     libBLS::CipherResult ciphertext = encryptWithAES( message, commonPublic );
     std::vector< uint8_t > ciphertextBytes = ciphertext.ciphertext->toBytes();
 
-    std::string ciphertextHexa = ThresholdUtils::bytesToHexCString( ciphertextBytes );
+    std::string ciphertextHexa = ThresholdUtils::bytesToHexString( ciphertextBytes );
     return std::make_pair( ciphertextHexa, ciphertext.random_secret );
 }
 
@@ -222,7 +222,7 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
 
     auto [U, V, W] = ciphertext;
 
-    std::string v_str = ThresholdUtils::bytesToHexCString( V );
+    std::string v_str = ThresholdUtils::bytesToHexString( V );
     libff::alt_bn128_G1 H = HashToGroup( U, v_str );
 
     libff::alt_bn128_GT fst, snd;
@@ -259,7 +259,7 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
 bool TE::Verify( const CipheredKey& ciphertext, const libff::alt_bn128_G2& decryptionShare,
     const libff::alt_bn128_G2& public_key ) {
     auto [U, V, W] = ciphertext;
-    std::string v_str = ThresholdUtils::bytesToHexCString( V );
+    std::string v_str = ThresholdUtils::bytesToHexString( V );
     libff::alt_bn128_G1 H = HashToGroup( U, v_str );
 
     libff::alt_bn128_GT fst, snd;
@@ -301,7 +301,7 @@ bool TE::Verify( const CipheredKey& ciphertext, const libff::alt_bn128_G2& decry
 AES256Key TE::CombineShares( const CipheredKey& ciphertext,
     const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShares ) {
     auto [U, V, W] = ciphertext;
-    std::string v_str = ThresholdUtils::bytesToHexCString( V );
+    std::string v_str = ThresholdUtils::bytesToHexString( V );
     libff::alt_bn128_G1 H = this->HashToGroup( U, v_str );
 
     libff::alt_bn128_GT fst, snd;

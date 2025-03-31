@@ -56,7 +56,7 @@ void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
     _ciphertext.validate();
 
     auto [U, V, W] = _ciphertext;
-    std::string v_str = ThresholdUtils::bytesToHexCString( V );
+    std::string v_str = ThresholdUtils::bytesToHexString( V );
 
     libff::alt_bn128_G1 H = TE::HashToGroup( U, v_str );
 
@@ -84,7 +84,7 @@ TEDecryptionShare ThresholdEncryption::partialDecrypt(
 
     ThresholdUtils::validateG2( decryption_share );
 
-    TEDecryptionShare share( _pkeyShare.getSignerIndex(), decryption_share );
+    TEDecryptionShare share( decryption_share, _pkeyShare.getSignerIndex() );
 
     return share;
 }

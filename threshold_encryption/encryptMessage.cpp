@@ -28,6 +28,8 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 extern "C" {
 
 const char* encryptMessage( const char* data, const char* key ) {
+    static std::string cipheredMessageStr;
+    
     libBLS::ThresholdUtils::initCurve();
 
     // convert from char into vec of bytes
@@ -42,7 +44,8 @@ const char* encryptMessage( const char* data, const char* key ) {
         libBLS::ThresholdEncryption::encrypt( messageBytes, commonPublic );
     std::vector< uint8_t > cipheredMessageBytes = cipheredMessage.toBytes();
 
-    // Convert bytes to a heap-allocated C-string
-    return libBLS::ThresholdUtils::bytesToHexCString( cipheredMessageBytes );
+    cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessageBytes );
+
+    return cipheredMessageStr.c_str();
 }
 }

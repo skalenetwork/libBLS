@@ -127,7 +127,7 @@ BOOST_AUTO_TEST_CASE( G2ToAndFromBytes ) {
     for ( size_t i = 0; i < 10000; i++ ) {
         libff::alt_bn128_G2 point = libff::alt_bn128_G2::random_element();
         std::array< uint8_t, libBLS::G2_SIZE_BYTES > point_bytes =
-            libBLS::ThresholdUtils::G2ToBytes( point );
+            libBLS::ThresholdUtils::G2ToBytesArray( point );
         libff::alt_bn128_G2 restored_point = libBLS::ThresholdUtils::bytesToG2( point_bytes );
         BOOST_REQUIRE( point == restored_point );
     }
@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE( FieldElementToAndFromBytes ) {
 
 BOOST_AUTO_TEST_SUITE_END()
 
-BOOST_AUTO_TEST_SUITE( TestBytesToHexCString )
+BOOST_AUTO_TEST_SUITE( TestBytesToHexString )
 
 BOOST_AUTO_TEST_CASE( BytesToAndFromHexCString ) {
     libBLS::ThresholdUtils::initCurve();
@@ -168,16 +168,16 @@ BOOST_AUTO_TEST_CASE( BytesToAndFromHexCString ) {
         std::copy_n( bytes.begin(), libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES, bytes2.begin() );
 
         // using vector
-        std::string hex = libBLS::ThresholdUtils::bytesToHexCString( bytes );
+        std::string hex = libBLS::ThresholdUtils::bytesToHexString( bytes );
         BOOST_REQUIRE( hex.size() == 2 * len );
         std::vector< uint8_t > restored_bytes =
             libBLS::ThresholdUtils::hexCStringToBytes( hex.c_str() );
         BOOST_REQUIRE( bytes == restored_bytes );
 
         // using fixed-size array
-        std::string hex2 = libBLS::ThresholdUtils::bytesToHexCString( bytes2 );
+        std::string hex2 = libBLS::ThresholdUtils::bytesToHexString( bytes2 );
         std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > restored_bytes2 =
-            libBLS::ThresholdUtils::hexCStringToBytesArray( hex2.c_str() );
+            libBLS::ThresholdUtils::hexCStringToBytesArray<libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES>( hex2.c_str() );
         BOOST_REQUIRE( bytes2 == restored_bytes2 );
     }
 }
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE( HexCStringToBytesException ) {
 
         BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytes( oddHex.c_str() ),
             libBLS::ThresholdUtils::IncorrectInput );
-        BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytesArray( oddHex.c_str() ),
+        BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytesArray<libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES>( oddHex.c_str() ),
             libBLS::ThresholdUtils::IncorrectInput );
 
         // String with invalid hexa characters
@@ -211,18 +211,18 @@ BOOST_AUTO_TEST_CASE( HexCStringToBytesException ) {
 
         BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytes( invalidHex.c_str() ),
             libBLS::ThresholdUtils::IncorrectInput );
-        BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytesArray( invalidHex.c_str() ),
+        BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytesArray<libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES>( invalidHex.c_str() ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
     // Empty string
     BOOST_REQUIRE_THROW(
         libBLS::ThresholdUtils::hexCStringToBytes( "" ), libBLS::ThresholdUtils::IncorrectInput );
-    BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytesArray( "" ),
+    BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytesArray<libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES>( "" ),
         libBLS::ThresholdUtils::IncorrectInput );
 
     // Empty byte vector
-    BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::bytesToHexCString( std::vector< uint8_t >() ),
+    BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::bytesToHexString( std::vector< uint8_t >() ),
         libBLS::ThresholdUtils::IncorrectInput );
 }
 

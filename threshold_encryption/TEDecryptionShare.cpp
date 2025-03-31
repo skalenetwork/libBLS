@@ -26,12 +26,12 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
-TEDecryptionShare::TEDecryptionShare( size_t _signerIndex, libff::alt_bn128_G2 _share )
+TEDecryptionShare::TEDecryptionShare( libff::alt_bn128_G2 _share, size_t _signerIndex )
     : signerIndex( _signerIndex ), share( _share ) {
     ThresholdUtils::validateG2( share );
 }
 
-TEDecryptionShare::TEDecryptionShare( size_t _signerIndex, const std::string& _hexaEncoded )
+TEDecryptionShare::TEDecryptionShare( const std::string& _hexaEncoded, size_t _signerIndex )
     : signerIndex( _signerIndex ) {
     share = ThresholdUtils::stringToG2( _hexaEncoded );
     ThresholdUtils::validateG2( share );
@@ -58,15 +58,15 @@ TEDecryptionShare::operator std::pair< libff::alt_bn128_G2, size_t >() const {
 }
 
 std::string TEDecryptionShare::toString() const {
-    std::vector< std::string > str = ThresholdUtils::G2ToString( share );
+    std::vector< std::string > str = ThresholdUtils::G2ToString( share, BASE_HEXA );
     std::ostringstream oss;
-    oss << signerIndex;
     for ( size_t i = 0; i < str.size(); ++i ) {
-        if ( i > 0 )
-            oss << " ";
         oss << str[i];
     }
-    return oss.str();
+
+    std::string s = oss.str();
+
+    return s;
 }
 
 }  // namespace libBLS

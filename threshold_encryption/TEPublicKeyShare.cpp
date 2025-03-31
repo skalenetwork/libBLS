@@ -26,39 +26,6 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
-TEPublicKeyShare::TEPublicKeyShare( std::shared_ptr< std::vector< std::string > > _keyStrPtr,
-    size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
-    : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
-    if ( !_keyStrPtr ) {
-        throw ThresholdUtils::IncorrectInput( "public key share is null" );
-    }
-
-    // assume only using affine coordinates
-    if ( _keyStrPtr->size() != 4 ) {
-        throw ThresholdUtils::IncorrectInput( "wrong number of components in public key share" );
-    }
-
-    if ( _signerIndex > _totalSigners ) {
-        throw ThresholdUtils::IncorrectInput( "Signer index must be <= total signers" );
-    }
-
-    if ( !ThresholdUtils::isStringNumber( _keyStrPtr->at( 0 ) ) ||
-         !ThresholdUtils::isStringNumber( _keyStrPtr->at( 1 ) ) ||
-         !ThresholdUtils::isStringNumber( _keyStrPtr->at( 2 ) ) ||
-         !ThresholdUtils::isStringNumber( _keyStrPtr->at( 3 ) ) ) {
-        throw ThresholdUtils::IncorrectInput(
-            "non-digit symbol or first zero in non-zero public key share" );
-    }
-
-    publicKey.Z = libff::alt_bn128_Fq2::one();
-    publicKey.X.c0 = libff::alt_bn128_Fq( _keyStrPtr->at( 0 ).c_str() );
-    publicKey.X.c1 = libff::alt_bn128_Fq( _keyStrPtr->at( 1 ).c_str() );
-    publicKey.Y.c0 = libff::alt_bn128_Fq( _keyStrPtr->at( 2 ).c_str() );
-    publicKey.Y.c1 = libff::alt_bn128_Fq( _keyStrPtr->at( 3 ).c_str() );
-
-    ThresholdUtils::validateG2( publicKey );
-}
-
 TEPublicKeyShare::TEPublicKeyShare( TEPrivateKeyShare _pKey )
     : TEBase( _pKey.getRequiredSigners(), _pKey.getTotalSigners() ) {
     _pKey.validate();
@@ -72,9 +39,28 @@ TEPublicKeyShare::TEPublicKeyShare(
     ThresholdUtils::validateG2( publicKey );
 }
 
-std::shared_ptr< std::vector< std::string > > TEPublicKeyShare::toString() const {
-    return std::make_shared< std::vector< std::string > >(
-        ThresholdUtils::G2ToString( publicKey ) );
+TEPublicKeyShare::TEPublicKeyShare( const std::vector< uint8_t >& _bytes, size_t _signerIndex,
+    size_t _requiredSigners, size_t _totalSigners )
+    : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
+
+    publicKey = ThresholdUtils::bytesToG2( _bytes );
+    ThresholdUtils::validateG2( publicKey );
+}
+
+TEPublicKeyShare::TEPublicKeyShare( const std::array< uint8_t, libBLS::G2_SIZE_BYTES >& bytes,
+    size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
+    : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
+
+    publicKey = ThresholdUtils::bytesToG2( bytes );
+    ThresholdUtils::validateG2( publicKey );
+}
+
+std::vector< uint8_t > TEPublicKeyShare::toBytesVec() const {
+    return ThresholdUtils::G2ToBytes( publicKey );
+}
+
+std::array< uint8_t, libBLS::G2_SIZE_BYTES > TEPublicKeyShare::toBytesArray() const {
+    return ThresholdUtils::G2ToBytesArray( publicKey );
 }
 
 libff::alt_bn128_G2 TEPublicKeyShare::getPublicKeyRaw() const {

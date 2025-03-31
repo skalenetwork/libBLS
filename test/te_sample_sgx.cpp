@@ -212,7 +212,7 @@ std::vector< libBLS::TEDecryptionShare > getDecryptionShares(
         for ( size_t i = 0; i < ciphertexts.size(); i++ ) {
             int i_int = ( int ) i;
             ret_values.push_back( libBLS::TEDecryptionShare(
-                signerIndex, result["decryptionShares"][i_int].asCString() ) );
+                result["decryptionShares"][i_int].asCString(), signerIndex ) );
         } );
 
     return ret_values;

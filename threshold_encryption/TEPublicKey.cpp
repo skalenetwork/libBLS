@@ -43,7 +43,7 @@ TEPublicKey::TEPublicKey( const std::vector< std::string >& _keyStrPtr ) {
             throw ThresholdUtils::IncorrectInput( "wrong string length in public key share" );
         }
         // throws if cannot hexa is not valid
-        components[i] = ThresholdUtils::hexCStringToBytesArray( _keyStrPtr[i].c_str() );
+        components[i] = ThresholdUtils::hexCStringToBytesArray<MAX_FIELD_ELEMENT_SIZE_BYTES>( _keyStrPtr[i].c_str() );
     }
 
     publicKey.Z = libff::alt_bn128_Fq2::one();
@@ -97,13 +97,11 @@ libff::alt_bn128_G2 TEPublicKey::getPublicKeyRaw() const {
 }
 
 std::array< uint8_t, G2_SIZE_BYTES > TEPublicKey::toBytesArray() const {
-    return libBLS::ThresholdUtils::G2ToBytes( publicKey );
+    return libBLS::ThresholdUtils::G2ToBytesArray( publicKey );
 }
 
 std::vector< uint8_t > TEPublicKey::toBytesVec() const {
-    auto arrayBytes = libBLS::ThresholdUtils::G2ToBytes( publicKey );
-    std::vector< uint8_t > vecBytes( arrayBytes.begin(), arrayBytes.end() );
-    return vecBytes;
+    return libBLS::ThresholdUtils::G2ToBytes( publicKey );
 }
 
 }  // namespace libBLS

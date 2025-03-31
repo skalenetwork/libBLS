@@ -18,7 +18,7 @@
 
   @file TEPublicKey.h
   @author Sveta Rogova
-  @date 2019
+  @date 2025
 */
 
 #ifndef LIBBLS_TEPRIVATEKEY_H
@@ -34,13 +34,21 @@ private:
     libff::alt_bn128_Fr privateKey;
 
 public:
-    TEPrivateKey( std::shared_ptr< std::string > _keyStrPtr );
+    TEPrivateKey( const std::string& _keyStr );
 
     TEPrivateKey( libff::alt_bn128_Fr _skey );
+
+    TEPrivateKey( const std::vector< uint8_t > _keyBytes );
+
+    TEPrivateKey( const std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > _keyBytes );
 
     std::string toString() const;
 
     libff::alt_bn128_Fr getPrivateKeyRaw() const;
+
+    std::vector< uint8_t > toBytesVec() const;
+
+    std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > toBytesArray() const;
 };
 
 }  // namespace libBLS
