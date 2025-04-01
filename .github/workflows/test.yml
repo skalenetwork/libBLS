@@ -42,7 +42,7 @@ jobs:
 
           sudo update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-11 11
 
-          echo "Checking alternative for gcc"
+          echo "Checking alternative for gcc"libff
 
           which gcc
 
@@ -90,6 +90,16 @@ jobs:
           sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
 
           sudo python3 -m pip install requests[security]
+
+      - name: install cmake
+        run: |
+          wget --no-check-certificate https://cmake.org/files/v3.21/cmake-3.21.0-linux-x86_64.sh && \
+          chmod +x cmake-3.21.0-linux-x86_64.sh && \
+          ./cmake-3.21.0-linux-x86_64.sh --skip-license --include-subdir && \
+          sudo ln -sf `pwd`/cmake-3.21.0-linux-x86_64/bin/* /usr/local/bin
+
+          cmake --version
+
       - name: Get newest lcov
         run: >
           echo "Removing previous lcov version..."
