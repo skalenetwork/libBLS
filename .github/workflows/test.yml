@@ -42,7 +42,7 @@ jobs:
 
           sudo update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-11 11
 
-          echo "Checking alternative for gcc"libff
+          echo "Checking alternative for gcc"
 
           which gcc
 
