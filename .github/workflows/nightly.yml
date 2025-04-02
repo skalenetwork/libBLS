@@ -78,6 +78,7 @@ jobs:
         $NIGHTLY_BUILD_FLAGS ./bls_test
         $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_unit_test
         $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_test
+        $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_encrypt_message
         $NIGHTLY_BUILD_FLAGS ./dkg_attack
 
     # - name: Run python test

@@ -18,45 +18,61 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 @file TEPublicKey.h
 @author Sveta Rogova
-@date 2019
+@date 2025
 */
 
 #include <threshold_encryption/TEPrivateKey.h>
 #include <tools/utils.h>
 
-TEPrivateKey::TEPrivateKey(
-    std::shared_ptr< std::string > _key_str, size_t _requiredSigners, size_t _totalSigners )
-    : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+namespace libBLS {
 
-    if ( !_key_str ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "private key is null" );
-    }
+TEPrivateKey::TEPrivateKey( const std::string& _keyStr ) {
+    // already validates the string
+    std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > privBytes =
+        ThresholdUtils::hexCStringToBytesArray< libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES >(
+            _keyStr.c_str() );
 
-    libff::init_alt_bn128_params();
-
-    privateKey = libff::alt_bn128_Fr( _key_str->c_str() );
+    privateKey = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( privBytes );
 
     if ( privateKey.is_zero() ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "private key is zero" );
+        throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
+    }
+}
+
+TEPrivateKey::TEPrivateKey( libff::alt_bn128_Fr _skey ) : privateKey( _skey ) {
+    if ( _skey.is_zero() )
+        throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
+}
+
+TEPrivateKey::TEPrivateKey( const std::vector< uint8_t > _keyBytes ) {
+    privateKey = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( _keyBytes );
+    if ( privateKey.is_zero() ) {
+        throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
     }
 }
 
 TEPrivateKey::TEPrivateKey(
-    libff::alt_bn128_Fr _skey, size_t _requiredSigners, size_t _totalSigners )
-    : privateKey( _skey ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+    const std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > _keyBytes ) {
+    privateKey = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( _keyBytes );
+    if ( privateKey.is_zero() ) {
+        throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
+    }
+}
 
-    libff::init_alt_bn128_params();
+std::vector< uint8_t > TEPrivateKey::toBytesVec() const {
+    return ThresholdUtils::fieldElementToBytes( privateKey );
+}
 
-    if ( _skey.is_zero() )
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "private key is zero" );
+std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > TEPrivateKey::toBytesArray() const {
+    return ThresholdUtils::fieldElementToBytesArray( privateKey );
 }
 
 std::string TEPrivateKey::toString() const {
-    return libBLS::ThresholdUtils::fieldElementToString( privateKey );
+    return ThresholdUtils::fieldElementToString( privateKey, BASE_HEXA );
 }
 
-libff::alt_bn128_Fr TEPrivateKey::getPrivateKey() const {
+libff::alt_bn128_Fr TEPrivateKey::getPrivateKeyRaw() const {
     return privateKey;
 }
+
+}  // namespace libBLS

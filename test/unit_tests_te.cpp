@@ -37,46 +37,173 @@
 
 BOOST_AUTO_TEST_SUITE( ThresholdEncryption )
 
+BOOST_AUTO_TEST_CASE( CipheredKey ) {
+    libBLS::TEBase::initializeIfNecessary();
+
+    for ( size_t i = 0; i < 20; i++ ) {
+        // random key data
+        libff::alt_bn128_G2 u = libff::alt_bn128_G2::random_element();
+        libBLS::AES256Key ciphered_key;
+        RAND_bytes( ciphered_key.data(), ciphered_key.size() );
+        libff::alt_bn128_G1 w = libff::alt_bn128_G1::random_element();
+        // check constructor
+        libBLS::CipheredKey key = libBLS::CipheredKey( u, ciphered_key, w );
+
+        BOOST_REQUIRE( key.U == u );
+        BOOST_REQUIRE( key.V == ciphered_key );
+        BOOST_REQUIRE( key.W == w );
+
+        // convert to bytes & back
+        std::array< uint8_t, libBLS::CipheredKey::CIPHERED_KEY_SIZE_BYTES > bytes = key.toBytes();
+        libBLS::CipheredKey restored_key = libBLS::CipheredKey::fromBytes( bytes );
+
+        BOOST_REQUIRE( key == restored_key );
+    }
+}
+
+BOOST_AUTO_TEST_CASE( CipheredKeyException ) {
+    libBLS::TEBase::initializeIfNecessary();
+
+    // zero u element
+    libff::alt_bn128_G2 u = libff::alt_bn128_G2::zero();
+    libBLS::AES256Key ciphered_key;
+    RAND_bytes( ciphered_key.data(), ciphered_key.size() );
+    libff::alt_bn128_G1 w = libff::alt_bn128_G1::random_element();
+    BOOST_REQUIRE_THROW(
+        libBLS::CipheredKey( u, ciphered_key, w ), libBLS::ThresholdUtils::IncorrectInput );
+
+    // zero w element
+    u = libff::alt_bn128_G2::random_element();
+    w = libff::alt_bn128_G1::zero();
+    BOOST_REQUIRE_THROW(
+        libBLS::CipheredKey( u, ciphered_key, w ), libBLS::ThresholdUtils::IncorrectInput );
+
+    // correct ciphered key, but changed U mid-execution
+    w = libff::alt_bn128_G1::random_element();
+    libBLS::CipheredKey key = libBLS::CipheredKey( u, ciphered_key, w );
+    key.U = libff::alt_bn128_G2::zero();
+    BOOST_REQUIRE_THROW( key.validate(), libBLS::ThresholdUtils::IncorrectInput );
+
+    // correct ciphered key, but changed W mid-execution
+    key.U = libff::alt_bn128_G2::random_element();
+    key.W = libff::alt_bn128_G1::zero();
+    BOOST_REQUIRE_THROW( key.validate(), libBLS::ThresholdUtils::IncorrectInput );
+}
+
+BOOST_AUTO_TEST_CASE( Ciphertext ) {
+    libBLS::TEBase::initializeIfNecessary();
+
+    for ( size_t i = 0; i < 20; i++ ) {
+        // random key data
+        libff::alt_bn128_G2 u = libff::alt_bn128_G2::random_element();
+        libBLS::AES256Key ciphered_key;
+        RAND_bytes( ciphered_key.data(), ciphered_key.size() );
+        libff::alt_bn128_G1 w = libff::alt_bn128_G1::random_element();
+        // convert to bytes & back
+        libBLS::CipheredKey key = libBLS::CipheredKey( u, ciphered_key, w );
+
+        // random 1000 bytes
+        std::vector< uint8_t > data;
+        data.resize( rand() % 1000 + libBLS::RANDOM_SECRET_SIZE_BYTES );  // must be at least rand
+                                                                          // secret bytes
+        RAND_bytes( data.data(), data.size() );
+
+        libBLS::Ciphertext ciphertext = libBLS::Ciphertext( key, data );
+        std::vector< uint8_t > bytes = ciphertext.toBytes();
+        libBLS::Ciphertext restoredCiphertext = libBLS::Ciphertext::fromBytes( bytes );
+
+        BOOST_REQUIRE( ciphertext == restoredCiphertext );
+
+        // getPublicDecryptionValue
+        auto uCopy = u;
+        uCopy.to_affine_coordinates();
+        auto U = libBLS::ThresholdUtils::G2ToString( uCopy, libBLS::BASE_HEXA );
+        std::string concatenated;
+        for ( size_t j = 0; j < U.size(); ++j ) {
+            concatenated += U[j];
+        }
+        BOOST_REQUIRE( ciphertext.getPublicDecryptionValue() == concatenated );
+    }
+}
+
+BOOST_AUTO_TEST_CASE( CiphertextException ) {
+    // constructor
+    // data is too short
+    auto key = libBLS::CipheredKey::random();
+    std::vector< uint8_t > data;
+    BOOST_REQUIRE_THROW( libBLS::Ciphertext( key, data ), libBLS::ThresholdUtils::IsNotWellFormed );
+
+    // still too short - should have at least +1 byte of actual data
+    data.resize( libBLS::RANDOM_SECRET_SIZE_BYTES );
+    BOOST_REQUIRE_THROW( libBLS::Ciphertext( key, data ), libBLS::ThresholdUtils::IsNotWellFormed );
+
+    // getPublicDecryptionValue - U element from key is not well formed
+    libBLS::Ciphertext ciphertext;
+    ciphertext.key.U = libff::alt_bn128_G2::zero();
+    BOOST_REQUIRE_THROW(
+        ciphertext.getPublicDecryptionValue(), libBLS::ThresholdUtils::IncorrectInput );
+
+    // from bytes
+    // bytes only allow for key bytes. No data
+    std::vector< uint8_t > bytes( libBLS::CipheredKey::CIPHERED_KEY_SIZE_BYTES );
+    RAND_bytes( bytes.data(), bytes.size() );
+    BOOST_REQUIRE_THROW(
+        libBLS::Ciphertext::fromBytes( bytes ), libBLS::ThresholdUtils::IncorrectInput );
+
+    // bytes are too short, even for key bytes
+    std::vector< uint8_t > bytes2( libBLS::CipheredKey::CIPHERED_KEY_SIZE_BYTES - 1 );
+    RAND_bytes( bytes2.data(), bytes2.size() );
+    BOOST_REQUIRE_THROW(
+        libBLS::Ciphertext::fromBytes( bytes2 ), libBLS::ThresholdUtils::IncorrectInput );
+
+    // bytes allow for ciphered key + random secret, but no data
+    std::vector< uint8_t > bytes3( libBLS::RANDOM_SECRET_SIZE_BYTES );
+    RAND_bytes( bytes3.data(), bytes3.size() );
+    libBLS::Ciphertext cipher;
+    BOOST_REQUIRE_THROW(
+        libBLS::Ciphertext::fromBytes( bytes2 ), libBLS::ThresholdUtils::IncorrectInput );
+}
+
 BOOST_AUTO_TEST_CASE( SimpleEncryption ) {
     libBLS::TE te_instance = libBLS::TE( 1, 1 );
 
-    std::string message =
-        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
-                                                                             // length
+    libBLS::AES256Key random_aes_key;
+    RAND_bytes( random_aes_key.data(), random_aes_key.size() );
 
     libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
 
     libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
 
-    auto ciphertext = te_instance.getCiphertext( message, public_key );
+    auto result = te_instance.getCiphertext( random_aes_key, public_key );
 
-    libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
+    libff::alt_bn128_G2 decryption_share =
+        te_instance.getDecryptionShare( *result.ciphertext, secret_key );
 
-    BOOST_REQUIRE( te_instance.Verify( ciphertext, decryption_share, public_key ) );
+    BOOST_REQUIRE( te_instance.Verify( *result.ciphertext, decryption_share, public_key ) );
 
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares;
     shares.push_back( std::make_pair( decryption_share, size_t( 1 ) ) );
 
-    std::string res = te_instance.CombineShares( ciphertext, shares );
+    libBLS::AES256Key res = te_instance.CombineShares( *result.ciphertext, shares );
 
-    BOOST_REQUIRE( res == message );
+    BOOST_REQUIRE( res == random_aes_key );
 }
 
 BOOST_AUTO_TEST_CASE( SimpleEncryptionWithAES ) {
     libBLS::TE te_instance = libBLS::TE( 1, 1 );
 
-    std::string message =
-        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
-                                                                             // length
+    std::string message = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
 
     libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
 
     libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
 
-    auto ciphertext_with_aes = te_instance.encryptWithAES( message, public_key );
+    libBLS::CipherResult ciphertext_with_aes =
+        te_instance.encryptWithAES( message_bytes, public_key );
 
-    auto ciphertext = ciphertext_with_aes.first;
-    auto encrypted_message = ciphertext_with_aes.second;
+    auto ciphertext = ciphertext_with_aes.ciphertext->key;
+    auto encrypted_message = ciphertext_with_aes.ciphertext->getData();
 
     libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
 
@@ -85,29 +212,32 @@ BOOST_AUTO_TEST_CASE( SimpleEncryptionWithAES ) {
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares;
     shares.push_back( std::make_pair( decryption_share, size_t( 1 ) ) );
 
-    std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
+    libBLS::AES256Key decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
 
-    std::string plaintext =
+    std::vector< uint8_t > plaintext =
         libBLS::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
 
-    BOOST_REQUIRE( plaintext == message );
+    // append random secret to end of original message
+    libBLS::RandSecret rand_secret = ciphertext_with_aes.random_secret;
+    message_bytes.insert( message_bytes.end(), rand_secret.begin(), rand_secret.end() );
+
+    BOOST_REQUIRE( plaintext == message_bytes );
 }
 
 BOOST_AUTO_TEST_CASE( encryptionWithAESWrongKey ) {
     libBLS::TE te_instance = libBLS::TE( 1, 1 );
 
-    std::string message =
-        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
-                                                                             // length
+    std::string message = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
 
     libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
 
     libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
 
-    auto ciphertext_with_aes = te_instance.encryptWithAES( message, public_key );
+    auto ciphertext_with_aes = te_instance.encryptWithAES( message_bytes, public_key );
 
-    auto ciphertext = ciphertext_with_aes.first;
-    auto encrypted_message = ciphertext_with_aes.second;
+    auto ciphertext = ciphertext_with_aes.ciphertext->key;
+    auto encrypted_message = ciphertext_with_aes.ciphertext->getData();
 
     libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
 
@@ -116,32 +246,29 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongKey ) {
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares;
     shares.push_back( std::make_pair( decryption_share, size_t( 1 ) ) );
 
-    // std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
     libBLS::ThresholdUtils::initAES();
-    unsigned char key_bytes[32];
-    RAND_bytes( key_bytes, sizeof( key_bytes ) );
-    std::string random_aes_key = std::string( ( char* ) key_bytes, sizeof( key_bytes ) );
 
-    std::string plaintext = libBLS::ThresholdUtils::aesDecrypt( encrypted_message, random_aes_key );
+    libBLS::AES256Key random_aes_key;
+    RAND_bytes( random_aes_key.data(), random_aes_key.size() );
 
-    BOOST_REQUIRE( plaintext != message );
+    BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::aesDecrypt( encrypted_message, random_aes_key ),
+        std::runtime_error );
 }
 
 BOOST_AUTO_TEST_CASE( encryptionWithAESWrongCiphertext ) {
     libBLS::TE te_instance = libBLS::TE( 1, 1 );
 
-    std::string message =
-        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
-                                                                             // length
+    std::string message = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
 
     libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
 
     libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
 
-    auto ciphertext_with_aes = te_instance.encryptWithAES( message, public_key );
+    libBLS::CipherResult ciphertext_with_aes =
+        te_instance.encryptWithAES( message_bytes, public_key );
 
-    auto ciphertext = ciphertext_with_aes.first;
-    // auto encrypted_message = ciphertext_with_aes.second;
+    libBLS::CipheredKey ciphertext = ciphertext_with_aes.ciphertext->key;
 
     libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
 
@@ -150,101 +277,24 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongCiphertext ) {
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares;
     shares.push_back( std::make_pair( decryption_share, size_t( 1 ) ) );
 
-    std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
+    libBLS::AES256Key decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
 
     std::string bad_message = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
-    auto bad_encrypted_message = te_instance.encryptWithAES( bad_message, public_key ).second;
+    std::vector< uint8_t > bad_message_bytes( message.begin(), message.end() );
 
-    std::string plaintext =
-        libBLS::ThresholdUtils::aesDecrypt( bad_encrypted_message, decrypted_aes_key );
-
-    BOOST_REQUIRE( plaintext != message );
-}
-
-BOOST_AUTO_TEST_CASE( ConvertionToStringAndBack ) {
-    libBLS::ThresholdUtils::initCurve();
-
-    std::string message =
-        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
-                                                                             // length
-
-    libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
-
-    libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
-
-    auto ciphertext_with_aes = libBLS::TE::encryptWithAES( message, public_key );
-
-    auto str =
-        libBLS::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second );
-
-    auto ciphertext_from_string = libBLS::TE::aesCiphertextFromString( str );
-    auto V_old = std::get< 1 >( ciphertext_with_aes.first );
-    auto V_new = std::get< 1 >( ciphertext_from_string.first );
-
-    auto W_old = std::get< 2 >( ciphertext_with_aes.first );
-    auto W_new = std::get< 2 >( ciphertext_from_string.first );
-
-    auto U_old = std::get< 0 >( ciphertext_with_aes.first );
-    auto U_new = std::get< 0 >( ciphertext_from_string.first );
-
-    BOOST_REQUIRE( U_old == U_new );
-    BOOST_REQUIRE( W_old == W_new );
-    BOOST_REQUIRE( V_old == V_new );
-    BOOST_REQUIRE( ciphertext_with_aes.first == ciphertext_from_string.first );
-    BOOST_REQUIRE( ciphertext_with_aes.second.size() == ciphertext_from_string.second.size() );
-    BOOST_REQUIRE( ciphertext_with_aes == ciphertext_from_string );
-}
-
-BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackTooShort ) {
-    libBLS::ThresholdUtils::initCurve();
-
-    // std::string message =
-    //     "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be
-    //     64
-    //                                                                          // length
-
-    // libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
-
-    // libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
-
-    // auto ciphertext_with_aes = libBLS::TE::encryptWithAES( message, public_key );
-
-    // auto str =
-    //     libBLS::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second
-    //     );
-
-    BOOST_REQUIRE_THROW( libBLS::TE::aesCiphertextFromString( "acefbdg11356" ),
-        libBLS::ThresholdUtils::IncorrectInput );
-}
-
-BOOST_AUTO_TEST_CASE( ConvertionToStringAndBackNonHex ) {
-    libBLS::ThresholdUtils::initCurve();
-
-    // std::string message =
-    //     "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be
-    //     64
-    //                                                                          // length
-
-    // libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
-
-    // libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
-
-    // auto ciphertext_with_aes = libBLS::TE::encryptWithAES( message, public_key );
-
-    // auto str =
-    //     libBLS::TE::aesCiphertextToString( ciphertext_with_aes.first, ciphertext_with_aes.second
-    //     );
+    auto bad_encrypted_message =
+        te_instance.encryptWithAES( bad_message_bytes, public_key ).ciphertext->getData();
 
     BOOST_REQUIRE_THROW(
-        libBLS::TE::aesCiphertextFromString( "qwerty" ), libBLS::ThresholdUtils::IncorrectInput );
+        libBLS::ThresholdUtils::aesDecrypt( bad_encrypted_message, decrypted_aes_key ),
+        std::runtime_error );
 }
 
-BOOST_AUTO_TEST_CASE( EncryptionCipherToString ) {
+BOOST_AUTO_TEST_CASE( EncryptionCipherToBytes ) {
     libBLS::TE te_instance = libBLS::TE( 1, 1 );
 
-    std::string message =
-        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
-                                                                             // length
+    std::string message = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
 
     libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
 
@@ -259,28 +309,34 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToString ) {
         common_public_str += elem;
     }
 
-    auto ciphertext_string = te_instance.encryptMessage( message, common_public_str );
+    auto result = te_instance.encryptMessage( message_bytes, common_public_str );
+    libBLS::RandSecret rand_secret = result.second;
 
-    auto ciphertext_with_aes = te_instance.aesCiphertextFromString( ciphertext_string );
+    std::vector< uint8_t > encrypted_msg_bytes =
+        libBLS::ThresholdUtils::hexCStringToBytes( result.first.c_str() );
 
-    auto ciphertext = ciphertext_with_aes.first;
-    BOOST_REQUIRE( ciphertext == te_instance.ciphertextFromString( ciphertext_string ) );
+    libBLS::Ciphertext ciphertext = libBLS::Ciphertext::fromBytes( encrypted_msg_bytes );
 
-    auto encrypted_message = ciphertext_with_aes.second;
+    libBLS::CipheredKey ciphered_key = ciphertext.key;
+    auto encrypted_message = ciphertext.getData();
 
-    libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
+    libff::alt_bn128_G2 decryption_share =
+        te_instance.getDecryptionShare( ciphered_key, secret_key );
 
-    BOOST_REQUIRE( te_instance.Verify( ciphertext, decryption_share, public_key ) );
+    BOOST_REQUIRE( te_instance.Verify( ciphered_key, decryption_share, public_key ) );
 
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares;
     shares.push_back( std::make_pair( decryption_share, size_t( 1 ) ) );
 
-    std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
+    libBLS::AES256Key decrypted_aes_key = te_instance.CombineShares( ciphered_key, shares );
 
-    std::string plaintext =
+    std::vector< uint8_t > plaintext =
         libBLS::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
 
-    BOOST_REQUIRE( plaintext == message );
+    // append random secret to the message
+    message_bytes.insert( message_bytes.end(), rand_secret.begin(), rand_secret.end() );
+
+    BOOST_REQUIRE( plaintext == message_bytes );
 }
 
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
@@ -316,29 +372,29 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
 
     libff::alt_bn128_G2 common_public = common_secret * libff::alt_bn128_G2::one();
 
-    std::string message =
-        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
-                                                                             // length
+    libBLS::AES256Key key;
+    RAND_bytes( key.data(), key.size() );
 
-    auto ciphertext = obj.getCiphertext( message, common_public );
+    auto result = obj.getCiphertext( key, common_public );
 
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares( 11 );
 
     for ( size_t i = 0; i < 11; ++i ) {
-        libff::alt_bn128_G2 decrypted = obj.getDecryptionShare( ciphertext, secret_keys[i] );
+        libff::alt_bn128_G2 decrypted =
+            obj.getDecryptionShare( *result.ciphertext, secret_keys[i] );
 
         libff::alt_bn128_G2 public_key = secret_keys[i] * libff::alt_bn128_G2::one();
 
-        BOOST_REQUIRE( obj.Verify( ciphertext, decrypted, public_key ) );
+        BOOST_REQUIRE( obj.Verify( *result.ciphertext, decrypted, public_key ) );
 
         shares[i].first = decrypted;
 
         shares[i].second = i + 1;
     }
 
-    std::string res = obj.CombineShares( ciphertext, shares );
+    libBLS::AES256Key res = obj.CombineShares( *result.ciphertext, shares );
 
-    BOOST_REQUIRE( res == message );
+    BOOST_REQUIRE( res == key );
 }
 
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomPK ) {
@@ -370,36 +426,31 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomPK ) {
         secret_keys[i] = sk;
     }
 
-    // libff::alt_bn128_Fr common_secret = coeffs[0];
-
-    // element_pow_zn(common_public, obj.generator_, common_secret);
-    // let common_public be a random element of G1 instead of correct one in the previous line
-
     libff::alt_bn128_G2 common_public = libff::alt_bn128_G2::random_element();
 
-    std::string message =
-        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
-                                                                             // length
+    libBLS::AES256Key key;
+    RAND_bytes( key.data(), key.size() );
 
-    auto ciphertext = obj.getCiphertext( message, common_public );
+    auto result = obj.getCiphertext( key, common_public );
 
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares( 11 );
 
     for ( size_t i = 0; i < 11; ++i ) {
-        libff::alt_bn128_G2 decrypted = obj.getDecryptionShare( ciphertext, secret_keys[i] );
+        libff::alt_bn128_G2 decrypted =
+            obj.getDecryptionShare( *result.ciphertext, secret_keys[i] );
 
         libff::alt_bn128_G2 public_key = secret_keys[i] * libff::alt_bn128_G2::one();
 
-        BOOST_REQUIRE( obj.Verify( ciphertext, decrypted, public_key ) );
+        BOOST_REQUIRE( obj.Verify( *result.ciphertext, decrypted, public_key ) );
 
         shares[i].first = decrypted;
 
         shares[i].second = i + 1;
     }
 
-    std::string res = obj.CombineShares( ciphertext, shares );
+    libBLS::AES256Key res = obj.CombineShares( *result.ciphertext, shares );
 
-    BOOST_REQUIRE( res != message );
+    BOOST_REQUIRE( res != key );
 }
 
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomSK ) {
@@ -440,29 +491,29 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomSK ) {
 
     libff::alt_bn128_G2 common_public = common_secret * libff::alt_bn128_G2::one();
 
-    std::string message =
-        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
-                                                                             // length
+    libBLS::AES256Key key;
+    RAND_bytes( key.data(), key.size() );
 
-    auto ciphertext = obj.getCiphertext( message, common_public );
+    auto result = obj.getCiphertext( key, common_public );
 
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares( 11 );
 
     for ( size_t i = 0; i < 11; ++i ) {
-        libff::alt_bn128_G2 decrypted = obj.getDecryptionShare( ciphertext, secret_keys[i] );
+        libff::alt_bn128_G2 decrypted =
+            obj.getDecryptionShare( *result.ciphertext, secret_keys[i] );
 
         libff::alt_bn128_G2 public_key = secret_keys[i] * libff::alt_bn128_G2::one();
 
-        BOOST_REQUIRE( obj.Verify( ciphertext, decrypted, public_key ) );
+        BOOST_REQUIRE( obj.Verify( *result.ciphertext, decrypted, public_key ) );
 
         shares[i].first = decrypted;
 
         shares[i].second = i + 1;
     }
 
-    std::string res = obj.CombineShares( ciphertext, shares );
+    libBLS::AES256Key res = obj.CombineShares( *result.ciphertext, shares );
 
-    BOOST_REQUIRE( res != message );
+    BOOST_REQUIRE( res != key );
 }
 
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionCorruptedCiphertext ) {
@@ -498,31 +549,28 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionCorruptedCiphertext ) {
 
     libff::alt_bn128_G2 common_public = common_secret * libff::alt_bn128_G2::one();
 
-    std::string message =
-        "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";  // message should be 64
-                                                                             // length
+    libBLS::AES256Key key;
+    RAND_bytes( key.data(), key.size() );
 
-    auto ciphertext = obj.getCiphertext( message, common_public );
+    auto result = obj.getCiphertext( key, common_public );
 
     libff::alt_bn128_G1 rand = libff::alt_bn128_G1::random_element();
 
-    std::tuple< libff::alt_bn128_G2, std::string, libff::alt_bn128_G1 > corrupted_ciphertext;
-    std::get< 0 >( corrupted_ciphertext ) = std::get< 0 >( ciphertext );
-    std::get< 1 >( corrupted_ciphertext ) = std::get< 1 >( ciphertext );
-    std::get< 2 >( corrupted_ciphertext ) = rand;
+    libBLS::CipheredKey corrupted_ciphered_key = { result.ciphertext->U, result.ciphertext->V,
+        rand };
 
     for ( size_t i = 0; i < 11; ++i ) {
         libff::alt_bn128_G2 decrypted;
 
         BOOST_REQUIRE_THROW(
-            decrypted = obj.getDecryptionShare( corrupted_ciphertext, secret_keys[i] ),
+            decrypted = obj.getDecryptionShare( corrupted_ciphered_key, secret_keys[i] ),
             libBLS::ThresholdUtils::IncorrectInput );
 
-        decrypted = obj.getDecryptionShare( ciphertext, secret_keys[i] );
+        decrypted = obj.getDecryptionShare( *result.ciphertext, secret_keys[i] );
 
         libff::alt_bn128_G2 public_key = secret_keys[i] * libff::alt_bn128_G2::one();
 
-        BOOST_REQUIRE( !obj.Verify( corrupted_ciphertext, decrypted, public_key ) );
+        BOOST_REQUIRE( !obj.Verify( corrupted_ciphered_key, decrypted, public_key ) );
     }
 }
 

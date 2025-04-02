@@ -10,12 +10,13 @@ int main( int argc, char* argv[] ) {
     }
 
     std::string message = argv[1];
+    std::vector< uint8_t > messageBytes( message.begin(), message.end() );
     std::string common_public_str = argv[2];
 
     libBLS::ThresholdUtils::initCurve();
-    auto ciphertext_string = libBLS::TE::encryptMessage( message, common_public_str );
+    auto ciphertext_string = libBLS::TE::encryptMessage( messageBytes, common_public_str );
 
-    std::cout << ciphertext_string;
+    std::cout << ciphertext_string.first;
 
     return 0;
 }

@@ -28,6 +28,7 @@
 #include <openssl/rand.h>
 
 #include <tools/utils.h>
+#include <iomanip>
 
 
 namespace libBLS {
@@ -72,6 +73,118 @@ std::vector< std::string > ThresholdUtils::G2ToString( libff::alt_bn128_G2 elem,
     return pkey_str_vect;
 }
 
+std::array< uint8_t, G2_SIZE_BYTES > ThresholdUtils::G2ToBytesArray( libff::alt_bn128_G2 elem ) {
+    std::array< uint8_t, G2_SIZE_BYTES > G2Bytes;
+
+    elem.to_affine_coordinates();
+    uint8_t* dest = G2Bytes.data();
+
+    // Get x.c0 bytes
+    auto x_c0_bytes = fieldElementToBytes( elem.X.c0 );
+    std::memcpy( dest, x_c0_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
+    dest += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    // Get x.c1 bytes
+    auto x_c1_bytes = fieldElementToBytes( elem.X.c1 );
+    std::memcpy( dest, x_c1_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
+    dest += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    // Get y.c0 bytes
+    auto y_c0_bytes = fieldElementToBytes( elem.Y.c0 );
+    std::memcpy( dest, y_c0_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
+    dest += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    // Get y.c1 bytes
+    auto y_c1_bytes = fieldElementToBytes( elem.Y.c1 );
+    std::memcpy( dest, y_c1_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
+
+    return G2Bytes;
+}
+
+std::vector< uint8_t > ThresholdUtils::G2ToBytes( libff::alt_bn128_G2 elem ) {
+    std::array< uint8_t, G2_SIZE_BYTES > G2Bytes = G2ToBytesArray( elem );
+    return std::vector< uint8_t >( G2Bytes.begin(), G2Bytes.end() );
+}
+
+libff::alt_bn128_G2 ThresholdUtils::bytesToG2( std::array< uint8_t, G2_SIZE_BYTES > bytes ) {
+    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > currentField;
+
+    libff::alt_bn128_G2 ret;
+    ret.Z = libff::alt_bn128_Fq2::one();
+
+    uint8_t* source = bytes.data();
+    // Get x.c0
+    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
+    ret.X.c0 = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    // Get x.c1
+    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
+    ret.X.c1 = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    // Get y.c0
+    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
+    ret.Y.c0 = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    // Get y.c1
+    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
+    ret.Y.c1 = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+
+    return ret;
+}
+
+libff::alt_bn128_G2 ThresholdUtils::bytesToG2( std::vector< uint8_t > bytes ) {
+    if ( bytes.size() != G2_SIZE_BYTES ) {
+        throw ThresholdUtils::IncorrectInput( "Incorrect number of bytes" );
+    }
+
+    std::array< uint8_t, G2_SIZE_BYTES > G2Bytes;
+    std::copy( bytes.begin(), bytes.end(), G2Bytes.begin() );
+
+    return bytesToG2( G2Bytes );
+}
+
+std::array< uint8_t, G1_SIZE_BYTES > ThresholdUtils::G1ToBytes( libff::alt_bn128_G1 elem ) {
+    std::array< uint8_t, G1_SIZE_BYTES > G1Bytes;
+
+    elem.to_affine_coordinates();
+    uint8_t* source = G1Bytes.data();
+
+    // Get X bytes
+    auto x_bytes = fieldElementToBytes( elem.X );
+    std::memcpy( source, x_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
+    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    // Get Y bytes
+    auto y_bytes = fieldElementToBytes( elem.Y );
+    std::memcpy( source, y_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
+    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    return G1Bytes;
+}
+
+libff::alt_bn128_G1 ThresholdUtils::bytesToG1( std::array< uint8_t, G1_SIZE_BYTES > bytes ) {
+    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > currentField;
+
+    libff::alt_bn128_G1 ret;
+    ret.Z = libff::alt_bn128_Fq::one();
+
+    uint8_t* source = bytes.data();
+
+    // Get X
+    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
+    ret.X = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
+
+    // Get Y
+    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
+    ret.Y = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+
+    return ret;
+}
+
 std::string ThresholdUtils::convertHexToDec( const std::string& hex_str ) {
     mpz_t dec;
     mpz_init( dec );
@@ -80,24 +193,38 @@ std::string ThresholdUtils::convertHexToDec( const std::string& hex_str ) {
 
     try {
         if ( mpz_set_str( dec, hex_str.c_str(), 16 ) == -1 ) {
-            mpz_clear( dec );
-            throw IsNotWellFormed( "Bad formatted hex string provided" );
+            throw IncorrectInput( "Bad formatted hex string provided" );
         }
 
         char arr[mpz_sizeinbase( dec, 10 ) + 2];
         char* tmp = mpz_get_str( arr, 10, dec );
-        mpz_clear( dec );
-
         output = tmp;
+
     } catch ( std::exception& e ) {
         mpz_clear( dec );
-        throw IsNotWellFormed( e.what() );
+        throw IncorrectInput( e.what() );
     } catch ( ... ) {
         mpz_clear( dec );
-        throw IsNotWellFormed( "Exception in convert hex to dec" );
+        throw IncorrectInput( "Exception in convert hex to dec" );
     }
 
+    mpz_clear( dec );
     return output;
+}
+
+std::string ThresholdUtils::convertDecToHex( std::string dec, int numBytes ) {
+    mpz_t num;
+    mpz_init( num );
+
+    mpz_set_str( num, dec.c_str(), 10 );
+    std::vector< char > tmp( mpz_sizeinbase( num, 16 ) + 2, 0 );
+    char* hex = mpz_get_str( tmp.data(), 16, num );
+    std::string result = hex;
+    int n_zeroes = numBytes * 2 - result.length();
+    result.insert( 0, n_zeroes, '0' );
+
+    mpz_clear( num );
+    return result;
 }
 
 libff::alt_bn128_G2 ThresholdUtils::stringToG2( const std::string& str ) {
@@ -346,60 +473,199 @@ std::shared_ptr< std::vector< std::string > > ThresholdUtils::SplitString(
 }
 
 void ThresholdUtils::initAES() {
-    static int init = 0;
-    if ( init == 0 ) {
+    static std::atomic< bool > init{ false };
+    bool expected = false;
+    if ( init.compare_exchange_strong( expected, true ) ) {
         // initialize openssl ciphers
         OpenSSL_add_all_ciphers();
 
         // initialize random number generator (for IVs)
-        RAND_load_file( "/dev/urandom", 32 );
-        ++init;
+        if ( RAND_load_file( "/dev/urandom", 32 ) != 32 ) {
+            throw std::runtime_error( "Failed to initialize random number generator" );
+        }
     }
 }
 
 std::vector< uint8_t > ThresholdUtils::aesEncrypt(
-    const std::string& plaintext, const std::string& key ) {
+    const std::vector< uint8_t >& plaintext, const AES256Key& key ) {
     initAES();
 
-    size_t enc_length = plaintext.length() * 3;
+    // Make sure there is enough space for: IV + plaintext + padding
+    size_t enc_length = AES_BLOCK_SIZE + plaintext.size() + AES_BLOCK_SIZE;
+
     std::vector< unsigned char > output;
     output.resize( enc_length, '\0' );
 
+    // Initialize IV vector
     unsigned char iv[AES_BLOCK_SIZE];
     RAND_bytes( iv, sizeof( iv ) );
-    std::copy( iv, iv + 16, output.begin() );
+    // Place IV at start of output
+    std::copy( iv, iv + AES_BLOCK_SIZE, output.begin() );
 
-    int actual_size = 0, final_size = 0;
+    // Account offset for the IV already stored in output vec
+    size_t offset = AES_BLOCK_SIZE;
+    int outlen = 0;
+
     EVP_CIPHER_CTX* e_ctx = EVP_CIPHER_CTX_new();
-    EVP_EncryptInit( e_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.c_str(), iv );
-    EVP_EncryptUpdate( e_ctx, &output[64], &actual_size, ( const unsigned char* ) plaintext.data(),
-        plaintext.length() );
-    EVP_EncryptFinal( e_ctx, &output[64 + actual_size], &final_size );
-    std::copy( iv, iv + 16, output.begin() + 16 );
-    output.resize( 64 + actual_size + final_size );
+    if ( !e_ctx ) {
+        throw std::runtime_error( "Failed to create new EVP_CIPHER_CTX" );
+    }
+
+    if ( EVP_EncryptInit( e_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.data(), iv ) !=
+         1 ) {
+        EVP_CIPHER_CTX_free( e_ctx );
+        throw std::runtime_error( "Failed to initialize encryption" );
+    }
+
+    // Cypher data and store in output
+    if ( EVP_EncryptUpdate( e_ctx, &output[offset], &outlen,
+             ( const unsigned char* ) plaintext.data(), plaintext.size() ) != 1 ) {
+        EVP_CIPHER_CTX_free( e_ctx );
+        throw std::runtime_error( "Failed to encrypt data" );
+    }
+
+    // offset for the data written
+    offset += outlen;
+
+    // Finalize encryption - take care of padding
+    if ( EVP_EncryptFinal( e_ctx, &output[offset], &outlen ) != 1 ) {
+        EVP_CIPHER_CTX_free( e_ctx );
+        throw std::runtime_error( "Failed to finalize encryption" );
+    }
+
+    offset += outlen;
+
+    output.resize( offset );
+
     EVP_CIPHER_CTX_free( e_ctx );
-    return output;
+
+    return std::vector< uint8_t >( output );
 }
 
-std::string ThresholdUtils::aesDecrypt(
-    const std::vector< uint8_t >& ciphertext, const std::string& key ) {
+std::vector< uint8_t > ThresholdUtils::aesDecrypt(
+    const std::vector< uint8_t >& ciphertext, const AES256Key& key ) {
     initAES();
 
+    if ( ciphertext.size() < AES_BLOCK_SIZE ) {
+        throw IncorrectInput( "Ciphertext is too short" );
+    }
+
     unsigned char iv[AES_BLOCK_SIZE];
-    std::copy( ciphertext.begin(), ciphertext.begin() + 16, iv );
-    std::vector< unsigned char > plaintext;
-    plaintext.resize( ciphertext.size(), '\0' );
+    std::copy( ciphertext.begin(), ciphertext.begin() + AES_BLOCK_SIZE, iv );
+    std::vector< unsigned char > plaintext( ciphertext.size() );
 
     int actual_size = 0, final_size = 0;
+
     EVP_CIPHER_CTX* d_ctx = EVP_CIPHER_CTX_new();
-    EVP_DecryptInit( d_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.c_str(), iv );
-    EVP_DecryptUpdate(
-        d_ctx, &plaintext[0], &actual_size, &ciphertext[64], ciphertext.size() - 64 );
-    EVP_DecryptFinal( d_ctx, &plaintext[actual_size], &final_size );
+    if ( !d_ctx ) {
+        throw std::runtime_error( "Failed to create new EVP_CIPHER_CTX" );
+    }
+
+    if ( EVP_DecryptInit( d_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.data(), iv ) !=
+         1 ) {
+        EVP_CIPHER_CTX_free( d_ctx );
+        throw std::runtime_error( "Failed to initialize decryption" );
+    }
+
+    if ( EVP_DecryptUpdate( d_ctx, &plaintext[0], &actual_size, &ciphertext[AES_BLOCK_SIZE],
+             ciphertext.size() - AES_BLOCK_SIZE ) != 1 ) {
+        EVP_CIPHER_CTX_free( d_ctx );
+        throw std::runtime_error( "Failed to decrypt data" );
+    }
+
+    if ( EVP_DecryptFinal( d_ctx, &plaintext[actual_size], &final_size ) != 1 ) {
+        EVP_CIPHER_CTX_free( d_ctx );
+        throw std::runtime_error( "Failed to finalize decryption" );
+    }
+
     EVP_CIPHER_CTX_free( d_ctx );
     plaintext.resize( actual_size + final_size, '\0' );
 
-    return std::string( plaintext.begin(), plaintext.end() );
+    return plaintext;
 }
+
+
+std::string ThresholdUtils::bytesToHexString( const std::vector< uint8_t >& bytes ) {
+    if ( bytes.size() == 0 ) {
+        throw IncorrectInput( "Byte array is empty." );
+    }
+
+    std::stringstream ss;
+    ss << std::hex << std::setfill( '0' );
+
+    for ( uint8_t byte : bytes ) {
+        ss << std::setw( 2 ) << static_cast< int >( byte );  // Format each byte as 2-char hex
+    }
+
+    return ss.str();
+}
+
+std::string ThresholdUtils::bytesToHexString(
+    const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& bytes ) {
+    std::stringstream ss;
+    ss << std::hex << std::setfill( '0' );
+
+    for ( uint8_t byte : bytes ) {
+        ss << std::setw( 2 ) << static_cast< int >( byte );  // Format each byte as 2-char hex
+    }
+
+    return ss.str();
+}
+
+std::vector< uint8_t > ThresholdUtils::hexCStringToBytes( const char* hexStr ) {
+    size_t len = validateHexCString( hexStr );
+
+    std::vector< uint8_t > bytes( len / 2 );
+
+    // Convert hex string to byte array
+    for ( size_t i = 0; i < len; i += 2 ) {
+        bytes[i / 2] = ( std::stoi( std::string( hexStr + i, 2 ), nullptr, 16 ) );
+    }
+
+    return bytes;
+}
+
+size_t ThresholdUtils::validateHexCString( const char* hexStr ) {
+    size_t len = std::strlen( hexStr );
+
+    if ( len == 0 ) {
+        throw IncorrectInput( "Hex string is empty." );
+    }
+
+    // Ensure the hex string length is even
+    if ( len % 2 != 0 ) {
+        throw IncorrectInput( "Hex string length must be even." );
+    }
+
+    // Ensure the string contains only valid hexadecimal characters
+    for ( size_t i = 0; i < len; i++ ) {
+        if ( !std::isxdigit( hexStr[i] ) ) {
+            throw IncorrectInput( "Hex string contains invalid characters." + hexStr[i] );
+        }
+    }
+    return len;
+}
+
+void ThresholdUtils::validateG1( const libff::alt_bn128_G1& point ) {
+    if ( point.is_zero() ) {
+        throw IncorrectInput( "Point is zero" );
+    }
+    if ( !point.is_well_formed() ) {
+        throw IncorrectInput( "Point is not well formed" );
+    }
+}
+
+void ThresholdUtils::validateG2( const libff::alt_bn128_G2& point ) {
+    if ( point.is_zero() ) {
+        throw IncorrectInput( "Point is zero" );
+    }
+    if ( !point.is_well_formed() ) {
+        throw IncorrectInput( "Point is not well formed" );
+    }
+    if ( libff::alt_bn128_G2::order() * point != libff::alt_bn128_G2::zero() ) {
+        throw IncorrectInput( "Point is not on the group" );
+    }
+}
+
 
 }  // namespace libBLS

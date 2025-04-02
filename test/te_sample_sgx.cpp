@@ -26,28 +26,37 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <jsonrpccpp/client/client.h>
 #include <jsonrpccpp/client/connectors/httpclient.h>
 
+#include "utils.h"
 #include <bls/bls.h>
 #include <dkg/dkg.h>
+#include <threshold_encryption/ThresholdEncryption.h>
 #include <threshold_encryption/threshold_encryption.h>
 #include <tools/utils.h>
+#include <chrono>
 
-void importBLSKeys(
-    const std::vector< libff::alt_bn128_Fr >& secret_keys, const std::string& sgx_url );
+void importBLSKeys( const std::vector< libBLS::TEPrivateKeyShare >& secretKeys,
+    const std::string& sgxUrl, const std::string& dkgRandId );
 
-std::vector< libff::alt_bn128_Fr > generateSecretKeys(
-    size_t t, size_t n, const std::string& sgx_url );
+std::vector< libBLS::TEDecryptionShare > getDecryptionShares(
+    const std::vector< std::shared_ptr< libBLS::Ciphertext > >& ciphertexts,
+    const std::string& keyName, const std::string& sgxUrl, const size_t signerIndex );
 
-libff::alt_bn128_G2 getDecryptionShare(
-    const libBLS::Ciphertext& ciphertext, const std::string& key_name, const std::string& sgx_url );
+std::pair< std::vector< std::vector< uint8_t > >,
+    std::vector< std::shared_ptr< libBLS::Ciphertext > > >
+cipherRandomMessageBatch( const libBLS::TEPublicKey& commonPublicKey, size_t nMessagesBatch );
+
+
+int64_t totalTime = 0;
 
 int main() {
     size_t t;
     size_t n;
-    std::string sgxwallet_url;
-    std::string plaintext;
+    std::string sgxWalletUrl;
+    size_t nMessagesBatch;
+    size_t nBatches;
 
-    if ( const char* env_t = std::getenv( "t" ) ) {
-        t = std::stoi( env_t );
+    if ( const char* envT = std::getenv( "t" ) ) {
+        t = std::stoi( envT );
     } else {
         t = 11;
     }
@@ -58,88 +67,116 @@ int main() {
         n = 16;
     }
 
-    if ( const char* env_url = std::getenv( "SGXWALLET_URL" ) ) {
-        sgxwallet_url = std::string( env_url );
+    if ( const char* envUrl = std::getenv( "SGXWALLET_URL" ) ) {
+        sgxWalletUrl = std::string( envUrl );
     } else {
-        sgxwallet_url = "http://127.0.0.1:1029";
+        sgxWalletUrl = "http://127.0.0.1:1029";
     }
 
-    if ( const char* env_message = std::getenv( "MESSAGE" ) ) {
-        plaintext = std::string( env_message );
+    if ( const char* envNmessagesBatch = std::getenv( "N_MESSAGES_BATCH" ) ) {
+        nMessagesBatch = std::stoi( envNmessagesBatch );
     } else {
-        plaintext = "Hello, SKALE users and fans, gl!Hello, SKALE users and fans, gl!";
+        nMessagesBatch = 100;
     }
 
-    auto secret_keys = generateSecretKeys( t, n, sgxwallet_url );
-
-    std::vector< libff::alt_bn128_G2 > public_keys( n );
-    for ( size_t i = 0; i < n; ++i ) {
-        public_keys[i] = secret_keys[i] * libff::alt_bn128_G2::one();
+    if ( const char* envBatchSize = std::getenv( "N_BATCHES" ) ) {
+        nBatches = std::stoi( envBatchSize );
+    } else {
+        nBatches = 1;
     }
 
-    std::vector< size_t > idx( n );
-    for ( size_t i = 0; i < n; ++i ) {
-        idx[i] = i + 1;
-    }
-    auto lagrange_coeffs = libBLS::ThresholdUtils::LagrangeCoeffs( idx, t );
+    // generate random dkg id - have different key names for each run
+    auto now = std::chrono::system_clock::now();
+    auto now_ms =
+        std::chrono::duration_cast< std::chrono::milliseconds >( now.time_since_epoch() ).count();
+    auto dkgRandId = std::to_string( now_ms );
 
-    libBLS::Bls bls_instance = libBLS::Bls( t, n );
-    auto common_keys = bls_instance.KeysRecover( lagrange_coeffs, secret_keys );
+    const keys keys = generateKeys( t, n );
+    importBLSKeys( keys.secretKeys, sgxWalletUrl, dkgRandId );
 
-    auto vector_coordinates = libBLS::ThresholdUtils::G2ToString( common_keys.second, 16 );
 
-    std::string common_public_str = "";
-    for ( auto& coord : vector_coordinates ) {
-        while ( coord.size() < 64 ) {
-            coord = "0" + coord;
+    for ( size_t i = 0; i < nBatches; ++i ) {
+        auto [plaintexts, ciphertexts] =
+            cipherRandomMessageBatch( keys.commonPublic, nMessagesBatch );
+
+        std::vector< libBLS::TEDecryptSet > decription_sets(
+            nMessagesBatch, libBLS::TEDecryptSet( t, n ) );
+
+        // For each node - request decryption shares for current batch
+        for ( size_t nodeId = 0; nodeId < n; ++nodeId ) {
+            // node id should start from 1
+            size_t actualNodeId = nodeId + 1;
+
+            std::string bls_key_name =
+                "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:" + std::to_string( actualNodeId ) +
+                ":DKG_ID:" + dkgRandId;
+
+
+            std::vector< libBLS::TEDecryptionShare > batchedDecryptionShares =
+                getDecryptionShares( ciphertexts, bls_key_name, sgxWalletUrl, actualNodeId );
+
+            // verify all shares
+            for ( size_t msg = 0; msg < batchedDecryptionShares.size(); ++msg ) {
+                libBLS::ThresholdEncryption::validateDecryptionShare(
+                    ciphertexts[msg]->key, batchedDecryptionShares[msg], keys.publicKeys[nodeId] );
+
+                decription_sets[msg].addDecryptShare( batchedDecryptionShares[msg] );
+            }
         }
-        common_public_str += coord;
+
+        // combine shares from each individual message on the batch
+        for ( size_t msg = 0; msg < nMessagesBatch; ++msg ) {
+            libBLS::AES256Key decipheredKey = libBLS::ThresholdEncryption::combineShares(
+                ciphertexts[msg]->key, decription_sets[msg] );
+            libBLS::ThresholdEncryption::validateCombinedDecryption(
+                *ciphertexts[msg], decipheredKey, keys.commonPublic );
+            std::vector< uint8_t > decipheredMsg =
+                libBLS::ThresholdEncryption::decrypt( *ciphertexts[msg], decipheredKey );
+
+            assert( decipheredMsg == plaintexts[msg] );
+        }
     }
 
-    auto encrypted_string = libBLS::TE::encryptMessage( plaintext, common_public_str );
-
-    auto te_instance = libBLS::TE( t, n );
-
-    auto ciphertext_with_aes = te_instance.aesCiphertextFromString( encrypted_string );
-
-    auto ciphertext = ciphertext_with_aes.first;
-    auto encrypted_message = ciphertext_with_aes.second;
-
-    std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares;
-    for ( size_t i = 0; i < n; ++i ) {
-        libff::alt_bn128_Fr secret_key = secret_keys[i];
-        libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
-
-        std::string bls_key_name =
-            "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:0:DKG_ID:" + std::to_string( i );
-
-        libff::alt_bn128_G2 decryption_share =
-            getDecryptionShare( ciphertext, bls_key_name, sgxwallet_url );
-
-        assert( te_instance.Verify( ciphertext, decryption_share, public_key ) );
-
-        shares.push_back( std::make_pair( decryption_share, size_t( i + 1 ) ) );
-    }
-
-    std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
-
-    std::string decrypted_plaintext =
-        libBLS::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
-
-    assert( decrypted_plaintext == plaintext );
-
+    float elapsedTime = totalTime / ( float ) 1'000'000;  // convert to seconds
+    std::cout << "Total time: " << elapsedTime << " seconds" << std::endl;
+    std::cout << "Throughput / node: " << ( nMessagesBatch * nBatches * n ) / elapsedTime
+              << " seconds" << std::endl;
     return 0;
 }
 
-void importBLSKeys(
-    const std::vector< libff::alt_bn128_Fr >& secret_keys, const std::string& sgx_url ) {
-    jsonrpc::HttpClient* jsonRpcClient = new jsonrpc::HttpClient( sgx_url );
+std::pair< std::vector< std::vector< uint8_t > >,
+    std::vector< std::shared_ptr< libBLS::Ciphertext > > >
+cipherRandomMessageBatch( const libBLS::TEPublicKey& commonPublicKey, size_t nMessagesBatch ) {
+    std::vector< std::vector< uint8_t > > plaintexts;
+    std::vector< std::shared_ptr< libBLS::Ciphertext > > ciphertexts;
+
+    // create the batch of messages
+    for ( size_t j = 0; j < nMessagesBatch; ++j ) {
+        std::vector< uint8_t > plaintext;
+        // build random messages of random sizes up to 800 characters
+        size_t msgLength = rand() % 800;
+        for ( size_t length = 0; length < msgLength; ++length ) {
+            plaintext.push_back( rand() % 256 );
+        }
+        plaintexts.push_back( plaintext );
+
+        // build corresponding ciphertexts
+        auto encrypted_data = libBLS::ThresholdEncryption::encrypt( plaintext, commonPublicKey );
+        ciphertexts.push_back( std::make_shared< libBLS::Ciphertext >( encrypted_data ) );
+    }
+    return { std::move( plaintexts ), std::move( ciphertexts ) };
+}
+
+void importBLSKeys( const std::vector< libBLS::TEPrivateKeyShare >& secretKeys,
+    const std::string& sgxUrl, const std::string& dkgRandId ) {
+    jsonrpc::HttpClient* jsonRpcClient = new jsonrpc::HttpClient( sgxUrl );
     jsonrpc::Client sgxClient( *jsonRpcClient );
 
-    for ( size_t i = 0; i < secret_keys.size(); ++i ) {
+    for ( size_t i = 0; i < secretKeys.size(); ++i ) {
         Json::Value p;
-        p["keyShare"] = libBLS::ThresholdUtils::fieldElementToString( secret_keys[i], 16 );
-        p["keyShareName"] = "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:0:DKG_ID:" + std::to_string( i );
+        p["keyShare"] = secretKeys[i].toStringHex();
+        p["keyShareName"] = "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:" + std::to_string( i + 1 ) +
+                            ":DKG_ID:" + dkgRandId;
 
         Json::Value result = sgxClient.CallMethod( "importBLSKeyShare", p );
     }
@@ -147,71 +184,36 @@ void importBLSKeys(
     delete jsonRpcClient;
 }
 
-std::vector< libff::alt_bn128_Fr > generateSecretKeys(
-    size_t t, size_t n, const std::string& sgx_url ) {
-    libBLS::Dkg dkg_instance = libBLS::Dkg( t, n );
-
-    auto polynomial = dkg_instance.GeneratePolynomial();
-
-    std::vector< libff::alt_bn128_Fr > secret_keys( n );
-    for ( size_t i = 0; i < n; ++i ) {
-        secret_keys[i] = dkg_instance.PolynomialValue( polynomial, i + 1 );
-    }
-
-    importBLSKeys( secret_keys, sgx_url );
-
-    return secret_keys;
-}
-
-libff::alt_bn128_G2 getDecryptionShare( const libBLS::Ciphertext& ciphertext,
-    const std::string& key_name, const std::string& sgx_url ) {
-    libBLS::TE::checkCypher( ciphertext );
-
-    libff::alt_bn128_G2 U = std::get< 0 >( ciphertext );
-
-    U.to_affine_coordinates();
-    auto u_splitted = libBLS::ThresholdUtils::G2ToString( U );
-    std::string public_decryption_value = "";
-    for ( size_t i = 0; i < u_splitted.size(); ++i ) {
-        public_decryption_value += u_splitted[i];
-        if ( i != u_splitted.size() - 1 ) {
-            public_decryption_value += ":";
-        }
-    }
-
-    std::string V = std::get< 1 >( ciphertext );
-
-    libff::alt_bn128_G1 W = std::get< 2 >( ciphertext );
-
-    libff::alt_bn128_G1 H = libBLS::TE::HashToGroup( U, V );
-
-    libff::alt_bn128_GT fst, snd;
-    fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
-    snd = libff::alt_bn128_ate_reduced_pairing( H, U );
-
-    bool res = fst == snd;
-
-    if ( !res ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "cannot decrypt data" );
-    }
-
-    jsonrpc::HttpClient* jsonRpcClient = new jsonrpc::HttpClient( sgx_url );
-    jsonrpc::Client sgxClient( *jsonRpcClient );
-
+std::vector< libBLS::TEDecryptionShare > getDecryptionShares(
+    const std::vector< std::shared_ptr< libBLS::Ciphertext > >& ciphertexts,
+    const std::string& keyName, const std::string& sgxUrl, const size_t signerIndex ) {
     Json::Value p;
-    p["blsKeyName"] = key_name;
-    p["publicDecryptionValue"] = public_decryption_value;
+    p["blsKeyName"] = keyName;
 
-    Json::Value result = sgxClient.CallMethod( "getDecryptionShare", p );
+    Json::Value batch;
+    // batch.reserve( 256 * ciphertexts.size());
+    for ( size_t i = 0; i < ciphertexts.size(); i++ ) {
+        std::shared_ptr< libBLS::Ciphertext > ciphertext = ciphertexts[i];
+        libBLS::ThresholdEncryption::validateEncryption( ciphertexts[i]->key );
+        batch.append( ciphertext->getPublicDecryptionValue() );
+    }
 
-    delete jsonRpcClient;
+    TIMER(
+        totalTime, p["publicDecryptionValues"] = batch;
+        jsonrpc::HttpClient* jsonRpcClient = new jsonrpc::HttpClient( sgxUrl );
+        jsonRpcClient->SetTimeout( 1000000 ); jsonrpc::Client sgxClient( *jsonRpcClient );
 
-    libff::alt_bn128_G2 ret_val;
-    ret_val.Z = libff::alt_bn128_Fq2::one();
-    ret_val.X.c0 = libff::alt_bn128_Fq( result["decryptionShare"][0].asCString() );
-    ret_val.X.c1 = libff::alt_bn128_Fq( result["decryptionShare"][1].asCString() );
-    ret_val.Y.c0 = libff::alt_bn128_Fq( result["decryptionShare"][2].asCString() );
-    ret_val.Y.c1 = libff::alt_bn128_Fq( result["decryptionShare"][3].asCString() );
+        Json::Value result = sgxClient.CallMethod( "getDecryptionShares", p );
 
-    return ret_val;
+        delete jsonRpcClient;
+
+        std::vector< libBLS::TEDecryptionShare > ret_values;
+
+        for ( size_t i = 0; i < ciphertexts.size(); i++ ) {
+            int i_int = ( int ) i;
+            ret_values.push_back( libBLS::TEDecryptionShare(
+                result["decryptionShares"][i_int].asCString(), signerIndex ) );
+        } );
+
+    return ret_values;
 }

@@ -18,31 +18,39 @@
 
   @file TEPublicKey.h
   @author Sveta Rogova
-  @date 2019
+  @date 2025
 */
 
 #ifndef LIBBLS_TEPRIVATEKEY_H
 #define LIBBLS_TEPRIVATEKEY_H
 
+#include <threshold_encryption/TEBase.h>
 #include <threshold_encryption/threshold_encryption.h>
+
+namespace libBLS {
 
 class TEPrivateKey {
 private:
     libff::alt_bn128_Fr privateKey;
 
-    size_t requiredSigners;
-    size_t totalSigners;
-
 public:
-    TEPrivateKey( std::shared_ptr< std::string > _key_str_ptr, size_t _requiredSigners,
-        size_t _totalSigners );
+    TEPrivateKey( const std::string& _keyStr );
 
-    TEPrivateKey( libff::alt_bn128_Fr _skey, size_t _requiredSigners, size_t _totalSigners );
+    TEPrivateKey( libff::alt_bn128_Fr _skey );
+
+    TEPrivateKey( const std::vector< uint8_t > _keyBytes );
+
+    TEPrivateKey( const std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > _keyBytes );
 
     std::string toString() const;
 
-    libff::alt_bn128_Fr getPrivateKey() const;
+    libff::alt_bn128_Fr getPrivateKeyRaw() const;
+
+    std::vector< uint8_t > toBytesVec() const;
+
+    std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > toBytesArray() const;
 };
 
+}  // namespace libBLS
 
 #endif  // LIBBLS_TEPRIVATEKEY_H

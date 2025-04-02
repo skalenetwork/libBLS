@@ -21,6 +21,10 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 @date 2021
 */
 
+#include <TEDecryptSet.h>
+#include <TEPrivateKeyShare.h>
+#include <TEPublicKeyShare.h>
+#include <ThresholdEncryption.h>
 #include <threshold_encryption.h>
 #include <tools/utils.h>
 #include <fstream>
@@ -36,27 +40,41 @@ int main() {
     std::string secretKey;
     secretKeyFile >> secretKey;
 
-    auto te_instance = libBLS::TE( 1, 1 );
+    libBLS::ThresholdUtils::initCurve();
 
-    auto ciphertext_with_aes = te_instance.aesCiphertextFromString( encryptedData );
+    auto encryptedDataBytes = libBLS::ThresholdUtils::hexCStringToBytes( encryptedData.c_str() );
 
-    auto ciphertext = ciphertext_with_aes.first;
-    auto encrypted_message = ciphertext_with_aes.second;
+    auto ciphertext = libBLS::Ciphertext::fromBytes( encryptedDataBytes );
 
-    libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr( secretKey.c_str() );
-    libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
+    auto aesKeyEncrypted = ciphertext.key;
+    auto encryptedMessage = ciphertext.getData();
 
-    libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( ciphertext, secret_key );
+    libBLS::ThresholdEncryption::validateEncryption( aesKeyEncrypted );
 
-    assert( te_instance.Verify( ciphertext, decryption_share, public_key ) );
+    libBLS::TEPrivateKeyShare privateKeyShare( libff::alt_bn128_Fr( secretKey.c_str() ), 1, 1, 1 );
+    libBLS::TEPublicKeyShare publicKeyShare( privateKeyShare );
 
-    std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares;
-    shares.push_back( std::make_pair( decryption_share, size_t( 1 ) ) );
+    libBLS::TEDecryptionShare decryptionShare =
+        libBLS::ThresholdEncryption::partialDecrypt( aesKeyEncrypted, privateKeyShare );
 
-    std::string decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
+    libBLS::ThresholdEncryption::validateDecryptionShare(
+        aesKeyEncrypted, decryptionShare, publicKeyShare );
 
-    std::string plaintext =
-        libBLS::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
+    libBLS::TEDecryptSet decryptSet( 1, 1 );
+    decryptSet.addDecryptShare( decryptionShare );
+
+    auto aesKeyDecrypted =
+        libBLS::ThresholdEncryption::combineShares( aesKeyEncrypted, decryptSet );
+
+    libBLS::TEPublicKey publicKey( publicKeyShare.getPublicKeyRaw() );
+
+    libBLS::ThresholdEncryption::validateCombinedDecryption(
+        ciphertext, aesKeyDecrypted, publicKey );
+
+    auto decryptedMessageBytes =
+        libBLS::ThresholdEncryption::decrypt( ciphertext, aesKeyDecrypted );
+
+    auto plaintext = libBLS::ThresholdUtils::bytesToHexString( decryptedMessageBytes );
 
     std::ifstream messageFile;
     messageFile.open( "message.txt" );

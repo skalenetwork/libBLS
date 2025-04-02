@@ -24,36 +24,53 @@
 #ifndef LIBBLS_TEPRIVATEKEYSHARE_H
 #define LIBBLS_TEPRIVATEKEYSHARE_H
 
+#include <threshold_encryption/TEBase.h>
+#include <threshold_encryption/TEDecryptionShare.h>
 #include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/threshold_encryption.h>
 
-class TEPrivateKeyShare {
+namespace libBLS {
+
+class TEPrivateKeyShare : public TEBase {
 private:
     libff::alt_bn128_Fr privateKey;
 
     size_t signerIndex;
-    size_t requiredSigners;
-    size_t totalSigners;
 
 public:
-    TEPrivateKeyShare( std::shared_ptr< std::string > _key_str_ptr, size_t _signerIndex,
+    TEPrivateKeyShare( const std::string& _hexaField, size_t _signerIndex, size_t _requiredSigners,
+        size_t _totalSigners );
+
+    TEPrivateKeyShare( libff::alt_bn128_Fr _skeyShare, size_t _signerIndex, size_t _requiredSigners,
+        size_t _totalSigners );
+
+    TEPrivateKeyShare( const std::vector< uint8_t >& _bytes, size_t _signerIndex,
         size_t _requiredSigners, size_t _totalSigners );
 
-    TEPrivateKeyShare( libff::alt_bn128_Fr _skey_share, size_t _signerIndex,
-        size_t _requiredSigners, size_t _totalSigners );
+    TEPrivateKeyShare( const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& bytes,
+        size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners );
 
-    libff::alt_bn128_G2 getDecryptionShare( libBLS::Ciphertext& cipher );
 
-    static std::pair< std::shared_ptr< std::vector< std::shared_ptr< TEPrivateKeyShare > > >,
-        std::shared_ptr< TEPublicKey > >
-    generateSampleKeys( size_t _requiredSigners, size_t _totalSigners );
+    std::vector< uint8_t > toBytesVec() const;
+
+    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > toBytesArray() const;
+
+    inline void validate() const {
+        if ( privateKey.is_zero() ) {
+            throw ThresholdUtils::IsNotWellFormed(
+                "Zero private key share, with signer index " + signerIndex );
+        }
+    }
 
     std::string toString() const;
 
+    std::string toStringHex() const;
+
     size_t getSignerIndex() const;
 
-    libff::alt_bn128_Fr getPrivateKey() const;
+    libff::alt_bn128_Fr getPrivateKeyRaw() const;
 };
 
+}  // namespace libBLS
 
 #endif  // LIBBLS_TEPRIVATEKEYSHARE_H

@@ -27,88 +27,82 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <iostream>
 #include <utility>
 
+namespace libBLS {
 
-TEPublicKey::TEPublicKey( std::shared_ptr< std::vector< std::string > > _key_str_ptr,
-    size_t _requiredSigners, size_t _totalSigners )
-    : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    if ( !_key_str_ptr ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "public key is null" );
+TEPublicKey::TEPublicKey( const std::vector< std::string >& _keyStrPtr ) {
+    if ( _keyStrPtr.size() != 4 ) {
+        throw ThresholdUtils::IncorrectInput( "wrong number of components in public key share" );
     }
 
-    if ( _key_str_ptr->size() != 4 ) {
-        throw libBLS::ThresholdUtils::IncorrectInput(
-            "wrong number of components in public key share" );
+    std::array< std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >, 4 > components;
+
+    // check each component
+    for ( size_t i = 0; i < _keyStrPtr.size(); ++i ) {
+        if ( _keyStrPtr[i].length() != MAX_FIELD_ELEMENT_SIZE_BYTES * 2 ) {
+            throw ThresholdUtils::IncorrectInput( "wrong string length in public key share" );
+        }
+        // throws if cannot hexa is not valid
+        components[i] = ThresholdUtils::hexCStringToBytesArray< MAX_FIELD_ELEMENT_SIZE_BYTES >(
+            _keyStrPtr[i].c_str() );
     }
 
-    if ( !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 0 ) ) ||
-         !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 1 ) ) ||
-         !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 2 ) ) ||
-         !libBLS::ThresholdUtils::isStringNumber( _key_str_ptr->at( 3 ) ) ) {
-        throw libBLS::ThresholdUtils::IncorrectInput(
-            "non-digit symbol or first zero in non-zero public key share" );
-    }
+    publicKey.Z = libff::alt_bn128_Fq2::one();
+    publicKey.X.c0 =
+        libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[0] );
+    publicKey.X.c1 =
+        libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[1] );
+    publicKey.Y.c0 =
+        libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[2] );
+    publicKey.Y.c1 =
+        libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[3] );
 
-    libff::init_alt_bn128_params();
-
-    PublicKey.Z = libff::alt_bn128_Fq2::one();
-    PublicKey.X.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 0 ).c_str() );
-    PublicKey.X.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 1 ).c_str() );
-    PublicKey.Y.c0 = libff::alt_bn128_Fq( _key_str_ptr->at( 2 ).c_str() );
-    PublicKey.Y.c1 = libff::alt_bn128_Fq( _key_str_ptr->at( 3 ).c_str() );
-
-    if ( PublicKey.is_zero() || !PublicKey.is_well_formed() ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "corrupted string or zero public key" );
-    }
+    ThresholdUtils::validateG2( publicKey );
 }
 
-TEPublicKey::TEPublicKey(
-    TEPrivateKey _common_private, size_t _requiredSigners, size_t _totalSigners )
-    : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+TEPublicKey::TEPublicKey( const std::string& _keyStr )
+    : TEPublicKey( ThresholdUtils::stringToG2( _keyStr ) ) {}
 
-    libff::init_alt_bn128_params();
-
-    if ( _common_private.getPrivateKey().is_zero() ) {
+TEPublicKey::TEPublicKey( const TEPrivateKey& _commonPrivate ) {
+    if ( _commonPrivate.getPrivateKeyRaw().is_zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "zero key" );
     }
 
-    PublicKey = _common_private.getPrivateKey() * libff::alt_bn128_G2::one();
+    publicKey = _commonPrivate.getPrivateKeyRaw() * libff::alt_bn128_G2::one();
 }
 
-TEPublicKey::TEPublicKey( libff::alt_bn128_G2 _pkey, size_t _requiredSigners, size_t _totalSigners )
-    : PublicKey( _pkey ), requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
+TEPublicKey::TEPublicKey( const libff::alt_bn128_G2& _pkey ) : publicKey( _pkey ) {
+    ThresholdUtils::validateG2( publicKey );
+}
 
-    if ( _pkey.is_zero() || !_pkey.is_well_formed() ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "zero or corrupted public key" );
+TEPublicKey::TEPublicKey( const std::array< uint8_t, G2_SIZE_BYTES >& _keyBytes )
+    : TEPublicKey( ThresholdUtils::bytesToG2( _keyBytes ) ) {}
+
+TEPublicKey::TEPublicKey( const std::vector< uint8_t >& _keyBytes )
+    : TEPublicKey( ThresholdUtils::bytesToG2( _keyBytes ) ) {}
+
+std::string TEPublicKey::toString() const {
+    std::vector< std::string > res = ThresholdUtils::G2ToString( publicKey, libBLS::BASE_HEXA );
+    std::string concatenated;
+    // Nbr of hexa digits = 2 x byte size
+    concatenated.reserve( 2 * G2_SIZE_BYTES );
+    for ( const auto& str : res ) {
+        concatenated += str;
     }
+
+    return concatenated;
 }
 
-libBLS::Ciphertext TEPublicKey::encrypt( std::shared_ptr< std::string > mes_ptr ) {
-    libBLS::TE te( requiredSigners, totalSigners );
-
-    if ( mes_ptr == nullptr ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Message is null" );
-    }
-
-    if ( mes_ptr->length() != 64 ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Message length is not equal to 64" );
-    }
-
-    libBLS::Ciphertext cypher = te.getCiphertext( *mes_ptr, PublicKey );
-    libBLS::TE::checkCypher( cypher );
-
-    return std::make_tuple(
-        std::get< 0 >( cypher ), std::get< 1 >( cypher ), std::get< 2 >( cypher ) );
+libff::alt_bn128_G2 TEPublicKey::getPublicKeyRaw() const {
+    return publicKey;
 }
 
-std::shared_ptr< std::vector< std::string > > TEPublicKey::toString() {
-    return std::make_shared< std::vector< std::string > >(
-        libBLS::ThresholdUtils::G2ToString( PublicKey ) );
+std::array< uint8_t, G2_SIZE_BYTES > TEPublicKey::toBytesArray() const {
+    return libBLS::ThresholdUtils::G2ToBytesArray( publicKey );
 }
 
-libff::alt_bn128_G2 TEPublicKey::getPublicKey() const {
-    return PublicKey;
+std::vector< uint8_t > TEPublicKey::toBytesVec() const {
+    return libBLS::ThresholdUtils::G2ToBytes( publicKey );
 }
+
+}  // namespace libBLS

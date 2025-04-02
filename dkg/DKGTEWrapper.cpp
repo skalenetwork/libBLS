@@ -64,7 +64,7 @@ std::shared_ptr< std::vector< libff::alt_bn128_G2 > > DKGTEWrapper::createDKGPub
         dkg_secret_ptr->getDKGTEPublicShares() );
 }
 
-TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare(
+libBLS::TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare(
     size_t signerIndex_, std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr ) {
     if ( secret_shares_ptr == nullptr )
         throw libBLS::ThresholdUtils::IncorrectInput( "Null secret_shares_ptr " );
@@ -75,10 +75,10 @@ TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare(
 
     libff::alt_bn128_Fr skey_share = dkg_te.SecretKeyShareCreate( *secret_shares_ptr );
 
-    return TEPrivateKeyShare( skey_share, signerIndex_, requiredSigners, totalSigners );
+    return libBLS::TEPrivateKeyShare( skey_share, signerIndex_, requiredSigners, totalSigners );
 }
 
-TEPublicKey DKGTEWrapper::CreateTEPublicKey(
+libBLS::TEPublicKey DKGTEWrapper::CreateTEPublicKey(
     std::shared_ptr< std::vector< std::vector< libff::alt_bn128_G2 > > > public_shares_all,
     size_t _requiredSigners, size_t _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
@@ -92,7 +92,7 @@ TEPublicKey DKGTEWrapper::CreateTEPublicKey(
         public_key = public_key + public_shares_all->at( i ).at( 0 );
     }
 
-    TEPublicKey common_public( public_key, _requiredSigners, _totalSigners );
+    libBLS::TEPublicKey common_public( public_key );
 
     return common_public;
 }

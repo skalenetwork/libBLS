@@ -24,30 +24,41 @@
 #ifndef LIBBLS_TEPUBLICKEYSHARE_H
 #define LIBBLS_TEPUBLICKEYSHARE_H
 
+#include <threshold_encryption/TEBase.h>
 #include <threshold_encryption/TEPrivateKeyShare.h>
 #include <threshold_encryption/threshold_encryption.h>
 
-class TEPublicKeyShare {
+namespace libBLS {
+
+class TEPublicKeyShare : TEBase {
 private:
-    libff::alt_bn128_G2 PublicKey;
+    libff::alt_bn128_G2 publicKey;
 
     size_t signerIndex;
-    size_t requiredSigners;
-    size_t totalSigners;
-
 
 public:
-    TEPublicKeyShare( std::shared_ptr< std::vector< std::string > > _key_str_ptr,
-        size_t signerIndex, size_t _requiredSigners, size_t _totalSigners );
+    TEPublicKeyShare( TEPrivateKeyShare _pKey );
 
-    TEPublicKeyShare( TEPrivateKeyShare _p_key, size_t _requiredSigners, size_t _totalSigners );
+    TEPublicKeyShare( libff::alt_bn128_G2 _point, size_t signerIndex, size_t _requiredSigners,
+        size_t _totalSigners );
 
-    bool Verify( const libBLS::Ciphertext& ciphertext, const libff::alt_bn128_G2& decrypted );
+    TEPublicKeyShare( const std::vector< uint8_t >& _bytes, size_t signerIndex,
+        size_t _requiredSigners, size_t _totalSigners );
 
-    std::shared_ptr< std::vector< std::string > > toString();
+    TEPublicKeyShare( const std::array< uint8_t, libBLS::G2_SIZE_BYTES >& bytes, size_t signerIndex,
+        size_t _requiredSigners, size_t _totalSigners );
 
-    libff::alt_bn128_G2 getPublicKey() const;
+    inline void validate() const { ThresholdUtils::validateG2( publicKey ); }
+
+    // std::string toString() const;
+
+    std::vector< uint8_t > toBytesVec() const;
+
+    std::array< uint8_t, libBLS::G2_SIZE_BYTES > toBytesArray() const;
+
+    libff::alt_bn128_G2 getPublicKeyRaw() const;
 };
 
+}  // namespace libBLS
 
 #endif  // LIBBLS_TEPUBLICKEYSHARE_H

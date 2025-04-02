@@ -90,6 +90,16 @@ jobs:
           sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
 
           sudo python3 -m pip install requests[security]
+
+      - name: install cmake
+        run: |
+          wget --no-check-certificate https://cmake.org/files/v3.21/cmake-3.21.0-linux-x86_64.sh && \
+          chmod +x cmake-3.21.0-linux-x86_64.sh && \
+          ./cmake-3.21.0-linux-x86_64.sh --skip-license --include-subdir && \
+          sudo ln -sf `pwd`/cmake-3.21.0-linux-x86_64/bin/* /usr/local/bin
+
+          cmake --version
+
       - name: Get newest lcov
         run: >
           echo "Removing previous lcov version..."
@@ -146,7 +156,7 @@ jobs:
           make -j$(nproc)
       - name: Run sgxwallet container
         run: |
-          export SGX_WALLET_TAG=1.83.0-develop.5
+          export SGX_WALLET_TAG=e548b375cae741af8fd11db54d6925c27a947af9
           ./scripts/run_sgx_simulator.sh
           sleep 60
       - name: Run tests
@@ -210,6 +220,7 @@ jobs:
           ./bls_test
           ./threshold_encryption/te_unit_test
           ./threshold_encryption/te_test
+          ./threshold_encryption/te_encrypt_message
           ./dkg_attack
   linux_build_with_emscripten:
     runs-on: ubuntu-22.04
@@ -242,6 +253,14 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
+      - name: install cmake
+        run: |
+          wget --no-check-certificate https://cmake.org/files/v3.21/cmake-3.21.0-linux-x86_64.sh && \
+          chmod +x cmake-3.21.0-linux-x86_64.sh && \
+          ./cmake-3.21.0-linux-x86_64.sh --skip-license --include-subdir && \
+          sudo ln -sf `pwd`/cmake-3.21.0-linux-x86_64/bin/* /usr/local/bin
+
+          cmake --version
       - name: Build dependencies
         run: |
           export CC=gcc-11
