@@ -662,6 +662,9 @@ void ThresholdUtils::validateG2( const libff::alt_bn128_G2& point ) {
     if ( !point.is_well_formed() ) {
         throw IncorrectInput( "Point is not well formed" );
     }
+    if ( libff::alt_bn128_G2::order() * point != libff::alt_bn128_G2::zero() ) {
+        throw IncorrectInput( "Point is not on the group" );
+    }
 }
 
 

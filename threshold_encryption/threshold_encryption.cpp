@@ -249,9 +249,10 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
  * 2. Whether the decryption share is valid by verifying e(W,PK) = e(H(U,V),S)
  * where PK is the public key and S is the decryption share
  *
- * @param ciphertext A tuple containing the encryption components (U,V,W)
- * @param decryptionShare The decryption share to verify
- * @param public_key The public key used for verification
+ * @param ciphertext A tuple containing the encryption components (U,V,W). Assumes is already
+ * validated
+ * @param decryptionShare The decryption share to verify. Assumes is valid & well formed
+ * @param public_key The public key used for verification. Assumes is valid & well formed
  *
  * @return true if both the ciphertext and decryption share are valid
  * @return false if either the ciphertext is invalid or the decryption share verification fails
@@ -262,13 +263,13 @@ bool TE::Verify( const CipheredKey& ciphertext, const libff::alt_bn128_G2& decry
     std::string v_str = ThresholdUtils::bytesToHexString( V );
     libff::alt_bn128_G1 H = HashToGroup( U, v_str );
 
+    ThresholdUtils::validateG1( H );
+
     libff::alt_bn128_GT fst, snd;
     fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
     snd = libff::alt_bn128_ate_reduced_pairing( H, U );
 
-    bool res = fst == snd;
-
-    if ( res && !decryptionShare.is_zero() ) {
+    if ( fst == snd ) {
         libff::alt_bn128_GT pp1, pp2;
         pp1 = libff::alt_bn128_ate_reduced_pairing( W, public_key );
         pp2 = libff::alt_bn128_ate_reduced_pairing( H, decryptionShare );
