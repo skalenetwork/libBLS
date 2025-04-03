@@ -52,6 +52,15 @@ jobs:
         cd deps
         ./build.sh
 
+    - name: install cmake
+      run: |
+        wget --no-check-certificate https://cmake.org/files/v3.21/cmake-3.21.0-linux-x86_64.sh && \
+        chmod +x cmake-3.21.0-linux-x86_64.sh && \
+        ./cmake-3.21.0-linux-x86_64.sh --skip-license --include-subdir && \
+        sudo ln -sf `pwd`/cmake-3.21.0-linux-x86_64/bin/* /usr/local/bin
+
+        cmake --version
+
     - name: Configure all
       run: |
         export CC=gcc-11
@@ -134,6 +143,15 @@ jobs:
         cd deps
         ./build.sh WITH_EMSCRIPTEN=1
         cd ..
+
+    - name: install cmake
+      run: |
+        wget --no-check-certificate https://cmake.org/files/v3.21/cmake-3.21.0-linux-x86_64.sh && \
+        chmod +x cmake-3.21.0-linux-x86_64.sh && \
+        ./cmake-3.21.0-linux-x86_64.sh --skip-license --include-subdir && \
+        sudo ln -sf `pwd`/cmake-3.21.0-linux-x86_64/bin/* /usr/local/bin
+
+        cmake --version
 
     - name: Build all
       run: |
