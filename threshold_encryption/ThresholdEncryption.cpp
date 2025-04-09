@@ -77,7 +77,7 @@ ThresholdEncryption::mockupDecrypt(const std::vector<uint8_t>& _encrypteData) {
     std::copy(_encrypteData.begin(), _encrypteData.begin() + AES_256_KEY_SIZE_BYTES, key.begin());
 
     // Encrypted message follows the key
-    std::vector<uint8_t> cipher_text(_encrypteData.begin() + AES_256_KEY_SIZE_BYTES, _encrypteData.end());
+    std::vector<uint8_t> cipher_text(_encrypteData.begin() + CipheredKey::CIPHERED_KEY_SIZE_BYTES, _encrypteData.end());
 
     // Decrypt the data
     std::vector<uint8_t> decrypted = ThresholdUtils::aesDecrypt(cipher_text, key);
