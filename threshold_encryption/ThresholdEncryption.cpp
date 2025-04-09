@@ -43,7 +43,7 @@ ThresholdEncryption::mockupEncrypt(const std::vector<uint8_t>& _message) {
 
     std::array<uint8_t, CipheredKey::CIPHERED_KEY_SIZE_BYTES> mockupEncryptedKey{}; // Zero-initialized
 
-    std::copy(key.begin(), key.end(), mockupEncryptedKey.begin()); // FIXED: specify destination
+    std::copy(key.begin(), key.end(), mockupEncryptedKey.begin()); 
 
     RandSecret random_secret{}; // Zero-initialized
 
@@ -56,7 +56,7 @@ ThresholdEncryption::mockupEncrypt(const std::vector<uint8_t>& _message) {
     auto encrypted_message = ThresholdUtils::aesEncrypt(message_to_cipher, key);
 
     // Construct result: key followed by encrypted data
-    std::vector<uint8_t> result(key.begin(), key.end());
+    std::vector<uint8_t> result(mockupEncryptedKey.begin(), mockupEncryptedKey.end());
 
     result.insert(result.end(), encrypted_message.begin(), encrypted_message.end());
 
