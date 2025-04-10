@@ -58,9 +58,9 @@ std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
     // Construct result: key followed by encrypted data
     std::vector< uint8_t > result( mockupEncryptedKey.begin(), mockupEncryptedKey.end() );
 
-    #pragma GCC diagnostic ignored "-Wstringop-overread"
+#pragma GCC diagnostic ignored "-Wstringop-overread"
     result.insert( result.end(), encrypted_message.begin(), encrypted_message.end() );
-    #pragma GCC diagnostic error "-Wstringop-overread"
+#pragma GCC diagnostic error "-Wstringop-overread"
 
     return result;
 }
