@@ -10,4 +10,14 @@ async function encryptMessage(txData, publicKey) {
     );
 }
 
-module.exports = { encryptMessage };
+async function encryptMessageMockup(txData) {
+    const Module = await ModuleFactory();
+    return Module.ccall(
+        'encryptMessageMockup', // Name of the exported C++ function
+        'string',         // Return type
+        ['string'], // Argument types
+        [txData] // Arguments
+    );
+}
+
+module.exports = { encryptMessage, encryptMessageMockup };

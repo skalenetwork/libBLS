@@ -29,6 +29,69 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
+std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
+    const std::vector< uint8_t >& _message ) {
+    if ( _message.empty() ) {
+        throw ThresholdUtils::IncorrectInput( "Empty message" );
+    }
+
+    // Create random AES key
+    AES256Key key;
+    if ( RAND_bytes( key.data(), key.size() ) != 1 ) {
+        throw ThresholdUtils::IsNotWellFormed( "Failed to generate random key" );
+    }
+
+    std::array< uint8_t, CipheredKey::CIPHERED_KEY_SIZE_BYTES >
+        mockupEncryptedKey{};  // Zero-initialized
+
+    std::copy( key.begin(), key.end(), mockupEncryptedKey.begin() );
+
+    RandSecret random_secret{};  // Zero-initialized
+
+    // Append random secret to end of message
+    std::vector< uint8_t > message_to_cipher( _message );
+    message_to_cipher.insert( message_to_cipher.end(), random_secret.begin(), random_secret.end() );
+
+    // Cipher message + random secret using AES key
+    auto encrypted_message = ThresholdUtils::aesEncrypt( message_to_cipher, key );
+
+    // Construct result: key followed by encrypted data
+    std::vector< uint8_t > result( mockupEncryptedKey.begin(), mockupEncryptedKey.end() );
+
+    result.insert( result.end(), encrypted_message.begin(), encrypted_message.end() );
+
+    return result;
+}
+
+
+std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
+    const std::vector< uint8_t >& _encrypteData ) {
+    if ( _encrypteData.size() <= CipheredKey::CIPHERED_KEY_SIZE_BYTES ) {
+        throw ThresholdUtils::IncorrectInput( "Encrypted data too short" );
+    }
+
+    // Extract AES key from the beginning
+    AES256Key key;
+    std::copy( _encrypteData.begin(), _encrypteData.begin() + AES_256_KEY_SIZE_BYTES, key.begin() );
+
+    // Encrypted message follows the key
+    std::vector< uint8_t > cipher_text(
+        _encrypteData.begin() + CipheredKey::CIPHERED_KEY_SIZE_BYTES, _encrypteData.end() );
+
+    // Decrypt the data
+    std::vector< uint8_t > decrypted = ThresholdUtils::aesDecrypt( cipher_text, key );
+
+    if ( decrypted.size() < RANDOM_SECRET_SIZE_BYTES ) {
+        throw ThresholdUtils::IsNotWellFormed( "Decrypted message too short" );
+    }
+
+    // Remove appended random secret
+    decrypted.resize( decrypted.size() - RANDOM_SECRET_SIZE_BYTES );
+
+    return decrypted;
+}
+
+
 Ciphertext ThresholdEncryption::encrypt(
     const std::vector< uint8_t >& _message, const TEPublicKey& _commonPublic ) {
     TEBase::initializeIfNecessary();

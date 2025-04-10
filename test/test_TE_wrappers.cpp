@@ -69,6 +69,19 @@ public:
 
 BOOST_FIXTURE_TEST_SUITE( ThresholdEncryptionWrappers, TestFixture )
 
+BOOST_AUTO_TEST_CASE( TEMockupEncryption ) {
+    std::vector< uint8_t > message;
+    size_t msg_length = 64;
+    for ( size_t length = 0; length < msg_length; ++length ) {
+        message.push_back( rand_gen() % 256 );
+    }
+
+    auto encryptedMsg = libBLS::ThresholdEncryption::mockupEncrypt( message );
+    auto decryptedMsg = libBLS::ThresholdEncryption::mockupDecrypt( encryptedMsg );
+
+    BOOST_REQUIRE( message == decryptedMsg );
+}
+
 BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
     for ( size_t i = 0; i < 10; i++ ) {
         size_t numAll = rand_gen() % 16 + 1;

@@ -43,6 +43,9 @@ namespace libBLS {
  */
 class ThresholdEncryption {
 public:
+    static std::vector< uint8_t > mockupEncrypt( const std::vector< uint8_t >& _message );
+    static std::vector< uint8_t > mockupDecrypt( const std::vector< uint8_t >& _encryptedData );
+
     /**
      * @brief Encrypts a message using a common public key
      * This function generates a random AES key, and encrypts the message using this key

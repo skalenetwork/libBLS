@@ -48,4 +48,21 @@ const char* encryptMessage( const char* data, const char* key ) {
 
     return cipheredMessageStr.c_str();
 }
+
+const char* encryptMessageMockup( const char* data ) {
+    static std::string cipheredMessageStr;
+
+    libBLS::ThresholdUtils::initCurve();
+
+    // convert from char into vec of bytes
+    std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
+
+    // encrypt message
+    std::vector< uint8_t > cipheredMessage =
+        libBLS::ThresholdEncryption::mockupEncrypt( messageBytes );
+
+    cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessage );
+
+    return cipheredMessageStr.c_str();
+}
 }
