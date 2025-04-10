@@ -58,7 +58,8 @@ const char* encryptMessageMockup( const char* data ) {
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
 
     // encrypt message
-    std::vector< uint8_t > cipheredMessage = libBLS::ThresholdEncryption::mockupEncrypt( messageBytes );
+    std::vector< uint8_t > cipheredMessage =
+        libBLS::ThresholdEncryption::mockupEncrypt( messageBytes );
 
     cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessage );
 
