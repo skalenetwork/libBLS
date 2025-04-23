@@ -100,10 +100,6 @@ Ciphertext ThresholdEncryption::encrypt(
 
     _commonPublic.validate();
 
-    if ( _message.empty() ) {
-        throw ThresholdUtils::IncorrectInput( "Empty message" );
-    }
-
     CipherResult cypher = TE::encryptWithAES( _message, _commonPublic.getPublicKeyRaw() );
 
     if ( !cypher.ciphertext ) {
@@ -289,10 +285,9 @@ std::vector< uint8_t > ThresholdEncryption::decipherAESAndValidate(
             "Cyphertext should be at least as big as plaintext message" );
     }
 
-    if ( plainSize <= RANDOM_SECRET_SIZE_BYTES ) {
+    if ( plainSize < RANDOM_SECRET_SIZE_BYTES ) {
         throw ThresholdUtils::IncorrectInput(
-            "Message decription size is too short - cannot include random secret + at least 1 byte "
-            "of data" );
+            "Message decription size is too short - cannot include random secret" );
     }
 
     return data;
