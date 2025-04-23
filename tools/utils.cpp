@@ -586,10 +586,6 @@ std::vector< uint8_t > ThresholdUtils::aesDecrypt(
 
 
 std::string ThresholdUtils::bytesToHexString( const std::vector< uint8_t >& bytes ) {
-    if ( bytes.size() == 0 ) {
-        throw IncorrectInput( "Byte array is empty." );
-    }
-
     std::stringstream ss;
     ss << std::hex << std::setfill( '0' );
 
@@ -627,10 +623,6 @@ std::vector< uint8_t > ThresholdUtils::hexCStringToBytes( const char* hexStr ) {
 
 size_t ThresholdUtils::validateHexCString( const char* hexStr ) {
     size_t len = std::strlen( hexStr );
-
-    if ( len == 0 ) {
-        throw IncorrectInput( "Hex string is empty." );
-    }
 
     // Ensure the hex string length is even
     if ( len % 2 != 0 ) {

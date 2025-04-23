@@ -50,6 +50,10 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
         keys keys = generateKeys( required, total );
         // random message & pKey
         std::vector< uint8_t > data( ( rand() % 1000 ) + 1 );
+
+        // empty message case
+        if ( i == 0 )
+            data.clear();
         RAND_bytes( data.data(), data.size() );
 
         // convert key & data to string

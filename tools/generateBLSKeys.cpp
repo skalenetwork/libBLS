@@ -50,7 +50,7 @@ int main() {
     publicKeyFile << result;
 
     std::string message = "";
-    while ( message.size() != 64 ) {
+    while ( message.size() % 2 != 0 ) {
         libff::alt_bn128_Fr message_number = libff::alt_bn128_Fr::random_element();
         message = libBLS::ThresholdUtils::fieldElementToString( message_number, 16 );
     }
