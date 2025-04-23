@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
         std::vector< uint8_t > data( ( rand() % 1000 ) + 1 );
 
         // empty message case
-        if (i == 0)
+        if ( i == 0 )
             data.clear();
         RAND_bytes( data.data(), data.size() );
 
