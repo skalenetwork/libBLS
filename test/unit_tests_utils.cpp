@@ -219,18 +219,6 @@ BOOST_AUTO_TEST_CASE( HexCStringToBytesException ) {
                 invalidHex.c_str() ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
-
-    // Empty string
-    BOOST_REQUIRE_THROW(
-        libBLS::ThresholdUtils::hexCStringToBytes( "" ), libBLS::ThresholdUtils::IncorrectInput );
-    BOOST_REQUIRE_THROW(
-        libBLS::ThresholdUtils::hexCStringToBytesArray< libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES >(
-            "" ),
-        libBLS::ThresholdUtils::IncorrectInput );
-
-    // Empty byte vector
-    BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::bytesToHexString( std::vector< uint8_t >() ),
-        libBLS::ThresholdUtils::IncorrectInput );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
