@@ -491,19 +491,19 @@ std::vector< uint8_t > ThresholdUtils::aesEncrypt(
     initAES();
 
     // Make sure there is enough space for: IV + plaintext + padding
-    size_t enc_length = AES_BLOCK_SIZE + plaintext.size() + AES_BLOCK_SIZE;
+    size_t enc_length = AES_GCM_IV_SIZE + plaintext.size() + AES_GCM_TAG_SIZE;
 
     std::vector< unsigned char > output;
     output.resize( enc_length, '\0' );
 
     // Initialize IV vector
-    unsigned char iv[AES_BLOCK_SIZE];
-    RAND_bytes( iv, sizeof( iv ) );
+    unsigned char iv[AES_GCM_IV_SIZE];
+    RAND_bytes( iv, AES_GCM_IV_SIZE );
     // Place IV at start of output
-    std::copy( iv, iv + AES_BLOCK_SIZE, output.begin() );
+    std::copy( iv, iv + AES_GCM_IV_SIZE, output.begin() );
 
     // Account offset for the IV already stored in output vec
-    size_t offset = AES_BLOCK_SIZE;
+    size_t offset = AES_GCM_IV_SIZE;
     int outlen = 0;
 
     EVP_CIPHER_CTX* e_ctx = EVP_CIPHER_CTX_new();
@@ -511,11 +511,20 @@ std::vector< uint8_t > ThresholdUtils::aesEncrypt(
         throw std::runtime_error( "Failed to create new EVP_CIPHER_CTX" );
     }
 
-    if ( EVP_EncryptInit( e_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.data(), iv ) !=
-         1 ) {
+    if ( EVP_EncryptInit_ex( e_ctx, EVP_aes_256_gcm(), nullptr, nullptr, nullptr ) != 1 ) {
         EVP_CIPHER_CTX_free( e_ctx );
-        throw std::runtime_error( "Failed to initialize encryption" );
+        throw std::runtime_error( "Failed to initialize encryption context" );
     }
+
+    // now set IV length if non-default:
+    if ( EVP_CIPHER_CTX_ctrl( e_ctx, EVP_CTRL_GCM_SET_IVLEN, AES_GCM_IV_SIZE, nullptr ) != 1 ) {
+        EVP_CIPHER_CTX_free( e_ctx );
+        throw std::runtime_error( "Failed to set IV length" );
+    }
+
+    // now actually supply key & IV:
+    if ( EVP_EncryptInit_ex( e_ctx, nullptr, nullptr, key.data(), iv ) != 1 )
+        throw std::runtime_error( "Failed to initialize key/IV" );
 
     // Cypher data and store in output
     if ( EVP_EncryptUpdate( e_ctx, &output[offset], &outlen,
@@ -528,17 +537,25 @@ std::vector< uint8_t > ThresholdUtils::aesEncrypt(
     offset += outlen;
 
     // Finalize encryption - take care of padding
-    if ( EVP_EncryptFinal( e_ctx, &output[offset], &outlen ) != 1 ) {
+    if ( EVP_EncryptFinal_ex( e_ctx, &output[offset], &outlen ) != 1 ) {
         EVP_CIPHER_CTX_free( e_ctx );
         throw std::runtime_error( "Failed to finalize encryption" );
     }
 
     offset += outlen;
 
+    // add authentication tag
+    unsigned char tag[AES_GCM_TAG_SIZE];
+    if ( EVP_CIPHER_CTX_ctrl( e_ctx, EVP_CTRL_GCM_GET_TAG, AES_GCM_TAG_SIZE, tag ) != 1 ) {
+        EVP_CIPHER_CTX_free( e_ctx );
+        throw std::runtime_error( "Failed to get authentication tag" );
+    }
+
+    std::copy( tag, tag + AES_GCM_TAG_SIZE, output.begin() + offset );
+    offset += AES_GCM_TAG_SIZE;
+
     output.resize( offset );
-
     EVP_CIPHER_CTX_free( e_ctx );
-
     return std::vector< uint8_t >( output );
 }
 
@@ -546,41 +563,60 @@ std::vector< uint8_t > ThresholdUtils::aesDecrypt(
     const std::vector< uint8_t >& ciphertext, const AES256Key& key ) {
     initAES();
 
-    if ( ciphertext.size() < AES_BLOCK_SIZE ) {
+    const size_t meta = AES_GCM_IV_SIZE + AES_GCM_TAG_SIZE;
+
+    if ( ciphertext.size() < meta )
         throw IncorrectInput( "Ciphertext is too short" );
-    }
 
-    unsigned char iv[AES_BLOCK_SIZE];
-    std::copy( ciphertext.begin(), ciphertext.begin() + AES_BLOCK_SIZE, iv );
-    std::vector< unsigned char > plaintext( ciphertext.size() );
+    // 1) split into IV / body / tag
+    unsigned char iv[AES_GCM_IV_SIZE];
+    std::copy( ciphertext.begin(), ciphertext.begin() + AES_GCM_IV_SIZE, iv );
 
-    int actual_size = 0, final_size = 0;
+    unsigned char tag[AES_GCM_TAG_SIZE];
+    std::copy( ciphertext.end() - AES_GCM_TAG_SIZE, ciphertext.end(), tag );
+
+    const size_t body_len = ciphertext.size() - meta;
+    const unsigned char* body_ptr = ciphertext.data() + AES_GCM_IV_SIZE;
+
+    std::vector< unsigned char > plaintext( body_len );
+    int len = 0;
+    int final_len = 0;
 
     EVP_CIPHER_CTX* d_ctx = EVP_CIPHER_CTX_new();
-    if ( !d_ctx ) {
-        throw std::runtime_error( "Failed to create new EVP_CIPHER_CTX" );
-    }
+    if ( !d_ctx )
+        throw std::runtime_error( "Failed to create EVP_CIPHER_CTX" );
 
-    if ( EVP_DecryptInit( d_ctx, EVP_aes_256_cbc(), ( const unsigned char* ) key.data(), iv ) !=
-         1 ) {
+    // 2) initialize for GCM
+    if ( EVP_DecryptInit_ex( d_ctx, EVP_aes_256_gcm(), nullptr, nullptr, nullptr ) != 1 ||
+         // if your IV size ≠ 12, you *must* set it here
+         EVP_CIPHER_CTX_ctrl( d_ctx, EVP_CTRL_GCM_SET_IVLEN, AES_GCM_IV_SIZE, nullptr ) != 1 ||
+         // now supply key+IV
+         EVP_DecryptInit_ex( d_ctx, nullptr, nullptr, key.data(), iv ) != 1 ) {
         EVP_CIPHER_CTX_free( d_ctx );
-        throw std::runtime_error( "Failed to initialize decryption" );
+        throw std::runtime_error( "Failed to initialize GCM decryption" );
     }
 
-    if ( EVP_DecryptUpdate( d_ctx, &plaintext[0], &actual_size, &ciphertext[AES_BLOCK_SIZE],
-             ciphertext.size() - AES_BLOCK_SIZE ) != 1 ) {
+    // 3) decrypt body
+    if ( EVP_DecryptUpdate( d_ctx, plaintext.data(), &len, body_ptr, body_len ) != 1 ) {
         EVP_CIPHER_CTX_free( d_ctx );
         throw std::runtime_error( "Failed to decrypt data" );
     }
 
-    if ( EVP_DecryptFinal( d_ctx, &plaintext[actual_size], &final_size ) != 1 ) {
+    // 4) tell GCM the expected tag *before* final
+    if ( EVP_CIPHER_CTX_ctrl( d_ctx, EVP_CTRL_GCM_SET_TAG, AES_GCM_TAG_SIZE, tag ) != 1 ) {
         EVP_CIPHER_CTX_free( d_ctx );
-        throw std::runtime_error( "Failed to finalize decryption" );
+        throw std::runtime_error( "Failed to set GCM authentication tag" );
+    }
+
+    // 5) finalize — this checks the tag
+    if ( EVP_DecryptFinal_ex( d_ctx, plaintext.data() + len, &final_len ) != 1 ) {
+        EVP_CIPHER_CTX_free( d_ctx );
+        throw std::runtime_error( "Authentication failed or data corrupted" );
     }
 
     EVP_CIPHER_CTX_free( d_ctx );
-    plaintext.resize( actual_size + final_size, '\0' );
 
+    plaintext.resize( len + final_len );
     return plaintext;
 }
 
