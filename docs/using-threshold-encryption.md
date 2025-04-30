@@ -4,69 +4,105 @@
 
 ## Classes for Threshold Encryption
 
-**TEPrivateKey** - class for common private key
+**TEPrivateKey** - Class that holds the common private key
 
-**TEPublicKey** - class for common public key. Has method _encrypt_ to encrypt the message. (Message should be in string format, with length of 64 characters) .
+**TEPublicKey** - Class that holds the common public key. 
 
-**TEPrivateKeyShare** - class for private key for each participant. Has method _decrypt_ to decrypt CipherText and to get a part of decrypted message.
+**TEPrivateKeyShare** - Class that holds private key for each participant.
 
-**TEPublicKeyShare** - class for public key for each participant. Has methods _Verify_ to verify if given CipherText matches given decrypted piece of message.
+**TEPublicKeyShare** - Class that holds public key for each participant.
 
-**TEDecryptSet** - class for set of decrypted pieces of message. Has methods _addDecrypt_ (to add a piece of decrypted message) and _merge_ to get a decrypted message ( if enough pieces are added).
+**TEDecryptionShare** - Class that holds a decryption share. Is used together with **TEDecryptSet** to combine several shares.
 
-All these classes (except TEDecryptSet) can be created from shared_ptr to string(or to vector of strings)  and converted to shared_ptr to string(or to vector of strings) with the method \_toString()_.
+**TEDecryptSet** - Class that holds a set of decrypted pieces of message. Has methods _addDecryptShare_ (to add a piece of decrypted message - represented by the class **TEDecryptionShare**).
+
+Most of the above classes (except for **TEDecryptSet**) allow building from string representation, as well as converting the object to string.
+
+Some also allow convertion from/to byte representation.
 
 ## How to use Threshold encryption
 
-1.  Choose total number of participants in your group (n), give index to each participant and choose a threshold number (t) for your case. (t &lt;= n).
+### 1. Key Creation
 
-2.  Generate private key for each participant. Create common public key. You may use DKG.
-    For test you can use
+1.1.  Choose total number of participants in your group (n), give index to each participant and choose a threshold number (t) for your case. (t &lt;= n).
+
+1.2.  Generate private key for each participant. Create a common private key, and a common public key from the common private key. You may use DKG. 
 
 ```cpp
-std::pair
-<std::shared_ptr<std::vector<std::shared_ptr<TEPrivateKeyShare>>>, std::shared_ptr<TEPublicKey>> keys =
-                                                             TEPrivateKeyShare::generateSampleKeys(t, n);
+// common_skey is a raw libff::alt_bn128_Fr
+libBLS::TEPrivateKey commonPrivate( common_skey );
+libBLS::TEPublicKey commonPublic( commonPrivate );
 ```
 
-You will get a pair, which first component is shared_ptr to a vector of private keys, and second component is shared_ptr to common public key;
-
-3.  Create public key from private key for each participant.
+1.3.  Create public key share from private key share for each participant.
 
 ```cpp
-TEPrivateKeyShare privateKeyShare = *keys.first->at(i);
-TEPublicKeyShare publicKeyShare ( privateKeyShare, t, n);
+(...)
+for ( size_t i = 0; i < n; i++ ) {
+    // skeys is a vector of raw libff::alt_bn128_Fr types
+    secretKeys.emplace_back( libBLS::TEPrivateKeyShare( skeys[i], i + 1, t, n ) );
+    publicKeys.emplace_back( libBLS::TEPublicKeyShare( secretKeys[i] ) );
+}
 ```
 
-where i is an index of a participant.
+Where i is the index of each participant.
 
-4.  Encrypt message with common public key. Message length should be 64.
+Please refer to `test/utils.cpp`, function `generateKeys` for an example of the process of generating all necessary keys.
+
+### 2. Encryption / Decryption
+
+2.1.  After having all keys generated, encrypt a message using the common public key.
 
 ```cpp
-TEPublicKey publicKey = *keys.second;
-libBLS::Ciphertext cipher = publicKey.encrypt(message_ptr);
+libBLS::ThresholdEncryption::encrypt(message, common_public);
 ```
 
- Where message_ptr is shared_ptr to string, cipher is encrypted message.
+This call returns a `Ciphertext` , which includes the ciphered *AES-256* key, as well as the ciphered data encoded in bytes.
 
-5.  Get pieces of decrypted message with private key of each participant and cipher got in step 4. Verify every piece with public key of corresponding participant.
+2.2.    Each party should create a `TEDecryptSet` to be used later on to merge the received `TEDecryptionShare`.
 
 ```cpp
-libff::alt_bn128_G2 piece = privateKey.decrypt(cipher);
-assert ( publicKeyShare.Verify(cipher, piece) ) ;
+libBLS::TEDecryptSet decrypt_set(n, t);
 ```
 
-6.  Create DecryptSet and add to it each piece of decrypted message.
+2.3  Each party, upon receiving the ciphertext, may optionally **validate** the encryption, and then **partially decrypts it**. This last step returns a `TEDecryptionShare`.
 
 ```cpp
-TEDecryptSet decrSet(t, n);
-decrSet.addDecrypt(signerIndex, piece_ptr);
+// Validation
+try {
+    libBLS::ThresholdEncryption::validateEncryption(ciphertext);
+    libBLS::TEDecryptionShare share = libBLS::ThresholdEncryption::partialDecrypt(ciphertext, private_key_share);
+} catch( error ) {
+    ...
+}
 ```
 
-where piece_ptr is shared_ptr to piece, signerIndex is an index of a participant, which created this piece.
-
-7.  If you have enough pieces you will be able to merge them and to get decrypted message.
+2.4.  Upon having a new `TEDecryptionShare`, each party should add it to their own `TEDecryptSet`
 
 ```cpp
-std::string message = decrSet.merge();
+decrypt_set.addDecryptShare(share);
+```
+
+2.5. Once enough shares have been gathered, the `DecryptSet` can be merged.
+
+```cpp
+if (decrypt_set.canMerge()) {
+   libBLS::AES256Key key = libBLS::ThresholdEncryption::combineShares(ciphertext, decrypt_set);
+}
+```
+
+As an optional step, the resulting key from the combined shares can also be validated:
+
+```cpp
+try {
+    libBLS::ThresholdEncryption::validateCombinedDecryption(ciphertext, aes_key, common_public);
+} catch( error ) {
+    ...
+}
+```
+
+2.6.  Finally decrypt the ciphertext using the deciphered aes 256 key
+
+```cpp
+auto data = libBLS::ThresholdEncryption::decrypt(cyphertext, aesKey);
 ```

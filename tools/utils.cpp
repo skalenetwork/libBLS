@@ -511,6 +511,7 @@ std::vector< uint8_t > ThresholdUtils::aesEncrypt(
         throw std::runtime_error( "Failed to create new EVP_CIPHER_CTX" );
     }
 
+    // Initialize context & select AES-256-GCM (no key/IV yet)
     if ( EVP_EncryptInit_ex( e_ctx, EVP_aes_256_gcm(), nullptr, nullptr, nullptr ) != 1 ) {
         EVP_CIPHER_CTX_free( e_ctx );
         throw std::runtime_error( "Failed to initialize encryption context" );
@@ -523,9 +524,10 @@ std::vector< uint8_t > ThresholdUtils::aesEncrypt(
     }
 
     // now actually supply key & IV:
-    if ( EVP_EncryptInit_ex( e_ctx, nullptr, nullptr, key.data(), iv ) != 1 )
+    if ( EVP_EncryptInit_ex( e_ctx, nullptr, nullptr, key.data(), iv ) != 1 ) {
+        EVP_CIPHER_CTX_free( e_ctx );
         throw std::runtime_error( "Failed to initialize key/IV" );
-
+    }
     // Cypher data and store in output
     if ( EVP_EncryptUpdate( e_ctx, &output[offset], &outlen,
              ( const unsigned char* ) plaintext.data(), plaintext.size() ) != 1 ) {
@@ -586,17 +588,15 @@ std::vector< uint8_t > ThresholdUtils::aesDecrypt(
     if ( !d_ctx )
         throw std::runtime_error( "Failed to create EVP_CIPHER_CTX" );
 
-    // 2) initialize for GCM
+    // Initialize for GCM
     if ( EVP_DecryptInit_ex( d_ctx, EVP_aes_256_gcm(), nullptr, nullptr, nullptr ) != 1 ||
-         // if your IV size ≠ 12, you *must* set it here
          EVP_CIPHER_CTX_ctrl( d_ctx, EVP_CTRL_GCM_SET_IVLEN, AES_GCM_IV_SIZE, nullptr ) != 1 ||
-         // now supply key+IV
          EVP_DecryptInit_ex( d_ctx, nullptr, nullptr, key.data(), iv ) != 1 ) {
         EVP_CIPHER_CTX_free( d_ctx );
         throw std::runtime_error( "Failed to initialize GCM decryption" );
     }
 
-    // 3) decrypt body
+    // Decrypt body
     if ( EVP_DecryptUpdate( d_ctx, plaintext.data(), &len, body_ptr, body_len ) != 1 ) {
         EVP_CIPHER_CTX_free( d_ctx );
         throw std::runtime_error( "Failed to decrypt data" );
