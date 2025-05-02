@@ -35,6 +35,73 @@
 
 #include <boost/test/included/unit_test.hpp>
 
+
+BOOST_AUTO_TEST_SUITE( TestAES )
+
+BOOST_AUTO_TEST_CASE( SimpleAES ) {
+    libBLS::ThresholdUtils::initRAND();
+    unsigned char key_bytes[32];
+    RAND_bytes( key_bytes, sizeof( key_bytes ) );
+    libBLS::AES256Key random_aes_key;
+    std::copy( key_bytes, key_bytes + libBLS::AES_256_KEY_SIZE_BYTES, random_aes_key.begin() );
+
+    const std::string message = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
+
+    libBLS::AesGcmCipher cipher{ random_aes_key };
+    auto ciphertext = cipher.encrypt( message_bytes );
+    auto decrypted_text = cipher.decrypt( ciphertext );
+
+    BOOST_REQUIRE( decrypted_text == message_bytes );
+}
+
+BOOST_AUTO_TEST_CASE( wrongCiphertext ) {
+    libBLS::ThresholdUtils::initRAND();
+    libBLS::AES256Key random_aes_key;
+    RAND_bytes( random_aes_key.data(), random_aes_key.size() );
+
+    const std::string message = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
+
+    const std::string bad_message =
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    std::vector< uint8_t > bad_message_bytes( bad_message.begin(), bad_message.end() );
+
+    libBLS::AesGcmCipher cipher{ random_aes_key };
+    auto bad_ciphertext = cipher.encrypt( bad_message_bytes );
+
+    auto decrypted_text = cipher.decrypt( bad_ciphertext );
+
+    BOOST_REQUIRE( decrypted_text != message_bytes );
+    BOOST_REQUIRE( decrypted_text == bad_message_bytes );
+}
+
+BOOST_AUTO_TEST_CASE( wrongKey ) {
+    libBLS::ThresholdUtils::initRAND();
+    unsigned char key_bytes[32];
+    RAND_bytes( key_bytes, sizeof( key_bytes ) );
+    libBLS::AES256Key random_aes_key;
+    std::copy( key_bytes, key_bytes + libBLS::AES_256_KEY_SIZE_BYTES, random_aes_key.begin() );
+
+    const std::string message = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
+
+    libBLS::AesGcmCipher cipher{ random_aes_key };
+    auto ciphertext = cipher.encrypt( message_bytes );
+
+    unsigned char bad_key_bytes[32];
+    RAND_bytes( bad_key_bytes, sizeof( bad_key_bytes ) );
+    libBLS::AES256Key random_bad_aes_key;
+    std::copy(
+        bad_key_bytes, bad_key_bytes + libBLS::AES_256_KEY_SIZE_BYTES, random_bad_aes_key.begin() );
+
+    libBLS::AesGcmCipher bad_cipher{ random_bad_aes_key };
+    BOOST_REQUIRE_THROW( bad_cipher.decrypt( ciphertext ), std::runtime_error );
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+
 BOOST_AUTO_TEST_SUITE( ThresholdEncryption )
 
 BOOST_AUTO_TEST_CASE( CipheredKey ) {
@@ -214,8 +281,8 @@ BOOST_AUTO_TEST_CASE( SimpleEncryptionWithAES ) {
 
     libBLS::AES256Key decrypted_aes_key = te_instance.CombineShares( ciphertext, shares );
 
-    std::vector< uint8_t > plaintext =
-        libBLS::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
+    libBLS::AesGcmCipher aesGcmCipher{ decrypted_aes_key };
+    std::vector< uint8_t > plaintext = aesGcmCipher.decrypt( encrypted_message );
 
     // append random secret to end of original message
     libBLS::RandSecret rand_secret = ciphertext_with_aes.random_secret;
@@ -246,13 +313,11 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongKey ) {
     std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares;
     shares.push_back( std::make_pair( decryption_share, size_t( 1 ) ) );
 
-    libBLS::ThresholdUtils::initAES();
-
     libBLS::AES256Key random_aes_key;
     RAND_bytes( random_aes_key.data(), random_aes_key.size() );
 
-    BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::aesDecrypt( encrypted_message, random_aes_key ),
-        std::runtime_error );
+    libBLS::AesGcmCipher cipher{ random_aes_key };
+    BOOST_REQUIRE_THROW( cipher.decrypt( encrypted_message ), std::runtime_error );
 }
 
 BOOST_AUTO_TEST_CASE( encryptionWithAESWrongCiphertext ) {
@@ -285,9 +350,8 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongCiphertext ) {
     auto bad_encrypted_message =
         te_instance.encryptWithAES( bad_message_bytes, public_key ).ciphertext->getData();
 
-    BOOST_REQUIRE_THROW(
-        libBLS::ThresholdUtils::aesDecrypt( bad_encrypted_message, decrypted_aes_key ),
-        std::runtime_error );
+    libBLS::AesGcmCipher cipher{ decrypted_aes_key };
+    BOOST_REQUIRE_THROW( cipher.decrypt( bad_encrypted_message ), std::runtime_error );
 }
 
 BOOST_AUTO_TEST_CASE( EncryptionCipherToBytes ) {
@@ -330,8 +394,8 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToBytes ) {
 
     libBLS::AES256Key decrypted_aes_key = te_instance.CombineShares( ciphered_key, shares );
 
-    std::vector< uint8_t > plaintext =
-        libBLS::ThresholdUtils::aesDecrypt( encrypted_message, decrypted_aes_key );
+    libBLS::AesGcmCipher cipher{ decrypted_aes_key };
+    std::vector< uint8_t > plaintext = cipher.decrypt( encrypted_message );
 
     // append random secret to the message
     message_bytes.insert( message_bytes.end(), rand_secret.begin(), rand_secret.end() );

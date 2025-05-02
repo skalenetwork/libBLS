@@ -53,7 +53,8 @@ std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
     message_to_cipher.insert( message_to_cipher.end(), random_secret.begin(), random_secret.end() );
 
     // Cipher message + random secret using AES key
-    auto encrypted_message = ThresholdUtils::aesEncrypt( message_to_cipher, key );
+    AesGcmCipher aesGcmCipher{ key };
+    auto encrypted_message = aesGcmCipher.encrypt( message_to_cipher );
 
     // Construct result: key followed by encrypted data
     std::vector< uint8_t > result( mockupEncryptedKey.begin(), mockupEncryptedKey.end() );
@@ -81,7 +82,8 @@ std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
         _encrypteData.begin() + CipheredKey::CIPHERED_KEY_SIZE_BYTES, _encrypteData.end() );
 
     // Decrypt the data
-    std::vector< uint8_t > decrypted = ThresholdUtils::aesDecrypt( cipher_text, key );
+    AesGcmCipher aesGcmCipher{ key };
+    std::vector< uint8_t > decrypted = aesGcmCipher.decrypt( cipher_text );
 
     if ( decrypted.size() < RANDOM_SECRET_SIZE_BYTES ) {
         throw ThresholdUtils::IsNotWellFormed( "Decrypted message too short" );
@@ -272,7 +274,8 @@ std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
 
 std::vector< uint8_t > ThresholdEncryption::decipherAESAndValidate(
     const Ciphertext& _ciphertext, const AES256Key& key ) {
-    std::vector< uint8_t > data = ThresholdUtils::aesDecrypt( _ciphertext.getData(), key );
+    AesGcmCipher aesGcmCipher{ key };
+    std::vector< uint8_t > data = aesGcmCipher.decrypt( _ciphertext.getData() );
 
     // validate output
     size_t cipherSize = _ciphertext.getData().size();
