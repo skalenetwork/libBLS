@@ -48,6 +48,9 @@ constexpr size_t G1_SIZE_BYTES = 64;
 constexpr size_t BASE_HEXA = 16;
 constexpr size_t BASE_DEC = 10;
 
+constexpr size_t AES_GCM_IV_SIZE = 12;
+constexpr size_t AES_GCM_TAG_SIZE = 16;
+
 class ThresholdUtils {
 private:
     class Exception : public std::exception {

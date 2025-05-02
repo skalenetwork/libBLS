@@ -208,8 +208,19 @@ BOOST_AUTO_TEST_CASE( HexCStringToBytesException ) {
         // String with invalid hexa characters
         size_t len2 = rand() % 1000 + 1;
         std::string invalidHex;
-        for ( size_t j = 0; j < len2; ++j ) {
-            invalidHex += rand() % 256;
+        invalidHex.reserve( len2 );
+
+        while ( invalidHex.size() < len2 ) {
+            char c = static_cast< char >( rand() % 256 );
+
+            if ( c == '\0' ) {
+                continue;  // Skip null character
+            }
+
+            // only add if not hexadecimal
+            if ( hexa.find( c ) == std::string::npos ) {
+                invalidHex += c;
+            }
         }
 
         BOOST_REQUIRE_THROW( libBLS::ThresholdUtils::hexCStringToBytes( invalidHex.c_str() ),
