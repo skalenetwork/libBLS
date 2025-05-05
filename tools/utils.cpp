@@ -326,12 +326,12 @@ libff::alt_bn128_G1 ThresholdUtils::HashtoG1(
             result.X = x1;
             libff::alt_bn128_Fq temp_y = y1_sqr.sqrt();
 
-            mpz_class y;
+            mpz_class y, y_neg;
             temp_y.as_bigint().to_mpz( y.get_mpz_t() );
+            // convert -y in Fq first, then convert to mpz
+            ( -temp_y ).as_bigint().to_mpz( y_neg.get_mpz_t() );
 
-            mpz_class neg_y = -y;
-
-            if ( y < neg_y ) {
+            if ( y < y_neg ) {
                 temp_y = -temp_y;
             }
 

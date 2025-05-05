@@ -89,6 +89,7 @@ std::pair< libff::alt_bn128_G1, std::string > Bls::HashtoG1withHint(
 
 
     while ( true ) {
+        // y^2 = x^3 + b
         libff::alt_bn128_Fq y1_sqr = x1 ^ 3;
         y1_sqr = y1_sqr + libff::alt_bn128_coeff_b;
 
@@ -99,12 +100,12 @@ std::pair< libff::alt_bn128_G1, std::string > Bls::HashtoG1withHint(
             point.X = x1;
             libff::alt_bn128_Fq temp_y = y1_sqr.sqrt();
 
-            mpz_class y;
+            mpz_class y, y_neg;
             temp_y.as_bigint().to_mpz( y.get_mpz_t() );
+            // get -y in Fq first, then convert to mpz
+            ( -temp_y ).as_bigint().to_mpz( y_neg.get_mpz_t() );
 
-            mpz_class neg_y = -y;
-
-            if ( y < neg_y ) {
+            if ( y < y_neg ) {
                 temp_y = -temp_y;
             }
 
