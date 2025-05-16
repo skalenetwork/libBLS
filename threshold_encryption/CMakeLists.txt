@@ -12,6 +12,7 @@ set(sources
     ${TOOLS_DIR}/utils.cpp
     threshold_encryption.cpp
     TEBase.cpp
+    TECiphertext.cpp
     TEDecryptionShare.cpp
     TEDecryptSet.cpp
     TEPrivateKeyShare.cpp
@@ -29,6 +30,7 @@ set(headers
     ${TOOLS_DIR}/utils.h
     threshold_encryption.h
     TEBase.h
+    TECiphertext.h
     TEDecryptionShare.h
     TEDecryptSet.h
     TEPrivateKeyShare.h

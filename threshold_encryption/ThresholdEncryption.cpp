@@ -41,7 +41,7 @@ std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
         throw ThresholdUtils::IsNotWellFormed( "Failed to generate random key" );
     }
 
-    std::array< uint8_t, CipheredKey::CIPHERED_KEY_SIZE_BYTES >
+    std::array< uint8_t, CipheredKey::SIZE_BYTES >
         mockupEncryptedKey{};  // Zero-initialized
 
     std::copy( key.begin(), key.end(), mockupEncryptedKey.begin() );
@@ -69,7 +69,7 @@ std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
 
 std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
     const std::vector< uint8_t >& _encrypteData ) {
-    if ( _encrypteData.size() <= CipheredKey::CIPHERED_KEY_SIZE_BYTES ) {
+    if ( _encrypteData.size() <= CipheredKey::SIZE_BYTES ) {
         throw ThresholdUtils::IncorrectInput( "Encrypted data too short" );
     }
 
@@ -79,7 +79,7 @@ std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
 
     // Encrypted message follows the key
     std::vector< uint8_t > cipher_text(
-        _encrypteData.begin() + CipheredKey::CIPHERED_KEY_SIZE_BYTES, _encrypteData.end() );
+        _encrypteData.begin() + CipheredKey::SIZE_BYTES, _encrypteData.end() );
 
     // Decrypt the data
     AesGcmCipher aesGcmCipher{ key };

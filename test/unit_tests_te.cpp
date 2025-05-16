@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE( CipheredKey ) {
         BOOST_REQUIRE( key.W == w );
 
         // convert to bytes & back
-        std::array< uint8_t, libBLS::CipheredKey::CIPHERED_KEY_SIZE_BYTES > bytes = key.toBytes();
+        std::array< uint8_t, libBLS::CipheredKey::SIZE_BYTES > bytes = key.toBytes();
         libBLS::CipheredKey restored_key = libBLS::CipheredKey::fromBytes( bytes );
 
         BOOST_REQUIRE( key == restored_key );
@@ -212,13 +212,13 @@ BOOST_AUTO_TEST_CASE( CiphertextException ) {
 
     // from bytes
     // bytes only allow for key bytes. No data
-    std::vector< uint8_t > bytes( libBLS::CipheredKey::CIPHERED_KEY_SIZE_BYTES );
+    std::vector< uint8_t > bytes( libBLS::CipheredKey::SIZE_BYTES );
     RAND_bytes( bytes.data(), bytes.size() );
     BOOST_REQUIRE_THROW(
         libBLS::Ciphertext::fromBytes( bytes ), libBLS::ThresholdUtils::IncorrectInput );
 
     // bytes are too short, even for key bytes
-    std::vector< uint8_t > bytes2( libBLS::CipheredKey::CIPHERED_KEY_SIZE_BYTES - 1 );
+    std::vector< uint8_t > bytes2( libBLS::CipheredKey::SIZE_BYTES - 1 );
     RAND_bytes( bytes2.data(), bytes2.size() );
     BOOST_REQUIRE_THROW(
         libBLS::Ciphertext::fromBytes( bytes2 ), libBLS::ThresholdUtils::IncorrectInput );
