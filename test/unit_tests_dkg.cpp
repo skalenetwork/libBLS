@@ -42,6 +42,7 @@
 #define BOOST_TEST_DISABLE_ALT_STACK
 #endif  // EMSCRIPTEN
 
+#include <gmpxx.h>
 #include <boost/test/included/unit_test.hpp>
 
 BOOST_AUTO_TEST_SUITE( DkgAlgorithm )
@@ -121,20 +122,16 @@ libff::alt_bn128_Fq SpoilCoord( libff::alt_bn128_Fq& sign_coord ) {
     libff::alt_bn128_Fq bad_coord = sign_coord;
     size_t n_bad_bit = rand_gen() % ( bad_coord.size_in_bits() ) + 1;
 
-    mpz_t was_coord;
-    mpz_init( was_coord );
-    bad_coord.as_bigint().to_mpz( was_coord );
+    mpz_class was_coord;
+    bad_coord.as_bigint().to_mpz( was_coord.get_mpz_t() );
 
-    mpz_t mask;
-    mpz_init( mask );
-    mpz_set_si( mask, n_bad_bit );
+    mpz_class mask;
+    mpz_set_si( mask.get_mpz_t(), n_bad_bit );
 
-    mpz_t badCoord;
-    mpz_init( badCoord );
-    mpz_xor( badCoord, was_coord, mask );
+    mpz_class badCoord;
+    mpz_xor( badCoord.get_mpz_t(), was_coord.get_mpz_t(), mask.get_mpz_t() );
 
-    bad_coord = libff::alt_bn128_Fq( badCoord );
-    mpz_clears( badCoord, was_coord, mask, 0 );
+    bad_coord = libff::alt_bn128_Fq( badCoord.get_mpz_t() );
 
     return bad_coord;
 }

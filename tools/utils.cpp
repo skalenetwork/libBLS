@@ -27,6 +27,7 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 
+#include <gmpxx.h>
 #include <tools/utils.h>
 #include <iomanip>
 
@@ -44,6 +45,16 @@ void ThresholdUtils::initCurve() {
         libff::init_alt_bn128_params();
         is_initialized = true;
     }
+}
+
+void ThresholdUtils::initRAND() {
+    static std::once_flag initFlag;
+    std::call_once( initFlag, []() {
+        // initialize random number generator (for IVs)
+        if ( RAND_load_file( "/dev/urandom", 32 ) != 32 ) {
+            throw std::runtime_error( "Failed to initialize random number generator" );
+        }
+    } );
 }
 
 void ThresholdUtils::checkSigners( size_t _requiredSigners, size_t _totalSigners ) {
@@ -185,45 +196,30 @@ libff::alt_bn128_G1 ThresholdUtils::bytesToG1( std::array< uint8_t, G1_SIZE_BYTE
     return ret;
 }
 
+
 std::string ThresholdUtils::convertHexToDec( const std::string& hex_str ) {
-    mpz_t dec;
-    mpz_init( dec );
-
-    std::string output;
-
     try {
-        if ( mpz_set_str( dec, hex_str.c_str(), 16 ) == -1 ) {
-            throw IncorrectInput( "Bad formatted hex string provided" );
-        }
+        // construct from base 16
+        mpz_class dec( hex_str, libBLS::BASE_HEXA );
 
-        char arr[mpz_sizeinbase( dec, 10 ) + 2];
-        char* tmp = mpz_get_str( arr, 10, dec );
-        output = tmp;
+        // convert to base 10
+        return dec.get_str( libBLS::BASE_DEC );
 
     } catch ( std::exception& e ) {
-        mpz_clear( dec );
         throw IncorrectInput( e.what() );
     } catch ( ... ) {
-        mpz_clear( dec );
         throw IncorrectInput( "Exception in convert hex to dec" );
     }
-
-    mpz_clear( dec );
-    return output;
 }
 
 std::string ThresholdUtils::convertDecToHex( std::string dec, int numBytes ) {
-    mpz_t num;
-    mpz_init( num );
-
-    mpz_set_str( num, dec.c_str(), 10 );
-    std::vector< char > tmp( mpz_sizeinbase( num, 16 ) + 2, 0 );
-    char* hex = mpz_get_str( tmp.data(), 16, num );
-    std::string result = hex;
+    // construct from base 10
+    mpz_class num( dec, libBLS::BASE_DEC );
+    // convert to base 16
+    std::string result = num.get_str( libBLS::BASE_HEXA );
+    // pad with leading zeroes
     int n_zeroes = numBytes * 2 - result.length();
     result.insert( 0, n_zeroes, '0' );
-
-    mpz_clear( num );
     return result;
 }
 
@@ -330,22 +326,14 @@ libff::alt_bn128_G1 ThresholdUtils::HashtoG1(
             result.X = x1;
             libff::alt_bn128_Fq temp_y = y1_sqr.sqrt();
 
-            mpz_t pos_y;
-            mpz_init( pos_y );
+            mpz_class y, y_neg;
+            temp_y.as_bigint().to_mpz( y.get_mpz_t() );
+            // convert -y in Fq first, then convert to mpz
+            ( -temp_y ).as_bigint().to_mpz( y_neg.get_mpz_t() );
 
-            temp_y.as_bigint().to_mpz( pos_y );
-
-            mpz_t neg_y;
-            mpz_init( neg_y );
-
-            ( -temp_y ).as_bigint().to_mpz( neg_y );
-
-            if ( mpz_cmp( pos_y, neg_y ) < 0 ) {
+            if ( y < y_neg ) {
                 temp_y = -temp_y;
             }
-
-            mpz_clear( pos_y );
-            mpz_clear( neg_y );
 
             result.Y = temp_y;
             break;
@@ -423,19 +411,6 @@ bool ThresholdUtils::hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* 
     return true;
 }
 
-bool ThresholdUtils::checkHex( const std::string& hex ) {
-    mpz_t num;
-    mpz_init( num );
-
-    if ( mpz_set_str( num, hex.c_str(), 16 ) == -1 ) {
-        mpz_clear( num );
-        return false;
-    }
-    mpz_clear( num );
-
-    return true;
-}
-
 std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ThresholdUtils::ParseHint(
     const std::string& _hint ) {
     auto position = _hint.find( ":" );
@@ -471,155 +446,6 @@ std::shared_ptr< std::vector< std::string > > ThresholdUtils::SplitString(
 
     return std::make_shared< std::vector< std::string > >( tokens );
 }
-
-void ThresholdUtils::initAES() {
-    static std::atomic< bool > init{ false };
-    bool expected = false;
-    if ( init.compare_exchange_strong( expected, true ) ) {
-        // initialize openssl ciphers
-        OpenSSL_add_all_ciphers();
-
-        // initialize random number generator (for IVs)
-        if ( RAND_load_file( "/dev/urandom", 32 ) != 32 ) {
-            throw std::runtime_error( "Failed to initialize random number generator" );
-        }
-    }
-}
-
-std::vector< uint8_t > ThresholdUtils::aesEncrypt(
-    const std::vector< uint8_t >& plaintext, const AES256Key& key ) {
-    initAES();
-
-    // Make sure there is enough space for: IV + plaintext + padding
-    size_t enc_length = AES_GCM_IV_SIZE + plaintext.size() + AES_GCM_TAG_SIZE;
-
-    std::vector< unsigned char > output;
-    output.resize( enc_length, '\0' );
-
-    // Initialize IV vector
-    unsigned char iv[AES_GCM_IV_SIZE];
-    RAND_bytes( iv, AES_GCM_IV_SIZE );
-    // Place IV at start of output
-    std::copy( iv, iv + AES_GCM_IV_SIZE, output.begin() );
-
-    // Account offset for the IV already stored in output vec
-    size_t offset = AES_GCM_IV_SIZE;
-    int outlen = 0;
-
-    EVP_CIPHER_CTX* e_ctx = EVP_CIPHER_CTX_new();
-    if ( !e_ctx ) {
-        throw std::runtime_error( "Failed to create new EVP_CIPHER_CTX" );
-    }
-
-    // Initialize context & select AES-256-GCM (no key/IV yet)
-    if ( EVP_EncryptInit_ex( e_ctx, EVP_aes_256_gcm(), nullptr, nullptr, nullptr ) != 1 ) {
-        EVP_CIPHER_CTX_free( e_ctx );
-        throw std::runtime_error( "Failed to initialize encryption context" );
-    }
-
-    // now set IV length if non-default:
-    if ( EVP_CIPHER_CTX_ctrl( e_ctx, EVP_CTRL_GCM_SET_IVLEN, AES_GCM_IV_SIZE, nullptr ) != 1 ) {
-        EVP_CIPHER_CTX_free( e_ctx );
-        throw std::runtime_error( "Failed to set IV length" );
-    }
-
-    // now actually supply key & IV:
-    if ( EVP_EncryptInit_ex( e_ctx, nullptr, nullptr, key.data(), iv ) != 1 ) {
-        EVP_CIPHER_CTX_free( e_ctx );
-        throw std::runtime_error( "Failed to initialize key/IV" );
-    }
-    // Cypher data and store in output
-    if ( EVP_EncryptUpdate( e_ctx, &output[offset], &outlen,
-             ( const unsigned char* ) plaintext.data(), plaintext.size() ) != 1 ) {
-        EVP_CIPHER_CTX_free( e_ctx );
-        throw std::runtime_error( "Failed to encrypt data" );
-    }
-
-    // offset for the data written
-    offset += outlen;
-
-    // Finalize encryption - take care of padding
-    if ( EVP_EncryptFinal_ex( e_ctx, &output[offset], &outlen ) != 1 ) {
-        EVP_CIPHER_CTX_free( e_ctx );
-        throw std::runtime_error( "Failed to finalize encryption" );
-    }
-
-    offset += outlen;
-
-    // add authentication tag
-    unsigned char tag[AES_GCM_TAG_SIZE];
-    if ( EVP_CIPHER_CTX_ctrl( e_ctx, EVP_CTRL_GCM_GET_TAG, AES_GCM_TAG_SIZE, tag ) != 1 ) {
-        EVP_CIPHER_CTX_free( e_ctx );
-        throw std::runtime_error( "Failed to get authentication tag" );
-    }
-
-    std::copy( tag, tag + AES_GCM_TAG_SIZE, output.begin() + offset );
-    offset += AES_GCM_TAG_SIZE;
-
-    output.resize( offset );
-    EVP_CIPHER_CTX_free( e_ctx );
-    return std::vector< uint8_t >( output );
-}
-
-std::vector< uint8_t > ThresholdUtils::aesDecrypt(
-    const std::vector< uint8_t >& ciphertext, const AES256Key& key ) {
-    initAES();
-
-    const size_t meta = AES_GCM_IV_SIZE + AES_GCM_TAG_SIZE;
-
-    if ( ciphertext.size() < meta )
-        throw IncorrectInput( "Ciphertext is too short" );
-
-    // 1) split into IV / body / tag
-    unsigned char iv[AES_GCM_IV_SIZE];
-    std::copy( ciphertext.begin(), ciphertext.begin() + AES_GCM_IV_SIZE, iv );
-
-    unsigned char tag[AES_GCM_TAG_SIZE];
-    std::copy( ciphertext.end() - AES_GCM_TAG_SIZE, ciphertext.end(), tag );
-
-    const size_t body_len = ciphertext.size() - meta;
-    const unsigned char* body_ptr = ciphertext.data() + AES_GCM_IV_SIZE;
-
-    std::vector< unsigned char > plaintext( body_len );
-    int len = 0;
-    int final_len = 0;
-
-    EVP_CIPHER_CTX* d_ctx = EVP_CIPHER_CTX_new();
-    if ( !d_ctx )
-        throw std::runtime_error( "Failed to create EVP_CIPHER_CTX" );
-
-    // Initialize for GCM
-    if ( EVP_DecryptInit_ex( d_ctx, EVP_aes_256_gcm(), nullptr, nullptr, nullptr ) != 1 ||
-         EVP_CIPHER_CTX_ctrl( d_ctx, EVP_CTRL_GCM_SET_IVLEN, AES_GCM_IV_SIZE, nullptr ) != 1 ||
-         EVP_DecryptInit_ex( d_ctx, nullptr, nullptr, key.data(), iv ) != 1 ) {
-        EVP_CIPHER_CTX_free( d_ctx );
-        throw std::runtime_error( "Failed to initialize GCM decryption" );
-    }
-
-    // Decrypt body
-    if ( EVP_DecryptUpdate( d_ctx, plaintext.data(), &len, body_ptr, body_len ) != 1 ) {
-        EVP_CIPHER_CTX_free( d_ctx );
-        throw std::runtime_error( "Failed to decrypt data" );
-    }
-
-    // 4) tell GCM the expected tag *before* final
-    if ( EVP_CIPHER_CTX_ctrl( d_ctx, EVP_CTRL_GCM_SET_TAG, AES_GCM_TAG_SIZE, tag ) != 1 ) {
-        EVP_CIPHER_CTX_free( d_ctx );
-        throw std::runtime_error( "Failed to set GCM authentication tag" );
-    }
-
-    // 5) finalize — this checks the tag
-    if ( EVP_DecryptFinal_ex( d_ctx, plaintext.data() + len, &final_len ) != 1 ) {
-        EVP_CIPHER_CTX_free( d_ctx );
-        throw std::runtime_error( "Authentication failed or data corrupted" );
-    }
-
-    EVP_CIPHER_CTX_free( d_ctx );
-
-    plaintext.resize( len + final_len );
-    return plaintext;
-}
-
 
 std::string ThresholdUtils::bytesToHexString( const std::vector< uint8_t >& bytes ) {
     std::stringstream ss;
@@ -694,6 +520,5 @@ void ThresholdUtils::validateG2( const libff::alt_bn128_G2& point ) {
         throw IncorrectInput( "Point is not on the group" );
     }
 }
-
 
 }  // namespace libBLS

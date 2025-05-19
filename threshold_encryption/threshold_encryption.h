@@ -31,6 +31,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 #include <third_party/cryptlite/sha256.h>
 
+#include "AesGcmCipher.h"
 #include <threshold_encryption/TEBase.h>
 #include <tools/utils.h>
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>

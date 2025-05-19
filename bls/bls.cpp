@@ -31,6 +31,7 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdexcept>
 #include <thread>
 
+#include <gmpxx.h>
 #include <boost/multiprecision/cpp_int.hpp>
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pairing.hpp>
 #include <libff/algebra/exponentiation/exponentiation.hpp>
@@ -88,6 +89,7 @@ std::pair< libff::alt_bn128_G1, std::string > Bls::HashtoG1withHint(
 
 
     while ( true ) {
+        // y^2 = x^3 + b
         libff::alt_bn128_Fq y1_sqr = x1 ^ 3;
         y1_sqr = y1_sqr + libff::alt_bn128_coeff_b;
 
@@ -98,22 +100,14 @@ std::pair< libff::alt_bn128_G1, std::string > Bls::HashtoG1withHint(
             point.X = x1;
             libff::alt_bn128_Fq temp_y = y1_sqr.sqrt();
 
-            mpz_t pos_y;
-            mpz_init( pos_y );
+            mpz_class y, y_neg;
+            temp_y.as_bigint().to_mpz( y.get_mpz_t() );
+            // get -y in Fq first, then convert to mpz
+            ( -temp_y ).as_bigint().to_mpz( y_neg.get_mpz_t() );
 
-            temp_y.as_bigint().to_mpz( pos_y );
-
-            mpz_t neg_y;
-            mpz_init( neg_y );
-
-            ( -temp_y ).as_bigint().to_mpz( neg_y );
-
-            if ( mpz_cmp( pos_y, neg_y ) < 0 ) {
+            if ( y < y_neg ) {
                 temp_y = -temp_y;
             }
-
-            mpz_clear( pos_y );
-            mpz_clear( neg_y );
 
             point.Y = temp_y;
             break;

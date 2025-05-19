@@ -141,8 +141,6 @@ CipheredKeyResult TE::getCiphertext(
  */
 CipherResult TE::encryptWithAES(
     const std::vector< uint8_t >& message, const libff::alt_bn128_G2& commonPublic ) {
-    ThresholdUtils::initAES();
-
     // create random AES key
     AES256Key key;
     if ( RAND_bytes( key.data(), key.size() ) != 1 ) {
@@ -157,7 +155,8 @@ CipherResult TE::encryptWithAES(
         message_to_cipher.end(), result.random_secret.begin(), result.random_secret.end() );
 
     // cipher message + random secret using AES key
-    auto encrypted_message = ThresholdUtils::aesEncrypt( message_to_cipher, key );
+    AesGcmCipher aesGcmCipher{ key };
+    auto encrypted_message = aesGcmCipher.encrypt( message_to_cipher );
 
     std::shared_ptr< Ciphertext > ciphertext =
         std::make_shared< Ciphertext >( *result.ciphertext, encrypted_message );

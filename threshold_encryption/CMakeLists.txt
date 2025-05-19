@@ -9,6 +9,7 @@ if(BUILD_TESTS)
 endif()
 
 set(sources
+    ${TOOLS_DIR}/utils.cpp
     threshold_encryption.cpp
     TEBase.cpp
     TEDecryptionShare.cpp
@@ -18,13 +19,14 @@ set(sources
     TEPublicKey.cpp
     TEPublicKeyShare.cpp
     ThresholdEncryption.cpp
+    AesGcmCipher.cpp
     ${DKG_DIR}/dkg.cpp
     ${DKG_DIR}/DKGTEWrapper.cpp
     ${DKG_DIR}/DKGTESecret.cpp
-    ${TOOLS_DIR}/utils.cpp
 )
 
 set(headers
+    ${TOOLS_DIR}/utils.h
     threshold_encryption.h
     TEBase.h
     TEDecryptionShare.h
@@ -34,10 +36,10 @@ set(headers
     TEPublicKey.h
     TEPublicKeyShare.h
     ThresholdEncryption.h
+    AesGcmCipher.h
     ${DKG_DIR}/dkg.h
     ${DKG_DIR}/DKGTEWrapper.h
     ${DKG_DIR}/DKGTESecret.h
-    ${TOOLS_DIR}/utils.h
 )
 
 set(PROJECT_VERSION 0.2.0)
