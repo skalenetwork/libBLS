@@ -553,12 +553,12 @@ then
 	then
 		env_restore
 		cd "$SOURCES_ROOT"
-		BOOST_NAME="boost_1_68_0"
-		BOOST_VERSION="1.68.0"
+                BOOST_NAME="boost_1_87_0"
+                BOOST_VERSION="1.87.0"
 		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ] || [ "${WITH_EMSCRIPTEN}" -eq 1 ];
 		then
-			BOOST_NAME="boost_1_82_0"
-			BOOST_VERSION="1.82.0"
+                        BOOST_NAME="boost_1_87_0"
+                        BOOST_VERSION="1.87.0"
 		fi
 		if [ ! -d "${BOOST_NAME}" ];
 		then
