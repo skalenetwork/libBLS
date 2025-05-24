@@ -568,7 +568,7 @@ then
 				eval "$WGET" https://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/${BOOST_NAME}.tar.bz2
 			fi
 			echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
-            tar -xf ${BOOST_NAME}.tar.bz2
+                        tar -xf ${BOOST_NAME}.tar.bz2
 		fi
 		cd ${BOOST_NAME}
 		echo -e "${COLOR_INFO}configuring and building it${COLOR_DOTS}...${COLOR_RESET}"
@@ -597,16 +597,16 @@ then
 		else
 			if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
 			then
-				eval ./b2 cxxflags=-fPIC toolset=clang cxxstd=17 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
+                                eval ./b2 cxxflags=-fPIC toolset=clang cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
 			else
 				if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 				then
-					eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=14 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=${variant} link=static install
+                                        eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=${variant} link=static install
 					cd bin.v2/libs/program_options/build/emscripten-4.0.5/${variant}/cxxstd-14-iso/link-static/threading-multi/visibility-hidden/
 					eval emar q "libboost_program_options.a" ./*.bc
 					eval cp "libboost_program_options.a" "${LIBRARIES_ROOT}"
 				else
-					eval ./b2 cxxflags=-fPIC cxxstd=14 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
+                                        eval ./b2 cxxflags=-fPIC cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
 				fi
 			fi
 		fi
