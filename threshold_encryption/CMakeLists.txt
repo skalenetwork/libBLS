@@ -67,7 +67,7 @@ if (BUILD_TESTS)
 
         if (EMSCRIPTEN)
             target_compile_options(${name} PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
-            set_target_properties(${name} PROPERTIES LINK_FLAGS "-s DISABLE_EXCEPTION_CATCHING=1")
+            set_target_properties(${name} PROPERTIES LINK_FLAGS "-s -fwasm-exceptions")
         else()
             target_compile_options(${name} PRIVATE -Wno-format-overflow)
         endif()

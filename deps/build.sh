@@ -553,12 +553,12 @@ then
 	then
 		env_restore
 		cd "$SOURCES_ROOT"
-                BOOST_NAME="boost_1_87_0"
-                BOOST_VERSION="1.87.0"
+		BOOST_NAME="boost_1_87_0"
+		BOOST_VERSION="1.87.0"
 		if [ "$UNIX_SYSTEM_NAME" = "Darwin" ] || [ "${WITH_EMSCRIPTEN}" -eq 1 ];
 		then
-                        BOOST_NAME="boost_1_87_0"
-                        BOOST_VERSION="1.87.0"
+			BOOST_NAME="boost_1_88_0"
+			BOOST_VERSION="1.88.0"
 		fi
 		if [ ! -d "${BOOST_NAME}" ];
 		then
@@ -568,7 +568,7 @@ then
 				eval "$WGET" https://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/${BOOST_NAME}.tar.bz2
 			fi
 			echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
-                        tar -xf ${BOOST_NAME}.tar.bz2
+            tar -xf ${BOOST_NAME}.tar.bz2
 		fi
 		cd ${BOOST_NAME}
 		echo -e "${COLOR_INFO}configuring and building it${COLOR_DOTS}...${COLOR_RESET}"
@@ -597,16 +597,13 @@ then
 		else
 			if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
 			then
-                                eval ./b2 cxxflags=-fPIC toolset=clang cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
+				eval ./b2 cxxflags=-fPIC toolset=clang cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
 			else
 				if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 				then
-                                        eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=${variant} link=static install
-					cd bin.v2/libs/program_options/build/emscripten-4.0.5/${variant}/cxxstd-14-iso/link-static/threading-multi/visibility-hidden/
-					eval emar q "libboost_program_options.a" ./*.bc
-					eval cp "libboost_program_options.a" "${LIBRARIES_ROOT}"
+                    eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=${variant} link=static install
 				else
-                                        eval ./b2 cxxflags=-fPIC cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
+                    eval ./b2 cxxflags=-fPIC cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
 				fi
 			fi
 		fi
@@ -694,9 +691,9 @@ then
 		if [ ! -d "${GMP_NAME}" ];
 		then
 			if [ ! -f ""${GMP_NAME}".tar.xz" ];
-				then
-			echo -e "${COLOR_INFO}getting it from gmp website${COLOR_DOTS}...${COLOR_RESET}"
-			eval "$WGET" https://ftp.gnu.org/gnu/gmp/"${GMP_NAME}".tar.xz
+			then
+				echo -e "${COLOR_INFO}getting it from gmp website${COLOR_DOTS}...${COLOR_RESET}"
+				eval "$WGET" https://ftp.gnu.org/gnu/gmp/"${GMP_NAME}".tar.xz
 			fi
 			echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
 			eval tar -xf "${GMP_NAME}".tar.xz
