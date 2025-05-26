@@ -2673,8 +2673,7 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 #define NLOHMANN_JSON_PASTE17(                                                    \
     func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16 ) \
     NLOHMANN_JSON_PASTE2( func, v1 )                                              \
-    NLOHMANN_JSON_PASTE16(                                                        \
-        func, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16 )
+    NLOHMANN_JSON_PASTE16( func, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16 )
 #define NLOHMANN_JSON_PASTE18(                                                         \
     func, v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16, v17 ) \
     NLOHMANN_JSON_PASTE2( func, v1 )                                                   \
@@ -8978,8 +8977,9 @@ private:
             }
             default:  // LCOV_EXCL_LINE
                 // Handle all possible types discretely, default handler should never be reached.
-                JSON_ASSERT( false );  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert,-warnings-as-errors)
-                                       // LCOV_EXCL_LINE
+                JSON_ASSERT(
+                    false );  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert,-warnings-as-errors)
+                              // LCOV_EXCL_LINE
             }
         }
     }
@@ -9328,8 +9328,9 @@ private:
             }
             default:  // LCOV_EXCL_LINE
                 // Handle all possible types discretely, default handler should never be reached.
-                JSON_ASSERT( false );  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert,-warnings-as-errors)
-                                       // LCOV_EXCL_LINE
+                JSON_ASSERT(
+                    false );  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert,-warnings-as-errors)
+                              // LCOV_EXCL_LINE
             }
         }
     }
@@ -10429,9 +10430,10 @@ private:
                 return get_cbor_binary( b ) && sax->binary( b );
             }
 
-            default:                   // LCOV_EXCL_LINE
-                JSON_ASSERT( false );  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
-                                       // LCOV_EXCL_LINE
+            default:  // LCOV_EXCL_LINE
+                JSON_ASSERT(
+                    false );   // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
+                               // LCOV_EXCL_LINE
                 return false;  // LCOV_EXCL_LINE
             }
         }
@@ -11606,8 +11608,9 @@ private:
                             "count in an optimized container must be positive", "size" ),
                         nullptr ) );
             }
-            result = static_cast< std::size_t >( number );  // NOLINT(bugprone-signed-char-misuse,cert-str34-c):
-                                                            // number is not a char
+            result = static_cast< std::size_t >(
+                number );  // NOLINT(bugprone-signed-char-misuse,cert-str34-c):
+                           // number is not a char
             return true;
         }
 
@@ -18411,9 +18414,10 @@ public:
                     break;
                 }
 
-                default:                   // LCOV_EXCL_LINE
-                    JSON_ASSERT( false );  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
-                                           // LCOV_EXCL_LINE
+                default:  // LCOV_EXCL_LINE
+                    JSON_ASSERT(
+                        false );  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
+                                  // LCOV_EXCL_LINE
                 }
                 break;
             }
@@ -18464,9 +18468,10 @@ public:
                 break;
             }
 
-            default:                   // LCOV_EXCL_LINE
-                JSON_ASSERT( false );  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
-                                       // LCOV_EXCL_LINE
+            default:  // LCOV_EXCL_LINE
+                JSON_ASSERT(
+                    false );  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
+                              // LCOV_EXCL_LINE
             }
         }
     }
@@ -23694,8 +23699,9 @@ public:
             case value_t::binary:           // LCOV_EXCL_LINE
             case value_t::discarded:        // LCOV_EXCL_LINE
             default:                        // LCOV_EXCL_LINE
-                JSON_ASSERT( false );  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
-                                       // LCOV_EXCL_LINE
+                JSON_ASSERT(
+                    false );  // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert)
+                              // LCOV_EXCL_LINE
             }
         };
 
@@ -24076,8 +24082,9 @@ struct less< ::nlohmann::detail::value_t >  // do not remove the space after '<'
 /// @sa https://json.nlohmann.me/api/basic_json/std_swap/
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
 inline void swap( nlohmann::NLOHMANN_BASIC_JSON_TPL& j1,
-    nlohmann::NLOHMANN_BASIC_JSON_TPL& j2 ) noexcept(  // NOLINT(readability-inconsistent-declaration-parameter-name,
-                                                       // cert-dcl58-cpp)
+    nlohmann::NLOHMANN_BASIC_JSON_TPL&
+        j2 ) noexcept(  // NOLINT(readability-inconsistent-declaration-parameter-name,
+                        // cert-dcl58-cpp)
     is_nothrow_move_constructible< nlohmann::NLOHMANN_BASIC_JSON_TPL >::
         value&&  // NOLINT(misc-redundant-expression,cppcoreguidelines-noexcept-swap,performance-noexcept-swap)
             is_nothrow_move_assignable< nlohmann::NLOHMANN_BASIC_JSON_TPL >::value ) {
