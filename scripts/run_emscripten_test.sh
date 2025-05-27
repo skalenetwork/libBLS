@@ -27,7 +27,6 @@ for i in $(seq 1 $RUNS); do
     ./decrypt_message
 
     # Clean up temp files generated in $ABS_BUILD_DIR/
-    rm -f generate_bls_keys decrypt_message test.js message.txt bls_public_key.txt encrypted_data.txt
-    rm -f encrypt.js encrypt.wasm encrypt.* # Remove all encrypt.* files
+    rm -f message.txt bls_public_key.txt encrypted_data.txt
     cd "$ROOT_DIR"
 done
