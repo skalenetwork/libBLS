@@ -15,7 +15,8 @@ int main( int argc, char* argv[] ) {
     libBLS::ThresholdUtils::initCurve();
 
     // convert from char into vec of bytes
-    std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( message.c_str() );
+    std::vector< uint8_t > messageBytes =
+        libBLS::ThresholdUtils::hexCStringToBytes( message.c_str() );
 
     // build public key
     libBLS::TEPublicKey commonPublic( common_public_str );
@@ -25,7 +26,8 @@ int main( int argc, char* argv[] ) {
         libBLS::ThresholdEncryption::encrypt( messageBytes, commonPublic );
     std::vector< uint8_t > cipheredMessageBytes = cipheredMessage.toBytes();
 
-    std::string cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessageBytes );
+    std::string cipheredMessageStr =
+        libBLS::ThresholdUtils::bytesToHexString( cipheredMessageBytes );
 
     std::cout << cipheredMessageStr;
 
