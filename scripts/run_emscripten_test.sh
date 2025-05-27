@@ -11,8 +11,8 @@ ABS_BUILD_DIR="$ROOT_DIR/$BUILD_DIR"
 cp "$ROOT_DIR/tools/generate_bls_keys" "$ABS_BUILD_DIR/"
 cp "$ROOT_DIR/tools/decrypt_message" "$ABS_BUILD_DIR/"
 cp "$ROOT_DIR/test/test.js" "$ABS_BUILD_DIR/"
-cd "$ABS_BUILD_DIR/"
 cp "$ABS_BUILD_DIR/threshold_encryption/encrypt."* .
+cd "$ABS_BUILD_DIR/"
 
 # Number of times to run the test block
 RUNS=50
@@ -28,5 +28,4 @@ for i in $(seq 1 $RUNS); do
 
     # Clean up temp files generated in $ABS_BUILD_DIR/
     rm -f message.txt bls_public_key.txt encrypted_data.txt
-    cd "$ROOT_DIR"
 done

@@ -98,6 +98,12 @@ if (BUILD_TESTS)
         target_link_libraries(generate_bls_keys PRIVATE te ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
     endif()
 
+    if(NOT EMSCRIPTEN AND NOT APPLE)
+        add_executable(encrypt_message ../test/encryptMessageJS.cpp)
+        target_include_directories(encrypt_message PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
+        target_link_libraries(encrypt_message PRIVATE te ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+    endif()
+
     add_test(NAME te_wrap_tests COMMAND te_unit_test)
 
     add_custom_target(all_te_tests
