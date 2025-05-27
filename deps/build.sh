@@ -567,8 +567,8 @@ then
 				eval echo -e "${COLOR_INFO}downloading it${COLOR_DOTS}...${COLOR_RESET}"
 				eval "$WGET" https://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/${BOOST_NAME}.tar.bz2
 			fi
-			echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
-            tar -xf ${BOOST_NAME}.tar.bz2
+                        echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
+                        tar -xf ${BOOST_NAME}.tar.bz2
 		fi
 		cd ${BOOST_NAME}
 		echo -e "${COLOR_INFO}configuring and building it${COLOR_DOTS}...${COLOR_RESET}"
@@ -601,9 +601,9 @@ then
 			else
 				if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 				then
-                    eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=${variant} link=static install
+                                        eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=${variant} link=static install
 				else
-                    eval ./b2 cxxflags=-fPIC cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
+                                        eval ./b2 cxxflags=-fPIC cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
 				fi
 			fi
 		fi
