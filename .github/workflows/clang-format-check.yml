@@ -9,6 +9,6 @@ jobs:
     - uses: DoozyX/clang-format-lint-action@v0.14
       with:
         source: '.'
-        exclude: './CMakeFiles ./cmake ./deps ./build ./node ./python'
+        exclude: './CMakeFiles ./cmake ./deps ./build ./node ./python ./third_party'
         extensions: 'h,hpp,hxx,cpp,cxx,cc,ipp'
         clangFormatVersion: 14
