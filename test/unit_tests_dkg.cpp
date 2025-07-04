@@ -27,6 +27,7 @@
 #include <bls/BLSSigShareSet.h>
 #include <bls/BLSSignature.h>
 #include <dkg/dkg.h>
+#include <tools/utils.h>
 
 #include <cstdlib>
 #include <ctime>
@@ -62,6 +63,12 @@ BOOST_AUTO_TEST_CASE( PolynomialValue ) {
         libff::alt_bn128_Fr( "0" ) };
 
     BOOST_REQUIRE_THROW( value = obj.PolynomialValue( polynomial, 5 ), std::logic_error );
+
+    std::vector< libff::alt_bn128_Fr > shortPol = polynomial;
+    shortPol.erase( shortPol.begin() );
+
+    BOOST_REQUIRE_THROW(
+        value = obj.PolynomialValue( shortPol, 5 ), libBLS::ThresholdUtils::IncorrectInput );
 }
 
 BOOST_AUTO_TEST_CASE( verification ) {
@@ -112,6 +119,10 @@ BOOST_AUTO_TEST_CASE( ZeroSecret ) {
         libff::alt_bn128_Fr num2 = -num1;
         std::vector< libff::alt_bn128_Fr > pol;
         pol.push_back( num1 );
+
+        BOOST_REQUIRE_THROW(
+            dkg_obj.SecretKeyShareCreate( pol ), libBLS::ThresholdUtils::IncorrectInput );
+
         pol.push_back( num2 );
 
         BOOST_REQUIRE_THROW( dkg_obj.SecretKeyShareCreate( pol ), std::logic_error );
@@ -175,13 +186,25 @@ BOOST_AUTO_TEST_CASE( Verification2 ) {
         std::vector< libff::alt_bn128_Fr > pol = obj.GeneratePolynomial();
         std::vector< libff::alt_bn128_Fr > secret_shares = obj.SecretKeyContribution( pol );
         std::vector< libff::alt_bn128_G2 > verif_vect = obj.VerificationVector( pol );
+
+        std::vector< libff::alt_bn128_Fr > shortPol = pol;
+        shortPol.erase( shortPol.begin() );
+
+        std::vector< libff::alt_bn128_G2 > shortVV = verif_vect;
+        shortVV.erase( shortVV.begin() );
+
         for ( size_t i = 0; i < num_all; i++ ) {
             BOOST_REQUIRE( obj.Verification( i, secret_shares.at( i ), verif_vect ) );
             BOOST_REQUIRE( !obj.Verification(
                 i, secret_shares.at( i ) + libff::alt_bn128_Fr::one(), verif_vect ) );
             BOOST_REQUIRE(
                 !obj.Verification( i, secret_shares.at( i ), SpoilVerifVector( verif_vect ) ) );
+            BOOST_REQUIRE_THROW( obj.Verification( i, secret_shares.at( i ), shortVV ),
+                libBLS::ThresholdUtils::IncorrectInput );
         }
+
+        BOOST_REQUIRE_THROW(
+            obj.VerificationVector( shortPol ), libBLS::ThresholdUtils::IncorrectInput );
     }
 }
 
