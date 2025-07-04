@@ -460,9 +460,11 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
 
     BOOST_REQUIRE( res == key );
 
-    std::vector< std::pair< libff::alt_bn128_G2, size_t > > tooFewShares( shares.begin(), shares.begin() + shares.size() - 2 ); // t - 1 elements
+    std::vector< std::pair< libff::alt_bn128_G2, size_t > > tooFewShares(
+        shares.begin(), shares.begin() + shares.size() - 2 );  // t - 1 elements
 
-    BOOST_REQUIRE_THROW( obj.CombineShares( *result.ciphertext, tooFewShares ), libBLS::ThresholdUtils::IncorrectInput );
+    BOOST_REQUIRE_THROW( obj.CombineShares( *result.ciphertext, tooFewShares ),
+        libBLS::ThresholdUtils::IncorrectInput );
 }
 
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomPK ) {

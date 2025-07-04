@@ -96,7 +96,8 @@ std::vector< libff::alt_bn128_Fr > Dkg::SecretKeyContribution(
 libff::alt_bn128_Fr Dkg::SecretKeyShareCreate(
     const std::vector< libff::alt_bn128_Fr >& secret_key_contribution ) {
     if ( secret_key_contribution.size() < n_ )
-        throw ThresholdUtils::IncorrectInput( "Secret key contribution must be at least of size n" );
+        throw ThresholdUtils::IncorrectInput(
+            "Secret key contribution must be at least of size n" );
     // create secret key share from secret key contribution
     libff::alt_bn128_Fr secret_key_share = libff::alt_bn128_Fr::zero();
 
