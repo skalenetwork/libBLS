@@ -53,6 +53,8 @@ Polynomial Dkg::GeneratePolynomial() {
 
 std::vector< libff::alt_bn128_G2 > Dkg::VerificationVector(
     const std::vector< libff::alt_bn128_Fr >& polynomial ) {
+    if ( polynomial.size() < t_ )
+        throw ThresholdUtils::IncorrectInput( "Wrong polynomial degree: must be at least t" );
     // vector of public values that each node will broadcast
     std::vector< libff::alt_bn128_G2 > verification_vector( this->t_ );
     for ( size_t i = 0; i < this->t_; ++i ) {
@@ -63,6 +65,8 @@ std::vector< libff::alt_bn128_G2 > Dkg::VerificationVector(
 }
 
 libff::alt_bn128_Fr Dkg::PolynomialValue( const Polynomial& pol, libff::alt_bn128_Fr point ) {
+    if ( pol.size() < t_ )
+        throw ThresholdUtils::IncorrectInput( "Wrong polynomial degree: must be at least t" );
     // calculate value of polynomial in a random integer point
     libff::alt_bn128_Fr value = libff::alt_bn128_Fr::zero();
 
@@ -91,6 +95,8 @@ std::vector< libff::alt_bn128_Fr > Dkg::SecretKeyContribution(
 
 libff::alt_bn128_Fr Dkg::SecretKeyShareCreate(
     const std::vector< libff::alt_bn128_Fr >& secret_key_contribution ) {
+    if ( secret_key_contribution.size() < n_ )
+        throw ThresholdUtils::IncorrectInput( "Secret key contribution must be at least of size n" );
     // create secret key share from secret key contribution
     libff::alt_bn128_Fr secret_key_share = libff::alt_bn128_Fr::zero();
 
@@ -107,6 +113,8 @@ libff::alt_bn128_Fr Dkg::SecretKeyShareCreate(
 
 bool Dkg::Verification( size_t idx, libff::alt_bn128_Fr share,
     const std::vector< libff::alt_bn128_G2 >& verification_vector ) {
+    if ( verification_vector.size() < t_ )
+        throw ThresholdUtils::IncorrectInput( "Verification vector must be at least of size n" );
     // idx-th node verifies that share corresponds to the verification vector
     libff::alt_bn128_G2 value = libff::alt_bn128_G2::zero();
     for ( size_t i = 0; i < this->t_; ++i ) {
