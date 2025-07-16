@@ -148,8 +148,16 @@ public:
 
         // convert to string
         std::string public_decryption_value;
-        for ( size_t j = 0; j < u_splitted.size(); ++j ) {
-            public_decryption_value += u_splitted[j];
+        size_t total_size = 0;
+
+        for (const auto& part : u_splitted) { 
+            total_size += part.size();
+        }
+
+        public_decryption_value.reserve(total_size);
+
+        for (const auto& part : u_splitted) {
+            public_decryption_value += part;
         }
 
         return public_decryption_value;
