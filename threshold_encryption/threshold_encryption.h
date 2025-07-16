@@ -134,6 +134,26 @@ public:
         libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
         return CipheredKey( U, V, W );
     }
+
+    /**
+     * Converts U component of the key to string
+     */
+    std::string getDecryptionShareInput() {
+        U.to_affine_coordinates();
+
+        // validate U
+        ThresholdUtils::validateG2( U );
+
+        auto u_splitted = ThresholdUtils::G2ToString( U, BASE_HEXA );
+
+        // convert to string
+        std::string public_decryption_value;
+        for ( size_t j = 0; j < u_splitted.size(); ++j ) {
+            public_decryption_value += u_splitted[j];
+        }
+
+        return public_decryption_value;
+    }
 };
 
 /**
@@ -159,28 +179,6 @@ public:
         : key( _key ), data( std::make_shared< std::vector< uint8_t > >( _data ) ) {
         validate();
     }
-
-    /**
-     * Converts U component of the key to string
-     */
-    std::string getPublicDecryptionValue() {
-        auto U = key.U;
-        U.to_affine_coordinates();
-
-        // validate U
-        ThresholdUtils::validateG2( U );
-
-        auto u_splitted = ThresholdUtils::G2ToString( U, BASE_HEXA );
-
-        // convert to string
-        std::string public_decryption_value;
-        for ( size_t j = 0; j < u_splitted.size(); ++j ) {
-            public_decryption_value += u_splitted[j];
-        }
-
-        return public_decryption_value;
-    }
-
 
     const std::vector< uint8_t >& getData() const {
         if ( !data ) {
