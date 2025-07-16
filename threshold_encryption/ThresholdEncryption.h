@@ -62,7 +62,8 @@ public:
     /**
      * @brief Validates the TE ciphered key
      *
-     * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext struct
+     * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
+     * struct
      * @throws Exceptions in case validation fails
      */
     static void validateEncryption( const CipheredKey& _cipheredKey );
@@ -70,7 +71,8 @@ public:
     /**
      * @brief Generates a decryption share for the given ciphered key
      *
-     * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext struct
+     * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
+     * struct
      * @param _pkeyShare The private key share
      * @return TEDecryptionShare - The partial decryption share
      */
@@ -80,7 +82,8 @@ public:
     /**
      * @brief Validates a decryption share
      *
-     * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext struct
+     * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
+     * struct
      * @param decryption_share The decryption share
      * @throws Exception if the decryption share is not valid
      */
@@ -91,7 +94,8 @@ public:
      * @brief Combines decryption shares to reconstruct the original AES key.
      * It combines all shares to derive the AES key.
      *
-     * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext struct
+     * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
+     * struct
      * @param _decryptionSet The decryption set containing the decryption shares
      * @return The deciphered AES key in byte array
      * @throws In case ciphertext is corrupted, or decription set is not ready to be merged
