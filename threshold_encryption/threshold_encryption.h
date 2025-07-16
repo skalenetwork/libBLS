@@ -150,13 +150,13 @@ public:
         std::string public_decryption_value;
         size_t total_size = 0;
 
-        for (const auto& part : u_splitted) { 
+        for ( const auto& part : u_splitted ) {
             total_size += part.size();
         }
 
-        public_decryption_value.reserve(total_size);
+        public_decryption_value.reserve( total_size );
 
-        for (const auto& part : u_splitted) {
+        for ( const auto& part : u_splitted ) {
             public_decryption_value += part;
         }
 
