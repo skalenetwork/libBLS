@@ -76,7 +76,7 @@ std::vector< std::string > ThresholdUtils::G2ToString( libff::alt_bn128_G2 elem,
     return {
         fieldElementToString( elem.X.c0, base ), fieldElementToString( elem.X.c1, base ),
             fieldElementToString( elem.Y.c0, base ), fieldElementToString( elem.Y.c1, base )
-    }
+    };
 }
 
 std::array< uint8_t, G2_SIZE_BYTES > ThresholdUtils::G2ToBytesArray( libff::alt_bn128_G2 elem ) {
