@@ -195,7 +195,7 @@ std::vector< libBLS::TEDecryptionShare > getDecryptionShares(
     for ( size_t i = 0; i < ciphertexts.size(); i++ ) {
         std::shared_ptr< libBLS::Ciphertext > ciphertext = ciphertexts[i];
         libBLS::ThresholdEncryption::validateEncryption( ciphertexts[i]->key );
-        batch.append( ciphertext->getPublicDecryptionValue() );
+        batch.append( ciphertext->key.getDecryptionShareInput() );
     }
 
     TIMER(

@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE( Ciphertext ) {
 
         BOOST_REQUIRE( ciphertext == restoredCiphertext );
 
-        // getPublicDecryptionValue
+        // getDecryptionShareInput
         auto uCopy = u;
         uCopy.to_affine_coordinates();
         auto U = libBLS::ThresholdUtils::G2ToString( uCopy, libBLS::BASE_HEXA );
@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE( Ciphertext ) {
         for ( size_t j = 0; j < U.size(); ++j ) {
             concatenated += U[j];
         }
-        BOOST_REQUIRE( ciphertext.getPublicDecryptionValue() == concatenated );
+        BOOST_REQUIRE( ciphertext.key.getDecryptionShareInput() == concatenated );
     }
 }
 
@@ -204,11 +204,11 @@ BOOST_AUTO_TEST_CASE( CiphertextException ) {
     data.resize( libBLS::RANDOM_SECRET_SIZE_BYTES );
     BOOST_REQUIRE_THROW( libBLS::Ciphertext( key, data ), libBLS::ThresholdUtils::IsNotWellFormed );
 
-    // getPublicDecryptionValue - U element from key is not well formed
+    // getDecryptionShareInput - U element from key is not well formed
     libBLS::Ciphertext ciphertext;
     ciphertext.key.U = libff::alt_bn128_G2::zero();
     BOOST_REQUIRE_THROW(
-        ciphertext.getPublicDecryptionValue(), libBLS::ThresholdUtils::IncorrectInput );
+        ciphertext.key.getDecryptionShareInput(), libBLS::ThresholdUtils::IncorrectInput );
 
     // from bytes
     // bytes only allow for key bytes. No data
