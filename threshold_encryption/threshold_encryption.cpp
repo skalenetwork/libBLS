@@ -349,6 +349,8 @@ AES256Key TE::CombineShares( const CipheredKey& ciphertext,
  */
 std::vector< uint8_t > TE::CombineSharesIntoAESKey(
     const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShares ) {
+    if ( decryptionShares.size() < t_ )
+        throw ThresholdUtils::IncorrectInput( "Expect at least t shares to be provided" );
     std::vector< size_t > idx( this->t_ );
     for ( size_t i = 0; i < this->t_; ++i ) {
         idx[i] = decryptionShares[i].second;
