@@ -72,16 +72,9 @@ void ThresholdUtils::checkSigners( size_t _requiredSigners, size_t _totalSigners
 }
 
 std::vector< std::string > ThresholdUtils::G2ToString( libff::alt_bn128_G2 elem, int base ) {
-    std::vector< std::string > pkey_str_vect;
-
     elem.to_affine_coordinates();
-
-    pkey_str_vect.push_back( fieldElementToString( elem.X.c0, base ) );
-    pkey_str_vect.push_back( fieldElementToString( elem.X.c1, base ) );
-    pkey_str_vect.push_back( fieldElementToString( elem.Y.c0, base ) );
-    pkey_str_vect.push_back( fieldElementToString( elem.Y.c1, base ) );
-
-    return pkey_str_vect;
+    return { fieldElementToString( elem.X.c0, base ), fieldElementToString( elem.X.c1, base ),
+        fieldElementToString( elem.Y.c0, base ), fieldElementToString( elem.Y.c1, base ) };
 }
 
 std::array< uint8_t, G2_SIZE_BYTES > ThresholdUtils::G2ToBytesArray( libff::alt_bn128_G2 elem ) {
