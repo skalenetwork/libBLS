@@ -1,6 +1,6 @@
 {
   "name": "@skalenetwork/t-encrypt",
-  "version": "0.5.0",
+  "version": "0.5.1",
 
   "keywords": [
     "SKALE",
@@ -11,6 +11,13 @@
     "encryption",
     "wasm"
   ],
+  "browser": {
+    "fs": false,
+    "os": false,
+    "path": false,
+    "crypto": false,
+    "child_process": false
+  },
   "homepage": "https://github.com/skalenetwork/libBLS",
   "license": "AGPL-3.0",
   "author": "SKALE Labs and contributors",
