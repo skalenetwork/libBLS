@@ -11,6 +11,13 @@
     "encryption",
     "wasm"
   ],
+  "browser": {
+    "fs": false,
+    "os": false,
+    "path": false,
+    "crypto": false,
+    "child_process": false
+  },
   "homepage": "https://github.com/skalenetwork/libBLS",
   "license": "AGPL-3.0",
   "author": "SKALE Labs and contributors",
