@@ -85,12 +85,12 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
         libBLS::Ciphertext cipheredMessageObj =
             libBLS::Ciphertext::fromBytes( cipheredMessageBytesActual );
 
-        for ( const auto& cipheredKey: cipheredMessageObj.getKeys() ) {
+        for ( const auto& cipheredKey : cipheredMessageObj.getKeys() ) {
             libBLS::TEDecryptSet decr_set( required, total );
 
             for ( size_t j = 0; j < required; ++j ) {
-                libBLS::TEDecryptionShare share = libBLS::ThresholdEncryption::partialDecrypt(
-                    cipheredKey, keys.secretKeys[j] );
+                libBLS::TEDecryptionShare share =
+                    libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[j] );
                 decr_set.addDecryptShare( share );
             }
 

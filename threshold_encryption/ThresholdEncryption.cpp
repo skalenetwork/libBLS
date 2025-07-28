@@ -203,12 +203,13 @@ void ThresholdEncryption::validateCombinedDecryption(
     // get random secret
     RandSecret secret = extractRandomSecretFromMessage( deciphered_message );
 
-    for ( const auto& ciphertextKey: _cyphertext.getKeys()) {
+    for ( const auto& ciphertextKey : _cyphertext.getKeys() ) {
         // get ciphered AES key
         const AES256Key& cipheredAesKey = ciphertextKey.V;
 
         // Compute G(r'Y)
-        libff::alt_bn128_Fr r = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( secret );
+        libff::alt_bn128_Fr r =
+            ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( secret );
         libff::alt_bn128_G2 Y = r * _publicKey.getPublicKeyRaw();
         std::string hash = TE::Hash( Y );
 
@@ -220,7 +221,8 @@ void ThresholdEncryption::validateCombinedDecryption(
 
         // compare the aes keys
         if ( decipheredAesKey != _aesKey ) {
-            throw ThresholdUtils::IsNotWellFormed( "Deciphered AES key is not equal to the original" );
+            throw ThresholdUtils::IsNotWellFormed(
+                "Deciphered AES key is not equal to the original" );
         }
     }
 }
@@ -250,12 +252,13 @@ std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
     // get random secret
     RandSecret secret = extractRandomSecretFromMessage( decipheredMessage );
 
-    for ( const auto& ciphertextKey: _cyphertext.getKeys()) {
+    for ( const auto& ciphertextKey : _cyphertext.getKeys() ) {
         // get ciphered AES key
         const AES256Key& cipheredAesKey = ciphertextKey.V;
 
         // Compute G(r'Y)
-        libff::alt_bn128_Fr r = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( secret );
+        libff::alt_bn128_Fr r =
+            ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( secret );
         libff::alt_bn128_G2 Y = r * _publicKey.getPublicKeyRaw();
         std::string hash = TE::Hash( Y );
 
@@ -267,7 +270,8 @@ std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
 
         // compare the aes keys
         if ( decipheredAesKey != _aesKey ) {
-            throw ThresholdUtils::IsNotWellFormed( "Deciphered AES key is not equal to the original" );
+            throw ThresholdUtils::IsNotWellFormed(
+                "Deciphered AES key is not equal to the original" );
         }
     }
 

@@ -39,7 +39,8 @@ void importBLSKeys( const std::vector< libBLS::TEPrivateKeyShare >& secretKeys,
 
 std::vector< libBLS::TEDecryptionShare > getDecryptionShares(
     const std::vector< std::shared_ptr< libBLS::Ciphertext > >& ciphertexts,
-    const std::string& keyName, const std::string& sgxUrl, const size_t signerIndex, const size_t keyIndex = 0 );
+    const std::string& keyName, const std::string& sgxUrl, const size_t signerIndex,
+    const size_t keyIndex = 0 );
 
 std::pair< std::vector< std::vector< uint8_t > >,
     std::vector< std::shared_ptr< libBLS::Ciphertext > > >
@@ -116,7 +117,7 @@ int main() {
 
             // verify all shares
             for ( size_t msg = 0; msg < batchedDecryptionShares.size(); ++msg ) {
-                for ( const auto& cipheredkey: ciphertexts[msg]->getKeys() ) {
+                for ( const auto& cipheredkey : ciphertexts[msg]->getKeys() ) {
                     libBLS::ThresholdEncryption::validateDecryptionShare(
                         cipheredkey, batchedDecryptionShares[msg], keys.publicKeys[nodeId] );
                 }
@@ -127,9 +128,9 @@ int main() {
 
         // combine shares from each individual message on the batch
         for ( size_t msg = 0; msg < nMessagesBatch; ++msg ) {
-            for ( const auto& cipheredkey: ciphertexts[msg]->getKeys() ) {
-                libBLS::AES256Key decipheredKey = libBLS::ThresholdEncryption::combineShares(
-                    cipheredkey, decription_sets[msg] );
+            for ( const auto& cipheredkey : ciphertexts[msg]->getKeys() ) {
+                libBLS::AES256Key decipheredKey =
+                    libBLS::ThresholdEncryption::combineShares( cipheredkey, decription_sets[msg] );
                 libBLS::ThresholdEncryption::validateCombinedDecryption(
                     *ciphertexts[msg], decipheredKey, keys.commonPublic );
                 std::vector< uint8_t > decipheredMsg =
@@ -189,7 +190,8 @@ void importBLSKeys( const std::vector< libBLS::TEPrivateKeyShare >& secretKeys,
 
 std::vector< libBLS::TEDecryptionShare > getDecryptionShares(
     const std::vector< std::shared_ptr< libBLS::Ciphertext > >& ciphertexts,
-    const std::string& keyName, const std::string& sgxUrl, const size_t signerIndex, const size_t keyIndex ) {
+    const std::string& keyName, const std::string& sgxUrl, const size_t signerIndex,
+    const size_t keyIndex ) {
     Json::Value p;
     p["blsKeyName"] = keyName;
 

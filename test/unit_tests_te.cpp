@@ -189,7 +189,7 @@ BOOST_AUTO_TEST_CASE( Ciphertext ) {
         for ( size_t j = 0; j < U.size(); ++j ) {
             concatenated += U[j];
         }
-        for ( auto cipheredkey: ciphertext.keys ) {
+        for ( auto cipheredkey : ciphertext.keys ) {
             BOOST_REQUIRE( cipheredkey.getDecryptionShareInput() == concatenated );
         }
     }
@@ -207,16 +207,19 @@ BOOST_AUTO_TEST_CASE( CiphertextException ) {
     BOOST_REQUIRE_THROW( libBLS::Ciphertext( key, data ), libBLS::ThresholdUtils::IsNotWellFormed );
 
     // requires exactly 1 or 2 keys
-    BOOST_REQUIRE_THROW( libBLS::Ciphertext( std::vector< libBLS::CipheredKey >(), data ), libBLS::ThresholdUtils::IsNotWellFormed );
+    BOOST_REQUIRE_THROW( libBLS::Ciphertext( std::vector< libBLS::CipheredKey >(), data ),
+        libBLS::ThresholdUtils::IsNotWellFormed );
 
     // requires exactly 1 or 2 keys
-    BOOST_REQUIRE_THROW( libBLS::Ciphertext( { key, key, key }, data ), libBLS::ThresholdUtils::IsNotWellFormed );
+    BOOST_REQUIRE_THROW(
+        libBLS::Ciphertext( { key, key, key }, data ), libBLS::ThresholdUtils::IsNotWellFormed );
 
     // getDecryptionShareInput - U element from key is not well formed
     libBLS::Ciphertext ciphertext;
-    for ( auto cipheredKey: ciphertext.keys ) {
+    for ( auto cipheredKey : ciphertext.keys ) {
         cipheredKey.U = libff::alt_bn128_G2::zero();
-        BOOST_REQUIRE_THROW( cipheredKey.getDecryptionShareInput(), libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW(
+            cipheredKey.getDecryptionShareInput(), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     // from bytes
@@ -279,8 +282,9 @@ BOOST_AUTO_TEST_CASE( SimpleEncryptionWithAES ) {
         te_instance.encryptWithAES( message_bytes, public_key );
 
     auto encrypted_message = ciphertext_with_aes.ciphertext->getData();
-    for ( const auto& cipheredKey: ciphertext_with_aes.ciphertext->getKeys() ) {
-        libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( cipheredKey, secret_key );
+    for ( const auto& cipheredKey : ciphertext_with_aes.ciphertext->getKeys() ) {
+        libff::alt_bn128_G2 decryption_share =
+            te_instance.getDecryptionShare( cipheredKey, secret_key );
 
         BOOST_REQUIRE( te_instance.Verify( cipheredKey, decryption_share, public_key ) );
 
@@ -313,8 +317,9 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongKey ) {
     auto ciphertext_with_aes = te_instance.encryptWithAES( message_bytes, public_key );
 
     auto encrypted_message = ciphertext_with_aes.ciphertext->getData();
-    for ( const auto& cipheredKey: ciphertext_with_aes.ciphertext->getKeys() ) {
-        libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( cipheredKey, secret_key );
+    for ( const auto& cipheredKey : ciphertext_with_aes.ciphertext->getKeys() ) {
+        libff::alt_bn128_G2 decryption_share =
+            te_instance.getDecryptionShare( cipheredKey, secret_key );
 
         BOOST_REQUIRE( te_instance.Verify( cipheredKey, decryption_share, public_key ) );
 
@@ -342,8 +347,9 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongCiphertext ) {
     libBLS::CipherResult ciphertext_with_aes =
         te_instance.encryptWithAES( message_bytes, public_key );
 
-    for ( const auto& cipheredKey: ciphertext_with_aes.ciphertext->getKeys() ) {
-        libff::alt_bn128_G2 decryption_share = te_instance.getDecryptionShare( cipheredKey, secret_key );
+    for ( const auto& cipheredKey : ciphertext_with_aes.ciphertext->getKeys() ) {
+        libff::alt_bn128_G2 decryption_share =
+            te_instance.getDecryptionShare( cipheredKey, secret_key );
 
         BOOST_REQUIRE( te_instance.Verify( cipheredKey, decryption_share, public_key ) );
 
@@ -352,7 +358,8 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongCiphertext ) {
 
         libBLS::AES256Key decrypted_aes_key = te_instance.CombineShares( cipheredKey, shares );
 
-        std::string bad_message = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        std::string bad_message =
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
         std::vector< uint8_t > bad_message_bytes( message.begin(), message.end() );
 
         auto bad_encrypted_message =
@@ -391,7 +398,7 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToBytes ) {
     libBLS::Ciphertext ciphertext = libBLS::Ciphertext::fromBytes( encrypted_msg_bytes );
     auto encrypted_message = ciphertext.getData();
 
-    for ( const auto& cipheredkey: ciphertext.getKeys() ) {
+    for ( const auto& cipheredkey : ciphertext.getKeys() ) {
         libff::alt_bn128_G2 decryption_share =
             te_instance.getDecryptionShare( cipheredkey, secret_key );
 

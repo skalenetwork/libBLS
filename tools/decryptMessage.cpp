@@ -46,12 +46,13 @@ int main() {
 
     auto ciphertext = libBLS::Ciphertext::fromBytes( encryptedDataBytes );
 
-    for ( const auto& aesKeyEncrypted: ciphertext.getKeys() ) {
+    for ( const auto& aesKeyEncrypted : ciphertext.getKeys() ) {
         auto encryptedMessage = ciphertext.getData();
 
         libBLS::ThresholdEncryption::validateEncryption( aesKeyEncrypted );
 
-        libBLS::TEPrivateKeyShare privateKeyShare( libff::alt_bn128_Fr( secretKey.c_str() ), 1, 1, 1 );
+        libBLS::TEPrivateKeyShare privateKeyShare(
+            libff::alt_bn128_Fr( secretKey.c_str() ), 1, 1, 1 );
         libBLS::TEPublicKeyShare publicKeyShare( privateKeyShare );
 
         libBLS::TEDecryptionShare decryptionShare =

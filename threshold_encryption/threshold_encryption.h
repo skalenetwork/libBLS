@@ -194,7 +194,8 @@ public:
     }
 
     // Constructor for exactly two keys
-    Ciphertext( const CipheredKey& _key1, const CipheredKey& _key2, const std::vector< uint8_t >& _data )
+    Ciphertext(
+        const CipheredKey& _key1, const CipheredKey& _key2, const std::vector< uint8_t >& _data )
         : keys( { _key1, _key2 } ), data( std::make_shared< std::vector< uint8_t > >( _data ) ) {
         validate();
     }
@@ -217,27 +218,27 @@ public:
         if ( !data ) {
             throw ThresholdUtils::IncorrectInput( "Cyphertext data is not initialized" );
         }
-        
+
         // Calculate total size needed
-        size_t totalSize = sizeof(uint8_t) + // for number of keys
-                          (keys.size() * CipheredKey::CIPHERED_KEY_SIZE_BYTES) + // for all keys
-                          data->size(); // for data
-        
+        size_t totalSize = sizeof( uint8_t ) +  // for number of keys
+                           ( keys.size() * CipheredKey::CIPHERED_KEY_SIZE_BYTES ) +  // for all keys
+                           data->size();                                             // for data
+
         std::vector< uint8_t > bytes;
-        bytes.reserve(totalSize);
+        bytes.reserve( totalSize );
 
         // Add number of keys
-        uint8_t numKeys = static_cast<uint8_t>(keys.size());
-        bytes.push_back(numKeys);
+        uint8_t numKeys = static_cast< uint8_t >( keys.size() );
+        bytes.push_back( numKeys );
 
         // Add each key
-        for (const auto& key : keys) {
+        for ( const auto& key : keys ) {
             std::array< uint8_t, CipheredKey::CIPHERED_KEY_SIZE_BYTES > keyBytes = key.toBytes();
-            bytes.insert(bytes.end(), keyBytes.begin(), keyBytes.end());
+            bytes.insert( bytes.end(), keyBytes.begin(), keyBytes.end() );
         }
-        
+
         // Add data
-        bytes.insert(bytes.end(), data->begin(), data->end());
+        bytes.insert( bytes.end(), data->begin(), data->end() );
 
         return bytes;
     }
@@ -247,41 +248,44 @@ public:
      */
     static Ciphertext fromBytes( std::vector< uint8_t >& bytes ) {
         // we require at least 1 byte for num_keys + one key + random secret + 1 byte for data
-        if ( bytes.size() <= sizeof(uint8_t) + CipheredKey::CIPHERED_KEY_SIZE_BYTES + RANDOM_SECRET_SIZE_BYTES ) {
+        if ( bytes.size() <=
+             sizeof( uint8_t ) + CipheredKey::CIPHERED_KEY_SIZE_BYTES + RANDOM_SECRET_SIZE_BYTES ) {
             throw ThresholdUtils::IncorrectInput( "Cyphertext data is too short" );
         }
 
         size_t offset = 0;
-        
+
         // Get number of keys
         uint8_t numKeys;
-        std::memcpy(&numKeys, bytes.data() + offset, sizeof(uint8_t));
-        offset += sizeof(uint8_t);
-        
-        if (numKeys == 0 || numKeys > 2)
+        std::memcpy( &numKeys, bytes.data() + offset, sizeof( uint8_t ) );
+        offset += sizeof( uint8_t );
+
+        if ( numKeys == 0 || numKeys > 2 )
             throw ThresholdUtils::IncorrectInput( "Ciphertext must contain exactly 1 or 2 keys" );
-        
+
         // Check that the input matches the number of keys
-        size_t expectedMinSize = sizeof(uint8_t) + 
-                                (numKeys * CipheredKey::CIPHERED_KEY_SIZE_BYTES) + 
-                                RANDOM_SECRET_SIZE_BYTES + 1; // +1 for at least 1 byte of actual data
-        if (bytes.size() < expectedMinSize)
-            throw ThresholdUtils::IncorrectInput( "Cyphertext data is too short for specified number of keys" );
-        
+        size_t expectedMinSize =
+            sizeof( uint8_t ) + ( numKeys * CipheredKey::CIPHERED_KEY_SIZE_BYTES ) +
+            RANDOM_SECRET_SIZE_BYTES + 1;  // +1 for at least 1 byte of actual data
+        if ( bytes.size() < expectedMinSize )
+            throw ThresholdUtils::IncorrectInput(
+                "Cyphertext data is too short for specified number of keys" );
+
         // Extract keys
         std::vector< CipheredKey > keys;
-        keys.reserve(numKeys);
-        
-        for (size_t i = 0; i < numKeys; ++i) {
+        keys.reserve( numKeys );
+
+        for ( size_t i = 0; i < numKeys; ++i ) {
             std::array< uint8_t, CipheredKey::CIPHERED_KEY_SIZE_BYTES > keyBytes;
-            std::memcpy(keyBytes.data(), bytes.data() + offset, CipheredKey::CIPHERED_KEY_SIZE_BYTES);
+            std::memcpy(
+                keyBytes.data(), bytes.data() + offset, CipheredKey::CIPHERED_KEY_SIZE_BYTES );
             offset += CipheredKey::CIPHERED_KEY_SIZE_BYTES;
-            
-            keys.push_back(CipheredKey::fromBytes(keyBytes));
+
+            keys.push_back( CipheredKey::fromBytes( keyBytes ) );
         }
-        
+
         // Get data bytes
-        std::vector< uint8_t > data(bytes.begin() + offset, bytes.end());
+        std::vector< uint8_t > data( bytes.begin() + offset, bytes.end() );
 
         return Ciphertext( keys, data );
     }
@@ -291,10 +295,10 @@ public:
      * @throw NotWellFormed if the it fails the validation
      */
     void validate() const {
-        if (keys.empty() || keys.size() > 2)
+        if ( keys.empty() || keys.size() > 2 )
             throw ThresholdUtils::IsNotWellFormed( "Ciphertext must contain exactly 1 or 2 keys" );
-        
-        for (const auto& key : keys) {
+
+        for ( const auto& key : keys ) {
             key.validate();
         }
 
@@ -312,9 +316,7 @@ public:
     /**
      * @brief Returns the number of keys in the Ciphertext
      */
-    const std::vector< CipheredKey >& getKeys() const {
-        return keys;
-    }
+    const std::vector< CipheredKey >& getKeys() const { return keys; }
 };
 
 /**
