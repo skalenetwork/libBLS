@@ -98,11 +98,25 @@ std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
 
 Ciphertext ThresholdEncryption::encrypt(
     const std::vector< uint8_t >& _message, const TEPublicKey& _commonPublic ) {
+    return encrypt( _message, { _commonPublic } );
+}
+
+
+Ciphertext ThresholdEncryption::encrypt(
+    const std::vector< uint8_t >& _message, const std::vector< TEPublicKey >& _commonPublic ) {
     TEBase::initializeIfNecessary();
 
-    _commonPublic.validate();
+    if ( _commonPublic.size() == 0 || _commonPublic.size() > 2 )
+        throw ThresholdUtils::IncorrectInput(
+            "Must provide exactly 1 or 2 public keys for encryption" );
 
-    CipherResult cypher = TE::encryptWithAES( _message, _commonPublic.getPublicKeyRaw() );
+    std::vector< libff::alt_bn128_G2 > rawPublicKeys;
+    for ( const auto& publicKey : _commonPublic ) {
+        publicKey.validate();
+        rawPublicKeys.push_back( publicKey.getPublicKeyRaw() );
+    }
+
+    CipherResult cypher = TE::encryptWithAES( _message, rawPublicKeys );
 
     if ( !cypher.ciphertext ) {
         throw ThresholdUtils::IsNotWellFormed( "ciphertext is null" );

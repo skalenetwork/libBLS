@@ -58,6 +58,8 @@ public:
      */
     static Ciphertext encrypt(
         const std::vector< uint8_t >& _message, const TEPublicKey& _commonPublic );
+    static Ciphertext encrypt(
+        const std::vector< uint8_t >& _message, const std::vector< TEPublicKey >& _commonPublic );
 
     /**
      * @brief Validates the TE ciphered key

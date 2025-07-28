@@ -330,7 +330,7 @@ struct CipherResult {
 };
 
 struct CipheredKeyResult {
-    std::shared_ptr< CipheredKey > ciphertext;
+    std::vector< CipheredKey > ciphertext;
     RandSecret random_secret;
 };
 
@@ -360,13 +360,19 @@ public:
      * @note This is an auxiliar function, used within `encryptWithAES`
      */
     static CipheredKeyResult getCiphertext(
-        const AES256Key& key, const libff::alt_bn128_G2& commonPublic );
+        const AES256Key& key, libff::alt_bn128_G2& commonPublic );
+    static CipheredKeyResult getCiphertext(
+        const AES256Key& key, const std::vector< libff::alt_bn128_G2 >& commonPublic );
 
     static CipherResult encryptWithAES(
         const std::vector< uint8_t >& message, const libff::alt_bn128_G2& commonPublic );
+    static CipherResult encryptWithAES( const std::vector< uint8_t >& message,
+        const std::vector< libff::alt_bn128_G2 >& commonPublic );
 
     static std::pair< std::string, RandSecret > encryptMessage(
-        const std::vector< uint8_t >& message, const std::string& common_public );
+        const std::vector< uint8_t >& message, const std::string& commonPublic );
+    static std::pair< std::string, RandSecret > encryptMessage(
+        const std::vector< uint8_t >& message, const std::vector< std::string >& commonPublic );
 
     static libff::alt_bn128_G2 getDecryptionShare(
         const CipheredKey& ciphertext, const libff::alt_bn128_Fr& secret_key );
