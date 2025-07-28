@@ -84,24 +84,25 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
         // run TE process over the ciphered message from JS
         libBLS::Ciphertext cipheredMessageObj =
             libBLS::Ciphertext::fromBytes( cipheredMessageBytesActual );
-        libBLS::TEDecryptSet decr_set( required, total );
 
-        for ( size_t j = 0; j < required; ++j ) {
-            libBLS::TEDecryptionShare share = libBLS::ThresholdEncryption::partialDecrypt(
-                cipheredMessageObj.key, keys.secretKeys[j] );
-            decr_set.addDecryptShare( share );
+        for ( const auto& cipheredKey: cipheredMessageObj.getKeys() ) {
+            libBLS::TEDecryptSet decr_set( required, total );
+
+            for ( size_t j = 0; j < required; ++j ) {
+                libBLS::TEDecryptionShare share = libBLS::ThresholdEncryption::partialDecrypt(
+                    cipheredKey, keys.secretKeys[j] );
+                decr_set.addDecryptShare( share );
+            }
+
+            libBLS::AES256Key key_deciphered =
+                libBLS::ThresholdEncryption::combineShares( cipheredKey, decr_set );
+            libBLS::ThresholdEncryption::validateCombinedDecryption(
+                cipheredMessageObj, key_deciphered, keys.commonPublic.getPublicKeyRaw() );
+            std::vector< uint8_t > decipheredMsg =
+                libBLS::ThresholdEncryption::decrypt( cipheredMessageObj, key_deciphered );
+
+            BOOST_REQUIRE( decipheredMsg == data );
         }
-
-        libBLS::AES256Key key_deciphered =
-            libBLS::ThresholdEncryption::combineShares( cipheredMessageObj.key, decr_set );
-        libBLS::ThresholdEncryption::validateCombinedDecryption(
-            cipheredMessageObj, key_deciphered, keys.commonPublic.getPublicKeyRaw() );
-        std::vector< uint8_t > decipheredMsg =
-            libBLS::ThresholdEncryption::decrypt( cipheredMessageObj, key_deciphered );
-
-        BOOST_REQUIRE( decipheredMsg == data );
-
-        // delete cipheredMessage;
     }
 }
 

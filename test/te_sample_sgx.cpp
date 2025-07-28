@@ -39,7 +39,7 @@ void importBLSKeys( const std::vector< libBLS::TEPrivateKeyShare >& secretKeys,
 
 std::vector< libBLS::TEDecryptionShare > getDecryptionShares(
     const std::vector< std::shared_ptr< libBLS::Ciphertext > >& ciphertexts,
-    const std::string& keyName, const std::string& sgxUrl, const size_t signerIndex );
+    const std::string& keyName, const std::string& sgxUrl, const size_t signerIndex, const size_t keyIndex = 0 );
 
 std::pair< std::vector< std::vector< uint8_t > >,
     std::vector< std::shared_ptr< libBLS::Ciphertext > > >
@@ -111,14 +111,15 @@ int main() {
                 "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:" + std::to_string( actualNodeId ) +
                 ":DKG_ID:" + dkgRandId;
 
-
             std::vector< libBLS::TEDecryptionShare > batchedDecryptionShares =
-                getDecryptionShares( ciphertexts, bls_key_name, sgxWalletUrl, actualNodeId );
+                getDecryptionShares( ciphertexts, bls_key_name, sgxWalletUrl, actualNodeId, 0 );
 
             // verify all shares
             for ( size_t msg = 0; msg < batchedDecryptionShares.size(); ++msg ) {
-                libBLS::ThresholdEncryption::validateDecryptionShare(
-                    ciphertexts[msg]->key, batchedDecryptionShares[msg], keys.publicKeys[nodeId] );
+                for ( const auto& cipheredkey: ciphertexts[msg]->getKeys() ) {
+                    libBLS::ThresholdEncryption::validateDecryptionShare(
+                        cipheredkey, batchedDecryptionShares[msg], keys.publicKeys[nodeId] );
+                }
 
                 decription_sets[msg].addDecryptShare( batchedDecryptionShares[msg] );
             }
@@ -126,14 +127,16 @@ int main() {
 
         // combine shares from each individual message on the batch
         for ( size_t msg = 0; msg < nMessagesBatch; ++msg ) {
-            libBLS::AES256Key decipheredKey = libBLS::ThresholdEncryption::combineShares(
-                ciphertexts[msg]->key, decription_sets[msg] );
-            libBLS::ThresholdEncryption::validateCombinedDecryption(
-                *ciphertexts[msg], decipheredKey, keys.commonPublic );
-            std::vector< uint8_t > decipheredMsg =
-                libBLS::ThresholdEncryption::decrypt( *ciphertexts[msg], decipheredKey );
+            for ( const auto& cipheredkey: ciphertexts[msg]->getKeys() ) {
+                libBLS::AES256Key decipheredKey = libBLS::ThresholdEncryption::combineShares(
+                    cipheredkey, decription_sets[msg] );
+                libBLS::ThresholdEncryption::validateCombinedDecryption(
+                    *ciphertexts[msg], decipheredKey, keys.commonPublic );
+                std::vector< uint8_t > decipheredMsg =
+                    libBLS::ThresholdEncryption::decrypt( *ciphertexts[msg], decipheredKey );
 
-            assert( decipheredMsg == plaintexts[msg] );
+                assert( decipheredMsg == plaintexts[msg] );
+            }
         }
     }
 
@@ -186,7 +189,7 @@ void importBLSKeys( const std::vector< libBLS::TEPrivateKeyShare >& secretKeys,
 
 std::vector< libBLS::TEDecryptionShare > getDecryptionShares(
     const std::vector< std::shared_ptr< libBLS::Ciphertext > >& ciphertexts,
-    const std::string& keyName, const std::string& sgxUrl, const size_t signerIndex ) {
+    const std::string& keyName, const std::string& sgxUrl, const size_t signerIndex, const size_t keyIndex ) {
     Json::Value p;
     p["blsKeyName"] = keyName;
 
@@ -194,8 +197,9 @@ std::vector< libBLS::TEDecryptionShare > getDecryptionShares(
     // batch.reserve( 256 * ciphertexts.size());
     for ( size_t i = 0; i < ciphertexts.size(); i++ ) {
         std::shared_ptr< libBLS::Ciphertext > ciphertext = ciphertexts[i];
-        libBLS::ThresholdEncryption::validateEncryption( ciphertexts[i]->key );
-        batch.append( ciphertext->key.getDecryptionShareInput() );
+        libBLS::CipheredKey cipheredKey = ciphertexts[i]->getKeys()[keyIndex];
+        libBLS::ThresholdEncryption::validateEncryption( cipheredKey );
+        batch.append( cipheredKey.getDecryptionShareInput() );
     }
 
     TIMER(

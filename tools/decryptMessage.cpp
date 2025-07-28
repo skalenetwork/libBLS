@@ -46,42 +46,43 @@ int main() {
 
     auto ciphertext = libBLS::Ciphertext::fromBytes( encryptedDataBytes );
 
-    auto aesKeyEncrypted = ciphertext.key;
-    auto encryptedMessage = ciphertext.getData();
+    for ( const auto& aesKeyEncrypted: ciphertext.getKeys() ) {
+        auto encryptedMessage = ciphertext.getData();
 
-    libBLS::ThresholdEncryption::validateEncryption( aesKeyEncrypted );
+        libBLS::ThresholdEncryption::validateEncryption( aesKeyEncrypted );
 
-    libBLS::TEPrivateKeyShare privateKeyShare( libff::alt_bn128_Fr( secretKey.c_str() ), 1, 1, 1 );
-    libBLS::TEPublicKeyShare publicKeyShare( privateKeyShare );
+        libBLS::TEPrivateKeyShare privateKeyShare( libff::alt_bn128_Fr( secretKey.c_str() ), 1, 1, 1 );
+        libBLS::TEPublicKeyShare publicKeyShare( privateKeyShare );
 
-    libBLS::TEDecryptionShare decryptionShare =
-        libBLS::ThresholdEncryption::partialDecrypt( aesKeyEncrypted, privateKeyShare );
+        libBLS::TEDecryptionShare decryptionShare =
+            libBLS::ThresholdEncryption::partialDecrypt( aesKeyEncrypted, privateKeyShare );
 
-    libBLS::ThresholdEncryption::validateDecryptionShare(
-        aesKeyEncrypted, decryptionShare, publicKeyShare );
+        libBLS::ThresholdEncryption::validateDecryptionShare(
+            aesKeyEncrypted, decryptionShare, publicKeyShare );
 
-    libBLS::TEDecryptSet decryptSet( 1, 1 );
-    decryptSet.addDecryptShare( decryptionShare );
+        libBLS::TEDecryptSet decryptSet( 1, 1 );
+        decryptSet.addDecryptShare( decryptionShare );
 
-    auto aesKeyDecrypted =
-        libBLS::ThresholdEncryption::combineShares( aesKeyEncrypted, decryptSet );
+        auto aesKeyDecrypted =
+            libBLS::ThresholdEncryption::combineShares( aesKeyEncrypted, decryptSet );
 
-    libBLS::TEPublicKey publicKey( publicKeyShare.getPublicKeyRaw() );
+        libBLS::TEPublicKey publicKey( publicKeyShare.getPublicKeyRaw() );
 
-    libBLS::ThresholdEncryption::validateCombinedDecryption(
-        ciphertext, aesKeyDecrypted, publicKey );
+        libBLS::ThresholdEncryption::validateCombinedDecryption(
+            ciphertext, aesKeyDecrypted, publicKey );
 
-    auto decryptedMessageBytes =
-        libBLS::ThresholdEncryption::decrypt( ciphertext, aesKeyDecrypted );
+        auto decryptedMessageBytes =
+            libBLS::ThresholdEncryption::decrypt( ciphertext, aesKeyDecrypted );
 
-    auto plaintext = libBLS::ThresholdUtils::bytesToHexString( decryptedMessageBytes );
+        auto plaintext = libBLS::ThresholdUtils::bytesToHexString( decryptedMessageBytes );
 
-    std::ifstream messageFile;
-    messageFile.open( "message.txt" );
-    std::string message;
-    messageFile >> message;
+        std::ifstream messageFile;
+        messageFile.open( "message.txt" );
+        std::string message;
+        messageFile >> message;
 
-    assert( message == plaintext );
+        assert( message == plaintext );
+    }
 
     return 0;
 }

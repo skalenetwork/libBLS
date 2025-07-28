@@ -203,23 +203,25 @@ void ThresholdEncryption::validateCombinedDecryption(
     // get random secret
     RandSecret secret = extractRandomSecretFromMessage( deciphered_message );
 
-    // get ciphered AES key
-    const AES256Key& cipheredAesKey = _cyphertext.key.V;
+    for ( const auto& ciphertextKey: _cyphertext.getKeys()) {
+        // get ciphered AES key
+        const AES256Key& cipheredAesKey = ciphertextKey.V;
 
-    // Compute G(r'Y)
-    libff::alt_bn128_Fr r = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( secret );
-    libff::alt_bn128_G2 Y = r * _publicKey.getPublicKeyRaw();
-    std::string hash = TE::Hash( Y );
+        // Compute G(r'Y)
+        libff::alt_bn128_Fr r = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( secret );
+        libff::alt_bn128_G2 Y = r * _publicKey.getPublicKeyRaw();
+        std::string hash = TE::Hash( Y );
 
-    // Compute V xor G(r'Y) to get M (AES key)
-    AES256Key decipheredAesKey;
-    for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
-        decipheredAesKey[i] = cipheredAesKey[i] ^ static_cast< uint8_t >( hash[i] );
-    }
+        // Compute V xor G(r'Y) to get M (AES key)
+        AES256Key decipheredAesKey;
+        for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
+            decipheredAesKey[i] = cipheredAesKey[i] ^ static_cast< uint8_t >( hash[i] );
+        }
 
-    // compare the aes keys
-    if ( decipheredAesKey != _aesKey ) {
-        throw ThresholdUtils::IsNotWellFormed( "Deciphered AES key is not equal to the original" );
+        // compare the aes keys
+        if ( decipheredAesKey != _aesKey ) {
+            throw ThresholdUtils::IsNotWellFormed( "Deciphered AES key is not equal to the original" );
+        }
     }
 }
 
@@ -248,23 +250,25 @@ std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
     // get random secret
     RandSecret secret = extractRandomSecretFromMessage( decipheredMessage );
 
-    // get ciphered AES key
-    const AES256Key& cipheredAesKey = _cyphertext.key.V;
+    for ( const auto& ciphertextKey: _cyphertext.getKeys()) {
+        // get ciphered AES key
+        const AES256Key& cipheredAesKey = ciphertextKey.V;
 
-    // Compute G(r'Y)
-    libff::alt_bn128_Fr r = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( secret );
-    libff::alt_bn128_G2 Y = r * _publicKey.getPublicKeyRaw();
-    std::string hash = TE::Hash( Y );
+        // Compute G(r'Y)
+        libff::alt_bn128_Fr r = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( secret );
+        libff::alt_bn128_G2 Y = r * _publicKey.getPublicKeyRaw();
+        std::string hash = TE::Hash( Y );
 
-    // Compute V xor G(r'Y) to get M (AES key)
-    AES256Key decipheredAesKey;
-    for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
-        decipheredAesKey[i] = cipheredAesKey[i] ^ static_cast< uint8_t >( hash[i] );
-    }
+        // Compute V xor G(r'Y) to get M (AES key)
+        AES256Key decipheredAesKey;
+        for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
+            decipheredAesKey[i] = cipheredAesKey[i] ^ static_cast< uint8_t >( hash[i] );
+        }
 
-    // compare the aes keys
-    if ( decipheredAesKey != _aesKey ) {
-        throw ThresholdUtils::IsNotWellFormed( "Deciphered AES key is not equal to the original" );
+        // compare the aes keys
+        if ( decipheredAesKey != _aesKey ) {
+            throw ThresholdUtils::IsNotWellFormed( "Deciphered AES key is not equal to the original" );
+        }
     }
 
     // safe - size of decipheredMessage was already validated
