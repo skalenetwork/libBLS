@@ -98,7 +98,7 @@ std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
 
 Ciphertext ThresholdEncryption::encrypt(
     const std::vector< uint8_t >& _message, const TEPublicKey& _commonPublic ) {
-    return encrypt( _message, { _commonPublic } );
+    return encrypt( _message, std::vector< TEPublicKey >{ _commonPublic } );
 }
 
 

@@ -84,7 +84,7 @@ libff::alt_bn128_G1 TE::HashToGroup( const libff::alt_bn128_G2& U, const std::st
 
 
 CipheredKeyResult TE::getCiphertext( const AES256Key& key, libff::alt_bn128_G2& commonPublic ) {
-    return getCiphertext( key, { commonPublic } );
+    return getCiphertext( key, std::vector< libff::alt_bn128_G2 >{ commonPublic } );
 }
 
 
@@ -150,7 +150,7 @@ CipheredKeyResult TE::getCiphertext(
  */
 CipherResult TE::encryptWithAES(
     const std::vector< uint8_t >& message, const libff::alt_bn128_G2& commonPublic ) {
-    return encryptWithAES( message, { commonPublic } );
+    return encryptWithAES( message, std::vector< libff::alt_bn128_G2 >{ commonPublic } );
 }
 
 CipherResult TE::encryptWithAES( const std::vector< uint8_t >& message,
@@ -195,7 +195,7 @@ CipherResult TE::encryptWithAES( const std::vector< uint8_t >& message,
  */
 std::pair< std::string, RandSecret > TE::encryptMessage(
     const std::vector< uint8_t >& message, const std::string& commonPublic ) {
-    return encryptMessage( message, { commonPublic } );
+    return encryptMessage( message, std::vector< std::string >{ commonPublic } );
 }
 
 std::pair< std::string, RandSecret > TE::encryptMessage(
