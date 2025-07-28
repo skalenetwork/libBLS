@@ -49,6 +49,33 @@ const char* encryptMessage( const char* data, const char* key ) {
     return cipheredMessageStr.c_str();
 }
 
+const char* encryptMessageDualKey( const char* data, const char* firstKey, const char* secondKey ) {
+    static std::string cipheredMessageStr;
+
+    libBLS::ThresholdUtils::initCurve();
+
+    // convert from char into vec of bytes
+    std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
+
+    std::vector< libBLS::TEPublicKey > commonPublicKeys;
+    // build public keys
+    std::string firstKeyStr( firstKey );
+    libBLS::TEPublicKey firstCommonPublic( firstKeyStr );
+    std::string secondKeyStr( secondKey );
+    libBLS::TEPublicKey secondCommonPublic( secondKeyStr );
+    commonPublicKeys.push_back( firstCommonPublic );
+    commonPublicKeys.push_back( secondCommonPublic );
+
+    // encrypt message
+    libBLS::Ciphertext cipheredMessage =
+        libBLS::ThresholdEncryption::encrypt( messageBytes, commonPublicKeys );
+    std::vector< uint8_t > cipheredMessageBytes = cipheredMessage.toBytes();
+
+    cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessageBytes );
+
+    return cipheredMessageStr.c_str();
+}
+
 const char* encryptMessageMockup( const char* data ) {
     static std::string cipheredMessageStr;
 
