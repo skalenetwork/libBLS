@@ -123,8 +123,8 @@ public:
      * @throw NotWellFormed if the key is not well formed
      */
     void validate() const {
-        ThresholdUtils::validateG1( W );
-        ThresholdUtils::validateG2( U );
+        ThresholdUtils::validatePointWithException( W );
+        ThresholdUtils::validatePointWithException( U );
     }
 
     static CipheredKey random() {
@@ -212,7 +212,7 @@ public:
      * The byte format returned is: `[ num_keys | key1 | key2 | ... | data ]`
      *
      * where `data` can be of arbitrary size, each `key` is a fixed size,
-     * and `num_keys` is a 4-byte integer indicating the number of keys.
+     * and `num_keys` is a 1-byte integer indicating the number of keys.
      */
     const std::vector< uint8_t > toBytes() const {
         if ( !data ) {
@@ -314,9 +314,30 @@ public:
     }
 
     /**
-     * @brief Returns the number of keys in the Ciphertext
+     * @brief Returns the vector of keys in the Ciphertext
      */
     const std::vector< CipheredKey >& getKeys() const { return keys; }
+
+    /**
+     * @brief keeps only one key for validation and decryption
+     * @param idx - index of the key to keep
+     */
+    void keepKey( size_t _idx ) {
+        if ( _idx >= keys.size() || keys.size() != 2 )
+            throw ThresholdUtils::IncorrectInput(
+                "Key index is greater than number of the keys in ciphertext" );
+        keys.erase( keys.begin() + ( keys.size() - _idx - 1 ) );
+    }
+
+    /**
+     * @brief get a CipheredKey for validation and decryption
+     * @throw IncorrectInput if there are 0 or 2 keys to choose
+     */
+    const CipheredKey& getTargetKey() const {
+        if ( keys.size() != 1 )
+            throw ThresholdUtils::IncorrectInput( "Cannot choose a target key" );
+        return keys.front();
+    }
 };
 
 /**

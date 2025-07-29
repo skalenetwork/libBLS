@@ -176,6 +176,14 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
                 libBLS::ThresholdEncryption::decrypt( tempCipheredMessage, key_deciphered );
 
             BOOST_REQUIRE( decipheredMsg == data );
+
+            auto ciphertextCopy = cipheredMessageObj;
+            BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateAndDecrypt(
+                                     ciphertextCopy, key_deciphered, keys[k].commonPublic ),
+                libBLS::ThresholdUtils::IncorrectInput );
+            ciphertextCopy.keepKey( k );
+            BOOST_REQUIRE( libBLS::ThresholdEncryption::validateAndDecrypt(
+                               ciphertextCopy, key_deciphered, keys[k].commonPublic ) == data );
         }
     }
 }
