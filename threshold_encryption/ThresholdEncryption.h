@@ -138,10 +138,9 @@ public:
      */
     static std::vector< uint8_t > validateAndDecrypt(
         const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey );
-    
-    static void validateDecipheredMessage(
-        const std::vector< uint8_t >& _decipheredMessage, const Ciphertext& _cyphertext,
-        const AES256Key& _aesKey, const TEPublicKey& _publicKey );
+
+    static void validateDecipheredMessage( const std::vector< uint8_t >& _decipheredMessage,
+        const Ciphertext& _cyphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey );
 
 private:
     static std::string bytesToHexaString( const std::vector< uint8_t >& bytes ) {

@@ -249,8 +249,8 @@ std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
 }
 
 void ThresholdEncryption::validateDecipheredMessage(
-        const std::vector< uint8_t >& _decipheredMessage, const Ciphertext& _cyphertext,
-        const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
+    const std::vector< uint8_t >& _decipheredMessage, const Ciphertext& _cyphertext,
+    const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
     if ( _cyphertext.getKeys().size() != 1 )
         throw ThresholdUtils::IncorrectInput(
             "Ciphertext must include only 1 encrypted key in payload "
