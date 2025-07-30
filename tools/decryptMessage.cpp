@@ -30,16 +30,18 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <fstream>
 #include <iostream>
 
-int main(int argc, char* argv[]) {
-    if (argc != 5) {
-        std::cerr << "Usage: " << argv[0] << " <encrypted_data> <secret_key> <expected_message> <key_index_to_keep>" << std::endl;
+int main( int argc, char* argv[] ) {
+    if ( argc != 5 ) {
+        std::cerr << "Usage: " << argv[0]
+                  << " <encrypted_data> <secret_key> <expected_message> <key_index_to_keep>"
+                  << std::endl;
         return 1;
     }
 
     std::string encryptedData = argv[1];
     std::string secretKey = argv[2];
     std::string expectedMessage = argv[3];
-    size_t keyIndexToKeep = std::stoul(argv[4]);
+    size_t keyIndexToKeep = std::stoul( argv[4] );
 
     libBLS::ThresholdUtils::initCurve();
 
@@ -56,8 +58,7 @@ int main(int argc, char* argv[]) {
 
     libBLS::ThresholdEncryption::validateEncryption( aesKeyEncrypted );
 
-    libBLS::TEPrivateKeyShare privateKeyShare(
-        libff::alt_bn128_Fr( secretKey.c_str() ), 1, 1, 1 );
+    libBLS::TEPrivateKeyShare privateKeyShare( libff::alt_bn128_Fr( secretKey.c_str() ), 1, 1, 1 );
     libBLS::TEPublicKeyShare publicKeyShare( privateKeyShare );
 
     libBLS::TEDecryptionShare decryptionShare =
@@ -82,7 +83,7 @@ int main(int argc, char* argv[]) {
 
     auto plaintext = libBLS::ThresholdUtils::bytesToHexString( decryptedMessageBytes );
 
-    assert(expectedMessage == plaintext);
+    assert( expectedMessage == plaintext );
 
     return 0;
 }
