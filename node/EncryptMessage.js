@@ -30,4 +30,4 @@ async function encryptMessageMockup(txData) {
     );
 }
 
-module.exports = { encryptMessage, encryptMessageMockup };
+module.exports = { encryptMessage, encryptMessageDualKey, encryptMessageMockup };
