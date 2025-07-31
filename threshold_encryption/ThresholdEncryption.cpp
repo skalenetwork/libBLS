@@ -80,7 +80,8 @@ std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
 
     // Extract AES key from the beginning
     AES256Key key;
-    std::copy( _encryptedData.begin() + 1, _encryptedData.begin() + AES_256_KEY_SIZE_BYTES + 1, key.begin() );
+    std::copy( _encryptedData.begin() + 1, _encryptedData.begin() + AES_256_KEY_SIZE_BYTES + 1,
+        key.begin() );
 
     // Encrypted message follows the key
     std::vector< uint8_t > cipher_text(

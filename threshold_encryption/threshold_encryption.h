@@ -58,7 +58,8 @@ struct CipheredKey {
 
 public:
     CipheredKey() = default;
-    CipheredKey( libff::alt_bn128_G2 _U, AES256Key _V, libff::alt_bn128_G1 _W, bool _validate = true )
+    CipheredKey(
+        libff::alt_bn128_G2 _U, AES256Key _V, libff::alt_bn128_G1 _W, bool _validate = true )
         : U( _U ), V( std::move( _V ) ), W( _W ) {
         if ( _validate )
             validate();
@@ -96,7 +97,8 @@ public:
     /**
      * @brief Converts bytes to CipheredKey
      */
-    static CipheredKey fromBytes( std::array< uint8_t, CIPHERED_KEY_SIZE_BYTES > bytes, bool _validate = true ) {
+    static CipheredKey fromBytes(
+        std::array< uint8_t, CIPHERED_KEY_SIZE_BYTES > bytes, bool _validate = true ) {
         std::array< uint8_t, G2_SIZE_BYTES > u_bytes;
         std::array< uint8_t, AES_256_KEY_SIZE_BYTES > v_bytes;
         std::array< uint8_t, G1_SIZE_BYTES > w_bytes;
@@ -184,21 +186,23 @@ public:
 
     Ciphertext() = default;
 
-    Ciphertext( const std::vector< CipheredKey >& _keys, const std::vector< uint8_t >& _data, bool _validate = true )
+    Ciphertext( const std::vector< CipheredKey >& _keys, const std::vector< uint8_t >& _data,
+        bool _validate = true )
         : keys( _keys ), data( std::make_shared< std::vector< uint8_t > >( _data ) ) {
         if ( _validate )
             validate();
     }
 
-    Ciphertext( const CipheredKey& _key, const std::vector< uint8_t >& _data, bool _validate = true )
+    Ciphertext(
+        const CipheredKey& _key, const std::vector< uint8_t >& _data, bool _validate = true )
         : keys( { _key } ), data( std::make_shared< std::vector< uint8_t > >( _data ) ) {
         if ( _validate )
             validate();
     }
 
     // Constructor for exactly two keys
-    Ciphertext(
-        const CipheredKey& _key1, const CipheredKey& _key2, const std::vector< uint8_t >& _data, bool _validate = true )
+    Ciphertext( const CipheredKey& _key1, const CipheredKey& _key2,
+        const std::vector< uint8_t >& _data, bool _validate = true )
         : keys( { _key1, _key2 } ), data( std::make_shared< std::vector< uint8_t > >( _data ) ) {
         if ( _validate )
             validate();
