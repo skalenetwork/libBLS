@@ -22,9 +22,9 @@ When reviewing code in pull requests:
 - Do not spam logs. Limit logging at info level to a few lines per block.
 - Prefer private methods over public unless necessary.
 - Use standard libraries for string manipulation and other common tasks.
-- Raw output (e.g., `cout`) is not allowed except during initial/termination stages.
+- In C++ code, raw output (e.g., `cout`) is not allowed except during initial/termination stages.
 - Do not keep unused functions, variables, or types in the codebase.
-- Avoid magic numbers - All numeric constants must be named via constexpr, const, or #define with descriptive names
+- Avoid magic numbers - All numeric constants must be named via constexpr or const with descriptive names. Avoid using #define for numeric constants as it lacks type safety and scope control.
 - Avoid deep nesting — refactor with early returns or helper functions.
 
 ### Memory and Safety
