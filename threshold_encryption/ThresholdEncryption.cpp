@@ -56,8 +56,11 @@ std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
     AesGcmCipher aesGcmCipher{ key };
     auto encrypted_message = aesGcmCipher.encrypt( message_to_cipher );
 
-    // Construct result: key followed by encrypted data
-    std::vector< uint8_t > result( mockupEncryptedKey.begin(), mockupEncryptedKey.end() );
+    // 0x01 byte is needed for compatibility with real encryption
+    // stands for the number of encrypted AES keys in the payload
+    // Construct result: 0x01 byte + key + encrypted data
+    std::vector< uint8_t > result = { 0x01 };
+    result.insert( result.end(), mockupEncryptedKey.begin(), mockupEncryptedKey.end() );
 
 #pragma GCC diagnostic ignored "-Wstringop-overread"
     result.insert( result.end(), encrypted_message.begin(), encrypted_message.end() );
@@ -68,18 +71,20 @@ std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
 
 
 std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
-    const std::vector< uint8_t >& _encrypteData ) {
-    if ( _encrypteData.size() <= CipheredKey::CIPHERED_KEY_SIZE_BYTES ) {
+    const std::vector< uint8_t >& _encryptedData ) {
+    // first byte - 0x01 stands for the number of encrypted AES keys in the payload
+    // needed for compatibility with real encryption
+    if ( _encryptedData.size() <= CipheredKey::CIPHERED_KEY_SIZE_BYTES + 1 ) {
         throw ThresholdUtils::IncorrectInput( "Encrypted data too short" );
     }
 
     // Extract AES key from the beginning
     AES256Key key;
-    std::copy( _encrypteData.begin(), _encrypteData.begin() + AES_256_KEY_SIZE_BYTES, key.begin() );
+    std::copy( _encryptedData.begin() + 1, _encryptedData.begin() + AES_256_KEY_SIZE_BYTES + 1, key.begin() );
 
     // Encrypted message follows the key
     std::vector< uint8_t > cipher_text(
-        _encrypteData.begin() + CipheredKey::CIPHERED_KEY_SIZE_BYTES, _encrypteData.end() );
+        _encryptedData.begin() + CipheredKey::CIPHERED_KEY_SIZE_BYTES + 1, _encryptedData.end() );
 
     // Decrypt the data
     AesGcmCipher aesGcmCipher{ key };

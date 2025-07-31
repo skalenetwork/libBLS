@@ -58,9 +58,10 @@ struct CipheredKey {
 
 public:
     CipheredKey() = default;
-    CipheredKey( libff::alt_bn128_G2 _U, AES256Key _V, libff::alt_bn128_G1 _W )
+    CipheredKey( libff::alt_bn128_G2 _U, AES256Key _V, libff::alt_bn128_G1 _W, bool _validate = true )
         : U( _U ), V( std::move( _V ) ), W( _W ) {
-        validate();
+        if ( _validate )
+            validate();
     }
 
     bool operator==( const CipheredKey& other ) const {
@@ -95,7 +96,7 @@ public:
     /**
      * @brief Converts bytes to CipheredKey
      */
-    static CipheredKey fromBytes( std::array< uint8_t, CIPHERED_KEY_SIZE_BYTES > bytes ) {
+    static CipheredKey fromBytes( std::array< uint8_t, CIPHERED_KEY_SIZE_BYTES > bytes, bool _validate = true ) {
         std::array< uint8_t, G2_SIZE_BYTES > u_bytes;
         std::array< uint8_t, AES_256_KEY_SIZE_BYTES > v_bytes;
         std::array< uint8_t, G1_SIZE_BYTES > w_bytes;
@@ -115,7 +116,7 @@ public:
         libff::alt_bn128_G1 W = ThresholdUtils::bytesToG1( w_bytes );
 
         // constructor performs validation
-        return CipheredKey( U, v_bytes, W );
+        return CipheredKey( U, v_bytes, W, _validate );
     }
 
     /**
@@ -183,21 +184,24 @@ public:
 
     Ciphertext() = default;
 
-    Ciphertext( const std::vector< CipheredKey >& _keys, const std::vector< uint8_t >& _data )
+    Ciphertext( const std::vector< CipheredKey >& _keys, const std::vector< uint8_t >& _data, bool _validate = true )
         : keys( _keys ), data( std::make_shared< std::vector< uint8_t > >( _data ) ) {
-        validate();
+        if ( _validate )
+            validate();
     }
 
-    Ciphertext( const CipheredKey& _key, const std::vector< uint8_t >& _data )
+    Ciphertext( const CipheredKey& _key, const std::vector< uint8_t >& _data, bool _validate = true )
         : keys( { _key } ), data( std::make_shared< std::vector< uint8_t > >( _data ) ) {
-        validate();
+        if ( _validate )
+            validate();
     }
 
     // Constructor for exactly two keys
     Ciphertext(
-        const CipheredKey& _key1, const CipheredKey& _key2, const std::vector< uint8_t >& _data )
+        const CipheredKey& _key1, const CipheredKey& _key2, const std::vector< uint8_t >& _data, bool _validate = true )
         : keys( { _key1, _key2 } ), data( std::make_shared< std::vector< uint8_t > >( _data ) ) {
-        validate();
+        if ( _validate )
+            validate();
     }
 
     const std::vector< uint8_t >& getData() const {
@@ -246,7 +250,7 @@ public:
     /**
      * @brief Converts bytes to Ciphertext
      */
-    static Ciphertext fromBytes( std::vector< uint8_t >& bytes ) {
+    static Ciphertext fromBytes( std::vector< uint8_t >& bytes, bool _validate = true ) {
         // we require at least 1 byte for num_keys + one key + random secret + 1 byte for data
         if ( bytes.size() <=
              sizeof( uint8_t ) + CipheredKey::CIPHERED_KEY_SIZE_BYTES + RANDOM_SECRET_SIZE_BYTES ) {
@@ -281,13 +285,13 @@ public:
                 keyBytes.data(), bytes.data() + offset, CipheredKey::CIPHERED_KEY_SIZE_BYTES );
             offset += CipheredKey::CIPHERED_KEY_SIZE_BYTES;
 
-            keys.push_back( CipheredKey::fromBytes( keyBytes ) );
+            keys.push_back( CipheredKey::fromBytes( keyBytes, _validate ) );
         }
 
         // Get data bytes
         std::vector< uint8_t > data( bytes.begin() + offset, bytes.end() );
 
-        return Ciphertext( keys, data );
+        return Ciphertext( keys, data, _validate );
     }
 
     /**
