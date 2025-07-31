@@ -2,29 +2,28 @@
 
 Threshold encryption (TE) is a form of public key encryption in which the decryption key is distributed across multiple parties. A message can only be decrypted if a threshold number of parties collaborate. This technique ensures both **confidentiality** and **fault tolerance** in cryptographic systems, especially in distributed environments.
 
-This document explains the **encryption** phase of the threshold encryption process, focusing on the generation of a *CipheredKey* object from a message, a public key, and a random scalar.
+This document starts by explaining the **encryption** phase of the threshold encryption process, focusing on the generation of a *CipheredKey* object from a message, a public key, and a random scalar.
+
+Then we explain the **decryption** process in order to retrieve the original plaintext.
+
+Finally we explain how **validation** happens in the different stages of the encryption-decryption process such that any node can validate the correctness of the data it is using for the threshold encryption process.
 
 ---
 
 # 1. Encryption
 
-
-The encryption function takes the following inputs:
-
-- `m`: The input message (e.g., an AES key).
-- `Y = x⋅P`: A public key (G2 point) where `x` is a private scalar and `P` is a known generator.
-- `r`: A random scalar (ephemeral secret).
-
-The output is a `CipheredKey` structure containing three components: `V`, `W`, and `U`.
-
----
-
-## Encryption Diagram
-
-Below is a visual representation of the encryption process:
+Below is a visual representation of the generic encryption process, which will be used as reference in the `step-by-step breakdown` section:
 
 <img src="../../diagrams/threshold-encryption.svg" alt="Diagram" style="width: 100%; max-width: 800px;" />
 
+<br>
+
+The process takes `3` inputs:
+- `m` - Plaintext message. Must be exactly `32` bytes. For our use case, this message will be an `AES256` key, which is exactly `32` bytes. We explain why we use an `AES256` key in [te-full-flow.md](./2-te-full-flow.md).
+- `Y = x⋅P` - A public key (G2 point), generated from the respective private key share `x`, where `P` is a known generator.
+- `r`: A random scalar (ephemeral secret).
+
+And it generates a single output - A `CipheredKey` struct that is always `224` bytes long, and includes `V`, `W` and `U` fields.
 
 ---
 
@@ -34,29 +33,41 @@ Below is a visual representation of the encryption process:
 
 We start by computing:
 
-\( V = G(r ⋅ Y) ⊕ m \)
+```
+V = G(r ⋅ Y) ⊕ m
+```
 
-- `r ⋅ Y` produces a shared secret using the public key.
-- `G(⋅)` is a key derivation function that maps a group element to a symmetric key.
-- `⊕ m` is a bitwise XOR between the derived key and the plaintext message `m`.
+- `r ⋅ Y` is a scalar multiplication over the elliptic curve, producing a secret point using the common public key `Y` and the secret scalar `r`.
+- `G(⋅)` is a cryptographic hash function that maps the elliptic curve point to a fixed-length byte array.
+- `⊕ m` denotes a bitwise XOR between the derived key and the plaintext message `m`.
+
+The result `V` is 32 bytes and constitutes the encrypted (masked) version of the key. `V` can only be computed or reversed if the scalar `r` is known. Without knowledge of `r`, no party can recover `m` from `V`.
+
+The security of this construction relies on two cryptographic hardness assumptions:
+1. **One-wayness of hash functions**: Given `A = G(x)`, it is computationally infeasible to recover `x` from `A`.
+2. **Elliptic Curve Discrete Logarithm Problem (ECDLP)**: Given a point `A = r ⋅ Y` and the public key `Y`, it is computationally infeasible to determine the scalar `r`.
+
+These properties ensure that even if an adversary knows `V` and `Y`, they cannot recover the plaintext `m` without the original random scalar `r`.
 
 ### 2. Compute `U`
 
-The ephemeral public component:
+The ephemeral public component derived from the random scalar:
 
-\( U = r ⋅ P \)
+```
+U = r ⋅ P
+```
 
-
-This is needed by decryptors to reconstruct the shared secret via pairing-based operations.
+The value `U` is essential for enabling decryption: it is used by decrypting nodes to reconstruct the shared secret via pairing-based operations. This mechanism allows the sender to transmit a masked message without revealing `r`, while still enabling the authorized parties to recover it collaboratively.
 
 ### 3. Compute `W`
 
-To protect integrity or bind `V` and `U` together:
+A binding value used for integrity verification:
 
-\( W = r ⋅ H(U, V) \)
+```
+W = r ⋅ H(U, V)
+```
 
-
-Where `H(U, V)` is a hash-to-curve function that outputs a point in the G1 group. `W` is used later during the **decryption** and **verification** phase to prove consistency.
+Here, `H(U, V)` is a hash-to-curve function that maps the tuple `(U, V)` to a point in the elliptic curve group. The resulting `W` value acts as a cryptographic commitment, binding together the ephemeral component `U` and the encrypted key `V`.
 
 ---
 
@@ -74,7 +85,38 @@ This tuple forms the encrypted representation of the message `m`. Only a valid q
 
 ---
 
-# 2. Decryption (soon)
+# 2. Decryption
+
+The following diagram (**Diagram 2**) shows the communication process to be able to decipher the ciphertext, used as reference for the following 2 subsections:
+
+<img src="../../diagrams/te-decryption.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
+
+This section will focus on the **Deciphering** part of the diagram. The ciphering part is already explained in the previous section.
+
+## 2.1 Computing Decryption Shares
+
+Each node uses its private key share to compute a **partial decryption share** (`PartialDecrypt` in the diagram) from the ciphertext. This share is then broadcast into the network such that each node eventually gets enough shares from all other nodes.
+The share computation is shown in detail in the diagram below:
+
+<img src="../../diagrams/decrypt-share-computation.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
+
+The process uses 2 inputs:
+- `U` field from `Ciphertext`
+- `s` - Private key share. 
+
+Each node computes:
+```
+D = s ⋅ U
+```
+
+And broadcasts this value to all other nodes.
+Recall that `U = r ⋅ P`. Thus `D = s ⋅ U = s⋅(r⋅P) = r⋅(s⋅P) = r⋅Y`
+
+## 2.2 Merging Decryption Shares
+
+Each node waits to receive a supermajority (t >= 2/3) of `DecryptShares` from other nodes. Once enough shares were received, each node merges them. The merging process is shown below:
+
+<img src="../../diagrams/merge-shares.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
 
 ---
 

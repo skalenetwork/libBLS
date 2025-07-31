@@ -105,11 +105,11 @@ The diagram reflects this with the final output structure shown on the right-han
 
 The flow for 2 keys is mostly the same as when using a single key. The only difference is that we now also threshold encrypt the second key, and append it to the ciphertext.
 
-Meaning that we reuse the same  AESKey `m` as well as the random secret `r` for both Threshold Encryptions, and only change the public common key inputted to each of the processes.
+Meaning that we reuse the same AESKey `m` as well as the random secret `r` for both Threshold Encryptions, and only change the public common key input to each of the processes.
 
 This will still result in different `CipheredKey` struct outputs, which will then be concatenated, and be part of the final `Ciphertext`.
 
-The following diagram shows the entire process uing 2 keys, and also depicts the TE process in the bottom half, for ease of reference:
+The following diagram shows the entire process using 2 keys, and also depicts the TE process in the bottom half, for ease of reference:
 
 
 <img src="../../diagrams/te-full-flow-full.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />

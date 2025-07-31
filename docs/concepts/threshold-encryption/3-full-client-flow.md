@@ -108,7 +108,7 @@ Share_i = DecryptShare(U, V, W, sk_i)
 ```
 
 
-Each share is broadcasted to tall other nodes as shown in Diagram 2.
+Each share is broadcasted to all other nodes as shown in Diagram 2.
 
 ## 4. Combine Shares
 
@@ -133,7 +133,7 @@ Each node can now decrypt the ciphertext `C` using the reconstructed `m`:
 ```
 plaintext || r = AES-Decrypt(m, C)
 ```
-The output is the original plaintext message, and the appended value `r`. THis `r` value can then be used to validate that the recovered plaintext corresponds to the threshold-ciphered key
+The output is the original plaintext message, and the appended value `r`. This `r` value can then be used to validate that the recovered plaintext corresponds to the threshold-ciphered key
 
 ---
 
