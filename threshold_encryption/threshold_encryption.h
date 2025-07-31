@@ -389,7 +389,7 @@ public:
      * @note This is an auxiliar function, used within `encryptWithAES`
      */
     static CipheredKeyResult getCiphertext(
-        const AES256Key& key, libff::alt_bn128_G2& commonPublic );
+        const AES256Key& key, const libff::alt_bn128_G2& commonPublic );
     static CipheredKeyResult getCiphertext(
         const AES256Key& key, const std::vector< libff::alt_bn128_G2 >& commonPublic );
 

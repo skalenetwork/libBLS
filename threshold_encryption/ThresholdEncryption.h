@@ -129,7 +129,7 @@ public:
      * @return std::vector<uint8_t> The decrypted message apart from the random secret
      */
     static std::vector< uint8_t > decrypt(
-        const Ciphertext& _cyphertext, const AES256Key& _aesKey );
+        const Ciphertext& _ciphertext, const AES256Key& _aesKey );
 
     /**
      * @brief Validates the cyphertext and decrypts the message
@@ -143,7 +143,7 @@ public:
      * @brief validates _aesKey against the one stored in _cyphertext
      */
     static void validateDecipheredMessage( const std::vector< uint8_t >& _decipheredMessage,
-        const Ciphertext& _cyphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey );
+        const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey );
 
 private:
     static std::string bytesToHexaString( const std::vector< uint8_t >& bytes ) {

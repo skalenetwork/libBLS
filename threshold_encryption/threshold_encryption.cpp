@@ -83,7 +83,7 @@ libff::alt_bn128_G1 TE::HashToGroup( const libff::alt_bn128_G2& U, const std::st
 }
 
 
-CipheredKeyResult TE::getCiphertext( const AES256Key& key, libff::alt_bn128_G2& commonPublic ) {
+CipheredKeyResult TE::getCiphertext( const AES256Key& key, const libff::alt_bn128_G2& commonPublic ) {
     return getCiphertext( key, std::vector< libff::alt_bn128_G2 >{ commonPublic } );
 }
 
