@@ -1,48 +1,81 @@
-# GitHub Copilot Custom Review Instructions
-
 ## Code Review Focus
 
 When reviewing code in pull requests:
-- First, validate that the logic introduced or changed is correct.
-- Second, check that all code follows the code style and engineering practices below.
+
+1. Logic Correctness
+   - First, ensure the changes are logically correct, complete, and satisfy the intended functionality.
+   - Identify incorrect behaviors, missing edge cases, or violations of expected input/output.
+
+2. Code Quality and Guidelines
+   - Enforce the following standards across structure, naming, formatting, safety, and performance.
 
 ## Code Guidelines
 
 ### General Style
+
 - Line length must not exceed 100 characters.
 - Function length must be ≤ 100 lines.
-- All code, including comments, must be in English with correct spelling.
-- Comments must be professional and explanatory — no jokes or non-technical remarks.
-- Do not mix naming conventions (e.g., snake_case with camelCase) within the same file.
-- Variable and function names must be descriptive and searchable.
-
-### Code Quality
-- No commented-out code should remain.
-- Avoid redundancy: duplicated code should be replaced by functions.
-- Do not spam logs. Limit logging at info level to a few lines per block.
-- Prefer private methods over public unless necessary.
-- Use standard libraries for string manipulation and other common tasks.
-- In C++ code, raw output (e.g., `cout`) is not allowed except during initial/termination stages.
-- Do not keep unused functions, variables, or types in the codebase.
-- Avoid magic numbers - All numeric constants must be named via constexpr or const with descriptive names. Avoid using #define for numeric constants as it lacks type safety and scope control.
-- Avoid deep nesting — refactor with early returns or helper functions.
-
-### Memory and Safety
-- Avoid raw pointers. If used, perform null checks before dereferencing.
-- Handle all error cases explicitly.
-- All shared data structures accessed concurrently must be properly synchronized.
-
-### Documentation and Comments
-- Each new function must have a comment or a descriptive name explaining its purpose.
-- Each new global/class field must have a comment or very descriptive name.
-- Complex code must be commented sufficiently to explain the algorithm.
+- All comments and code must be written in English with correct spelling.
+- Comments must be professional and clearly explain the code’s logic or behavior.
+- Use a consistent naming style (e.g., avoid mixing `snake_case` with `camelCase` in the same file).
+- Names must be descriptive and searchable (e.g., `userAccountBalance`, not `x` or `data`).
 
 ### Function Best Practices
-- Functions must do one thing only.
-- All inputs (preconditions) and outputs (postconditions) must be checked.
 
-### Testing
+- Each function must perform only one task.
+- Each function must have:
+  - A clear name or a preceding comment describing what it does.
+  - Precondition checks: validate all inputs.
+  - Postcondition checks: ensure valid outputs after execution.
+- Avoid nesting functions deeply or making them hard to refactor.
 
-- For each code change, ensure tests are updated or added where applicable.
-- New logic should be covered by unit or integration tests.
-- Code that is hard to test should be simplified or split into testable units.
+### Variables and Fields
+
+- All global or class fields must:
+  - Be well-named or
+  - Have a preceding comment explaining their purpose.
+- Avoid one-letter variable names, except for common counters (`i`, `j`).
+
+### Error Handling
+
+- Never ignore errors (e.g., discarded return values).
+- All error cases must be handled explicitly using conditionals or exceptions.
+- Use exceptions only for exceptional, non-recoverable cases.
+- Do not use exceptions for normal control flow.
+- Prefer exceptions over `assert` for error handling.
+
+### Safety & Concurrency
+
+- Avoid raw pointers unless necessary.
+  - If raw pointers are used, ensure null checks before dereferencing.
+- All shared data structures accessed concurrently must be:
+  - Protected with mutexes, atomics, or other synchronization primitives.
+- Avoid race conditions or data races by enforcing thread safety consistently.
+
+## Performance Guidelines
+
+### Memory and Copies
+
+- Use `const` and `const references` where applicable to avoid unnecessary copies.
+- Prefer `std::move` when ownership is transferred.
+- Avoid expensive operations (e.g., heap allocations) inside tight loops or hot paths.
+- Cache repeated values or function results locally if reused.
+
+### Resource Management
+
+- Use RAII principles for managing resources and memory.
+- Prefer smart pointers (`std::unique_ptr`, `std::shared_ptr`) over raw pointers.
+- Ensure deterministic cleanup via destructors or scoped guards.
+
+### Logging and Observability
+
+- Do not spam logs. Logging at `info` level should be concise.
+- Avoid using `std::cout` or other raw output — use standard logging libraries.
+- Avoid color formatting in logs (e.g., ANSI codes) — logs must remain plaintext for ElasticSearch and similar tools.
+
+## Code Hygiene
+
+- No commented-out code should remain.
+- No redundant code — factor out repeated logic into helper functions.
+- Minimal public interface: Prefer `private` fields and methods when possible.
+- Use standard libraries over custom implementations for common operations (e.g., `std::string` operations).
