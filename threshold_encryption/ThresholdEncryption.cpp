@@ -122,15 +122,15 @@ Ciphertext ThresholdEncryption::encrypt(
         rawPublicKeys.push_back( publicKey.getPublicKeyRaw() );
     }
 
-    CipherResult cypher = TE::encryptWithAES( _message, rawPublicKeys );
+    CipherResult cipher = TE::encryptWithAES( _message, rawPublicKeys );
 
-    if ( !cypher.ciphertext ) {
+    if ( !cipher.ciphertext ) {
         throw ThresholdUtils::IsNotWellFormed( "ciphertext is null" );
     }
 
-    cypher.ciphertext->validate();
+    cipher.ciphertext->validate();
 
-    return *cypher.ciphertext;
+    return *cipher.ciphertext;
 }
 
 void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
@@ -187,10 +187,10 @@ void ThresholdEncryption::validateDecryptionShare( const CipheredKey& _cipherTex
 }
 
 AES256Key ThresholdEncryption::combineShares(
-    const CipheredKey& _cypheredKey, TEDecryptSet& _decryptionSet ) {
+    const CipheredKey& _cipheredKey, TEDecryptSet& _decryptionSet ) {
     TEBase::initializeIfNecessary();
 
-    _cypheredKey.validate();
+    _cipheredKey.validate();
 
     switch ( _decryptionSet.getMergeStatus() ) {
     case TEDecryptSet::MergeStatus::READY_TO_MERGE:
@@ -204,7 +204,7 @@ AES256Key ThresholdEncryption::combineShares(
     }
 
     TE te( _decryptionSet );
-    AES256Key aesKey = te.CombineShares( _cypheredKey, _decryptionSet.getSharesRaw() );
+    AES256Key aesKey = te.CombineShares( _cipheredKey, _decryptionSet.getSharesRaw() );
 
     _decryptionSet.markAsMerged();
 
@@ -212,26 +212,26 @@ AES256Key ThresholdEncryption::combineShares(
 }
 
 void ThresholdEncryption::validateCombinedDecryption(
-    const Ciphertext& _cyphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
+    const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
     TEBase::initializeIfNecessary();
 
-    _cyphertext.validate();
+    _ciphertext.validate();
 
     // decipher & validate plaintext
-    std::vector< uint8_t > decipheredMessage = decipherAESAndValidate( _cyphertext, _aesKey );
+    std::vector< uint8_t > decipheredMessage = decipherAESAndValidate( _ciphertext, _aesKey );
 
-    validateDecipheredMessage( decipheredMessage, _cyphertext, _aesKey, _publicKey );
+    validateDecipheredMessage( decipheredMessage, _ciphertext, _aesKey, _publicKey );
 }
 
 
 std::vector< uint8_t > ThresholdEncryption::decrypt(
-    const Ciphertext& _cyphertext, const AES256Key& _aesKey ) {
+    const Ciphertext& _ciphertext, const AES256Key& _aesKey ) {
     TEBase::initializeIfNecessary();
 
-    _cyphertext.validate();
+    _ciphertext.validate();
 
     // decipher & validate plaintext
-    std::vector< uint8_t > data = decipherAESAndValidate( _cyphertext, _aesKey );
+    std::vector< uint8_t > data = decipherAESAndValidate( _ciphertext, _aesKey );
 
     // safe - size of decipheredMessage was already validated
     data.resize( data.size() - RANDOM_SECRET_SIZE_BYTES );
@@ -239,15 +239,15 @@ std::vector< uint8_t > ThresholdEncryption::decrypt(
 }
 
 std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
-    const Ciphertext& _cyphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
+    const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
     TEBase::initializeIfNecessary();
 
-    _cyphertext.validate();
+    _ciphertext.validate();
 
     // decipher & validate plaintext
-    std::vector< uint8_t > decipheredMessage = decipherAESAndValidate( _cyphertext, _aesKey );
+    std::vector< uint8_t > decipheredMessage = decipherAESAndValidate( _ciphertext, _aesKey );
 
-    validateDecipheredMessage( decipheredMessage, _cyphertext, _aesKey, _publicKey );
+    validateDecipheredMessage( decipheredMessage, _ciphertext, _aesKey, _publicKey );
 
     // safe - size of decipheredMessage was already validated
     decipheredMessage.resize( decipheredMessage.size() - RANDOM_SECRET_SIZE_BYTES );
@@ -255,16 +255,16 @@ std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
 }
 
 void ThresholdEncryption::validateDecipheredMessage(
-    const std::vector< uint8_t >& _decipheredMessage, const Ciphertext& _cyphertext,
+    const std::vector< uint8_t >& _decipheredMessage, const Ciphertext& _ciphertext,
     const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
-    if ( _cyphertext.getKeys().size() != 1 )
+    if ( _ciphertext.getKeys().size() != 1 )
         throw ThresholdUtils::IncorrectInput(
             "Ciphertext must include only 1 encrypted key in payload "
             "when validating against original AES key" );
     // get random secret
     RandSecret secret = extractRandomSecretFromMessage( _decipheredMessage );
 
-    auto cipheredKey = _cyphertext.getTargetKey();
+    auto cipheredKey = _ciphertext.getTargetKey();
     // get ciphered AES key
     const AES256Key& cipheredAesKey = cipheredKey.V;
 
