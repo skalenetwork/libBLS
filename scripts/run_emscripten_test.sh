@@ -11,6 +11,7 @@ ABS_BUILD_DIR="$ROOT_DIR/$BUILD_DIR"
 cp "$ROOT_DIR/tools/generate_bls_keys" "$ABS_BUILD_DIR/"
 cp "$ROOT_DIR/tools/decrypt_message" "$ABS_BUILD_DIR/"
 cp "$ROOT_DIR/test/test.js" "$ABS_BUILD_DIR/"
+cp "$ROOT_DIR/test/test2Keys.js" "$ABS_BUILD_DIR/"
 cp "$ABS_BUILD_DIR/threshold_encryption/encrypt."* "$ABS_BUILD_DIR/"
 cd "$ABS_BUILD_DIR/"
 
@@ -23,9 +24,31 @@ for i in $(seq 1 $RUNS); do
     ./generate_bls_keys
     MESSAGE=$(cat message.txt)
     PUBLIC_BLS_KEY=$(cat bls_public_key.txt)
+    SECRET_KEY=$(cat secret_key.txt)
     node test.js $PUBLIC_BLS_KEY $MESSAGE > encrypted_data.txt
-    ./decrypt_message
+    ENCRYPTED_DATA=$(cat encrypted_data.txt)
+    ./decrypt_message "$ENCRYPTED_DATA" "$SECRET_KEY" "$MESSAGE" 0
 
     # Clean up temp files generated in $ABS_BUILD_DIR/
     rm -f message.txt bls_public_key.txt encrypted_data.txt
+
+    ./generate_bls_keys
+    MESSAGE=$(cat message.txt)
+    FIRST_PUBLIC_BLS_KEY=$(cat bls_public_key.txt)
+    FIRST_SECRET_BLS_KEY=$(cat secret_key.txt)
+    ./generate_bls_keys
+    SECOND_PUBLIC_BLS_KEY=$(cat bls_public_key.txt)
+    SECOND_SECRET_BLS_KEY=$(cat secret_key.txt)
+    node test2Keys.js $FIRST_PUBLIC_BLS_KEY $SECOND_PUBLIC_BLS_KEY $MESSAGE > encrypted_data.txt
+    ENCRYPTED_DATA=$(cat encrypted_data.txt)
+    
+    # Randomly pick index 1 or 2
+    RANDOM_INDEX=$((RANDOM % 2))
+    if [ $RANDOM_INDEX -eq 0 ]; then
+        SECRET_KEY_TO_USE=$FIRST_SECRET_BLS_KEY
+    else
+        SECRET_KEY_TO_USE=$SECOND_SECRET_BLS_KEY
+    fi
+    
+    ./decrypt_message "$ENCRYPTED_DATA" "$SECRET_KEY_TO_USE" "$MESSAGE" "$RANDOM_INDEX"
 done

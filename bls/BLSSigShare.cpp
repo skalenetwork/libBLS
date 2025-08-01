@@ -37,7 +37,8 @@ size_t BLSSigShare::getSignerIndex() const {
 }
 
 std::shared_ptr< std::string > BLSSigShare::toString() {
-    sigShare->to_affine_coordinates();
+    if ( !sigShare->is_special() )
+        sigShare->to_affine_coordinates();
     std::string ret = "";
     ret += libBLS::ThresholdUtils::fieldElementToString( sigShare->X ) + ':' +
            libBLS::ThresholdUtils::fieldElementToString( sigShare->Y ) + ':' + hint;
