@@ -58,6 +58,8 @@ public:
      */
     static Ciphertext encrypt(
         const std::vector< uint8_t >& _message, const TEPublicKey& _commonPublic );
+    static Ciphertext encrypt(
+        const std::vector< uint8_t >& _message, const std::vector< TEPublicKey >& _commonPublic );
 
     /**
      * @brief Validates the TE ciphered key
@@ -127,7 +129,7 @@ public:
      * @return std::vector<uint8_t> The decrypted message apart from the random secret
      */
     static std::vector< uint8_t > decrypt(
-        const Ciphertext& _cyphertext, const AES256Key& _aesKey );
+        const Ciphertext& _ciphertext, const AES256Key& _aesKey );
 
     /**
      * @brief Validates the cyphertext and decrypts the message
@@ -135,6 +137,12 @@ public:
      * but avoids deciphering twice - more performant alternative
      */
     static std::vector< uint8_t > validateAndDecrypt(
+        const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey );
+
+    /**
+     * @brief validates _aesKey against the one stored in _cyphertext
+     */
+    static void validateDecipheredMessage( const std::vector< uint8_t >& _decipheredMessage,
         const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey );
 
 private:

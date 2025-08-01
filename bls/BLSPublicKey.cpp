@@ -193,7 +193,8 @@ BLSPublicKey::BLSPublicKey(
 std::shared_ptr< std::vector< std::string > > BLSPublicKey::toString() {
     std::vector< std::string > pkey_str_vect;
 
-    libffPublicKey->to_affine_coordinates();
+    if ( !libffPublicKey->is_special() )
+        libffPublicKey->to_affine_coordinates();
 
     pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( libffPublicKey->X.c0 ) );
     pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( libffPublicKey->X.c1 ) );
