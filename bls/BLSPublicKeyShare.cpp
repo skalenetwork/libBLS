@@ -72,7 +72,8 @@ std::shared_ptr< libff::alt_bn128_G2 > BLSPublicKeyShare::getPublicKey() const {
 std::shared_ptr< std::vector< std::string > > BLSPublicKeyShare::toString() {
     std::vector< std::string > pkey_str_vect;
 
-    publicKey->to_affine_coordinates();
+    if ( !publicKey->is_special() )
+        publicKey->to_affine_coordinates();
 
     pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( publicKey->X.c0 ) );
     pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( publicKey->X.c1 ) );

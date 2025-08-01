@@ -289,7 +289,10 @@ public:
                 keyBytes.data(), bytes.data() + offset, CipheredKey::CIPHERED_KEY_SIZE_BYTES );
             offset += CipheredKey::CIPHERED_KEY_SIZE_BYTES;
 
-            keys.push_back( CipheredKey::fromBytes( keyBytes, _validate ) );
+            // do not validate CipheredKey here
+            // if validation is enabled, CipheredKey is validated in Ciphertext's constructor
+            // otherwise we don't need validation at all
+            keys.push_back( CipheredKey::fromBytes( keyBytes, false ) );
         }
 
         // Get data bytes

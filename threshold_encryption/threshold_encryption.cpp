@@ -98,9 +98,11 @@ CipheredKeyResult TE::getCiphertext(
     }
 
     std::vector< CipheredKey > cipheredKeys;
+    libff::alt_bn128_G2 U = r * libff::alt_bn128_G2::one();
+    // convert to affine coordinate here to avoid doing it twice inside the loop
+    U.to_affine_coordinates();
     for ( const auto& commonPublic : commonPublicVector ) {
-        libff::alt_bn128_G2 U, Y;
-        U = r * libff::alt_bn128_G2::one();
+        libff::alt_bn128_G2 Y;
         Y = r * commonPublic;
 
         std::string hash = Hash( Y );
