@@ -43,7 +43,7 @@ namespace libBLS {
  */
 class ThresholdEncryption {
 public:
-    static std::vector< uint8_t > mockupEncrypt( const std::vector< uint8_t >& _message );
+    static std::vector< uint8_t > mockupEncrypt( std::vector< uint8_t > _message );
     static std::vector< uint8_t > mockupDecrypt( const std::vector< uint8_t >& _encryptedData );
 
     /**
@@ -102,7 +102,7 @@ public:
      * @note Does not throw error in case there is a corrupted share. But the output
      * will not be the correct deciphered key, since one of the shares is corrupted.
      */
-    static AES256Key combineShares( const CipheredKey& _cipheredKey, TEDecryptSet& _decryptionSet );
+    static AES256Key combineShares( CipheredKey _cipheredKey, TEDecryptSet& _decryptionSet );
 
     /**
      * @brief Validates if the generated AES key from merging the shares is correct against

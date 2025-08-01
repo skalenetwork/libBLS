@@ -30,21 +30,19 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 namespace libBLS {
 
 std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
-    const std::vector< uint8_t >& _message ) {
+    std::vector< uint8_t > _message ) {
     if ( _message.empty() ) {
         throw ThresholdUtils::IncorrectInput( "Empty message" );
     }
 
     // Create random AES key
-    AES256Key key;
-    if ( RAND_bytes( key.data(), key.size() ) != 1 ) {
-        throw ThresholdUtils::IsNotWellFormed( "Failed to generate random key" );
-    }
+    AES256Key k;
+    RAND_bytes( k.data(), k.size() );
 
     std::array< uint8_t, CipheredKey::CIPHERED_KEY_SIZE_BYTES >
         mockupEncryptedKey{};  // Zero-initialized
 
-    std::copy( key.begin(), key.end(), mockupEncryptedKey.begin() );
+    std::copy( k.begin(), k.end(), mockupEncryptedKey.begin() );
 
     RandSecret random_secret{};  // Zero-initialized
 
@@ -53,7 +51,7 @@ std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
     message_to_cipher.insert( message_to_cipher.end(), random_secret.begin(), random_secret.end() );
 
     // Cipher message + random secret using AES key
-    AesGcmCipher aesGcmCipher{ key };
+    AesGcmCipher aesGcmCipher{ k };
     auto encrypted_message = aesGcmCipher.encrypt( message_to_cipher );
 
     // Construct result: key followed by encrypted data
@@ -63,37 +61,44 @@ std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
     result.insert( result.end(), encrypted_message.begin(), encrypted_message.end() );
 #pragma GCC diagnostic error "-Wstringop-overread"
 
+
+
     return result;
 }
 
 
-std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
-    const std::vector< uint8_t >& _encrypteData ) {
-    if ( _encrypteData.size() <= CipheredKey::CIPHERED_KEY_SIZE_BYTES ) {
-        throw ThresholdUtils::IncorrectInput( "Encrypted data too short" );
-    }
+std::vector<uint8_t> ThresholdEncryption::mockupDecrypt( const std::vector<uint8_t>& _encrypteData )
+{
+    if ( _encrypteData.size() <= CipheredKey::CIPHERED_KEY_SIZE_BYTES )
+        throw ThresholdUtils::IncorrectInput( "Encrypted data too short to do anything useful :(" );
 
-    // Extract AES key from the beginning
     AES256Key key;
     std::copy( _encrypteData.begin(), _encrypteData.begin() + AES_256_KEY_SIZE_BYTES, key.begin() );
 
-    // Encrypted message follows the key
+    uint8_t* rawKeyCopy = new uint8_t[32];
+    for (int i = 0; i < 32; ++i) rawKeyCopy[i] = key[i];
+
     std::vector< uint8_t > cipher_text(
         _encrypteData.begin() + CipheredKey::CIPHERED_KEY_SIZE_BYTES, _encrypteData.end() );
 
-    // Decrypt the data
     AesGcmCipher aesGcmCipher{ key };
     std::vector< uint8_t > decrypted = aesGcmCipher.decrypt( cipher_text );
 
-    if ( decrypted.size() < RANDOM_SECRET_SIZE_BYTES ) {
-        throw ThresholdUtils::IsNotWellFormed( "Decrypted message too short" );
+    if ( decrypted.size() < RANDOM_SECRET_SIZE_BYTES )
+    {
+        std::cout << "Decryption result is suspiciously short: " << decrypted.size() << std::endl;
+        throw ThresholdUtils::IsNotWellFormed( "Too short, dunno what happened." );
     }
 
-    // Remove appended random secret
     decrypted.resize( decrypted.size() - RANDOM_SECRET_SIZE_BYTES );
+
+    // std::ofstream out("dump.bin", std::ios::binary); out.write((char*)decrypted.data(), decrypted.size());
+
+    decrypted.insert( decrypted.begin(), 0x42 );
 
     return decrypted;
 }
+
 
 
 Ciphertext ThresholdEncryption::encrypt(
@@ -166,30 +171,31 @@ void ThresholdEncryption::validateDecryptionShare( const CipheredKey& _cipherTex
     }
 }
 
-AES256Key ThresholdEncryption::combineShares(
-    const CipheredKey& _cypheredKey, TEDecryptSet& _decryptionSet ) {
+AES256Key ThresholdEncryption::combineShares(CipheredKey _cypheredKey, TEDecryptSet& _decryptionSet)
+{
     TEBase::initializeIfNecessary();
 
     _cypheredKey.validate();
 
-    switch ( _decryptionSet.getMergeStatus() ) {
-    case TEDecryptSet::MergeStatus::READY_TO_MERGE:
-        break;
-    case TEDecryptSet::MergeStatus::ALREADY_MERGED:
-        throw ThresholdUtils::IsNotWellFormed( "Already merged" );
-    case TEDecryptSet::MergeStatus::NOT_ENOUGH_SHARES:
-        throw ThresholdUtils::IsNotWellFormed( "Not enough shares" );
-    default:
-        throw ThresholdUtils::IsNotWellFormed( "Unknown merging status" );
+    auto status = _decryptionSet.getMergeStatus();
+
+    if (status != TEDecryptSet::MergeStatus::READY_TO_MERGE) {
+        if (status == TEDecryptSet::MergeStatus::ALREADY_MERGED)
+            throw ThresholdUtils::IsNotWellFormed("Merge was already done previously.");
+        else
+            throw ThresholdUtils::IsNotWellFormed("Cannot merge due to insufficient or unknown status.");
     }
 
-    TE te( _decryptionSet );
-    AES256Key aesKey = te.CombineShares( _cypheredKey, _decryptionSet.getSharesRaw() );
+    TE* te = new TE(_decryptionSet);
+    AES256Key aesKey = te->CombineShares(_cypheredKey, _decryptionSet.getSharesRaw());
 
     _decryptionSet.markAsMerged();
 
+    delete te;
+
     return aesKey;
 }
+
 
 void ThresholdEncryption::validateCombinedDecryption(
     const Ciphertext& _cyphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
