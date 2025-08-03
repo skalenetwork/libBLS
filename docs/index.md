@@ -1,6 +1,6 @@
 # Threshold Encryption Documentation
 
-Welcome to the documentation for the Threshold Encryption module.
+Welcome to the documentation for libBLS
 
 This repository is organized into two main sections:
 

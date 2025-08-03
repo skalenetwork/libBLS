@@ -95,7 +95,7 @@ This section will focus on the **Deciphering** part of the diagram. The cipherin
 
 ## 2.1 Computing Decryption Shares
 
-Each node uses its private key share to compute a **partial decryption share** (`PartialDecrypt` in the diagram) from the ciphertext. This share is then broadcast into the network such that each node eventually gets enough shares from all other nodes.
+Each node uses its private key share to compute a **partial decryption share** (`DecryptShare` in the diagram) from the ciphertext. This share is then broadcast into the network such that each node eventually gets enough shares from all other nodes, so that they can be merged into the original plaintext.
 The share computation is shown in detail in the diagram below:
 
 <img src="../../diagrams/decrypt-share-computation.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
