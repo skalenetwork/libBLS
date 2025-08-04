@@ -31,7 +31,7 @@
 #include <string>
 #include <vector>
 
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
+#include "backends/algebra_types.hpp"
 
 static constexpr size_t BLS_MAX_COMPONENT_LEN = 77;
 
@@ -86,22 +86,22 @@ public:
 
     static void initRAND();
 
-    static void validateG1( const libff::alt_bn128_G1& point );
+    static void validateG1( const algebra::G1Point& point );
 
-    static void validateG2( const libff::alt_bn128_G2& point );
+    static void validateG2( const algebra::G2Point& point );
 
     static void checkSigners( size_t _requiredSigners, size_t _totalSigners );
 
-    static std::vector< libff::alt_bn128_Fr > LagrangeCoeffs(
+    static std::vector< algebra::FrScalar > LagrangeCoeffs(
         const std::vector< size_t >& idx, size_t t );
 
-    static libff::alt_bn128_Fq HashToFq(
+    static algebra::FqElement HashToFq(
         std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
 
-    static libff::alt_bn128_G1 HashtoG1(
+    static algebra::G1Point HashtoG1(
         std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
 
-    static libff::alt_bn128_G1 HashtoG1( const std::string& message );
+    static algebra::G1Point HashtoG1( const std::string& message );
 
     static bool isStringNumber( const std::string& str );
 
@@ -111,7 +111,7 @@ public:
 
     static bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin );
 
-    static std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ParseHint(
+    static std::pair< algebra::FqElement, algebra::FqElement > ParseHint(
         const std::string& hint );
 
     static std::shared_ptr< std::vector< std::string > > SplitString(
@@ -134,23 +134,23 @@ public:
     template < class T >
     static T bytesToFieldElement( const std::vector< uint8_t >& byte_array );
 
-    static std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem, int base = BASE_DEC );
+    static std::vector< std::string > G2ToString( algebra::G2Point elem, int base = BASE_DEC );
 
-    static std::vector< uint8_t > G2ToBytes( libff::alt_bn128_G2 elem );
+    static std::vector< uint8_t > G2ToBytes( algebra::G2Point elem );
 
-    static std::array< uint8_t, G2_SIZE_BYTES > G2ToBytesArray( libff::alt_bn128_G2 elem );
+    static std::array< uint8_t, G2_SIZE_BYTES > G2ToBytesArray( algebra::G2Point elem );
 
-    static std::array< uint8_t, G1_SIZE_BYTES > G1ToBytes( libff::alt_bn128_G1 elem );
+    static std::array< uint8_t, G1_SIZE_BYTES > G1ToBytes( algebra::G1Point elem );
 
-    static libff::alt_bn128_G2 bytesToG2( std::array< uint8_t, G2_SIZE_BYTES > elem );
+    static algebra::G2Point bytesToG2( std::array< uint8_t, G2_SIZE_BYTES > elem );
 
-    static libff::alt_bn128_G2 bytesToG2( std::vector< uint8_t > elem );
+    static algebra::G2Point bytesToG2( std::vector< uint8_t > elem );
 
-    static libff::alt_bn128_G1 bytesToG1( std::array< uint8_t, G1_SIZE_BYTES > elem );
+    static algebra::G1Point bytesToG1( std::array< uint8_t, G1_SIZE_BYTES > elem );
 
-    static libff::alt_bn128_G2 stringToG2( const std::string& str );
+    static algebra::G2Point stringToG2( const std::string& str );
 
-    static libff::alt_bn128_G1 stringToG1( const std::string& str );
+    static algebra::G1Point stringToG1( const std::string& str );
 
     static std::string convertHexToDec( const std::string& hex_str );
 
@@ -245,7 +245,7 @@ std::vector< uint8_t > ThresholdUtils::fieldElementToBytes( const T& field_elem 
     return bytesVec;
 }
 
-// Convert a 32-byte array back to a libff::alt_bn128_Fq field element
+// Convert a 32-byte array back to a algebra::FqElement field element
 template < class T >
 T ThresholdUtils::bytesToFieldElement(
     const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& byte_array ) {
@@ -254,7 +254,7 @@ T ThresholdUtils::bytesToFieldElement(
     // Import the byte array into the mpz_t (in little-endian order)
     mpz_import( t.get_mpz_t(), byte_array.size(), 1, 1, 0, 0, byte_array.data() );
 
-    // Convert the mpz_t back to a libff::alt_bn128_Fq field element
+    // Convert the mpz_t back to a algebra::FqElement field element
     T field_elem( t.get_mpz_t() );
 
     return field_elem;
