@@ -33,7 +33,7 @@ namespace libBLS {
 
 class TEPrivateKeyShare : public TEBase {
 private:
-    libff::alt_bn128_Fr privateKey;
+    algebra::FrScalar privateKey;
 
     size_t signerIndex;
 
@@ -41,7 +41,7 @@ public:
     TEPrivateKeyShare( const std::string& _hexaField, size_t _signerIndex, size_t _requiredSigners,
         size_t _totalSigners );
 
-    TEPrivateKeyShare( libff::alt_bn128_Fr _skeyShare, size_t _signerIndex, size_t _requiredSigners,
+    TEPrivateKeyShare( algebra::FrScalar _skeyShare, size_t _signerIndex, size_t _requiredSigners,
         size_t _totalSigners );
 
     TEPrivateKeyShare( const std::vector< uint8_t >& _bytes, size_t _signerIndex,
@@ -68,7 +68,7 @@ public:
 
     size_t getSignerIndex() const;
 
-    libff::alt_bn128_Fr getPrivateKeyRaw() const;
+    const algebra::FrScalar& getPrivateKeyRaw() const;
 };
 
 }  // namespace libBLS

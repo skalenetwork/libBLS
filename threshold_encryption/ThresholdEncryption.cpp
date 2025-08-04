@@ -121,13 +121,13 @@ void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
     auto [U, V, W] = _ciphertext;
     std::string v_str = ThresholdUtils::bytesToHexString( V );
 
-    libff::alt_bn128_G1 H = TE::HashToGroup( U, v_str );
+    algebra::G1Point H = TE::HashToGroup( U, v_str );
 
-    libff::alt_bn128_GT fst, snd;
+    algebra::GTElement fst, snd;
 
     // pairing( W, P ) == pairing( H, U )
-    fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
-    snd = libff::alt_bn128_ate_reduced_pairing( H, U );
+    fst = algebra::pairing( W, algebra::G2Point::one() );
+    snd = algebra::pairing( H, U );
 
     if ( fst != snd ) {
         throw ThresholdUtils::IsNotWellFormed( "Invalid encryption" );
@@ -142,7 +142,7 @@ TEDecryptionShare ThresholdEncryption::partialDecrypt(
     _pkeyShare.validate();
 
     // ciphertext is validated in getDecryptionShare
-    libff::alt_bn128_G2 decryption_share =
+    algebra::G2Point decryption_share =
         TE::getDecryptionShare( _ciphertext, _pkeyShare.getPrivateKeyRaw() );
 
     ThresholdUtils::validateG2( decryption_share );
@@ -207,8 +207,8 @@ void ThresholdEncryption::validateCombinedDecryption(
     const AES256Key& cipheredAesKey = _cyphertext.key.V;
 
     // Compute G(r'Y)
-    libff::alt_bn128_Fr r = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( secret );
-    libff::alt_bn128_G2 Y = r * _publicKey.getPublicKeyRaw();
+    algebra::FrScalar r = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( secret );
+    algebra::G2Point Y = r * _publicKey.getPublicKeyRaw();
     std::string hash = TE::Hash( Y );
 
     // Compute V xor G(r'Y) to get M (AES key)
@@ -252,8 +252,8 @@ std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
     const AES256Key& cipheredAesKey = _cyphertext.key.V;
 
     // Compute G(r'Y)
-    libff::alt_bn128_Fr r = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( secret );
-    libff::alt_bn128_G2 Y = r * _publicKey.getPublicKeyRaw();
+    algebra::FrScalar r = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( secret );
+    algebra::G2Point Y = r * _publicKey.getPublicKeyRaw();
     std::string hash = TE::Hash( Y );
 
     // Compute V xor G(r'Y) to get M (AES key)

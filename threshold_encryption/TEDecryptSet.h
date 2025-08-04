@@ -82,7 +82,7 @@ public:
 
     MergeStatus getMergeStatus() const;
 
-    std::vector< std::pair< libff::alt_bn128_G2, size_t > > getSharesRaw() const;
+    std::vector< std::pair< algebra::G2Point, size_t > > getSharesRaw() const;
 };
 
 }  // namespace libBLS

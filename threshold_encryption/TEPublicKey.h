@@ -32,10 +32,10 @@ namespace libBLS {
 
 class TEPublicKey {
 private:
-    libff::alt_bn128_G2 publicKey;
+    algebra::G2Point publicKey;
 
 public:
-    TEPublicKey( const libff::alt_bn128_G2& _pkey );
+    TEPublicKey( const algebra::G2Point& _pkey );
 
     /**
      * @brief Construct a public key from a vector of strings,
@@ -70,7 +70,7 @@ public:
 
     std::vector< uint8_t > toBytesVec() const;
 
-    libff::alt_bn128_G2 getPublicKeyRaw() const;
+    const algebra::G2Point& getPublicKeyRaw() const;
 };
 
 }  // namespace libBLS

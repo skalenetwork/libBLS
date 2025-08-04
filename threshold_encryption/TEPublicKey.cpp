@@ -47,14 +47,14 @@ TEPublicKey::TEPublicKey( const std::vector< std::string >& _keyStrPtr ) {
             _keyStrPtr[i].c_str() );
     }
 
-    publicKey.Z = libff::alt_bn128_Fq2::one();
-    publicKey.X.c0 =
+    publicKey.value.Z = libff::alt_bn128_Fq2::one();
+    publicKey.value.X.c0 =
         libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[0] );
-    publicKey.X.c1 =
+    publicKey.value.X.c1 =
         libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[1] );
-    publicKey.Y.c0 =
+    publicKey.value.Y.c0 =
         libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[2] );
-    publicKey.Y.c1 =
+    publicKey.value.Y.c1 =
         libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[3] );
 
     ThresholdUtils::validateG2( publicKey );
@@ -68,10 +68,10 @@ TEPublicKey::TEPublicKey( const TEPrivateKey& _commonPrivate ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "zero key" );
     }
 
-    publicKey = _commonPrivate.getPrivateKeyRaw() * libff::alt_bn128_G2::one();
+    publicKey = _commonPrivate.getPrivateKeyRaw() * algebra::G2Point::one();
 }
 
-TEPublicKey::TEPublicKey( const libff::alt_bn128_G2& _pkey ) : publicKey( _pkey ) {
+TEPublicKey::TEPublicKey( const algebra::G2Point& _pkey ) : publicKey( _pkey ) {
     ThresholdUtils::validateG2( publicKey );
 }
 
@@ -93,7 +93,7 @@ std::string TEPublicKey::toString() const {
     return concatenated;
 }
 
-libff::alt_bn128_G2 TEPublicKey::getPublicKeyRaw() const {
+const algebra::G2Point& TEPublicKey::getPublicKeyRaw() const {
     return publicKey;
 }
 

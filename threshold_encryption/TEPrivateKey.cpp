@@ -32,14 +32,14 @@ TEPrivateKey::TEPrivateKey( const std::string& _keyStr ) {
         ThresholdUtils::hexCStringToBytesArray< libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES >(
             _keyStr.c_str() );
 
-    privateKey = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( privBytes );
+    privateKey = algebra::FrScalar(ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( privBytes ));
 
     if ( privateKey.is_zero() ) {
         throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
     }
 }
 
-TEPrivateKey::TEPrivateKey( libff::alt_bn128_Fr _skey ) : privateKey( _skey ) {
+TEPrivateKey::TEPrivateKey( algebra::FrScalar _skey ) : privateKey( _skey ) {
     if ( _skey.is_zero() )
         throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
 }
@@ -71,7 +71,7 @@ std::string TEPrivateKey::toString() const {
     return ThresholdUtils::fieldElementToString( privateKey, BASE_HEXA );
 }
 
-libff::alt_bn128_Fr TEPrivateKey::getPrivateKeyRaw() const {
+const algebra::FrScalar& TEPrivateKey::getPrivateKeyRaw() const {
     return privateKey;
 }
 

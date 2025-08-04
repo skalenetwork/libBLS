@@ -32,14 +32,14 @@ namespace libBLS {
 
 class TEPublicKeyShare : TEBase {
 private:
-    libff::alt_bn128_G2 publicKey;
+    algebra::G2Point publicKey;
 
     size_t signerIndex;
 
 public:
     TEPublicKeyShare( TEPrivateKeyShare _pKey );
 
-    TEPublicKeyShare( libff::alt_bn128_G2 _point, size_t signerIndex, size_t _requiredSigners,
+    TEPublicKeyShare( algebra::G2Point _point, size_t signerIndex, size_t _requiredSigners,
         size_t _totalSigners );
 
     TEPublicKeyShare( const std::vector< uint8_t >& _bytes, size_t signerIndex,
@@ -56,7 +56,7 @@ public:
 
     std::array< uint8_t, libBLS::G2_SIZE_BYTES > toBytesArray() const;
 
-    libff::alt_bn128_G2 getPublicKeyRaw() const;
+    const algebra::G2Point& getPublicKeyRaw() const;
 };
 
 }  // namespace libBLS

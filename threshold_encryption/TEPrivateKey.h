@@ -31,12 +31,12 @@ namespace libBLS {
 
 class TEPrivateKey {
 private:
-    libff::alt_bn128_Fr privateKey;
+    algebra::FrScalar privateKey;
 
 public:
     TEPrivateKey( const std::string& _keyStr );
 
-    TEPrivateKey( libff::alt_bn128_Fr _skey );
+    TEPrivateKey( algebra::FrScalar _skey );
 
     TEPrivateKey( const std::vector< uint8_t > _keyBytes );
 
@@ -44,7 +44,7 @@ public:
 
     std::string toString() const;
 
-    libff::alt_bn128_Fr getPrivateKeyRaw() const;
+    const algebra::FrScalar& getPrivateKeyRaw() const;
 
     std::vector< uint8_t > toBytesVec() const;
 

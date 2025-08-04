@@ -23,7 +23,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 #include <threshold_encryption/TEBase.h>
 #include <tools/utils.h>
-#include <libff/common/profiling.hpp>
+#include "backends/algebra_types.hpp"
 
 namespace libBLS {
 
@@ -32,8 +32,7 @@ std::atomic< bool > TEBase::isLibffInitialized{ false };
 void TEBase::initializeIfNecessary() {
     bool expected = false;
     if ( isLibffInitialized.compare_exchange_strong( expected, true ) ) {
-        libff::init_alt_bn128_params();
-        libff::inhibit_profiling_info = true;
+        algebra::init_curve();
     }
 }
 

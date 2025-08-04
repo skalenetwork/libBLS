@@ -35,11 +35,13 @@
 
 namespace libBLS {
 
+// TODO - we should not be calling init curve here
 TE::TE( const TEBase& base ) : t_( base.getRequiredSigners() ), n_( base.getTotalSigners() ) {
     libff::init_alt_bn128_params();
     libff::inhibit_profiling_info = true;
 }
 
+// TODO - we should not be calling init curve here
 TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {
     libff::init_alt_bn128_params();
     libff::inhibit_profiling_info = true;
@@ -48,7 +50,7 @@ TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {
 TE::~TE() {}
 
 std::string TE::Hash(
-    const libff::alt_bn128_G2& Y, std::string ( *hash_func )( const std::string& str ) ) {
+    const algebra::G2Point& Y, std::string ( *hash_func )( const std::string& str ) ) {
     auto vectorCoordinates = ThresholdUtils::G2ToString( Y );
 
     std::string tmp = "";
@@ -61,7 +63,7 @@ std::string TE::Hash(
     return sha256hex;
 }
 
-libff::alt_bn128_G1 TE::HashToGroup( const libff::alt_bn128_G2& U, const std::string& V,
+algebra::G1Point TE::HashToGroup( const algebra::G2Point& U, const std::string& V,
     std::string ( *hash_func )( const std::string& str ) ) {
     // assumed that U lies in G2
 
@@ -84,15 +86,15 @@ libff::alt_bn128_G1 TE::HashToGroup( const libff::alt_bn128_G2& U, const std::st
 
 
 CipheredKeyResult TE::getCiphertext(
-    const AES256Key& key, const libff::alt_bn128_G2& commonPublic ) {
-    libff::alt_bn128_Fr r = libff::alt_bn128_Fr::random_element();
+    const AES256Key& key, const algebra::G2Point& commonPublic ) {
+    algebra::FrScalar r = algebra::FrScalar::random();
 
     while ( r.is_zero() ) {
-        r = libff::alt_bn128_Fr::random_element();
+        r = algebra::FrScalar::random();
     }
 
-    libff::alt_bn128_G2 U, Y;
-    U = r * libff::alt_bn128_G2::one();
+    algebra::G2Point U, Y;
+    U = r * algebra::G2Point::one();
     Y = r * commonPublic;
 
     std::string hash = Hash( Y );
@@ -109,7 +111,7 @@ CipheredKeyResult TE::getCiphertext(
 
     std::string v_str = ThresholdUtils::bytesToHexString( V );
 
-    libff::alt_bn128_G1 W, H;
+    algebra::G1Point W, H;
 
     H = HashToGroup( U, v_str );
     W = r * H;
@@ -140,7 +142,7 @@ CipheredKeyResult TE::getCiphertext(
  * @note Initializes AES before encryption
  */
 CipherResult TE::encryptWithAES(
-    const std::vector< uint8_t >& message, const libff::alt_bn128_G2& commonPublic ) {
+    const std::vector< uint8_t >& message, const algebra::G2Point& commonPublic ) {
     // create random AES key
     AES256Key key;
     if ( RAND_bytes( key.data(), key.size() ) != 1 ) {
@@ -181,7 +183,7 @@ CipherResult TE::encryptWithAES(
  */
 std::pair< std::string, RandSecret > TE::encryptMessage(
     const std::vector< uint8_t >& message, const std::string& commonPublic_str ) {
-    libff::alt_bn128_G2 commonPublic = ThresholdUtils::stringToG2( commonPublic_str );
+    algebra::G2Point commonPublic = ThresholdUtils::stringToG2( commonPublic_str );
     libBLS::CipherResult ciphertext = encryptWithAES( message, commonPublic );
     std::vector< uint8_t > ciphertextBytes = ciphertext.ciphertext->toBytes();
 
@@ -204,7 +206,7 @@ std::pair< std::string, RandSecret > TE::encryptMessage(
  * This field usually refers to the threshold-encrypted AES key
  * @param secret_key The secret key share (element of Fr) used for decryption
  *
- * @return libff::alt_bn128_G2 The decryption share (U multiplied by the secret key)
+ * @return algebra::G2Point The decryption share (U multiplied by the secret key)
  *
  * @throws ThresholdUtils::ZeroSecretKey if the provided secret key is zero
  * @throws ThresholdUtils::IncorrectInput if the ciphertext fails validation checks
@@ -212,8 +214,8 @@ std::pair< std::string, RandSecret > TE::encryptMessage(
  * @note The function verifies the ciphertext integrity using pairing-based checks before generating
  *       the decryption share
  */
-libff::alt_bn128_G2 TE::getDecryptionShare(
-    const CipheredKey& ciphertext, const libff::alt_bn128_Fr& secret_key ) {
+algebra::G2Point TE::getDecryptionShare(
+    const CipheredKey& ciphertext, const algebra::FrScalar& secret_key ) {
     ciphertext.validate();
 
     if ( secret_key.is_zero() )
@@ -222,11 +224,11 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
     auto [U, V, W] = ciphertext;
 
     std::string v_str = ThresholdUtils::bytesToHexString( V );
-    libff::alt_bn128_G1 H = HashToGroup( U, v_str );
+    algebra::G1Point H = HashToGroup( U, v_str );
 
-    libff::alt_bn128_GT fst, snd;
-    fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
-    snd = libff::alt_bn128_ate_reduced_pairing( H, U );
+    algebra::GTElement fst, snd;
+    fst = algebra::pairing( W, algebra::G2Point::one());
+    snd = algebra::pairing( H, U );
 
     bool res = fst == snd;
 
@@ -234,7 +236,7 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
         throw ThresholdUtils::IncorrectInput( "cannot decrypt data" );
     }
 
-    libff::alt_bn128_G2 ret_val = secret_key * U;
+    algebra::G2Point ret_val = secret_key * U;
 
     return ret_val;
 }
@@ -256,22 +258,22 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
  * @return true if both the ciphertext and decryption share are valid
  * @return false if either the ciphertext is invalid or the decryption share verification fails
  */
-bool TE::Verify( const CipheredKey& ciphertext, const libff::alt_bn128_G2& decryptionShare,
-    const libff::alt_bn128_G2& public_key ) {
+bool TE::Verify( const CipheredKey& ciphertext, const algebra::G2Point& decryptionShare,
+    const algebra::G2Point& public_key ) {
     auto [U, V, W] = ciphertext;
     std::string v_str = ThresholdUtils::bytesToHexString( V );
-    libff::alt_bn128_G1 H = HashToGroup( U, v_str );
+    algebra::G1Point H = HashToGroup( U, v_str );
 
     ThresholdUtils::validateG1( H );
 
-    libff::alt_bn128_GT fst, snd;
-    fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
-    snd = libff::alt_bn128_ate_reduced_pairing( H, U );
+    algebra::GTElement fst, snd;
+    fst = algebra::pairing( W, algebra::G2Point::one() );
+    snd = algebra::pairing( H, U );
 
     if ( fst == snd ) {
-        libff::alt_bn128_GT pp1, pp2;
-        pp1 = libff::alt_bn128_ate_reduced_pairing( W, public_key );
-        pp2 = libff::alt_bn128_ate_reduced_pairing( H, decryptionShare );
+        algebra::GTElement pp1, pp2;
+        pp1 = algebra::pairing( W, public_key );
+        pp2 = algebra::pairing( H, decryptionShare );
 
         return pp1 == pp2;
     }
@@ -299,14 +301,14 @@ bool TE::Verify( const CipheredKey& ciphertext, const libff::alt_bn128_G2& decry
  * @throws ThresholdUtils::IncorrectInput if the ciphertext validation fails
  */
 AES256Key TE::CombineShares( const CipheredKey& ciphertext,
-    const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShares ) {
+    const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShares ) {
     auto [U, V, W] = ciphertext;
     std::string v_str = ThresholdUtils::bytesToHexString( V );
-    libff::alt_bn128_G1 H = this->HashToGroup( U, v_str );
+    algebra::G1Point H = this->HashToGroup( U, v_str );
 
-    libff::alt_bn128_GT fst, snd;
-    fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
-    snd = libff::alt_bn128_ate_reduced_pairing( H, U );
+    algebra::GTElement fst, snd;
+    fst = algebra::pairing( W, algebra::G2Point::one() );
+    snd = algebra::pairing( H, U );
 
     bool res = fst == snd;
 
@@ -348,7 +350,7 @@ AES256Key TE::CombineShares( const CipheredKey& ciphertext,
  * message
  */
 std::vector< uint8_t > TE::CombineSharesIntoAESKey(
-    const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShares ) {
+    const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShares ) {
     if ( decryptionShares.size() < t_ )
         throw ThresholdUtils::IncorrectInput( "Expect at least t shares to be provided" );
     std::vector< size_t > idx( this->t_ );
@@ -356,12 +358,12 @@ std::vector< uint8_t > TE::CombineSharesIntoAESKey(
         idx[i] = decryptionShares[i].second;
     }
 
-    std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
+    std::vector< algebra::FrScalar > lagrange_coeffs =
         ThresholdUtils::LagrangeCoeffs( idx, this->t_ );
 
-    libff::alt_bn128_G2 sum = libff::alt_bn128_G2::zero();
+    algebra::G2Point sum = algebra::G2Point::zero();
     for ( size_t i = 0; i < this->t_; ++i ) {
-        libff::alt_bn128_G2 temp = lagrange_coeffs[i] * decryptionShares[i].first;
+        algebra::G2Point temp = lagrange_coeffs[i] * decryptionShares[i].first;
 
         sum = sum + temp;
     }

@@ -29,12 +29,12 @@ namespace libBLS {
 TEPublicKeyShare::TEPublicKeyShare( TEPrivateKeyShare _pKey )
     : TEBase( _pKey.getRequiredSigners(), _pKey.getTotalSigners() ) {
     _pKey.validate();
-    publicKey = _pKey.getPrivateKeyRaw() * libff::alt_bn128_G2::one();
+    publicKey = _pKey.getPrivateKeyRaw() * algebra::G2Point::one();
     signerIndex = _pKey.getSignerIndex();
 }
 
 TEPublicKeyShare::TEPublicKeyShare(
-    libff::alt_bn128_G2 _point, size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
+    algebra::G2Point _point, size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), publicKey( _point ), signerIndex( _signerIndex ) {
     ThresholdUtils::validateG2( publicKey );
 }
@@ -61,7 +61,7 @@ std::array< uint8_t, libBLS::G2_SIZE_BYTES > TEPublicKeyShare::toBytesArray() co
     return ThresholdUtils::G2ToBytesArray( publicKey );
 }
 
-libff::alt_bn128_G2 TEPublicKeyShare::getPublicKeyRaw() const {
+const algebra::G2Point& TEPublicKeyShare::getPublicKeyRaw() const {
     return publicKey;
 }
 

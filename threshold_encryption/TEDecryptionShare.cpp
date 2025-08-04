@@ -26,7 +26,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
-TEDecryptionShare::TEDecryptionShare( libff::alt_bn128_G2 _share, size_t _signerIndex )
+TEDecryptionShare::TEDecryptionShare( algebra::G2Point _share, size_t _signerIndex )
     : signerIndex( _signerIndex ), share( _share ) {
     ThresholdUtils::validateG2( share );
 }
@@ -41,7 +41,7 @@ size_t TEDecryptionShare::getSignerIndex() const {
     return signerIndex;
 }
 
-libff::alt_bn128_G2 TEDecryptionShare::getShareRaw() const {
+algebra::G2Point TEDecryptionShare::getShareRaw() const {
     return share;
 }
 
@@ -53,7 +53,7 @@ bool TEDecryptionShare::operator==( const TEDecryptionShare& _other ) const {
     return signerIndex == _other.signerIndex;
 }
 
-TEDecryptionShare::operator std::pair< libff::alt_bn128_G2, size_t >() const {
+TEDecryptionShare::operator std::pair< algebra::G2Point, size_t >() const {
     return std::make_pair( share, signerIndex );
 }
 

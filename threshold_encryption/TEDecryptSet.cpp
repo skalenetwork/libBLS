@@ -72,8 +72,8 @@ TEDecryptSet::MergeStatus TEDecryptSet::getMergeStatus() const {
 }
 
 
-std::vector< std::pair< libff::alt_bn128_G2, size_t > > TEDecryptSet::getSharesRaw() const {
-    std::vector< std::pair< libff::alt_bn128_G2, size_t > > decrypted;
+std::vector< std::pair< algebra::G2Point, size_t > > TEDecryptSet::getSharesRaw() const {
+    std::vector< std::pair< algebra::G2Point, size_t > > decrypted;
     for ( auto&& share : decrypts ) {
         decrypted.push_back( share );
     }

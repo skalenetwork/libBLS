@@ -44,7 +44,7 @@ TEPrivateKeyShare::TEPrivateKeyShare( const std::string& _hexaField, size_t _sig
     }
 }
 
-TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skeyShare, size_t _signerIndex,
+TEPrivateKeyShare::TEPrivateKeyShare( algebra::FrScalar _skeyShare, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ),
       privateKey( _skeyShare ),
@@ -84,7 +84,7 @@ size_t TEPrivateKeyShare::getSignerIndex() const {
     return signerIndex;
 }
 
-libff::alt_bn128_Fr TEPrivateKeyShare::getPrivateKeyRaw() const {
+const algebra::FrScalar& TEPrivateKeyShare::getPrivateKeyRaw() const {
     return privateKey;
 }
 

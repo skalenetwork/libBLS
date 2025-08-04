@@ -35,6 +35,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <threshold_encryption/TEBase.h>
 #include <tools/utils.h>
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
+#include "backends/algebra_types.hpp"
 
 
 namespace libBLS {
@@ -52,13 +53,13 @@ struct CipheredKey {
     static constexpr size_t CIPHERED_KEY_SIZE_BYTES =
         G2_SIZE_BYTES + AES_256_KEY_SIZE_BYTES + G1_SIZE_BYTES;
 
-    libff::alt_bn128_G2 U;
+    algebra::G2Point U;
     AES256Key V;
-    libff::alt_bn128_G1 W;
+    algebra::G1Point W;
 
 public:
     CipheredKey() = default;
-    CipheredKey( libff::alt_bn128_G2 _U, AES256Key _V, libff::alt_bn128_G1 _W )
+    CipheredKey( algebra::G2Point _U, AES256Key _V, algebra::G1Point _W )
         : U( _U ), V( std::move( _V ) ), W( _W ) {
         validate();
     }
@@ -111,8 +112,8 @@ public:
         std::memcpy( w_bytes.data(), offset, G1_SIZE_BYTES );
 
         // Convert to CipheredKey components
-        libff::alt_bn128_G2 U = ThresholdUtils::bytesToG2( u_bytes );
-        libff::alt_bn128_G1 W = ThresholdUtils::bytesToG1( w_bytes );
+        algebra::G2Point U = ThresholdUtils::bytesToG2( u_bytes );
+        algebra::G1Point W = ThresholdUtils::bytesToG1( w_bytes );
 
         // constructor performs validation
         return CipheredKey( U, v_bytes, W );
@@ -128,10 +129,10 @@ public:
     }
 
     static CipheredKey random() {
-        libff::alt_bn128_G2 U = libff::alt_bn128_G2::random_element();
+        algebra::G2Point U = algebra::G2Point::random();
         AES256Key V;
         RAND_bytes( V.data(), V.size() );
-        libff::alt_bn128_G1 W = libff::alt_bn128_G1::random_element();
+        algebra::G1Point W = algebra::G1Point::random();
         return CipheredKey( U, V, W );
     }
 
@@ -300,31 +301,31 @@ public:
      * @note This is an auxiliar function, used within `encryptWithAES`
      */
     static CipheredKeyResult getCiphertext(
-        const AES256Key& key, const libff::alt_bn128_G2& commonPublic );
+        const AES256Key& key, const algebra::G2Point& commonPublic );
 
     static CipherResult encryptWithAES(
-        const std::vector< uint8_t >& message, const libff::alt_bn128_G2& commonPublic );
+        const std::vector< uint8_t >& message, const algebra::G2Point& commonPublic );
 
     static std::pair< std::string, RandSecret > encryptMessage(
         const std::vector< uint8_t >& message, const std::string& common_public );
 
-    static libff::alt_bn128_G2 getDecryptionShare(
-        const CipheredKey& ciphertext, const libff::alt_bn128_Fr& secret_key );
+    static algebra::G2Point getDecryptionShare(
+        const CipheredKey& ciphertext, const algebra::FrScalar& secret_key );
 
-    static libff::alt_bn128_G1 HashToGroup( const libff::alt_bn128_G2& U, const std::string& V,
+    static algebra::G1Point HashToGroup( const algebra::G2Point& U, const std::string& V,
         std::string ( *hash_func )( const std::string& str ) = cryptlite::sha256::hash_hex );
 
-    static std::string Hash( const libff::alt_bn128_G2& Y,
+    static std::string Hash( const algebra::G2Point& Y,
         std::string ( *hash_func )( const std::string& str ) = cryptlite::sha256::hash_hex );
 
-    static bool Verify( const CipheredKey& ciphertext, const libff::alt_bn128_G2& decryptionShare,
-        const libff::alt_bn128_G2& public_key );
+    static bool Verify( const CipheredKey& ciphertext, const algebra::G2Point& decryptionShare,
+        const algebra::G2Point& public_key );
 
     AES256Key CombineShares( const CipheredKey& ciphertext,
-        const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShare );
+        const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShare );
 
     std::vector< uint8_t > CombineSharesIntoAESKey(
-        const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShare );
+        const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShare );
 
 private:
     const size_t t_ = 0;
