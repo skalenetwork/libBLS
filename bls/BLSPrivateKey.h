@@ -34,7 +34,7 @@ private:
     size_t requiredSigners;
     size_t totalSigners;
 
-    std::shared_ptr< libff::alt_bn128_Fr > privateKey;
+    std::shared_ptr< algebra::FrScalar > privateKey;
 
 public:
     BLSPrivateKey(
@@ -44,7 +44,7 @@ public:
         std::shared_ptr< std::vector< size_t > > koefs, size_t _requiredSigners,
         size_t _totalSigners );
 
-    std::shared_ptr< libff::alt_bn128_Fr > getPrivateKey() const;
+    std::shared_ptr< algebra::FrScalar > getPrivateKey() const;
 
     std::shared_ptr< std::string > toString();
 };

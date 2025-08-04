@@ -36,22 +36,22 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(
     if ( _key.empty() ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Secret key share string is empty" );
     }
-    privateKey = std::make_shared< libff::alt_bn128_Fr >( _key.c_str() );
+    privateKey = std::make_shared< algebra::FrScalar >( _key.c_str() );
 
-    if ( *privateKey == libff::alt_bn128_Fr::zero() ) {
+    if ( *privateKey == algebra::FrScalar::zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey(
             "Secret key share is equal to zero or corrupt" );
     }
 }
 
 BLSPrivateKeyShare::BLSPrivateKeyShare(
-    const libff::alt_bn128_Fr& libff_skey, size_t _requiredSigners, size_t _totalSigners )
+    const algebra::FrScalar& libff_skey, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    privateKey = std::make_shared< libff::alt_bn128_Fr >( libff_skey );
+    privateKey = std::make_shared< algebra::FrScalar >( libff_skey );
 
-    if ( *privateKey == libff::alt_bn128_Fr::zero() ) {
+    if ( *privateKey == algebra::FrScalar::zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "BLS Secret key share is equal to zero" );
     }
 }
@@ -69,15 +69,15 @@ std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::sign(
 
     obj = std::make_shared< libBLS::Bls >( libBLS::Bls( requiredSigners, totalSigners ) );
 
-    libff::alt_bn128_G1 hash = libBLS::ThresholdUtils::HashtoG1( hash_byte_arr );
+    algebra::G1Point hash = libBLS::ThresholdUtils::HashtoG1( hash_byte_arr );
 
-    auto ss = std::make_shared< libff::alt_bn128_G1 >( obj->Signing( hash, *privateKey ) );
+    auto ss = std::make_shared< algebra::G1Point >( obj->Signing( hash, *privateKey ) );
 
     ss->to_affine_coordinates();
 
-    std::pair< libff::alt_bn128_G1, std::string > hash_with_hint =
+    std::pair< algebra::G1Point, std::string > hash_with_hint =
         obj->HashtoG1withHint( hash_byte_arr );
-    std::string hint = libBLS::ThresholdUtils::fieldElementToString( hash_with_hint.first.Y ) +
+    std::string hint = libBLS::ThresholdUtils::fieldElementToString( hash_with_hint.first.value.Y ) + // TODO - uses .value - impl. specific - need to refactor
                        ":" + hash_with_hint.second;
 
     auto s =
@@ -99,15 +99,15 @@ std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::signWithHelper(
 
     obj = std::make_shared< libBLS::Bls >( libBLS::Bls( requiredSigners, totalSigners ) );
 
-    std::pair< libff::alt_bn128_G1, std::string > hash_with_hint =
+    std::pair< algebra::G1Point, std::string > hash_with_hint =
         obj->HashtoG1withHint( hash_byte_arr );
 
-    auto ss = std::make_shared< libff::alt_bn128_G1 >(
+    auto ss = std::make_shared< algebra::G1Point >(
         obj->Signing( hash_with_hint.first, *privateKey ) );
 
     ss->to_affine_coordinates();
 
-    std::string hint = libBLS::ThresholdUtils::fieldElementToString( hash_with_hint.first.Y ) +
+    std::string hint = libBLS::ThresholdUtils::fieldElementToString( hash_with_hint.first.value.Y ) + // TODO - uses .value - impl. specific - need to refactor
                        ":" + hash_with_hint.second;
 
     auto s =
@@ -124,10 +124,10 @@ BLSPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSi
     std::vector< std::shared_ptr< BLSPrivateKeyShare > > skeys_shares;
 
     libBLS::Dkg dkg_obj = libBLS::Dkg( _requiredSigners, _totalSigners );
-    const std::vector< libff::alt_bn128_Fr > pol = dkg_obj.GeneratePolynomial();
-    std::vector< libff::alt_bn128_Fr > skeys = dkg_obj.SecretKeyContribution( pol );
+    const std::vector< algebra::FrScalar > pol = dkg_obj.GeneratePolynomial();
+    std::vector< algebra::FrScalar > skeys = dkg_obj.SecretKeyContribution( pol );
 
-    libff::alt_bn128_Fr common_skey = pol.at( 0 );
+    algebra::FrScalar common_skey = pol.at( 0 );
     std::shared_ptr< BLSPublicKey > pkey_ptr =
         std::make_shared< BLSPublicKey >( common_skey, _requiredSigners, _totalSigners );
 
@@ -149,7 +149,7 @@ BLSPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSi
             std::shared_ptr< BLSPublicKey > > >( keys );
 }
 
-std::shared_ptr< libff::alt_bn128_Fr > BLSPrivateKeyShare::getPrivateKey() const {
+std::shared_ptr< algebra::FrScalar > BLSPrivateKeyShare::getPrivateKey() const {
     CHECK( privateKey );
     return privateKey;
 }
@@ -157,7 +157,7 @@ std::shared_ptr< libff::alt_bn128_Fr > BLSPrivateKeyShare::getPrivateKey() const
 std::shared_ptr< std::string > BLSPrivateKeyShare::toString() {
     if ( !privateKey )
         throw libBLS::ThresholdUtils::IncorrectInput( "Secret key share is null" );
-    if ( *privateKey == libff::alt_bn128_Fr::zero() ) {
+    if ( *privateKey == algebra::FrScalar::zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey(
             "Secret key share is equal to zero or corrupt" );
     }

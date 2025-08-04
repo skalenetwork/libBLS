@@ -32,14 +32,15 @@ BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > 
 
     CHECK( pkey_str_vect )
 
-    libffPublicKey = std::make_shared< libff::alt_bn128_G2 >();
+    libffPublicKey = std::make_shared< algebra::G2Point >();
 
-    libffPublicKey->X.c0 = libff::alt_bn128_Fq( pkey_str_vect->at( 0 ).c_str() );
-    libffPublicKey->X.c1 = libff::alt_bn128_Fq( pkey_str_vect->at( 1 ).c_str() );
-    libffPublicKey->Y.c0 = libff::alt_bn128_Fq( pkey_str_vect->at( 2 ).c_str() );
-    libffPublicKey->Y.c1 = libff::alt_bn128_Fq( pkey_str_vect->at( 3 ).c_str() );
-    libffPublicKey->Z.c0 = libff::alt_bn128_Fq::one();
-    libffPublicKey->Z.c1 = libff::alt_bn128_Fq::zero();
+    // TODO uses value - impl. specific - need to refactor. Also using specific libff types
+    libffPublicKey->value.X.c0 = libff::alt_bn128_Fq( pkey_str_vect->at( 0 ).c_str() );
+    libffPublicKey->value.X.c1 = libff::alt_bn128_Fq( pkey_str_vect->at( 1 ).c_str() );
+    libffPublicKey->value.Y.c0 = libff::alt_bn128_Fq( pkey_str_vect->at( 2 ).c_str() );
+    libffPublicKey->value.Y.c1 = libff::alt_bn128_Fq( pkey_str_vect->at( 3 ).c_str() );
+    libffPublicKey->value.Z.c0 = libff::alt_bn128_Fq::one();
+    libffPublicKey->value.Z.c1 = libff::alt_bn128_Fq::zero();
 
     if ( libffPublicKey->is_zero() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Zero BLS public Key " );
@@ -50,23 +51,23 @@ BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > 
     }
 }
 
-BLSPublicKey::BLSPublicKey( const libff::alt_bn128_G2& pkey, size_t t, size_t n ) : t( t ), n( n ) {
-    libBLS::ThresholdUtils::initCurve();
+BLSPublicKey::BLSPublicKey( const algebra::G2Point& pkey, size_t t, size_t n ) : t( t ), n( n ) {
+    libBLS::ThresholdUtils::initCurve(); // we can get rid of this
 
     // do not check signers for compatibility
     // libBLS::ThresholdUtils::checkSigners( t, n );
 
-    libffPublicKey = std::make_shared< libff::alt_bn128_G2 >( pkey );
+    libffPublicKey = std::make_shared< algebra::G2Point >( pkey );
     if ( libffPublicKey->is_zero() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Zero BLS Public Key" );
     }
 }
 
-BLSPublicKey::BLSPublicKey( const libff::alt_bn128_Fr& skey, size_t t, size_t n ) : t( t ), n( n ) {
+BLSPublicKey::BLSPublicKey( const algebra::FrScalar& skey, size_t t, size_t n ) : t( t ), n( n ) {
     // do not check signers for compatibility
     // libBLS::ThresholdUtils::checkSigners( t, n );
 
-    libffPublicKey = std::make_shared< libff::alt_bn128_G2 >( skey * libff::alt_bn128_G2::one() );
+    libffPublicKey = std::make_shared< algebra::G2Point >( skey * algebra::G2Point::one() );
     if ( libffPublicKey->is_zero() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Public Key is equal to zero or corrupt" );
     }
@@ -99,24 +100,25 @@ bool BLSPublicKey::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32
 
     std::string hint = sign_ptr->getHint();
 
-    std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > y_shift_x =
+    std::pair< algebra::FqElement, algebra::FqElement > y_shift_x =
         libBLS::ThresholdUtils::ParseHint( hint );
 
-    libff::alt_bn128_Fq x = libBLS::ThresholdUtils::HashToFq( hash_ptr );
+    algebra::FqElement x = libBLS::ThresholdUtils::HashToFq( hash_ptr );
     x = x + y_shift_x.second;
 
-    libff::alt_bn128_Fq y_sqr = y_shift_x.first ^ 2;
-    libff::alt_bn128_Fq x3B = x ^ 3;
+    algebra::FqElement y_sqr = y_shift_x.first ^ 2;
+    algebra::FqElement x3B = x ^ 3;
     x3B = x3B + libff::alt_bn128_coeff_b;
 
     if ( y_sqr != x3B )
         return false;
 
-    libff::alt_bn128_G1 hash( x, y_shift_x.first, libff::alt_bn128_Fq::one() );
+    // TODO - uses value - impl. specific - need to refactor
+    libff::alt_bn128_G1 hash( x.value, y_shift_x.first.value, algebra::FqElement::one().value );
 
     return (
-        libff::alt_bn128_ate_reduced_pairing( *sign_ptr->getSig(), libff::alt_bn128_G2::one() ) ==
-        libff::alt_bn128_ate_reduced_pairing( hash, *libffPublicKey ) );
+        algebra::pairing( *sign_ptr->getSig(), algebra::G2Point::one() ) ==
+        algebra::pairing( hash, *libffPublicKey ) );
 }
 
 bool BLSPublicKey::AggregatedVerifySig(
@@ -135,7 +137,7 @@ bool BLSPublicKey::AggregatedVerifySig(
         }
     }
 
-    std::vector< libff::alt_bn128_G1 > libff_sig_vec;
+    std::vector< algebra::G1Point > libff_sig_vec;
     libff_sig_vec.reserve( sign_ptr_vec.size() );
 
     for ( auto& sign_ptr : sign_ptr_vec ) {
@@ -170,10 +172,10 @@ BLSPublicKey::BLSPublicKey(
         participatingNodes.push_back( static_cast< uint64_t >( item.first ) );
     }
 
-    std::vector< libff::alt_bn128_Fr > lagrangeCoeffs =
+    std::vector< algebra::FrScalar > lagrangeCoeffs =
         libBLS::ThresholdUtils::LagrangeCoeffs( participatingNodes, _requiredSigners );
 
-    libff::alt_bn128_G2 key = libff::alt_bn128_G2::zero();
+    algebra::G2Point key = algebra::G2Point::zero();
     size_t i = 0;
     for ( auto&& item : *koefs_pkeys_map ) {
         if ( i < _requiredSigners ) {
@@ -184,7 +186,7 @@ BLSPublicKey::BLSPublicKey(
         }
     }
 
-    libffPublicKey = std::make_shared< libff::alt_bn128_G2 >( key );
+    libffPublicKey = std::make_shared< algebra::G2Point >( key );
     if ( libffPublicKey->is_zero() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Public Key is equal to zero or corrupt" );
     }
@@ -195,14 +197,15 @@ std::shared_ptr< std::vector< std::string > > BLSPublicKey::toString() {
 
     libffPublicKey->to_affine_coordinates();
 
-    pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( libffPublicKey->X.c0 ) );
-    pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( libffPublicKey->X.c1 ) );
-    pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( libffPublicKey->Y.c0 ) );
-    pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( libffPublicKey->Y.c1 ) );
+    // TODO - use value - impl. specific - need to refactor
+    pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( libffPublicKey->value.X.c0 ) );
+    pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( libffPublicKey->value.X.c1 ) );
+    pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( libffPublicKey->value.Y.c0 ) );
+    pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( libffPublicKey->value.Y.c1 ) );
 
     return std::make_shared< std::vector< std::string > >( pkey_str_vect );
 }
 
-std::shared_ptr< libff::alt_bn128_G2 > BLSPublicKey::getPublicKey() const {
+std::shared_ptr< algebra::G2Point > BLSPublicKey::getPublicKey() const {
     return libffPublicKey;
 }

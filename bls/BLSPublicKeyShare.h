@@ -30,7 +30,7 @@ class BLSSigShare;
 
 class BLSPublicKeyShare {
 private:
-    std::shared_ptr< libff::alt_bn128_G2 > publicKey;
+    std::shared_ptr< algebra::G2Point > publicKey;
     size_t requiredSigners;
     size_t totalSigners;
 
@@ -39,9 +39,9 @@ public:
         size_t _totalSigners );
 
     BLSPublicKeyShare(
-        const libff::alt_bn128_Fr& skey, size_t _requiredSigners, size_t _totalSigners );
+        const algebra::FrScalar& skey, size_t _requiredSigners, size_t _totalSigners );
 
-    std::shared_ptr< libff::alt_bn128_G2 > getPublicKey() const;
+    std::shared_ptr< algebra::G2Point > getPublicKey() const;
 
     bool VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
         std::shared_ptr< BLSSigShare > sign_ptr, size_t _requiredSigners, size_t _totalSigners );

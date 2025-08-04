@@ -32,16 +32,16 @@ class BLSPublicKeyShare;
 
 class BLSPublicKey {
 private:
-    std::shared_ptr< libff::alt_bn128_G2 > libffPublicKey;
+    std::shared_ptr< algebra::G2Point > libffPublicKey;
     size_t t;
     size_t n;
 
 public:
     BLSPublicKey( const std::shared_ptr< std::vector< std::string > > );
     // default value set to 0 for compatibility
-    BLSPublicKey( const libff::alt_bn128_Fr& skey, size_t t = 0, size_t n = 0 );
+    BLSPublicKey( const algebra::FrScalar& skey, size_t t = 0, size_t n = 0 );
     // default value set to 0 for compatibility
-    BLSPublicKey( const libff::alt_bn128_G2& skey, size_t t = 0, size_t n = 0 );
+    BLSPublicKey( const algebra::G2Point& skey, size_t t = 0, size_t n = 0 );
 
     BLSPublicKey(
         std::shared_ptr< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > > map_pkeys_koefs,
@@ -59,7 +59,7 @@ public:
 
     std::shared_ptr< std::vector< std::string > > toString();
 
-    std::shared_ptr< libff::alt_bn128_G2 > getPublicKey() const;
+    std::shared_ptr< algebra::G2Point > getPublicKey() const;
 
     size_t getRequiredSigners() const { return t; }
 

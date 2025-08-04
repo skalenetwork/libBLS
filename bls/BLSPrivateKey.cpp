@@ -39,8 +39,8 @@ BLSPrivateKey::BLSPrivateKey(
         throw libBLS::ThresholdUtils::IncorrectInput( "Secret key share is empty" );
     }
 
-    privateKey = std::make_shared< libff::alt_bn128_Fr >( _key->c_str() );
-    if ( *privateKey == libff::alt_bn128_Fr::zero() ) {
+    privateKey = std::make_shared< algebra::FrScalar >( _key->c_str() );
+    if ( *privateKey == algebra::FrScalar::zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey(
             "Secret key share is equal to zero or corrupt" );
     }
@@ -60,21 +60,21 @@ BLSPrivateKey::BLSPrivateKey(
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     auto lagrange_koefs = libBLS::ThresholdUtils::LagrangeCoeffs( *koefs, this->requiredSigners );
-    libff::alt_bn128_Fr privateKeyObj( libff::alt_bn128_Fr::zero() );
+    algebra::FrScalar privateKeyObj( algebra::FrScalar::zero() );
     for ( size_t i = 0; i < requiredSigners; ++i ) {
-        libff::alt_bn128_Fr skey = *skeys->at( koefs->at( i ) - 1 )->getPrivateKey();
+        algebra::FrScalar skey = *skeys->at( koefs->at( i ) - 1 )->getPrivateKey();
         privateKeyObj = privateKeyObj + lagrange_koefs.at( i ) * skey;
     }
 
-    if ( privateKeyObj == libff::alt_bn128_Fr::zero() ) {
+    if ( privateKeyObj == algebra::FrScalar::zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey(
             "Secret key share is equal to zero or corrupt" );
     }
 
-    privateKey = std::make_shared< libff::alt_bn128_Fr >( privateKeyObj );
+    privateKey = std::make_shared< algebra::FrScalar >( privateKeyObj );
 }
 
-std::shared_ptr< libff::alt_bn128_Fr > BLSPrivateKey::getPrivateKey() const {
+std::shared_ptr< algebra::FrScalar > BLSPrivateKey::getPrivateKey() const {
     return privateKey;
 }
 

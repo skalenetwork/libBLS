@@ -33,7 +33,7 @@ class BLSSigShare;
 
 class BLSPrivateKeyShare {
 protected:
-    std::shared_ptr< libff::alt_bn128_Fr > privateKey;
+    std::shared_ptr< algebra::FrScalar > privateKey;
 
     size_t requiredSigners;
     size_t totalSigners;
@@ -47,7 +47,7 @@ public:
     std::shared_ptr< BLSSigShare > signWithHelper(
         std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr, size_t _signerIndex );
 
-    BLSPrivateKeyShare( const libff::alt_bn128_Fr&, size_t _requiredSigners, size_t _totalSigners );
+    BLSPrivateKeyShare( const algebra::FrScalar&, size_t _requiredSigners, size_t _totalSigners );
 
     // generate a vector of correct _totalSigners private keys that work together and common public
     // key
@@ -57,7 +57,7 @@ public:
             std::shared_ptr< BLSPublicKey > > >
     generateSampleKeys( size_t _requiredSigners, size_t _totalSigners );
 
-    std::shared_ptr< libff::alt_bn128_Fr > getPrivateKey() const;
+    std::shared_ptr< algebra::FrScalar > getPrivateKey() const;
 
     std::shared_ptr< std::string > toString();
 };
