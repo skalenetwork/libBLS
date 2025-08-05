@@ -81,19 +81,19 @@ std::shared_ptr< BLSSignature > BLSSigShareSet::merge() {
     libBLS::Bls obj = libBLS::Bls( requiredSigners, totalSigners );
 
     std::vector< size_t > participatingNodes;
-    std::vector< libff::alt_bn128_G1 > shares;
+    std::vector< algebra::G1Point > shares;
 
     for ( auto&& item : sigShares ) {
         participatingNodes.push_back( static_cast< uint64_t >( item.first ) );
         shares.push_back( *item.second->getSigShare() );
     }
 
-    std::vector< libff::alt_bn128_Fr > lagrangeCoeffs =
+    std::vector< algebra::FrScalar > lagrangeCoeffs =
         libBLS::ThresholdUtils::LagrangeCoeffs( participatingNodes, requiredSigners );
 
-    libff::alt_bn128_G1 signature = obj.SignatureRecover( shares, lagrangeCoeffs );
+    algebra::G1Point signature = obj.SignatureRecover( shares, lagrangeCoeffs );
 
-    auto sigPtr = std::make_shared< libff::alt_bn128_G1 >( signature );
+    auto sigPtr = std::make_shared< algebra::G1Point >( signature );
 
     std::string hint = sigShares[participatingNodes.at( 0 )]->getHint();
 

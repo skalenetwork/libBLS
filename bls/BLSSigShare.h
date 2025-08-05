@@ -26,9 +26,11 @@
 
 #include <bls/bls.h>
 
+namespace libBLS {
+
 class BLSSigShare {
 private:
-    std::shared_ptr< libff::alt_bn128_G1 > sigShare;
+    std::shared_ptr< algebra::G1Point > sigShare;
 
     std::string hint;
 
@@ -38,14 +40,14 @@ private:
     size_t totalSigners;
 
 public:
-    BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& sigShare, std::string& hint,
+    BLSSigShare( const std::shared_ptr< algebra::G1Point >& sigShare, std::string& hint,
         size_t signerIndex, size_t _requiredSigners, size_t _totalSigners );
 
 
     BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t signerIndex,
         size_t _requiredSigners, size_t _totalSigners );
 
-    std::shared_ptr< libff::alt_bn128_G1 > getSigShare() const;
+    std::shared_ptr< algebra::G1Point > getSigShare() const;
 
     size_t getSignerIndex() const;
 
@@ -56,5 +58,6 @@ public:
     size_t getRequiredSigners() const;
 };
 
+} // namespace libBLS
 
 #endif  // LIBBLS_BLSSIGSHARE_H

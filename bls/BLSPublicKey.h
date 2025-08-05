@@ -28,6 +28,8 @@
 #include <bls/BLSSignature.h>
 #include <bls/bls.h>
 
+namespace libBLS {
+
 class BLSPublicKeyShare;
 
 class BLSPublicKey {
@@ -66,5 +68,6 @@ public:
     size_t getTotalSigners() const { return n; }
 };
 
+} // namespace libBLS
 
 #endif  // LIBBLS_BLSPUBLICKEY_H

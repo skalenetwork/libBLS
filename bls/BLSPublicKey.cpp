@@ -26,6 +26,7 @@
 #include <bls/BLSPublicKeyShare.h>
 #include <tools/utils.h>
 
+namespace libBLS {
 
 BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > pkey_str_vect ) {
     libBLS::ThresholdUtils::initCurve();
@@ -193,19 +194,12 @@ BLSPublicKey::BLSPublicKey(
 }
 
 std::shared_ptr< std::vector< std::string > > BLSPublicKey::toString() {
-    std::vector< std::string > pkey_str_vect;
-
     libffPublicKey->to_affine_coordinates();
-
-    // TODO - use value - impl. specific - need to refactor
-    pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( libffPublicKey->value.X.c0 ) );
-    pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( libffPublicKey->value.X.c1 ) );
-    pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( libffPublicKey->value.Y.c0 ) );
-    pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( libffPublicKey->value.Y.c1 ) );
-
-    return std::make_shared< std::vector< std::string > >( pkey_str_vect );
+    return std::make_shared< std::vector< std::string > >( libffPublicKey->toStringVector( algebra::Base::DEC ) );
 }
 
 std::shared_ptr< algebra::G2Point > BLSPublicKey::getPublicKey() const {
     return libffPublicKey;
 }
+
+} // namespace libBLS

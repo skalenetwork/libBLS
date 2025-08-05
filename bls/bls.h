@@ -32,7 +32,7 @@
 #include <utility>
 #include <vector>
 
-#include "backends/algebra_types.hpp"
+#include "backends/algebra.hpp"
 
 static constexpr size_t BLS_MAX_SIG_LEN = 240;
 

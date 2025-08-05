@@ -26,6 +26,8 @@
 
 #include <bls/bls.h>
 
+namespace libBLS {
+
 class BLSSigShare;
 
 class BLSPublicKeyShare {
@@ -51,5 +53,7 @@ public:
 
     std::shared_ptr< std::vector< std::string > > toString();
 };
+
+}
 
 #endif  // LIBBLS_BLSPUBLICKEYSHARE_H

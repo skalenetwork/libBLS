@@ -28,8 +28,9 @@
 #include <bls/BLSPublicKey.h>
 
 
-class BLSSigShare;
+namespace libBLS {
 
+class BLSSigShare;
 
 class BLSPrivateKeyShare {
 protected:
@@ -62,5 +63,6 @@ public:
     std::shared_ptr< std::string > toString();
 };
 
+} // namespace libBLS
 
 #endif  // LIBBLS_BLSPRIVATEKEYSHARE_H

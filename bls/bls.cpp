@@ -121,6 +121,7 @@ std::pair< algebra::G1Point, std::string > Bls::HashtoG1withHint(
     }
     point.value.Z = libff::alt_bn128_Fq::one();
 
+    // TODO using .value
     return std::make_pair( point, ThresholdUtils::fieldElementToString( counter ) );
 }
 

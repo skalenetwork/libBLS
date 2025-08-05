@@ -28,6 +28,7 @@
 #include <bls/BLSPrivateKeyShare.h>
 #include <bls/bls.h>
 
+namespace libBLS {
 
 class BLSPrivateKey {
 private:
@@ -48,6 +49,8 @@ public:
 
     std::shared_ptr< std::string > toString();
 };
+
+}
 
 
 #endif  // LIBBLS_BLSPRIVATEKEY_H

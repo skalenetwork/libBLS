@@ -24,11 +24,13 @@
 #include <bls/BLSSignature.h>
 #include <tools/utils.h>
 
-std::shared_ptr< libff::alt_bn128_G1 > BLSSignature::getSig() const {
+namespace libBLS {
+
+std::shared_ptr< algebra::G1Point > BLSSignature::getSig() const {
     CHECK( sig );
     return sig;
 }
-BLSSignature::BLSSignature( const std::shared_ptr< libff::alt_bn128_G1 > sig, std::string& _hint,
+BLSSignature::BLSSignature( const std::shared_ptr< algebra::G1Point > sig, std::string& _hint,
     size_t _requiredSigners, size_t _totalSigners )
     : sig( sig ),
       hint( _hint ),
@@ -81,9 +83,9 @@ BLSSignature::BLSSignature(
             }
         }
     }
-    libff::alt_bn128_Fq X( result->at( 0 ).c_str() );
-    libff::alt_bn128_Fq Y( result->at( 1 ).c_str() );
-    sig = std::make_shared< libff::alt_bn128_G1 >( X, Y, libff::alt_bn128_Fq::one() );
+    algebra::FqElement X( result->at( 0 ) );
+    algebra::FqElement Y( result->at( 1 ) );
+    sig = std::make_shared< algebra::G1Point >( X, Y );
     hint = result->at( 2 ) + ":" + result->at( 3 );
 
     if ( !( sig->is_well_formed() ) ) {
@@ -94,8 +96,9 @@ BLSSignature::BLSSignature(
 std::shared_ptr< std::string > BLSSignature::toString() {
     sig->to_affine_coordinates();
     std::string ret = "";
-    ret += libBLS::ThresholdUtils::fieldElementToString( sig->X ) + ':' +
-           libBLS::ThresholdUtils::fieldElementToString( sig->Y ) + ':' + hint;
+    // TODO - need to refactor this - uses .value
+    ret += libBLS::ThresholdUtils::fieldElementToString( sig->getX() ) + ':' +
+           libBLS::ThresholdUtils::fieldElementToString( sig->getY() ) + ':' + hint;
 
     return std::make_shared< std::string >( ret );
 }
@@ -110,3 +113,5 @@ size_t BLSSignature::getTotalSigners() const {
 size_t BLSSignature::getRequiredSigners() const {
     return requiredSigners;
 }
+
+} // namespace libBLS

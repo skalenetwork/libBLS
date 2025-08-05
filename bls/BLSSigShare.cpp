@@ -28,7 +28,9 @@
 #include <stdlib.h>
 #include <string>
 
-std::shared_ptr< libff::alt_bn128_G1 > BLSSigShare::getSigShare() const {
+namespace libBLS {
+
+std::shared_ptr< algebra::G1Point > BLSSigShare::getSigShare() const {
     CHECK( sigShare );
     return sigShare;
 }
@@ -39,8 +41,9 @@ size_t BLSSigShare::getSignerIndex() const {
 std::shared_ptr< std::string > BLSSigShare::toString() {
     sigShare->to_affine_coordinates();
     std::string ret = "";
-    ret += libBLS::ThresholdUtils::fieldElementToString( sigShare->X ) + ':' +
-           libBLS::ThresholdUtils::fieldElementToString( sigShare->Y ) + ':' + hint;
+    // TODO - need to refactor this - uses .value
+    ret += libBLS::ThresholdUtils::fieldElementToString( sigShare->value.X ) + ':' +
+           libBLS::ThresholdUtils::fieldElementToString( sigShare->value.Y ) + ':' + hint;
 
     return std::make_shared< std::string >( ret );
 }
@@ -51,7 +54,10 @@ BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _sign
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
+
+    // TODO - try getting rid of this
     libBLS::ThresholdUtils::initCurve();
+
     if ( _signerIndex == 0 ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Zero signer index" );
     }
@@ -85,17 +91,17 @@ BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _sign
         }
     }
 
-    libff::alt_bn128_Fq X( result->at( 0 ).c_str() );
-    libff::alt_bn128_Fq Y( result->at( 1 ).c_str() );
+    algebra::FqElement X( result->at( 0 ) );
+    algebra::FqElement Y( result->at( 1 ) );
 
-    sigShare = std::make_shared< libff::alt_bn128_G1 >( X, Y, libff::alt_bn128_Fq::one() );
+    sigShare = std::make_shared< algebra::G1Point >( X, Y );
     hint = result->at( 2 ) + ":" + result->at( 3 );
 
     if ( !sigShare->is_well_formed() )
         throw libBLS::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
 }
 
-BLSSigShare::BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& _sigShare,
+BLSSigShare::BLSSigShare( const std::shared_ptr< algebra::G1Point >& _sigShare,
     std::string& _hint, size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
     : sigShare( _sigShare ),
       hint( _hint ),
@@ -134,3 +140,5 @@ size_t BLSSigShare::getRequiredSigners() const {
 std::string BLSSigShare::getHint() const {
     return hint;
 }
+
+} // namespace libBLS

@@ -25,6 +25,7 @@
 #include <bls/bls.h>
 #include <tools/utils.h>
 
+namespace libBLS {
 
 BLSPrivateKey::BLSPrivateKey(
     const std::shared_ptr< std::string >& _key, size_t _requiredSigners, size_t _totalSigners )
@@ -39,7 +40,7 @@ BLSPrivateKey::BLSPrivateKey(
         throw libBLS::ThresholdUtils::IncorrectInput( "Secret key share is empty" );
     }
 
-    privateKey = std::make_shared< algebra::FrScalar >( _key->c_str() );
+    privateKey = std::make_shared< algebra::FrScalar >( *_key );
     if ( *privateKey == algebra::FrScalar::zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey(
             "Secret key share is equal to zero or corrupt" );
@@ -87,3 +88,5 @@ std::shared_ptr< std::string > BLSPrivateKey::toString() {
 
     return key_str;
 }
+
+} // namespace libBLS

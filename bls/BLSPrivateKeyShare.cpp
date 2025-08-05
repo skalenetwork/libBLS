@@ -27,6 +27,7 @@
 
 #include <dkg/dkg.h>
 
+namespace libBLS {
 
 BLSPrivateKeyShare::BLSPrivateKeyShare(
     const std::string& _key, size_t _requiredSigners, size_t _totalSigners )
@@ -77,7 +78,7 @@ std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::sign(
 
     std::pair< algebra::G1Point, std::string > hash_with_hint =
         obj->HashtoG1withHint( hash_byte_arr );
-    std::string hint = libBLS::ThresholdUtils::fieldElementToString( hash_with_hint.first.value.Y ) + // TODO - uses .value - impl. specific - need to refactor
+    std::string hint = libBLS::ThresholdUtils::fieldElementToString( hash_with_hint.first.getY() ) +
                        ":" + hash_with_hint.second;
 
     auto s =
@@ -107,7 +108,7 @@ std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::signWithHelper(
 
     ss->to_affine_coordinates();
 
-    std::string hint = libBLS::ThresholdUtils::fieldElementToString( hash_with_hint.first.value.Y ) + // TODO - uses .value - impl. specific - need to refactor
+    std::string hint = libBLS::ThresholdUtils::fieldElementToString( hash_with_hint.first.getY() ) + // TODO need to refactor - should call toString method
                        ":" + hash_with_hint.second;
 
     auto s =
@@ -168,3 +169,5 @@ std::shared_ptr< std::string > BLSPrivateKeyShare::toString() {
         throw libBLS::ThresholdUtils::IncorrectInput( "Secret key share string is empty" );
     return key_str;
 }
+
+} // namespace libBLS

@@ -26,6 +26,8 @@
 #include <bls/bls.h>
 #include <tools/utils.h>
 
+namespace libBLS {
+
 BLSPublicKeyShare::BLSPublicKeyShare(
     const std::shared_ptr< std::vector< std::string > > pkey_str_vect, size_t _requiredSigners,
     size_t _totalSigners )
@@ -36,15 +38,7 @@ BLSPublicKeyShare::BLSPublicKeyShare(
 
     libBLS::ThresholdUtils::initCurve(); // TODO - maybe we can get rid of this
 
-    publicKey = std::make_shared< algebra::G2Point >();
-
-    // TODO uses value - impl. specific - need to refactor
-    publicKey->value.X.c0 = libff::alt_bn128_Fq( pkey_str_vect->at( 0 ).c_str() );
-    publicKey->value.X.c1 = libff::alt_bn128_Fq( pkey_str_vect->at( 1 ).c_str() );
-    publicKey->value.Y.c0 = libff::alt_bn128_Fq( pkey_str_vect->at( 2 ).c_str() );
-    publicKey->value.Y.c1 = libff::alt_bn128_Fq( pkey_str_vect->at( 3 ).c_str() );
-    publicKey->value.Z.c0 = libff::alt_bn128_Fq::one();
-    publicKey->value.Z.c1 = libff::alt_bn128_Fq::zero();
+    publicKey = std::make_shared< algebra::G2Point >( pkey_str_vect );
 
     if ( publicKey->is_zero() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Zero BLS public Key share" );
@@ -71,17 +65,7 @@ std::shared_ptr< algebra::G2Point > BLSPublicKeyShare::getPublicKey() const {
 }
 
 std::shared_ptr< std::vector< std::string > > BLSPublicKeyShare::toString() {
-    std::vector< std::string > pkey_str_vect;
-
-    publicKey->to_affine_coordinates();
-
-    // TODO - uses value - impl. specific - need to refactor
-    pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( publicKey->value.X.c0 ) );
-    pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( publicKey->value.X.c1 ) );
-    pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( publicKey->value.Y.c0 ) );
-    pkey_str_vect.push_back( libBLS::ThresholdUtils::fieldElementToString( publicKey->value.Y.c1 ) );
-
-    return std::make_shared< std::vector< std::string > >( pkey_str_vect );
+    return std::make_shared< std::vector< std::string > >( publicKey->toStringVector( libBLS::Base::DEC ) );
 }
 
 bool BLSPublicKeyShare::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
@@ -136,4 +120,6 @@ bool BLSPublicKeyShare::VerifySigWithHelper( std::shared_ptr< std::array< uint8_
 
     return algebra::pairing(*sign_ptr->getSigShare(), algebra::G2Point::one() ) ==
              algebra::pairing( hash, *publicKey );
+}
+
 }
