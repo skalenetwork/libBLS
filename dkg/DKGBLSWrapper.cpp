@@ -35,8 +35,8 @@ DKGBLSWrapper::DKGBLSWrapper( size_t _requiredSigners, size_t _totalSigners )
     dkg_secret_ptr = std::make_shared< DKGBLSSecret >( temp );
 }
 
-bool DKGBLSWrapper::VerifyDKGShare( size_t _signerIndex, const libff::alt_bn128_Fr& _share,
-    std::shared_ptr< std::vector< libff::alt_bn128_G2 > > _verification_vector ) {
+bool DKGBLSWrapper::VerifyDKGShare( size_t _signerIndex, const algebra::FrScalar& _share,
+    std::shared_ptr< std::vector< algebra::G2Point > > _verification_vector ) {
     if ( _share.is_zero() )
         throw libBLS::ThresholdUtils::ZeroSecretKey( " Zero secret share" );
     if ( _verification_vector == nullptr ) {
@@ -49,24 +49,24 @@ bool DKGBLSWrapper::VerifyDKGShare( size_t _signerIndex, const libff::alt_bn128_
 }
 
 void DKGBLSWrapper::setDKGSecret(
-    std::shared_ptr< std::vector< libff::alt_bn128_Fr > > _poly_ptr ) {
+    std::shared_ptr< std::vector< algebra::FrScalar > > _poly_ptr ) {
     if ( _poly_ptr == nullptr )
         throw libBLS::ThresholdUtils::IncorrectInput( "Null polynomial ptr" );
     dkg_secret_ptr->setPoly( *_poly_ptr );
 }
 
-std::shared_ptr< std::vector< libff::alt_bn128_Fr > > DKGBLSWrapper::createDKGSecretShares() {
-    return std::make_shared< std::vector< libff::alt_bn128_Fr > >(
+std::shared_ptr< std::vector< algebra::FrScalar > > DKGBLSWrapper::createDKGSecretShares() {
+    return std::make_shared< std::vector< algebra::FrScalar > >(
         dkg_secret_ptr->getDKGBLSSecretShares() );
 }
 
-std::shared_ptr< std::vector< libff::alt_bn128_G2 > > DKGBLSWrapper::createDKGPublicShares() {
-    return std::make_shared< std::vector< libff::alt_bn128_G2 > >(
+std::shared_ptr< std::vector< algebra::G2Point > > DKGBLSWrapper::createDKGPublicShares() {
+    return std::make_shared< std::vector< algebra::G2Point > >(
         dkg_secret_ptr->getDKGBLSPublicShares() );
 }
 
 BLSPrivateKeyShare DKGBLSWrapper::CreateBLSPrivateKeyShare(
-    std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr ) {
+    std::shared_ptr< std::vector< algebra::FrScalar > > secret_shares_ptr ) {
     if ( secret_shares_ptr == nullptr )
         throw libBLS::ThresholdUtils::IncorrectInput( "Null secret_shares_ptr " );
 
@@ -75,11 +75,11 @@ BLSPrivateKeyShare DKGBLSWrapper::CreateBLSPrivateKeyShare(
 
     libBLS::Dkg dkg( requiredSigners, totalSigners );
 
-    libff::alt_bn128_Fr skey_share = dkg.SecretKeyShareCreate( *secret_shares_ptr );
+    algebra::FrScalar skey_share = dkg.SecretKeyShareCreate( *secret_shares_ptr );
 
     return BLSPrivateKeyShare( skey_share, requiredSigners, totalSigners );
 }
 
-libff::alt_bn128_Fr DKGBLSWrapper::getValueAt0() {
+algebra::FrScalar DKGBLSWrapper::getValueAt0() {
     return dkg_secret_ptr->getValueAt0();
 }

@@ -25,8 +25,6 @@
 #include <tools/utils.h>
 
 #include <boost/multiprecision/cpp_int.hpp>
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-#include <libff/algebra/exponentiation/exponentiation.hpp>
 
 namespace libBLS {
 
@@ -124,7 +122,7 @@ bool Dkg::Verification( size_t idx, algebra::FrScalar share,
         }
 
         // TODO - can save the power value in a variable from prev. iteration to avoid recalculating it
-        value = value + power( algebra::FrScalar( idx + 1 ), i ) * verification_vector[i];
+        value = value + algebra::power( algebra::FrScalar( idx + 1 ), i ) * verification_vector[i];
     }
 
     return ( value == share * algebra::G2Point::one() );

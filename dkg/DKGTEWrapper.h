@@ -39,20 +39,20 @@ private:
 public:
     DKGTEWrapper( size_t _requiredSigners, size_t _totalSigners );
 
-    bool VerifyDKGShare( size_t signerIndex, const libff::alt_bn128_Fr& share,
-        std::shared_ptr< std::vector< libff::alt_bn128_G2 > > verification_vector );
+    bool VerifyDKGShare( size_t signerIndex, const algebra::FrScalar& share,
+        std::shared_ptr< std::vector< algebra::G2Point > > verification_vector );
 
-    void setDKGSecret( std::shared_ptr< std::vector< libff::alt_bn128_Fr > > _poly_ptr );
+    void setDKGSecret( std::shared_ptr< std::vector< algebra::FrScalar > > _poly_ptr );
 
-    std::shared_ptr< std::vector< libff::alt_bn128_Fr > > createDKGSecretShares();
+    std::shared_ptr< std::vector< algebra::FrScalar > > createDKGSecretShares();
 
-    std::shared_ptr< std::vector< libff::alt_bn128_G2 > > createDKGPublicShares();
+    std::shared_ptr< std::vector< algebra::G2Point > > createDKGPublicShares();
 
     libBLS::TEPrivateKeyShare CreateTEPrivateKeyShare( size_t signerIndex_,
-        std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr );
+        std::shared_ptr< std::vector< algebra::FrScalar > > secret_shares_ptr );
 
     static libBLS::TEPublicKey CreateTEPublicKey(
-        std::shared_ptr< std::vector< std::vector< libff::alt_bn128_G2 > > > public_shares_all,
+        std::shared_ptr< std::vector< std::vector< algebra::G2Point > > > public_shares_all,
         size_t _requiredSigners, size_t _totalSigners );
 };
 

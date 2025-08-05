@@ -37,7 +37,7 @@ DKGTESecret::DKGTESecret( size_t _requiredSigners, size_t _totalSigners )
     poly = dkg_te.GeneratePolynomial();
 }
 
-void DKGTESecret::setPoly( std::vector< libff::alt_bn128_Fr >& _poly ) {
+void DKGTESecret::setPoly( std::vector< algebra::FrScalar >& _poly ) {
     if ( _poly.size() != requiredSigners ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Wrong size of vector" );
     }
@@ -45,12 +45,12 @@ void DKGTESecret::setPoly( std::vector< libff::alt_bn128_Fr >& _poly ) {
     poly = _poly;
 }
 
-std::vector< libff::alt_bn128_Fr > DKGTESecret::getDKGTESecretShares() {
+std::vector< algebra::FrScalar > DKGTESecret::getDKGTESecretShares() {
     libBLS::Dkg dkg_te( requiredSigners, totalSigners );
     return dkg_te.SecretKeyContribution( poly );
 }
 
-std::vector< libff::alt_bn128_G2 > DKGTESecret::getDKGTEPublicShares() {
+std::vector< algebra::G2Point > DKGTESecret::getDKGTEPublicShares() {
     libBLS::Dkg dkg_te( requiredSigners, totalSigners );
     return dkg_te.VerificationVector( poly );
 }

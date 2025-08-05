@@ -26,8 +26,7 @@
 
 #include <vector>
 
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-#include <libff/algebra/fields/fp.hpp>
+#include "backends/algebra.hpp"
 
 namespace libBLS {
 

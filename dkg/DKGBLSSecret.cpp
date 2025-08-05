@@ -34,23 +34,23 @@ DKGBLSSecret::DKGBLSSecret( size_t _requiredSigners, size_t _totalSigners )
     poly = dkg.GeneratePolynomial();
 }
 
-void DKGBLSSecret::setPoly( std::vector< libff::alt_bn128_Fr > _poly ) {
+void DKGBLSSecret::setPoly( std::vector< algebra::FrScalar > _poly ) {
     if ( _poly.size() != requiredSigners ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Wrong size of vector" );
     }
     poly = _poly;
 }
 
-std::vector< libff::alt_bn128_Fr > DKGBLSSecret::getDKGBLSSecretShares() {
+std::vector< algebra::FrScalar > DKGBLSSecret::getDKGBLSSecretShares() {
     libBLS::Dkg dkg( requiredSigners, totalSigners );
     return dkg.SecretKeyContribution( poly );
 }
 
-std::vector< libff::alt_bn128_G2 > DKGBLSSecret::getDKGBLSPublicShares() {
+std::vector< algebra::G2Point > DKGBLSSecret::getDKGBLSPublicShares() {
     libBLS::Dkg dkg( requiredSigners, totalSigners );
     return dkg.VerificationVector( poly );
 }
 
-libff::alt_bn128_Fr DKGBLSSecret::getValueAt0() {
+algebra::FrScalar DKGBLSSecret::getValueAt0() {
     return poly.at( 0 );
 }

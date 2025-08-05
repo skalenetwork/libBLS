@@ -35,8 +35,8 @@ DKGTEWrapper::DKGTEWrapper( size_t _requiredSigners, size_t _totalSigners )
     dkg_secret_ptr = std::make_shared< DKGTESecret >( temp );
 }
 
-bool DKGTEWrapper::VerifyDKGShare( size_t _signerIndex, const libff::alt_bn128_Fr& _share,
-    std::shared_ptr< std::vector< libff::alt_bn128_G2 > > _verification_vector ) {
+bool DKGTEWrapper::VerifyDKGShare( size_t _signerIndex, const algebra::FrScalar& _share,
+    std::shared_ptr< std::vector< algebra::G2Point > > _verification_vector ) {
     if ( _share.is_zero() )
         throw libBLS::ThresholdUtils::ZeroSecretKey( "Zero secret share" );
     if ( _verification_vector == nullptr )
@@ -47,25 +47,25 @@ bool DKGTEWrapper::VerifyDKGShare( size_t _signerIndex, const libff::alt_bn128_F
     return dkg_te.Verification( _signerIndex, _share, *_verification_vector );
 }
 
-void DKGTEWrapper::setDKGSecret( std::shared_ptr< std::vector< libff::alt_bn128_Fr > > _poly_ptr ) {
+void DKGTEWrapper::setDKGSecret( std::shared_ptr< std::vector< algebra::FrScalar > > _poly_ptr ) {
     if ( _poly_ptr == nullptr )
         throw libBLS::ThresholdUtils::IncorrectInput( "Null polynomial ptr" );
 
     dkg_secret_ptr->setPoly( *_poly_ptr );
 }
 
-std::shared_ptr< std::vector< libff::alt_bn128_Fr > > DKGTEWrapper::createDKGSecretShares() {
-    return std::make_shared< std::vector< libff::alt_bn128_Fr > >(
+std::shared_ptr< std::vector< algebra::FrScalar > > DKGTEWrapper::createDKGSecretShares() {
+    return std::make_shared< std::vector< algebra::FrScalar > >(
         dkg_secret_ptr->getDKGTESecretShares() );
 }
 
-std::shared_ptr< std::vector< libff::alt_bn128_G2 > > DKGTEWrapper::createDKGPublicShares() {
-    return std::make_shared< std::vector< libff::alt_bn128_G2 > >(
+std::shared_ptr< std::vector< algebra::G2Point > > DKGTEWrapper::createDKGPublicShares() {
+    return std::make_shared< std::vector< algebra::G2Point > >(
         dkg_secret_ptr->getDKGTEPublicShares() );
 }
 
 libBLS::TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare(
-    size_t signerIndex_, std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr ) {
+    size_t signerIndex_, std::shared_ptr< std::vector< algebra::FrScalar > > secret_shares_ptr ) {
     if ( secret_shares_ptr == nullptr )
         throw libBLS::ThresholdUtils::IncorrectInput( "Null secret_shares_ptr " );
     if ( secret_shares_ptr->size() != totalSigners )
@@ -73,20 +73,20 @@ libBLS::TEPrivateKeyShare DKGTEWrapper::CreateTEPrivateKeyShare(
 
     libBLS::Dkg dkg_te( requiredSigners, totalSigners );
 
-    libff::alt_bn128_Fr skey_share = dkg_te.SecretKeyShareCreate( *secret_shares_ptr );
+    algebra::FrScalar skey_share = dkg_te.SecretKeyShareCreate( *secret_shares_ptr );
 
     return libBLS::TEPrivateKeyShare( skey_share, signerIndex_, requiredSigners, totalSigners );
 }
 
 libBLS::TEPublicKey DKGTEWrapper::CreateTEPublicKey(
-    std::shared_ptr< std::vector< std::vector< libff::alt_bn128_G2 > > > public_shares_all,
+    std::shared_ptr< std::vector< std::vector< algebra::G2Point > > > public_shares_all,
     size_t _requiredSigners, size_t _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( public_shares_all == nullptr )
         throw libBLS::ThresholdUtils::IncorrectInput( "Null public shares all" );
 
-    libff::alt_bn128_G2 public_key = libff::alt_bn128_G2::zero();
+    algebra::G2Point public_key = algebra::G2Point::zero();
 
     for ( size_t i = 0; i < _totalSigners; i++ ) {
         public_key = public_key + public_shares_all->at( i ).at( 0 );
