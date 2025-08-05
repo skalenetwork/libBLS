@@ -58,7 +58,7 @@ TEDecryptionShare::operator std::pair< algebra::G2Point, size_t >() const {
 }
 
 std::string TEDecryptionShare::toString() const {
-    std::vector< std::string > str = ThresholdUtils::G2ToString( share, BASE_HEXA );
+    std::vector< std::string > str = share.toStringVector( Base::HEXA );
     std::ostringstream oss;
     for ( size_t i = 0; i < str.size(); ++i ) {
         oss << str[i];

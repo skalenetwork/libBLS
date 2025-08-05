@@ -34,8 +34,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include "AesGcmCipher.h"
 #include <threshold_encryption/TEBase.h>
 #include <tools/utils.h>
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-#include "backends/algebra_types.hpp"
+#include "backends/algebra.hpp"
 
 
 namespace libBLS {
@@ -145,7 +144,7 @@ public:
         // validate U
         ThresholdUtils::validateG2( U );
 
-        auto u_splitted = ThresholdUtils::G2ToString( U, BASE_HEXA );
+        auto u_splitted = U.toStringVector( Base::HEXA );
 
         // convert to string
         std::string public_decryption_value;

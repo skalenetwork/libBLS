@@ -51,7 +51,7 @@ TE::~TE() {}
 
 std::string TE::Hash(
     const algebra::G2Point& Y, std::string ( *hash_func )( const std::string& str ) ) {
-    auto vectorCoordinates = ThresholdUtils::G2ToString( Y );
+    auto vectorCoordinates = Y.toStringVector( Base::DEC );
 
     std::string tmp = "";
     for ( const auto& coord : vectorCoordinates ) {
@@ -67,7 +67,7 @@ algebra::G1Point TE::HashToGroup( const algebra::G2Point& U, const std::string& 
     std::string ( *hash_func )( const std::string& str ) ) {
     // assumed that U lies in G2
 
-    auto U_str = ThresholdUtils::G2ToString( U );
+    auto U_str = U.toStringVector( Base::DEC );
 
     const std::string sha256hex = hash_func( U_str[0] + U_str[1] + U_str[2] + U_str[3] + V );
 
