@@ -31,15 +31,12 @@
 #include <string>
 #include <vector>
 
-#include "backends/algebra_types.hpp"
+#include "backends/algebra.hpp"
 
 static constexpr size_t BLS_MAX_COMPONENT_LEN = 77;
 
 namespace libBLS {
 
-constexpr size_t MAX_FIELD_ELEMENT_SIZE_BYTES = 32;
-// 4 x 32 bytes
-constexpr size_t G2_SIZE_BYTES = 128;
 // 2 x 32 bytes
 constexpr size_t G1_SIZE_BYTES = 64;
 
@@ -121,20 +118,7 @@ public:
     static std::string fieldElementToString( const T& field_elem, int base = BASE_DEC );
 
     template < class T >
-    static std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > fieldElementToBytesArray(
-        const T& field_elem );
-
-    template < class T >
-    static std::vector< uint8_t > fieldElementToBytes( const T& field_elem );
-
-    template < class T >
-    static T bytesToFieldElement(
-        const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& byte_array );
-
-    template < class T >
     static T bytesToFieldElement( const std::vector< uint8_t >& byte_array );
-
-    static std::vector< std::string > G2ToString( algebra::G2Point elem, int base = BASE_DEC );
 
     static std::vector< uint8_t > G2ToBytes( algebra::G2Point elem );
 
@@ -182,6 +166,24 @@ private:
 
 
 template < size_t N >
+std::array< uint8_t, N > hexCStringToBytesArray( const char* hexStr ) {
+    size_t characterCountNeeded = N * 2;
+    if ( validateHexCString( hexStr ) < characterCountNeeded ) {
+        throw IncorrectInput( "Hex string length must be at least 64 characters." );
+    }
+
+    std::array< uint8_t, N > bytes;
+
+    // Convert hex string to byte array
+    for ( size_t i = 0; i < characterCountNeeded; i += 2 ) {
+        bytes[i / 2] = ( std::stoi( std::string( hexStr + i, 2 ), nullptr, 16 ) );
+    }
+
+    return bytes;
+}
+
+
+template < size_t N >
 std::array< uint8_t, N > ThresholdUtils::hexCStringToBytesArray( const char* hexStr ) {
     size_t characterCountNeeded = N * 2;
     if ( validateHexCString( hexStr ) < characterCountNeeded ) {
@@ -203,7 +205,8 @@ template < class T >
 std::string ThresholdUtils::fieldElementToString( const T& field_elem, int base ) {
     mpz_class t;
 
-    field_elem.as_bigint().to_mpz( t.get_mpz_t() );
+    // TODO - refactor this - uses .value
+    field_elem.value.as_bigint().to_mpz( t.get_mpz_t() );
 
     std::string output = t.get_str( base );
 
@@ -215,49 +218,6 @@ std::string ThresholdUtils::fieldElementToString( const T& field_elem, int base 
     }
 
     return output;
-}
-
-template < class T >
-std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > ThresholdUtils::fieldElementToBytesArray(
-    const T& field_elem ) {
-    mpz_class t;
-    field_elem.as_bigint().to_mpz( t.get_mpz_t() );
-
-    // Compute byte count (at least 1 byte)
-    size_t bit_len = mpz_sizeinbase( t.get_mpz_t(), 2 );
-    size_t byte_count = std::max< size_t >( 1, ( bit_len + 7 ) / 8 );
-
-    // Prepare output array (zero-initialized)
-    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > byte_array = {};
-
-    // Export into the least-significant end of the buffer
-    mpz_export( byte_array.data() + ( MAX_FIELD_ELEMENT_SIZE_BYTES - byte_count ), nullptr, 1, 1, 0,
-        0, t.get_mpz_t() );
-
-    return byte_array;
-}
-
-template < class T >
-std::vector< uint8_t > ThresholdUtils::fieldElementToBytes( const T& field_elem ) {
-    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > bytes =
-        fieldElementToBytesArray( field_elem );
-    std::vector< uint8_t > bytesVec( bytes.begin(), bytes.end() );
-    return bytesVec;
-}
-
-// Convert a 32-byte array back to a algebra::FqElement field element
-template < class T >
-T ThresholdUtils::bytesToFieldElement(
-    const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& byte_array ) {
-    mpz_class t;
-
-    // Import the byte array into the mpz_t (in little-endian order)
-    mpz_import( t.get_mpz_t(), byte_array.size(), 1, 1, 0, 0, byte_array.data() );
-
-    // Convert the mpz_t back to a algebra::FqElement field element
-    T field_elem( t.get_mpz_t() );
-
-    return field_elem;
 }
 
 // Converts the first 32 bytes from the vector into a field element
@@ -275,7 +235,7 @@ T ThresholdUtils::bytesToFieldElement( const std::vector< uint8_t >& byte_array 
 
 template < class T >
 bool ThresholdUtils::ValidateKey( const T& point ) {
-    return point.is_well_formed() && T::order() * point == T::zero();
+    return point.is_well_formed() && point.is_in_group();
 }
 
 }  // namespace libBLS

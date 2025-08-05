@@ -70,45 +70,6 @@ void ThresholdUtils::checkSigners( size_t _requiredSigners, size_t _totalSigners
     }
 }
 
-std::vector< std::string > ThresholdUtils::G2ToString( algebra::G2Point elem, int base ) {
-    elem.to_affine_coordinates();
-    return { fieldElementToString( elem.value.X.c0, base ), fieldElementToString( elem.value.X.c1, base ),
-        fieldElementToString( elem.value.Y.c0, base ), fieldElementToString( elem.value.Y.c1, base ) };
-}
-
-std::array< uint8_t, G2_SIZE_BYTES > ThresholdUtils::G2ToBytesArray( algebra::G2Point elem ) {
-    std::array< uint8_t, G2_SIZE_BYTES > G2Bytes;
-
-    elem.to_affine_coordinates();
-    uint8_t* dest = G2Bytes.data();
-
-    // Get x.c0 bytes
-    auto x_c0_bytes = fieldElementToBytes( elem.value.X.c0 );
-    std::memcpy( dest, x_c0_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
-    dest += MAX_FIELD_ELEMENT_SIZE_BYTES;
-
-    // Get x.c1 bytes
-    auto x_c1_bytes = fieldElementToBytes( elem.value.X.c1 );
-    std::memcpy( dest, x_c1_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
-    dest += MAX_FIELD_ELEMENT_SIZE_BYTES;
-
-    // Get y.c0 bytes
-    auto y_c0_bytes = fieldElementToBytes( elem.value.Y.c0 );
-    std::memcpy( dest, y_c0_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
-    dest += MAX_FIELD_ELEMENT_SIZE_BYTES;
-
-    // Get y.c1 bytes
-    auto y_c1_bytes = fieldElementToBytes( elem.value.Y.c1 );
-    std::memcpy( dest, y_c1_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
-
-    return G2Bytes;
-}
-
-std::vector< uint8_t > ThresholdUtils::G2ToBytes( algebra::G2Point elem ) {
-    std::array< uint8_t, G2_SIZE_BYTES > G2Bytes = G2ToBytesArray( elem );
-    return std::vector< uint8_t >( G2Bytes.begin(), G2Bytes.end() );
-}
-
 algebra::G2Point ThresholdUtils::bytesToG2( std::array< uint8_t, G2_SIZE_BYTES > bytes ) {
     std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > currentField;
 
@@ -187,7 +148,6 @@ algebra::G1Point ThresholdUtils::bytesToG1( std::array< uint8_t, G1_SIZE_BYTES >
 
     return ret;
 }
-
 
 std::string ThresholdUtils::convertHexToDec( const std::string& hex_str ) {
     try {
@@ -513,7 +473,7 @@ void ThresholdUtils::validateG2( const algebra::G2Point& point ) {
     if ( !point.is_well_formed() ) {
         throw IncorrectInput( "Point is not well formed" );
     }
-    if ( !point.is_in_subgroup() ) {
+    if ( !point.is_in_group() ) {
         throw IncorrectInput( "Point is not on the group" );
     }
 }
