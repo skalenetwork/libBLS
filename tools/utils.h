@@ -171,6 +171,9 @@ public:
     template < class T >
     static bool ValidateKey( const T& point );
 
+    template < class T >
+    static void validatePointWithException( const T& point );
+
 private:
     /**
      * @brief Helper function that validates input char*
@@ -272,10 +275,22 @@ T ThresholdUtils::bytesToFieldElement( const std::vector< uint8_t >& byte_array 
     return bytesToFieldElement< T >( bytes );
 }
 
-
 template < class T >
 bool ThresholdUtils::ValidateKey( const T& point ) {
     return point.is_well_formed() && T::order() * point == T::zero();
+}
+
+template < class T >
+void ThresholdUtils::validatePointWithException( const T& point ) {
+    if ( point.is_zero() ) {
+        throw IncorrectInput( "Point is zero" );
+    }
+    if ( !point.is_well_formed() ) {
+        throw IncorrectInput( "Point is not well formed" );
+    }
+    if ( T::order() * point != T::zero() ) {
+        throw IncorrectInput( "Point is not on the group" );
+    }
 }
 
 }  // namespace libBLS

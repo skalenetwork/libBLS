@@ -169,6 +169,7 @@ jobs:
           ./bls_test
           ./threshold_encryption/te_unit_test
           ./threshold_encryption/te_test
+          ./threshold_encryption/te_encrypt_message
           ./dkg_attack
           ./threshold_encryption/te_sample_sgx
       - name: Create lcov report

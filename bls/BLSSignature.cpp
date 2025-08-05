@@ -92,7 +92,8 @@ BLSSignature::BLSSignature(
 }
 
 std::shared_ptr< std::string > BLSSignature::toString() {
-    sig->to_affine_coordinates();
+    if ( !sig->is_special() )
+        sig->to_affine_coordinates();
     std::string ret = "";
     ret += libBLS::ThresholdUtils::fieldElementToString( sig->X ) + ':' +
            libBLS::ThresholdUtils::fieldElementToString( sig->Y ) + ':' + hint;

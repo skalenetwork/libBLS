@@ -28,17 +28,20 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <threshold_encryption.h>
 #include <tools/utils.h>
 #include <fstream>
+#include <iostream>
 
-int main() {
-    std::ifstream encryptedDataFile, secretKeyFile;
-    encryptedDataFile.open( "encrypted_data.txt" );
-    secretKeyFile.open( "secret_key.txt" );
+int main( int argc, char* argv[] ) {
+    if ( argc != 5 ) {
+        std::cerr << "Usage: " << argv[0]
+                  << " <encrypted_data> <secret_key> <expected_message> <key_index_to_keep>"
+                  << std::endl;
+        return 1;
+    }
 
-    std::string encryptedData;
-    encryptedDataFile >> encryptedData;
-
-    std::string secretKey;
-    secretKeyFile >> secretKey;
+    std::string encryptedData = argv[1];
+    std::string secretKey = argv[2];
+    std::string expectedMessage = argv[3];
+    size_t keyIndexToKeep = std::stoul( argv[4] );
 
     libBLS::ThresholdUtils::initCurve();
 
@@ -46,7 +49,11 @@ int main() {
 
     auto ciphertext = libBLS::Ciphertext::fromBytes( encryptedDataBytes );
 
-    auto aesKeyEncrypted = ciphertext.key;
+    if ( ciphertext.getKeys().size() == 2 )
+        ciphertext.keepKey( keyIndexToKeep );
+
+    libBLS::CipheredKey aesKeyEncrypted = ciphertext.getTargetKey();
+
     auto encryptedMessage = ciphertext.getData();
 
     libBLS::ThresholdEncryption::validateEncryption( aesKeyEncrypted );
@@ -76,12 +83,7 @@ int main() {
 
     auto plaintext = libBLS::ThresholdUtils::bytesToHexString( decryptedMessageBytes );
 
-    std::ifstream messageFile;
-    messageFile.open( "message.txt" );
-    std::string message;
-    messageFile >> message;
-
-    assert( message == plaintext );
+    assert( expectedMessage == plaintext );
 
     return 0;
 }
