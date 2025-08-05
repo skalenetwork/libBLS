@@ -2,11 +2,13 @@
 
 Threshold encryption (TE) is a form of public key encryption in which the decryption key is distributed across multiple parties. A message can only be decrypted if a threshold number of parties collaborate. This technique ensures both **confidentiality** and **fault tolerance** in cryptographic systems, especially in distributed environments.
 
-This document starts by explaining the **encryption** phase of the threshold encryption process, focusing on the generation of a *CipheredKey* object from a message, a public key, and a random scalar.
+This document starts by explaining the **encryption** phase of the threshold encryption process, focusing on the generation of a `CipheredKey` object from a message, a public key, and a random scalar.
 
 Then we explain the **decryption** process in order to retrieve the original plaintext.
 
 Finally we explain how **validation** happens in the different stages of the encryption-decryption process such that any node can validate the correctness of the data it is using for the threshold encryption process.
+
+> **Note:** This process assumes the [DKG](../distributed-key-generation/dkg.md) procedure was already executed, and each node is already in posession of its `PrivateKeyShare` as well as its `PublicKeyShare`.
 
 ---
 
@@ -87,6 +89,8 @@ This tuple forms the encrypted representation of the message `m`. Only a valid q
 
 # 2. Decryption
 
+The main goal of the decryption process is to **discover the secret used to encrypt the original plaintext** - `r * Y`. If we discover this value, we can run `G( r * Y)` and `xor` it aganinst the ciphertext to recover the original plaintext.
+ 
 The following diagram (**Diagram 2**) shows the communication process to be able to decipher the ciphertext, used as reference for the following 2 subsections:
 
 <img src="../../diagrams/te-decryption.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
