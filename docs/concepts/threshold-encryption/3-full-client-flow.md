@@ -6,7 +6,7 @@ This document does not cover the details of encryption / decryption. These can b
 
 ---
 
-<img src="../../diagrams/full-client-flow.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
+<img src="../../diagrams/threshold-encryption/full-client-flow.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
 
 <br>
 
@@ -91,7 +91,7 @@ Only one key block (`K1` or `K2`) remains at this stage, depending on which comm
 At this stage, the decryption is started. Each node first computes one decryption share and shares with all other nodes.
 **Diagram 2** below shows a broader view of the encryption-decryption process.
 
-<img src="../../diagrams/simplified-process-overview.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
+<img src="../../diagrams/threshold-encryption/simplified-process-overview.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
 
 At this stage, we have already gone through the `Ciphering` part on the left of the diagram, and we are exactly at the middle.
 

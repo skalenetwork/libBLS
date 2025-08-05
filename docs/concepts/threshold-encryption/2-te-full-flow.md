@@ -16,7 +16,7 @@ The process is designed to:
 
 ## Overview of the Process
 
-<img src="../../diagrams/te-full-flow.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
+<img src="../../diagrams/threshold-encryption/te-full-flow.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
 
 <br>
 <br>
@@ -49,7 +49,9 @@ The message `T` is concatenated with the random number `r`, forming `T || r`. Th
 
 This combined input is encrypted using AES in GCM mode:
 
-\( C = GCM_m(T || r)  \)
+``` 
+C = GCM_m(T || r)
+```
 
 
 Where:
@@ -65,7 +67,9 @@ This step is performed for efficiency, as symmetric encryption is significantly 
 
 The AES key `m` is encrypted using threshold encryption with public key `Y₁` and random number `r`:
 
-\( K_1 = TE(m, r, Y_1) \)
+```
+K_1 = TE(m, r, Y_1)
+```
 
 
 Where:
@@ -86,7 +90,9 @@ The final ciphertext consists of:
 
 This is serialized as:
 
-\( Ciphertext = [Keys Size] || K₁ || C \)
+```
+Ciphertext = [Keys Size] || K₁ || C
+```
 
 The diagram reflects this with the final output structure shown on the right-hand side.
 
@@ -112,13 +118,18 @@ This will still result in different `CipheredKey` struct outputs, which will the
 The following diagram shows the entire process using 2 keys, and also depicts the TE process in the bottom half, for ease of reference:
 
 
-<img src="../../diagrams/te-full-flow-full.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
+<img src="../../diagrams/threshold-encryption/te-full-flow-full.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
 
 <br>
 
 ---
 
 # 2. Decryption (soon)
+
+Next we explain the decryption process without devling into the details. If you need to know the details on how exactly shares are merged [read this](./1-threshold-encryption.md).
+
+
+
 
 ---
 
