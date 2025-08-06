@@ -89,17 +89,6 @@ public:
 
     static void checkSigners( size_t _requiredSigners, size_t _totalSigners );
 
-    static std::vector< algebra::FrScalar > LagrangeCoeffs(
-        const std::vector< size_t >& idx, size_t t );
-
-    static algebra::FqElement HashToFq(
-        std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
-
-    static algebra::G1Point HashtoG1(
-        std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
-
-    static algebra::G1Point HashtoG1( const std::string& message );
-
     static bool isStringNumber( const std::string& str );
 
     static int char2int( char _input );
@@ -108,33 +97,9 @@ public:
 
     static bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin );
 
-    static std::pair< algebra::FqElement, algebra::FqElement > ParseHint(
-        const std::string& hint );
-
     static std::shared_ptr< std::vector< std::string > > SplitString(
         const std::shared_ptr< std::string >, const std::string& delim );
 
-    template < class T >
-    static std::string fieldElementToString( const T& field_elem, int base = BASE_DEC );
-
-    template < class T >
-    static T bytesToFieldElement( const std::vector< uint8_t >& byte_array );
-
-    static std::vector< uint8_t > G2ToBytes( algebra::G2Point elem );
-
-    static std::array< uint8_t, G2_SIZE_BYTES > G2ToBytesArray( algebra::G2Point elem );
-
-    static std::array< uint8_t, G1_SIZE_BYTES > G1ToBytes( algebra::G1Point elem );
-
-    static algebra::G2Point bytesToG2( std::array< uint8_t, G2_SIZE_BYTES > elem );
-
-    static algebra::G2Point bytesToG2( std::vector< uint8_t > elem );
-
-    static algebra::G1Point bytesToG1( std::array< uint8_t, G1_SIZE_BYTES > elem );
-
-    static algebra::G2Point stringToG2( const std::string& str );
-
-    static algebra::G1Point stringToG1( const std::string& str );
 
     static std::string convertHexToDec( const std::string& hex_str );
 
@@ -143,17 +108,14 @@ public:
     static bool checkHex( const std::string& hex );
 
     static std::string bytesToHexString( const std::vector< uint8_t >& bytes );
-    static std::string bytesToHexString(
-        const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& bytes );
+
+    template < size_t N >
+    static std::string ThresholdUtils::bytesToHexString(const std::array< uint8_t, N >& bytes );
 
     static std::vector< uint8_t > hexCStringToBytes( const char* hexStr );
 
     template < size_t N >
     static std::array< uint8_t, N > hexCStringToBytesArray( const char* hexStr );
-
-
-    template < class T >
-    static bool ValidateKey( const T& point );
 
 private:
     /**
@@ -163,6 +125,18 @@ private:
      */
     static size_t validateHexCString( const char* hexStr );
 };
+
+template < size_t N >
+std::string ThresholdUtils::bytesToHexString(const std::array< uint8_t, N >& bytes ) {
+    std::stringstream ss;
+    ss << std::hex << std::setfill( '0' );
+
+    for ( uint8_t byte : bytes ) {
+        ss << std::setw( 2 ) << static_cast< int >( byte );  // Format each byte as 2-char hex
+    }
+
+    return ss.str();
+}
 
 
 template < size_t N >
@@ -198,44 +172,6 @@ std::array< uint8_t, N > ThresholdUtils::hexCStringToBytesArray( const char* hex
     }
 
     return bytes;
-}
-
-
-template < class T >
-std::string ThresholdUtils::fieldElementToString( const T& field_elem, int base ) {
-    mpz_class t;
-
-    // TODO - refactor this - uses .value
-    field_elem.value.as_bigint().to_mpz( t.get_mpz_t() );
-
-    std::string output = t.get_str( base );
-
-    if ( base == libBLS::BASE_HEXA ) {
-        const std::size_t width = 64;
-        if ( output.length() < width ) {
-            output.insert( 0, width - output.length(), '0' );
-        }
-    }
-
-    return output;
-}
-
-// Converts the first 32 bytes from the vector into a field element
-template < class T >
-T ThresholdUtils::bytesToFieldElement( const std::vector< uint8_t >& byte_array ) {
-    if ( byte_array.size() < MAX_FIELD_ELEMENT_SIZE_BYTES ) {
-        throw ThresholdUtils::IncorrectInput( "Incorrect number of bytes in vector" );
-    }
-
-    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > bytes;
-    std::copy( byte_array.begin(), byte_array.end(), bytes.begin() );
-    return bytesToFieldElement< T >( bytes );
-}
-
-
-template < class T >
-bool ThresholdUtils::ValidateKey( const T& point ) {
-    return point.is_well_formed() && point.is_in_group();
 }
 
 }  // namespace libBLS

@@ -70,85 +70,6 @@ void ThresholdUtils::checkSigners( size_t _requiredSigners, size_t _totalSigners
     }
 }
 
-algebra::G2Point ThresholdUtils::bytesToG2( std::array< uint8_t, G2_SIZE_BYTES > bytes ) {
-    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > currentField;
-
-    algebra::G2Point ret;
-    ret.value.Z = libff::alt_bn128_Fq2::one();
-
-    uint8_t* source = bytes.data();
-    // Get x.c0
-    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
-    ret.value.X.c0 = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
-    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
-
-    // Get x.c1
-    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
-    ret.value.X.c1 = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
-    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
-
-    // Get y.c0
-    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
-    ret.value.Y.c0 = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
-    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
-
-    // Get y.c1
-    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
-    ret.value.Y.c1 = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
-
-    return ret;
-}
-
-algebra::G2Point ThresholdUtils::bytesToG2( std::vector< uint8_t > bytes ) {
-    if ( bytes.size() != G2_SIZE_BYTES ) {
-        throw ThresholdUtils::IncorrectInput( "Incorrect number of bytes" );
-    }
-
-    std::array< uint8_t, G2_SIZE_BYTES > G2Bytes;
-    std::copy( bytes.begin(), bytes.end(), G2Bytes.begin() );
-
-    return bytesToG2( G2Bytes );
-}
-
-std::array< uint8_t, G1_SIZE_BYTES > ThresholdUtils::G1ToBytes( algebra::G1Point elem ) {
-    std::array< uint8_t, G1_SIZE_BYTES > G1Bytes;
-
-    elem.to_affine_coordinates();
-    uint8_t* source = G1Bytes.data();
-
-    // Get X bytes
-    auto x_bytes = fieldElementToBytes( elem.value.X );
-    std::memcpy( source, x_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
-    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
-
-    // Get Y bytes
-    auto y_bytes = fieldElementToBytes( elem.value.Y );
-    std::memcpy( source, y_bytes.data(), MAX_FIELD_ELEMENT_SIZE_BYTES );
-    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
-
-    return G1Bytes;
-}
-
-algebra::G1Point ThresholdUtils::bytesToG1( std::array< uint8_t, G1_SIZE_BYTES > bytes ) {
-    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > currentField;
-
-    algebra::G1Point ret;
-    ret.value.Z = libff::alt_bn128_Fq::one();
-
-    uint8_t* source = bytes.data();
-
-    // Get X
-    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
-    ret.value.X = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
-    source += MAX_FIELD_ELEMENT_SIZE_BYTES;
-
-    // Get Y
-    std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
-    ret.value.Y = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
-
-    return ret;
-}
-
 std::string ThresholdUtils::convertHexToDec( const std::string& hex_str ) {
     try {
         // construct from base 16
@@ -175,144 +96,6 @@ std::string ThresholdUtils::convertDecToHex( std::string dec, int numBytes ) {
     return result;
 }
 
-algebra::G2Point ThresholdUtils::stringToG2( const std::string& str ) {
-    if ( str.size() != 256 ) {
-        throw IncorrectInput( "Wrong string size to convert to G2" );
-    }
-
-    algebra::G2Point ret;
-
-    ret.value.Z = libff::alt_bn128_Fq2::one();
-
-    ret.value.X.c0 =
-        libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( str.substr( 0, 64 ) ).c_str() );
-    ret.value.X.c1 =
-        libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( str.substr( 64, 64 ) ).c_str() );
-    ret.value.Y.c0 =
-        libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( str.substr( 128, 64 ) ).c_str() );
-    ret.value.Y.c1 = libff::alt_bn128_Fq(
-        ThresholdUtils::convertHexToDec( str.substr( 192, std::string::npos ) ).c_str() );
-
-    return ret;
-}
-
-algebra::G1Point ThresholdUtils::stringToG1( const std::string& str ) {
-    if ( str.size() != 128 ) {
-        throw IncorrectInput( "Wrong string size to convert to G1" );
-    }
-
-    algebra::G1Point ret;
-
-    ret.value.Z = libff::alt_bn128_Fq::one();
-    ret.value.X = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( str.substr( 0, 64 ) ).c_str() );
-    ret.value.Y = libff::alt_bn128_Fq( ThresholdUtils::convertHexToDec( str.substr( 64, 64 ) ).c_str() );
-
-    return ret;
-}
-
-std::vector< algebra::FrScalar > ThresholdUtils::LagrangeCoeffs(
-    const std::vector< size_t >& idx, size_t t ) {
-    if ( idx.size() < t ) {
-        throw IncorrectInput( "not enough participants in the threshold group" );
-    }
-
-    std::vector< libff::alt_bn128_Fr > res( t );
-
-    libff::alt_bn128_Fr w = libff::alt_bn128_Fr::one();
-
-    for ( size_t i = 0; i < t; ++i ) {
-        w *= libff::alt_bn128_Fr( idx[i] );
-    }
-
-    for ( size_t i = 0; i < t; ++i ) {
-        libff::alt_bn128_Fr v = libff::alt_bn128_Fr( idx[i] );
-
-        for ( size_t j = 0; j < t; ++j ) {
-            if ( j != i ) {
-                if ( libff::alt_bn128_Fr( idx[i] ) == libff::alt_bn128_Fr( idx[j] ) ) {
-                    throw IncorrectInput(
-                        "during the interpolation, have same indexes in list of indexes" );
-                }
-
-                v *= ( libff::alt_bn128_Fr( idx[j] ) -
-                       libff::alt_bn128_Fr( idx[i] ) );  // calculating Lagrange coefficients
-            }
-        }
-
-        res[i] = w * v.invert();
-    }
-
-    std::vector< algebra::FrScalar > output;
-    for (size_t i = 0; i < t; ++i) {
-        output[i] = algebra::FrScalar(res[i]);
-    }
-
-    return output;
-}
-
-algebra::FqElement ThresholdUtils::HashToFq(
-    std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr ) {
-    libff::bigint< libff::alt_bn128_q_limbs > from_hex;
-
-    std::vector< uint8_t > hex( 64 );
-    for ( size_t i = 0; i < 32; ++i ) {
-        hex[2 * i] = static_cast< int >( hash_byte_arr->at( i ) ) / 16;
-        hex[2 * i + 1] = static_cast< int >( hash_byte_arr->at( i ) ) % 16;
-    }
-    mpn_set_str( from_hex.data, hex.data(), 64, 16 );
-
-    libff::alt_bn128_Fq ret_val( from_hex );
-
-    return algebra::FqElement(ret_val);
-}
-
-algebra::G1Point ThresholdUtils::HashtoG1(
-    std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr ) {
-    algebra::FqElement x1( HashToFq( hash_byte_arr ) );
-
-    algebra::G1Point result;
-
-    while ( true ) {
-        libff::alt_bn128_Fq y1_sqr = x1.value ^ 3;
-        y1_sqr = y1_sqr + libff::alt_bn128_coeff_b;
-
-        libff::alt_bn128_Fq euler = y1_sqr ^ libff::alt_bn128_Fq::euler;
-
-        if ( euler == libff::alt_bn128_Fq::one() ||
-             euler == libff::alt_bn128_Fq::zero() ) {  // if y1_sqr is a square
-            result.value.X = x1.value;
-            libff::alt_bn128_Fq temp_y = y1_sqr.sqrt();
-
-            mpz_class y, y_neg;
-            temp_y.as_bigint().to_mpz( y.get_mpz_t() );
-            // convert -y in Fq first, then convert to mpz
-            ( -temp_y ).as_bigint().to_mpz( y_neg.get_mpz_t() );
-
-            if ( y < y_neg ) {
-                temp_y = -temp_y;
-            }
-
-            result.value.Y = temp_y;
-            break;
-        } else {
-            x1 = x1 + 1;
-        }
-    }
-    result.value.Z = libff::alt_bn128_Fq::one();
-
-    return result;
-}
-
-algebra::G1Point ThresholdUtils::HashtoG1( const std::string& message ) {
-    auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
-
-    uint64_t bin_len;
-    if ( !ThresholdUtils::hex2carray( message.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
-        throw std::runtime_error( "Invalid hash" );
-    }
-
-    return ThresholdUtils::HashtoG1( hash_bytes_arr );
-}
 
 bool ThresholdUtils::isStringNumber( const std::string& str ) {
     if ( str.at( 0 ) == '0' && str.length() > 1 )
@@ -368,21 +151,6 @@ bool ThresholdUtils::hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* 
     return true;
 }
 
-std::pair< algebra::FqElement, algebra::FqElement > ThresholdUtils::ParseHint(
-    const std::string& _hint ) {
-    auto position = _hint.find( ":" );
-
-    if ( position == std::string::npos || position > BLS_MAX_COMPONENT_LEN ||
-         _hint.length() - position - 1 > BLS_MAX_COMPONENT_LEN ) {
-        throw IncorrectInput( "Misformatted hint" );
-    }
-
-    libff::alt_bn128_Fq y( _hint.substr( 0, position ).c_str() );
-    libff::alt_bn128_Fq shift_x( _hint.substr( position + 1 ).c_str() );
-
-    return std::make_pair( algebra::FqElement(y), algebra::FqElement(shift_x) );
-}
-
 std::shared_ptr< std::vector< std::string > > ThresholdUtils::SplitString(
     std::shared_ptr< std::string > str, const std::string& delim ) {
     if ( !str ) {
@@ -405,18 +173,6 @@ std::shared_ptr< std::vector< std::string > > ThresholdUtils::SplitString(
 }
 
 std::string ThresholdUtils::bytesToHexString( const std::vector< uint8_t >& bytes ) {
-    std::stringstream ss;
-    ss << std::hex << std::setfill( '0' );
-
-    for ( uint8_t byte : bytes ) {
-        ss << std::setw( 2 ) << static_cast< int >( byte );  // Format each byte as 2-char hex
-    }
-
-    return ss.str();
-}
-
-std::string ThresholdUtils::bytesToHexString(
-    const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& bytes ) {
     std::stringstream ss;
     ss << std::hex << std::setfill( '0' );
 
@@ -455,27 +211,6 @@ size_t ThresholdUtils::validateHexCString( const char* hexStr ) {
         }
     }
     return len;
-}
-
-void ThresholdUtils::validateG1( const algebra::G1Point& point ) {
-    if ( point.is_zero() ) {
-        throw IncorrectInput( "Point is zero" );
-    }
-    if ( !point.is_well_formed() ) {
-        throw IncorrectInput( "Point is not well formed" );
-    }
-}
-
-void ThresholdUtils::validateG2( const algebra::G2Point& point ) {
-    if ( point.is_zero() ) {
-        throw IncorrectInput( "Point is zero" );
-    }
-    if ( !point.is_well_formed() ) {
-        throw IncorrectInput( "Point is not well formed" );
-    }
-    if ( !point.is_in_group() ) {
-        throw IncorrectInput( "Point is not on the group" );
-    }
 }
 
 }  // namespace libBLS
