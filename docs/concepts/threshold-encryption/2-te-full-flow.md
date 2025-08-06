@@ -126,10 +126,36 @@ The following diagram shows the entire process using 2 keys, and also depicts th
 
 # 2. Decryption (soon)
 
-Next we explain the decryption process without devling into the details. If you need to know the details on how exactly shares are merged [read this](./1-threshold-encryption.md).
+Next we explain the decryption process without delving into math details. If you need to know the details [read this](./1-threshold-encryption.md).
+In the threshold decryption process, each node uses its private key share to compute a **partial decryption** of the ciphertext and broadcasts this decryption share to the network. Once a supermajority (i.e., at least the threshold number of valid shares) is received, any node can combine these shares to reconstruct the original plaintext, without needing the full private key.
+
+Since only the `CipheredKey` structure was ciphered using threshold encryption, only this needs to be merged using threshold encryption semantics.
+The **result of such merging will not be the original ciphertext, but the deciphered `AESKey`**
+
+The process is shown below:
+
+<img src="../../diagrams/threshold-encryption/te-decryption-full.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
+<br>
+<br>
+
+1. Each node uses its `PrivateKeyShare_i` to partial decipher the `CipheredKey`, resulting in a `DecryptShare_i` that is broadcasted to all other nodes.
+2. Each node awaits for **t** decrypt shares, and merges them, resulting in the original `AESKey` used to cipher the `Ciphertext`
+
+The **merge** process itself is detailed [here](./1-threshold-encryption.md).
+
+Having seen the threshold encryption decryption process to get the `AESKey`, we see next how we can use this to get the original plaintext `T` from the `Ciphertext` struct:
 
 
+<br>
+<img src="../../diagrams/threshold-encryption/te-decrypt-without-validation.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
+<br>
+<br>
 
+1. First we merge the shares against the `CipheredKey` to get the original `AESKey` (shown in bottom half of the diagram)
+2. Given the `AESKey`, we run the `GCM` keyed with `m` to decipher the encrypted plaintext - the `C` field from the `Ciphertext` struct.
+3. After step 2., we get `T || r`, and we extract `T` from it
+
+Although the `r` field is not used during decryption, it is essential for validating the result: nodes use it to confirm the correctness of the recovered `AESKey`. Details of this validation process are described in the **validation section**.
 
 ---
 
