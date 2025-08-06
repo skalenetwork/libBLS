@@ -60,10 +60,10 @@ public:
         const algebra::G2Point& elem );
 
     static algebra::G1Point Signing(
-        const algebra::G1Point hash, const algebra::FrScalar secret_key );
+        const algebra::G1Point& hash, const algebra::FrScalar& secret_key );
 
     static algebra::G1Point CoreSignAggregated(
-        const std::string& message, const algebra::FrScalar secret_key );
+        const std::string& message, const algebra::FrScalar& secret_key );
 
     static algebra::G1Point Aggregate( const std::vector< algebra::G1Point >& signatures );
 
@@ -76,11 +76,11 @@ public:
     static bool Verification( const std::string& to_be_hashed, const algebra::G1Point& sign,
         const algebra::G2Point& public_key );
 
-    static bool Verification( std::shared_ptr< std::array< uint8_t, 32 > >,
+    static bool Verification( const std::array< uint8_t, 32 >& hash_byte_arr,
         const algebra::G1Point& sign, const algebra::G2Point& public_key );
 
     static bool AggregatedVerification(
-        std::vector< std::shared_ptr< std::array< uint8_t, 32 > > > hash_byte_arr,
+        const std::vector< std::shared_ptr< std::array< uint8_t, 32 > > >& hash_byte_arr,
         const std::vector< algebra::G1Point >& sign, const algebra::G2Point& public_key );
 
     std::pair< algebra::FrScalar, algebra::G2Point > KeysRecover(

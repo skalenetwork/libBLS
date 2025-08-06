@@ -75,55 +75,12 @@ algebra::G1Point Bls::Hashing(
 
     std::string s = num.convert_to< std::string >();
 
-    const libff::alt_bn128_G1 hash = libff::alt_bn128_Fr( s.c_str() ) * libff::alt_bn128_G1::one();
+    const algebra::G1Point hash = algebra::FrScalar( s ) * algebra::G1Point::one();
 
     return hash;
 }
 
-std::pair< algebra::G1Point, std::string > Bls::HashtoG1withHint(
-    std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr ) {
-    CHECK( hash_byte_arr );
 
-    algebra::G1Point point;
-    algebra::FqElement counter = algebra::FqElement::zero();
-    algebra::FqElement x1( ThresholdUtils::HashToFq( hash_byte_arr ) );
-
-
-    while ( true ) {
-        // TODO using .value here. this is impl. specific - this entire function should be inside backends/libff
-
-        // y^2 = x^3 + b
-        libff::alt_bn128_Fq y1_sqr = x1.value ^ 3;
-        y1_sqr = y1_sqr + libff::alt_bn128_coeff_b;
-
-        libff::alt_bn128_Fq euler = y1_sqr ^ libff::alt_bn128_Fq::euler;
-
-        if ( euler == libff::alt_bn128_Fq::one() ||
-             euler == libff::alt_bn128_Fq::zero() ) {  // if y1_sqr is a square
-            point.value.X = x1.value;
-            libff::alt_bn128_Fq temp_y = y1_sqr.sqrt();
-
-            mpz_class y, y_neg;
-            temp_y.as_bigint().to_mpz( y.get_mpz_t() );
-            // get -y in Fq first, then convert to mpz
-            ( -temp_y ).as_bigint().to_mpz( y_neg.get_mpz_t() );
-
-            if ( y < y_neg ) {
-                temp_y = -temp_y;
-            }
-
-            point.value.Y = temp_y;
-            break;
-        } else {
-            counter = counter + libff::alt_bn128_Fq::one();
-            x1 = x1 + libff::alt_bn128_Fq::one();
-        }
-    }
-    point.value.Z = libff::alt_bn128_Fq::one();
-
-    // TODO using .value
-    return std::make_pair( point, ThresholdUtils::fieldElementToString( counter ) );
-}
 
 algebra::G1Point Bls::HashBytes(
     const char* raw_bytes, size_t length, std::string ( *hash_func )( const std::string& str ) ) {
@@ -140,44 +97,44 @@ algebra::G1Point Bls::HashBytes(
 }
 
 algebra::G1Point Bls::HashPublicKeyToG1( const algebra::G2Point& elem ) {
-    auto serialized_elem_vector = ThresholdUtils::G2ToString( elem, 16 );
+    auto serialized_elem_vector = elem.toStringArray( Base::HEXA );
 
     std::string serialized_elem = std::accumulate(
         serialized_elem_vector.begin(), serialized_elem_vector.end(), std::string( "" ) );
 
     std::string hashed_pubkey = cryptlite::sha256::hash_hex( serialized_elem );
 
-    auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
+    auto hash_bytes_arr = std::array< uint8_t, 32 >();
 
     uint64_t bin_len;
-    if ( !ThresholdUtils::hex2carray( hashed_pubkey.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+    if ( !ThresholdUtils::hex2carray( hashed_pubkey.c_str(), &bin_len, hash_bytes_arr.data() ) ) {
         throw std::runtime_error( "Invalid hash" );
     }
 
-    return ThresholdUtils::HashtoG1( hash_bytes_arr );
+    return algebra::G1Point::fromHash( hash_bytes_arr );
 }
 
 std::pair< algebra::G1Point, std::string > Bls::HashPublicKeyToG1WithHint(
     const algebra::G2Point& elem ) {
-    auto serialized_elem_vector = ThresholdUtils::G2ToString( elem, 16 );
+    auto serialized_elem_vector = elem.toStringArray( Base::HEXA );
 
     std::string serialized_elem = std::accumulate(
         serialized_elem_vector.begin(), serialized_elem_vector.end(), std::string( "" ) );
 
     std::string hashed_pubkey = cryptlite::sha256::hash_hex( serialized_elem );
 
-    auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
+    auto hash_bytes_arr = std::array< uint8_t, 32 >();
 
     uint64_t bin_len;
-    if ( !ThresholdUtils::hex2carray( hashed_pubkey.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+    if ( !ThresholdUtils::hex2carray( hashed_pubkey.c_str(), &bin_len, hash_bytes_arr.data() ) ) {
         throw std::runtime_error( "Invalid hash" );
     }
 
-    return Bls::HashtoG1withHint( hash_bytes_arr );
+    return algebra::hashtoG1withHint( hash_bytes_arr );
 }
 
 algebra::G1Point Bls::Signing(
-    const algebra::G1Point hash, const algebra::FrScalar secret_key ) {
+    const algebra::G1Point& hash, const algebra::FrScalar& secret_key ) {
     // sign a message with its hash and secret key
     // implemented constant time signing
 
@@ -188,7 +145,7 @@ algebra::G1Point Bls::Signing(
     std::clock_t c_start = std::clock();  // hash
 
     // TODO using .value here. this is impl. specific - this entire function should be inside backends/libff
-    const algebra::G1Point sign = secret_key.value.as_bigint() * hash.value;  // sign
+    const algebra::G1Point sign = secret_key * hash;  // sign
 
     std::clock_t c_end = std::clock();
 
@@ -199,21 +156,15 @@ algebra::G1Point Bls::Signing(
 }
 
 algebra::G1Point Bls::CoreSignAggregated(
-    const std::string& message, const algebra::FrScalar secret_key ) {
-    algebra::G1Point hash = ThresholdUtils::HashtoG1( message );
-
-    return secret_key * hash;
+    const std::string& message, const algebra::FrScalar& secret_key ) {
+    return secret_key * algebra::G1Point::fromHash( message );
 }
 
 algebra::G1Point Bls::Aggregate( const std::vector< algebra::G1Point >& signatures ) {
     algebra::G1Point res = algebra::G1Point::zero();
 
     for ( const auto& signature : signatures ) {
-        if ( !ThresholdUtils::ValidateKey( signature ) ) {
-            throw ThresholdUtils::IsNotWellFormed(
-                "One of the signatures to be aggregated is malicious" );
-        }
-
+        signature.validate();
         res = res + signature;
     }
 
@@ -222,11 +173,11 @@ algebra::G1Point Bls::Aggregate( const std::vector< algebra::G1Point >& signatur
 
 bool Bls::CoreVerify( const algebra::G2Point& public_key, const std::string& message,
     const algebra::G1Point& signature ) {
-    if ( !ThresholdUtils::ValidateKey( public_key ) || !ThresholdUtils::ValidateKey( signature ) ) {
+    if ( !public_key.isValid() || !signature.isValid() ) {
         throw ThresholdUtils::IsNotWellFormed( "Either signature or public key is malicious" );
     }
 
-    algebra::G1Point hash = ThresholdUtils::HashtoG1( message );
+    algebra::G1Point hash = algebra::G1Point::fromHash( message );
 
     return algebra::pairing( hash, public_key ) ==
            algebra::pairing( signature, algebra::G2Point::one() );
@@ -234,8 +185,8 @@ bool Bls::CoreVerify( const algebra::G2Point& public_key, const std::string& mes
 
 bool Bls::FastAggregateVerify( const std::vector< algebra::G2Point >& public_keys,
     const std::string& message, const algebra::G1Point& signature ) {
-    libff::alt_bn128_G2 sum =
-        std::accumulate( public_keys.begin(), public_keys.end(), libff::alt_bn128_G2::zero() );
+    algebra::G2Point sum =
+        std::accumulate( public_keys.begin(), public_keys.end(), algebra::G2Point::zero() );
 
     return CoreVerify( sum, message, signature );
 }
@@ -244,20 +195,7 @@ bool Bls::Verification( const std::string& to_be_hashed, const algebra::G1Point&
     const algebra::G2Point& public_key ) {
     // verifies that a given signature corresponds to given public key
 
-    libff::inhibit_profiling_info = true;
-
-    if ( !sign.is_well_formed() ) {
-        throw ThresholdUtils::IsNotWellFormed(
-            "Error, signature does not lie on the alt_bn128 curve" );
-    }
-
-    if ( !public_key.is_well_formed() ) {
-        throw ThresholdUtils::IsNotWellFormed( "Error, public key is invalid" );
-    }
-
-    if ( !sign.is_in_group() ) {
-        throw ThresholdUtils::IsNotWellFormed( "Error, signature is not member of G1" );
-    }
+    sign.validate();
 
     algebra::G1Point hash = Hashing( to_be_hashed );
 
@@ -266,9 +204,8 @@ bool Bls::Verification( const std::string& to_be_hashed, const algebra::G1Point&
     // there are several types of pairing, it does not matter which one is chosen for verification
 }
 
-bool Bls::Verification( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr,
+bool Bls::Verification( const std::array< uint8_t, 32 >& hash_byte_arr,
     const algebra::G1Point& sign, const algebra::G2Point& public_key ) {
-    CHECK( hash_byte_arr );
 
     // verifies that a given signature corresponds to given public key
 
@@ -288,7 +225,7 @@ bool Bls::Verification( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_a
         throw ThresholdUtils::IsNotWellFormed( "Error, signature is not member of G1" );
     }
 
-    algebra::G1Point hash = ThresholdUtils::HashtoG1( hash_byte_arr );
+    algebra::G1Point hash = algebra::G1Point::fromHash( hash_byte_arr );
 
     return ( algebra::pairing( sign, algebra::G2Point::one() ) ==
              algebra::pairing( hash, public_key ) );
@@ -296,8 +233,9 @@ bool Bls::Verification( std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_a
 }
 
 bool Bls::AggregatedVerification(
-    std::vector< std::shared_ptr< std::array< uint8_t, 32 > > > hash_byte_arr,
+    const std::vector< std::shared_ptr< std::array< uint8_t, 32 > > >& hash_byte_arr,
     const std::vector< algebra::G1Point >& sign, const algebra::G2Point& public_key ) {
+
     for ( auto& hash : hash_byte_arr ) {
         CHECK( hash );
     }
@@ -305,26 +243,14 @@ bool Bls::AggregatedVerification(
     libff::inhibit_profiling_info = true;
 
     for ( auto& sig : sign ) {
-        if ( !sig.is_well_formed() ) {
-            throw ThresholdUtils::IsNotWellFormed(
-                "Error, signature does not lie on the alt_bn128 curve" );
-        }
-        if ( !sig.is_in_group() ) {
-            throw ThresholdUtils::IsNotWellFormed( "Error, signature is not member of G1" );
-        }
+        sig.validate();
     }
 
-    if ( !public_key.is_well_formed() ) {
-        throw ThresholdUtils::IsNotWellFormed( "Error, public key is invalid" );
-    }
-
-    if ( !ThresholdUtils::ValidateKey( public_key ) ) {
-        throw ThresholdUtils::IsNotWellFormed( "Error, public key is not member of G2" );
-    }
+    public_key.validate();
 
     algebra::G1Point aggregated_hash = algebra::G1Point::zero();
-    for ( std::shared_ptr< std::array< uint8_t, 32 > >& hash : hash_byte_arr ) {
-        aggregated_hash = aggregated_hash + ThresholdUtils::HashtoG1( hash );
+    for ( const std::shared_ptr< std::array< uint8_t, 32 > >& hash : hash_byte_arr ) {
+        aggregated_hash = aggregated_hash + algebra::G1Point::fromHash( *hash );
     }
 
     algebra::G1Point aggregated_sig = algebra::G1Point::zero();
@@ -396,10 +322,8 @@ algebra::G1Point Bls::PopProve( const algebra::FrScalar& secret_key ) {
 }
 
 bool Bls::PopVerify( const algebra::G2Point& public_key, const algebra::G1Point& prove ) {
-    if ( !ThresholdUtils::ValidateKey( prove ) || !ThresholdUtils::ValidateKey( public_key ) ) {
-        throw ThresholdUtils::IsNotWellFormed(
-            "incorrect input data to verify proof of possession" );
-    }
+    prove.validate();
+    public_key.validate();
 
     algebra::G1Point hash = HashPublicKeyToG1( public_key );
 
