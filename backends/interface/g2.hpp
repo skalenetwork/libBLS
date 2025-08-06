@@ -30,21 +30,25 @@ public:
 
     // Builds a G2Point from its affine coordinates
     G2Point(const std::array< std::string, NUM_SERIALIZED_COMPONENTS >& serializedG2);
+
     
     void to_affine_coordinates();
 
     // -------------------- Serialization Methods -------------------- //
 
     std::array<std::string, NUM_SERIALIZED_COMPONENTS> toStringArray(libBLS::Base base) const;
-    std::array< uint8_t, SIZE_BYTES > toBytesArray() const;
+    std::string toString(Base base) const;
 
-    std::vector< uint8_t > toBytesVector() const;
+    std::array< uint8_t, SIZE_BYTES > toByteArray() const;
+    std::vector< uint8_t > toByteVector() const;
 
     // -------------------- Validation Methods -------------------- //
 
     bool is_zero() const;
     bool is_well_formed() const;
     bool is_in_group() const;
+    bool isValid() const;
+    void validate() const;
 
     std::array<FqElement, 4> getAffineComponents() const ;
 
@@ -53,6 +57,14 @@ public:
     static G2Point random();
     static G2Point zero();
     static G2Point one();
+
+    static G2Point fromBytes(const std::array<uint8_t, SIZE_BYTES>& bytes);
+    static G2Point fromBytes(const std::vector< uint8_t >& bytes );
+
+    static G2Point fromString(const std::string& str, Base base );
+    static G2Point fromString(const std::array<std::string, NUM_SERIALIZED_COMPONENTS>& arr, Base base);
+    // TODO - we should get rid of this for perf. reasons. no need to use vectors when we know the size
+    static G2Point fromString(const std::vector<std::string>& arr, Base base);
 
     // -------------------- Operator Overloads -------------------- //
 

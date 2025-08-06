@@ -24,6 +24,9 @@ public:
     FqElement(uint64_t x);
     FqElement(const std::string& str);
 
+    // -------------------- Serialization / Deserialization Methods -------------------- //
+    std::string toString(Base base) const;
+
     // -------------------- Operator Overloads -------------------- //
 
     FqElement operator+(const FqElement& other) const;
@@ -40,6 +43,8 @@ public:
     static FqElement random();
     static FqElement zero();
     static FqElement one();
+
+    static FqElement fromHash(const std::array< uint8_t, HASH_SIZE>& hash_byte_arr);
 };
 
 } // namespace algebra

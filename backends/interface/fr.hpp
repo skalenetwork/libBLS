@@ -29,26 +29,24 @@ public:
 
     bool is_zero() const;
 
+    std::array< uint8_t, SIZE_BYTES > toByteArray() const;
+
     // -------------------- Static Methods -------------------- // 
 
     static FrScalar random();
     static FrScalar zero();
     static FrScalar one();
 
+    static FrScalar fromByteArray(const std::array< uint8_t, SIZE_BYTES >& bytes);
+
     // -------------------- Operator Overloads -------------------- //
 
     FrScalar operator+(const FrScalar& other) const;
-
     FrScalar operator-(const FrScalar& other) const;
-
     FrScalar operator*(const FrScalar& other) const;
-
     FrScalar operator+=(const FrScalar& other);
-
     FrScalar operator*=(const FrScalar& other);
-
     bool operator==(const FrScalar& other) const;
-
     bool operator!=(const FrScalar& other) const;
 };
 

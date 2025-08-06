@@ -20,6 +20,8 @@ public:
 
     GTElement();
 
+    // -------------------- Operator Overloads -------------------- //
+    
     GTElement operator*(const GTElement& other) const;
     GTElement inverse() const;
     bool operator==(const GTElement& other) const;
