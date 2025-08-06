@@ -6,7 +6,7 @@ This repository is organized into two main sections:
 
 ---
 
-## `./usage`
+## [`./usage`](./usage/usage-index.md)
 
 This folder contains **practical code examples** demonstrating how to use the library.  
 It includes:
@@ -15,13 +15,13 @@ It includes:
 - Encryption and decryption API calls
 - Sample input/output
 
-Refer to this section if you are looking for concrete implementation details - [usage-index.md](./usage/usage-index.md)
+Refer to this section if you are looking for concrete implementation details.
 
 ---
 
-## `./concepts`
+## [`./concepts`](./concepts/concepts-index.md)
 
-This folder provides a **theoretical explanation** of how threshold encryption works.  
+This folder provides both a **theoretical explanation** of how threshold encryption works as well as **system architecture and workflows**.  
 It covers:
 
 - Cryptographic foundations
