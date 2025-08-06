@@ -50,7 +50,7 @@ using RandSecret = std::array< uint8_t, RANDOM_SECRET_SIZE_BYTES >;
  */
 struct CipheredKey {
     static constexpr size_t CIPHERED_KEY_SIZE_BYTES =
-        G2_SIZE_BYTES + AES_256_KEY_SIZE_BYTES + G1_SIZE_BYTES;
+        algebra::G2Point::SIZE_BYTES + AES_256_KEY_SIZE_BYTES + algebra::G1Point::SIZE_BYTES;
 
     algebra::G2Point U;
     AES256Key V;
@@ -79,14 +79,14 @@ public:
         std::array< uint8_t, CIPHERED_KEY_SIZE_BYTES > bytes;
         uint8_t* source = bytes.data();
         // set U component
-        auto u_bytes = ThresholdUtils::G2ToBytes( U );
+        auto u_bytes = U.toByteArray();
         std::memcpy( source, u_bytes.data(), u_bytes.size() );
         source += u_bytes.size();
         // set V commponent
         std::memcpy( source, V.data(), V.size() );
         source += V.size();
         // set W component
-        auto w_bytes = ThresholdUtils::G1ToBytes( W );
+        auto w_bytes = W.toByteArray();
         std::memcpy( source, w_bytes.data(), w_bytes.size() );
 
         return bytes;
@@ -96,14 +96,14 @@ public:
      * @brief Converts bytes to CipheredKey
      */
     static CipheredKey fromBytes( std::array< uint8_t, CIPHERED_KEY_SIZE_BYTES > bytes ) {
-        std::array< uint8_t, G2_SIZE_BYTES > u_bytes;
+        std::array< uint8_t, algebra::G2Point::SIZE_BYTES > u_bytes;
         std::array< uint8_t, AES_256_KEY_SIZE_BYTES > v_bytes;
         std::array< uint8_t, G1_SIZE_BYTES > w_bytes;
 
         uint8_t* offset = bytes.data();
         // Get U bytes
-        std::memcpy( u_bytes.data(), offset, G2_SIZE_BYTES );
-        offset += G2_SIZE_BYTES;
+        std::memcpy( u_bytes.data(), offset, algebra::G2Point::SIZE_BYTES );
+        offset += algebra::G2Point::SIZE_BYTES;
         // Get V bytes
         std::memcpy( v_bytes.data(), offset, AES_256_KEY_SIZE_BYTES );
         offset += AES_256_KEY_SIZE_BYTES;
@@ -111,8 +111,8 @@ public:
         std::memcpy( w_bytes.data(), offset, G1_SIZE_BYTES );
 
         // Convert to CipheredKey components
-        algebra::G2Point U = ThresholdUtils::bytesToG2( u_bytes );
-        algebra::G1Point W = ThresholdUtils::bytesToG1( w_bytes );
+        algebra::G2Point U = algebra::G2Point::fromBytes( u_bytes );
+        algebra::G1Point W = algebra::G1Point::fromBytes( w_bytes );
 
         // constructor performs validation
         return CipheredKey( U, v_bytes, W );
@@ -144,7 +144,7 @@ public:
         // validate U
         ThresholdUtils::validateG2( U );
 
-        auto u_splitted = U.toStringVector( Base::HEXA );
+        auto u_splitted = U.toStringArray( Base::HEXA );
 
         // convert to string
         std::string public_decryption_value;

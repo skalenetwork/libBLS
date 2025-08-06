@@ -207,7 +207,7 @@ void ThresholdEncryption::validateCombinedDecryption(
     const AES256Key& cipheredAesKey = _cyphertext.key.V;
 
     // Compute G(r'Y)
-    algebra::FrScalar r = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( secret );
+    algebra::FrScalar r = algebra::FrScalar::fromByteArray( secret );
     algebra::G2Point Y = r * _publicKey.getPublicKeyRaw();
     std::string hash = TE::Hash( Y );
 
@@ -252,7 +252,7 @@ std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
     const AES256Key& cipheredAesKey = _cyphertext.key.V;
 
     // Compute G(r'Y)
-    algebra::FrScalar r = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( secret );
+    algebra::FrScalar r = algebra::FrScalar::fromByteArray( secret );
     algebra::G2Point Y = r * _publicKey.getPublicKeyRaw();
     std::string hash = TE::Hash( Y );
 

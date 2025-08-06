@@ -53,7 +53,7 @@ public:
 
     TEPublicKey( const TEPrivateKey& _comonPrivate );
 
-    TEPublicKey( const std::array< uint8_t, G2_SIZE_BYTES >& _keyBytes );
+    TEPublicKey( const std::array< uint8_t, algebra::G2Point::SIZE_BYTES >& _keyBytes );
 
     TEPublicKey( const std::vector< uint8_t >& _keyBytes );
 
@@ -66,7 +66,7 @@ public:
 
     inline void validate() const { ThresholdUtils::validateG2( publicKey ); }
 
-    std::array< uint8_t, G2_SIZE_BYTES > toBytesArray() const;
+    std::array< uint8_t, algebra::G2Point::SIZE_BYTES > toBytesArray() const;
 
     std::vector< uint8_t > toBytesVec() const;
 

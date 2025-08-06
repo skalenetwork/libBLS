@@ -45,7 +45,7 @@ public:
     TEPublicKeyShare( const std::vector< uint8_t >& _bytes, size_t signerIndex,
         size_t _requiredSigners, size_t _totalSigners );
 
-    TEPublicKeyShare( const std::array< uint8_t, libBLS::G2_SIZE_BYTES >& bytes, size_t signerIndex,
+    TEPublicKeyShare( const std::array< uint8_t, algebra::G2Point::SIZE_BYTES >& bytes, size_t signerIndex,
         size_t _requiredSigners, size_t _totalSigners );
 
     inline void validate() const { ThresholdUtils::validateG2( publicKey ); }
@@ -54,7 +54,7 @@ public:
 
     std::vector< uint8_t > toBytesVec() const;
 
-    std::array< uint8_t, libBLS::G2_SIZE_BYTES > toBytesArray() const;
+    std::array< uint8_t, algebra::G2Point::SIZE_BYTES > toBytesArray() const;
 
     const algebra::G2Point& getPublicKeyRaw() const;
 };

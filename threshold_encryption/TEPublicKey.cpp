@@ -31,37 +31,12 @@ namespace libBLS {
 
 
 TEPublicKey::TEPublicKey( const std::vector< std::string >& _keyStrPtr ) {
-    if ( _keyStrPtr.size() != 4 ) {
-        throw ThresholdUtils::IncorrectInput( "wrong number of components in public key share" );
-    }
-
-    std::array< std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >, 4 > components;
-
-    // check each component
-    for ( size_t i = 0; i < _keyStrPtr.size(); ++i ) {
-        if ( _keyStrPtr[i].length() != MAX_FIELD_ELEMENT_SIZE_BYTES * 2 ) {
-            throw ThresholdUtils::IncorrectInput( "wrong string length in public key share" );
-        }
-        // throws if cannot hexa is not valid
-        components[i] = ThresholdUtils::hexCStringToBytesArray< MAX_FIELD_ELEMENT_SIZE_BYTES >(
-            _keyStrPtr[i].c_str() );
-    }
-
-    publicKey.value.Z = libff::alt_bn128_Fq2::one();
-    publicKey.value.X.c0 =
-        libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[0] );
-    publicKey.value.X.c1 =
-        libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[1] );
-    publicKey.value.Y.c0 =
-        libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[2] );
-    publicKey.value.Y.c1 =
-        libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[3] );
-
-    ThresholdUtils::validateG2( publicKey );
+    publicKey = algebra::G2Point::fromString( _keyStrPtr, Base::HEXA );
+    publicKey.validate();
 }
 
 TEPublicKey::TEPublicKey( const std::string& _keyStr )
-    : TEPublicKey( ThresholdUtils::stringToG2( _keyStr ) ) {}
+    : TEPublicKey( algebra::G2Point::fromString( _keyStr, Base::HEXA ) ) {}
 
 TEPublicKey::TEPublicKey( const TEPrivateKey& _commonPrivate ) {
     if ( _commonPrivate.getPrivateKeyRaw().is_zero() ) {
@@ -75,18 +50,18 @@ TEPublicKey::TEPublicKey( const algebra::G2Point& _pkey ) : publicKey( _pkey ) {
     ThresholdUtils::validateG2( publicKey );
 }
 
-TEPublicKey::TEPublicKey( const std::array< uint8_t, G2_SIZE_BYTES >& _keyBytes )
-    : TEPublicKey( ThresholdUtils::bytesToG2( _keyBytes ) ) {}
+TEPublicKey::TEPublicKey( const std::array< uint8_t, algebra::G2Point::SIZE_BYTES >& _keyBytes )
+    : TEPublicKey( algebra::G2Point::fromBytes( _keyBytes ) ) {}
 
 TEPublicKey::TEPublicKey( const std::vector< uint8_t >& _keyBytes )
-    : TEPublicKey( ThresholdUtils::bytesToG2( _keyBytes ) ) {}
+    : TEPublicKey( algebra::G2Point::fromBytes( _keyBytes ) ) {}
 
 std::string TEPublicKey::toString() const {
-    std::vector< std::string > res = ThresholdUtils::G2ToString( publicKey, libBLS::BASE_HEXA );
+    auto serializedKey = publicKey.toStringArray( Base::HEXA );
     std::string concatenated;
     // Nbr of hexa digits = 2 x byte size
-    concatenated.reserve( 2 * G2_SIZE_BYTES );
-    for ( const auto& str : res ) {
+    concatenated.reserve( 2 * algebra::G2Point::SIZE_BYTES );
+    for ( const auto& str : serializedKey ) {
         concatenated += str;
     }
 
@@ -97,12 +72,12 @@ const algebra::G2Point& TEPublicKey::getPublicKeyRaw() const {
     return publicKey;
 }
 
-std::array< uint8_t, G2_SIZE_BYTES > TEPublicKey::toBytesArray() const {
-    return libBLS::ThresholdUtils::G2ToBytesArray( publicKey );
+std::array< uint8_t, algebra::G2Point::SIZE_BYTES > TEPublicKey::toBytesArray() const {
+    return publicKey.toByteArray();
 }
 
 std::vector< uint8_t > TEPublicKey::toBytesVec() const {
-    return libBLS::ThresholdUtils::G2ToBytes( publicKey );
+    return publicKey.toByteVector();
 }
 
 }  // namespace libBLS

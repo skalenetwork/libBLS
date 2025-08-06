@@ -51,7 +51,7 @@ TE::~TE() {}
 
 std::string TE::Hash(
     const algebra::G2Point& Y, std::string ( *hash_func )( const std::string& str ) ) {
-    auto vectorCoordinates = Y.toStringVector( Base::DEC );
+    auto vectorCoordinates = Y.toStringArray( Base::DEC );
 
     std::string tmp = "";
     for ( const auto& coord : vectorCoordinates ) {
@@ -67,7 +67,7 @@ algebra::G1Point TE::HashToGroup( const algebra::G2Point& U, const std::string& 
     std::string ( *hash_func )( const std::string& str ) ) {
     // assumed that U lies in G2
 
-    auto U_str = U.toStringVector( Base::DEC );
+    auto U_str = U.toStringArray( Base::DEC );
 
     const std::string sha256hex = hash_func( U_str[0] + U_str[1] + U_str[2] + U_str[3] + V );
 
@@ -77,11 +77,11 @@ algebra::G1Point TE::HashToGroup( const algebra::G2Point& U, const std::string& 
 
     // copy first 32 bytes
     auto hash_bytes_arr =
-        std::make_shared< std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > >();
-    std::copy( bytes.begin(), bytes.begin() + libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES,
-        hash_bytes_arr->begin() );
+        std::array< uint8_t, algebra::MAX_FIELD_ELEMENT_SIZE_BYTES >();
+    std::copy( bytes.begin(), bytes.begin() + algebra::MAX_FIELD_ELEMENT_SIZE_BYTES,
+        hash_bytes_arr.begin() );
 
-    return ThresholdUtils::HashtoG1( hash_bytes_arr );
+    return algebra::G1Point::fromHash( hash_bytes_arr );
 }
 
 
@@ -117,9 +117,8 @@ CipheredKeyResult TE::getCiphertext(
     W = r * H;
 
     std::shared_ptr< CipheredKey > ciphered = std::make_shared< CipheredKey >( U, V, W );
-    RandSecret random_secret = ThresholdUtils::fieldElementToBytesArray( r );
 
-    return { ciphered, std::move( random_secret ) };
+    return { ciphered, std::move( r.toByteArray() ) };
 }
 
 /**
@@ -183,7 +182,7 @@ CipherResult TE::encryptWithAES(
  */
 std::pair< std::string, RandSecret > TE::encryptMessage(
     const std::vector< uint8_t >& message, const std::string& commonPublic_str ) {
-    algebra::G2Point commonPublic = ThresholdUtils::stringToG2( commonPublic_str );
+    algebra::G2Point commonPublic = algebra::G2Point::fromString( commonPublic_str, Base::HEXA );
     libBLS::CipherResult ciphertext = encryptWithAES( message, commonPublic );
     std::vector< uint8_t > ciphertextBytes = ciphertext.ciphertext->toBytes();
 
@@ -358,8 +357,7 @@ std::vector< uint8_t > TE::CombineSharesIntoAESKey(
         idx[i] = decryptionShares[i].second;
     }
 
-    std::vector< algebra::FrScalar > lagrange_coeffs =
-        ThresholdUtils::LagrangeCoeffs( idx, this->t_ );
+    std::vector< algebra::FrScalar > lagrange_coeffs = algebra::lagrangeCoeffs( idx, this->t_ );
 
     algebra::G2Point sum = algebra::G2Point::zero();
     for ( size_t i = 0; i < this->t_; ++i ) {
