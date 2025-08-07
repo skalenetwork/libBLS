@@ -36,12 +36,13 @@
 
 static bool g_b_verbose_mode = false;
 
+// TODO - this entire function should be inside dkg
 
 void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std::string >& input ) {
     libBLS::Dkg dkg_instance = libBLS::Dkg( t, n );
 
-    std::vector< std::vector< libff::alt_bn128_G2 > > verification_vector( n );
-    std::vector< std::vector< libff::alt_bn128_Fr > > secret_key_contribution( n );
+    std::vector< std::vector< libBLS::algebra::G2Point > > verification_vector( n );
+    std::vector< std::vector< libBLS::algebra::FrScalar > > secret_key_contribution( n );
 
     for ( size_t i = 0; i < n; ++i ) {
         std::ifstream infile( input[i] );
@@ -54,46 +55,39 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
 
         secret_key_contribution[idx].resize( n );
         for ( size_t i = 0; i < n; ++i ) {
-            secret_key_contribution[idx][i] = libff::alt_bn128_Fr(
-                data["secret_key_contribution"][std::to_string( i )].get< std::string >().c_str() );
+            secret_key_contribution[idx][i] = libBLS::algebra::FrScalar::fromString(
+                data["secret_key_contribution"][std::to_string( i )].get< std::string >(), libBLS::Base::DEC );
         }
 
         verification_vector[idx].resize( t );
         for ( size_t i = 0; i < t; ++i ) {
-            libff::alt_bn128_Fq first_coord_x =
-                libff::alt_bn128_Fq( data["verification_vector"][std::to_string( i )]["X"]["c0"]
-                                         .get< std::string >()
-                                         .c_str() );
-            libff::alt_bn128_Fq first_coord_y =
-                libff::alt_bn128_Fq( data["verification_vector"][std::to_string( i )]["X"]["c1"]
-                                         .get< std::string >()
-                                         .c_str() );
-            libff::alt_bn128_Fq2 first_coord = libff::alt_bn128_Fq2( first_coord_x, first_coord_y );
+            libBLS::algebra::FqElement first_coord_x =
+                libBLS::algebra::FqElement::fromString( data["verification_vector"][std::to_string( i )]["X"]["c0"]
+                                         .get< std::string >(), libBLS::Base::DEC );
+            libBLS::algebra::FqElement first_coord_y =
+                libBLS::algebra::FqElement::fromString( data["verification_vector"][std::to_string( i )]["X"]["c1"]
+                                         .get< std::string >(), libBLS::Base::DEC );
+            libBLS::algebra::Fq2Element first_coord( first_coord_x, first_coord_y );
 
-            libff::alt_bn128_Fq second_coord_x =
-                libff::alt_bn128_Fq( data["verification_vector"][std::to_string( i )]["Y"]["c0"]
-                                         .get< std::string >()
-                                         .c_str() );
-            libff::alt_bn128_Fq second_coord_y =
-                libff::alt_bn128_Fq( data["verification_vector"][std::to_string( i )]["Y"]["c1"]
-                                         .get< std::string >()
-                                         .c_str() );
-            libff::alt_bn128_Fq2 second_coord =
-                libff::alt_bn128_Fq2( second_coord_x, second_coord_y );
+            libBLS::algebra::FqElement second_coord_x =
+                libBLS::algebra::FqElement::fromString( data["verification_vector"][std::to_string( i )]["Y"]["c0"]
+                                         .get< std::string >(), libBLS::Base::DEC );
+            libBLS::algebra::FqElement second_coord_y =
+                libBLS::algebra::FqElement::fromString( data["verification_vector"][std::to_string( i )]["Y"]["c1"]
+                                         .get< std::string >(), libBLS::Base::DEC );
+            libBLS::algebra::Fq2Element second_coord( second_coord_x, second_coord_y );
 
-            libff::alt_bn128_Fq third_coord_x =
-                libff::alt_bn128_Fq( data["verification_vector"][std::to_string( i )]["Z"]["c0"]
-                                         .get< std::string >()
-                                         .c_str() );
-            libff::alt_bn128_Fq third_coord_y =
-                libff::alt_bn128_Fq( data["verification_vector"][std::to_string( i )]["Z"]["c1"]
-                                         .get< std::string >()
-                                         .c_str() );
-            libff::alt_bn128_Fq2 third_coord = libff::alt_bn128_Fq2( third_coord_x, third_coord_y );
+            libBLS::algebra::FqElement third_coord_x =
+                libBLS::algebra::FqElement::fromString( data["verification_vector"][std::to_string( i )]["Z"]["c0"]
+                                         .get< std::string >(), libBLS::Base::DEC );
+            libBLS::algebra::FqElement third_coord_y =
+                libBLS::algebra::FqElement::fromString( data["verification_vector"][std::to_string( i )]["Z"]["c1"]
+                                         .get< std::string >(), libBLS::Base::DEC );
+            libBLS::algebra::Fq2Element third_coord( third_coord_x, third_coord_y );
 
 
             verification_vector[idx][i] =
-                libff::alt_bn128_G2( first_coord, second_coord, third_coord );
+                libBLS::algebra::G2Point( first_coord, second_coord, third_coord );
         }
     }
 
@@ -103,7 +97,7 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
         }
     }
 
-    std::vector< libff::alt_bn128_Fr > secret_key( n, libff::alt_bn128_Fr::zero() );
+    std::vector< libBLS::algebra::FrScalar > secret_key( n, libBLS::algebra::FrScalar::ZERO );
     for ( size_t i = 0; i < n; ++i ) {
         for ( size_t j = 0; j < n; ++j ) {
             if ( !dkg_instance.Verification(
@@ -114,8 +108,8 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
         }
     }
 
-    std::vector< libff::alt_bn128_G2 > public_keys( n );
-    libff::alt_bn128_G2 common_public_key = libff::alt_bn128_G2::zero();
+    std::vector< libBLS::algebra::G2Point > public_keys( n );
+    libBLS::algebra::G2Point common_public_key = libBLS::algebra::G2Point::ZERO;
     for ( size_t i = 0; i < n; ++i ) {
         secret_key[i] = dkg_instance.SecretKeyShareCreate( secret_key_contribution[i] );
         public_keys[i] = verification_vector[i][0];
@@ -125,22 +119,17 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
     for ( size_t i = 0; i < n; ++i ) {
         nlohmann::json BLS_key_file;
 
-        BLS_key_file["insecureBLSPrivateKey"] =
-            libBLS::ThresholdUtils::fieldElementToString( secret_key[i] );
+        BLS_key_file["insecureBLSPrivateKey"] = secret_key[i].toString( libBLS::Base::DEC );
 
         std::string str_file_name = "BLS_keys" + std::to_string( i ) + ".json";
         std::ofstream out( str_file_name.c_str() );
 
-        libff::alt_bn128_G2 publ_key = dkg_instance.GetPublicKeyFromSecretKey( secret_key[i] );
-        publ_key.to_affine_coordinates();
-        BLS_key_file["BLSPublicKey0"] =
-            libBLS::ThresholdUtils::fieldElementToString( publ_key.X.c0 );
-        BLS_key_file["BLSPublicKey1"] =
-            libBLS::ThresholdUtils::fieldElementToString( publ_key.X.c1 );
-        BLS_key_file["BLSPublicKey2"] =
-            libBLS::ThresholdUtils::fieldElementToString( publ_key.Y.c0 );
-        BLS_key_file["BLSPublicKey3"] =
-            libBLS::ThresholdUtils::fieldElementToString( publ_key.Y.c1 );
+        libBLS::algebra::G2Point publ_key = dkg_instance.GetPublicKeyFromSecretKey( secret_key[i] );
+        auto string_components = publ_key.toStringArray( libBLS::Base::DEC );
+        BLS_key_file["BLSPublicKey0"] = string_components[0];
+        BLS_key_file["BLSPublicKey1"] = string_components[1];
+        BLS_key_file["BLSPublicKey2"] = string_components[2];
+        BLS_key_file["BLSPublicKey3"] = string_components[3];
 
         if ( g_b_verbose_mode ) {
             std::cout << str_file_name << " file:\n" << BLS_key_file.dump( 4 ) << "\n\n";
@@ -148,16 +137,13 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
         out << BLS_key_file.dump( 4 ) << '\n';
     }
 
-    common_public_key.to_affine_coordinates();
+    
     nlohmann::json public_key_json;
-    public_key_json["commonBLSPublicKey0"] =
-        libBLS::ThresholdUtils::fieldElementToString( common_public_key.X.c0 );
-    public_key_json["commonBLSPublicKey1"] =
-        libBLS::ThresholdUtils::fieldElementToString( common_public_key.X.c1 );
-    public_key_json["commonBLSPublicKey2"] =
-        libBLS::ThresholdUtils::fieldElementToString( common_public_key.Y.c0 );
-    public_key_json["commonBLSPublicKey3"] =
-        libBLS::ThresholdUtils::fieldElementToString( common_public_key.Y.c1 );
+    auto string_components = common_public_key.toStringArray( libBLS::Base::DEC );
+    public_key_json["commonBLSPublicKey0"] = string_components[0];
+    public_key_json["commonBLSPublicKey1"] = string_components[1];
+    public_key_json["commonBLSPublicKey2"] = string_components[2];
+    public_key_json["commonBLSPublicKey3"] = string_components[3];
 
     std::ofstream outfile_pk( "common_public_key.json" );
     outfile_pk << public_key_json.dump( 4 ) << "\n";

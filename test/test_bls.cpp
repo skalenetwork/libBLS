@@ -50,72 +50,57 @@
 #include <boost/test/included/unit_test.hpp>
 #include <libff/common/profiling.hpp>
 
+#include "backends/interface/test/FqElementTestAccessor.hpp"
+
+using namespace libBLS;
+using namespace libBLS::algebra;
 
 BOOST_AUTO_TEST_SUITE( Bls )
 
 std::default_random_engine rand_gen( ( unsigned int ) time( 0 ) );
 
-libff::alt_bn128_Fq SpoilSignCoord( libff::alt_bn128_Fq& sign_coord ) {
-    libff::alt_bn128_Fq bad_coord = sign_coord;
-    do {
-        size_t n_bad_bit = rand_gen() % ( bad_coord.size_in_bits() ) + 1;
 
-        mpz_class was_coord;
-        bad_coord.as_bigint().to_mpz( was_coord.get_mpz_t() );
-
-        mpz_class mask;
-        mpz_set_si( mask.get_mpz_t(), n_bad_bit );
-
-        mpz_class badCoord;
-        mpz_xor( badCoord.get_mpz_t(), was_coord.get_mpz_t(), mask.get_mpz_t() );
-
-        bad_coord = libff::alt_bn128_Fq( badCoord.get_mpz_t() );
-    } while ( bad_coord == libff::alt_bn128_Fq::zero() );
-
-    return bad_coord;
-}
-
-libff::alt_bn128_G1 SpoilSignature( libff::alt_bn128_G1& sign ) {
-    libff::alt_bn128_G1 bad_sign = sign;
-    while ( bad_sign.is_well_formed() ) {
+G1Point SpoilSignature( G1Point& sign ) {
+    G1Point bad_sign = sign;
+    while ( bad_sign.isWellFormed() ) {
         size_t bad_coord_num = rand_gen() % 3;
         switch ( bad_coord_num ) {
         case 0:
-            bad_sign.X = SpoilSignCoord( sign.X );
+            bad_sign.getXRef().asBackendRef() = FqElementTestAccessor::spoil( sign.getXRef().asBackendRef() );
             break;
         case 1:
-            bad_sign.Y = SpoilSignCoord( sign.Y );
+            bad_sign.getYRef().asBackendRef() = FqElementTestAccessor::spoil( sign.getYRef().asBackendRef() );
             break;
         case 2:
-            bad_sign.Z = SpoilSignCoord( sign.Z );
+            bad_sign.getZRef().asBackendRef() = FqElementTestAccessor::spoil( sign.getZRef().asBackendRef() );
             break;
         }
     }
     return bad_sign;
 }
 
-libff::alt_bn128_G2 SpoilPublicKey( libff::alt_bn128_G2& elem ) {
-    libff::alt_bn128_G2 bad_elem = elem;
-    while ( bad_elem.is_well_formed() ) {
+G2Point SpoilPublicKey( G2Point& elem ) {
+    G2Point bad_elem = elem;
+    while ( bad_elem.isWellFormed() ) {
         size_t bad_coord_num = rand_gen() % 6;
         switch ( bad_coord_num ) {
         case 0:
-            bad_elem.X.c0 = SpoilSignCoord( elem.X.c0 );
+            bad_elem.getXRef().getC0Ref().asBackendRef() = FqElementTestAccessor::spoil( elem.getXRef().getC0Ref().asBackendRef() );
             break;
         case 1:
-            bad_elem.X.c1 = SpoilSignCoord( elem.X.c1 );
+            bad_elem.getXRef().getC1Ref().asBackendRef() = FqElementTestAccessor::spoil( elem.getXRef().getC1Ref().asBackendRef() );
             break;
         case 2:
-            bad_elem.Y.c0 = SpoilSignCoord( elem.Y.c0 );
+            bad_elem.getYRef().getC0Ref().asBackendRef() = FqElementTestAccessor::spoil( elem.getYRef().getC0Ref().asBackendRef() );
             break;
         case 3:
-            bad_elem.Y.c1 = SpoilSignCoord( elem.Y.c1 );
+            bad_elem.getYRef().getC1Ref().asBackendRef() = FqElementTestAccessor::spoil( elem.getYRef().getC1Ref().asBackendRef() );
             break;
         case 4:
-            bad_elem.Z.c0 = SpoilSignCoord( elem.Z.c0 );
+            bad_elem.getZRef().getC0Ref().asBackendRef() = FqElementTestAccessor::spoil( elem.getZRef().getC0Ref().asBackendRef() );
             break;
         case 5:
-            bad_elem.Z.c1 = SpoilSignCoord( elem.Z.c1 );
+            bad_elem.getZRef().getC1Ref().asBackendRef() = FqElementTestAccessor::spoil( elem.getZRef().getC1Ref().asBackendRef() );
             break;
         }
     }
@@ -152,17 +137,17 @@ BOOST_AUTO_TEST_CASE( libBls ) {
         size_t num_signed = rand_gen() % num_all + 1;
 
         libBLS::Dkg dkg_obj = libBLS::Dkg( num_signed, num_all );
-        const std::vector< libff::alt_bn128_Fr > pol = dkg_obj.GeneratePolynomial();
-        std::vector< libff::alt_bn128_Fr > skeys = dkg_obj.SecretKeyContribution( pol );
+        const std::vector< algebra::FrScalar > pol = dkg_obj.GeneratePolynomial();
+        std::vector< algebra::FrScalar > skeys = dkg_obj.SecretKeyContribution( pol );
 
-        std::vector< libff::alt_bn128_G1 > signatures( num_signed );
+        std::vector< algebra::G1Point > signatures( num_signed );
 
         libBLS::Bls obj = libBLS::Bls( num_signed, num_all );
 
         for ( size_t i = 0; i < 10; ++i ) {
             std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr =
                 std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() );
-            libff::alt_bn128_G1 hash = libBLS::ThresholdUtils::HashtoG1( hash_ptr );
+            G1Point hash = G1Point::fromHash( *hash_ptr );
 
             for ( size_t i = 0; i < num_signed; ++i )
                 signatures.at( i ) = obj.Signing( hash, skeys.at( i ) );
@@ -176,25 +161,25 @@ BOOST_AUTO_TEST_CASE( libBls ) {
             }
 
             for ( size_t i = 0; i < num_signed; ++i ) {
-                auto pkey = skeys.at( i ) * libff::alt_bn128_G2::one();
-                BOOST_REQUIRE( obj.Verification( hash_ptr, signatures.at( i ), pkey ) );
+                auto pkey = skeys.at( i ) * G2Point::ONE;
+                BOOST_REQUIRE( obj.Verification( *hash_ptr, signatures.at( i ), pkey ) );
                 BOOST_REQUIRE_THROW(
-                    obj.Verification( hash_ptr, SpoilSignature( signatures.at( i ) ), pkey ),
+                    obj.Verification( *hash_ptr, SpoilSignature( signatures.at( i ) ), pkey ),
                     libBLS::ThresholdUtils::IsNotWellFormed );
             }
 
-            std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
-                libBLS::ThresholdUtils::LagrangeCoeffs( participants, num_signed );
-            libff::alt_bn128_G1 signature = obj.SignatureRecover( signatures, lagrange_coeffs );
+            std::vector< algebra::FrScalar > lagrange_coeffs =
+                algebra::lagrangeCoeffs( participants, num_signed );
+            algebra::G1Point signature = obj.SignatureRecover( signatures, lagrange_coeffs );
 
             auto recovered_keys = obj.KeysRecover( lagrange_coeffs, skeys );
-            BOOST_REQUIRE( obj.Verification( hash_ptr, signature, recovered_keys.second ) );
+            BOOST_REQUIRE( obj.Verification( *hash_ptr, signature, recovered_keys.second ) );
             BOOST_REQUIRE_THROW(
-                obj.Verification( hash_ptr, SpoilSignature( signature ), recovered_keys.second ),
+                obj.Verification( *hash_ptr, SpoilSignature( signature ), recovered_keys.second ),
                 libBLS::ThresholdUtils::IsNotWellFormed );
 
-            recovered_keys.second.X.c0 = SpoilSignCoord( recovered_keys.second.X.c0 );
-            BOOST_REQUIRE_THROW( obj.Verification( hash_ptr, signature, recovered_keys.second ),
+            recovered_keys.second.getXRef().getC0Ref().asBackendRef() = FqElementTestAccessor::spoil( recovered_keys.second.getXRef().getC0Ref().asBackendRef() );
+            BOOST_REQUIRE_THROW( obj.Verification( *hash_ptr, signature, recovered_keys.second ),
                 libBLS::ThresholdUtils::IsNotWellFormed );
         }
     }
@@ -238,8 +223,8 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
                     sigSet.getSigShareByIndex( participants.at( i ) );
                 BOOST_REQUIRE(
                     pkey_share.VerifySig( hash_ptr, sig_share_ptr, num_signed, num_all ) );
-                std::shared_ptr< libff::alt_bn128_G1 > bad_sig =
-                    std::make_shared< libff::alt_bn128_G1 >(
+                std::shared_ptr< algebra::G1Point > bad_sig =
+                    std::make_shared< algebra::G1Point >(
                         SpoilSignature( *sig_share_ptr->getSigShare() ) );
                 std::string hint = sig_share_ptr->getHint();
 
@@ -255,8 +240,8 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
                 std::make_shared< std::vector< size_t > >( participants ), num_signed, num_all );
             BLSPublicKey common_pkey( *( common_skey.getPrivateKey() ) );
             BOOST_REQUIRE( common_pkey.VerifySig( hash_ptr, common_sig_ptr ) );
-            std::shared_ptr< libff::alt_bn128_G1 > bad_sig =
-                std::make_shared< libff::alt_bn128_G1 >(
+            std::shared_ptr< algebra::G1Point > bad_sig =
+                std::make_shared< algebra::G1Point >(
                     SpoilSignature( *common_sig_ptr->getSig() ) );
             std::string hint = common_sig_ptr->getHint();
             BLSSignature bad_sign( bad_sig, hint, num_signed, num_all );
@@ -461,15 +446,15 @@ BOOST_AUTO_TEST_CASE( private_keys_equality ) {
         size_t num_signed = rand_gen() % ( num_all - 1 ) + 1;
 
         libBLS::Dkg dkg_obj = libBLS::Dkg( num_signed, num_all );
-        const std::vector< libff::alt_bn128_Fr > pol = dkg_obj.GeneratePolynomial();
-        std::vector< libff::alt_bn128_Fr > skeys = dkg_obj.SecretKeyContribution( pol );
+        const std::vector< algebra::FrScalar > pol = dkg_obj.GeneratePolynomial();
+        std::vector< algebra::FrScalar > skeys = dkg_obj.SecretKeyContribution( pol );
 
         std::shared_ptr< std::vector< size_t > > participants =
             choose_rand_signers( num_signed, num_all );
 
-        std::vector< libff::alt_bn128_Fr > lagrange_koefs =
-            libBLS::ThresholdUtils::LagrangeCoeffs( *participants, num_signed );
-        libff::alt_bn128_Fr common_skey = libff::alt_bn128_Fr::zero();
+        std::vector< algebra::FrScalar > lagrange_koefs =
+            algebra::lagrangeCoeffs( *participants, num_signed );
+        algebra::FrScalar common_skey = algebra::FrScalar::ZERO;
         for ( size_t i = 0; i < num_signed; ++i ) {
             common_skey =
                 common_skey + lagrange_koefs.at( i ) * skeys.at( participants->at( i ) - 1 );
@@ -485,20 +470,20 @@ BOOST_AUTO_TEST_CASE( public_keys_equality ) {
         size_t num_signed = rand_gen() % ( num_all - 1 ) + 1;
 
         libBLS::Dkg dkg_obj = libBLS::Dkg( num_signed, num_all );
-        const std::vector< libff::alt_bn128_Fr > pol = dkg_obj.GeneratePolynomial();
-        std::vector< libff::alt_bn128_Fr > skeys = dkg_obj.SecretKeyContribution( pol );
-        libff::alt_bn128_G2 common_pkey = dkg_obj.GetPublicKeyFromSecretKey( pol.at( 0 ) );
+        const std::vector< algebra::FrScalar > pol = dkg_obj.GeneratePolynomial();
+        std::vector< algebra::FrScalar > skeys = dkg_obj.SecretKeyContribution( pol );
+        algebra::G2Point common_pkey = dkg_obj.GetPublicKeyFromSecretKey( pol.at( 0 ) );
 
         std::shared_ptr< std::vector< size_t > > participants =
             choose_rand_signers( num_signed, num_all );
 
-        std::vector< libff::alt_bn128_Fr > lagrange_koefs =
-            libBLS::ThresholdUtils::LagrangeCoeffs( *participants, num_signed );
-        libff::alt_bn128_G2 common_pkey1 = libff::alt_bn128_G2::zero();
+        std::vector< algebra::FrScalar > lagrange_koefs =
+            algebra::lagrangeCoeffs( *participants, num_signed );
+        algebra::G2Point common_pkey1 = algebra::G2Point::ZERO;
         for ( size_t i = 0; i < num_signed; ++i ) {
             common_pkey1 = common_pkey1 + lagrange_koefs.at( i ) *
                                               skeys.at( participants->at( i ) - 1 ) *
-                                              libff::alt_bn128_G2::one();
+                                              algebra::G2Point::ONE;
         }
         BOOST_REQUIRE( common_pkey == common_pkey1 );
     }
@@ -509,19 +494,19 @@ BOOST_AUTO_TEST_CASE( BLSWITHDKG ) {
         size_t num_all = rand_gen() % 15 + 2;
         size_t num_signed = rand_gen() % ( num_all - 1 ) + 1;
 
-        std::vector< std::vector< libff::alt_bn128_Fr > > secret_shares_all;
-        std::vector< std::vector< libff::alt_bn128_G2 > > public_shares_all;
+        std::vector< std::vector< algebra::FrScalar > > secret_shares_all;
+        std::vector< std::vector< algebra::G2Point > > public_shares_all;
         std::vector< DKGBLSWrapper > dkgs;
         std::vector< BLSPrivateKeyShare > skeys;
 
-        libff::alt_bn128_G2 common_public = libff::alt_bn128_G2::zero();
+        algebra::G2Point common_public = algebra::G2Point::ZERO;
 
         for ( size_t i = 0; i < num_all; i++ ) {
             DKGBLSWrapper dkg_wrap( num_signed, num_all );
             dkgs.push_back( dkg_wrap );
-            std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr =
+            std::shared_ptr< std::vector< algebra::FrScalar > > secret_shares_ptr =
                 dkg_wrap.createDKGSecretShares();
-            std::shared_ptr< std::vector< libff::alt_bn128_G2 > > public_shares_ptr =
+            std::shared_ptr< std::vector< algebra::G2Point > > public_shares_ptr =
                 dkg_wrap.createDKGPublicShares();
             common_public = common_public + public_shares_ptr->at( 0 );
             secret_shares_all.push_back( *secret_shares_ptr );
@@ -533,14 +518,14 @@ BOOST_AUTO_TEST_CASE( BLSWITHDKG ) {
         for ( size_t i = 0; i < num_all; i++ )
             for ( size_t j = 0; j < num_all; j++ ) {
                 BOOST_REQUIRE( dkgs.at( i ).VerifyDKGShare( j, secret_shares_all.at( i ).at( j ),
-                    std::make_shared< std::vector< libff::alt_bn128_G2 > >(
+                    std::make_shared< std::vector< algebra::G2Point > >(
                         public_shares_all.at( i ) ) ) );
             }
 
-        std::vector< std::vector< libff::alt_bn128_Fr > > secret_key_shares;
+        std::vector< std::vector< algebra::FrScalar > > secret_key_shares;
 
         for ( size_t i = 0; i < num_all; i++ ) {
-            std::vector< libff::alt_bn128_Fr > secret_key_contribution;
+            std::vector< algebra::FrScalar > secret_key_contribution;
             for ( size_t j = 0; j < num_all; j++ ) {
                 secret_key_contribution.push_back( secret_shares_all.at( j ).at( i ) );
             }
@@ -549,7 +534,7 @@ BOOST_AUTO_TEST_CASE( BLSWITHDKG ) {
 
         for ( size_t i = 0; i < num_all; i++ ) {
             BLSPrivateKeyShare pkey_share = dkgs.at( i ).CreateBLSPrivateKeyShare(
-                std::make_shared< std::vector< libff::alt_bn128_Fr > >(
+                std::make_shared< std::vector< algebra::FrScalar > >(
                     secret_key_shares.at( i ) ) );
             skeys.push_back( pkey_share );
         }
@@ -586,15 +571,14 @@ BOOST_AUTO_TEST_CASE( BLSWITHDKG ) {
             ptr_skeys.push_back( std::make_shared< BLSPrivateKeyShare >( skeys.at( i ) ) );
         }
 
-        libff::alt_bn128_Fr common_secret = libff::alt_bn128_Fr::zero();
+        algebra::FrScalar common_secret = algebra::FrScalar::ZERO;
         for ( size_t i = 0; i < num_all; i++ ) {
             common_secret = common_secret + dkgs.at( i ).getValueAt0();
         }
 
         std::shared_ptr< BLSSignature > common_sig_ptr = sigSet.merge();  // verifying signature
 
-        std::string common_secret_str =
-            libBLS::ThresholdUtils::fieldElementToString( common_secret );
+        std::string common_secret_str = common_secret.toString( Base::DEC );
         BLSPrivateKey common_skey(
             std::make_shared< std::string >( common_secret_str ), num_signed, num_all );
 
@@ -602,7 +586,7 @@ BOOST_AUTO_TEST_CASE( BLSWITHDKG ) {
             std::make_shared< std::vector< std::shared_ptr< BLSPrivateKeyShare > > >( ptr_skeys ),
             std::make_shared< std::vector< size_t > >( participants ), num_signed, num_all );
         BOOST_REQUIRE( *common_skey.getPrivateKey() == *common_skey2.getPrivateKey() );
-        BOOST_REQUIRE( common_secret * libff::alt_bn128_G2::one() == common_public );
+        BOOST_REQUIRE( common_secret * algebra::G2Point::ONE == common_public );
         BLSPublicKey common_pkey( *( common_skey2.getPrivateKey() ) );
         BOOST_REQUIRE( *common_pkey.getPublicKey() == *dkg_common_pkey.getPublicKey() );
         BOOST_REQUIRE( common_pkey.VerifySig( hash_ptr, common_sig_ptr ) );
@@ -632,19 +616,19 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDVERIFICATIONONLY ) {
 
         bool invalid_sig = rand_gen() % 2;
 
-        std::vector< std::vector< libff::alt_bn128_Fr > > secret_shares_all;
-        std::vector< std::vector< libff::alt_bn128_G2 > > public_shares_all;
+        std::vector< std::vector< algebra::FrScalar > > secret_shares_all;
+        std::vector< std::vector< algebra::G2Point > > public_shares_all;
         std::vector< DKGBLSWrapper > dkgs;
         std::vector< BLSPrivateKeyShare > skeys;
 
-        libff::alt_bn128_G2 common_public = libff::alt_bn128_G2::zero();
+        algebra::G2Point common_public = algebra::G2Point::ZERO;
 
         for ( size_t i = 0; i < num_all; i++ ) {
             DKGBLSWrapper dkg_wrap( num_signed, num_all );
             dkgs.push_back( dkg_wrap );
-            std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr =
+            std::shared_ptr< std::vector< algebra::FrScalar > > secret_shares_ptr =
                 dkg_wrap.createDKGSecretShares();
-            std::shared_ptr< std::vector< libff::alt_bn128_G2 > > public_shares_ptr =
+            std::shared_ptr< std::vector< algebra::G2Point > > public_shares_ptr =
                 dkg_wrap.createDKGPublicShares();
             common_public = common_public + public_shares_ptr->at( 0 );
             secret_shares_all.push_back( *secret_shares_ptr );
@@ -656,14 +640,14 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDVERIFICATIONONLY ) {
         for ( size_t i = 0; i < num_all; i++ )
             for ( size_t j = 0; j < num_all; j++ ) {
                 BOOST_REQUIRE( dkgs.at( i ).VerifyDKGShare( j, secret_shares_all.at( i ).at( j ),
-                    std::make_shared< std::vector< libff::alt_bn128_G2 > >(
+                    std::make_shared< std::vector< algebra::G2Point > >(
                         public_shares_all.at( i ) ) ) );
             }
 
-        std::vector< std::vector< libff::alt_bn128_Fr > > secret_key_shares;
+        std::vector< std::vector< algebra::FrScalar > > secret_key_shares;
 
         for ( size_t i = 0; i < num_all; i++ ) {
-            std::vector< libff::alt_bn128_Fr > secret_key_contribution;
+            std::vector< algebra::FrScalar > secret_key_contribution;
             for ( size_t j = 0; j < num_all; j++ ) {
                 secret_key_contribution.push_back( secret_shares_all.at( j ).at( i ) );
             }
@@ -672,7 +656,7 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDVERIFICATIONONLY ) {
 
         for ( size_t i = 0; i < num_all; i++ ) {
             BLSPrivateKeyShare pkey_share = dkgs.at( i ).CreateBLSPrivateKeyShare(
-                std::make_shared< std::vector< libff::alt_bn128_Fr > >(
+                std::make_shared< std::vector< algebra::FrScalar > >(
                     secret_key_shares.at( i ) ) );
             skeys.push_back( pkey_share );
         }
@@ -760,8 +744,8 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDVERIFICATIONONLY ) {
 BOOST_AUTO_TEST_CASE( BLSAGGREGATEDSIGNATURESSCHEME ) {
     size_t num_all = rand_gen() % 100 + 2;
 
-    std::vector< libff::alt_bn128_Fr > private_keys( num_all );
-    std::vector< libff::alt_bn128_G2 > public_keys( num_all );
+    std::vector< algebra::FrScalar > private_keys( num_all );
+    std::vector< algebra::G2Point > public_keys( num_all );
     for ( size_t i = 0; i < num_all; ++i ) {
         auto key_pair = libBLS::Bls::KeyGeneration();
         private_keys[i] = key_pair.first;
@@ -770,7 +754,7 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDSIGNATURESSCHEME ) {
 
     std::string hex_message = rand32HexStr();
 
-    std::vector< libff::alt_bn128_G1 > signatures( num_all );
+    std::vector< algebra::G1Point > signatures( num_all );
     for ( size_t i = 0; i < num_all; ++i ) {
         signatures[i] = libBLS::Bls::CoreSignAggregated( hex_message, private_keys[i] );
         BOOST_REQUIRE( libBLS::Bls::CoreVerify( public_keys[i], hex_message, signatures[i] ) );
@@ -806,7 +790,7 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDSIGNATURESSCHEME ) {
     for ( size_t i = 0; i < num_all; ++i ) {
         auto malicious_public_keys = public_keys;
         size_t rand_idx = rand_gen() % num_all;
-        malicious_public_keys[rand_idx] = libff::alt_bn128_G2::random_element();
+        malicious_public_keys[rand_idx] = algebra::G2Point::random();
 
         BOOST_REQUIRE( !libBLS::Bls::FastAggregateVerify(
             malicious_public_keys, hex_message, aggregated_signature ) );
@@ -824,7 +808,7 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDPOPPROVEVERIFY ) {
 
     BOOST_REQUIRE( libBLS::Bls::PopVerify( key_pair.second, pop_prove ) );
 
-    auto random_prove = libff::alt_bn128_G1::random_element();
+    auto random_prove = algebra::G1Point::random();
 
     BOOST_REQUIRE( !libBLS::Bls::PopVerify( key_pair.second, random_prove ) );
 
@@ -884,18 +868,18 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
     {
         // creating a polynomial
-        std::vector< libff::alt_bn128_Fr > coeffs( 11 );
+        std::vector< algebra::FrScalar > coeffs( 11 );
 
         for ( auto& elem : coeffs ) {
-            elem = libff::alt_bn128_Fr::random_element();
+            elem = algebra::FrScalar::random();
 
             while ( elem == 0 ) {
-                elem = libff::alt_bn128_Fr::random_element();
+                elem = algebra::FrScalar::random();
             }
         }
 
         // make free element zero so the common secret is zero
-        coeffs[0] = libff::alt_bn128_Fr::zero();
+        coeffs[0] = algebra::FrScalar::ZERO;
 
         std::vector< std::shared_ptr< BLSPrivateKeyShare > > secret_keys( 16 );
         std::vector< size_t > ids( 11 );
@@ -904,12 +888,12 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
                 ids[i] = i + 1;
             }
 
-            libff::alt_bn128_Fr tmp = libff::alt_bn128_Fr::zero();
+            algebra::FrScalar tmp = algebra::FrScalar::ZERO;
 
             for ( size_t j = 0; j < 11; ++j ) {
                 tmp = tmp +
                       coeffs[j] *
-                          libff::power( libff::alt_bn128_Fr( std::to_string( i + 1 ).c_str() ), j );
+                          algebra::power( algebra::FrScalar::fromString(std::to_string( i + 1 ), Base::DEC ), j );
             }
             secret_keys[i] =
                 std::make_shared< BLSPrivateKeyShare >( BLSPrivateKeyShare( tmp, 11, 16 ) );
@@ -935,24 +919,24 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
     {
         BOOST_REQUIRE_THROW(
-            BLSPrivateKeyShare skey( libff::alt_bn128_Fr::zero(), num_signed, num_all ),
+            BLSPrivateKeyShare skey( algebra::FrScalar::ZERO, num_signed, num_all ),
             libBLS::ThresholdUtils::ZeroSecretKey );
     }
 
     {
-        BLSPrivateKeyShare skey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
+        BLSPrivateKeyShare skey( algebra::FrScalar::random(), num_signed, num_all );
         BOOST_REQUIRE_THROW(
             skey.sign( std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() ), 0 ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
-        BLSPrivateKeyShare skey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
+        BLSPrivateKeyShare skey( algebra::FrScalar::random(), num_signed, num_all );
         BOOST_REQUIRE_THROW( skey.sign( NULL, 1 ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
-        BLSPrivateKeyShare skey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
+        BLSPrivateKeyShare skey( algebra::FrScalar::random(), num_signed, num_all );
         BOOST_REQUIRE_THROW(
             skey.signWithHelper(
                 std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() ), 0 ),
@@ -960,7 +944,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        BLSPrivateKeyShare skey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
+        BLSPrivateKeyShare skey( algebra::FrScalar::random(), num_signed, num_all );
         BOOST_REQUIRE_THROW(
             skey.signWithHelper( NULL, 1 ), libBLS::ThresholdUtils::IncorrectInput );
     }
@@ -987,27 +971,27 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
     {
         // creating a polynomial
-        std::vector< libff::alt_bn128_Fr > coeffs( 11 );
+        std::vector< algebra::FrScalar > coeffs( 11 );
 
         for ( auto& elem : coeffs ) {
-            elem = libff::alt_bn128_Fr::random_element();
+            elem = algebra::FrScalar::random();
 
             while ( elem == 0 ) {
-                elem = libff::alt_bn128_Fr::random_element();
+                elem = algebra::FrScalar::random();
             }
         }
 
         // make free element zero so the common secret is zero
-        coeffs[0] = libff::alt_bn128_Fr::zero();
+        coeffs[0] = algebra::FrScalar::ZERO;
 
         std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > coeffs_map;
         for ( size_t i = 0; i < 16; ++i ) {
-            libff::alt_bn128_Fr tmp = libff::alt_bn128_Fr::zero();
+            algebra::FrScalar tmp = algebra::FrScalar::ZERO;
 
             for ( size_t j = 0; j < 11; ++j ) {
                 tmp = tmp +
                       coeffs[j] *
-                          libff::power( libff::alt_bn128_Fr( std::to_string( i + 1 ).c_str() ), j );
+                          libff::power( algebra::FrScalar::fromString( std::to_string( i + 1 ), Base::DEC ), j );
             }
 
             if ( i < 11 ) {
@@ -1023,20 +1007,20 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        BOOST_REQUIRE_THROW( BLSPublicKey pkey( libff::alt_bn128_G2::zero() ),
+        BOOST_REQUIRE_THROW( BLSPublicKey pkey( algebra::G2Point::ZERO ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
-        BOOST_REQUIRE_THROW( BLSPublicKey pkey( libff::alt_bn128_Fr::zero() ),
+        BOOST_REQUIRE_THROW( BLSPublicKey pkey( algebra::FrScalar::ZERO ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
-        BLSPublicKey pkey( libff::alt_bn128_Fr::random_element() );
+        BLSPublicKey pkey( algebra::FrScalar::random() );
         std::string hint = "123:1";
         BLSSignature rand_sig(
-            std::make_shared< libff::alt_bn128_G1 >( libff::alt_bn128_G1::random_element() ), hint,
+            std::make_shared< algebra::G1Point >( algebra::G1Point::random() ), hint,
             num_signed, num_all );
         BOOST_REQUIRE_THROW(
             pkey.VerifySigWithHelper( nullptr, std::make_shared< BLSSignature >( rand_sig ) ),
@@ -1044,7 +1028,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        BLSPublicKey pkey( libff::alt_bn128_Fr::random_element() );
+        BLSPublicKey pkey( algebra::FrScalar::random() );
         BOOST_REQUIRE_THROW(
             pkey.VerifySigWithHelper(
                 std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() ), nullptr ),
@@ -1052,7 +1036,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        BLSPublicKey pkey( libff::alt_bn128_Fr::random_element() );
+        BLSPublicKey pkey( algebra::FrScalar::random() );
         BOOST_REQUIRE_THROW(
             pkey.VerifySig(
                 std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() ), nullptr ),
@@ -1060,10 +1044,10 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        BLSPublicKey pkey( libff::alt_bn128_Fr::random_element() );
+        BLSPublicKey pkey( algebra::FrScalar::random() );
         std::string hint = "123:1";
         BLSSignature rand_sig(
-            std::make_shared< libff::alt_bn128_G1 >( libff::alt_bn128_G1::random_element() ), hint,
+            std::make_shared< algebra::G1Point >( algebra::G1Point::random() ), hint,
             num_signed, num_all );
         BOOST_REQUIRE_THROW(
             pkey.VerifySig( nullptr, std::make_shared< BLSSignature >( rand_sig ) ),
@@ -1072,7 +1056,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
     {
         BOOST_REQUIRE_THROW(
-            BLSPublicKeyShare pkey( libff::alt_bn128_Fr::zero(), num_signed, num_all ),
+            BLSPublicKeyShare pkey( algebra::FrScalar::ZERO, num_signed, num_all ),
             libBLS::ThresholdUtils::ZeroSecretKey );
     }
 
@@ -1089,10 +1073,10 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        BLSPublicKeyShare pkey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
+        BLSPublicKeyShare pkey( algebra::FrScalar::random(), num_signed, num_all );
         std::string hint = "123:1";
         BLSSigShare rand_sig(
-            std::make_shared< libff::alt_bn128_G1 >( libff::alt_bn128_G1::random_element() ), hint,
+            std::make_shared< algebra::G1Point >( algebra::G1Point::random() ), hint,
             1, num_signed, num_all );
         BOOST_REQUIRE_THROW( pkey.VerifySigWithHelper( nullptr,
                                  std::make_shared< BLSSigShare >( rand_sig ), num_signed, num_all ),
@@ -1100,7 +1084,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        BLSPublicKeyShare pkey( libff::alt_bn128_Fr::random_element(), num_signed, num_all );
+        BLSPublicKeyShare pkey( algebra::FrScalar::random(), num_signed, num_all );
         BOOST_REQUIRE_THROW(
             pkey.VerifySigWithHelper(
                 std::make_shared< std::array< uint8_t, 32 > >( GenerateRandHash() ), nullptr,
@@ -1121,8 +1105,8 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
     {
         std::string empty_hint = "";
-        BOOST_REQUIRE_THROW( BLSSignature( std::make_shared< libff::alt_bn128_G1 >(
-                                               libff::alt_bn128_G1::random_element() ),
+        BOOST_REQUIRE_THROW( BLSSignature( std::make_shared< algebra::G1Point >(
+                                               algebra::G1Point::random() ),
                                  empty_hint, num_signed, num_all ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
@@ -1189,9 +1173,9 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        libff::alt_bn128_G1 zero_sig = libff::alt_bn128_G1::zero();
+        algebra::G1Point zero_sig = algebra::G1Point::ZERO;
         std::string hint = "123:1";
-        BOOST_REQUIRE_THROW( BLSSignature( std::make_shared< libff::alt_bn128_G1 >( zero_sig ),
+        BOOST_REQUIRE_THROW( BLSSignature( std::make_shared< algebra::G1Point >( zero_sig ),
                                  hint, num_signed, num_all ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
@@ -1214,8 +1198,8 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
     {
         std::string empty_hint = "";
-        BOOST_REQUIRE_THROW( BLSSigShare( std::make_shared< libff::alt_bn128_G1 >(
-                                              libff::alt_bn128_G1::random_element() ),
+        BOOST_REQUIRE_THROW( BLSSigShare( std::make_shared< algebra::G1Point >(
+                                              algebra::G1Point::random() ),
                                  empty_hint, 1, num_signed, num_all ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
@@ -1223,15 +1207,15 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     {
         std::string hint = "123:1";
         BOOST_REQUIRE_THROW(
-            BLSSigShare( std::make_shared< libff::alt_bn128_G1 >( libff::alt_bn128_G1::zero() ),
+            BLSSigShare( std::make_shared< algebra::G1Point >( algebra::G1Point::ZERO ),
                 hint, 1, num_signed, num_all ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
         std::string hint = "123:1";
-        BOOST_REQUIRE_THROW( BLSSigShare( std::make_shared< libff::alt_bn128_G1 >(
-                                              libff::alt_bn128_G1::random_element() ),
+        BOOST_REQUIRE_THROW( BLSSigShare( std::make_shared< algebra::G1Point >(
+                                              algebra::G1Point::random() ),
                                  hint, 0, num_signed, num_all ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
@@ -1309,7 +1293,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     {
         std::string hint = "123:1";
         BLSSigShare sigShare1(
-            std::make_shared< libff::alt_bn128_G1 >( libff::alt_bn128_G1::random_element() ), hint,
+            std::make_shared< algebra::G1Point >( algebra::G1Point::random() ), hint,
             1, num_signed, num_all );
         BLSSigShare sigShare2 = sigShare1;
         BLSSigShareSet sig_set( num_signed, num_all );
@@ -1321,7 +1305,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     {
         std::string hint = "123:1";
         BLSSigShare sigShare1(
-            std::make_shared< libff::alt_bn128_G1 >( libff::alt_bn128_G1::random_element() ), hint,
+            std::make_shared< algebra::G1Point >( algebra::G1Point::random() ), hint,
             1, num_signed, num_all );
         BLSSigShareSet sig_set( 1, 1 );
         sig_set.addSigShare( std::make_shared< BLSSigShare >( sigShare1 ) );
@@ -1355,30 +1339,30 @@ BOOST_AUTO_TEST_CASE( DKGWrappersExceptions ) {
 
     {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
-        std::vector< libff::alt_bn128_G2 > vect = { libff::alt_bn128_G2::random_element() };
-        BOOST_REQUIRE_THROW( dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::zero(),
-                                 std::make_shared< std::vector< libff::alt_bn128_G2 > >( vect ) ),
+        std::vector< algebra::G2Point > vect = { algebra::G2Point::random() };
+        BOOST_REQUIRE_THROW( dkg_wrap.VerifyDKGShare( 1, algebra::FrScalar::ZERO,
+                                 std::make_shared< std::vector< algebra::G2Point > >( vect ) ),
             libBLS::ThresholdUtils::ZeroSecretKey );
     }
 
     {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
-        BOOST_REQUIRE_THROW( dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::zero(), nullptr ),
+        BOOST_REQUIRE_THROW( dkg_wrap.VerifyDKGShare( 1, algebra::FrScalar::ZERO, nullptr ),
             libBLS::ThresholdUtils::ZeroSecretKey );
     }
 
     {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
         BOOST_REQUIRE_THROW(
-            dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::random_element(), nullptr ),
+            dkg_wrap.VerifyDKGShare( 1, algebra::FrScalar::random(), nullptr ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
         DKGBLSWrapper dkg_wrap( num_signed + 1, num_all + 1 );
-        std::vector< libff::alt_bn128_G2 > vect = { libff::alt_bn128_G2::random_element() };
-        BOOST_REQUIRE_THROW( dkg_wrap.VerifyDKGShare( 1, libff::alt_bn128_Fr::random_element(),
-                                 std::make_shared< std::vector< libff::alt_bn128_G2 > >( vect ) ),
+        std::vector< algebra::G2Point > vect = { algebra::G2Point::random() };
+        BOOST_REQUIRE_THROW( dkg_wrap.VerifyDKGShare( 1, algebra::FrScalar::random(),
+                                 std::make_shared< std::vector< algebra::G2Point > >( vect ) ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
@@ -1390,9 +1374,9 @@ BOOST_AUTO_TEST_CASE( DKGWrappersExceptions ) {
 
     {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
-        std::vector< libff::alt_bn128_Fr > poly;
+        std::vector< algebra::FrScalar > poly;
         BOOST_REQUIRE_THROW(
-            dkg_wrap.setDKGSecret( std::make_shared< std::vector< libff::alt_bn128_Fr > >( poly ) ),
+            dkg_wrap.setDKGSecret( std::make_shared< std::vector< algebra::FrScalar > >( poly ) ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
@@ -1404,9 +1388,9 @@ BOOST_AUTO_TEST_CASE( DKGWrappersExceptions ) {
 
     {
         DKGBLSWrapper dkg_wrap( num_signed, num_all );
-        std::vector< libff::alt_bn128_Fr > shares;
+        std::vector< algebra::FrScalar > shares;
         BOOST_REQUIRE_THROW( dkg_wrap.CreateBLSPrivateKeyShare(
-                                 std::make_shared< std::vector< libff::alt_bn128_Fr > >( shares ) ),
+                                 std::make_shared< std::vector< algebra::FrScalar > >( shares ) ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 }

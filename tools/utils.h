@@ -30,7 +30,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-
+#include <iomanip>
 #include "backends/algebra.hpp"
 
 static constexpr size_t BLS_MAX_COMPONENT_LEN = 77;
@@ -83,10 +83,6 @@ public:
 
     static void initRAND();
 
-    static void validateG1( const algebra::G1Point& point );
-
-    static void validateG2( const algebra::G2Point& point );
-
     static void checkSigners( size_t _requiredSigners, size_t _totalSigners );
 
     static bool isStringNumber( const std::string& str );
@@ -109,10 +105,10 @@ public:
 
     static std::string bytesToHexString( const std::vector< uint8_t >& bytes );
 
-    template < size_t N >
-    static std::string ThresholdUtils::bytesToHexString(const std::array< uint8_t, N >& bytes );
-
     static std::vector< uint8_t > hexCStringToBytes( const char* hexStr );
+
+    template < size_t N >
+    static std::string bytesToHexString(const std::array< uint8_t, N >& bytes );
 
     template < size_t N >
     static std::array< uint8_t, N > hexCStringToBytesArray( const char* hexStr );
@@ -140,24 +136,6 @@ std::string ThresholdUtils::bytesToHexString(const std::array< uint8_t, N >& byt
 
 
 template < size_t N >
-std::array< uint8_t, N > hexCStringToBytesArray( const char* hexStr ) {
-    size_t characterCountNeeded = N * 2;
-    if ( validateHexCString( hexStr ) < characterCountNeeded ) {
-        throw IncorrectInput( "Hex string length must be at least 64 characters." );
-    }
-
-    std::array< uint8_t, N > bytes;
-
-    // Convert hex string to byte array
-    for ( size_t i = 0; i < characterCountNeeded; i += 2 ) {
-        bytes[i / 2] = ( std::stoi( std::string( hexStr + i, 2 ), nullptr, 16 ) );
-    }
-
-    return bytes;
-}
-
-
-template < size_t N >
 std::array< uint8_t, N > ThresholdUtils::hexCStringToBytesArray( const char* hexStr ) {
     size_t characterCountNeeded = N * 2;
     if ( validateHexCString( hexStr ) < characterCountNeeded ) {
@@ -173,6 +151,7 @@ std::array< uint8_t, N > ThresholdUtils::hexCStringToBytesArray( const char* hex
 
     return bytes;
 }
+
 
 }  // namespace libBLS
 

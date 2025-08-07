@@ -31,6 +31,7 @@
 #include <bls/BLSPublicKey.h>
 #include <bls/BLSPublicKeyShare.h>
 
+using namespace libBLS;
 
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
 #define __EXPAND_AS_STR__( x ) #x
@@ -71,18 +72,18 @@ void KeyGeneration( const size_t t, const size_t n, bool generate_all = true, in
     libBLS::Dkg dkg_instance = libBLS::Dkg( t, n );
 
     if ( generate_all ) {
-        std::vector< std::vector< libff::alt_bn128_Fr > > polynomial( n );
+        std::vector< std::vector< algebra::FrScalar > > polynomial( n );
 
         for ( auto& pol : polynomial ) {
             pol = dkg_instance.GeneratePolynomial();
         }
 
-        std::vector< std::vector< libff::alt_bn128_Fr > > secret_key_contribution( n );
+        std::vector< std::vector< algebra::FrScalar > > secret_key_contribution( n );
         for ( size_t i = 0; i < n; ++i ) {
             secret_key_contribution[i] = dkg_instance.SecretKeyContribution( polynomial[i] );
         }
 
-        std::vector< std::vector< libff::alt_bn128_G2 > > verification_vector( n );
+        std::vector< std::vector< algebra::G2Point > > verification_vector( n );
         for ( size_t i = 0; i < n; ++i ) {
             verification_vector[i] = dkg_instance.VerificationVector( polynomial[i] );
         }
@@ -103,9 +104,9 @@ void KeyGeneration( const size_t t, const size_t n, bool generate_all = true, in
         }
 
         std::vector< std::shared_ptr< BLSPrivateKeyShare > > skeys;
-        libff::alt_bn128_G2 common_public_key = libff::alt_bn128_G2::zero();
+        algebra::G2Point common_public_key = algebra::G2Point::ZERO;
         for ( size_t i = 0; i < n; ++i ) {
-            common_public_key = common_public_key + polynomial[i][0] * libff::alt_bn128_G2::one();
+            common_public_key = common_public_key + polynomial[i][0] * algebra::G2Point::ONE;
             BLSPrivateKeyShare cur_skey(
                 dkg_instance.SecretKeyShareCreate( secret_key_contribution[i] ), t, n );
             skeys.push_back( std::make_shared< BLSPrivateKeyShare >( cur_skey ) );
@@ -118,36 +119,30 @@ void KeyGeneration( const size_t t, const size_t n, bool generate_all = true, in
         }
 
     } else {
-        std::vector< libff::alt_bn128_Fr > polynomial = dkg_instance.GeneratePolynomial();
+        std::vector< algebra::FrScalar > polynomial = dkg_instance.GeneratePolynomial();
 
-        std::vector< libff::alt_bn128_Fr > secret_key_contribution =
+        std::vector< algebra::FrScalar > secret_key_contribution =
             dkg_instance.SecretKeyContribution( polynomial );
 
-        std::vector< libff::alt_bn128_G2 > verification_vector =
+        std::vector< algebra::G2Point > verification_vector =
             dkg_instance.VerificationVector( polynomial );
 
         nlohmann::json data;
         data["idx"] = std::to_string( idx );
 
         for ( size_t i = 0; i < n; ++i ) {
-            data["secret_key_contribution"][std::to_string( i )] =
-                libBLS::ThresholdUtils::fieldElementToString( secret_key_contribution[i] );
+            data["secret_key_contribution"][std::to_string( i )] = secret_key_contribution[i].toString( Base::DEC );
         }
 
 
         for ( size_t i = 0; i < t; ++i ) {
-            data["verification_vector"][std::to_string( i )]["X"]["c0"] =
-                libBLS::ThresholdUtils::fieldElementToString( verification_vector[i].X.c0 );
-            data["verification_vector"][std::to_string( i )]["X"]["c1"] =
-                libBLS::ThresholdUtils::fieldElementToString( verification_vector[i].X.c1 );
-            data["verification_vector"][std::to_string( i )]["Y"]["c0"] =
-                libBLS::ThresholdUtils::fieldElementToString( verification_vector[i].Y.c0 );
-            data["verification_vector"][std::to_string( i )]["Y"]["c1"] =
-                libBLS::ThresholdUtils::fieldElementToString( verification_vector[i].Y.c1 );
-            data["verification_vector"][std::to_string( i )]["Z"]["c0"] =
-                libBLS::ThresholdUtils::fieldElementToString( verification_vector[i].Z.c0 );
-            data["verification_vector"][std::to_string( i )]["Z"]["c1"] =
-                libBLS::ThresholdUtils::fieldElementToString( verification_vector[i].Z.c1 );
+            auto projectiveCoords = verification_vector[i].toStringArrayProjective( Base::DEC );
+            data["verification_vector"][std::to_string( i )]["X"]["c0"] = projectiveCoords[0];
+            data["verification_vector"][std::to_string( i )]["X"]["c1"] = projectiveCoords[1];
+            data["verification_vector"][std::to_string( i )]["Y"]["c0"] = projectiveCoords[2];
+            data["verification_vector"][std::to_string( i )]["Y"]["c1"] = projectiveCoords[3];
+            data["verification_vector"][std::to_string( i )]["Z"]["c0"] = projectiveCoords[4];
+            data["verification_vector"][std::to_string( i )]["Z"]["c1"] = projectiveCoords[5];
         }
 
         std::ofstream outfile( "data_for_" + std::to_string( idx ) + "-th_participant.json" );
