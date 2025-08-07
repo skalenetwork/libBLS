@@ -10,9 +10,18 @@ namespace algebra {
 constexpr size_t BASE_HEXA = 16;
 constexpr size_t BASE_DEC = 10;
 
-inline GTElement pairing(const G1Point& g1, const G2Point& g2);
+GTElement pairing(const G1Point& g1, const G2Point& g2);
 
-inline FrScalar power( const FrScalar& fr, int exponent );
+#ifdef MCL
+#else
+
+template<typename Exponent>
+FrScalar power( const FrScalar& fr, Exponent exponent ) {
+    return libff::power(fr.value, exponent);
+}
+
+#endif
+
 
 std::pair< FqElement, FqElement > parseHint(const std::string& hint );
 

@@ -1,10 +1,6 @@
 #pragma once
 
-#ifdef MCL
-#else
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-#include <libff/common/utils.hpp>
-#endif
+#include "../algebra_types.hpp"
 
 namespace libBLS {
 namespace algebra {
@@ -12,32 +8,42 @@ namespace algebra {
 class FrScalar {
 
 public:
+
 #ifdef MCL
 #else
-    static constexpr size_t SIZE_BYTES = 32;
-    libff::alt_bn128_Fr value;
-
-    FrScalar(const libff::alt_bn128_Fr& v) : value(v) {}
-
+    static const size_t SIZE_BYTES = 32;
 #endif
+
+    static const FrScalar ZERO;
+    static const FrScalar ONE;
+
+    FrBackendType value;
 
     FrScalar();
     FrScalar(const size_t n);
-    FrScalar(const std::string& str);
+    FrScalar(const FrBackendType& v) : value(v) {}
 
     FrScalar inverse() const;
 
-    bool is_zero() const;
+    bool isZero() const;
 
+    // ---------- Serialization ----------- //
+
+    std::vector< uint8_t > toByteVector() const;
     std::array< uint8_t, SIZE_BYTES > toByteArray() const;
+
+    std::string toString( Base base ) const;
+
+    // ---------- Deserialization ----------- //
+
+    static FrScalar fromBytes(const std::array< uint8_t, SIZE_BYTES >& bytes);
+    static FrScalar fromBytes(const std::vector< uint8_t >& bytes);
+
+    static FrScalar fromString(const std::string& str, Base base);
 
     // -------------------- Static Methods -------------------- // 
 
     static FrScalar random();
-    static FrScalar zero();
-    static FrScalar one();
-
-    static FrScalar fromByteArray(const std::array< uint8_t, SIZE_BYTES >& bytes);
 
     // -------------------- Operator Overloads -------------------- //
 
@@ -48,6 +54,7 @@ public:
     FrScalar operator*=(const FrScalar& other);
     bool operator==(const FrScalar& other) const;
     bool operator!=(const FrScalar& other) const;
+
 };
 
 } // namespace algebra

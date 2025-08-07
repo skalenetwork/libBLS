@@ -1,10 +1,6 @@
 #pragma once
 
-#ifdef MCL
-#else
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-#include <libff/common/utils.hpp>
-#endif
+#include "../algebra_types.hpp"
 
 namespace libBLS {
 namespace algebra {
@@ -15,17 +11,21 @@ public:
 #ifdef MCL
 #else
     static constexpr size_t SIZE_BYTES = 32;
-    libff::alt_bn128_Fq value;
-
-    FqElement(const libff::alt_bn128_Fq& val) : value(val) {}
 #endif
+
+    static const FqElement ZERO;
+    static const FqElement ONE;
+
+    FqBackendType value;
 
     FqElement();
     FqElement(uint64_t x);
-    FqElement(const std::string& str);
+    FqElement(const FqBackendType& val) : value(val) {}
 
     // -------------------- Serialization / Deserialization Methods -------------------- //
     std::string toString(Base base) const;
+
+    static FqElement fromString(const std::string& str, Base base);
 
     // -------------------- Operator Overloads -------------------- //
 
@@ -41,10 +41,15 @@ public:
     // -------------------- Static Methods -------------------- // 
 
     static FqElement random();
-    static FqElement zero();
-    static FqElement one();
 
     static FqElement fromHash(const std::array< uint8_t, HASH_SIZE>& hash_byte_arr);
+};
+
+class FqRefWrapper {
+    FqBackendType ref_;
+public:
+    explicit FqRefWrapper(FqBackendType& ref) : ref_(ref) {}
+    FqBackendType& asBackendRef() { return ref_; }
 };
 
 } // namespace algebra

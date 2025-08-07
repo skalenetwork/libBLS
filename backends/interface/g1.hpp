@@ -1,7 +1,7 @@
 #pragma once
 
 #include "fq.hpp"
-#include "algebra_types.hpp"
+#include "../algebra_types.hpp"
 
 #ifdef MCL
 #else
@@ -17,25 +17,31 @@ public:
 
 #ifdef MCL
 #else
-    libff::alt_bn128_G1 value;
-
     static constexpr size_t SIZE_BYTES = 64;
-
-    G1Point(const libff::alt_bn128_G1& v) : value(v) {}
 #endif
+
+    static const G1Point ZERO;
+    static const G1Point ONE;
+
+    G1BackendType value;
 
     G1Point();
     G1Point(const FqElement& x, const FqElement& y);
+    G1Point(const G1BackendType& v) : value(v) {}
 
-    void to_affine_coordinates();
-    bool is_zero() const;
-    bool is_well_formed() const;
-    bool is_in_group() const;
+    void toAffineCoordinates();
+    bool isZero() const;
+    bool isWellFormed() const;
+    bool isInGroup() const;
     bool isValid() const;
     void validate() const;
 
     FqElement getX() const;
     FqElement getY() const;
+
+    FqRefWrapper getXRef() { return FqRefWrapper(value.X); }
+    FqRefWrapper getYRef() { return FqRefWrapper(value.Y); }
+    FqRefWrapper getZRef() { return FqRefWrapper(value.Z); }
 
     // --------------------- Serialization Methods -------------------- //
     std::array< uint8_t, SIZE_BYTES > toByteArray() const;
@@ -44,8 +50,6 @@ public:
     // --------------------- Static Methods -------------------- //
 
     static G1Point random();
-    static G1Point zero();
-    static G1Point one();
 
     static G1Point fromBytes(const std::array<uint8_t, SIZE_BYTES>& bytes);
     static G1Point fromBytes(const std::vector<uint8_t>& bytes);
@@ -59,9 +63,10 @@ public:
     G1Point operator-(const G1Point& other) const;
     bool operator==(const G1Point& other) const;
     bool operator!=(const G1Point& other) const;
+
 };
 
-inline G1Point operator*(const FrScalar& scalar, const G1Point& point);
+G1Point operator*(const FrScalar& scalar, const G1Point& point);
 
 } // namespace algebra
 } // namespace libBLS

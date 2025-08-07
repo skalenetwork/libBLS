@@ -2,6 +2,7 @@
 
 #include "fr.hpp"
 #include "fq.hpp"
+#include "fq2.hpp"
 #include "../algebra_types.hpp"
 
 #ifdef MCL
@@ -16,53 +17,64 @@ class G2Point {
 
 public:
 
+    static constexpr std::size_t NUM_COMPONENTS_AFFINE = 4;
+    static constexpr std::size_t NUM_COMPONENTS_PROJECTIVE = 6;
+
 #ifdef MCL
 #else
     static constexpr std::size_t SIZE_BYTES = 128;
-    static constexpr std::size_t NUM_SERIALIZED_COMPONENTS = 4;
-    
-    libff::alt_bn128_G2 value;
-    
-    G2Point(const libff::alt_bn128_G2& v) : value(v) {}
 #endif
 
+    G2BackendType value;
+
+    static const G2Point ZERO;
+    static const G2Point ONE;
+
     G2Point();
+    G2Point(const G2BackendType v) : value(v) {}
+    G2Point( const Fq2Element& x, const Fq2Element& y, const Fq2Element& z);
 
-    // Builds a G2Point from its affine coordinates
-    G2Point(const std::array< std::string, NUM_SERIALIZED_COMPONENTS >& serializedG2);
 
-    
-    void to_affine_coordinates();
+    void toAffineCoordinates();
 
     // -------------------- Serialization Methods -------------------- //
 
-    std::array<std::string, NUM_SERIALIZED_COMPONENTS> toStringArray(libBLS::Base base) const;
+    std::array<std::string, NUM_COMPONENTS_AFFINE> toStringArray(Base base) const;
+    std::array<std::string, NUM_COMPONENTS_PROJECTIVE> toStringArrayProjective( Base base ) const;
+    // TODO - get rid of this method - should only return array
+    std::vector< std::string > toStringVector(Base base) const;
+
     std::string toString(Base base) const;
 
     std::array< uint8_t, SIZE_BYTES > toByteArray() const;
     std::vector< uint8_t > toByteVector() const;
 
+    // ------------------- Getters ------------------- //
+
+    Fq2RefWrapper getXRef() { return Fq2RefWrapper(value.X); }
+    Fq2RefWrapper getYRef() { return Fq2RefWrapper(value.Y); }
+    Fq2RefWrapper getZRef() { return Fq2RefWrapper(value.Z); }
+
     // -------------------- Validation Methods -------------------- //
 
-    bool is_zero() const;
-    bool is_well_formed() const;
-    bool is_in_group() const;
+    bool isZero() const;
+    bool isWellFormed() const;
+    bool isInGroup() const;
     bool isValid() const;
     void validate() const;
 
-    std::array<FqElement, 4> getAffineComponents() const ;
+    std::array<FqElement, NUM_COMPONENTS_AFFINE> getAffineComponents() const ;
+    std::array<FqElement, NUM_COMPONENTS_PROJECTIVE> getProjectiveComponents() const;
 
     // -------------------- Static Methods -------------------- //
 
     static G2Point random();
-    static G2Point zero();
-    static G2Point one();
 
     static G2Point fromBytes(const std::array<uint8_t, SIZE_BYTES>& bytes);
     static G2Point fromBytes(const std::vector< uint8_t >& bytes );
 
     static G2Point fromString(const std::string& str, Base base );
-    static G2Point fromString(const std::array<std::string, NUM_SERIALIZED_COMPONENTS>& arr, Base base);
+    static G2Point fromString(const std::array<std::string, NUM_COMPONENTS_AFFINE>& arr, Base base);
     // TODO - we should get rid of this for perf. reasons. no need to use vectors when we know the size
     static G2Point fromString(const std::vector<std::string>& arr, Base base);
 
@@ -75,7 +87,7 @@ public:
 
 };
 
-inline G2Point operator*(const FrScalar& scalar, const G2Point& point);
+G2Point operator*(const FrScalar& scalar, const G2Point& point);
 
 } // namespace algebra
 } // namespace libBLS

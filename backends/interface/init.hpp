@@ -3,7 +3,7 @@
 namespace libBLS {
 namespace algebra {
 
-inline void init_curve();
+void initCurve();
 
 } // namespace algebra
 } // namespace libBLS

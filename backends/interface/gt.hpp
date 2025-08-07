@@ -1,5 +1,6 @@
 #pragma once
 
+
 #ifdef MCL
 #else
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
@@ -12,12 +13,9 @@ class GTElement {
     
 public:
 
-#ifdef MCL
-#else
-    libff::alt_bn128_GT value;
-    GTElement(const libff::alt_bn128_GT& v) : value(v) {}
-#endif
 
+    GTBackendType value;
+    GTElement(const GTBackendType& v) : value(v) {}
     GTElement();
 
     // -------------------- Operator Overloads -------------------- //
