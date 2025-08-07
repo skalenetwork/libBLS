@@ -21,8 +21,8 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 @date 2025
 */
 
-#include <threshold_encryption/TEBase.h>
-#include <threshold_encryption/TEDecryptSet.h>
+#include "TEBase.h"
+#include "TEDecryptSet.h"
 #include <utility>
 
 #include <tools/utils.h>

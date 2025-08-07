@@ -32,7 +32,8 @@ std::atomic< bool > TEBase::isLibffInitialized{ false };
 void TEBase::initializeIfNecessary() {
     bool expected = false;
     if ( isLibffInitialized.compare_exchange_strong( expected, true ) ) {
-        algebra::init_curve();
+        // TODO - should not be needed - we should enforce curve initialization before any libBLS call
+        algebra::initCurve();
     }
 }
 

@@ -48,7 +48,7 @@ public:
     TEPublicKeyShare( const std::array< uint8_t, algebra::G2Point::SIZE_BYTES >& bytes, size_t signerIndex,
         size_t _requiredSigners, size_t _totalSigners );
 
-    inline void validate() const { ThresholdUtils::validateG2( publicKey ); }
+    inline void validate() const { publicKey.validate(); }
 
     // std::string toString() const;
 

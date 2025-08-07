@@ -39,15 +39,15 @@ TEPublicKey::TEPublicKey( const std::string& _keyStr )
     : TEPublicKey( algebra::G2Point::fromString( _keyStr, Base::HEXA ) ) {}
 
 TEPublicKey::TEPublicKey( const TEPrivateKey& _commonPrivate ) {
-    if ( _commonPrivate.getPrivateKeyRaw().is_zero() ) {
+    if ( _commonPrivate.getPrivateKeyRaw().isZero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "zero key" );
     }
 
-    publicKey = _commonPrivate.getPrivateKeyRaw() * algebra::G2Point::one();
+    publicKey = _commonPrivate.getPrivateKeyRaw() * algebra::G2Point::ONE;
 }
 
 TEPublicKey::TEPublicKey( const algebra::G2Point& _pkey ) : publicKey( _pkey ) {
-    ThresholdUtils::validateG2( publicKey );
+    publicKey.validate();
 }
 
 TEPublicKey::TEPublicKey( const std::array< uint8_t, algebra::G2Point::SIZE_BYTES >& _keyBytes )

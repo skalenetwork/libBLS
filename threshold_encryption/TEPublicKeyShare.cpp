@@ -29,14 +29,14 @@ namespace libBLS {
 TEPublicKeyShare::TEPublicKeyShare( TEPrivateKeyShare _pKey )
     : TEBase( _pKey.getRequiredSigners(), _pKey.getTotalSigners() ) {
     _pKey.validate();
-    publicKey = _pKey.getPrivateKeyRaw() * algebra::G2Point::one();
+    publicKey = _pKey.getPrivateKeyRaw() * algebra::G2Point::ONE;
     signerIndex = _pKey.getSignerIndex();
 }
 
 TEPublicKeyShare::TEPublicKeyShare(
     algebra::G2Point _point, size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), publicKey( _point ), signerIndex( _signerIndex ) {
-    ThresholdUtils::validateG2( publicKey );
+    publicKey.validate();
 }
 
 TEPublicKeyShare::TEPublicKeyShare( const std::vector< uint8_t >& _bytes, size_t _signerIndex,

@@ -40,7 +40,7 @@ public:
 
     TEPrivateKey( const std::vector< uint8_t > _keyBytes );
 
-    TEPrivateKey( const std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > _keyBytes );
+    TEPrivateKey( const std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > _keyBytes );
 
     std::string toString() const;
 
@@ -48,7 +48,7 @@ public:
 
     std::vector< uint8_t > toBytesVec() const;
 
-    std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > toBytesArray() const;
+    std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > toBytesArray() const;
 };
 
 }  // namespace libBLS

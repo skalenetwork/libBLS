@@ -28,13 +28,13 @@ namespace libBLS {
 
 TEDecryptionShare::TEDecryptionShare( algebra::G2Point _share, size_t _signerIndex )
     : signerIndex( _signerIndex ), share( _share ) {
-    ThresholdUtils::validateG2( share );
+    share.validate();
 }
 
 TEDecryptionShare::TEDecryptionShare( const std::string& _hexaEncoded, size_t _signerIndex )
     : signerIndex( _signerIndex ) {
-    share = ThresholdUtils::stringToG2( _hexaEncoded );
-    ThresholdUtils::validateG2( share );
+    share = algebra::G2Point::fromString( _hexaEncoded, Base::HEXA );
+    share.validate();
 }
 
 size_t TEDecryptionShare::getSignerIndex() const {
@@ -46,7 +46,7 @@ algebra::G2Point TEDecryptionShare::getShareRaw() const {
 }
 
 void TEDecryptionShare::validate() const {
-    ThresholdUtils::validateG2( share );
+    share.validate();
 }
 
 bool TEDecryptionShare::operator==( const TEDecryptionShare& _other ) const {
@@ -58,15 +58,7 @@ TEDecryptionShare::operator std::pair< algebra::G2Point, size_t >() const {
 }
 
 std::string TEDecryptionShare::toString() const {
-    std::vector< std::string > str = share.toStringVector( Base::HEXA );
-    std::ostringstream oss;
-    for ( size_t i = 0; i < str.size(); ++i ) {
-        oss << str[i];
-    }
-
-    std::string s = oss.str();
-
-    return s;
+    return share.toString( Base::HEXA );
 }
 
 }  // namespace libBLS

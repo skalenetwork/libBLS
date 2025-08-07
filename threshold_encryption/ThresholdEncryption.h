@@ -27,7 +27,7 @@
 #include "TEDecryptSet.h"
 #include "TEPrivateKeyShare.h"
 #include "TEPublicKeyShare.h"
-#include <threshold_encryption/threshold_encryption.h>
+#include "threshold_encryption.h"
 #include <tools/utils.h>
 #include <cstddef>
 

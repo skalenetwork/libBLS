@@ -126,7 +126,7 @@ void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
     algebra::GTElement fst, snd;
 
     // pairing( W, P ) == pairing( H, U )
-    fst = algebra::pairing( W, algebra::G2Point::one() );
+    fst = algebra::pairing( W, algebra::G2Point::ONE );
     snd = algebra::pairing( H, U );
 
     if ( fst != snd ) {
@@ -145,7 +145,7 @@ TEDecryptionShare ThresholdEncryption::partialDecrypt(
     algebra::G2Point decryption_share =
         TE::getDecryptionShare( _ciphertext, _pkeyShare.getPrivateKeyRaw() );
 
-    ThresholdUtils::validateG2( decryption_share );
+    decryption_share.validate();
 
     TEDecryptionShare share( decryption_share, _pkeyShare.getSignerIndex() );
 
@@ -207,7 +207,7 @@ void ThresholdEncryption::validateCombinedDecryption(
     const AES256Key& cipheredAesKey = _cyphertext.key.V;
 
     // Compute G(r'Y)
-    algebra::FrScalar r = algebra::FrScalar::fromByteArray( secret );
+    algebra::FrScalar r = algebra::FrScalar::fromBytes( secret );
     algebra::G2Point Y = r * _publicKey.getPublicKeyRaw();
     std::string hash = TE::Hash( Y );
 
@@ -252,7 +252,7 @@ std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
     const AES256Key& cipheredAesKey = _cyphertext.key.V;
 
     // Compute G(r'Y)
-    algebra::FrScalar r = algebra::FrScalar::fromByteArray( secret );
+    algebra::FrScalar r = algebra::FrScalar::fromBytes( secret );
     algebra::G2Point Y = r * _publicKey.getPublicKeyRaw();
     std::string hash = TE::Hash( Y );
 

@@ -24,9 +24,9 @@
 #ifndef LIBBLS_TEDECRYPTSET_H
 #define LIBBLS_TEDECRYPTSET_H
 
-#include <threshold_encryption/TEBase.h>
-#include <threshold_encryption/TEDecryptionShare.h>
-#include <threshold_encryption/threshold_encryption.h>
+#include "TEBase.h"
+#include "TEDecryptionShare.h"
+#include "threshold_encryption.h"
 #include <unordered_set>
 
 namespace libBLS {

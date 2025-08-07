@@ -28,13 +28,14 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <array>
 
 #include <third_party/cryptlite/sha256.h>
 
 #include "AesGcmCipher.h"
-#include <threshold_encryption/TEBase.h>
-#include <tools/utils.h>
+#include "TEBase.h"
 #include "backends/algebra.hpp"
+#include <tools/utils.h>
 
 
 namespace libBLS {
@@ -123,8 +124,8 @@ public:
      * @throw NotWellFormed if the key is not well formed
      */
     void validate() const {
-        ThresholdUtils::validateG1( W );
-        ThresholdUtils::validateG2( U );
+        W.validate();
+        U.validate();
     }
 
     static CipheredKey random() {
@@ -139,10 +140,8 @@ public:
      * Converts U component of the key to string
      */
     std::string getDecryptionShareInput() {
-        U.to_affine_coordinates();
-
-        // validate U
-        ThresholdUtils::validateG2( U );
+        U.toAffineCoordinates();
+        U.validate();
 
         auto u_splitted = U.toStringArray( Base::HEXA );
 
