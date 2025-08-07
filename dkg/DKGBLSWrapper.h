@@ -27,7 +27,7 @@
 #include <bls/BLSPrivateKeyShare.h>
 #include <dkg/DKGBLSSecret.h>
 
-
+namespace libBLS {
 class DKGBLSWrapper {
 private:
     size_t requiredSigners;
@@ -56,6 +56,8 @@ public:
         std::shared_ptr< std::vector< std::vector< algebra::G2Point > > > public_shares_all,
         size_t _requiredSigners, size_t _totalSigners );
 };
+
+} // namespace libBLS
 
 
 #endif  // LIBBLS_DKGBLSWRAPPER_H

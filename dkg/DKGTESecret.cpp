@@ -27,6 +27,8 @@
 
 #include <dkg/dkg.h>
 
+namespace libBLS {
+
 DKGTESecret::DKGTESecret( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
@@ -54,3 +56,5 @@ std::vector< algebra::G2Point > DKGTESecret::getDKGTEPublicShares() {
     libBLS::Dkg dkg_te( requiredSigners, totalSigners );
     return dkg_te.VerificationVector( poly );
 }
+
+} // namespace libBLS

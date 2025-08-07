@@ -26,6 +26,8 @@
 
 #include <bls/bls.h>
 
+namespace libBLS {
+
 class DKGBLSSecret {
 private:
     size_t requiredSigners;
@@ -40,5 +42,6 @@ public:
     algebra::FrScalar getValueAt0();
 };
 
+} // namespace libBLS
 
 #endif  // LIBBLS_DKGBLSSECRET_H

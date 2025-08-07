@@ -26,6 +26,8 @@
 #include <dkg/dkg.h>
 #include <tools/utils.h>
 
+namespace libBLS {
+
 DKGBLSSecret::DKGBLSSecret( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
@@ -54,3 +56,5 @@ std::vector< algebra::G2Point > DKGBLSSecret::getDKGBLSPublicShares() {
 algebra::FrScalar DKGBLSSecret::getValueAt0() {
     return poly.at( 0 );
 }
+
+} // namespace libBLS

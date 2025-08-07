@@ -27,6 +27,8 @@
 
 #include <tools/utils.h>
 
+namespace libBLS {
+
 DKGBLSWrapper::DKGBLSWrapper( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
@@ -37,7 +39,7 @@ DKGBLSWrapper::DKGBLSWrapper( size_t _requiredSigners, size_t _totalSigners )
 
 bool DKGBLSWrapper::VerifyDKGShare( size_t _signerIndex, const algebra::FrScalar& _share,
     std::shared_ptr< std::vector< algebra::G2Point > > _verification_vector ) {
-    if ( _share.is_zero() )
+    if ( _share.isZero() )
         throw libBLS::ThresholdUtils::ZeroSecretKey( " Zero secret share" );
     if ( _verification_vector == nullptr ) {
         throw libBLS::ThresholdUtils::IncorrectInput( " Null verification vector" );
@@ -83,3 +85,5 @@ BLSPrivateKeyShare DKGBLSWrapper::CreateBLSPrivateKeyShare(
 algebra::FrScalar DKGBLSWrapper::getValueAt0() {
     return dkg_secret_ptr->getValueAt0();
 }
+
+} // namespace libBLS

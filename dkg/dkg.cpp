@@ -41,7 +41,7 @@ Polynomial Dkg::GeneratePolynomial() {
     for ( size_t i = 0; i < this->t_; ++i ) {
         pol[i] = algebra::FrScalar::random();
 
-        while ( i == this->t_ - 1 && pol[i] == algebra::FrScalar::zero() ) {
+        while ( i == this->t_ - 1 && pol[i].isZero() ) {
             pol[i] = algebra::FrScalar::random();
         }
     }
@@ -56,7 +56,7 @@ std::vector< algebra::G2Point > Dkg::VerificationVector(
     // vector of public values that each node will broadcast
     std::vector< algebra::G2Point > verification_vector( this->t_ );
     for ( size_t i = 0; i < this->t_; ++i ) {
-        verification_vector[i] = polynomial[i] * algebra::G2Point::one();
+        verification_vector[i] = polynomial[i] * algebra::G2Point::ONE;
     }
 
     return verification_vector;
@@ -66,11 +66,11 @@ algebra::FrScalar Dkg::PolynomialValue( const Polynomial& pol, algebra::FrScalar
     if ( pol.size() < t_ )
         throw ThresholdUtils::IncorrectInput( "Wrong polynomial degree: must be at least t" );
     // calculate value of polynomial in a random integer point
-    algebra::FrScalar value = algebra::FrScalar::zero();
+    algebra::FrScalar value = algebra::FrScalar::ZERO;
 
-    algebra::FrScalar pow = algebra::FrScalar::one();
+    algebra::FrScalar pow = algebra::FrScalar::ONE;
     for ( size_t i = 0; i < this->t_; ++i ) {
-        if ( i == this->t_ - 1 && pol[i] == algebra::FrScalar::zero() ) {
+        if ( i == this->t_ - 1 && pol[i].isZero() ) {
             throw std::logic_error( "Error, incorrect degree of a polynomial" );
         }
         value += pol[i] * pow;
@@ -97,13 +97,13 @@ algebra::FrScalar Dkg::SecretKeyShareCreate(
         throw ThresholdUtils::IncorrectInput(
             "Secret key contribution must be at least of size n" );
     // create secret key share from secret key contribution
-    algebra::FrScalar secret_key_share = algebra::FrScalar::zero();
+    algebra::FrScalar secret_key_share = algebra::FrScalar::ZERO;
 
     for ( size_t i = 0; i < this->n_; ++i ) {
         secret_key_share = secret_key_share + secret_key_contribution[i];
     }
 
-    if ( secret_key_share == algebra::FrScalar::zero() ) {
+    if ( secret_key_share.isZero()  ) {
         throw std::logic_error( "Error, at least one secret key share is equal to zero" );
     }
 
@@ -115,9 +115,9 @@ bool Dkg::Verification( size_t idx, algebra::FrScalar share,
     if ( verification_vector.size() < t_ )
         throw ThresholdUtils::IncorrectInput( "Verification vector must be at least of size n" );
     // idx-th node verifies that share corresponds to the verification vector
-    algebra::G2Point value = algebra::G2Point::zero();
+    algebra::G2Point value = algebra::G2Point::ZERO;
     for ( size_t i = 0; i < this->t_; ++i ) {
-        if ( !ThresholdUtils::ValidateKey( verification_vector[i] ) ) {
+        if ( !verification_vector[i].isValid() ) {
             return false;
         }
 
@@ -125,12 +125,12 @@ bool Dkg::Verification( size_t idx, algebra::FrScalar share,
         value = value + algebra::power( algebra::FrScalar( idx + 1 ), i ) * verification_vector[i];
     }
 
-    return ( value == share * algebra::G2Point::one() );
+    return ( value == share * algebra::G2Point::ONE );
 }
 
 algebra::G2Point Dkg::GetPublicKeyFromSecretKey( const algebra::FrScalar& secret_key ) {
-    algebra::G2Point public_key = secret_key * algebra::G2Point::one();
-    public_key.to_affine_coordinates();
+    algebra::G2Point public_key = secret_key * algebra::G2Point::ONE;
+    public_key.toAffineCoordinates();
 
     return public_key;
 }

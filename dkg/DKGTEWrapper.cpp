@@ -25,6 +25,8 @@
 #include <dkg/DKGTEWrapper.h>
 #include <tools/utils.h>
 
+namespace libBLS {
+
 DKGTEWrapper::DKGTEWrapper( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
@@ -37,7 +39,7 @@ DKGTEWrapper::DKGTEWrapper( size_t _requiredSigners, size_t _totalSigners )
 
 bool DKGTEWrapper::VerifyDKGShare( size_t _signerIndex, const algebra::FrScalar& _share,
     std::shared_ptr< std::vector< algebra::G2Point > > _verification_vector ) {
-    if ( _share.is_zero() )
+    if ( _share.isZero() )
         throw libBLS::ThresholdUtils::ZeroSecretKey( "Zero secret share" );
     if ( _verification_vector == nullptr )
         throw libBLS::ThresholdUtils::IncorrectInput( "Null verification vector" );
@@ -86,7 +88,7 @@ libBLS::TEPublicKey DKGTEWrapper::CreateTEPublicKey(
     if ( public_shares_all == nullptr )
         throw libBLS::ThresholdUtils::IncorrectInput( "Null public shares all" );
 
-    algebra::G2Point public_key = algebra::G2Point::zero();
+    algebra::G2Point public_key = algebra::G2Point::ZERO;
 
     for ( size_t i = 0; i < _totalSigners; i++ ) {
         public_key = public_key + public_shares_all->at( i ).at( 0 );
@@ -96,3 +98,5 @@ libBLS::TEPublicKey DKGTEWrapper::CreateTEPublicKey(
 
     return common_public;
 }
+
+} // namespace libBLS

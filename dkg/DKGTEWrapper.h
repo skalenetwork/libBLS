@@ -29,6 +29,8 @@
 #include <dkg/dkg.h>
 #include <threshold_encryption/TEPrivateKeyShare.h>
 
+namespace libBLS {
+
 class DKGTEWrapper {
 private:
     size_t requiredSigners;
@@ -55,6 +57,8 @@ public:
         std::shared_ptr< std::vector< std::vector< algebra::G2Point > > > public_shares_all,
         size_t _requiredSigners, size_t _totalSigners );
 };
+
+} // namespace libBLS
 
 
 #endif  // LIBBLS_DKGTEWRAPPER_H

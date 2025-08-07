@@ -27,6 +27,8 @@
 
 #include <threshold_encryption/threshold_encryption.h>
 
+namespace libBLS {
+
 class DKGTESecret {
 private:
     size_t requiredSigners;
@@ -40,5 +42,6 @@ public:
     std::vector< algebra::G2Point > getDKGTEPublicShares();
 };
 
+} // namespace libBLS
 
 #endif  // LIBBLS_DKGTESECRET_H
