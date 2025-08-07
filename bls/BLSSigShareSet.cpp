@@ -24,11 +24,10 @@
 #include <stdint.h>
 #include <string>
 
-#include <bls/BLSSigShare.h>
-#include <bls/BLSSigShareSet.h>
-#include <bls/BLSSignature.h>
+#include "BLSSigShareSet.h"
 #include <tools/utils.h>
 
+namespace libBLS {
 
 bool BLSSigShareSet::addSigShare( std::shared_ptr< BLSSigShare > _sigShare ) {
     CHECK( _sigShare );
@@ -89,7 +88,7 @@ std::shared_ptr< BLSSignature > BLSSigShareSet::merge() {
     }
 
     std::vector< algebra::FrScalar > lagrangeCoeffs =
-        libBLS::ThresholdUtils::LagrangeCoeffs( participatingNodes, requiredSigners );
+        algebra::lagrangeCoeffs( participatingNodes, requiredSigners );
 
     algebra::G1Point signature = obj.SignatureRecover( shares, lagrangeCoeffs );
 
@@ -99,3 +98,5 @@ std::shared_ptr< BLSSignature > BLSSigShareSet::merge() {
 
     return std::make_shared< BLSSignature >( sigPtr, hint, requiredSigners, totalSigners );
 }
+
+} // namespace libBLS

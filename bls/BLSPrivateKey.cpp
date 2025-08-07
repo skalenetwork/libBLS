@@ -40,8 +40,9 @@ BLSPrivateKey::BLSPrivateKey(
         throw libBLS::ThresholdUtils::IncorrectInput( "Secret key share is empty" );
     }
 
-    privateKey = std::make_shared< algebra::FrScalar >( *_key );
-    if ( *privateKey == algebra::FrScalar::zero() ) {
+    // TODO - should not use shared ptr
+    privateKey = std::make_shared< algebra::FrScalar >( algebra::FrScalar::fromString( *_key, Base::DEC ) );
+    if ( privateKey->isZero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey(
             "Secret key share is equal to zero or corrupt" );
     }
@@ -60,14 +61,14 @@ BLSPrivateKey::BLSPrivateKey(
 
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    auto lagrange_koefs = libBLS::ThresholdUtils::LagrangeCoeffs( *koefs, this->requiredSigners );
-    algebra::FrScalar privateKeyObj( algebra::FrScalar::zero() );
+    auto lagrange_koefs = algebra::lagrangeCoeffs( *koefs, this->requiredSigners );
+    algebra::FrScalar privateKeyObj( algebra::FrScalar::ZERO );
     for ( size_t i = 0; i < requiredSigners; ++i ) {
         algebra::FrScalar skey = *skeys->at( koefs->at( i ) - 1 )->getPrivateKey();
         privateKeyObj = privateKeyObj + lagrange_koefs.at( i ) * skey;
     }
 
-    if ( privateKeyObj == algebra::FrScalar::zero() ) {
+    if ( privateKeyObj.isZero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey(
             "Secret key share is equal to zero or corrupt" );
     }
@@ -81,7 +82,7 @@ std::shared_ptr< algebra::FrScalar > BLSPrivateKey::getPrivateKey() const {
 
 std::shared_ptr< std::string > BLSPrivateKey::toString() {
     std::shared_ptr< std::string > key_str = std::make_shared< std::string >(
-        libBLS::ThresholdUtils::fieldElementToString( *privateKey ) );
+        privateKey->toString( Base::HEXA ) );
 
     if ( key_str->empty() )
         throw libBLS::ThresholdUtils::ZeroSecretKey( "Secret key share string is empty" );

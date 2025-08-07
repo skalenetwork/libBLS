@@ -39,11 +39,11 @@ size_t BLSSigShare::getSignerIndex() const {
 }
 
 std::shared_ptr< std::string > BLSSigShare::toString() {
-    sigShare->to_affine_coordinates();
+    sigShare->toAffineCoordinates();
     std::string ret = "";
     // TODO - need to refactor this - uses .value
-    ret += libBLS::ThresholdUtils::fieldElementToString( sigShare->value.X ) + ':' +
-           libBLS::ThresholdUtils::fieldElementToString( sigShare->value.Y ) + ':' + hint;
+    ret += sigShare->getX().toString( Base::DEC ) + ':' +
+           sigShare->getY().toString( Base::DEC ) + ':' + hint;
 
     return std::make_shared< std::string >( ret );
 }
@@ -91,13 +91,14 @@ BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _sign
         }
     }
 
-    algebra::FqElement X( result->at( 0 ) );
-    algebra::FqElement Y( result->at( 1 ) );
+    sigShare = std::make_shared< algebra::G1Point >( 
+        algebra::FqElement::fromString( result->at(0), Base::DEC ),
+        algebra::FqElement::fromString( result->at(1), Base::DEC )
+    );
 
-    sigShare = std::make_shared< algebra::G1Point >( X, Y );
     hint = result->at( 2 ) + ":" + result->at( 3 );
 
-    if ( !sigShare->is_well_formed() )
+    if ( !sigShare->isWellFormed() )
         throw libBLS::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
 }
 
@@ -113,7 +114,7 @@ BLSSigShare::BLSSigShare( const std::shared_ptr< algebra::G1Point >& _sigShare,
     if ( !_sigShare ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Null _s" );
     }
-    if ( _sigShare->is_zero() ) {
+    if ( _sigShare->isZero() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Zero signature" );
     }
     if ( _signerIndex == 0 ) {
@@ -123,9 +124,11 @@ BLSSigShare::BLSSigShare( const std::shared_ptr< algebra::G1Point >& _sigShare,
     if ( _hint.length() == 0 || _hint.length() > 2 * BLS_MAX_COMPONENT_LEN ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Wrong BLS hint" );
     }
-    libBLS::ThresholdUtils::ParseHint( _hint );
 
-    if ( !_sigShare->is_well_formed() ) {
+    // TODO unused return value
+    algebra::parseHint( _hint );
+
+    if ( !_sigShare->isWellFormed() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
     }
 }

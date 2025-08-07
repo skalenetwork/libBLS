@@ -42,7 +42,7 @@ BLSSignature::BLSSignature( const std::shared_ptr< algebra::G1Point > sig, std::
 
     libBLS::ThresholdUtils::initCurve();
 
-    if ( sig->is_zero() ) {
+    if ( sig->isZero() ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Zero BLS signature" );
     }
     if ( _hint.length() == 0 || _hint.length() > 2 * BLS_MAX_COMPONENT_LEN ) {
@@ -83,22 +83,22 @@ BLSSignature::BLSSignature(
             }
         }
     }
-    algebra::FqElement X( result->at( 0 ) );
-    algebra::FqElement Y( result->at( 1 ) );
-    sig = std::make_shared< algebra::G1Point >( X, Y );
+
+    sig = std::make_shared< algebra::G1Point >( 
+        algebra::FqElement::fromString( result->at(0), Base::DEC ), 
+        algebra::FqElement::fromString( result->at(1), Base::DEC ) );
     hint = result->at( 2 ) + ":" + result->at( 3 );
 
-    if ( !( sig->is_well_formed() ) ) {
+    if ( !( sig->isWellFormed() ) ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
     }
 }
 
 std::shared_ptr< std::string > BLSSignature::toString() {
-    sig->to_affine_coordinates();
+    sig->toAffineCoordinates();
     std::string ret = "";
-    // TODO - need to refactor this - uses .value
-    ret += libBLS::ThresholdUtils::fieldElementToString( sig->getX() ) + ':' +
-           libBLS::ThresholdUtils::fieldElementToString( sig->getY() ) + ':' + hint;
+    ret += sig->getX().toString( Base::DEC ) + ':' +
+           sig->getY().toString( Base::DEC ) + ':' + hint;
 
     return std::make_shared< std::string >( ret );
 }
