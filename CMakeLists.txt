@@ -107,6 +107,8 @@ set(sourses_bls
 	dkg/dkg.cpp
 	dkg/DKGBLSWrapper.cpp
 	dkg/DKGBLSSecret.cpp
+	dkg/DKGTEWrapper.cpp
+	dkg/DKGTESecret.cpp
 	third_party/cryptlite/base64.cpp
 	tools/utils.cpp
 )
@@ -152,6 +154,8 @@ endif()
 include_directories(${CMAKE_BINARY_DIR}/deps/include)
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 
+add_subdirectory(backends)
+
 add_library(bls ${sourses_bls} ${headers_bls})
 
 include_directories(${Boost_INCLUDE_DIRS})
@@ -168,7 +172,7 @@ set(BLS_INCLUDE_DIRS
 )
 
 target_include_directories(bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(bls PRIVATE ff ${CRYPTOPP_LIBRARY} ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+target_link_libraries(bls PUBLIC backend PRIVATE ${CRYPTOPP_LIBRARY})
 
 add_subdirectory(threshold_encryption)
 
@@ -183,7 +187,7 @@ if (BUILD_UTILS)
 			set_target_properties(${name} PROPERTIES LINK_FLAGS "-s -fwasm-exceptions")
 		endif()
 
-		target_link_libraries(${name} PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} boost_program_options)
+		target_link_libraries(${name} PRIVATE bls ${CRYPTOPP_LIBRARY} boost_program_options)
 	endfunction()
 
 	# Add all tools using the function
@@ -212,7 +216,7 @@ if(BUILD_TESTS)
 			target_compile_options(${name} PRIVATE -Wno-format-overflow)
 		endif()
 
-		target_link_libraries(${name} PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${extra_libs})
+		target_link_libraries(${name} PRIVATE bls ${CRYPTOPP_LIBRARY} boost_program_options ${extra_libs})
 		add_test(NAME ${name} COMMAND ${name})
 	endfunction()
 
@@ -226,7 +230,7 @@ if(BUILD_TESTS)
     # Special case for dkg_attack (no compile options)
     add_executable(dkg_attack test/dkg_attack.cpp)
     target_include_directories(dkg_attack PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-    target_link_libraries(dkg_attack PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options)
+    target_link_libraries(dkg_attack PRIVATE bls ${CRYPTOPP_LIBRARY} boost_program_options)
     add_test(NAME dkg_attack COMMAND dkg_attack)
 
 	add_custom_target(all_bls_tests
