@@ -31,7 +31,7 @@ using namespace libBLS;
 int main() {
     ThresholdUtils::initCurve();
     algebra::FrScalar secret_key = algebra::FrScalar::random();
-    algebra::G2Point public_key = secret_key * algebra::G2Point::ONE;
+    algebra::G2Point public_key = secret_key * algebra::G2Point::one();
 
     std::ofstream secretKeyFile;
     secretKeyFile.open( "secret_key.txt" );

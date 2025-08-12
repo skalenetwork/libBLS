@@ -53,8 +53,10 @@ void RecoverSignature( const size_t t, const size_t n, const std::vector< std::s
         idx[i] = stoi( signature["index"].get< std::string >() ) + 1;
 
         libBLS::algebra::G1Point signature_share(
-            libBLS::algebra::FqElement::fromString( signature["signature"]["X"].get< std::string >(), libBLS::Base::DEC ),
-            libBLS::algebra::FqElement::fromString( signature["signature"]["Y"].get< std::string >(), libBLS::Base::DEC ) );
+            libBLS::algebra::FqElement::fromString(
+                signature["signature"]["X"].get< std::string >(), libBLS::Base::DEC ),
+            libBLS::algebra::FqElement::fromString(
+                signature["signature"]["Y"].get< std::string >(), libBLS::Base::DEC ) );
 
         signature_shares[i] = signature_share;
     }

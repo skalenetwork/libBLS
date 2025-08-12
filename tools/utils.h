@@ -27,18 +27,14 @@
 #include <gmpxx.h>
 #include <array>
 #include <atomic>
+#include <iomanip>
 #include <memory>
 #include <string>
 #include <vector>
-#include <iomanip>
-#include "backends/algebra.hpp"
 
 static constexpr size_t BLS_MAX_COMPONENT_LEN = 77;
 
 namespace libBLS {
-
-// 2 x 32 bytes
-constexpr size_t G1_SIZE_BYTES = 64;
 
 constexpr size_t BASE_HEXA = 16;
 constexpr size_t BASE_DEC = 10;
@@ -108,7 +104,7 @@ public:
     static std::vector< uint8_t > hexCStringToBytes( const char* hexStr );
 
     template < size_t N >
-    static std::string bytesToHexString(const std::array< uint8_t, N >& bytes );
+    static std::string bytesToHexString( const std::array< uint8_t, N >& bytes );
 
     template < size_t N >
     static std::array< uint8_t, N > hexCStringToBytesArray( const char* hexStr );
@@ -123,7 +119,7 @@ private:
 };
 
 template < size_t N >
-std::string ThresholdUtils::bytesToHexString(const std::array< uint8_t, N >& bytes ) {
+std::string ThresholdUtils::bytesToHexString( const std::array< uint8_t, N >& bytes ) {
     std::stringstream ss;
     ss << std::hex << std::setfill( '0' );
 

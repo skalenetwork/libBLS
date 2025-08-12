@@ -31,6 +31,7 @@
 #include <tools/utils.h>
 #include <iomanip>
 
+#include "backends/algebra.hpp"
 
 namespace libBLS {
 

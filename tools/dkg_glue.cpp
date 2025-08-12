@@ -56,33 +56,34 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
         secret_key_contribution[idx].resize( n );
         for ( size_t i = 0; i < n; ++i ) {
             secret_key_contribution[idx][i] = libBLS::algebra::FrScalar::fromString(
-                data["secret_key_contribution"][std::to_string( i )].get< std::string >(), libBLS::Base::DEC );
+                data["secret_key_contribution"][std::to_string( i )].get< std::string >(),
+                libBLS::Base::DEC );
         }
 
         verification_vector[idx].resize( t );
         for ( size_t i = 0; i < t; ++i ) {
-            libBLS::algebra::FqElement first_coord_x =
-                libBLS::algebra::FqElement::fromString( data["verification_vector"][std::to_string( i )]["X"]["c0"]
-                                         .get< std::string >(), libBLS::Base::DEC );
-            libBLS::algebra::FqElement first_coord_y =
-                libBLS::algebra::FqElement::fromString( data["verification_vector"][std::to_string( i )]["X"]["c1"]
-                                         .get< std::string >(), libBLS::Base::DEC );
+            libBLS::algebra::FqElement first_coord_x = libBLS::algebra::FqElement::fromString(
+                data["verification_vector"][std::to_string( i )]["X"]["c0"].get< std::string >(),
+                libBLS::Base::DEC );
+            libBLS::algebra::FqElement first_coord_y = libBLS::algebra::FqElement::fromString(
+                data["verification_vector"][std::to_string( i )]["X"]["c1"].get< std::string >(),
+                libBLS::Base::DEC );
             libBLS::algebra::Fq2Element first_coord( first_coord_x, first_coord_y );
 
-            libBLS::algebra::FqElement second_coord_x =
-                libBLS::algebra::FqElement::fromString( data["verification_vector"][std::to_string( i )]["Y"]["c0"]
-                                         .get< std::string >(), libBLS::Base::DEC );
-            libBLS::algebra::FqElement second_coord_y =
-                libBLS::algebra::FqElement::fromString( data["verification_vector"][std::to_string( i )]["Y"]["c1"]
-                                         .get< std::string >(), libBLS::Base::DEC );
+            libBLS::algebra::FqElement second_coord_x = libBLS::algebra::FqElement::fromString(
+                data["verification_vector"][std::to_string( i )]["Y"]["c0"].get< std::string >(),
+                libBLS::Base::DEC );
+            libBLS::algebra::FqElement second_coord_y = libBLS::algebra::FqElement::fromString(
+                data["verification_vector"][std::to_string( i )]["Y"]["c1"].get< std::string >(),
+                libBLS::Base::DEC );
             libBLS::algebra::Fq2Element second_coord( second_coord_x, second_coord_y );
 
-            libBLS::algebra::FqElement third_coord_x =
-                libBLS::algebra::FqElement::fromString( data["verification_vector"][std::to_string( i )]["Z"]["c0"]
-                                         .get< std::string >(), libBLS::Base::DEC );
-            libBLS::algebra::FqElement third_coord_y =
-                libBLS::algebra::FqElement::fromString( data["verification_vector"][std::to_string( i )]["Z"]["c1"]
-                                         .get< std::string >(), libBLS::Base::DEC );
+            libBLS::algebra::FqElement third_coord_x = libBLS::algebra::FqElement::fromString(
+                data["verification_vector"][std::to_string( i )]["Z"]["c0"].get< std::string >(),
+                libBLS::Base::DEC );
+            libBLS::algebra::FqElement third_coord_y = libBLS::algebra::FqElement::fromString(
+                data["verification_vector"][std::to_string( i )]["Z"]["c1"].get< std::string >(),
+                libBLS::Base::DEC );
             libBLS::algebra::Fq2Element third_coord( third_coord_x, third_coord_y );
 
 
@@ -97,7 +98,7 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
         }
     }
 
-    std::vector< libBLS::algebra::FrScalar > secret_key( n, libBLS::algebra::FrScalar::ZERO );
+    std::vector< libBLS::algebra::FrScalar > secret_key( n, libBLS::algebra::FrScalar::zero() );
     for ( size_t i = 0; i < n; ++i ) {
         for ( size_t j = 0; j < n; ++j ) {
             if ( !dkg_instance.Verification(
@@ -109,7 +110,7 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
     }
 
     std::vector< libBLS::algebra::G2Point > public_keys( n );
-    libBLS::algebra::G2Point common_public_key = libBLS::algebra::G2Point::ZERO;
+    libBLS::algebra::G2Point common_public_key = libBLS::algebra::G2Point::zero();
     for ( size_t i = 0; i < n; ++i ) {
         secret_key[i] = dkg_instance.SecretKeyShareCreate( secret_key_contribution[i] );
         public_keys[i] = verification_vector[i][0];
@@ -137,7 +138,7 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
         out << BLS_key_file.dump( 4 ) << '\n';
     }
 
-    
+
     nlohmann::json public_key_json;
     auto string_components = common_public_key.toStringArray( libBLS::Base::DEC );
     public_key_json["commonBLSPublicKey0"] = string_components[0];
