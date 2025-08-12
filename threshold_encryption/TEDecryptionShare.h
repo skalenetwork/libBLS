@@ -44,7 +44,7 @@ public:
      * @param _share Decryption share
      * @note Validates that the share is well formed and non-zero.
      */
-    TEDecryptionShare( algebra::G2Point _share, size_t _signerIndex );
+    TEDecryptionShare( const algebra::G2Point& _share, size_t _signerIndex );
 
     /**
      * @param _signerIndex Index of the signer

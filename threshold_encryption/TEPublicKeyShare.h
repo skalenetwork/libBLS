@@ -37,16 +37,16 @@ private:
     size_t signerIndex;
 
 public:
-    TEPublicKeyShare( TEPrivateKeyShare _pKey );
+    TEPublicKeyShare( const TEPrivateKeyShare& _pKey );
 
-    TEPublicKeyShare( algebra::G2Point _point, size_t signerIndex, size_t _requiredSigners,
+    TEPublicKeyShare( const algebra::G2Point& _point, size_t _signerIndex, size_t _requiredSigners,
         size_t _totalSigners );
 
     TEPublicKeyShare( const std::vector< uint8_t >& _bytes, size_t signerIndex,
         size_t _requiredSigners, size_t _totalSigners );
 
-    TEPublicKeyShare( const std::array< uint8_t, algebra::G2Point::SIZE_BYTES >& bytes, size_t signerIndex,
-        size_t _requiredSigners, size_t _totalSigners );
+    TEPublicKeyShare( const std::array< uint8_t, algebra::G2Point::SIZE_BYTES >& bytes,
+        size_t signerIndex, size_t _requiredSigners, size_t _totalSigners );
 
     inline void validate() const { publicKey.validate(); }
 

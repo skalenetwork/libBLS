@@ -26,15 +26,15 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
-TEPublicKeyShare::TEPublicKeyShare( TEPrivateKeyShare _pKey )
+TEPublicKeyShare::TEPublicKeyShare( const TEPrivateKeyShare& _pKey )
     : TEBase( _pKey.getRequiredSigners(), _pKey.getTotalSigners() ) {
     _pKey.validate();
-    publicKey = _pKey.getPrivateKeyRaw() * algebra::G2Point::ONE;
+    publicKey = _pKey.getPrivateKeyRaw() * algebra::G2Point::one();
     signerIndex = _pKey.getSignerIndex();
 }
 
-TEPublicKeyShare::TEPublicKeyShare(
-    algebra::G2Point _point, size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
+TEPublicKeyShare::TEPublicKeyShare( const algebra::G2Point& _point, size_t _signerIndex,
+    size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), publicKey( _point ), signerIndex( _signerIndex ) {
     publicKey.validate();
 }
@@ -46,8 +46,9 @@ TEPublicKeyShare::TEPublicKeyShare( const std::vector< uint8_t >& _bytes, size_t
     publicKey.validate();
 }
 
-TEPublicKeyShare::TEPublicKeyShare( const std::array< uint8_t, algebra::G2Point::SIZE_BYTES >& bytes,
-    size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
+TEPublicKeyShare::TEPublicKeyShare(
+    const std::array< uint8_t, algebra::G2Point::SIZE_BYTES >& bytes, size_t _signerIndex,
+    size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
     publicKey = algebra::G2Point::fromBytes( bytes );
     publicKey.validate();

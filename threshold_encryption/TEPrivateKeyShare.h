@@ -41,8 +41,8 @@ public:
     TEPrivateKeyShare( const std::string& _hexaField, size_t _signerIndex, size_t _requiredSigners,
         size_t _totalSigners );
 
-    TEPrivateKeyShare( algebra::FrScalar _skeyShare, size_t _signerIndex, size_t _requiredSigners,
-        size_t _totalSigners );
+    TEPrivateKeyShare( const algebra::FrScalar& _skeyShare, size_t _signerIndex,
+        size_t _requiredSigners, size_t _totalSigners );
 
     TEPrivateKeyShare( const std::vector< uint8_t >& _bytes, size_t _signerIndex,
         size_t _requiredSigners, size_t _totalSigners );

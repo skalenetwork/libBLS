@@ -43,7 +43,7 @@ TEPublicKey::TEPublicKey( const TEPrivateKey& _commonPrivate ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "zero key" );
     }
 
-    publicKey = _commonPrivate.getPrivateKeyRaw() * algebra::G2Point::ONE;
+    publicKey = _commonPrivate.getPrivateKeyRaw() * algebra::G2Point::one();
 }
 
 TEPublicKey::TEPublicKey( const algebra::G2Point& _pkey ) : publicKey( _pkey ) {

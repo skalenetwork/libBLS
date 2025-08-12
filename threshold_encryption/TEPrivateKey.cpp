@@ -29,8 +29,7 @@ namespace libBLS {
 TEPrivateKey::TEPrivateKey( const std::string& _keyStr ) {
     // already validates the string
     std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > privBytes =
-        ThresholdUtils::hexCStringToBytesArray< algebra::FrScalar::SIZE_BYTES >(
-            _keyStr.c_str() );
+        ThresholdUtils::hexCStringToBytesArray< algebra::FrScalar::SIZE_BYTES >( _keyStr.c_str() );
 
     privateKey = algebra::FrScalar::fromBytes( privBytes );
 
@@ -39,7 +38,7 @@ TEPrivateKey::TEPrivateKey( const std::string& _keyStr ) {
     }
 }
 
-TEPrivateKey::TEPrivateKey( algebra::FrScalar _skey ) : privateKey( _skey ) {
+TEPrivateKey::TEPrivateKey( const algebra::FrScalar& _skey ) : privateKey( _skey ) {
     if ( _skey.isZero() )
         throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
 }
@@ -51,8 +50,7 @@ TEPrivateKey::TEPrivateKey( const std::vector< uint8_t > _keyBytes ) {
     }
 }
 
-TEPrivateKey::TEPrivateKey(
-    const std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > _keyBytes ) {
+TEPrivateKey::TEPrivateKey( const std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > _keyBytes ) {
     privateKey = algebra::FrScalar::fromBytes( _keyBytes );
     if ( privateKey.isZero() ) {
         throw ThresholdUtils::ZeroSecretKey( "private key is zero" );

@@ -26,7 +26,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
-TEDecryptionShare::TEDecryptionShare( algebra::G2Point _share, size_t _signerIndex )
+TEDecryptionShare::TEDecryptionShare( const algebra::G2Point& _share, size_t _signerIndex )
     : signerIndex( _signerIndex ), share( _share ) {
     share.validate();
 }

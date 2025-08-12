@@ -44,7 +44,7 @@ TEPrivateKeyShare::TEPrivateKeyShare( const std::string& _hexaField, size_t _sig
     }
 }
 
-TEPrivateKeyShare::TEPrivateKeyShare( algebra::FrScalar _skeyShare, size_t _signerIndex,
+TEPrivateKeyShare::TEPrivateKeyShare( const algebra::FrScalar& _skeyShare, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ),
       privateKey( _skeyShare ),
@@ -60,14 +60,14 @@ TEPrivateKeyShare::TEPrivateKeyShare( algebra::FrScalar _skeyShare, size_t _sign
 
 TEPrivateKeyShare::TEPrivateKeyShare( const std::vector< uint8_t >& _bytes, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
-    : TEPrivateKeyShare(algebra::FrScalar::fromBytes( _bytes ),
-          _signerIndex, _requiredSigners, _totalSigners ) {}
+    : TEPrivateKeyShare(
+          algebra::FrScalar::fromBytes( _bytes ), _signerIndex, _requiredSigners, _totalSigners ) {}
 
 TEPrivateKeyShare::TEPrivateKeyShare(
     const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& _bytes, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
-    : TEPrivateKeyShare(algebra::FrScalar::fromBytes( _bytes ),
-          _signerIndex, _requiredSigners, _totalSigners ) {}
+    : TEPrivateKeyShare(
+          algebra::FrScalar::fromBytes( _bytes ), _signerIndex, _requiredSigners, _totalSigners ) {}
 
 
 std::string TEPrivateKeyShare::toString() const {

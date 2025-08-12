@@ -21,9 +21,9 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 @date 2019
 */
 
+#include "backends/algebra_types.hpp"
 #include <threshold_encryption/TEBase.h>
 #include <tools/utils.h>
-#include "backends/algebra_types.hpp"
 
 namespace libBLS {
 
@@ -32,7 +32,8 @@ std::atomic< bool > TEBase::isLibffInitialized{ false };
 void TEBase::initializeIfNecessary() {
     bool expected = false;
     if ( isLibffInitialized.compare_exchange_strong( expected, true ) ) {
-        // TODO - should not be needed - we should enforce curve initialization before any libBLS call
+        // TODO - should not be needed - we should enforce curve initialization before any libBLS
+        // call
         algebra::initCurve();
     }
 }

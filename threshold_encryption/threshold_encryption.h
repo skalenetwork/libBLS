@@ -24,11 +24,11 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #pragma once
 
 #include <openssl/rand.h>
+#include <array>
 #include <string>
 #include <tuple>
 #include <utility>
 #include <vector>
-#include <array>
 
 #include <third_party/cryptlite/sha256.h>
 
@@ -97,14 +97,14 @@ public:
      * @brief Converts bytes to CipheredKey
      */
     static CipheredKey fromBytes( std::array< uint8_t, CIPHERED_KEY_SIZE_BYTES > bytes ) {
-        std::array< uint8_t, algebra::G2Point::SIZE_BYTES > u_bytes;
+        std::array< uint8_t, G2_SIZE_BYTES > u_bytes;
         std::array< uint8_t, AES_256_KEY_SIZE_BYTES > v_bytes;
         std::array< uint8_t, G1_SIZE_BYTES > w_bytes;
 
         uint8_t* offset = bytes.data();
         // Get U bytes
-        std::memcpy( u_bytes.data(), offset, algebra::G2Point::SIZE_BYTES );
-        offset += algebra::G2Point::SIZE_BYTES;
+        std::memcpy( u_bytes.data(), offset, G2_SIZE_BYTES );
+        offset += G2_SIZE_BYTES;
         // Get V bytes
         std::memcpy( v_bytes.data(), offset, AES_256_KEY_SIZE_BYTES );
         offset += AES_256_KEY_SIZE_BYTES;

@@ -126,7 +126,7 @@ void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
     algebra::GTElement fst, snd;
 
     // pairing( W, P ) == pairing( H, U )
-    fst = algebra::pairing( W, algebra::G2Point::ONE );
+    fst = algebra::pairing( W, algebra::G2Point::one() );
     snd = algebra::pairing( H, U );
 
     if ( fst != snd ) {

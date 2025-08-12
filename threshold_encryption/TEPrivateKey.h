@@ -36,7 +36,7 @@ private:
 public:
     TEPrivateKey( const std::string& _keyStr );
 
-    TEPrivateKey( algebra::FrScalar _skey );
+    TEPrivateKey( const algebra::FrScalar& _skey );
 
     TEPrivateKey( const std::vector< uint8_t > _keyBytes );
 

@@ -76,8 +76,7 @@ algebra::G1Point TE::HashToGroup( const algebra::G2Point& U, const std::string& 
     std::vector< uint8_t > bytes = ThresholdUtils::hexCStringToBytes( hash_str.c_str() );
 
     // copy first 32 bytes
-    auto hash_bytes_arr =
-        std::array< uint8_t, algebra::MAX_FIELD_ELEMENT_SIZE_BYTES >();
+    auto hash_bytes_arr = std::array< uint8_t, algebra::MAX_FIELD_ELEMENT_SIZE_BYTES >();
     std::copy( bytes.begin(), bytes.begin() + algebra::MAX_FIELD_ELEMENT_SIZE_BYTES,
         hash_bytes_arr.begin() );
 
@@ -85,8 +84,7 @@ algebra::G1Point TE::HashToGroup( const algebra::G2Point& U, const std::string& 
 }
 
 
-CipheredKeyResult TE::getCiphertext(
-    const AES256Key& key, const algebra::G2Point& commonPublic ) {
+CipheredKeyResult TE::getCiphertext( const AES256Key& key, const algebra::G2Point& commonPublic ) {
     algebra::FrScalar r = algebra::FrScalar::random();
 
     while ( r.isZero() ) {
@@ -94,7 +92,7 @@ CipheredKeyResult TE::getCiphertext(
     }
 
     algebra::G2Point U, Y;
-    U = r * algebra::G2Point::ONE;
+    U = r * algebra::G2Point::one();
     Y = r * commonPublic;
 
     std::string hash = Hash( Y );
@@ -226,7 +224,7 @@ algebra::G2Point TE::getDecryptionShare(
     algebra::G1Point H = HashToGroup( U, v_str );
 
     algebra::GTElement fst, snd;
-    fst = algebra::pairing( W, algebra::G2Point::ONE);
+    fst = algebra::pairing( W, algebra::G2Point::one() );
     snd = algebra::pairing( H, U );
 
     bool res = fst == snd;
@@ -267,7 +265,7 @@ bool TE::Verify( const CipheredKey& ciphertext, const algebra::G2Point& decrypti
     H.validate();
 
     algebra::GTElement fst, snd;
-    fst = algebra::pairing( W, algebra::G2Point::ONE );
+    fst = algebra::pairing( W, algebra::G2Point::one() );
     snd = algebra::pairing( H, U );
 
     if ( fst == snd ) {
@@ -307,7 +305,7 @@ AES256Key TE::CombineShares( const CipheredKey& ciphertext,
     algebra::G1Point H = this->HashToGroup( U, v_str );
 
     algebra::GTElement fst, snd;
-    fst = algebra::pairing( W, algebra::G2Point::ONE );
+    fst = algebra::pairing( W, algebra::G2Point::one() );
     snd = algebra::pairing( H, U );
 
     bool res = fst == snd;
@@ -360,7 +358,7 @@ std::vector< uint8_t > TE::CombineSharesIntoAESKey(
 
     std::vector< algebra::FrScalar > lagrange_coeffs = algebra::lagrangeCoeffs( idx, this->t_ );
 
-    algebra::G2Point sum = algebra::G2Point::ZERO;
+    algebra::G2Point sum = algebra::G2Point::zero();
     for ( size_t i = 0; i < this->t_; ++i ) {
         algebra::G2Point temp = lagrange_coeffs[i] * decryptionShares[i].first;
 
