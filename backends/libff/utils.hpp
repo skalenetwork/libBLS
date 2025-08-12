@@ -1,16 +1,19 @@
 #pragma once
-#include <cstddef>
+#include <gmpxx.h>
+#include <boost/multiprecision/cpp_int.hpp>
 #include <array>
+#include <cstddef>
 #include <cstdint>
+#include <libff/common/utils.hpp>
 #include <string>
 #include <vector>
 
+#include "backends/algebra_types.hpp"
+#include "tools/utils.h"
+
+
 namespace libBLS {
 namespace algebra {
-
-// same size as libff::alt_bn128_Fq and libff::alt_bn128_Fr
-// This is the maximum size of a field element in bytes
-constexpr size_t MAX_FIELD_ELEMENT_SIZE_BYTES = 32;
 
 // ----------------- Template Declarations ----------------- //
 
@@ -24,7 +27,7 @@ template < class T >
 std::vector< uint8_t > fieldElementToBytes( const T& field_elem );
 
 template < class T >
-static T bytesToFieldElement(const std::array< uint8_t, T::SIZE_BYTES >& byte_array );
+static T bytesToFieldElement( const std::array< uint8_t, T::SIZE_BYTES >& byte_array );
 
 
 // ------------------- Template Implementations ------------------- //
@@ -37,7 +40,8 @@ std::string fieldElementToString( const T& field_elem, size_t base ) {
 
     std::string output = t.get_str( base );
 
-    if ( base == HEXA ) {
+    constexpr size_t hexa = 16;
+    if ( base == hexa ) {
         const std::size_t width = 64;
         if ( output.length() < width ) {
             output.insert( 0, width - output.length(), '0' );
@@ -48,7 +52,8 @@ std::string fieldElementToString( const T& field_elem, size_t base ) {
 }
 
 template < class T >
-std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > fieldElementToBytesArray(const T& field_elem ) {
+std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > fieldElementToBytesArray(
+    const T& field_elem ) {
     mpz_class t;
     field_elem.as_bigint().to_mpz( t.get_mpz_t() );
 
@@ -76,7 +81,7 @@ std::vector< uint8_t > fieldElementToBytes( const T& field_elem ) {
 
 // Convert a 32-byte array back to a algebra::FqElement or FrScalar element
 template < class T >
-T bytesToFieldElement(const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& byte_array ) {
+T bytesToFieldElement( const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& byte_array ) {
     mpz_class t;
 
     // Import the byte array into the mpz_t (in little-endian order)
@@ -100,5 +105,5 @@ T bytesToFieldElement( const std::vector< uint8_t >& byte_array ) {
     return bytesToFieldElement< T >( bytes );
 }
 
-} // namespace algebra
-} // namespace libBLS
+}  // namespace algebra
+}  // namespace libBLS

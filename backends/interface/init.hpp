@@ -5,5 +5,5 @@ namespace algebra {
 
 void initCurve();
 
-} // namespace algebra
-} // namespace libBLS
+}  // namespace algebra
+}  // namespace libBLS
