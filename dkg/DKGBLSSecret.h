@@ -42,6 +42,6 @@ public:
     algebra::FrScalar getValueAt0();
 };
 
-} // namespace libBLS
+}  // namespace libBLS
 
 #endif  // LIBBLS_DKGBLSSECRET_H

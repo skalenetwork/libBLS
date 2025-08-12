@@ -57,7 +57,7 @@ public:
         size_t _requiredSigners, size_t _totalSigners );
 };
 
-} // namespace libBLS
+}  // namespace libBLS
 
 
 #endif  // LIBBLS_DKGBLSWRAPPER_H

@@ -42,6 +42,6 @@ public:
     std::vector< algebra::G2Point > getDKGTEPublicShares();
 };
 
-} // namespace libBLS
+}  // namespace libBLS
 
 #endif  // LIBBLS_DKGTESECRET_H

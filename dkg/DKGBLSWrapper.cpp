@@ -50,8 +50,7 @@ bool DKGBLSWrapper::VerifyDKGShare( size_t _signerIndex, const algebra::FrScalar
     return dkg.Verification( _signerIndex, _share, *_verification_vector );
 }
 
-void DKGBLSWrapper::setDKGSecret(
-    std::shared_ptr< std::vector< algebra::FrScalar > > _poly_ptr ) {
+void DKGBLSWrapper::setDKGSecret( std::shared_ptr< std::vector< algebra::FrScalar > > _poly_ptr ) {
     if ( _poly_ptr == nullptr )
         throw libBLS::ThresholdUtils::IncorrectInput( "Null polynomial ptr" );
     dkg_secret_ptr->setPoly( *_poly_ptr );
@@ -86,4 +85,4 @@ algebra::FrScalar DKGBLSWrapper::getValueAt0() {
     return dkg_secret_ptr->getValueAt0();
 }
 
-} // namespace libBLS
+}  // namespace libBLS

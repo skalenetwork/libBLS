@@ -57,4 +57,4 @@ algebra::FrScalar DKGBLSSecret::getValueAt0() {
     return poly.at( 0 );
 }
 
-} // namespace libBLS
+}  // namespace libBLS

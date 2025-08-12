@@ -57,4 +57,4 @@ std::vector< algebra::G2Point > DKGTESecret::getDKGTEPublicShares() {
     return dkg_te.VerificationVector( poly );
 }
 
-} // namespace libBLS
+}  // namespace libBLS

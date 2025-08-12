@@ -88,7 +88,7 @@ libBLS::TEPublicKey DKGTEWrapper::CreateTEPublicKey(
     if ( public_shares_all == nullptr )
         throw libBLS::ThresholdUtils::IncorrectInput( "Null public shares all" );
 
-    algebra::G2Point public_key = algebra::G2Point::ZERO;
+    algebra::G2Point public_key = algebra::G2Point::zero();
 
     for ( size_t i = 0; i < _totalSigners; i++ ) {
         public_key = public_key + public_shares_all->at( i ).at( 0 );
@@ -99,4 +99,4 @@ libBLS::TEPublicKey DKGTEWrapper::CreateTEPublicKey(
     return common_public;
 }
 
-} // namespace libBLS
+}  // namespace libBLS
