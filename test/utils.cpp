@@ -8,17 +8,17 @@
 keys generateKeys( size_t t, size_t n ) {
     libBLS::Dkg dkgTe( t, n );
 
-    std::vector< libff::alt_bn128_Fr > poly = dkgTe.GeneratePolynomial();
+    std::vector< libBLS::algebra::FrScalar > poly = dkgTe.GeneratePolynomial();
 
-    libff::alt_bn128_Fr zero_el = libff::alt_bn128_Fr::zero();
+    libBLS::algebra::FrScalar zero_el = libBLS::algebra::FrScalar::zero();
 
-    libff::alt_bn128_Fr common_skey = dkgTe.PolynomialValue( poly, zero_el );
+    libBLS::algebra::FrScalar common_skey = dkgTe.PolynomialValue( poly, zero_el );
 
     libBLS::TEPrivateKey commonPrivate( common_skey );
 
     libBLS::TEPublicKey commonPublic( commonPrivate );
 
-    std::vector< libff::alt_bn128_Fr > skeys = dkgTe.SecretKeyContribution( poly );
+    std::vector< libBLS::algebra::FrScalar > skeys = dkgTe.SecretKeyContribution( poly );
     std::vector< libBLS::TEPrivateKeyShare > secretKeys;
     std::vector< libBLS::TEPublicKeyShare > publicKeys;
     for ( size_t i = 0; i < n; i++ ) {

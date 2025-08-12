@@ -57,12 +57,7 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
         RAND_bytes( data.data(), data.size() );
 
         // convert key & data to string
-        std::vector< std::string > pKeyVec = libBLS::ThresholdUtils::G2ToString(
-            keys.commonPublic.getPublicKeyRaw(), libBLS::BASE_HEXA );
-        std::string pKeyStr;
-        for ( auto& str : pKeyVec ) {
-            pKeyStr += str;
-        }
+        std::string pKeyStr = keys.commonPublic.getPublicKeyRaw().toString( libBLS::Base::HEXA );
 
         std::string str = libBLS::ThresholdUtils::bytesToHexString( data );
         const char* dataStr = str.c_str();
