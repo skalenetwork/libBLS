@@ -84,9 +84,9 @@ BLSSignature::BLSSignature(
         }
     }
 
-    sig = std::make_shared< algebra::G1Point >( 
-        algebra::FqElement::fromString( result->at(0), Base::DEC ), 
-        algebra::FqElement::fromString( result->at(1), Base::DEC ) );
+    sig = std::make_shared< algebra::G1Point >(
+        algebra::FqElement::fromString( result->at( 0 ), Base::DEC ),
+        algebra::FqElement::fromString( result->at( 1 ), Base::DEC ) );
     hint = result->at( 2 ) + ":" + result->at( 3 );
 
     if ( !( sig->isWellFormed() ) ) {
@@ -97,8 +97,7 @@ BLSSignature::BLSSignature(
 std::shared_ptr< std::string > BLSSignature::toString() {
     sig->toAffineCoordinates();
     std::string ret = "";
-    ret += sig->getX().toString( Base::DEC ) + ':' +
-           sig->getY().toString( Base::DEC ) + ':' + hint;
+    ret += sig->getX().toString( Base::DEC ) + ':' + sig->getY().toString( Base::DEC ) + ':' + hint;
 
     return std::make_shared< std::string >( ret );
 }
@@ -114,4 +113,4 @@ size_t BLSSignature::getRequiredSigners() const {
     return requiredSigners;
 }
 
-} // namespace libBLS
+}  // namespace libBLS

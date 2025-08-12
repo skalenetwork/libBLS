@@ -38,9 +38,10 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(
         throw libBLS::ThresholdUtils::IncorrectInput( "Secret key share string is empty" );
     }
     // TODO - should get rid of this shared_ptr
-    privateKey = std::make_shared< algebra::FrScalar >( algebra::FrScalar::fromString( _key, Base::DEC ) );
+    privateKey =
+        std::make_shared< algebra::FrScalar >( algebra::FrScalar::fromString( _key, Base::DEC ) );
 
-    if ( *privateKey == algebra::FrScalar::ZERO ) {
+    if ( *privateKey == algebra::FrScalar::zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey(
             "Secret key share is equal to zero or corrupt" );
     }
@@ -53,7 +54,7 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(
 
     privateKey = std::make_shared< algebra::FrScalar >( libff_skey );
 
-    if ( *privateKey == algebra::FrScalar::ZERO ) {
+    if ( *privateKey == algebra::FrScalar::zero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "BLS Secret key share is equal to zero" );
     }
 }
@@ -78,9 +79,9 @@ std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::sign(
     ss->toAffineCoordinates();
 
     std::pair< algebra::G1Point, std::string > hash_with_hint =
-        obj->HashtoG1withHint( hash_byte_arr );
-    std::string hint = hash_with_hint.first.getY().toString( Base::DEC ) +
-                       ":" + hash_with_hint.second;
+        libBLS::algebra::hashtoG1withHint( *hash_byte_arr );
+    std::string hint =
+        hash_with_hint.first.getY().toString( Base::DEC ) + ":" + hash_with_hint.second;
 
     auto s =
         std::make_shared< BLSSigShare >( ss, hint, _signerIndex, requiredSigners, totalSigners );
@@ -102,15 +103,15 @@ std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::signWithHelper(
     obj = std::make_shared< libBLS::Bls >( libBLS::Bls( requiredSigners, totalSigners ) );
 
     std::pair< algebra::G1Point, std::string > hash_with_hint =
-        obj->HashtoG1withHint( hash_byte_arr );
+        libBLS::algebra::hashtoG1withHint( *hash_byte_arr );
 
-    auto ss = std::make_shared< algebra::G1Point >(
-        obj->Signing( hash_with_hint.first, *privateKey ) );
+    auto ss =
+        std::make_shared< algebra::G1Point >( obj->Signing( hash_with_hint.first, *privateKey ) );
 
     ss->toAffineCoordinates();
 
-    std::string hint = hash_with_hint.first.getY().toString( Base::DEC ) +
-                       ":" + hash_with_hint.second;
+    std::string hint =
+        hash_with_hint.first.getY().toString( Base::DEC ) + ":" + hash_with_hint.second;
 
     auto s =
         std::make_shared< BLSSigShare >( ss, hint, _signerIndex, requiredSigners, totalSigners );
@@ -159,18 +160,18 @@ std::shared_ptr< algebra::FrScalar > BLSPrivateKeyShare::getPrivateKey() const {
 std::shared_ptr< std::string > BLSPrivateKeyShare::toString() {
     if ( !privateKey )
         throw libBLS::ThresholdUtils::IncorrectInput( "Secret key share is null" );
-    
+
     if ( privateKey->isZero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey(
             "Secret key share is equal to zero or corrupt" );
     }
-    
-    std::shared_ptr< std::string > key_str = std::make_shared< std::string >(
-        privateKey->toString( Base::DEC ));
+
+    std::shared_ptr< std::string > key_str =
+        std::make_shared< std::string >( privateKey->toString( Base::DEC ) );
 
     if ( key_str->empty() )
         throw libBLS::ThresholdUtils::IncorrectInput( "Secret key share string is empty" );
     return key_str;
 }
 
-} // namespace libBLS
+}  // namespace libBLS

@@ -24,9 +24,9 @@
 #ifndef LIBBLS_BLSSIGSHARESET_H
 #define LIBBLS_BLSSIGSHARESET_H
 
-#include <bls/bls.h>
 #include "BLSSigShare.h"
 #include "BLSSignature.h"
+#include <bls/bls.h>
 
 namespace libBLS {
 
@@ -51,6 +51,6 @@ public:
     std::shared_ptr< BLSSignature > merge();
 };
 
-} // namespace libBLS
+}  // namespace libBLS
 
 #endif  // LIBBLS_BLSSIGSHARESET_H

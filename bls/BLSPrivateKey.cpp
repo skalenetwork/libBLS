@@ -27,6 +27,7 @@
 
 namespace libBLS {
 
+// TODO - should define clearly base of the string
 BLSPrivateKey::BLSPrivateKey(
     const std::shared_ptr< std::string >& _key, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
@@ -41,7 +42,8 @@ BLSPrivateKey::BLSPrivateKey(
     }
 
     // TODO - should not use shared ptr
-    privateKey = std::make_shared< algebra::FrScalar >( algebra::FrScalar::fromString( *_key, Base::DEC ) );
+    privateKey =
+        std::make_shared< algebra::FrScalar >( algebra::FrScalar::fromString( *_key, Base::DEC ) );
     if ( privateKey->isZero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey(
             "Secret key share is equal to zero or corrupt" );
@@ -62,7 +64,7 @@ BLSPrivateKey::BLSPrivateKey(
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     auto lagrange_koefs = algebra::lagrangeCoeffs( *koefs, this->requiredSigners );
-    algebra::FrScalar privateKeyObj( algebra::FrScalar::ZERO );
+    algebra::FrScalar privateKeyObj = algebra::FrScalar::zero();
     for ( size_t i = 0; i < requiredSigners; ++i ) {
         algebra::FrScalar skey = *skeys->at( koefs->at( i ) - 1 )->getPrivateKey();
         privateKeyObj = privateKeyObj + lagrange_koefs.at( i ) * skey;
@@ -80,9 +82,10 @@ std::shared_ptr< algebra::FrScalar > BLSPrivateKey::getPrivateKey() const {
     return privateKey;
 }
 
+// TODO - should receive the base as a parameter
 std::shared_ptr< std::string > BLSPrivateKey::toString() {
-    std::shared_ptr< std::string > key_str = std::make_shared< std::string >(
-        privateKey->toString( Base::HEXA ) );
+    std::shared_ptr< std::string > key_str =
+        std::make_shared< std::string >( privateKey->toString( Base::DEC ) );
 
     if ( key_str->empty() )
         throw libBLS::ThresholdUtils::ZeroSecretKey( "Secret key share string is empty" );
@@ -90,4 +93,4 @@ std::shared_ptr< std::string > BLSPrivateKey::toString() {
     return key_str;
 }
 
-} // namespace libBLS
+}  // namespace libBLS

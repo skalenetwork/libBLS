@@ -54,6 +54,6 @@ public:
     std::shared_ptr< std::vector< std::string > > toString();
 };
 
-}
+}  // namespace libBLS
 
 #endif  // LIBBLS_BLSPUBLICKEYSHARE_H

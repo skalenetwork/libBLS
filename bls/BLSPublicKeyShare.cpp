@@ -36,10 +36,11 @@ BLSPublicKeyShare::BLSPublicKeyShare(
 
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    libBLS::ThresholdUtils::initCurve(); // TODO - maybe we can get rid of this
+    libBLS::ThresholdUtils::initCurve();  // TODO - maybe we can get rid of this
 
     // TODO - should not use shared_ptr
-    publicKey = std::make_shared< algebra::G2Point >( algebra::G2Point::fromString( *pkey_str_vect, Base::DEC ) );
+    publicKey = std::make_shared< algebra::G2Point >(
+        algebra::G2Point::fromString( *pkey_str_vect, Base::DEC ) );
 
     if ( publicKey->isZero() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Zero BLS public Key share" );
@@ -57,7 +58,7 @@ BLSPublicKeyShare::BLSPublicKeyShare(
     if ( _skey.isZero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "Zero BLS Secret Key" );
     }
-    publicKey = std::make_shared< algebra::G2Point >( _skey * algebra::G2Point::ONE );
+    publicKey = std::make_shared< algebra::G2Point >( _skey * algebra::G2Point::one() );
 }
 
 std::shared_ptr< algebra::G2Point > BLSPublicKeyShare::getPublicKey() const {
@@ -65,8 +66,11 @@ std::shared_ptr< algebra::G2Point > BLSPublicKeyShare::getPublicKey() const {
     return publicKey;
 }
 
+
+// TODO - should be named to toStringVec to remove ambiguity
 std::shared_ptr< std::vector< std::string > > BLSPublicKeyShare::toString() {
-    return std::make_shared< std::vector< std::string > >( publicKey->toStringVector( libBLS::Base::DEC ) );
+    return std::make_shared< std::vector< std::string > >(
+        publicKey->toStringVector( libBLS::Base::DEC ) );
 }
 
 bool BLSPublicKeyShare::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
@@ -115,10 +119,10 @@ bool BLSPublicKeyShare::VerifySigWithHelper( std::shared_ptr< std::array< uint8_
         return false;
     }
 
-    libff::alt_bn128_G1 hash( x.value, y_shift_x.first.value, algebra::FqElement::ONE.value );
+    libff::alt_bn128_G1 hash( x.value, y_shift_x.first.value, algebra::FqElement::one().value );
 
-    return algebra::pairing(*sign_ptr->getSigShare(), algebra::G2Point::ONE ) ==
-             algebra::pairing( hash, *publicKey );
+    return algebra::pairing( *sign_ptr->getSigShare(), algebra::G2Point::one() ) ==
+           algebra::pairing( hash, *publicKey );
 }
 
-}
+}  // namespace libBLS

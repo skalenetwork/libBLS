@@ -58,6 +58,6 @@ public:
     size_t getRequiredSigners() const;
 };
 
-} // namespace libBLS
+}  // namespace libBLS
 
 #endif  // LIBBLS_BLSSIGSHARE_H

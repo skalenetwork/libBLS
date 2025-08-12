@@ -99,4 +99,4 @@ std::shared_ptr< BLSSignature > BLSSigShareSet::merge() {
     return std::make_shared< BLSSignature >( sigPtr, hint, requiredSigners, totalSigners );
 }
 
-} // namespace libBLS
+}  // namespace libBLS

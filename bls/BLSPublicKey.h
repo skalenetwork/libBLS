@@ -68,6 +68,6 @@ public:
     size_t getTotalSigners() const { return n; }
 };
 
-} // namespace libBLS
+}  // namespace libBLS
 
 #endif  // LIBBLS_BLSPUBLICKEY_H

@@ -51,9 +51,6 @@ public:
     static algebra::G1Point HashBytes( const char* raw_bytes, size_t length,
         std::string ( *hash_func )( const std::string& str ) = cryptlite::sha256::hash_hex );
 
-    static std::pair< algebra::G1Point, std::string > HashtoG1withHint(
-        std::shared_ptr< std::array< uint8_t, 32 > > );
-
     static algebra::G1Point HashPublicKeyToG1( const algebra::G2Point& elem );
 
     static std::pair< algebra::G1Point, std::string > HashPublicKeyToG1WithHint(
@@ -92,8 +89,7 @@ public:
 
     static algebra::G1Point PopProve( const algebra::FrScalar& secret_key );
 
-    static bool PopVerify(
-        const algebra::G2Point& public_key, const algebra::G1Point& prove );
+    static bool PopVerify( const algebra::G2Point& public_key, const algebra::G1Point& prove );
 
 private:
     const size_t t_ = 0;

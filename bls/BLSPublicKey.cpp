@@ -34,14 +34,15 @@ BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > 
     CHECK( pkey_str_vect )
 
     // TODO get rid of unnecessary shared_ptr
-    libffPublicKey = std::make_shared< algebra::G2Point >( algebra::G2Point::fromString( *pkey_str_vect , Base::DEC )) ;
+    libffPublicKey = std::make_shared< algebra::G2Point >(
+        algebra::G2Point::fromString( *pkey_str_vect, Base::DEC ) );
 
     // TODO change field name - remove libff from it
     libffPublicKey->validate();
 }
 
 BLSPublicKey::BLSPublicKey( const algebra::G2Point& pkey, size_t t, size_t n ) : t( t ), n( n ) {
-    libBLS::ThresholdUtils::initCurve(); // we can get rid of this
+    libBLS::ThresholdUtils::initCurve();  // we can get rid of this
 
     // TODO - check this commented out code (?)
     // do not check signers for compatibility
@@ -57,7 +58,7 @@ BLSPublicKey::BLSPublicKey( const algebra::FrScalar& skey, size_t t, size_t n ) 
     // do not check signers for compatibility
     // libBLS::ThresholdUtils::checkSigners( t, n );
 
-    libffPublicKey = std::make_shared< algebra::G2Point >( skey * algebra::G2Point::ONE );
+    libffPublicKey = std::make_shared< algebra::G2Point >( skey * algebra::G2Point::one() );
     if ( libffPublicKey->isZero() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Public Key is equal to zero or corrupt" );
     }
@@ -104,11 +105,10 @@ bool BLSPublicKey::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32
         return false;
 
     // TODO - uses value - impl. specific - need to refactor
-    libff::alt_bn128_G1 hash( x.value, y_shift_x.first.value, algebra::FqElement::ONE.value );
+    libff::alt_bn128_G1 hash( x.value, y_shift_x.first.value, algebra::FqElement::one().value );
 
-    return (
-        algebra::pairing( *sign_ptr->getSig(), algebra::G2Point::ONE ) ==
-        algebra::pairing( hash, *libffPublicKey ) );
+    return ( algebra::pairing( *sign_ptr->getSig(), algebra::G2Point::one() ) ==
+             algebra::pairing( hash, *libffPublicKey ) );
 }
 
 bool BLSPublicKey::AggregatedVerifySig(
@@ -165,7 +165,7 @@ BLSPublicKey::BLSPublicKey(
     std::vector< algebra::FrScalar > lagrangeCoeffs =
         algebra::lagrangeCoeffs( participatingNodes, _requiredSigners );
 
-    algebra::G2Point key = algebra::G2Point::ZERO;
+    algebra::G2Point key = algebra::G2Point::zero();
     size_t i = 0;
     for ( auto&& item : *koefs_pkeys_map ) {
         if ( i < _requiredSigners ) {
@@ -184,11 +184,12 @@ BLSPublicKey::BLSPublicKey(
 
 std::shared_ptr< std::vector< std::string > > BLSPublicKey::toString() {
     libffPublicKey->toAffineCoordinates();
-    return std::make_shared< std::vector< std::string > >( libffPublicKey->toStringVector( algebra::Base::DEC ) );
+    return std::make_shared< std::vector< std::string > >(
+        libffPublicKey->toStringVector( algebra::Base::DEC ) );
 }
 
 std::shared_ptr< algebra::G2Point > BLSPublicKey::getPublicKey() const {
     return libffPublicKey;
 }
 
-} // namespace libBLS
+}  // namespace libBLS

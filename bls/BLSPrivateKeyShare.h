@@ -63,6 +63,6 @@ public:
     std::shared_ptr< std::string > toString();
 };
 
-} // namespace libBLS
+}  // namespace libBLS
 
 #endif  // LIBBLS_BLSPRIVATEKEYSHARE_H

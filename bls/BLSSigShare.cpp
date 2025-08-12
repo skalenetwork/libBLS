@@ -42,8 +42,8 @@ std::shared_ptr< std::string > BLSSigShare::toString() {
     sigShare->toAffineCoordinates();
     std::string ret = "";
     // TODO - need to refactor this - uses .value
-    ret += sigShare->getX().toString( Base::DEC ) + ':' +
-           sigShare->getY().toString( Base::DEC ) + ':' + hint;
+    ret += sigShare->getX().toString( Base::DEC ) + ':' + sigShare->getY().toString( Base::DEC ) +
+           ':' + hint;
 
     return std::make_shared< std::string >( ret );
 }
@@ -91,10 +91,9 @@ BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _sign
         }
     }
 
-    sigShare = std::make_shared< algebra::G1Point >( 
-        algebra::FqElement::fromString( result->at(0), Base::DEC ),
-        algebra::FqElement::fromString( result->at(1), Base::DEC )
-    );
+    sigShare = std::make_shared< algebra::G1Point >(
+        algebra::FqElement::fromString( result->at( 0 ), Base::DEC ),
+        algebra::FqElement::fromString( result->at( 1 ), Base::DEC ) );
 
     hint = result->at( 2 ) + ":" + result->at( 3 );
 
@@ -102,8 +101,8 @@ BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _sign
         throw libBLS::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
 }
 
-BLSSigShare::BLSSigShare( const std::shared_ptr< algebra::G1Point >& _sigShare,
-    std::string& _hint, size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
+BLSSigShare::BLSSigShare( const std::shared_ptr< algebra::G1Point >& _sigShare, std::string& _hint,
+    size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
     : sigShare( _sigShare ),
       hint( _hint ),
       signerIndex( _signerIndex ),
@@ -144,4 +143,4 @@ std::string BLSSigShare::getHint() const {
     return hint;
 }
 
-} // namespace libBLS
+}  // namespace libBLS
