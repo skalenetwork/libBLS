@@ -1,20 +1,23 @@
 #pragma once
 
+#include "PointSerializer.hpp"
 #include "backends/algebra_types.hpp"
+#include "backends/interface/field/FqElement.hpp"
+#include "backends/interface/WrapperCore.hpp"
 
-#ifdef MCL
-#else
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-#endif
 
 namespace libBLS {
 namespace algebra {
 
-class GTElement {
+constexpr size_t GT_NUM_COMPONENTS_AFFINE = 2;
+constexpr size_t GT_NUM_COMPONENTS_PROJECTIVE = 3;
+
+class GTElement : 
+    public WrapperCore< GTBackendType, GTElement >,
+    public PointSerializer< GTElement, GT_NUM_COMPONENTS_AFFINE, GT_NUM_COMPONENTS_PROJECTIVE > {
 public:
-    GTBackendType value;
-    GTElement( const GTBackendType& v ) : value( v ) {}
-    GTElement();
+    GTElement() {}
+    GTElement( const GTBackendType& v ) : WrapperCore( v ) {}
 
     // -------------------- Operator Overloads -------------------- //
 
@@ -22,6 +25,16 @@ public:
     GTElement inverse() const;
     bool operator==( const GTElement& other ) const;
     bool operator!=( const GTElement& other ) const;
+
+
+    // -------------------- Helper methods for PointSerializer -------------------- //
+
+    void forEachAffineComponentImpl(
+        const std::function< void( const FqElement&, size_t i ) >& fn ) const;
+
+    void forEachProjectiveComponentImpl(
+        const std::function< void( const FqElement&, size_t i ) >& fn ) const;
+
 };
 
 }  // namespace algebra

@@ -1,25 +1,20 @@
 #pragma once
 
 #include "../WrapperCore.hpp"
+#include "Field.hpp"
 #include "backends/algebra_types.hpp"
 
-namespace libBLS {
-namespace algebra {
+namespace libBLS::algebra {
 
-class FrScalar : public WrapperCore< FrBackendType, FrScalar > {
+class FrScalar : public Field< FrBackendType, FrScalar > {
 public:
-#ifdef MCL
-#else
     static const size_t SIZE_BYTES = 32;
-#endif
 
     FrScalar();
     FrScalar( const size_t n );
-    FrScalar( const FrBackendType& v ) : WrapperCore( v ) {}
+    FrScalar( const FrBackendType& v ) : Field( v ) {}
 
     FrScalar inverse() const;
-
-    bool isZero() const;
 
     // ---------- Serialization ----------- //
 
@@ -51,5 +46,4 @@ public:
     bool operator!=( const FrScalar& other ) const;
 };
 
-}  // namespace algebra
-}  // namespace libBLS
+}  // namespace libBLS::algebra

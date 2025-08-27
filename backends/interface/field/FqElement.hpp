@@ -1,21 +1,20 @@
 #pragma once
 
 #include "../WrapperCore.hpp"
+#include "Field.hpp"
+#include "backends/interface/curve_contract_altbn128.hpp"
 #include "backends/algebra_types.hpp"
 
-namespace libBLS {
-namespace algebra {
+namespace libBLS::algebra {
 
-class FqElement : public WrapperCore< FqBackendType, FqElement > {
+class FqElement : public Field< FqBackendType, FqElement > {
 public:
-#ifdef MCL
-#else
     static constexpr size_t SIZE_BYTES = 32;
-#endif
+    static constexpr std::string_view EULER = AltBn128Contract::fq_euler_dec;
 
     FqElement();
     FqElement( uint64_t x );
-    FqElement( const FqBackendType& val ) : WrapperCore( val ) {}
+    FqElement( const FqBackendType& val ) : Field( val ) {}
 
     // -------------------- Serialization / Deserialization Methods -------------------- //
     std::string toString( Base base ) const;
@@ -36,11 +35,11 @@ public:
     bool operator==( const FqElement& other ) const;
     bool operator!=( const FqElement& other ) const;
 
+    FqElement sqrt() const;
+
     // -------------------- Static Methods -------------------- //
 
     static FqElement random();
-
-    static FqElement fromHash( const std::array< uint8_t, HASH_SIZE >& hash_byte_arr );
 };
 
 class FqRefWrapper {
@@ -51,5 +50,4 @@ public:
     FqBackendType& asBackendRef() { return ref_; }
 };
 
-}  // namespace algebra
-}  // namespace libBLS
+}  // namespace libBLS::algebra

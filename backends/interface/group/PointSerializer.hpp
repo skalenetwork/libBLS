@@ -2,6 +2,8 @@
 
 #include "backends/interface/field/FqElement.hpp"
 #include "tools/utils.h"
+#include <cstring>
+#include <functional>
 
 namespace libBLS::algebra {
 
@@ -19,8 +21,10 @@ class PointSerializer {
             std::forward< const std::function< void( const FqElement&, size_t i ) >& >( fn ) );
     }
 
-    // ----------------------- Byte Serializations ----------------------- //
 public:
+
+    // ----------------------- Byte Serializations ----------------------- //
+    
     std::array< uint8_t, NUM_AFFINE_COMPONENTS * FqElement::SIZE_BYTES > toByteArray() const {
         std::array< uint8_t, NUM_AFFINE_COMPONENTS * FqElement::SIZE_BYTES > out{};
         uint8_t* p = out.data();

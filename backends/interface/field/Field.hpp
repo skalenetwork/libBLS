@@ -1,0 +1,28 @@
+#pragma once
+
+namespace libBLS::algebra {
+
+/// @brief Base parent class for field types.
+/// Declares both zero() and one() static methods.
+/// @tparam BackendType - concrete backend type to be held by the wrappers
+/// @tparam Wrapper - Wrapper class - needed for the one() and zero() methods
+template < typename BackendType, typename Wrapper >
+class Field : public WrapperCore< BackendType, Wrapper > {
+
+public:
+
+    Field() : WrapperCore< BackendType, Wrapper >() {}
+    Field( const BackendType& v) : WrapperCore< BackendType, Wrapper >( v ) {}
+
+    // Must be declared as static functions, not fields.
+    // We need to have initialized the curve before calling them.
+    // If they were static fields, they would be both initialized as 0,
+    // since the curve was not initialized yet.
+    static Wrapper one();
+    static Wrapper zero();
+
+    bool isOne() const;
+    bool isZero() const;
+};
+
+}  // namespace libBLS::algebra
