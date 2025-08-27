@@ -27,7 +27,6 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 
-#include <gmpxx.h>
 #include <tools/utils.h>
 #include <iomanip>
 
@@ -69,32 +68,6 @@ void ThresholdUtils::checkSigners( size_t _requiredSigners, size_t _totalSigners
     if ( _requiredSigners == 0 ) {
         throw IncorrectInput( "_requiredSigners == 0" );
     }
-}
-
-std::string ThresholdUtils::convertHexToDec( const std::string& hex_str ) {
-    try {
-        // construct from base 16
-        mpz_class dec( hex_str, libBLS::BASE_HEXA );
-
-        // convert to base 10
-        return dec.get_str( libBLS::BASE_DEC );
-
-    } catch ( std::exception& e ) {
-        throw IncorrectInput( e.what() );
-    } catch ( ... ) {
-        throw IncorrectInput( "Exception in convert hex to dec" );
-    }
-}
-
-std::string ThresholdUtils::convertDecToHex( std::string dec, int numBytes ) {
-    // construct from base 10
-    mpz_class num( dec, libBLS::BASE_DEC );
-    // convert to base 16
-    std::string result = num.get_str( libBLS::BASE_HEXA );
-    // pad with leading zeroes
-    int n_zeroes = numBytes * 2 - result.length();
-    result.insert( 0, n_zeroes, '0' );
-    return result;
 }
 
 

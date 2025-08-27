@@ -24,7 +24,6 @@
 #ifndef LIBBLS_UTILS_H
 #define LIBBLS_UTILS_H
 
-#include <gmpxx.h>
 #include <array>
 #include <atomic>
 #include <iomanip>
@@ -38,6 +37,14 @@ namespace libBLS {
 
 constexpr size_t BASE_HEXA = 16;
 constexpr size_t BASE_DEC = 10;
+
+#define REQUIRE_OR_THROW(cond, msg) \
+do { if(!(cond)) throw ThresholdUtils::IncorrectInput(std::string(msg) + " @ " + __FILE__ ":" + std::to_string(__LINE__)); \
+} while(0)
+
+#define THROW(msg) \
+throw ThresholdUtils::IncorrectInput(std::string(msg) + " @ " + __FILE__ ":" + std::to_string(__LINE__));
+
 
 class ThresholdUtils {
 private:
@@ -91,11 +98,6 @@ public:
 
     static std::shared_ptr< std::vector< std::string > > SplitString(
         const std::shared_ptr< std::string >, const std::string& delim );
-
-
-    static std::string convertHexToDec( const std::string& hex_str );
-
-    static std::string convertDecToHex( std::string dec, int numBytes );
 
     static bool checkHex( const std::string& hex );
 

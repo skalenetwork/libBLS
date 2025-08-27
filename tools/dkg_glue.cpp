@@ -24,12 +24,10 @@
 
 #include <dkg/dkg.h>
 #include <tools/utils.h>
-
 #include <fstream>
-
 #include <third_party/json.hpp>
-
 #include <boost/program_options.hpp>
+#include <iostream>
 
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
 #define __EXPAND_AS_STR__( x ) #x
@@ -110,7 +108,7 @@ void GenerateSecretKeys( const size_t t, const size_t n, const std::vector< std:
     }
 
     std::vector< libBLS::algebra::G2Point > public_keys( n );
-    libBLS::algebra::G2Point common_public_key = libBLS::algebra::G2Point::zero();
+    libBLS::algebra::G2Point common_public_key = libBLS::algebra::G2Point::identity();
     for ( size_t i = 0; i < n; ++i ) {
         secret_key[i] = dkg_instance.SecretKeyShareCreate( secret_key_contribution[i] );
         public_keys[i] = verification_vector[i][0];

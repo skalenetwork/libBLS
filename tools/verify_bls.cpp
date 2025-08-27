@@ -23,16 +23,9 @@
 
 
 #include <fstream>
-
 #include <boost/program_options.hpp>
-
-#include <libff/common/profiling.hpp>
-
 #include <bls/bls.h>
-
 #include <third_party/json.hpp>
-
-
 #include <bls/BLSPublicKey.h>
 
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
@@ -72,17 +65,16 @@ bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin ) {
 }
 
 void Verify( const size_t t, const size_t n, std::istream& sign_file, int j = -1 ) {
-    libff::inhibit_profiling_info = true;
     libBLS::Bls bls_instance = libBLS::Bls( t, n );
 
     nlohmann::json signature;
     sign_file >> signature;
 
-    libff::alt_bn128_G1 sign;
-
-    sign.X = libff::alt_bn128_Fq( signature["signature"]["X"].get< std::string >().c_str() );
-    sign.Y = libff::alt_bn128_Fq( signature["signature"]["Y"].get< std::string >().c_str() );
-    sign.Z = libff::alt_bn128_Fq::one();
+    libBLS::algebra::G1Point sign(
+        libBLS::algebra::FqElement::fromString( signature["signature"]["X"].get< std::string >(), libBLS::Base::DEC ),
+        libBLS::algebra::FqElement::fromString( signature["signature"]["Y"].get< std::string >(), libBLS::Base::DEC ),
+        libBLS::algebra::FqElement::one()
+    );
 
     nlohmann::json hash_in;
 
@@ -124,7 +116,7 @@ void Verify( const size_t t, const size_t n, std::istream& sign_file, int j = -1
 
     libBLS::BLSPublicKey pkey( std::make_shared< std::vector< std::string > >( pkey_str ) );
 
-    if ( !sign.is_well_formed() ) {
+    if ( !sign.isWellFormed() ) {
         std::cout << "Bad value, signature was not verified\n";
     }
 
