@@ -219,8 +219,10 @@ then
 	WITH_ARGTABLE2="no"
 fi
 
+# Install all backends
 WITH_FF="yes"
 WITH_GMP="yes"
+WITH_MCL="yes"
 
 if [ -z "${PARALLEL_COUNT}" ];
 then
@@ -507,6 +509,7 @@ echo -e "${COLOR_VAR_NAME}WITH_BOOST${COLOR_DOTS}.............${COLOR_VAR_DESC}l
 echo -e "${COLOR_VAR_NAME}WITH_ARGTABLE2${COLOR_DOTS}.........${COLOR_VAR_DESC}libArgTable${COLOR_DOTS}............................${COLOR_VAR_VAL}$WITH_ARGTABLE2${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_GMP${COLOR_DOTS}...............${COLOR_VAR_DESC}LibGMP${COLOR_DOTS}.................................${COLOR_VAR_VAL}$WITH_GMP${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_FF${COLOR_DOTS}................${COLOR_VAR_DESC}LibFF${COLOR_DOTS}..................................${COLOR_VAR_VAL}$WITH_FF${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_MCL${COLOR_DOTS}...............${COLOR_VAR_DESC}MCL${COLOR_DOTS}....................................${COLOR_VAR_VAL}$WITH_MCL${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_JSONRPC${COLOR_DOTS}...........${COLOR_VAR_DESC}LibJsonC++${COLOR_DOTS}.............................${COLOR_VAR_VAL}$WITH_JSONRPC${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_JSONRPCCPP${COLOR_DOTS}........${COLOR_VAR_DESC}LibJsonRpcC++${COLOR_DOTS}..........................${COLOR_VAR_VAL}$WITH_JSONRPCCPP${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_ZLIB${COLOR_DOTS}..............${COLOR_VAR_DESC}Zlib${COLOR_DOTS}...................................${COLOR_VAR_VAL}$WITH_ZLIB${COLOR_RESET}"
@@ -675,6 +678,9 @@ then
 	fi
 fi
 
+# -----------------------------------------------------------------------------
+# 									GMP
+# -----------------------------------------------------------------------------
 if [ "$WITH_GMP" = "yes" ];
 then
 	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}GMP${COLOR_SEPARATOR} ==========================================${COLOR_RESET}"
@@ -726,6 +732,9 @@ then
 	fi
 fi
 
+# -----------------------------------------------------------------------------
+# 									libff
+# -----------------------------------------------------------------------------
 if [ "$WITH_FF" = "yes" ];
 then
 	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}FF${COLOR_SEPARATOR} ===========================================${COLOR_RESET}"
@@ -759,6 +768,56 @@ then
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
 	fi
 fi
+
+
+# -----------------------------------------------------------------------------
+# 								mcl (herumi/mcl)
+# -----------------------------------------------------------------------------
+if [ "$WITH_MCL" = "yes" ]; then
+  echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}MCL${COLOR_SEPARATOR} ===========================================${COLOR_RESET}"
+  if [ ! -f "$INSTALL_ROOT/lib/libmcl.a" ] && [ ! -f "$INSTALL_ROOT/lib64/libmcl.a" ]; then
+    env_restore
+    cd "$SOURCES_ROOT"
+    if [ ! -d "mcl" ]; then
+      echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
+      # Pin to a known good commit or tag
+      eval git clone https://github.com/herumi/mcl.git --depth 1
+    fi
+    cd mcl
+    echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+	eval git fetch
+	eval git checkout e67f9e6eab43116a14751bf7166c59d98728297a # v3.03 released in 10/08/2025
+    eval mkdir -p build
+    cd build
+
+    # Build flags (tune as needed)
+    #  -DMCL_USE_XBYAK=ON enables JIT (fast on x86; disable if your env forbids JIT)
+    #  -DMCL_USE_GMP=OFF uses builtin bigint (set ON if you prefer GMP and have it installed)
+    #  -DBUILD_SHARED_LIBS=OFF to get static libmcl.a
+    MCL_CMAKE_OPTS="-DMCL_USE_XBYAK=ON -DMCL_USE_GMP=ON -DBUILD_SHARED_LIBS=OFF"
+
+    echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+    if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]]; then
+      eval emcmake "$CMAKE" ${CMAKE_CROSSCOMPILING_OPTS} \
+        -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" \
+        -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" \
+        ${MCL_CMAKE_OPTS} ..
+      eval emmake "$MAKE" ${PARALLEL_MAKE_OPTIONS}
+    else
+      eval "$CMAKE" ${CMAKE_CROSSCOMPILING_OPTS} \
+        -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" \
+        -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" \
+        ${MCL_CMAKE_OPTS} ..
+      eval "$MAKE" ${PARALLEL_MAKE_OPTIONS}
+    fi
+
+    eval "$MAKE" ${PARALLEL_MAKE_OPTIONS} install
+    cd "$SOURCES_ROOT"
+  else
+    echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+  fi
+fi
+
 
 if [ "$WITH_ZLIB" = "yes" ];
 then
