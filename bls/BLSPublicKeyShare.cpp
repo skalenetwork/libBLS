@@ -42,7 +42,7 @@ BLSPublicKeyShare::BLSPublicKeyShare(
     publicKey = std::make_shared< algebra::G2Point >(
         algebra::G2Point::fromString( *pkey_str_vect, Base::DEC ) );
 
-    if ( publicKey->isZero() ) {
+    if ( publicKey->isIdentity() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Zero BLS public Key share" );
     }
 
@@ -58,7 +58,7 @@ BLSPublicKeyShare::BLSPublicKeyShare(
     if ( _skey.isZero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "Zero BLS Secret Key" );
     }
-    publicKey = std::make_shared< algebra::G2Point >( _skey * algebra::G2Point::one() );
+    publicKey = std::make_shared< algebra::G2Point >( _skey * algebra::G2Point::generator() );
 }
 
 std::shared_ptr< algebra::G2Point > BLSPublicKeyShare::getPublicKey() const {
@@ -80,7 +80,7 @@ bool BLSPublicKeyShare::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > 
 
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    if ( sign_ptr->getSigShare()->isZero() ) {
+    if ( sign_ptr->getSigShare()->isIdentity() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Zero BLS Sig share" );
     }
 
@@ -90,6 +90,7 @@ bool BLSPublicKeyShare::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > 
     return res;
 }
 
+// TODO - this function is replicated in BLSPublicKey - refactor it
 bool BLSPublicKeyShare::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
     std::shared_ptr< BLSSigShare > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
     CHECK( sign_ptr )
@@ -99,7 +100,7 @@ bool BLSPublicKeyShare::VerifySigWithHelper( std::shared_ptr< std::array< uint8_
     if ( !hash_ptr ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "hash is null" );
     }
-    if ( sign_ptr->getSigShare()->isZero() ) {
+    if ( sign_ptr->getSigShare()->isIdentity() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Sig share is equal to zero" );
     }
 
@@ -107,21 +108,21 @@ bool BLSPublicKeyShare::VerifySigWithHelper( std::shared_ptr< std::array< uint8_
 
     std::pair< algebra::FqElement, algebra::FqElement > y_shift_x = algebra::parseHint( hint );
 
-    algebra::FqElement x = algebra::FqElement::fromHash( *hash_ptr );
+    algebra::FqElement x = algebra::hashToFq( *hash_ptr );
 
     x = x + y_shift_x.second;
 
     algebra::FqElement y_sqr = y_shift_x.first ^ 2;
     algebra::FqElement x3B = x ^ 3;
-    x3B = x3B + libff::alt_bn128_coeff_b;
+    x3B = x3B + algebra::AltBn128Contract::coeffB();
 
     if ( y_sqr != x3B ) {
         return false;
     }
 
-    libff::alt_bn128_G1 hash( x.value, y_shift_x.first.value, algebra::FqElement::one().value );
+    algebra::G1Point hash( x.value, y_shift_x.first.value, algebra::FqElement::one().value );
 
-    return algebra::pairing( *sign_ptr->getSigShare(), algebra::G2Point::one() ) ==
+    return algebra::pairing( *sign_ptr->getSigShare(), algebra::G2Point::generator() ) ==
            algebra::pairing( hash, *publicKey );
 }
 

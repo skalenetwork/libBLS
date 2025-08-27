@@ -33,9 +33,6 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <gmpxx.h>
 #include <boost/multiprecision/cpp_int.hpp>
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pairing.hpp>
-#include <libff/algebra/exponentiation/exponentiation.hpp>
-#include <libff/common/profiling.hpp>
 
 namespace libBLS {
 
@@ -52,7 +49,7 @@ std::pair< algebra::FrScalar, algebra::G2Point > Bls::KeyGeneration() {
     }
 
     const algebra::G2Point public_key =
-        secret_key * algebra::G2Point::one();  // public key generation
+        secret_key * algebra::G2Point::generator();  // public key generation
 
     return std::make_pair( secret_key, public_key );
 }
@@ -75,7 +72,7 @@ algebra::G1Point Bls::Hashing(
     std::string s = num.convert_to< std::string >();
 
     const algebra::G1Point hash =
-        algebra::FrScalar::fromString( s, Base::DEC ) * algebra::G1Point::one();
+        algebra::FrScalar::fromString( s, Base::DEC ) * algebra::G1Point::generator();
 
     return hash;
 }
@@ -129,7 +126,7 @@ std::pair< algebra::G1Point, std::string > Bls::HashPublicKeyToG1WithHint(
         throw std::runtime_error( "Invalid hash" );
     }
 
-    return algebra::hashtoG1withHint( hash_bytes_arr );
+    return algebra::hashToG1withHint( hash_bytes_arr );
 }
 
 algebra::G1Point Bls::Signing( const algebra::G1Point& hash, const algebra::FrScalar& secret_key ) {
@@ -160,7 +157,7 @@ algebra::G1Point Bls::CoreSignAggregated(
 }
 
 algebra::G1Point Bls::Aggregate( const std::vector< algebra::G1Point >& signatures ) {
-    algebra::G1Point res = algebra::G1Point::zero();
+    algebra::G1Point res = algebra::G1Point::identity();
 
     for ( const auto& signature : signatures ) {
         signature.validate();
@@ -179,13 +176,13 @@ bool Bls::CoreVerify( const algebra::G2Point& public_key, const std::string& mes
     algebra::G1Point hash = algebra::G1Point::fromHash( message );
 
     return algebra::pairing( hash, public_key ) ==
-           algebra::pairing( signature, algebra::G2Point::one() );
+           algebra::pairing( signature, algebra::G2Point::generator() );
 }
 
 bool Bls::FastAggregateVerify( const std::vector< algebra::G2Point >& public_keys,
     const std::string& message, const algebra::G1Point& signature ) {
     algebra::G2Point sum =
-        std::accumulate( public_keys.begin(), public_keys.end(), algebra::G2Point::zero() );
+        std::accumulate( public_keys.begin(), public_keys.end(), algebra::G2Point::identity() );
 
     return CoreVerify( sum, message, signature );
 }
@@ -200,7 +197,7 @@ bool Bls::Verification( const std::string& to_be_hashed, const algebra::G1Point&
     algebra::G1Point hash = Hashing( to_be_hashed );
 
     return (
-        algebra::pairing( sign, algebra::G2Point::one() ) == algebra::pairing( hash, public_key ) );
+        algebra::pairing( sign, algebra::G2Point::generator() ) == algebra::pairing( hash, public_key ) );
     // there are several types of pairing, it does not matter which one is chosen for verification
 }
 
@@ -208,16 +205,13 @@ bool Bls::Verification( const std::array< uint8_t, 32 >& hash_byte_arr,
     const algebra::G1Point& sign, const algebra::G2Point& public_key ) {
     // verifies that a given signature corresponds to given public key
 
-    // TODO check for such statements throghout the codebase
-    libff::inhibit_profiling_info = true;
-
     sign.validate();
     public_key.validate();
 
     algebra::G1Point hash = algebra::G1Point::fromHash( hash_byte_arr );
 
     return (
-        algebra::pairing( sign, algebra::G2Point::one() ) == algebra::pairing( hash, public_key ) );
+        algebra::pairing( sign, algebra::G2Point::generator() ) == algebra::pairing( hash, public_key ) );
     // there are several types of pairing, it does not matter which one is chosen for verification
 }
 
@@ -228,25 +222,23 @@ bool Bls::AggregatedVerification(
         CHECK( hash );
     }
 
-    libff::inhibit_profiling_info = true;
-
     for ( auto& sig : sign ) {
         sig.validate();
     }
 
     public_key.validate();
 
-    algebra::G1Point aggregated_hash = algebra::G1Point::zero();
+    algebra::G1Point aggregated_hash = algebra::G1Point::identity();
     for ( const std::shared_ptr< std::array< uint8_t, 32 > >& hash : hash_byte_arr ) {
         aggregated_hash = aggregated_hash + algebra::G1Point::fromHash( *hash );
     }
 
-    algebra::G1Point aggregated_sig = algebra::G1Point::zero();
+    algebra::G1Point aggregated_sig = algebra::G1Point::identity();
     for ( const algebra::G1Point& sig : sign ) {
         aggregated_sig = aggregated_sig + sig;
     }
 
-    return ( algebra::pairing( aggregated_sig, algebra::G2Point::one() ) ==
+    return ( algebra::pairing( aggregated_sig, algebra::G2Point::generator() ) ==
              algebra::pairing( aggregated_hash, public_key ) );
 }
 
@@ -272,7 +264,7 @@ std::pair< algebra::FrScalar, algebra::G2Point > Bls::KeysRecover(
     }
 
     const algebra::G2Point public_key =
-        secret_key * algebra::G2Point::one();  // public key recovering
+        secret_key * algebra::G2Point::generator();  // public key recovering
 
     return std::make_pair( secret_key, public_key );
 }
@@ -287,7 +279,7 @@ algebra::G1Point Bls::SignatureRecover( const std::vector< algebra::G1Point >& s
         throw ThresholdUtils::IncorrectInput( "too many participants in the threshold group" );
     }
 
-    algebra::G1Point sign = algebra::G1Point::zero();
+    algebra::G1Point sign = algebra::G1Point::identity();
 
     for ( size_t i = 0; i < this->t_; ++i ) {
         if ( !shares[i].isWellFormed() ) {
@@ -300,7 +292,7 @@ algebra::G1Point Bls::SignatureRecover( const std::vector< algebra::G1Point >& s
 }
 
 algebra::G1Point Bls::PopProve( const algebra::FrScalar& secret_key ) {
-    algebra::G2Point public_key = secret_key * algebra::G2Point::one();
+    algebra::G2Point public_key = secret_key * algebra::G2Point::generator();
 
     algebra::G1Point hash = HashPublicKeyToG1( public_key );
 
@@ -316,7 +308,7 @@ bool Bls::PopVerify( const algebra::G2Point& public_key, const algebra::G1Point&
     algebra::G1Point hash = HashPublicKeyToG1( public_key );
 
     return algebra::pairing( hash, public_key ) ==
-           algebra::pairing( prove, algebra::G2Point::one() );
+           algebra::pairing( prove, algebra::G2Point::generator() );
 }
 
 }  // namespace libBLS

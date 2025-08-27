@@ -49,7 +49,9 @@ BLSPublicKey::BLSPublicKey( const algebra::G2Point& pkey, size_t t, size_t n ) :
     // libBLS::ThresholdUtils::checkSigners( t, n );
 
     libffPublicKey = std::make_shared< algebra::G2Point >( pkey );
-    if ( libffPublicKey->isZero() ) {
+
+    // TODO - maybe we should call isValid instead (?)
+    if ( libffPublicKey->isIdentity() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Zero BLS Public Key" );
     }
 }
@@ -58,8 +60,8 @@ BLSPublicKey::BLSPublicKey( const algebra::FrScalar& skey, size_t t, size_t n ) 
     // do not check signers for compatibility
     // libBLS::ThresholdUtils::checkSigners( t, n );
 
-    libffPublicKey = std::make_shared< algebra::G2Point >( skey * algebra::G2Point::one() );
-    if ( libffPublicKey->isZero() ) {
+    libffPublicKey = std::make_shared< algebra::G2Point >( skey * algebra::G2Point::generator() );
+    if ( libffPublicKey->isIdentity() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Public Key is equal to zero or corrupt" );
     }
 }
@@ -73,7 +75,7 @@ bool BLSPublicKey::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_
         throw libBLS::ThresholdUtils::IncorrectInput( "hash is null" );
     }
 
-    if ( !sign_ptr || sign_ptr->getSig()->isZero() ) {
+    if ( !sign_ptr || sign_ptr->getSig()->isIdentity() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Sig share is equal to zero or corrupt" );
     }
 
@@ -86,7 +88,7 @@ bool BLSPublicKey::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32
     if ( !hash_ptr ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "hash is null" );
     }
-    if ( !sign_ptr || sign_ptr->getSig()->isZero() ) {
+    if ( !sign_ptr || sign_ptr->getSig()->isIdentity() ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Sig share is equal to zero or corrupt" );
     }
 
@@ -94,20 +96,19 @@ bool BLSPublicKey::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32
 
     std::pair< algebra::FqElement, algebra::FqElement > y_shift_x = algebra::parseHint( hint );
 
-    algebra::FqElement x = algebra::FqElement::fromHash( *hash_ptr );
+    algebra::FqElement x = algebra::hashToFq( *hash_ptr );
     x = x + y_shift_x.second;
 
     algebra::FqElement y_sqr = y_shift_x.first ^ 2;
     algebra::FqElement x3B = x ^ 3;
-    x3B = x3B + libff::alt_bn128_coeff_b;
+    x3B = x3B + algebra::AltBn128Contract::coeffB();
 
     if ( y_sqr != x3B )
         return false;
 
-    // TODO - uses value - impl. specific - need to refactor
-    libff::alt_bn128_G1 hash( x.value, y_shift_x.first.value, algebra::FqElement::one().value );
+    algebra::G1Point hash( x.value, y_shift_x.first.value, algebra::FqElement::one().value );
 
-    return ( algebra::pairing( *sign_ptr->getSig(), algebra::G2Point::one() ) ==
+    return ( algebra::pairing( *sign_ptr->getSig(), algebra::G2Point::generator() ) ==
              algebra::pairing( hash, *libffPublicKey ) );
 }
 
@@ -131,7 +132,7 @@ bool BLSPublicKey::AggregatedVerifySig(
     libff_sig_vec.reserve( sign_ptr_vec.size() );
 
     for ( auto& sign_ptr : sign_ptr_vec ) {
-        if ( !sign_ptr || sign_ptr->getSig()->isZero() ) {
+        if ( !sign_ptr || sign_ptr->getSig()->isIdentity() ) {
             throw libBLS::ThresholdUtils::IsNotWellFormed(
                 "Sig share is equal to zero or corrupt" );
         }
@@ -156,7 +157,7 @@ BLSPublicKey::BLSPublicKey(
     }
 
     std::vector< size_t > participatingNodes;
-    std::vector< libff::alt_bn128_G1 > shares;
+    std::vector< algebra::G1Point > shares;
 
     for ( auto&& item : *koefs_pkeys_map ) {
         participatingNodes.push_back( static_cast< uint64_t >( item.first ) );
@@ -165,7 +166,7 @@ BLSPublicKey::BLSPublicKey(
     std::vector< algebra::FrScalar > lagrangeCoeffs =
         algebra::lagrangeCoeffs( participatingNodes, _requiredSigners );
 
-    algebra::G2Point key = algebra::G2Point::zero();
+    algebra::G2Point key = algebra::G2Point::identity();
     size_t i = 0;
     for ( auto&& item : *koefs_pkeys_map ) {
         if ( i < _requiredSigners ) {
@@ -177,7 +178,7 @@ BLSPublicKey::BLSPublicKey(
     }
 
     libffPublicKey = std::make_shared< algebra::G2Point >( key );
-    if ( libffPublicKey->isZero() ) {
+    if ( libffPublicKey->isIdentity() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Public Key is equal to zero or corrupt" );
     }
 }

@@ -79,7 +79,7 @@ std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::sign(
     ss->toAffineCoordinates();
 
     std::pair< algebra::G1Point, std::string > hash_with_hint =
-        libBLS::algebra::hashtoG1withHint( *hash_byte_arr );
+        libBLS::algebra::hashToG1withHint( *hash_byte_arr );
     std::string hint =
         hash_with_hint.first.getY().toString( Base::DEC ) + ":" + hash_with_hint.second;
 
@@ -103,7 +103,7 @@ std::shared_ptr< BLSSigShare > BLSPrivateKeyShare::signWithHelper(
     obj = std::make_shared< libBLS::Bls >( libBLS::Bls( requiredSigners, totalSigners ) );
 
     std::pair< algebra::G1Point, std::string > hash_with_hint =
-        libBLS::algebra::hashtoG1withHint( *hash_byte_arr );
+        libBLS::algebra::hashToG1withHint( *hash_byte_arr );
 
     auto ss =
         std::make_shared< algebra::G1Point >( obj->Signing( hash_with_hint.first, *privateKey ) );

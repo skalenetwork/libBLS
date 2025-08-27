@@ -113,7 +113,7 @@ BLSSigShare::BLSSigShare( const std::shared_ptr< algebra::G1Point >& _sigShare, 
     if ( !_sigShare ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Null _s" );
     }
-    if ( _sigShare->isZero() ) {
+    if ( _sigShare->isIdentity() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Zero signature" );
     }
     if ( _signerIndex == 0 ) {

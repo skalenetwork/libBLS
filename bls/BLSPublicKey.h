@@ -27,6 +27,7 @@
 
 #include <bls/BLSSignature.h>
 #include <bls/bls.h>
+#include <map>
 
 namespace libBLS {
 

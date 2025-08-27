@@ -42,7 +42,7 @@ BLSSignature::BLSSignature( const std::shared_ptr< algebra::G1Point > sig, std::
 
     libBLS::ThresholdUtils::initCurve();
 
-    if ( sig->isZero() ) {
+    if ( sig->isIdentity() ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Zero BLS signature" );
     }
     if ( _hint.length() == 0 || _hint.length() > 2 * BLS_MAX_COMPONENT_LEN ) {
