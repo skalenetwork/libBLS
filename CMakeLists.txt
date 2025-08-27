@@ -33,8 +33,6 @@ set( CMAKE_PREFIX_PATH "${DEPS_INSTALL_ROOT}" )
 set( LIBBLS_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake" CACHE PATH "The path to the cmake directory" )
 list( APPEND CMAKE_MODULE_PATH ${LIBBLS_CMAKE_DIR} )
 
-find_library( GMP_LIBRARY NAMES "gmp" PATHS "${DEPS_INSTALL_ROOT}/lib" )
-find_library( GMPXX_LIBRARY NAMES "gmpxx" PATHS "${DEPS_INSTALL_ROOT}/lib" )
 find_library( CRYPTOPP_LIBRARY NAMES "crypto" PATHS "${DEPS_INSTALL_ROOT}/lib" )
 
 option(BUILD_TESTS "Build tests" ON)
