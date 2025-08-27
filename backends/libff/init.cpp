@@ -1,3 +1,5 @@
+#ifdef LIBFF
+
 #include "../interface/init.hpp"
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 #include <libff/common/profiling.hpp>
@@ -12,3 +14,5 @@ void initCurve() {
 
 }  // namespace algebra
 }  // namespace libBLS
+
+#endif // LIBFF

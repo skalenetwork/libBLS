@@ -1,24 +1,42 @@
+#ifdef LIBFF
+
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 #include <libff/common/utils.hpp>
 
 #include "../utils.hpp"
 #include "backends/interface/field/FrScalar.hpp"
 
-namespace libBLS {
-namespace algebra {
+namespace libBLS::algebra {
+
+template <>
+FrScalar Field< FrBackendType, FrScalar >::zero() {
+    return FrScalar( libff::alt_bn128_Fr::zero() );
+}
+
+template <>
+FrScalar Field< FrBackendType, FrScalar >::one() {
+    return FrScalar( libff::alt_bn128_Fr::one() );
+}
+
+template <>
+bool Field< FrBackendType, FrScalar >::isZero() const {
+    return value.is_zero();
+}
+
+template <>
+bool Field< FrBackendType, FrScalar >::isOne() const {
+    return value == libff::alt_bn128_Fr::one();
+}
+
 
 FrScalar::FrScalar() {
     value = libff::alt_bn128_Fr::zero();
 }
 
-FrScalar::FrScalar( const size_t n ) : WrapperCore( libff::alt_bn128_Fr( n ) ) {}
+FrScalar::FrScalar( const size_t n ) : Field( libff::alt_bn128_Fr( n ) ) {}
 
 FrScalar FrScalar::inverse() const {
     return FrScalar( value.inverse() );
-}
-
-bool FrScalar::isZero() const {
-    return value.is_zero();
 }
 
 // ---------- Serialization  ----------- //
@@ -69,16 +87,6 @@ FrScalar FrScalar::random() {
     return FrScalar( libff::alt_bn128_Fr::random_element() );
 }
 
-template <>
-FrScalar WrapperCore< FrBackendType, FrScalar >::zero() {
-    return FrScalar( libff::alt_bn128_Fr::zero() );
-}
-
-template <>
-FrScalar WrapperCore< FrBackendType, FrScalar >::one() {
-    return FrScalar( libff::alt_bn128_Fr::one() );
-}
-
 // -------------------- Operator Overloads -------------------- //
 
 FrScalar FrScalar::operator+( const FrScalar& other ) const {
@@ -115,5 +123,6 @@ bool FrScalar::operator!=( const FrScalar& other ) const {
     return value != other.value;
 }
 
-}  // namespace algebra
-}  // namespace libBLS
+}  // namespace libBLS::algebra
+
+#endif // LIBFF

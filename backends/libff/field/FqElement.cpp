@@ -1,15 +1,40 @@
+#ifdef LIBFF
+
 #include "backends/interface/field/FqElement.hpp"
 #include "../utils.hpp"
 #include "backends/algebra_types.hpp"
-#include "backends/interface/WrapperCore.hpp"
 #include <gmpxx.h>
 
-namespace libBLS {
-namespace algebra {
+namespace libBLS::algebra {
 
-FqElement::FqElement() : WrapperCore( libff::alt_bn128_Fq::zero() ) {}
+template <>
+FqElement Field< FqBackendType, FqElement >::zero() {
+    return FqElement( libff::alt_bn128_Fq::zero() );
+}
 
-FqElement::FqElement( uint64_t x ) : WrapperCore( libff::alt_bn128_Fq( x ) ) {}
+template <>
+FqElement Field< FqBackendType, FqElement >::one() {
+    return FqElement( libff::alt_bn128_Fq::one() );
+}
+
+template <>
+bool Field< FqBackendType, FqElement >::isZero() const {
+    return value.is_zero();
+}
+
+template <>
+bool Field< FqBackendType, FqElement >::isOne() const {
+    return value == libff::alt_bn128_Fq::one();
+}
+
+FqElement FqElement::sqrt() const {
+    libff::alt_bn128_Fq result = value.sqrt();
+    return FqElement( result );
+}
+
+FqElement::FqElement() : Field( libff::alt_bn128_Fq::zero() ) {}
+
+FqElement::FqElement( uint64_t x ) : Field( libff::alt_bn128_Fq( x ) ) {}
 
 // -------------------- Serialization / Deserialization Methods -------------------- //
 
@@ -78,30 +103,6 @@ FqElement FqElement::random() {
     return FqElement( libff::alt_bn128_Fq::random_element() );
 }
 
-FqElement FqElement::fromHash( const std::array< uint8_t, HASH_SIZE >& hash_byte_arr ) {
-    libff::bigint< libff::alt_bn128_q_limbs > from_hex;
+}  // namespace libBLS::algebra
 
-    std::vector< uint8_t > hex( 2 * HASH_SIZE );
-    for ( size_t i = 0; i < HASH_SIZE; ++i ) {
-        hex[2 * i] = static_cast< int >( hash_byte_arr.at( i ) ) / 16;
-        hex[2 * i + 1] = static_cast< int >( hash_byte_arr.at( i ) ) % 16;
-    }
-    mpn_set_str( from_hex.data, hex.data(), 2 * HASH_SIZE, 16 );
-
-    libff::alt_bn128_Fq ret_val( from_hex );
-
-    return algebra::FqElement( ret_val );
-}
-
-template <>
-FqElement WrapperCore< FqBackendType, FqElement >::zero() {
-    return FqElement( libff::alt_bn128_Fq::zero() );
-}
-
-template <>
-FqElement WrapperCore< FqBackendType, FqElement >::one() {
-    return FqElement( libff::alt_bn128_Fq::one() );
-}
-
-}  // namespace algebra
-}  // namespace libBLS
+#endif // LIBFF

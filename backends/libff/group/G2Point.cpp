@@ -1,12 +1,42 @@
+#ifdef LIBFF
+
 #include "backends/interface/group/G2Point.hpp"
 #include "../utils.hpp"
 #include "backends/algebra_types.hpp"
 #include "backends/interface/field/FqElement.hpp"
 #include "backends/interface/field/FrScalar.hpp"
+#include "backends/interface/field/Fq2Element.hpp"
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 
 namespace libBLS {
 namespace algebra {
+
+template <>
+const G2BackendType& Group< G2BackendType, G2Point, Fq2RefWrapper >::identityBackend() {
+    static const G2BackendType identity = [] {
+        return G2BackendType::zero();
+    }();
+    return identity;
+}
+
+template <>
+const G2BackendType& Group< G2BackendType, G2Point, Fq2RefWrapper >::generatorBackend() {
+    static const G2BackendType generator = [] {
+        return G2BackendType::one();
+    }();
+    return generator;
+}
+
+template <>
+bool Group< G2BackendType, G2Point, Fq2RefWrapper >::isIdentity() const {
+    return value.is_zero();
+}
+
+template <>
+bool Group< G2BackendType, G2Point, Fq2RefWrapper >::isGenerator() const {
+    return value == libff::alt_bn128_G2::one();
+}
+
 
 G2Point::G2Point() {
     value = libff::alt_bn128_G2::zero();
@@ -21,43 +51,43 @@ G2Point::G2Point( const Fq2Element& x, const Fq2Element& y, const Fq2Element& z 
     value.Z.c1 = z.value.c1;
 }
 
-void G2Point::toAffineCoordinates() {
+template <>
+void Group< G2BackendType, G2Point, Fq2RefWrapper >::toAffineCoordinates() {
     value.to_affine_coordinates();
+}
+
+template <>
+Fq2RefWrapper Group< G2BackendType, G2Point, Fq2RefWrapper >::getXRef() {
+    return Fq2RefWrapper( value.X );
+}
+
+template <>
+Fq2RefWrapper Group< G2BackendType, G2Point, Fq2RefWrapper >::getYRef() {
+    return Fq2RefWrapper( value.Y );
+}
+
+template <>
+Fq2RefWrapper Group< G2BackendType, G2Point, Fq2RefWrapper >::getZRef() {
+    return Fq2RefWrapper( value.Z );
 }
 
 // -------------------- Validation Methods -------------------- //
 
-bool G2Point::isZero() const {
-    return value.is_zero();
-}
-
-bool G2Point::isWellFormed() const {
+template <>
+bool Group< G2BackendType, G2Point, Fq2RefWrapper >::isWellFormed() const {
     return value.is_well_formed();
 }
 
-bool G2Point::isInGroup() const {
+template <>
+bool Group< G2BackendType, G2Point, Fq2RefWrapper >::isInGroup() const {
     return libff::alt_bn128_G2::order() * value == libff::alt_bn128_G2::zero();
 }
 
-bool G2Point::isValid() const {
-    return !isZero() && isWellFormed() && isInGroup();
-}
-
-void G2Point::validate() const {
-    if ( isZero() ) {
-        throw ThresholdUtils::IsNotWellFormed( "Point is zero" );
-    }
-    if ( !isWellFormed() ) {
-        throw ThresholdUtils::IsNotWellFormed( "Point is not well formed" );
-    }
-    if ( !isInGroup() ) {
-        throw ThresholdUtils::IsNotWellFormed( "Point is not on the group" );
-    }
-}
 
 // -------------------- Static Methods -------------------- //
 
-G2Point G2Point::random() {
+template <>
+G2Point Group< G2BackendType, G2Point, Fq2RefWrapper >::random() {
     return G2Point( libff::alt_bn128_G2::random_element() );
 }
 
@@ -120,18 +150,10 @@ G2Point G2Point::fromString( const std::string& str, Base base ) {
 
     ret.value.Z = libff::alt_bn128_Fq2::one();
 
-    ret.value.X.c0 = libff::alt_bn128_Fq(
-        ThresholdUtils::convertHexToDec( str.substr( 0 * elementStringSize, elementStringSize ) )
-            .c_str() );
-    ret.value.X.c1 = libff::alt_bn128_Fq(
-        ThresholdUtils::convertHexToDec( str.substr( 1 * elementStringSize, elementStringSize ) )
-            .c_str() );
-    ret.value.Y.c0 = libff::alt_bn128_Fq(
-        ThresholdUtils::convertHexToDec( str.substr( 2 * elementStringSize, elementStringSize ) )
-            .c_str() );
-    ret.value.Y.c1 = libff::alt_bn128_Fq(
-        ThresholdUtils::convertHexToDec( str.substr( 3 * elementStringSize, std::string::npos ) )
-            .c_str() );
+    ret.value.X.c0 = libff::alt_bn128_Fq(convertHexToDec( str.substr( 0 * elementStringSize, elementStringSize ) ).c_str() );
+    ret.value.X.c1 = libff::alt_bn128_Fq(convertHexToDec( str.substr( 1 * elementStringSize, elementStringSize ) ).c_str() );
+    ret.value.Y.c0 = libff::alt_bn128_Fq(convertHexToDec( str.substr( 2 * elementStringSize, elementStringSize ) ).c_str() );
+    ret.value.Y.c1 = libff::alt_bn128_Fq(convertHexToDec( str.substr( 3 * elementStringSize, std::string::npos ) ).c_str() );
 
     return ret;
 }
@@ -181,16 +203,6 @@ G2Point G2Point::fromString( const std::vector< std::string >& arr, Base base ) 
     return fromString( arrCopy, base );
 }
 
-template <>
-G2Point WrapperCore< G2BackendType, G2Point >::zero() {
-    return G2Point( libff::alt_bn128_G2::zero() );
-}
-
-template <>
-G2Point WrapperCore< G2BackendType, G2Point >::one() {
-    return G2Point( libff::alt_bn128_G2::one() );
-}
-
 // -------------------- Operator Overloads -------------------- //
 
 G2Point G2Point::operator+( const G2Point& other ) const {
@@ -199,6 +211,10 @@ G2Point G2Point::operator+( const G2Point& other ) const {
 
 G2Point G2Point::operator-( const G2Point& other ) const {
     return G2Point( value - other.value );
+}
+
+G2Point G2Point::operator-() const {
+    return G2Point( -value );
 }
 
 bool G2Point::operator==( const G2Point& other ) const {
@@ -239,3 +255,5 @@ void G2Point::forEachProjectiveComponentImpl(
 
 }  // namespace algebra
 }  // namespace libBLS
+
+#endif // LIBFF
