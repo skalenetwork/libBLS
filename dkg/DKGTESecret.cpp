@@ -33,8 +33,6 @@ DKGTESecret::DKGTESecret( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    libff::init_alt_bn128_params();
-
     libBLS::Dkg dkg_te( requiredSigners, totalSigners );
     poly = dkg_te.GeneratePolynomial();
 }
