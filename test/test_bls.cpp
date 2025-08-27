@@ -46,9 +46,7 @@
 #define BOOST_TEST_DISABLE_ALT_STACK
 #endif  // EMSCRIPTEN
 
-#include <gmpxx.h>
 #include <boost/test/included/unit_test.hpp>
-#include <libff/common/profiling.hpp>
 
 #include "backends/interface/test/FqElementTestAccessor.hpp"
 
@@ -139,7 +137,6 @@ std::string rand32HexStr() {
 }
 
 BOOST_AUTO_TEST_CASE( libBls ) {
-    libff::inhibit_profiling_info = true;
     std::cerr << "STARTING LIBBLS TESTS" << std::endl;
     for ( size_t i = 0; i < 10; ++i ) {
         size_t num_all = rand_gen() % 16 + 1;
@@ -170,7 +167,7 @@ BOOST_AUTO_TEST_CASE( libBls ) {
             }
 
             for ( size_t i = 0; i < num_signed; ++i ) {
-                auto pkey = skeys.at( i ) * G2Point::one();
+                auto pkey = skeys.at( i ) * G2Point::generator();
                 BOOST_REQUIRE( obj.Verification( *hash_ptr, signatures.at( i ), pkey ) );
                 BOOST_REQUIRE_THROW(
                     obj.Verification( *hash_ptr, SpoilSignature( signatures.at( i ) ), pkey ),
@@ -301,7 +298,6 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
 }
 
 BOOST_AUTO_TEST_CASE( libffObjsToString ) {
-    libff::inhibit_profiling_info = true;
 
     for ( size_t i = 0; i < 100; ++i ) {
         size_t num_all = rand_gen() % 16 + 1;
@@ -488,11 +484,11 @@ BOOST_AUTO_TEST_CASE( public_keys_equality ) {
 
         std::vector< algebra::FrScalar > lagrange_koefs =
             algebra::lagrangeCoeffs( *participants, num_signed );
-        algebra::G2Point common_pkey1 = algebra::G2Point::zero();
+        algebra::G2Point common_pkey1 = algebra::G2Point::identity();
         for ( size_t i = 0; i < num_signed; ++i ) {
             common_pkey1 = common_pkey1 + lagrange_koefs.at( i ) *
                                               skeys.at( participants->at( i ) - 1 ) *
-                                              algebra::G2Point::one();
+                                              algebra::G2Point::generator();
         }
         BOOST_REQUIRE( common_pkey == common_pkey1 );
     }
@@ -508,7 +504,7 @@ BOOST_AUTO_TEST_CASE( BLSWITHDKG ) {
         std::vector< DKGBLSWrapper > dkgs;
         std::vector< BLSPrivateKeyShare > skeys;
 
-        algebra::G2Point common_public = algebra::G2Point::zero();
+        algebra::G2Point common_public = algebra::G2Point::identity();
 
         for ( size_t i = 0; i < num_all; i++ ) {
             DKGBLSWrapper dkg_wrap( num_signed, num_all );
@@ -594,7 +590,7 @@ BOOST_AUTO_TEST_CASE( BLSWITHDKG ) {
             std::make_shared< std::vector< std::shared_ptr< BLSPrivateKeyShare > > >( ptr_skeys ),
             std::make_shared< std::vector< size_t > >( participants ), num_signed, num_all );
         BOOST_REQUIRE( *common_skey.getPrivateKey() == *common_skey2.getPrivateKey() );
-        BOOST_REQUIRE( common_secret * algebra::G2Point::one() == common_public );
+        BOOST_REQUIRE( common_secret * algebra::G2Point::generator() == common_public );
         BLSPublicKey common_pkey( *( common_skey2.getPrivateKey() ) );
         BOOST_REQUIRE( *common_pkey.getPublicKey() == *dkg_common_pkey.getPublicKey() );
         BOOST_REQUIRE( common_pkey.VerifySig( hash_ptr, common_sig_ptr ) );
@@ -629,7 +625,7 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDVERIFICATIONONLY ) {
         std::vector< DKGBLSWrapper > dkgs;
         std::vector< BLSPrivateKeyShare > skeys;
 
-        algebra::G2Point common_public = algebra::G2Point::zero();
+        algebra::G2Point common_public = algebra::G2Point::identity();
 
         for ( size_t i = 0; i < num_all; i++ ) {
             DKGBLSWrapper dkg_wrap( num_signed, num_all );
@@ -1014,7 +1010,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        BOOST_REQUIRE_THROW( BLSPublicKey pkey( algebra::G2Point::zero() ),
+        BOOST_REQUIRE_THROW( BLSPublicKey pkey( algebra::G2Point::identity() ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
@@ -1177,7 +1173,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     }
 
     {
-        algebra::G1Point zero_sig = algebra::G1Point::zero();
+        algebra::G1Point zero_sig = algebra::G1Point::identity();
         std::string hint = "123:1";
         BOOST_REQUIRE_THROW( BLSSignature( std::make_shared< algebra::G1Point >( zero_sig ), hint,
                                  num_signed, num_all ),
@@ -1211,7 +1207,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     {
         std::string hint = "123:1";
         BOOST_REQUIRE_THROW(
-            BLSSigShare( std::make_shared< algebra::G1Point >( algebra::G1Point::zero() ), hint, 1,
+            BLSSigShare( std::make_shared< algebra::G1Point >( algebra::G1Point::identity() ), hint, 1,
                 num_signed, num_all ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }

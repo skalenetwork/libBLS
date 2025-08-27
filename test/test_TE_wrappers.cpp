@@ -312,7 +312,6 @@ BOOST_AUTO_TEST_CASE( TEFailingValidation ) {
 
 
 BOOST_AUTO_TEST_CASE( WrappersFromString ) {
-    libBLS::TEBase::initializeIfNecessary();
 
     for ( size_t i = 0; i < 100; i++ ) {
         size_t numAll = rand_gen() % 16 + 1;
@@ -536,7 +535,7 @@ BOOST_AUTO_TEST_CASE( TEPublicKey ) {
     // Well constructed inputs
     for ( size_t i = 0; i < 30; ++i ) {
         libBLS::algebra::FrScalar priv = libBLS::algebra::FrScalar::random();
-        libBLS::algebra::G2Point pub = priv * libBLS::algebra::G2Point::one();
+        libBLS::algebra::G2Point pub = priv * libBLS::algebra::G2Point::generator();
 
         // consruct from field element
         libBLS::TEPublicKey pkey( pub );
@@ -583,7 +582,7 @@ BOOST_AUTO_TEST_CASE( TEPublicKey ) {
     // From G2
     {
         // zero public key
-        libBLS::algebra::G2Point el = libBLS::algebra::G2Point::zero();
+        libBLS::algebra::G2Point el = libBLS::algebra::G2Point::identity();
         BOOST_REQUIRE_THROW(
             libBLS::TEPublicKey pkey( el ), libBLS::ThresholdUtils::IsNotWellFormed );
     }
@@ -652,7 +651,7 @@ BOOST_AUTO_TEST_CASE( TEPublicKeyShare ) {
     // Well constructed inputs
     for ( size_t i = 0; i < 10; ++i ) {
         libBLS::algebra::FrScalar priv = libBLS::algebra::FrScalar::random();
-        libBLS::algebra::G2Point pub = priv * libBLS::algebra::G2Point::one();
+        libBLS::algebra::G2Point pub = priv * libBLS::algebra::G2Point::generator();
 
         // construct from field element
         libBLS::TEPublicKeyShare pkey( pub, signer, numSigned, numAll );
@@ -683,7 +682,7 @@ BOOST_AUTO_TEST_CASE( TEPublicKeyShare ) {
     // From G2
     {
         // zero public key
-        libBLS::algebra::G2Point el = libBLS::algebra::G2Point::zero();
+        libBLS::algebra::G2Point el = libBLS::algebra::G2Point::identity();
         BOOST_REQUIRE_THROW( libBLS::TEPublicKeyShare pkey( el, signer, numSigned, numAll ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
@@ -918,7 +917,7 @@ BOOST_AUTO_TEST_CASE( TEDecryptionShare ) {
     // From G2
     {
         // zero key
-        libBLS::algebra::G2Point el = libBLS::algebra::G2Point::zero();
+        libBLS::algebra::G2Point el = libBLS::algebra::G2Point::identity();
         BOOST_REQUIRE_THROW( libBLS::TEDecryptionShare share( el, signer ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
@@ -940,7 +939,7 @@ BOOST_AUTO_TEST_CASE( TEDecryptionShare ) {
     }
     {
         // zero element
-        libBLS::algebra::G2Point el2 = libBLS::algebra::G2Point::zero();
+        libBLS::algebra::G2Point el2 = libBLS::algebra::G2Point::identity();
         std::string str2 = el2.toString( libBLS::Base::HEXA );
         BOOST_REQUIRE_THROW( libBLS::TEDecryptionShare share( str2, signer ),
             libBLS::ThresholdUtils::IsNotWellFormed );

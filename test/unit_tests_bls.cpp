@@ -24,14 +24,12 @@
 
 #include <bls/bls.h>
 #include <tools/utils.h>
+#include "test/utils.h"
 
 #include <cstdlib>
 #include <ctime>
 #include <map>
 #include <set>
-
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-#include <libff/algebra/exponentiation/exponentiation.hpp>
 
 
 #define BOOST_TEST_MODULE
@@ -40,8 +38,11 @@
 #endif  // EMSCRIPTEN
 
 #include <boost/test/included/unit_test.hpp>
+#include <random>
 
 std::default_random_engine rand_gen( ( unsigned int ) time( 0 ) );
+
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
 
 std::string rand32HexStr() {
     std::array< char, 16 > s = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c',

@@ -128,24 +128,6 @@ BOOST_AUTO_TEST_CASE( ZeroSecret ) {
     }
 }
 
-libff::alt_bn128_Fq SpoilCoord( libff::alt_bn128_Fq& sign_coord ) {
-    libff::alt_bn128_Fq bad_coord = sign_coord;
-    size_t n_bad_bit = rand_gen() % ( bad_coord.size_in_bits() ) + 1;
-
-    mpz_class was_coord;
-    bad_coord.as_bigint().to_mpz( was_coord.get_mpz_t() );
-
-    mpz_class mask;
-    mpz_set_si( mask.get_mpz_t(), n_bad_bit );
-
-    mpz_class badCoord;
-    mpz_xor( badCoord.get_mpz_t(), was_coord.get_mpz_t(), mask.get_mpz_t() );
-
-    bad_coord = libff::alt_bn128_Fq( badCoord.get_mpz_t() );
-
-    return bad_coord;
-}
-
 std::vector< libBLS::algebra::G2Point > SpoilVerifVector(
     std::vector< libBLS::algebra::G2Point >& verif_vect ) {
     size_t elem_to_spoil = rand_gen() % verif_vect.size();

@@ -37,12 +37,13 @@
 #include "utils.h"
 #include <TEPublicKey.h>
 #include <ThresholdEncryption.h>
+#include "backends/algebra.hpp"
 #include <boost/test/included/unit_test.hpp>
 
 BOOST_AUTO_TEST_SUITE( EncryptMessageJS )
 
 BOOST_AUTO_TEST_CASE( EncryptMessage ) {
-    libBLS::TEBase::initializeIfNecessary();
+    libBLS::initCurve();
     size_t required = 10;
     size_t total = 15;
 

@@ -64,7 +64,7 @@ int main() {
     // Check that the subgroupPoint is in the correct subgroup
     // and passes the is_well_formed check
     std::cout << "\nChecking that subgroupPoint is in subgroup of order 10069: "
-              << ( libBLS::algebra::FrScalar( 10069 ) * subgroupPoint ).isZero()
+              << ( libBLS::algebra::FrScalar( 10069 ) * subgroupPoint ).isIdentity()
               << "\nChecking that the point passes `is_well_formed`: "
               << subgroupPoint.isWellFormed() << "\n";
 

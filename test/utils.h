@@ -5,6 +5,7 @@
 #include <threshold_encryption/TEPrivateKeyShare.h>
 #include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/TEPublicKeyShare.h>
+#include "backends/algebra.hpp"
 #include <chrono>
 
 #define TIMER( variable, code_block )                                                   \
@@ -20,6 +21,15 @@ struct keys {
     libBLS::TEPrivateKey commonPrivate;
     std::vector< libBLS::TEPrivateKeyShare > secretKeys;
     std::vector< libBLS::TEPublicKeyShare > publicKeys;
+};
+
+
+/// Should be used to init all tests - initializes the curve
+struct GlobalConfig {
+    GlobalConfig() {
+        // runs before any test
+        libBLS::initCurve();
+    }
 };
 
 
