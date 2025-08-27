@@ -1,13 +1,16 @@
+/**
+ * This is the main include file for the algebra backend interface.
+ * It includes all the necessary headers to use the algebraic structures and functions.
+ */
+
 #pragma once
 
 #include "./interface/field/FqElement.hpp"
 #include "./interface/field/FrScalar.hpp"
-#include "./interface/functions/bls.hpp"
-#include "./interface/functions/core.hpp"
-#include "./interface/functions/threshold_encryption.hpp"
 #include "./interface/group/G1Point.hpp"
 #include "./interface/group/G2Point.hpp"
 #include "./interface/group/GTElement.hpp"
+#include "./interface/functions.hpp"
 #include "./interface/init.hpp"
 #include "algebra_types.hpp"
 
