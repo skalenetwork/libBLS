@@ -27,21 +27,9 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
-std::atomic< bool > TEBase::isLibffInitialized{ false };
-
-void TEBase::initializeIfNecessary() {
-    bool expected = false;
-    if ( isLibffInitialized.compare_exchange_strong( expected, true ) ) {
-        // TODO - should not be needed - we should enforce curve initialization before any libBLS
-        // call
-        algebra::initCurve();
-    }
-}
-
 TEBase::TEBase( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
-    initializeIfNecessary();
 }
 
 size_t TEBase::getRequiredSigners() const {

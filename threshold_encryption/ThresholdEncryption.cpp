@@ -98,7 +98,6 @@ std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
 
 Ciphertext ThresholdEncryption::encrypt(
     const std::vector< uint8_t >& _message, const TEPublicKey& _commonPublic ) {
-    TEBase::initializeIfNecessary();
 
     _commonPublic.validate();
 
@@ -114,7 +113,6 @@ Ciphertext ThresholdEncryption::encrypt(
 }
 
 void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
-    TEBase::initializeIfNecessary();
 
     _ciphertext.validate();
 
@@ -126,7 +124,7 @@ void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
     algebra::GTElement fst, snd;
 
     // pairing( W, P ) == pairing( H, U )
-    fst = algebra::pairing( W, algebra::G2Point::one() );
+    fst = algebra::pairing( W, algebra::G2Point::generator() );
     snd = algebra::pairing( H, U );
 
     if ( fst != snd ) {
@@ -136,7 +134,6 @@ void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
 
 TEDecryptionShare ThresholdEncryption::partialDecrypt(
     const CipheredKey& _ciphertext, const TEPrivateKeyShare& _pkeyShare ) {
-    TEBase::initializeIfNecessary();
 
     _ciphertext.validate();
     _pkeyShare.validate();
@@ -154,7 +151,6 @@ TEDecryptionShare ThresholdEncryption::partialDecrypt(
 
 void ThresholdEncryption::validateDecryptionShare( const CipheredKey& _cipherText,
     const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey ) {
-    TEBase::initializeIfNecessary();
 
     _cipherText.validate();
     _decryptionShare.validate();
@@ -168,7 +164,6 @@ void ThresholdEncryption::validateDecryptionShare( const CipheredKey& _cipherTex
 
 AES256Key ThresholdEncryption::combineShares(
     const CipheredKey& _cypheredKey, TEDecryptSet& _decryptionSet ) {
-    TEBase::initializeIfNecessary();
 
     _cypheredKey.validate();
 
@@ -193,7 +188,6 @@ AES256Key ThresholdEncryption::combineShares(
 
 void ThresholdEncryption::validateCombinedDecryption(
     const Ciphertext& _cyphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
-    TEBase::initializeIfNecessary();
 
     _cyphertext.validate();
 
@@ -226,7 +220,6 @@ void ThresholdEncryption::validateCombinedDecryption(
 
 std::vector< uint8_t > ThresholdEncryption::decrypt(
     const Ciphertext& _cyphertext, const AES256Key& _aesKey ) {
-    TEBase::initializeIfNecessary();
 
     _cyphertext.validate();
 

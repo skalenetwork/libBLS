@@ -43,10 +43,6 @@ protected:
     static std::atomic< bool > isLibffInitialized;
 
 public:
-    /**
-     * Initializes libff if it has not been initialized yet.
-     */
-    static void initializeIfNecessary();
 
     /**
      * @brief Constructor for TEBase

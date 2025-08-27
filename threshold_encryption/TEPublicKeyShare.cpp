@@ -29,7 +29,7 @@ namespace libBLS {
 TEPublicKeyShare::TEPublicKeyShare( const TEPrivateKeyShare& _pKey )
     : TEBase( _pKey.getRequiredSigners(), _pKey.getTotalSigners() ) {
     _pKey.validate();
-    publicKey = _pKey.getPrivateKeyRaw() * algebra::G2Point::one();
+    publicKey = _pKey.getPrivateKeyRaw() * algebra::G2Point::generator();
     signerIndex = _pKey.getSignerIndex();
 }
 
