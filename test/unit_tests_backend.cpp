@@ -165,10 +165,37 @@ BOOST_AUTO_TEST_CASE(FrScalar_Pow_Basic)
     BOOST_CHECK_EQUAL(p5.toString(Base::DEC), "243");
 }
 
-BOOST_AUTO_TEST_CASE( FrScalar_FromString ) {
+BOOST_AUTO_TEST_CASE( FrScalar_To_FromString ) {
     FrScalar fr = FrScalar::fromString("12345", Base::DEC);
     BOOST_REQUIRE_EQUAL(fr.toString(Base::DEC), "12345");
+
+    for (size_t i = 0; i < 100; i++) {
+        FrScalar r = FrScalar::random();
+        auto s = r.toString(Base::HEXA);
+        FrScalar r2 = FrScalar::fromString(s, Base::HEXA);
+        BOOST_REQUIRE(r == r2);
+
+        s = r.toString(Base::DEC);
+        r2 = FrScalar::fromString(s, Base::DEC);
+        BOOST_REQUIRE(r == r2);
+    }
 }
+
+BOOST_AUTO_TEST_CASE( FrScalar_To_From_Bytes ) {
+    for (size_t i = 0; i < 100; ++i) {
+        FrScalar r = FrScalar::random();
+
+        auto bytes = r.toByteArray();
+        FrScalar r2 = FrScalar::fromBytes(bytes);
+        BOOST_REQUIRE(r == r2);
+
+        auto bytesVec = r.toByteVector();
+        FrScalar r3 = FrScalar::fromBytes(bytesVec);
+        BOOST_REQUIRE(r == r3);
+    }
+}
+
+
 
 // ==================== FqElement Tests ====================
 
@@ -260,6 +287,16 @@ BOOST_AUTO_TEST_CASE( FqElement_FromHash ) {
     std::array<uint8_t, 32> hash = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32};
     FqElement fq = hashToFq(hash);
     BOOST_REQUIRE_EQUAL(fq.toString(Base::DEC), "455867356320691211509944977504407603390036387149619137164185182714736811808");
+}
+
+BOOST_AUTO_TEST_CASE( FqElement_To_From_Bytes ) {
+    for (size_t i = 0; i < 100; ++i) {
+        FqElement r = FqElement::random();
+
+        auto bytes = r.toByteArray();
+        FqElement r2 = FqElement::fromBytes(bytes);
+        BOOST_REQUIRE(r == r2);
+    }
 }
 
 // ==================== Fq2Element Tests ====================

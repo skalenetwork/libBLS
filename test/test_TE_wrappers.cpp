@@ -46,6 +46,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <test/utils.h>
 #include <random>
 
+namespace utf = boost::unit_test;
 
 std::default_random_engine rand_gen( ( unsigned int ) time( 0 ) );
 
@@ -59,9 +60,7 @@ std::string spoilMessage( std::string& message ) {
     return mes;
 }
 
-struct GlobalInit {
-    GlobalInit() { libBLS::initCurve(); }
-};
+BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
 
 BOOST_AUTO_TEST_SUITE( ThresholdEncryptionWrappers )
 
@@ -136,7 +135,6 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
         libBLS::TEDecryptSet decr_set4 = decrSet;
 
         libBLS::AES256Key key = libBLS::ThresholdEncryption::combineShares( cypher.key, decrSet );
-
         libBLS::ThresholdEncryption::validateCombinedDecryption( cypher, key, common_public );
 
         std::vector< uint8_t > decipheredMsg = libBLS::ThresholdEncryption::decrypt( cypher, key );
@@ -598,7 +596,7 @@ BOOST_AUTO_TEST_CASE( TEPublicKey ) {
         // Components are not 64-char length
         std::vector< std::string > pkeyStr( { "0", "0", "0", "0" } );
         BOOST_REQUIRE_THROW( libBLS::TEPublicKey( std::vector< std::string >( pkeyStr ) ),
-            libBLS::ThresholdUtils::IncorrectInput );
+            libBLS::ThresholdUtils::IsNotWellFormed );
     }
     {
         // Components are not hexadecimal
@@ -929,7 +927,7 @@ BOOST_AUTO_TEST_CASE( TEDecryptionShare ) {
         std::string str = el.toString( libBLS::Base::HEXA );
         str[0] = 'U';  // make it not hexa
         BOOST_REQUIRE_THROW( libBLS::TEDecryptionShare share( str, signer ),
-            libBLS::ThresholdUtils::IncorrectInput );
+            libBLS::ThresholdUtils::IsNotWellFormed );
 
         // string has wrong length
         str[0] = 'A';  // make it hexa again
@@ -1463,6 +1461,72 @@ BOOST_AUTO_TEST_CASE( ValidateCombinedDecryptionAndDecrypt ) {
                                  cipher, keyDeciphered2, keys.commonPublic ),
             std::exception );
     }
+}
+
+
+// ############### Performance Tests #####################
+// DO NOT CHANGE TEST BELOW - used for performance measurements through scripts
+// DO NOT ADD ANY OTHER OUTPUTS TO THE TEST - breaks the measurement scripts
+
+BOOST_AUTO_TEST_CASE( FullEncryptionDecryptionCycle,
+    * utf::label("performance")
+) {
+
+    std::chrono::nanoseconds base_total{0};
+
+    constexpr size_t RUNS = 100;
+
+    for ( size_t i = 0; i < RUNS; i++ ) {
+        // initial setup
+        size_t numAll = rand_gen() % 15 + 2;
+        size_t numSigned = rand_gen() % numAll + 1;
+        const keys keys = generateKeys( numSigned, numAll );
+
+        std::vector< uint8_t > message;
+        size_t msg_length = rand_gen() % 800;
+
+        for ( size_t length = 0; length < msg_length; ++length ) {
+            message.push_back( rand_gen() % 256 );
+        }
+
+        // actual work
+        auto loop_start = std::chrono::high_resolution_clock::now();
+        libBLS::Ciphertext cypher = libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
+        
+        libBLS::ThresholdEncryption::validateEncryption( cypher.key );
+
+        libBLS::TEDecryptSet decrSet( numSigned, numAll );
+        for ( size_t i = 0; i < numSigned; i++ ) {
+            libBLS::TEDecryptionShare decr_share =
+                libBLS::ThresholdEncryption::partialDecrypt( cypher.key, keys.secretKeys[i] );
+
+            libBLS::ThresholdEncryption::validateDecryptionShare(
+                cypher.key, decr_share, keys.publicKeys[i] );
+
+            decrSet.addDecryptShare( decr_share );
+        }
+
+        libBLS::AES256Key key_deciphered =
+            libBLS::ThresholdEncryption::combineShares( cypher.key, decrSet );
+
+        libBLS::ThresholdEncryption::validateCombinedDecryption(
+            cypher, key_deciphered, keys.commonPublic );
+
+        std::vector< uint8_t > decipheredMsg =
+            libBLS::ThresholdEncryption::decrypt( cypher, key_deciphered );
+        
+        // increase timer
+        auto loop_end = std::chrono::high_resolution_clock::now();
+        base_total += std::chrono::duration_cast<std::chrono::nanoseconds>(loop_end - loop_start);
+
+        // check correctness
+        BOOST_REQUIRE( decipheredMsg == message );
+    }
+
+    auto average = base_total / RUNS;
+    auto avgSec = std::chrono::duration_cast<std::chrono::duration<double>>(average);
+    std::cout << "Average time for full encryption-decryption cycle: "
+              << avgSec.count() << " s\n";
 }
 
 

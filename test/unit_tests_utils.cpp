@@ -25,11 +25,9 @@
 #include <ctime>
 #include <map>
 #include <set>
-
 #include <bls/bls.h>
-
 #include <tools/utils.h>
-
+#include "test/utils.h"
 #include <openssl/rand.h>
 
 
@@ -39,6 +37,8 @@
 #endif  // EMSCRIPTEN
 
 #include <boost/test/included/unit_test.hpp>
+
+BOOST_GLOBAL_FIXTURE( GlobalConfig );
 
 BOOST_AUTO_TEST_SUITE( TestLagrange )
 
