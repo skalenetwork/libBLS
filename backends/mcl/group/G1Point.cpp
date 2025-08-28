@@ -109,7 +109,7 @@ G1Point G1Point::fromBytes( const std::array< uint8_t, G1Point::SIZE_BYTES >& by
     constexpr size_t FQ_SIZE = FqElement::SIZE_BYTES;
     const uint8_t* p = bytes.data();
 
-    // helper to read an Fp from BE bytes
+    // helper to read an Fp from Big endian bytes
     auto readFp = [&](mcl::bn::Fp& out) {
         out.setBigEndianMod(p, FQ_SIZE);
         p += FQ_SIZE;

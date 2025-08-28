@@ -7,6 +7,20 @@
 namespace libBLS {
 namespace algebra {
 
+mpz_class FrScalar::toMpzClass() const {
+    std::string s = value.getStr(10); // base 10 decimal string
+    mpz_class t;
+    if (mpz_set_str(t.get_mpz_t(), s.c_str(), 10) != 0) {
+        THROW("mpz_set_str failed");
+    }
+    return t;
+}
+
+FrBackendType FrScalar::fromMpzClass( const mpz_class& m ) {
+    FrBackendType x( m.get_str(10).c_str(), 10 );
+    return x;
+}
+
 // -------------------- Template Specializations -------------------- //
 // Should be placed at start of file - must be defined before any 
 // code that uses them
@@ -56,26 +70,36 @@ FrScalar FrScalar::inverse() const {
 
 // ---------- Serialization  ----------- //
 
+// TODO check if there is a more efficient way to do this
 std::vector< uint8_t > FrScalar::toByteVector() const {
-    return fieldElementToBytes( value );
+    return toByteVectorDefault();
 }
 
+// TODO check if there is a more efficient way to do this
 std::array< uint8_t, FrScalar::SIZE_BYTES > FrScalar::toByteArray() const {
-    return fieldElementToByteArray( value );
+    return toByteArrayDefault();
 }
 
 std::string FrScalar::toString( Base base ) const {
-    return value.getStr(toIoBase(base));
+    constexpr size_t width = 2 * SIZE_BYTES;
+    auto string = value.getStr(toIoBase(base));
+    if ( base == Base::HEXA ) {
+
+        if ( string.length() < width ) {
+            string.insert( 0, width - string.length(), '0' );
+        }
+    }
+    return string;
 }
 
 // ---------- Deserialization ----------- //
 
 FrScalar FrScalar::fromBytes( const std::array< uint8_t, SIZE_BYTES >& bytes ) {
-    return FrScalar( bytesToFieldElement< FrBackendType >( bytes ) );
+    return fromBytesDefault(bytes);
 }
 
 FrScalar FrScalar::fromBytes( const std::vector< uint8_t >& bytes ) {
-    return FrScalar(bytesToFieldElement< FrBackendType >( bytes ));
+    return fromBytesDefault(bytes);
 }
 
 FrScalar FrScalar::fromString( const std::string& str, Base base ) {

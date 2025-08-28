@@ -47,57 +47,6 @@ inline void trySettingFieldWithString(T& x, const std::string& str, Base base) {
     }
 }
 
-template< class T >
-std::array<uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES> fieldElementToByteArray( const T& element ) {
-    std::array<uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES> out{};
-
-    std::string s = element.getStr(10); // base 10 decimal string
-    mpz_class t;
-    if (mpz_set_str(t.get_mpz_t(), s.c_str(), 10) != 0) {
-        THROW("mpz_set_str failed");
-    }
-
-    size_t bit_len = mpz_sizeinbase(t.get_mpz_t(), 2);
-    size_t byte_count = std::max<size_t>(1, (bit_len + 7) / 8);
-
-    // write into the least-significant end (left-pad to fixed width)
-    mpz_export(out.data() + (MAX_FIELD_ELEMENT_SIZE_BYTES - byte_count),
-               nullptr,
-               /*order*/ 1, /*size*/ 1, /*endian*/ 0, /*nails*/ 0,
-               t.get_mpz_t());
-    return out;
-}
-
-template < class T >
-std::vector< uint8_t > fieldElementToBytes( const T& field_elem ) {
-    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > bytes =
-        fieldElementToByteArray( field_elem );
-    std::vector< uint8_t > bytesVec( bytes.begin(), bytes.end() );
-    return bytesVec;
-}
-
-// Convert a 32-byte array back to a algebra::FqElement or FrScalar element
-template < class T >
-T bytesToFieldElement( const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& byte_array ) {
-    T x;
-    if (x.deserialize(byte_array.data(), byte_array.size()) == 0) {
-        // TODO - exception needs better name - isNotWellFormed is misleading
-        throw ThresholdUtils::IsNotWellFormed("FqElement::fromBytes: deserialization failed");
-    }
-    return x;
-}
-
-// Converts the first 32 bytes from the vector into a field element
-template < class T >
-T bytesToFieldElement( const std::vector< uint8_t >& byte_array ) {
-    T x;
-    if (x.deserialize(byte_array.data(), byte_array.size()) == 0) {
-        // TODO - exception needs better name - isNotWellFormed is misleading
-        throw ThresholdUtils::IsNotWellFormed("FqElement::fromBytes: deserialization failed");
-    }
-    return x;
-}
-
 enum class GroupPoint {
     G1,
     G2
