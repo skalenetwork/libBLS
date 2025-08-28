@@ -33,4 +33,4 @@ inline std::string convertHexToDec( const std::string& hex_str ) {
 
 }  // namespace libBLS::algebra
 
-#endif // LIBFF
+#endif  // LIBFF

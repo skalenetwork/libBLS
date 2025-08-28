@@ -34,10 +34,10 @@
 #define BOOST_TEST_DISABLE_ALT_STACK
 #endif  // EMSCRIPTEN
 
+#include "backends/algebra.hpp"
 #include "utils.h"
 #include <TEPublicKey.h>
 #include <ThresholdEncryption.h>
-#include "backends/algebra.hpp"
 #include <boost/test/included/unit_test.hpp>
 
 BOOST_AUTO_TEST_SUITE( EncryptMessageJS )

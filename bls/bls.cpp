@@ -196,8 +196,8 @@ bool Bls::Verification( const std::string& to_be_hashed, const algebra::G1Point&
 
     algebra::G1Point hash = Hashing( to_be_hashed );
 
-    return (
-        algebra::pairing( sign, algebra::G2Point::generator() ) == algebra::pairing( hash, public_key ) );
+    return ( algebra::pairing( sign, algebra::G2Point::generator() ) ==
+             algebra::pairing( hash, public_key ) );
     // there are several types of pairing, it does not matter which one is chosen for verification
 }
 
@@ -210,8 +210,8 @@ bool Bls::Verification( const std::array< uint8_t, 32 >& hash_byte_arr,
 
     algebra::G1Point hash = algebra::G1Point::fromHash( hash_byte_arr );
 
-    return (
-        algebra::pairing( sign, algebra::G2Point::generator() ) == algebra::pairing( hash, public_key ) );
+    return ( algebra::pairing( sign, algebra::G2Point::generator() ) ==
+             algebra::pairing( hash, public_key ) );
     // there are several types of pairing, it does not matter which one is chosen for verification
 }
 

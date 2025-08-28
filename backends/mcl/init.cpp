@@ -9,10 +9,10 @@ namespace algebra {
 
 void initCurve() {
     mcl::bn::CurveParam cp = mcl::bn::BN_SNARK1;
-    mcl::bn::initPairing(cp);
+    mcl::bn::initPairing( cp );
 }
 
 }  // namespace algebra
 }  // namespace libBLS
 
-#endif // MCL
+#endif  // MCL

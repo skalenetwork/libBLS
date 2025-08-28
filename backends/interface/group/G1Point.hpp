@@ -1,12 +1,11 @@
 #pragma once
 
-#include "PointSerializer.hpp"
 #include "Group.hpp"
+#include "PointSerializer.hpp"
 #include "backends/algebra_types.hpp"
 #include "backends/interface/WrapperCore.hpp"
 #include "backends/interface/field/FqElement.hpp"
 #include "backends/interface/field/FrScalar.hpp"
-
 
 
 namespace libBLS {
@@ -22,8 +21,8 @@ G1Point hashToG1( const std::string& message );
 constexpr size_t G1_NUM_COMPONENTS_AFFINE = 2;
 constexpr size_t G1_NUM_COMPONENTS_PROJECTIVE = 3;
 
-class G1Point :
-      public Group< G1BackendType, G1Point, FqRefWrapper >,
+class G1Point
+    : public Group< G1BackendType, G1Point, FqRefWrapper >,
       public PointSerializer< G1Point, G1_NUM_COMPONENTS_AFFINE, G1_NUM_COMPONENTS_PROJECTIVE > {
 public:
     static constexpr size_t SIZE_BYTES = 64;
@@ -54,9 +53,7 @@ public:
         return hashToG1( hash_byte_arr );
     }
 
-    static G1Point fromHash( const std::string& message ) {
-        return hashToG1( message );
-    }
+    static G1Point fromHash( const std::string& message ) { return hashToG1( message ); }
 
     static G1Point fromBytes( const std::vector< uint8_t >& bytes ) {
         if ( bytes.size() != G1Point::SIZE_BYTES ) {
@@ -66,7 +63,7 @@ public:
         std::array< uint8_t, G1Point::SIZE_BYTES > arr;
         std::copy( bytes.begin(), bytes.end(), arr.begin() );
 
-        return fromBytes( arr );    
+        return fromBytes( arr );
     }
 
     static G1Point fromString( const std::string& str, Base base );

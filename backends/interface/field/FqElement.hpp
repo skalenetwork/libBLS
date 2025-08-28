@@ -2,8 +2,8 @@
 
 #include "../WrapperCore.hpp"
 #include "Field.hpp"
-#include "backends/interface/curve_contract_altbn128.hpp"
 #include "backends/algebra_types.hpp"
+#include "backends/interface/curve_contract_altbn128.hpp"
 
 namespace libBLS::algebra {
 
@@ -18,17 +18,17 @@ private:
 
     static FqElement fromBytesDefault( const std::array< uint8_t, SIZE_BYTES >& bytes ) {
         mpz_class t = bytesToMpzClass( bytes );
-        return fromMpzClass(t);
+        return fromMpzClass( t );
     }
 
     static FqElement fromBytesDefault( const std::vector< uint8_t >& bytes ) {
         mpz_class t = bytesToMpzClass( bytes );
-        return fromMpzClass(t);
+        return fromMpzClass( t );
     }
 
     static FqElement fromStringDefault( const std::string& str, Base base ) {
         mpz_class t = stringToMpzClass( str, static_cast< size_t >( base ) );
-        return fromMpzClass(t);
+        return fromMpzClass( t );
     }
 
     virtual std::array< uint8_t, SIZE_BYTES > toByteArrayDefault() const {
@@ -55,8 +55,6 @@ public:
 
     static FqElement fromString( const std::string& str, Base base );
     static FqElement fromBytes( const std::array< uint8_t, SIZE_BYTES >& bytes );
-
-
 
 
     // -------------------- Operator Overloads -------------------- //

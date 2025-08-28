@@ -18,9 +18,9 @@ std::pair< FqElement, FqElement > parseHint( const std::string& _hint ) {
 
 std::pair< G1Point, std::string > hashToG1withHint(
     const std::array< uint8_t, 32 >& hash_byte_arr ) {
-        
-    static const FqElement coeff_b = FqElement::fromString(std::string(AltBn128Contract::coeff_b_dec), Base::DEC);
-    static const std::string fq_euler_str = std::string(AltBn128Contract::fq_euler_dec);
+    static const FqElement coeff_b =
+        FqElement::fromString( std::string( AltBn128Contract::coeff_b_dec ), Base::DEC );
+    static const std::string fq_euler_str = std::string( AltBn128Contract::fq_euler_dec );
 
     G1Point point;
     FqElement counter = FqElement::zero();
@@ -31,12 +31,12 @@ std::pair< G1Point, std::string > hashToG1withHint(
         FqElement y1_sqr = x1 ^ 3;
         y1_sqr = y1_sqr + coeff_b;
 
-        FqElement euler = algebra::power(y1_sqr, fq_euler_str);
+        FqElement euler = algebra::power( y1_sqr, fq_euler_str );
 
         if ( euler.isOne() || euler.isZero() ) {  // if y1_sqr is a square
             point.getXRef().asBackendRef() = x1.asBackendType();
             FqElement temp_y = y1_sqr.sqrt();
-            normalizeYCoordinate(temp_y);
+            normalizeYCoordinate( temp_y );
             point.getYRef().asBackendRef() = temp_y.asBackendType();
             break;
         } else {
@@ -52,7 +52,7 @@ std::pair< G1Point, std::string > hashToG1withHint(
 }
 
 G1Point hashToG1( const std::array< uint8_t, HASH_SIZE >& hash_byte_arr ) {
-    return hashToG1withHint(hash_byte_arr).first;
+    return hashToG1withHint( hash_byte_arr ).first;
 }
 
 G1Point hashToG1( const std::string& message ) {
@@ -89,8 +89,8 @@ std::vector< FrScalar > lagrangeCoeffs( const std::vector< size_t >& idx, size_t
                         "during the interpolation, have same indexes in list of indexes" );
                 }
 
-                v *= ( FrScalar( idx[j] ) -
-                       FrScalar( idx[i] ) );  // calculating Lagrange coefficients
+                v *= ( FrScalar( idx[j] ) - FrScalar( idx[i] ) );  // calculating Lagrange
+                                                                   // coefficients
             }
         }
 

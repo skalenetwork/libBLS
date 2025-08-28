@@ -18,17 +18,13 @@ namespace algebra {
 
 template <>
 const G1BackendType& Group< G1BackendType, G1Point, FqRefWrapper >::identityBackend() {
-    static const G1BackendType identity = [] {
-        return G1BackendType::zero();
-    }();
+    static const G1BackendType identity = [] { return G1BackendType::zero(); }();
     return identity;
 }
 
 template <>
 const G1BackendType& Group< G1BackendType, G1Point, FqRefWrapper >::generatorBackend() {
-    static const G1BackendType generator = [] {
-        return G1BackendType::one();
-    }();
+    static const G1BackendType generator = [] { return G1BackendType::one(); }();
     return generator;
 }
 
@@ -141,27 +137,31 @@ G1Point G1Point::fromString( const std::string& str, Base base ) {
     algebra::G1Point ret;
 
     ret.value.Z = libff::alt_bn128_Fq::one();
-    ret.value.X = libff::alt_bn128_Fq(convertHexToDec( str.substr( 0 * elementStringSize, elementStringSize ) ).c_str() );
-    ret.value.Y = libff::alt_bn128_Fq(convertHexToDec( str.substr( 1 * elementStringSize, elementStringSize ) ).c_str() );
+    ret.value.X = libff::alt_bn128_Fq(
+        convertHexToDec( str.substr( 0 * elementStringSize, elementStringSize ) ).c_str() );
+    ret.value.Y = libff::alt_bn128_Fq(
+        convertHexToDec( str.substr( 1 * elementStringSize, elementStringSize ) ).c_str() );
 
     return ret;
 }
 
-G1Point G1Point::fromString(const std::array< std::string, G1Point::NUM_COMPONENTS_AFFINE >& arr, Base base ) {
+G1Point G1Point::fromString(
+    const std::array< std::string, G1Point::NUM_COMPONENTS_AFFINE >& arr, Base base ) {
     algebra::G1Point ret;
     ret.value.Z = libff::alt_bn128_Fq::one();
 
     switch ( base ) {
     case Base::HEXA:
-        ret.value.X = libff::alt_bn128_Fq(convertHexToDec( arr[0] ).c_str() );
-        ret.value.Y = libff::alt_bn128_Fq(convertHexToDec( arr[1] ).c_str() );
+        ret.value.X = libff::alt_bn128_Fq( convertHexToDec( arr[0] ).c_str() );
+        ret.value.Y = libff::alt_bn128_Fq( convertHexToDec( arr[1] ).c_str() );
         break;
     case Base::DEC:
         ret.value.X = libff::alt_bn128_Fq( arr[0].c_str() );
         ret.value.Y = libff::alt_bn128_Fq( arr[1].c_str() );
         break;
     default:
-        throw ThresholdUtils::IncorrectInput( "Base not supported to build G1Point from string array" );
+        throw ThresholdUtils::IncorrectInput(
+            "Base not supported to build G1Point from string array" );
     }
 
     return G1Point( ret );
@@ -226,4 +226,4 @@ void G1Point::forEachProjectiveComponentImpl(
 }  // namespace algebra
 }  // namespace libBLS
 
-#endif // LIBFF
+#endif  // LIBFF

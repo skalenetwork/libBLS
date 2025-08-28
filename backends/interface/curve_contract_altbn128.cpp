@@ -4,7 +4,8 @@
 namespace libBLS::algebra {
 
 const FqElement& AltBn128Contract::coeffB() {
-    static const FqElement coeff_b = FqElement::fromString( std::string(AltBn128Contract::coeff_b_dec), Base::DEC );
+    static const FqElement coeff_b =
+        FqElement::fromString( std::string( AltBn128Contract::coeff_b_dec ), Base::DEC );
     return coeff_b;
 }
 

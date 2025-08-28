@@ -15,7 +15,7 @@ mpz_class FrScalar::toMpzClass() const {
 }
 
 FrBackendType FrScalar::fromMpzClass( const mpz_class& m ) {
-    FrBackendType field_elem( m.get_mpz_t());
+    FrBackendType field_elem( m.get_mpz_t() );
     return field_elem;
 }
 
@@ -136,4 +136,4 @@ bool FrScalar::operator!=( const FrScalar& other ) const {
 
 }  // namespace libBLS::algebra
 
-#endif // LIBFF
+#endif  // LIBFF

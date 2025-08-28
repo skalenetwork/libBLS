@@ -24,10 +24,10 @@
 
 #include <dkg/dkg.h>
 #include <tools/utils.h>
-#include <fstream>
-#include <third_party/json.hpp>
 #include <boost/program_options.hpp>
+#include <fstream>
 #include <iostream>
+#include <third_party/json.hpp>
 
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
 #define __EXPAND_AS_STR__( x ) #x

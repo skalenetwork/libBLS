@@ -3,9 +3,9 @@
 #include "backends/interface/group/G2Point.hpp"
 #include "../utils.hpp"
 #include "backends/algebra_types.hpp"
+#include "backends/interface/field/Fq2Element.hpp"
 #include "backends/interface/field/FqElement.hpp"
 #include "backends/interface/field/FrScalar.hpp"
-#include "backends/interface/field/Fq2Element.hpp"
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 
 namespace libBLS {
@@ -13,17 +13,13 @@ namespace algebra {
 
 template <>
 const G2BackendType& Group< G2BackendType, G2Point, Fq2RefWrapper >::identityBackend() {
-    static const G2BackendType identity = [] {
-        return G2BackendType::zero();
-    }();
+    static const G2BackendType identity = [] { return G2BackendType::zero(); }();
     return identity;
 }
 
 template <>
 const G2BackendType& Group< G2BackendType, G2Point, Fq2RefWrapper >::generatorBackend() {
-    static const G2BackendType generator = [] {
-        return G2BackendType::one();
-    }();
+    static const G2BackendType generator = [] { return G2BackendType::one(); }();
     return generator;
 }
 
@@ -150,10 +146,14 @@ G2Point G2Point::fromString( const std::string& str, Base base ) {
 
     ret.value.Z = libff::alt_bn128_Fq2::one();
 
-    ret.value.X.c0 = libff::alt_bn128_Fq(convertHexToDec( str.substr( 0 * elementStringSize, elementStringSize ) ).c_str() );
-    ret.value.X.c1 = libff::alt_bn128_Fq(convertHexToDec( str.substr( 1 * elementStringSize, elementStringSize ) ).c_str() );
-    ret.value.Y.c0 = libff::alt_bn128_Fq(convertHexToDec( str.substr( 2 * elementStringSize, elementStringSize ) ).c_str() );
-    ret.value.Y.c1 = libff::alt_bn128_Fq(convertHexToDec( str.substr( 3 * elementStringSize, std::string::npos ) ).c_str() );
+    ret.value.X.c0 = libff::alt_bn128_Fq(
+        convertHexToDec( str.substr( 0 * elementStringSize, elementStringSize ) ).c_str() );
+    ret.value.X.c1 = libff::alt_bn128_Fq(
+        convertHexToDec( str.substr( 1 * elementStringSize, elementStringSize ) ).c_str() );
+    ret.value.Y.c0 = libff::alt_bn128_Fq(
+        convertHexToDec( str.substr( 2 * elementStringSize, elementStringSize ) ).c_str() );
+    ret.value.Y.c1 = libff::alt_bn128_Fq(
+        convertHexToDec( str.substr( 3 * elementStringSize, std::string::npos ) ).c_str() );
 
     return ret;
 }
@@ -256,4 +256,4 @@ void G2Point::forEachProjectiveComponentImpl(
 }  // namespace algebra
 }  // namespace libBLS
 
-#endif // LIBFF
+#endif  // LIBFF

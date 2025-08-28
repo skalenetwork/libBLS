@@ -298,7 +298,6 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
 }
 
 BOOST_AUTO_TEST_CASE( libffObjsToString ) {
-
     for ( size_t i = 0; i < 100; ++i ) {
         size_t num_all = rand_gen() % 16 + 1;
         size_t num_signed = rand_gen() % num_all + 1;
@@ -1207,8 +1206,8 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     {
         std::string hint = "123:1";
         BOOST_REQUIRE_THROW(
-            BLSSigShare( std::make_shared< algebra::G1Point >( algebra::G1Point::identity() ), hint, 1,
-                num_signed, num_all ),
+            BLSSigShare( std::make_shared< algebra::G1Point >( algebra::G1Point::identity() ), hint,
+                1, num_signed, num_all ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 

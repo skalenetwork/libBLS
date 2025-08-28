@@ -11,7 +11,7 @@ GTElement GTElement::operator*( const GTElement& other ) const {
 
 GTElement GTElement::inverse() const {
     GTBackendType inv;
-    mcl::GT::inv(inv, value);
+    mcl::GT::inv( inv, value );
     return GTElement( inv );
 }
 
@@ -26,4 +26,4 @@ bool GTElement::operator!=( const GTElement& other ) const {
 }  // namespace algebra
 }  // namespace libBLS
 
-#endif // MCL
+#endif  // MCL

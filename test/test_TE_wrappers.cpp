@@ -60,7 +60,7 @@ std::string spoilMessage( std::string& message ) {
     return mes;
 }
 
-BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
+BOOST_TEST_GLOBAL_CONFIGURATION( GlobalConfig );
 
 BOOST_AUTO_TEST_SUITE( ThresholdEncryptionWrappers )
 
@@ -310,7 +310,6 @@ BOOST_AUTO_TEST_CASE( TEFailingValidation ) {
 
 
 BOOST_AUTO_TEST_CASE( WrappersFromString ) {
-
     for ( size_t i = 0; i < 100; i++ ) {
         size_t numAll = rand_gen() % 16 + 1;
         size_t numSigned = rand_gen() % numAll + 1;
@@ -1468,11 +1467,8 @@ BOOST_AUTO_TEST_CASE( ValidateCombinedDecryptionAndDecrypt ) {
 // DO NOT CHANGE TEST BELOW - used for performance measurements through scripts
 // DO NOT ADD ANY OTHER OUTPUTS TO THE TEST - breaks the measurement scripts
 
-BOOST_AUTO_TEST_CASE( FullEncryptionDecryptionCycle,
-    * utf::label("performance")
-) {
-
-    std::chrono::nanoseconds base_total{0};
+BOOST_AUTO_TEST_CASE( FullEncryptionDecryptionCycle, *utf::label( "performance" ) ) {
+    std::chrono::nanoseconds base_total{ 0 };
 
     constexpr size_t RUNS = 100;
 
@@ -1491,8 +1487,9 @@ BOOST_AUTO_TEST_CASE( FullEncryptionDecryptionCycle,
 
         // actual work
         auto loop_start = std::chrono::high_resolution_clock::now();
-        libBLS::Ciphertext cypher = libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
-        
+        libBLS::Ciphertext cypher =
+            libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
+
         libBLS::ThresholdEncryption::validateEncryption( cypher.key );
 
         libBLS::TEDecryptSet decrSet( numSigned, numAll );
@@ -1514,19 +1511,19 @@ BOOST_AUTO_TEST_CASE( FullEncryptionDecryptionCycle,
 
         std::vector< uint8_t > decipheredMsg =
             libBLS::ThresholdEncryption::decrypt( cypher, key_deciphered );
-        
+
         // increase timer
         auto loop_end = std::chrono::high_resolution_clock::now();
-        base_total += std::chrono::duration_cast<std::chrono::nanoseconds>(loop_end - loop_start);
+        base_total +=
+            std::chrono::duration_cast< std::chrono::nanoseconds >( loop_end - loop_start );
 
         // check correctness
         BOOST_REQUIRE( decipheredMsg == message );
     }
 
     auto average = base_total / RUNS;
-    auto avgSec = std::chrono::duration_cast<std::chrono::duration<double>>(average);
-    std::cout << "Average time for full encryption-decryption cycle: "
-              << avgSec.count() << " s\n";
+    auto avgSec = std::chrono::duration_cast< std::chrono::duration< double > >( average );
+    std::cout << "Average time for full encryption-decryption cycle: " << avgSec.count() << " s\n";
 }
 
 

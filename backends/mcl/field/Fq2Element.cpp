@@ -2,13 +2,13 @@
 #ifdef MCL
 
 #include "backends/interface/field/Fq2Element.hpp"
-#include "backends/interface/field/FqElement.hpp"
 #include "backends/algebra_types.hpp"
+#include "backends/interface/field/FqElement.hpp"
 
 namespace libBLS::algebra {
 
 // -------------------- Template Specializations -------------------- //
-// Should be placed at start of file - must be defined before any 
+// Should be placed at start of file - must be defined before any
 // code that uses them
 
 template <>
@@ -63,7 +63,6 @@ FqRefWrapper Fq2RefWrapper::getC1Ref() {
 }
 
 
-
 }  // namespace libBLS::algebra
 
-#endif // MCL
+#endif  // MCL

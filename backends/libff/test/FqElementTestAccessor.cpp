@@ -1,9 +1,9 @@
 #ifdef LIBFF
 
+#include "backends/interface/test/FqElementTestAccessor.hpp"
+#include <gmpxx.h>
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
 #include <libff/common/utils.hpp>
-#include <gmpxx.h>
-#include "backends/interface/test/FqElementTestAccessor.hpp"
 
 
 namespace libBLS::algebra {
@@ -33,4 +33,4 @@ FqBackendType FqElementTestAccessor::spoil( FqBackendType& elem ) {
 
 }  // namespace libBLS::algebra
 
-#endif // LIBFF
+#endif  // LIBFF

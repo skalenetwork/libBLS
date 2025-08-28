@@ -1,7 +1,7 @@
 #pragma once
 
-#include "PointSerializer.hpp"
 #include "Group.hpp"
+#include "PointSerializer.hpp"
 #include "backends/algebra_types.hpp"
 #include "backends/interface/WrapperCore.hpp"
 #include "backends/interface/field/Fq2Element.hpp"
@@ -13,11 +13,10 @@ namespace libBLS::algebra {
 constexpr size_t G2_NUM_COMPONENTS_AFFINE = 4;
 constexpr size_t G2_NUM_COMPONENTS_PROJECTIVE = 6;
 
-class G2Point :
-      public Group< G2BackendType, G2Point, Fq2RefWrapper >,
+class G2Point
+    : public Group< G2BackendType, G2Point, Fq2RefWrapper >,
       public PointSerializer< G2Point, G2_NUM_COMPONENTS_AFFINE, G2_NUM_COMPONENTS_PROJECTIVE > {
 public:
-
     static constexpr size_t SIZE_BYTES = 128;
     static constexpr size_t NUM_COMPONENTS_AFFINE = G2_NUM_COMPONENTS_AFFINE;
 

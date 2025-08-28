@@ -21,14 +21,14 @@
   @date 2021
 */
 
+#include "test/utils.h"
+#include <bls/bls.h>
+#include <openssl/rand.h>
+#include <tools/utils.h>
 #include <cstdlib>
 #include <ctime>
 #include <map>
 #include <set>
-#include <bls/bls.h>
-#include <tools/utils.h>
-#include "test/utils.h"
-#include <openssl/rand.h>
 
 
 #define BOOST_TEST_MODULE

@@ -12,10 +12,7 @@ namespace libBLS::algebra {
 /// @tparam Wrapper - Wrapper class - needed for the one() and zero() methods
 template < typename BackendType, typename Wrapper >
 class Field : public WrapperCore< BackendType, Wrapper > {
-
-
 protected:
-
     /// @brief Converts a decimal string to a hex string
     /// @param field field represented as a mpz_class
     /// @param base base to convert to (10 or 16)
@@ -48,7 +45,6 @@ protected:
 
     static std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > mpzClassToByteArray(
         mpz_class& field ) {
-
         // Compute byte count (at least 1 byte)
         size_t bit_len = mpz_sizeinbase( field.get_mpz_t(), 2 );
         size_t byte_count = std::max< size_t >( 1, ( bit_len + 7 ) / 8 );
@@ -57,8 +53,8 @@ protected:
         std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > byte_array = {};
 
         // Export into the least-significant end of the buffer
-        mpz_export( byte_array.data() + ( MAX_FIELD_ELEMENT_SIZE_BYTES - byte_count ), nullptr, 1, 1, 0,
-            0, field.get_mpz_t() );
+        mpz_export( byte_array.data() + ( MAX_FIELD_ELEMENT_SIZE_BYTES - byte_count ), nullptr, 1,
+            1, 0, 0, field.get_mpz_t() );
 
         return byte_array;
     }
@@ -71,7 +67,8 @@ protected:
     }
 
 
-    static mpz_class bytesToMpzClass( const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& byte_array ) {
+    static mpz_class bytesToMpzClass(
+        const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& byte_array ) {
         mpz_class t;
         // Import the byte array into the mpz_t (in little-endian order)
         mpz_import( t.get_mpz_t(), byte_array.size(), 1, 1, 0, 0, byte_array.data() );
@@ -90,9 +87,8 @@ protected:
 
 
 public:
-
     Field() : WrapperCore< BackendType, Wrapper >() {}
-    Field( const BackendType& v) : WrapperCore< BackendType, Wrapper >( v ) {}
+    Field( const BackendType& v ) : WrapperCore< BackendType, Wrapper >( v ) {}
 
     // Must be declared as static functions, not fields.
     // We need to have initialized the curve before calling them.

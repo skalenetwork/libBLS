@@ -98,7 +98,6 @@ std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
 
 Ciphertext ThresholdEncryption::encrypt(
     const std::vector< uint8_t >& _message, const TEPublicKey& _commonPublic ) {
-
     _commonPublic.validate();
 
     CipherResult cypher = TE::encryptWithAES( _message, _commonPublic.getPublicKeyRaw() );
@@ -113,7 +112,6 @@ Ciphertext ThresholdEncryption::encrypt(
 }
 
 void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
-
     _ciphertext.validate();
 
     auto [U, V, W] = _ciphertext;
@@ -134,7 +132,6 @@ void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
 
 TEDecryptionShare ThresholdEncryption::partialDecrypt(
     const CipheredKey& _ciphertext, const TEPrivateKeyShare& _pkeyShare ) {
-
     _ciphertext.validate();
     _pkeyShare.validate();
 
@@ -151,7 +148,6 @@ TEDecryptionShare ThresholdEncryption::partialDecrypt(
 
 void ThresholdEncryption::validateDecryptionShare( const CipheredKey& _cipherText,
     const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey ) {
-
     _cipherText.validate();
     _decryptionShare.validate();
     _publicKey.validate();
@@ -164,7 +160,6 @@ void ThresholdEncryption::validateDecryptionShare( const CipheredKey& _cipherTex
 
 AES256Key ThresholdEncryption::combineShares(
     const CipheredKey& _cypheredKey, TEDecryptSet& _decryptionSet ) {
-
     _cypheredKey.validate();
 
     switch ( _decryptionSet.getMergeStatus() ) {
@@ -188,7 +183,6 @@ AES256Key ThresholdEncryption::combineShares(
 
 void ThresholdEncryption::validateCombinedDecryption(
     const Ciphertext& _cyphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
-
     _cyphertext.validate();
 
     // decipher & validate plaintext
@@ -220,7 +214,6 @@ void ThresholdEncryption::validateCombinedDecryption(
 
 std::vector< uint8_t > ThresholdEncryption::decrypt(
     const Ciphertext& _cyphertext, const AES256Key& _aesKey ) {
-
     _cyphertext.validate();
 
     // decipher & validate plaintext

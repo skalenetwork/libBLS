@@ -26,7 +26,8 @@ struct AltBn128Contract {
         "21888242871839275222246405745257275088548364400416034343698204186575808495617";
 
     // Euler exponent (p-1)/2
-    static constexpr std::string_view fq_euler_dec = "10944121435919637611123202872628637544348155578648911831344518947322613104291";
+    static constexpr std::string_view fq_euler_dec =
+        "10944121435919637611123202872628637544348155578648911831344518947322613104291";
 
     // Fp2 model (u^2 = -1); we record this for documentation/interop
     // limb order is (a, b) for a + b*u
@@ -44,9 +45,9 @@ struct AltBn128Contract {
         "8495653923123431417604973247489272438418190587263600148770280649306958101930";
     static constexpr std::string_view g2_y1_dec =
         "4082367875863433681332203403145435568316851327593401208105741076214120093531";
-    
+
     static const FqElement& coeffB();
 };
 
 
-} // namespace libBLS::algebra
+}  // namespace libBLS::algebra

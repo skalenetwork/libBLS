@@ -22,9 +22,8 @@ class PointSerializer {
     }
 
 public:
-
     // ----------------------- Byte Serializations ----------------------- //
-    
+
     std::array< uint8_t, NUM_AFFINE_COMPONENTS * FqElement::SIZE_BYTES > toByteArray() const {
         std::array< uint8_t, NUM_AFFINE_COMPONENTS * FqElement::SIZE_BYTES > out{};
         uint8_t* p = out.data();

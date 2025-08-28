@@ -1,9 +1,9 @@
 #ifdef MCL
 
 #include "backends/interface/group/G1Point.hpp"
+#include "../utils.hpp"
 #include "backends/interface/field/FqElement.hpp"
 #include "backends/interface/field/FrScalar.hpp"
-#include "../utils.hpp"
 #include <tools/utils.h>
 #include <array>
 
@@ -25,10 +25,11 @@ const G1BackendType& Group< G1BackendType, G1Point, FqRefWrapper >::generatorBac
     static const G1BackendType generator = [] {
         G1BackendType generator;
         generator.clear();
-        generator.x.setStr(std::string(AltBn128Contract::g1_x_dec), mcl::bn::IoDec);
-        generator.y.setStr(std::string(AltBn128Contract::g1_y_dec), mcl::bn::IoDec);
-        generator.z = 1;                        // affine
-        if (!generator.isValid()) throw std::runtime_error("mcl: G1::generator not on curve");
+        generator.x.setStr( std::string( AltBn128Contract::g1_x_dec ), mcl::bn::IoDec );
+        generator.y.setStr( std::string( AltBn128Contract::g1_y_dec ), mcl::bn::IoDec );
+        generator.z = 1;  // affine
+        if ( !generator.isValid() )
+            throw std::runtime_error( "mcl: G1::generator not on curve" );
         return generator;
     }();
     return generator;
@@ -110,17 +111,17 @@ G1Point G1Point::fromBytes( const std::array< uint8_t, G1Point::SIZE_BYTES >& by
     const uint8_t* p = bytes.data();
 
     // helper to read an Fp from Big endian bytes
-    auto readFp = [&](mcl::bn::Fp& out) {
-        out.setBigEndianMod(p, FQ_SIZE);
+    auto readFp = [&]( mcl::bn::Fp& out ) {
+        out.setBigEndianMod( p, FQ_SIZE );
         p += FQ_SIZE;
     };
 
     // build point
     G1BackendType P;
-    readFp(P.x);
-    readFp(P.y);
+    readFp( P.x );
+    readFp( P.y );
     P.z = FqBackendType::one();
-    return G1Point(P);
+    return G1Point( P );
 }
 
 G1Point G1Point::fromString( const std::string& str, Base base ) {
@@ -141,29 +142,30 @@ G1Point G1Point::fromString( const std::string& str, Base base ) {
     ret.value.z = FqBackendType::one();
 
     try {
-        trySettingFieldWithString(ret.value.x, str.substr(0 * elementStringSize, elementStringSize), base);
-        trySettingFieldWithString(ret.value.y, str.substr(1 * elementStringSize, elementStringSize), base);
+        trySettingFieldWithString(
+            ret.value.x, str.substr( 0 * elementStringSize, elementStringSize ), base );
+        trySettingFieldWithString(
+            ret.value.y, str.substr( 1 * elementStringSize, elementStringSize ), base );
     } catch ( const std::exception& e ) {
         throw ThresholdUtils::IncorrectInput(
-            std::string("Failed to set G2Point components from string: ") + e.what()
-        );
+            std::string( "Failed to set G2Point components from string: " ) + e.what() );
     }
 
     return ret;
 }
 
-G1Point G1Point::fromString(const std::array< std::string, G1Point::NUM_COMPONENTS_AFFINE >& arr, Base base ) {
+G1Point G1Point::fromString(
+    const std::array< std::string, G1Point::NUM_COMPONENTS_AFFINE >& arr, Base base ) {
     algebra::G1Point ret;
     ret.value.z = FqBackendType::one();
 
     try {
-        trySettingFieldWithString(ret.value.x, arr[0], base);
-        trySettingFieldWithString(ret.value.y, arr[1], base);
+        trySettingFieldWithString( ret.value.x, arr[0], base );
+        trySettingFieldWithString( ret.value.y, arr[1], base );
         return ret;
     } catch ( const std::exception& e ) {
         throw ThresholdUtils::IncorrectInput(
-            std::string("Failed to set G1Point components from string: ") + e.what()
-        );
+            std::string( "Failed to set G1Point components from string: " ) + e.what() );
     }
 }
 
@@ -203,7 +205,7 @@ bool G1Point::operator!=( const G1Point& other ) const {
 
 G1Point operator*( const FrScalar& scalar, const G1Point& point ) {
     G1BackendType result;
-    mcl::G1::mul(result, point.value, scalar.value );
+    mcl::G1::mul( result, point.value, scalar.value );
     return G1Point( result );
 }
 
@@ -231,4 +233,4 @@ void G1Point::forEachProjectiveComponentImpl(
 }  // namespace algebra
 }  // namespace libBLS
 
-#endif // MCL
+#endif  // MCL

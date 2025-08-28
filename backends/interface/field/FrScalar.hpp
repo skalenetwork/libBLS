@@ -1,9 +1,9 @@
 #pragma once
 
-#include <gmpxx.h>
 #include "../WrapperCore.hpp"
 #include "Field.hpp"
 #include "backends/algebra_types.hpp"
+#include <gmpxx.h>
 
 namespace libBLS::algebra {
 
@@ -17,17 +17,17 @@ private:
 
     static FrScalar fromBytesDefault( const std::array< uint8_t, SIZE_BYTES >& bytes ) {
         mpz_class t = bytesToMpzClass( bytes );
-        return fromMpzClass(t);
+        return fromMpzClass( t );
     }
 
     static FrScalar fromBytesDefault( const std::vector< uint8_t >& bytes ) {
         mpz_class t = bytesToMpzClass( bytes );
-        return fromMpzClass(t);
+        return fromMpzClass( t );
     }
 
     static FrScalar fromStringDefault( const std::string& str, Base base ) {
         mpz_class t = stringToMpzClass( str, static_cast< size_t >( base ) );
-        return fromMpzClass(t);
+        return fromMpzClass( t );
     }
 
     std::vector< uint8_t > toByteVectorDefault() const {
@@ -46,7 +46,6 @@ private:
     }
 
 public:
-
     FrScalar();
     FrScalar( const size_t n );
     FrScalar( const FrBackendType& v ) : Field( v ) {}

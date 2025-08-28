@@ -51,9 +51,8 @@ int main() {
 
     libBLS::ThresholdEncryption::validateEncryption( aesKeyEncrypted );
 
-    libBLS::TEPrivateKeyShare privateKeyShare( 
-        libBLS::algebra::FrScalar::fromString( secretKey, libBLS::Base::DEC ), 
-        1, 1, 1 );
+    libBLS::TEPrivateKeyShare privateKeyShare(
+        libBLS::algebra::FrScalar::fromString( secretKey, libBLS::Base::DEC ), 1, 1, 1 );
     libBLS::TEPublicKeyShare publicKeyShare( privateKeyShare );
 
     libBLS::TEDecryptionShare decryptionShare =

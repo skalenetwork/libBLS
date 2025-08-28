@@ -38,12 +38,16 @@ namespace libBLS {
 constexpr size_t BASE_HEXA = 16;
 constexpr size_t BASE_DEC = 10;
 
-#define REQUIRE_OR_THROW(cond, msg) \
-do { if(!(cond)) throw ThresholdUtils::IncorrectInput(std::string(msg) + " @ " + __FILE__ ":" + std::to_string(__LINE__)); \
-} while(0)
+#define REQUIRE_OR_THROW( cond, msg )                                                     \
+    do {                                                                                  \
+        if ( !( cond ) )                                                                  \
+            throw ThresholdUtils::IncorrectInput(                                         \
+                std::string( msg ) + " @ " + __FILE__ ":" + std::to_string( __LINE__ ) ); \
+    } while ( 0 )
 
-#define THROW(msg) \
-throw ThresholdUtils::IncorrectInput(std::string(msg) + " @ " + __FILE__ ":" + std::to_string(__LINE__));
+#define THROW( msg )                      \
+    throw ThresholdUtils::IncorrectInput( \
+        std::string( msg ) + " @ " + __FILE__ ":" + std::to_string( __LINE__ ) );
 
 
 class ThresholdUtils {

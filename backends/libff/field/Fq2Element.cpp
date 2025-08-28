@@ -44,4 +44,4 @@ FqRefWrapper Fq2RefWrapper::getC1Ref() {
 
 }  // namespace libBLS::algebra
 
-#endif // LIBFF
+#endif  // LIBFF

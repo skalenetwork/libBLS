@@ -17,7 +17,7 @@ FrScalar power( const FrScalar& fr, size_t exponent ) {
 }
 
 FqElement power( const FqElement& fq, const std::string& exponent ) {
-    return fq.value ^ libff::bigint<libff::alt_bn128_q_limbs>(exponent.c_str());
+    return fq.value ^ libff::bigint< libff::alt_bn128_q_limbs >( exponent.c_str() );
 }
 
 void normalizeYCoordinate( FqElement& element ) {
@@ -44,9 +44,8 @@ FqElement hashToFq( const std::array< uint8_t, 32 >& hash_byte_arr ) {
     libff::alt_bn128_Fq ret_val( from_hex );
 
     return algebra::FqElement( ret_val );
-
 }
 
 }  // namespace libBLS::algebra
 
-#endif // LIBFF
+#endif  // LIBFF

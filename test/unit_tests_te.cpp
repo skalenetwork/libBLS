@@ -23,9 +23,9 @@
 
 #include <random>
 
+#include "test/utils.h"
 #include <threshold_encryption.h>
 #include <tools/utils.h>
-#include "test/utils.h"
 
 #include <openssl/rand.h>
 
@@ -36,7 +36,7 @@
 
 #include <boost/test/included/unit_test.hpp>
 
-BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
+BOOST_TEST_GLOBAL_CONFIGURATION( GlobalConfig );
 
 BOOST_AUTO_TEST_SUITE( TestAES )
 
@@ -107,14 +107,13 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE( ThresholdEncryption )
 
 BOOST_AUTO_TEST_CASE( CipheredKey ) {
-
     for ( size_t i = 0; i < 20; i++ ) {
         // random key data
         libBLS::algebra::G2Point u = libBLS::algebra::G2Point::random();
         libBLS::AES256Key ciphered_key;
         RAND_bytes( ciphered_key.data(), ciphered_key.size() );
         libBLS::algebra::G1Point w = libBLS::algebra::G1Point::random();
-        
+
         // check constructor
         libBLS::CipheredKey key = libBLS::CipheredKey( u, ciphered_key, w );
 
@@ -131,7 +130,6 @@ BOOST_AUTO_TEST_CASE( CipheredKey ) {
 }
 
 BOOST_AUTO_TEST_CASE( CipheredKeyException ) {
-
     // zero u element
     libBLS::algebra::G2Point u = libBLS::algebra::G2Point::identity();
     libBLS::AES256Key ciphered_key;
@@ -159,7 +157,6 @@ BOOST_AUTO_TEST_CASE( CipheredKeyException ) {
 }
 
 BOOST_AUTO_TEST_CASE( Ciphertext ) {
-
     for ( size_t i = 0; i < 20; i++ ) {
         // random key data
         libBLS::algebra::G2Point u = libBLS::algebra::G2Point::random();
@@ -450,7 +447,8 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
         libBLS::algebra::G2Point decrypted =
             obj.getDecryptionShare( *result.ciphertext, secret_keys[i] );
 
-        libBLS::algebra::G2Point public_key = secret_keys[i] * libBLS::algebra::G2Point::generator();
+        libBLS::algebra::G2Point public_key =
+            secret_keys[i] * libBLS::algebra::G2Point::generator();
 
         BOOST_REQUIRE( obj.Verify( *result.ciphertext, decrypted, public_key ) );
 
@@ -512,7 +510,8 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomPK ) {
         libBLS::algebra::G2Point decrypted =
             obj.getDecryptionShare( *result.ciphertext, secret_keys[i] );
 
-        libBLS::algebra::G2Point public_key = secret_keys[i] * libBLS::algebra::G2Point::generator();
+        libBLS::algebra::G2Point public_key =
+            secret_keys[i] * libBLS::algebra::G2Point::generator();
 
         BOOST_REQUIRE( obj.Verify( *result.ciphertext, decrypted, public_key ) );
 
@@ -575,7 +574,8 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomSK ) {
         libBLS::algebra::G2Point decrypted =
             obj.getDecryptionShare( *result.ciphertext, secret_keys[i] );
 
-        libBLS::algebra::G2Point public_key = secret_keys[i] * libBLS::algebra::G2Point::generator();
+        libBLS::algebra::G2Point public_key =
+            secret_keys[i] * libBLS::algebra::G2Point::generator();
 
         BOOST_REQUIRE( obj.Verify( *result.ciphertext, decrypted, public_key ) );
 

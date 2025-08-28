@@ -7,10 +7,10 @@
 
 #include "./interface/field/FqElement.hpp"
 #include "./interface/field/FrScalar.hpp"
+#include "./interface/functions.hpp"
 #include "./interface/group/G1Point.hpp"
 #include "./interface/group/G2Point.hpp"
 #include "./interface/group/GTElement.hpp"
-#include "./interface/functions.hpp"
 #include "./interface/init.hpp"
 #include "algebra_types.hpp"
 

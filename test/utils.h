@@ -1,11 +1,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include "backends/algebra.hpp"
 #include <threshold_encryption/TEPrivateKey.h>
 #include <threshold_encryption/TEPrivateKeyShare.h>
 #include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/TEPublicKeyShare.h>
-#include "backends/algebra.hpp"
 #include <chrono>
 
 #define TIMER( variable, code_block )                                                   \

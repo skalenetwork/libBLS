@@ -15,4 +15,4 @@ void initCurve() {
 }  // namespace algebra
 }  // namespace libBLS
 
-#endif // LIBFF
+#endif  // LIBFF

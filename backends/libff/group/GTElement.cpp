@@ -25,19 +25,19 @@ bool GTElement::operator!=( const GTElement& other ) const {
 
 void GTElement::forEachAffineComponentImpl(
     const std::function< void( const FqElement&, size_t i ) >& fn ) const {
-    fn(FqElement(value.c0.c0.c0),  0);
-    fn(FqElement(value.c0.c0.c1),  1);
-    fn(FqElement(value.c0.c1.c0),  2);
-    fn(FqElement(value.c0.c1.c1),  3);
-    fn(FqElement(value.c0.c2.c0),  4);
-    fn(FqElement(value.c0.c2.c1),  5);
+    fn( FqElement( value.c0.c0.c0 ), 0 );
+    fn( FqElement( value.c0.c0.c1 ), 1 );
+    fn( FqElement( value.c0.c1.c0 ), 2 );
+    fn( FqElement( value.c0.c1.c1 ), 3 );
+    fn( FqElement( value.c0.c2.c0 ), 4 );
+    fn( FqElement( value.c0.c2.c1 ), 5 );
 
-    fn(FqElement(value.c1.c0.c0),  6);
-    fn(FqElement(value.c1.c0.c1),  7);
-    fn(FqElement(value.c1.c1.c0),  8);
-    fn(FqElement(value.c1.c1.c1),  9);
-    fn(FqElement(value.c1.c2.c0), 10);
-    fn(FqElement(value.c1.c2.c1), 11);
+    fn( FqElement( value.c1.c0.c0 ), 6 );
+    fn( FqElement( value.c1.c0.c1 ), 7 );
+    fn( FqElement( value.c1.c1.c0 ), 8 );
+    fn( FqElement( value.c1.c1.c1 ), 9 );
+    fn( FqElement( value.c1.c2.c0 ), 10 );
+    fn( FqElement( value.c1.c2.c1 ), 11 );
 }
 
 void GTElement::forEachProjectiveComponentImpl(
@@ -56,4 +56,4 @@ void GTElement::forEachProjectiveComponentImpl(
 }  // namespace algebra
 }  // namespace libBLS
 
-#endif // LIBFF
+#endif  // LIBFF

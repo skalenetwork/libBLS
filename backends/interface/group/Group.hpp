@@ -15,9 +15,8 @@ protected:
     static const BackendType& identityBackend();
 
 public:
-
     Group() : WrapperCore< BackendType, Wrapper >() {}
-    Group( const BackendType& v) : WrapperCore< BackendType, Wrapper >( v ) {}
+    Group( const BackendType& v ) : WrapperCore< BackendType, Wrapper >( v ) {}
 
     void toAffineCoordinates();
 
@@ -34,9 +33,7 @@ public:
     bool isWellFormed() const;
     bool isInGroup() const;
 
-    bool isValid() const {
-        return !isIdentity() && isWellFormed() && isInGroup();
-    }
+    bool isValid() const { return !isIdentity() && isWellFormed() && isInGroup(); }
 
     void validate() const {
         if ( isIdentity() ) {
@@ -57,12 +54,12 @@ public:
     // If they were static fields, they would be both initialized as 0,
     // since the curve was not initialized yet.
     static Wrapper generator() {
-        static const Wrapper one = Wrapper(generatorBackend());
+        static const Wrapper one = Wrapper( generatorBackend() );
         return one;
     }
 
     static Wrapper identity() {
-        static const Wrapper zero = Wrapper(identityBackend());
+        static const Wrapper zero = Wrapper( identityBackend() );
         return zero;
     }
 
@@ -74,10 +71,10 @@ public:
     // static Wrapper fromString( const std::string& str, Base base );
     // static Wrapper fromString(
     //     const std::array< std::string, Wrapper::NUM_COMPONENTS_AFFINE >& arr, Base base );
-    // // TODO - we should get rid of this for perf. reasons. no need to use vectors when we know the
+    // // TODO - we should get rid of this for perf. reasons. no need to use vectors when we know
+    // the
     // // size
     // static Wrapper fromString( const std::vector< std::string >& arr, Base base );
-
 };
 
 }  // namespace libBLS::algebra

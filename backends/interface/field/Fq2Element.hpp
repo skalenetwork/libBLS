@@ -8,7 +8,7 @@
 
 namespace libBLS::algebra {
 
-class Fq2Element : public Field< Fq2BackendType, Fq2Element >  {
+class Fq2Element : public Field< Fq2BackendType, Fq2Element > {
 private:
 public:
     Fq2Element();

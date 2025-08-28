@@ -1,10 +1,10 @@
 #ifdef MCL
 
 #include "backends/interface/group/G2Point.hpp"
+#include "../utils.hpp"
 #include "backends/algebra_types.hpp"
 #include "backends/interface/field/FqElement.hpp"
 #include "backends/interface/field/FrScalar.hpp"
-#include "../utils.hpp"
 
 namespace libBLS::algebra {
 
@@ -23,8 +23,8 @@ G2Point::G2Point( const Fq2Element& x, const Fq2Element& y, const Fq2Element& z 
 }
 
 template <>
-const G2BackendType& Group< G2BackendType, G2Point, Fq2RefWrapper>::identityBackend() {
-    static const G2BackendType identity = []{
+const G2BackendType& Group< G2BackendType, G2Point, Fq2RefWrapper >::identityBackend() {
+    static const G2BackendType identity = [] {
         G2BackendType t;
         t.clear();
         return t;
@@ -33,17 +33,18 @@ const G2BackendType& Group< G2BackendType, G2Point, Fq2RefWrapper>::identityBack
 }
 
 template <>
-const G2BackendType& Group< G2BackendType, G2Point, Fq2RefWrapper>::generatorBackend() {
-    static const G2BackendType one = []{
+const G2BackendType& Group< G2BackendType, G2Point, Fq2RefWrapper >::generatorBackend() {
+    static const G2BackendType one = [] {
         G2BackendType one;
         one.clear();
-        one.x.a.setStr(std::string(AltBn128Contract::g2_x0_dec), mcl::bn::IoDec);
-        one.x.b.setStr(std::string(AltBn128Contract::g2_x1_dec), mcl::bn::IoDec);
-        one.y.a.setStr(std::string(AltBn128Contract::g2_y0_dec), mcl::bn::IoDec);
-        one.y.b.setStr(std::string(AltBn128Contract::g2_y1_dec), mcl::bn::IoDec);
+        one.x.a.setStr( std::string( AltBn128Contract::g2_x0_dec ), mcl::bn::IoDec );
+        one.x.b.setStr( std::string( AltBn128Contract::g2_x1_dec ), mcl::bn::IoDec );
+        one.y.a.setStr( std::string( AltBn128Contract::g2_y0_dec ), mcl::bn::IoDec );
+        one.y.b.setStr( std::string( AltBn128Contract::g2_y1_dec ), mcl::bn::IoDec );
         one.z.clear();
-        one.z.a = FqBackendType::one(); // z = 1 (affine)
-        if (!one.isValid()) throw std::runtime_error("mcl: G2::one not on curve");
+        one.z.a = FqBackendType::one();  // z = 1 (affine)
+        if ( !one.isValid() )
+            throw std::runtime_error( "mcl: G2::one not on curve" );
         return one;
     }();
     return one;
@@ -100,7 +101,7 @@ G2Point Group< G2BackendType, G2Point, Fq2RefWrapper >::random() {
     r.setByCSPRNG();
     const G2BackendType& G = generatorBackend();
     G2BackendType Q;
-    mcl::G2::mul(Q, G, r);
+    mcl::G2::mul( Q, G, r );
     return Q;
 }
 
@@ -109,21 +110,21 @@ G2Point G2Point::fromBytes( const std::array< uint8_t, G2Point::SIZE_BYTES >& by
     const uint8_t* p = bytes.data();
 
     // helper to read an Fp from BE bytes
-    auto readFp = [&](mcl::bn::Fp& out) {
-        out.setBigEndianMod(p, FQ_SIZE);
+    auto readFp = [&]( mcl::bn::Fp& out ) {
+        out.setBigEndianMod( p, FQ_SIZE );
         p += FQ_SIZE;
     };
 
     // build point
     G2BackendType P;
-    readFp(P.x.a);
-    readFp(P.x.b);
-    readFp(P.y.a);
-    readFp(P.y.b);
-    P.z.clear(); 
+    readFp( P.x.a );
+    readFp( P.x.b );
+    readFp( P.y.a );
+    readFp( P.y.b );
+    P.z.clear();
     P.z.a = 1;
-    
-    return G2Point(P);
+
+    return G2Point( P );
 }
 
 G2Point G2Point::fromBytes( const std::vector< uint8_t >& bytes ) {
@@ -156,14 +157,17 @@ G2Point G2Point::fromString( const std::string& str, Base base ) {
     ret.value.z.a = FqBackendType::one();
 
     try {
-        trySettingFieldWithString(ret.value.x.a, str.substr(0 * elementStringSize, elementStringSize), base);
-        trySettingFieldWithString(ret.value.x.b, str.substr(1 * elementStringSize, elementStringSize), base);
-        trySettingFieldWithString(ret.value.y.a, str.substr(2 * elementStringSize, elementStringSize), base);
-        trySettingFieldWithString(ret.value.y.b, str.substr(3 * elementStringSize, std::string::npos), base);
+        trySettingFieldWithString(
+            ret.value.x.a, str.substr( 0 * elementStringSize, elementStringSize ), base );
+        trySettingFieldWithString(
+            ret.value.x.b, str.substr( 1 * elementStringSize, elementStringSize ), base );
+        trySettingFieldWithString(
+            ret.value.y.a, str.substr( 2 * elementStringSize, elementStringSize ), base );
+        trySettingFieldWithString(
+            ret.value.y.b, str.substr( 3 * elementStringSize, std::string::npos ), base );
     } catch ( const std::exception& e ) {
         throw ThresholdUtils::IncorrectInput(
-            std::string("Failed to set G2Point components from string: ") + e.what()
-        );
+            std::string( "Failed to set G2Point components from string: " ) + e.what() );
     }
 
     return ret;
@@ -176,17 +180,15 @@ G2Point G2Point::fromString(
     ret.value.z.a = FqBackendType::one();
 
     try {
-        trySettingFieldWithString(ret.value.x.a, arr[0], base);
-        trySettingFieldWithString(ret.value.x.b, arr[1], base);
-        trySettingFieldWithString(ret.value.y.a, arr[2], base);
-        trySettingFieldWithString(ret.value.y.b, arr[3], base);
+        trySettingFieldWithString( ret.value.x.a, arr[0], base );
+        trySettingFieldWithString( ret.value.x.b, arr[1], base );
+        trySettingFieldWithString( ret.value.y.a, arr[2], base );
+        trySettingFieldWithString( ret.value.y.b, arr[3], base );
         return ret;
     } catch ( const std::exception& e ) {
         throw ThresholdUtils::IncorrectInput(
-            std::string("Failed to set G2Point components from string: ") + e.what()
-        );
+            std::string( "Failed to set G2Point components from string: " ) + e.what() );
     }
-
 }
 
 G2Point G2Point::fromString( const std::vector< std::string >& arr, Base base ) {
@@ -222,7 +224,7 @@ bool G2Point::operator!=( const G2Point& other ) const {
 
 G2Point operator*( const FrScalar& scalar, const G2Point& point ) {
     G2BackendType result;
-    mcl::G2::mul(result, point.value, scalar.value );
+    mcl::G2::mul( result, point.value, scalar.value );
     return G2Point( result );
 }
 
@@ -239,7 +241,7 @@ void G2Point::forEachAffineComponentImpl(
 
     // compatibility with point at infinity representation across all backends
     value.isZero() ? fn( FqElement( 1 ), 2 ) : fn( FqElement( affine.y.a ), 2 );
-    
+
     fn( FqElement( affine.y.b ), 3 );
 }
 
@@ -256,4 +258,4 @@ void G2Point::forEachProjectiveComponentImpl(
 
 }  // namespace libBLS::algebra
 
-#endif // MCL
+#endif  // MCL

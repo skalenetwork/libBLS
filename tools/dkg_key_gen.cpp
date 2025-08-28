@@ -106,7 +106,8 @@ void KeyGeneration( const size_t t, const size_t n, bool generate_all = true, in
         std::vector< std::shared_ptr< BLSPrivateKeyShare > > skeys;
         algebra::G2Point common_public_key = algebra::G2Point::identity();
         for ( size_t i = 0; i < n; ++i ) {
-            common_public_key = common_public_key + polynomial[i][0] * algebra::G2Point::generator();
+            common_public_key =
+                common_public_key + polynomial[i][0] * algebra::G2Point::generator();
             BLSPrivateKeyShare cur_skey(
                 dkg_instance.SecretKeyShareCreate( secret_key_contribution[i] ), t, n );
             skeys.push_back( std::make_shared< BLSPrivateKeyShare >( cur_skey ) );

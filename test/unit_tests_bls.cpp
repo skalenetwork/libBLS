@@ -22,9 +22,9 @@
  */
 
 
+#include "test/utils.h"
 #include <bls/bls.h>
 #include <tools/utils.h>
-#include "test/utils.h"
 
 #include <cstdlib>
 #include <ctime>
@@ -42,7 +42,7 @@
 
 std::default_random_engine rand_gen( ( unsigned int ) time( 0 ) );
 
-BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
+BOOST_TEST_GLOBAL_CONFIGURATION( GlobalConfig );
 
 std::string rand32HexStr() {
     std::array< char, 16 > s = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c',

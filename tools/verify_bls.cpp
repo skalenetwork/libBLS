@@ -22,11 +22,11 @@
 */
 
 
-#include <fstream>
-#include <boost/program_options.hpp>
-#include <bls/bls.h>
-#include <third_party/json.hpp>
 #include <bls/BLSPublicKey.h>
+#include <bls/bls.h>
+#include <boost/program_options.hpp>
+#include <fstream>
+#include <third_party/json.hpp>
 
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
 #define __EXPAND_AS_STR__( x ) #x
@@ -71,10 +71,11 @@ void Verify( const size_t t, const size_t n, std::istream& sign_file, int j = -1
     sign_file >> signature;
 
     libBLS::algebra::G1Point sign(
-        libBLS::algebra::FqElement::fromString( signature["signature"]["X"].get< std::string >(), libBLS::Base::DEC ),
-        libBLS::algebra::FqElement::fromString( signature["signature"]["Y"].get< std::string >(), libBLS::Base::DEC ),
-        libBLS::algebra::FqElement::one()
-    );
+        libBLS::algebra::FqElement::fromString(
+            signature["signature"]["X"].get< std::string >(), libBLS::Base::DEC ),
+        libBLS::algebra::FqElement::fromString(
+            signature["signature"]["Y"].get< std::string >(), libBLS::Base::DEC ),
+        libBLS::algebra::FqElement::one() );
 
     nlohmann::json hash_in;
 

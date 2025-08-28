@@ -22,14 +22,14 @@ GTElement pairing( const G1Point& g1, const G2Point& g2 );
 FrScalar power( const FrScalar& fr, size_t exponent );
 
 // Exponentiation using a big integer
-FqElement power( const FqElement& fq, const std::string& exponent); 
+FqElement power( const FqElement& fq, const std::string& exponent );
 
 void normalizeYCoordinate( FqElement& element );
 
 FqElement hashToFq( const std::array< uint8_t, 32 >& hash_byte_arr );
 
 // -------------------- Backend Agnostic -------------------- //
-// These functions are implemented in functions.cpp and should 
+// These functions are implemented in functions.cpp and should
 // work for any backend
 
 std::pair< FqElement, FqElement > parseHint( const std::string& _hint );

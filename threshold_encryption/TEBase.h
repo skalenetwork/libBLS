@@ -43,7 +43,6 @@ protected:
     static std::atomic< bool > isLibffInitialized;
 
 public:
-
     /**
      * @brief Constructor for TEBase
      * @param _requiredSigners Number of signers required to decrypt

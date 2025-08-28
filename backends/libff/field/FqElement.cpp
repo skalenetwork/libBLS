@@ -14,7 +14,7 @@ mpz_class FqElement::toMpzClass() const {
 }
 
 FqBackendType FqElement::fromMpzClass( const mpz_class& m ) {
-    FqBackendType field_elem( m.get_mpz_t());
+    FqBackendType field_elem( m.get_mpz_t() );
     return field_elem;
 }
 
@@ -117,4 +117,4 @@ FqElement FqElement::random() {
 
 }  // namespace libBLS::algebra
 
-#endif // LIBFF
+#endif  // LIBFF
