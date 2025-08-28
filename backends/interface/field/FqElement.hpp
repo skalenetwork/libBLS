@@ -10,6 +10,38 @@ namespace libBLS::algebra {
 class FqElement : public Field< FqBackendType, FqElement > {
 public:
     static constexpr size_t SIZE_BYTES = 32;
+
+
+private:
+    mpz_class toMpzClass() const;
+    static FqBackendType fromMpzClass( const mpz_class& m );
+
+    static FqElement fromBytesDefault( const std::array< uint8_t, SIZE_BYTES >& bytes ) {
+        mpz_class t = bytesToMpzClass( bytes );
+        return fromMpzClass(t);
+    }
+
+    static FqElement fromBytesDefault( const std::vector< uint8_t >& bytes ) {
+        mpz_class t = bytesToMpzClass( bytes );
+        return fromMpzClass(t);
+    }
+
+    static FqElement fromStringDefault( const std::string& str, Base base ) {
+        mpz_class t = stringToMpzClass( str, static_cast< size_t >( base ) );
+        return fromMpzClass(t);
+    }
+
+    virtual std::array< uint8_t, SIZE_BYTES > toByteArrayDefault() const {
+        mpz_class t = toMpzClass();
+        return mpzClassToByteArray( t );
+    }
+
+    virtual std::string toStringDefault( Base base ) const {
+        mpz_class t = toMpzClass();
+        return mpzClassToString( t, static_cast< size_t >( base ) );
+    }
+
+public:
     static constexpr std::string_view EULER = AltBn128Contract::fq_euler_dec;
 
     FqElement();
@@ -17,11 +49,14 @@ public:
     FqElement( const FqBackendType& val ) : Field( val ) {}
 
     // -------------------- Serialization / Deserialization Methods -------------------- //
-    std::string toString( Base base ) const;
+
     std::array< uint8_t, SIZE_BYTES > toByteArray() const;
+    std::string toString( Base base ) const;
 
     static FqElement fromString( const std::string& str, Base base );
     static FqElement fromBytes( const std::array< uint8_t, SIZE_BYTES >& bytes );
+
+
 
 
     // -------------------- Operator Overloads -------------------- //

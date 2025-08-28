@@ -59,15 +59,15 @@ public:
     }
 
     static G1Point fromBytes( const std::vector< uint8_t >& bytes ) {
-    if ( bytes.size() != G1Point::SIZE_BYTES ) {
-        throw ThresholdUtils::IncorrectInput( "Wrong byte vector size to convert to G1Point" );
+        if ( bytes.size() != G1Point::SIZE_BYTES ) {
+            throw ThresholdUtils::IncorrectInput( "Wrong byte vector size to convert to G1Point" );
+        }
+
+        std::array< uint8_t, G1Point::SIZE_BYTES > arr;
+        std::copy( bytes.begin(), bytes.end(), arr.begin() );
+
+        return fromBytes( arr );    
     }
-
-    std::array< uint8_t, G1Point::SIZE_BYTES > arr;
-    std::copy( bytes.begin(), bytes.end(), arr.begin() );
-
-    return fromBytes( arr );    
-}
 
     static G1Point fromString( const std::string& str, Base base );
     static G1Point fromString(
