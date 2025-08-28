@@ -66,7 +66,6 @@ std::shared_ptr< algebra::G2Point > BLSPublicKeyShare::getPublicKey() const {
     return publicKey;
 }
 
-
 // TODO - should be named to toStringVec to remove ambiguity
 std::shared_ptr< std::vector< std::string > > BLSPublicKeyShare::toString() {
     return std::make_shared< std::vector< std::string > >(

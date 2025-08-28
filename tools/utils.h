@@ -115,6 +115,9 @@ public:
     template < size_t N >
     static std::array< uint8_t, N > hexCStringToBytesArray( const char* hexStr );
 
+    template < class T >
+    static void validatePointWithException( const T& point );
+
 private:
     /**
      * @brief Helper function that validates input char*
@@ -153,7 +156,6 @@ std::array< uint8_t, N > ThresholdUtils::hexCStringToBytesArray( const char* hex
 
     return bytes;
 }
-
 
 }  // namespace libBLS
 

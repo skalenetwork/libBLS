@@ -59,9 +59,11 @@ struct CipheredKey {
 
 public:
     CipheredKey() = default;
-    CipheredKey( algebra::G2Point _U, AES256Key _V, algebra::G1Point _W )
+    CipheredKey(
+        libff::algebra::G2Point _U, AES256Key _V, libff::algebra::G1Point _W, bool _validate = true )
         : U( _U ), V( std::move( _V ) ), W( _W ) {
-        validate();
+        if ( _validate )
+            validate();
     }
 
     bool operator==( const CipheredKey& other ) const {
@@ -96,7 +98,8 @@ public:
     /**
      * @brief Converts bytes to CipheredKey
      */
-    static CipheredKey fromBytes( std::array< uint8_t, CIPHERED_KEY_SIZE_BYTES > bytes ) {
+    static CipheredKey fromBytes(
+        std::array< uint8_t, CIPHERED_KEY_SIZE_BYTES > bytes, bool _validate = true ) {
         std::array< uint8_t, G2_SIZE_BYTES > u_bytes;
         std::array< uint8_t, AES_256_KEY_SIZE_BYTES > v_bytes;
         std::array< uint8_t, G1_SIZE_BYTES > w_bytes;
@@ -116,7 +119,7 @@ public:
         algebra::G1Point W = algebra::G1Point::fromBytes( w_bytes );
 
         // constructor performs validation
-        return CipheredKey( U, v_bytes, W );
+        return CipheredKey( U, v_bytes, W, _validate );
     }
 
     /**
@@ -164,16 +167,16 @@ public:
 };
 
 /**
- * @brief Holds the ciphered AES key, as well as the data
+ * @brief Holds the ciphered AES keys (vector), as well as the data
  * ciphered with AES key.
  */
 struct Ciphertext {
-    CipheredKey key;
+    std::vector< CipheredKey > keys;
     std::shared_ptr< std::vector< uint8_t > > data;
 
 public:
     bool operator==( const Ciphertext& other ) const {
-        bool baseParams = key == other.key;
+        bool baseParams = keys == other.keys;
         if ( data && other.data ) {
             return baseParams && ( *data == *other.data );
         }
@@ -182,9 +185,26 @@ public:
 
     Ciphertext() = default;
 
-    Ciphertext( const CipheredKey& _key, const std::vector< uint8_t >& _data )
-        : key( _key ), data( std::make_shared< std::vector< uint8_t > >( _data ) ) {
-        validate();
+    Ciphertext( const std::vector< CipheredKey >& _keys, const std::vector< uint8_t >& _data,
+        bool _validate = true )
+        : keys( _keys ), data( std::make_shared< std::vector< uint8_t > >( _data ) ) {
+        if ( _validate )
+            validate();
+    }
+
+    Ciphertext(
+        const CipheredKey& _key, const std::vector< uint8_t >& _data, bool _validate = true )
+        : keys( { _key } ), data( std::make_shared< std::vector< uint8_t > >( _data ) ) {
+        if ( _validate )
+            validate();
+    }
+
+    // Constructor for exactly two keys
+    Ciphertext( const CipheredKey& _key1, const CipheredKey& _key2,
+        const std::vector< uint8_t >& _data, bool _validate = true )
+        : keys( { _key1, _key2 } ), data( std::make_shared< std::vector< uint8_t > >( _data ) ) {
+        if ( _validate )
+            validate();
     }
 
     const std::vector< uint8_t >& getData() const {
@@ -196,22 +216,36 @@ public:
 
     /**
      * @brief Converts Ciphertext to bytes
-     * The byte format returned is: `[ key | data ]`
+     * The byte format returned is: `[ num_keys | key1 | key2 | ... | data ]`
      *
-     * where `data` can be of arbitrary size, and `key` is a fixed size.
+     * where `data` can be of arbitrary size, each `key` is a fixed size,
+     * and `num_keys` is a 1-byte integer indicating the number of keys.
      */
     const std::vector< uint8_t > toBytes() const {
         if ( !data ) {
             throw ThresholdUtils::IncorrectInput( "Cyphertext data is not initialized" );
         }
-        // get key bytes
-        std::array< uint8_t, CipheredKey::CIPHERED_KEY_SIZE_BYTES > keyBytes = key.toBytes();
-        // preallocate vec
-        std::vector< uint8_t > bytes( CipheredKey::CIPHERED_KEY_SIZE_BYTES + data->size() );
-        // Copy keyBytes into the first part of bytes
-        std::copy( keyBytes.begin(), keyBytes.end(), bytes.begin() );
-        // Copy data bytes after keyBytes
-        std::copy( data->begin(), data->end(), bytes.begin() + keyBytes.size() );
+
+        // Calculate total size needed
+        size_t totalSize = sizeof( uint8_t ) +  // for number of keys
+                           ( keys.size() * CipheredKey::CIPHERED_KEY_SIZE_BYTES ) +  // for all keys
+                           data->size();                                             // for data
+
+        std::vector< uint8_t > bytes;
+        bytes.reserve( totalSize );
+
+        // Add number of keys
+        uint8_t numKeys = static_cast< uint8_t >( keys.size() );
+        bytes.push_back( numKeys );
+
+        // Add each key
+        for ( const auto& key : keys ) {
+            std::array< uint8_t, CipheredKey::CIPHERED_KEY_SIZE_BYTES > keyBytes = key.toBytes();
+            bytes.insert( bytes.end(), keyBytes.begin(), keyBytes.end() );
+        }
+
+        // Add data
+        bytes.insert( bytes.end(), data->begin(), data->end() );
 
         return bytes;
     }
@@ -219,24 +253,51 @@ public:
     /**
      * @brief Converts bytes to Ciphertext
      */
-    static Ciphertext fromBytes( std::vector< uint8_t >& bytes ) {
-        // we require at least key size + random secret size + 1 byte for data field
-        if ( bytes.size() <= CipheredKey::CIPHERED_KEY_SIZE_BYTES + RANDOM_SECRET_SIZE_BYTES ) {
+    static Ciphertext fromBytes( std::vector< uint8_t >& bytes, bool _validate = true ) {
+        // we require at least 1 byte for num_keys + one key + random secret + 1 byte for data
+        if ( bytes.size() <=
+             sizeof( uint8_t ) + CipheredKey::CIPHERED_KEY_SIZE_BYTES + RANDOM_SECRET_SIZE_BYTES ) {
             throw ThresholdUtils::IncorrectInput( "Cyphertext data is too short" );
         }
 
-        // get key bytes
-        std::array< uint8_t, CipheredKey::CIPHERED_KEY_SIZE_BYTES > keyBytes;
-        std::copy(
-            bytes.begin(), bytes.begin() + CipheredKey::CIPHERED_KEY_SIZE_BYTES, keyBytes.begin() );
-        // get data bytes
-        std::vector< uint8_t > data(
-            bytes.begin() + CipheredKey::CIPHERED_KEY_SIZE_BYTES, bytes.end() );
+        size_t offset = 0;
 
-        // get key structure
-        CipheredKey key = CipheredKey::fromBytes( keyBytes );
+        // Get number of keys
+        uint8_t numKeys;
+        std::memcpy( &numKeys, bytes.data() + offset, sizeof( uint8_t ) );
+        offset += sizeof( uint8_t );
 
-        return Ciphertext( key, data );
+        if ( numKeys == 0 || numKeys > 2 )
+            throw ThresholdUtils::IncorrectInput( "Ciphertext must contain exactly 1 or 2 keys" );
+
+        // Check that the input matches the number of keys
+        size_t expectedMinSize =
+            sizeof( uint8_t ) + ( numKeys * CipheredKey::CIPHERED_KEY_SIZE_BYTES ) +
+            RANDOM_SECRET_SIZE_BYTES + 1;  // +1 for at least 1 byte of actual data
+        if ( bytes.size() < expectedMinSize )
+            throw ThresholdUtils::IncorrectInput(
+                "Cyphertext data is too short for specified number of keys" );
+
+        // Extract keys
+        std::vector< CipheredKey > keys;
+        keys.reserve( numKeys );
+
+        for ( size_t i = 0; i < numKeys; ++i ) {
+            std::array< uint8_t, CipheredKey::CIPHERED_KEY_SIZE_BYTES > keyBytes;
+            std::memcpy(
+                keyBytes.data(), bytes.data() + offset, CipheredKey::CIPHERED_KEY_SIZE_BYTES );
+            offset += CipheredKey::CIPHERED_KEY_SIZE_BYTES;
+
+            // do not validate CipheredKey here
+            // if validation is enabled, CipheredKey is validated in Ciphertext's constructor
+            // otherwise we don't need validation at all
+            keys.push_back( CipheredKey::fromBytes( keyBytes, false ) );
+        }
+
+        // Get data bytes
+        std::vector< uint8_t > data( bytes.begin() + offset, bytes.end() );
+
+        return Ciphertext( keys, data, _validate );
     }
 
     /**
@@ -244,7 +305,12 @@ public:
      * @throw NotWellFormed if the it fails the validation
      */
     void validate() const {
-        key.validate();
+        if ( keys.empty() || keys.size() > 2 )
+            throw ThresholdUtils::IsNotWellFormed( "Ciphertext must contain exactly 1 or 2 keys" );
+
+        for ( const auto& key : keys ) {
+            key.validate();
+        }
 
         if ( !data ) {
             throw ThresholdUtils::IsNotWellFormed( "Cyphertext data is not initialized" );
@@ -255,6 +321,32 @@ public:
             throw ThresholdUtils::IsNotWellFormed(
                 "Cyphertext data is too short to hold random secret and at least 1 byte of data." );
         }
+    }
+
+    /**
+     * @brief Returns the vector of keys in the Ciphertext
+     */
+    const std::vector< CipheredKey >& getKeys() const { return keys; }
+
+    /**
+     * @brief keeps only one key for validation and decryption
+     * @param idx - index of the key to keep
+     */
+    void keepKey( size_t _idx ) {
+        if ( _idx >= keys.size() || keys.size() != 2 )
+            throw ThresholdUtils::IncorrectInput(
+                "Key index is greater than number of the keys in ciphertext" );
+        keys.erase( keys.begin() + ( keys.size() - _idx - 1 ) );
+    }
+
+    /**
+     * @brief get a CipheredKey for validation and decryption
+     * @throw IncorrectInput if there are 0 or 2 keys to choose
+     */
+    const CipheredKey& getTargetKey() const {
+        if ( keys.size() != 1 )
+            throw ThresholdUtils::IncorrectInput( "Cannot choose a target key" );
+        return keys.front();
     }
 };
 
@@ -269,7 +361,7 @@ struct CipherResult {
 };
 
 struct CipheredKeyResult {
-    std::shared_ptr< CipheredKey > ciphertext;
+    std::vector< CipheredKey > ciphertext;
     RandSecret random_secret;
 };
 
@@ -299,13 +391,19 @@ public:
      * @note This is an auxiliar function, used within `encryptWithAES`
      */
     static CipheredKeyResult getCiphertext(
-        const AES256Key& key, const algebra::G2Point& commonPublic );
+        const AES256Key& key, const libff::algebra::G2Point& commonPublic );
+    static CipheredKeyResult getCiphertext(
+        const AES256Key& key, const std::vector< libff::algebra::G2Point >& commonPublic );
 
     static CipherResult encryptWithAES(
-        const std::vector< uint8_t >& message, const algebra::G2Point& commonPublic );
+        const std::vector< uint8_t >& message, const libff::algebra::G2Point& commonPublic );
+    static CipherResult encryptWithAES( const std::vector< uint8_t >& message,
+        const std::vector< libff::algebra::G2Point >& commonPublic );
 
     static std::pair< std::string, RandSecret > encryptMessage(
-        const std::vector< uint8_t >& message, const std::string& common_public );
+        const std::vector< uint8_t >& message, const std::string& commonPublic );
+    static std::pair< std::string, RandSecret > encryptMessage(
+        const std::vector< uint8_t >& message, const std::vector< std::string >& commonPublic );
 
     static algebra::G2Point getDecryptionShare(
         const CipheredKey& ciphertext, const algebra::FrScalar& secret_key );

@@ -121,79 +121,86 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
             public_key_shares.erase( pos2 );
         }
 
-        libBLS::TEDecryptSet decrSet( numSigned, numAll );
-        for ( size_t i = 0; i < numSigned; i++ ) {
-            libBLS::TEDecryptionShare share =
-                libBLS::ThresholdEncryption::partialDecrypt( cypher.key, skey_shares[i] );
-            libBLS::ThresholdEncryption::validateDecryptionShare(
-                cypher.key, share, public_key_shares[i] );
-            decrSet.addDecryptShare( share );
+        for ( const auto& cipheredKey : cypher.getKeys() ) {
+            libBLS::TEDecryptSet decrSet( numSigned, numAll );
+            for ( size_t i = 0; i < numSigned; i++ ) {
+                libBLS::TEDecryptionShare share =
+                    libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, skey_shares[i] );
+                libBLS::ThresholdEncryption::validateDecryptionShare(
+                    cipheredKey, share, public_key_shares[i] );
+                decrSet.addDecryptShare( share );
+            }
+            // each can only combine the shares once - thus several copies
+            libBLS::TEDecryptSet decr_set2 = decrSet;
+            libBLS::TEDecryptSet decr_set3 = decrSet;
+            libBLS::TEDecryptSet decr_set4 = decrSet;
+
+
+            libBLS::AES256Key key =
+                libBLS::ThresholdEncryption::combineShares( cipheredKey, decrSet );
+
+            libBLS::ThresholdEncryption::validateCombinedDecryption( cypher, key, common_public );
+
+            std::vector< uint8_t > decipheredMsg =
+                libBLS::ThresholdEncryption::decrypt( cypher, key );
+            BOOST_REQUIRE( decipheredMsg == message );
+
+
+            libBLS::CipheredKey bad_cyphered_key = cipheredKey;  // corrupt V in cypher
+
+            // spoil 2 random consecutive bytes
+            size_t ind4del = rand_gen() % libBLS::AES_256_KEY_SIZE_BYTES;
+            bad_cyphered_key.V[ind4del] = rand_gen() % 256;
+            bad_cyphered_key.V[( ind4del + 1 ) % libBLS::AES_256_KEY_SIZE_BYTES] = rand_gen() % 256;
+
+            BOOST_REQUIRE_THROW(
+                libBLS::ThresholdEncryption::combineShares( bad_cyphered_key, decr_set2 ),
+                libBLS::ThresholdUtils::IncorrectInput );
+
+            // cannot add after merge
+            BOOST_REQUIRE_THROW( decrSet.addDecryptShare( libBLS::TEDecryptionShare(
+                                     libff::algebra::G2Point::random(), 1 ) ),
+                libBLS::ThresholdUtils::IncorrectInput );
+
+            bad_cyphered_key = cipheredKey;  // corrupt U in cypher
+            libff::algebra::G2Point rand_el = libff::algebra::G2Point::random();
+            bad_cyphered_key.U = rand_el;
+
+            BOOST_REQUIRE_THROW(
+                libBLS::ThresholdEncryption::combineShares( bad_cyphered_key, decr_set3 ),
+                libBLS::ThresholdUtils::IncorrectInput );
+
+            bad_cyphered_key = cipheredKey;  // corrupt W in cypher
+            libff::algebra::G1Point rand_el2 = libff::algebra::G1Point::random();
+            bad_cyphered_key.W = rand_el2;
+
+            BOOST_REQUIRE_THROW(
+                libBLS::ThresholdEncryption::combineShares( bad_cyphered_key, decr_set4 ),
+                libBLS::ThresholdUtils::IncorrectInput );
+
+            size_t ind = rand_gen() % numSigned;  // corrupt random private key share
+
+            libBLS::algebra::FrScalar bad_pkey = libBLS::algebra::FrScalar::random();
+            libBLS::TEPrivateKeyShare bad_key(
+                bad_pkey, skey_shares[ind].getSignerIndex(), numSigned, numAll );
+            skey_shares[ind] = bad_key;
+
+
+            libBLS::TEDecryptSet bad_decr_set( numSigned, numAll );
+            for ( size_t i = 0; i < numSigned; i++ ) {
+                libBLS::TEDecryptionShare decr_share =
+                    libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, skey_shares[i] );
+                if ( i == ind )
+                    BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateDecryptionShare(
+                                             cipheredKey, decr_share, public_key_shares[i] ),
+                        libBLS::ThresholdUtils::IsNotWellFormed );
+                bad_decr_set.addDecryptShare( decr_share );
+            }
+
+            libBLS::AES256Key bad_key_decrypted =
+                libBLS::ThresholdEncryption::combineShares( cipheredKey, bad_decr_set );
+            BOOST_REQUIRE( key != bad_key_decrypted );
         }
-        // each can only combine the shares once - thus several copies
-        libBLS::TEDecryptSet decr_set2 = decrSet;
-        libBLS::TEDecryptSet decr_set3 = decrSet;
-        libBLS::TEDecryptSet decr_set4 = decrSet;
-
-        libBLS::AES256Key key = libBLS::ThresholdEncryption::combineShares( cypher.key, decrSet );
-        libBLS::ThresholdEncryption::validateCombinedDecryption( cypher, key, common_public );
-
-        std::vector< uint8_t > decipheredMsg = libBLS::ThresholdEncryption::decrypt( cypher, key );
-        BOOST_REQUIRE( decipheredMsg == message );
-
-
-        libBLS::CipheredKey bad_cyphered_key = cypher.key;  // corrupt V in cypher
-
-        // spoil 2 random consecutive bytes
-        size_t ind4del = rand_gen() % libBLS::AES_256_KEY_SIZE_BYTES;
-        bad_cyphered_key.V[ind4del] = rand_gen() % 256;
-        bad_cyphered_key.V[( ind4del + 1 ) % libBLS::AES_256_KEY_SIZE_BYTES] = rand_gen() % 256;
-
-        BOOST_REQUIRE_THROW(
-            libBLS::ThresholdEncryption::combineShares( bad_cyphered_key, decr_set2 ),
-            libBLS::ThresholdUtils::IncorrectInput );
-
-        // cannot add after merge
-        BOOST_REQUIRE_THROW( decrSet.addDecryptShare( libBLS::TEDecryptionShare(
-                                 libBLS::algebra::G2Point::random(), 1 ) ),
-            libBLS::ThresholdUtils::IncorrectInput );
-
-        bad_cyphered_key = cypher.key;  // corrupt U in cypher
-        libBLS::algebra::G2Point rand_el = libBLS::algebra::G2Point::random();
-        bad_cyphered_key.U = rand_el;
-
-        BOOST_REQUIRE_THROW(
-            libBLS::ThresholdEncryption::combineShares( bad_cyphered_key, decr_set3 ),
-            libBLS::ThresholdUtils::IncorrectInput );
-
-        bad_cyphered_key = cypher.key;  // corrupt W in cypher
-        libBLS::algebra::G1Point rand_el2 = libBLS::algebra::G1Point::random();
-        bad_cyphered_key.W = rand_el2;
-
-        BOOST_REQUIRE_THROW(
-            libBLS::ThresholdEncryption::combineShares( bad_cyphered_key, decr_set4 ),
-            libBLS::ThresholdUtils::IncorrectInput );
-
-        size_t ind = rand_gen() % numSigned;  // corrupt random private key share
-
-        libBLS::algebra::FrScalar bad_pkey = libBLS::algebra::FrScalar::random();
-        libBLS::TEPrivateKeyShare bad_key(
-            bad_pkey, skey_shares[ind].getSignerIndex(), numSigned, numAll );
-        skey_shares[ind] = bad_key;
-
-        libBLS::TEDecryptSet bad_decr_set( numSigned, numAll );
-        for ( size_t i = 0; i < numSigned; i++ ) {
-            libBLS::TEDecryptionShare decr_share =
-                libBLS::ThresholdEncryption::partialDecrypt( cypher.key, skey_shares[i] );
-            if ( i == ind )
-                BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateDecryptionShare(
-                                         cypher.key, decr_share, public_key_shares[i] ),
-                    libBLS::ThresholdUtils::IsNotWellFormed );
-            bad_decr_set.addDecryptShare( decr_share );
-        }
-
-        libBLS::AES256Key bad_key_decrypted =
-            libBLS::ThresholdEncryption::combineShares( cypher.key, bad_decr_set );
-        BOOST_REQUIRE( key != bad_key_decrypted );
     }
 }
 
@@ -226,24 +233,26 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
             public_key_shares.erase( pos2 );
         }
 
-        libBLS::TEDecryptSet decrSet( numSigned, numAll );
-        for ( size_t i = 0; i < numSigned; i++ ) {
-            libBLS::TEDecryptionShare decr_share =
-                libBLS::ThresholdEncryption::partialDecrypt( cypher.key, keys.secretKeys[i] );
-            libBLS::ThresholdEncryption::validateDecryptionShare(
-                cypher.key, decr_share, public_key_shares.at( i ) );
-            decrSet.addDecryptShare( decr_share );
+        for ( const auto& cipheredKey : cypher.getKeys() ) {
+            libBLS::TEDecryptSet decrSet( numSigned, numAll );
+            for ( size_t i = 0; i < numSigned; i++ ) {
+                libBLS::TEDecryptionShare decr_share =
+                    libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[i] );
+                libBLS::ThresholdEncryption::validateDecryptionShare(
+                    cipheredKey, decr_share, public_key_shares.at( i ) );
+                decrSet.addDecryptShare( decr_share );
+            }
+
+            libBLS::AES256Key key_decrypted =
+                libBLS::ThresholdEncryption::combineShares( cipheredKey, decrSet );
+
+            libBLS::ThresholdEncryption::validateCombinedDecryption(
+                cypher, key_decrypted, keys.commonPublic );
+
+            std::vector< uint8_t > decipheredMsg =
+                libBLS::ThresholdEncryption::decrypt( cypher, key_decrypted );
+            BOOST_REQUIRE( decipheredMsg == message );
         }
-
-        libBLS::AES256Key key_decrypted =
-            libBLS::ThresholdEncryption::combineShares( cypher.key, decrSet );
-
-        libBLS::ThresholdEncryption::validateCombinedDecryption(
-            cypher, key_decrypted, keys.commonPublic );
-
-        std::vector< uint8_t > decipheredMsg =
-            libBLS::ThresholdEncryption::decrypt( cypher, key_decrypted );
-        BOOST_REQUIRE( decipheredMsg == message );
     }
 }
 
@@ -258,15 +267,6 @@ BOOST_AUTO_TEST_CASE( TEFailingValidation ) {
         std::vector< uint8_t > message = randomByteVec( 100 );
 
         keys keys = generateKeys( numSigned, numAll );
-
-        libBLS::Ciphertext cypher =
-            libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
-
-        libBLS::CipheredKey bad_key = cypher.key;
-        bad_key.V[0] = ( bad_key.V[0] + 1 ) % 256;  // spoil the ciphered key
-        BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateEncryption( bad_key ),
-            libBLS::ThresholdUtils::IsNotWellFormed );
-        libBLS::ThresholdEncryption::validateEncryption( cypher.key );
 
         std::vector< libBLS::TEPublicKeyShare > public_key_shares;
         for ( size_t i = 0; i < numAll; i++ ) {
@@ -283,28 +283,39 @@ BOOST_AUTO_TEST_CASE( TEFailingValidation ) {
             public_key_shares.erase( pos2 );
         }
 
-        libBLS::TEDecryptSet decrSet( numSigned, numAll );
-        for ( size_t i = 0; i < numSigned; i++ ) {
-            libBLS::TEDecryptionShare decr_share =
-                libBLS::ThresholdEncryption::partialDecrypt( cypher.key, keys.secretKeys[i] );
-            libBLS::ThresholdEncryption::validateDecryptionShare(
-                cypher.key, decr_share, public_key_shares.at( i ) );
+        libBLS::Ciphertext cypher =
+            libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
 
-            decrSet.addDecryptShare( decr_share );
+        libBLS::CipheredKey bad_key = cypher.keys[0];
+        bad_key.V[0] = ( bad_key.V[0] + 1 ) % 256;  // spoil the ciphered key
+        BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateEncryption( bad_key ),
+            libBLS::ThresholdUtils::IsNotWellFormed );
+        for ( const auto& cipheredKey : cypher.getKeys() ) {
+            libBLS::ThresholdEncryption::validateEncryption( cipheredKey );
+
+            libBLS::TEDecryptSet decrSet( numSigned, numAll );
+            for ( size_t i = 0; i < numSigned; i++ ) {
+                libBLS::TEDecryptionShare decr_share =
+                    libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[i] );
+                libBLS::ThresholdEncryption::validateDecryptionShare(
+                    cipheredKey, decr_share, public_key_shares.at( i ) );
+
+                decrSet.addDecryptShare( decr_share );
+            }
+            libBLS::AES256Key key_decrypted =
+                libBLS::ThresholdEncryption::combineShares( cipheredKey, decrSet );
+
+            // change some bytes from key_decrypted
+            libBLS::AES256Key copy = key_decrypted;
+            copy[0] = ( key_decrypted[0] + 1 ) % 256;
+            // this can throw either runtime_exception OR IsNotWellFormed. depends on AES content
+            BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateCombinedDecryption(
+                                     cypher, copy, keys.commonPublic ),
+                std::exception );
+
+            BOOST_REQUIRE_THROW(
+                libBLS::ThresholdEncryption::decrypt( cypher, copy ), std::runtime_error );
         }
-        libBLS::AES256Key key_decrypted =
-            libBLS::ThresholdEncryption::combineShares( cypher.key, decrSet );
-
-        // change some bytes from key_decrypted
-        libBLS::AES256Key copy = key_decrypted;
-        copy[0] = ( key_decrypted[0] + 1 ) % 256;
-        // this can throw either runtime_exception OR IsNotWellFormed. depends on AES content
-        BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateCombinedDecryption(
-                                 cypher, copy, keys.commonPublic ),
-            std::exception );
-
-        BOOST_REQUIRE_THROW(
-            libBLS::ThresholdEncryption::decrypt( cypher, copy ), std::runtime_error );
     }
 }
 
@@ -400,8 +411,6 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
 
         libBLS::Ciphertext cypher = libBLS::ThresholdEncryption::encrypt( message, common_public );
 
-        libBLS::ThresholdEncryption::validateEncryption( cypher.key );
-
         for ( size_t i = 0; i < numAll - numSigned; ++i ) {
             size_t ind4del = rand_gen() % secret_shares_all.size();
             auto pos4del = secret_shares_all.begin();
@@ -412,26 +421,30 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
             public_shares_all.erase( pos2 );
         }
 
-        libBLS::TEDecryptSet decrSet( numSigned, numAll );
-        for ( size_t i = 0; i < numSigned; i++ ) {
-            libBLS::TEDecryptionShare decr_share =
-                libBLS::ThresholdEncryption::partialDecrypt( cypher.key, skeys[i] );
+        for ( const auto& cipheredKey : cypher.getKeys() ) {
+            libBLS::ThresholdEncryption::validateEncryption( cipheredKey );
 
-            libBLS::ThresholdEncryption::validateDecryptionShare(
-                cypher.key, decr_share, pkeys[i] );
+            libBLS::TEDecryptSet decrSet( numSigned, numAll );
+            for ( size_t i = 0; i < numSigned; i++ ) {
+                libBLS::TEDecryptionShare decr_share =
+                    libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, skeys[i] );
 
-            decrSet.addDecryptShare( decr_share );
+                libBLS::ThresholdEncryption::validateDecryptionShare(
+                    cipheredKey, decr_share, pkeys[i] );
+
+                decrSet.addDecryptShare( decr_share );
+            }
+
+            libBLS::AES256Key key_deciphered =
+                libBLS::ThresholdEncryption::combineShares( cipheredKey, decrSet );
+
+            libBLS::ThresholdEncryption::validateCombinedDecryption(
+                cypher, key_deciphered, common_public );
+
+            std::vector< uint8_t > decipheredMsg =
+                libBLS::ThresholdEncryption::decrypt( cypher, key_deciphered );
+            BOOST_REQUIRE( decipheredMsg == message );
         }
-
-        libBLS::AES256Key key_deciphered =
-            libBLS::ThresholdEncryption::combineShares( cypher.key, decrSet );
-
-        libBLS::ThresholdEncryption::validateCombinedDecryption(
-            cypher, key_deciphered, common_public );
-
-        std::vector< uint8_t > decipheredMsg =
-            libBLS::ThresholdEncryption::decrypt( cypher, key_deciphered );
-        BOOST_REQUIRE( decipheredMsg == message );
     }
 }
 
@@ -1014,7 +1027,8 @@ template < typename ExceptionType >
 void exceptionOnTamperedCiphertextData(
     std::function< void( libBLS::Ciphertext& ) > testFunc, size_t dataSize, keys& keys ) {
     libBLS::Ciphertext cipher = generateRandomCiphertext( dataSize, keys );
-    tamperCipheredKeyV( cipher.key );
+    for ( auto& cipheredKey : cipher.keys )
+        tamperCipheredKeyV( cipheredKey );
 
     BOOST_REQUIRE_THROW( testFunc( cipher ), ExceptionType );
 }
@@ -1025,7 +1039,9 @@ template < typename ExceptionType >
 void exceptionOnTamperedCiphertextU(
     std::function< void( libBLS::Ciphertext& ) > testFunc, size_t dataSize, keys& keys ) {
     libBLS::Ciphertext cipher = generateRandomCiphertext( dataSize, keys );
-    cipher.key.U = libBLS::algebra::G2Point::random();
+
+    for ( auto& cipheredKey : cipher.keys )
+        cipheredKey.U = libff::algebra::G2Point::random();
 
     BOOST_REQUIRE_THROW( testFunc( cipher ), ExceptionType );
 }
@@ -1036,7 +1052,9 @@ template < typename ExceptionType >
 void exceptionOnTamperedCiphertextW(
     std::function< void( libBLS::Ciphertext& ) > testFunc, size_t dataSize, keys& keys ) {
     libBLS::Ciphertext cipher = generateRandomCiphertext( dataSize, keys );
-    cipher.key.W = libBLS::algebra::G1Point::random();
+
+    for ( auto& cipheredKey : cipher.keys )
+        cipheredKey.W = libff::algebra::G1Point::random();
 
     BOOST_REQUIRE_THROW( testFunc( cipher ), ExceptionType );
 }
@@ -1052,7 +1070,8 @@ BOOST_AUTO_TEST_CASE( Encryption ) {
         // should be big enough to contain message and random secret
         BOOST_REQUIRE( cipher.getData().size() >= data.size() + libBLS::RANDOM_SECRET_SIZE_BYTES );
 
-        libBLS::ThresholdEncryption::validateEncryption( cipher.key );
+        for ( const auto& cipheredKey : cipher.getKeys() )
+            libBLS::ThresholdEncryption::validateEncryption( cipheredKey );
     }
 
     // Exceptions
@@ -1061,7 +1080,8 @@ BOOST_AUTO_TEST_CASE( Encryption ) {
             // should not pass pairing validation
             exceptionOnTamperedCiphertextData< libBLS::ThresholdUtils::IsNotWellFormed >(
                 []( libBLS::Ciphertext& cipher ) {
-                    libBLS::ThresholdEncryption::validateEncryption( cipher.key );
+                    for ( const auto& cipheredKey : cipher.getKeys() )
+                        libBLS::ThresholdEncryption::validateEncryption( cipheredKey );
                 },
                 dataSize, keys );
         }
@@ -1069,7 +1089,8 @@ BOOST_AUTO_TEST_CASE( Encryption ) {
             // passed ciphered key has tampered U field
             exceptionOnTamperedCiphertextData< libBLS::ThresholdUtils::IsNotWellFormed >(
                 []( libBLS::Ciphertext& cipher ) {
-                    libBLS::ThresholdEncryption::validateEncryption( cipher.key );
+                    for ( const auto& cipheredKey : cipher.getKeys() )
+                        libBLS::ThresholdEncryption::validateEncryption( cipheredKey );
                 },
                 dataSize, keys );
         }
@@ -1077,7 +1098,8 @@ BOOST_AUTO_TEST_CASE( Encryption ) {
             // passed ciphered key has tampered W field
             exceptionOnTamperedCiphertextData< libBLS::ThresholdUtils::IsNotWellFormed >(
                 []( libBLS::Ciphertext& cipher ) {
-                    libBLS::ThresholdEncryption::validateEncryption( cipher.key );
+                    for ( const auto& cipheredKey : cipher.getKeys() )
+                        libBLS::ThresholdEncryption::validateEncryption( cipheredKey );
                 },
                 dataSize, keys );
         }
@@ -1090,7 +1112,8 @@ BOOST_AUTO_TEST_CASE( PartialDecrypt ) {
     for ( size_t i = 0; i < 20; ++i ) {
         libBLS::Ciphertext cipher = generateRandomCiphertext( dataSize, keys );
         // should not throw any exception
-        libBLS::ThresholdEncryption::partialDecrypt( cipher.key, keys.secretKeys[0] );
+        for ( const auto& cipheredKey : cipher.getKeys() )
+            libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[0] );
     }
 
     // Exceptions
@@ -1099,7 +1122,9 @@ BOOST_AUTO_TEST_CASE( PartialDecrypt ) {
             // passed ciphered key has tampered data
             exceptionOnTamperedCiphertextData< libBLS::ThresholdUtils::IncorrectInput >(
                 [&keys]( libBLS::Ciphertext& cipher ) {
-                    libBLS::ThresholdEncryption::partialDecrypt( cipher.key, keys.secretKeys[0] );
+                    for ( const auto& cipheredKey : cipher.getKeys() )
+                        libBLS::ThresholdEncryption::partialDecrypt(
+                            cipheredKey, keys.secretKeys[0] );
                 },
                 dataSize, keys );
         }
@@ -1107,7 +1132,9 @@ BOOST_AUTO_TEST_CASE( PartialDecrypt ) {
             // passed ciphered key has tampered U field
             exceptionOnTamperedCiphertextU< libBLS::ThresholdUtils::IncorrectInput >(
                 [&keys]( libBLS::Ciphertext& cipher ) {
-                    libBLS::ThresholdEncryption::partialDecrypt( cipher.key, keys.secretKeys[0] );
+                    for ( const auto& cipheredKey : cipher.getKeys() )
+                        libBLS::ThresholdEncryption::partialDecrypt(
+                            cipheredKey, keys.secretKeys[0] );
                 },
                 dataSize, keys );
         }
@@ -1115,7 +1142,9 @@ BOOST_AUTO_TEST_CASE( PartialDecrypt ) {
             // passed ciphered key has tampered W field
             exceptionOnTamperedCiphertextW< libBLS::ThresholdUtils::IncorrectInput >(
                 [&keys]( libBLS::Ciphertext& cipher ) {
-                    libBLS::ThresholdEncryption::partialDecrypt( cipher.key, keys.secretKeys[0] );
+                    for ( const auto& cipheredKey : cipher.getKeys() )
+                        libBLS::ThresholdEncryption::partialDecrypt(
+                            cipheredKey, keys.secretKeys[0] );
                 },
                 dataSize, keys );
         }
@@ -1132,16 +1161,19 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionShare ) {
 
     for ( size_t i = 0; i < 40; ++i ) {
         cipher = generateRandomCiphertext( dataSize, keys );
-        decrShare = libBLS::ThresholdEncryption::partialDecrypt( cipher.key, keys.secretKeys[0] );
+        for ( const auto& cipheredKey : cipher.getKeys() ) {
+            decrShare =
+                libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[0] );
 
-        libBLS::TEDecryptionShare decrShare2 =
-            libBLS::ThresholdEncryption::partialDecrypt( cipher.key, keys.secretKeys[1] );
+            libBLS::TEDecryptionShare decrShare2 =
+                libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[1] );
 
-        // should not throw
-        libBLS::ThresholdEncryption::validateDecryptionShare(
-            cipher.key, decrShare, keys.publicKeys[0] );
-        libBLS::ThresholdEncryption::validateDecryptionShare(
-            cipher.key, decrShare2, keys.publicKeys[1] );
+            // should not throw
+            libBLS::ThresholdEncryption::validateDecryptionShare(
+                cipheredKey, decrShare, keys.publicKeys[0] );
+            libBLS::ThresholdEncryption::validateDecryptionShare(
+                cipheredKey, decrShare2, keys.publicKeys[1] );
+        }
     }
 
     libBLS::TEDecryptionShare original = decrShare;
@@ -1153,8 +1185,9 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionShare ) {
             // passed ciphered key has tampered data field
             exceptionOnTamperedCiphertextData< libBLS::ThresholdUtils::IsNotWellFormed >(
                 [&keys, &original]( libBLS::Ciphertext& cipher ) {
-                    libBLS::ThresholdEncryption::validateDecryptionShare(
-                        cipher.key, original, keys.publicKeys[0] );
+                    for ( const auto& cipheredKey : cipher.getKeys() )
+                        libBLS::ThresholdEncryption::validateDecryptionShare(
+                            cipheredKey, original, keys.publicKeys[0] );
                 },
                 dataSize, keys );
         }
@@ -1162,8 +1195,9 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionShare ) {
             // passed ciphered key has tampered U field
             exceptionOnTamperedCiphertextU< libBLS::ThresholdUtils::IsNotWellFormed >(
                 [&keys, &decrShare]( libBLS::Ciphertext& cipher ) {
-                    libBLS::ThresholdEncryption::validateDecryptionShare(
-                        cipher.key, decrShare, keys.publicKeys[0] );
+                    for ( const auto& cipheredKey : cipher.getKeys() )
+                        libBLS::ThresholdEncryption::validateDecryptionShare(
+                            cipheredKey, decrShare, keys.publicKeys[0] );
                 },
                 dataSize, keys );
         }
@@ -1171,26 +1205,29 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionShare ) {
             // passed ciphered key has tampered W field
             exceptionOnTamperedCiphertextW< libBLS::ThresholdUtils::IsNotWellFormed >(
                 [&keys, &decrShare]( libBLS::Ciphertext& cipher ) {
-                    libBLS::ThresholdEncryption::validateDecryptionShare(
-                        cipher.key, decrShare, keys.publicKeys[0] );
+                    for ( const auto& cipheredKey : cipher.getKeys() )
+                        libBLS::ThresholdEncryption::validateDecryptionShare(
+                            cipheredKey, decrShare, keys.publicKeys[0] );
                 },
                 dataSize, keys );
         }
         // tampered TEDecryptionShare
         {
             // wrong decription share
-            libBLS::TEDecryptionShare decrShare2( libBLS::algebra::G2Point::random(), 1 );
-            BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateDecryptionShare(
-                                     cipher.key, decrShare2, keys.publicKeys[0] ),
-                libBLS::ThresholdUtils::IsNotWellFormed );
+            libBLS::TEDecryptionShare decrShare2( libff::algebra::G2Point::random(), 1 );
+            for ( const auto& cipheredKey : cipher.getKeys() )
+                BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateDecryptionShare(
+                                         cipheredKey, decrShare2, keys.publicKeys[0] ),
+                    libBLS::ThresholdUtils::IsNotWellFormed );
         }
         {
             // wrong te public key share should not pass pairing validation
             libBLS::TEPublicKeyShare pKeyShare(
-                libBLS::algebra::G2Point::random(), 1, requiredSigners, totalSigners );
-            BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateDecryptionShare(
-                                     cipher.key, original, pKeyShare ),
-                libBLS::ThresholdUtils::IsNotWellFormed );
+                libff::algebra::G2Point::random(), 1, requiredSigners, totalSigners );
+            for ( const auto& cipheredKey : cipher.getKeys() )
+                BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateDecryptionShare(
+                                         cipheredKey, original, pKeyShare ),
+                    libBLS::ThresholdUtils::IsNotWellFormed );
         }
     }
 }
@@ -1210,37 +1247,39 @@ BOOST_AUTO_TEST_CASE( CombineShares ) {
         keys keys = generateKeys( requiredSigners, totalSigners );
         std::vector< uint8_t > data = randomByteVec( dataSize );
         cipher = libBLS::ThresholdEncryption::encrypt( data, keys.commonPublic );
-        libBLS::ThresholdEncryption::validateEncryption( cipher.key );
 
         alreadyMerged = libBLS::TEDecryptSet( requiredSigners, totalSigners );
         readyToMerge = libBLS::TEDecryptSet( requiredSigners, totalSigners );
         notEnoughShares = libBLS::TEDecryptSet( requiredSigners, totalSigners );
 
+        for ( const auto& cipheredKey : cipher.getKeys() ) {
+            libBLS::ThresholdEncryption::validateEncryption( cipheredKey );
 
-        for ( size_t j = 0; j < requiredSigners; ++j ) {
-            libBLS::TEDecryptionShare decrShare =
-                libBLS::ThresholdEncryption::partialDecrypt( cipher.key, keys.secretKeys[j] );
-            libBLS::ThresholdEncryption::validateDecryptionShare(
-                cipher.key, decrShare, keys.publicKeys[j] );
-            alreadyMerged.addDecryptShare( decrShare );
+            for ( size_t j = 0; j < requiredSigners; ++j ) {
+                libBLS::TEDecryptionShare decrShare =
+                    libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[j] );
+                libBLS::ThresholdEncryption::validateDecryptionShare(
+                    cipheredKey, decrShare, keys.publicKeys[j] );
+                alreadyMerged.addDecryptShare( decrShare );
 
-            // only add the shares. Do not merge them - used for exception checking below
-            readyToMerge.addDecryptShare( decrShare );
+                // only add the shares. Do not merge them - used for exception checking below
+                readyToMerge.addDecryptShare( decrShare );
 
-            // only add one share to notEnoughShares  - used for exception checking below
-            if ( notEnoughShares.size() < requiredSigners - 1 ) {
-                notEnoughShares.addDecryptShare( decrShare );
+                // only add one share to notEnoughShares  - used for exception checking below
+                if ( notEnoughShares.size() < requiredSigners - 1 ) {
+                    notEnoughShares.addDecryptShare( decrShare );
+                }
             }
+
+            libBLS::AES256Key key_deciphered =
+                libBLS::ThresholdEncryption::combineShares( cipheredKey, alreadyMerged );
+            libBLS::ThresholdEncryption::validateCombinedDecryption(
+                cipher, key_deciphered, keys.commonPublic );
+            std::vector< uint8_t > decryptedData =
+                libBLS::ThresholdEncryption::decrypt( cipher, key_deciphered );
+
+            BOOST_REQUIRE( decryptedData == data );
         }
-
-        libBLS::AES256Key key_deciphered =
-            libBLS::ThresholdEncryption::combineShares( cipher.key, alreadyMerged );
-        libBLS::ThresholdEncryption::validateCombinedDecryption(
-            cipher, key_deciphered, keys.commonPublic );
-        std::vector< uint8_t > decryptedData =
-            libBLS::ThresholdEncryption::decrypt( cipher, key_deciphered );
-
-        BOOST_REQUIRE( decryptedData == data );
     }
 
     keys keys = generateKeys( requiredSigners, totalSigners );
@@ -1251,7 +1290,8 @@ BOOST_AUTO_TEST_CASE( CombineShares ) {
     {
         exceptionOnTamperedCiphertextData< libBLS::ThresholdUtils::IncorrectInput >(
             [&readyToMerge]( libBLS::Ciphertext& cipher ) {
-                libBLS::ThresholdEncryption::combineShares( cipher.key, readyToMerge );
+                for ( const auto& cipheredKey : cipher.getKeys() )
+                    libBLS::ThresholdEncryption::combineShares( cipheredKey, readyToMerge );
             },
             dataSize, keys );
     }
@@ -1259,7 +1299,8 @@ BOOST_AUTO_TEST_CASE( CombineShares ) {
         // passed ciphered key has tampered U field
         exceptionOnTamperedCiphertextU< libBLS::ThresholdUtils::IncorrectInput >(
             [&readyToMerge]( libBLS::Ciphertext& cipher ) {
-                libBLS::ThresholdEncryption::combineShares( cipher.key, readyToMerge );
+                for ( const auto& cipheredKey : cipher.getKeys() )
+                    libBLS::ThresholdEncryption::combineShares( cipheredKey, readyToMerge );
             },
             dataSize, keys );
     }
@@ -1267,22 +1308,25 @@ BOOST_AUTO_TEST_CASE( CombineShares ) {
         // passed ciphered key has tampered W field
         exceptionOnTamperedCiphertextW< libBLS::ThresholdUtils::IncorrectInput >(
             [&readyToMerge]( libBLS::Ciphertext& cipher ) {
-                libBLS::ThresholdEncryption::combineShares( cipher.key, readyToMerge );
+                for ( const auto& cipheredKey : cipher.getKeys() )
+                    libBLS::ThresholdEncryption::combineShares( cipheredKey, readyToMerge );
             },
             dataSize, keys );
     }
     // tampered TEDecryptSet
     {
-        // already merged set
-        BOOST_REQUIRE_THROW(
-            libBLS::ThresholdEncryption::combineShares( cipher.key, alreadyMerged ),
-            libBLS::ThresholdUtils::IsNotWellFormed );
+        for ( const auto& cipheredKey : cipher.getKeys() )
+            // already merged set
+            BOOST_REQUIRE_THROW(
+                libBLS::ThresholdEncryption::combineShares( cipheredKey, alreadyMerged ),
+                libBLS::ThresholdUtils::IsNotWellFormed );
     }
     {
-        // not enough shares
-        BOOST_REQUIRE_THROW(
-            libBLS::ThresholdEncryption::combineShares( cipher.key, notEnoughShares ),
-            libBLS::ThresholdUtils::IsNotWellFormed );
+        for ( const auto& cipheredKey : cipher.getKeys() )
+            // not enough shares
+            BOOST_REQUIRE_THROW(
+                libBLS::ThresholdEncryption::combineShares( cipheredKey, notEnoughShares ),
+                libBLS::ThresholdUtils::IsNotWellFormed );
     }
 }
 
@@ -1302,31 +1346,33 @@ BOOST_AUTO_TEST_CASE( ValidateCombinedDecryptionAndDecrypt ) {
         keys = generateKeys( requiredSigners, totalSigners );
         std::vector< uint8_t > data = randomByteVec( dataSize );
         cipher = libBLS::ThresholdEncryption::encrypt( data, keys.commonPublic );
-        libBLS::ThresholdEncryption::validateEncryption( cipher.key );
+        for ( const auto& cipheredKey : cipher.getKeys() ) {
+            libBLS::ThresholdEncryption::validateEncryption( cipheredKey );
 
-        decryptSet = libBLS::TEDecryptSet( requiredSigners, totalSigners );
+            decryptSet = libBLS::TEDecryptSet( requiredSigners, totalSigners );
 
-        for ( size_t j = 0; j < requiredSigners; ++j ) {
-            libBLS::TEDecryptionShare decrShare =
-                libBLS::ThresholdEncryption::partialDecrypt( cipher.key, keys.secretKeys[j] );
-            libBLS::ThresholdEncryption::validateDecryptionShare(
-                cipher.key, decrShare, keys.publicKeys[j] );
-            decryptSet.addDecryptShare( decrShare );
+            for ( size_t j = 0; j < requiredSigners; ++j ) {
+                libBLS::TEDecryptionShare decrShare =
+                    libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[j] );
+                libBLS::ThresholdEncryption::validateDecryptionShare(
+                    cipheredKey, decrShare, keys.publicKeys[j] );
+                decryptSet.addDecryptShare( decrShare );
+            }
+
+            // validate both combined decryption and decryption
+            keyDeciphered = libBLS::ThresholdEncryption::combineShares( cipheredKey, decryptSet );
+            libBLS::ThresholdEncryption::validateCombinedDecryption(
+                cipher, keyDeciphered, keys.commonPublic );
+            std::vector< uint8_t > decryptedData =
+                libBLS::ThresholdEncryption::decrypt( cipher, keyDeciphered );
+
+            // validate validateAndDecrypt call
+            std::vector< uint8_t > decryptedData2 = libBLS::ThresholdEncryption::validateAndDecrypt(
+                cipher, keyDeciphered, keys.commonPublic );
+
+            BOOST_REQUIRE( decryptedData == data );
+            BOOST_REQUIRE( decryptedData2 == data );
         }
-
-        // validate both combined decryption and decryption
-        keyDeciphered = libBLS::ThresholdEncryption::combineShares( cipher.key, decryptSet );
-        libBLS::ThresholdEncryption::validateCombinedDecryption(
-            cipher, keyDeciphered, keys.commonPublic );
-        std::vector< uint8_t > decryptedData =
-            libBLS::ThresholdEncryption::decrypt( cipher, keyDeciphered );
-
-        // validate validateAndDecrypt call
-        std::vector< uint8_t > decryptedData2 = libBLS::ThresholdEncryption::validateAndDecrypt(
-            cipher, keyDeciphered, keys.commonPublic );
-
-        BOOST_REQUIRE( decryptedData == data );
-        BOOST_REQUIRE( decryptedData2 == data );
     }
 
     // Exceptions

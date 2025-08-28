@@ -70,7 +70,6 @@ void ThresholdUtils::checkSigners( size_t _requiredSigners, size_t _totalSigners
     }
 }
 
-
 bool ThresholdUtils::isStringNumber( const std::string& str ) {
     if ( str.at( 0 ) == '0' && str.length() > 1 )
         return false;
@@ -186,5 +185,4 @@ size_t ThresholdUtils::validateHexCString( const char* hexStr ) {
     }
     return len;
 }
-
 }  // namespace libBLS
