@@ -8,6 +8,17 @@
 
 namespace libBLS::algebra {
 
+mpz_class FrScalar::toMpzClass() const {
+    mpz_class t;
+    value.as_bigint().to_mpz( t.get_mpz_t() );
+    return t;
+}
+
+FrBackendType FrScalar::fromMpzClass( const mpz_class& m ) {
+    FrBackendType field_elem( m.get_mpz_t());
+    return field_elem;
+}
+
 template <>
 FrScalar Field< FrBackendType, FrScalar >::zero() {
     return FrScalar( libff::alt_bn128_Fr::zero() );
@@ -42,21 +53,21 @@ FrScalar FrScalar::inverse() const {
 // ---------- Serialization  ----------- //
 
 std::vector< uint8_t > FrScalar::toByteVector() const {
-    return fieldElementToBytes( value );
+    return toByteVectorDefault();
 }
 
 std::array< uint8_t, FrScalar::SIZE_BYTES > FrScalar::toByteArray() const {
-    return fieldElementToBytesArray( value );
+    return toByteArrayDefault();
 }
 
 std::string FrScalar::toString( Base base ) const {
-    return fieldElementToString( value, static_cast< size_t >( base ) );
+    return toStringDefault( base );
 }
 
 // ---------- Deserialization ----------- //
 
 FrScalar FrScalar::fromBytes( const std::array< uint8_t, SIZE_BYTES >& bytes ) {
-    return FrScalar( bytesToFieldElement< libff::alt_bn128_Fr >( bytes ) );
+    return fromBytesDefault( bytes );
 }
 
 FrScalar FrScalar::fromBytes( const std::vector< uint8_t >& bytes ) {

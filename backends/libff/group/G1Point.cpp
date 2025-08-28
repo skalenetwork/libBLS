@@ -115,12 +115,12 @@ G1Point G1Point::fromBytes( const std::array< uint8_t, G1Point::SIZE_BYTES >& by
 
     // Get X
     std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
-    ret.value.X = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+    ret.value.X = FqElement::fromBytes( currentField ).value;
     source += MAX_FIELD_ELEMENT_SIZE_BYTES;
 
     // Get Y
     std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
-    ret.value.Y = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+    ret.value.Y = FqElement::fromBytes( currentField ).value;
 
     return ret;
 }

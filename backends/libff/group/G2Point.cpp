@@ -102,22 +102,22 @@ G2Point G2Point::fromBytes( const std::array< uint8_t, G2Point::SIZE_BYTES >& by
 
     // Get x.c0
     std::memcpy( currentField.data(), source, FQ_SIZE_BYTES );
-    ret.value.X.c0 = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+    ret.value.X.c0 = FqElement::fromBytes( currentField ).value;
     source += FQ_SIZE_BYTES;
 
     // Get x.c1
     std::memcpy( currentField.data(), source, FQ_SIZE_BYTES );
-    ret.value.X.c1 = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+    ret.value.X.c1 = FqElement::fromBytes( currentField ).value;
     source += FQ_SIZE_BYTES;
 
     // Get y.c0
     std::memcpy( currentField.data(), source, FQ_SIZE_BYTES );
-    ret.value.Y.c0 = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+    ret.value.Y.c0 = FqElement::fromBytes( currentField ).value;
     source += FQ_SIZE_BYTES;
 
     // Get y.c1
     std::memcpy( currentField.data(), source, FQ_SIZE_BYTES );
-    ret.value.Y.c1 = bytesToFieldElement< libff::alt_bn128_Fq >( currentField );
+    ret.value.Y.c1 = FqElement::fromBytes( currentField ).value;
 
     return ret;
 }
@@ -177,10 +177,10 @@ G2Point G2Point::fromString(
                 arr[i].c_str() );
         }
 
-        ret.value.X.c0 = bytesToFieldElement< libff::alt_bn128_Fq >( components[0] );
-        ret.value.X.c1 = bytesToFieldElement< libff::alt_bn128_Fq >( components[1] );
-        ret.value.Y.c0 = bytesToFieldElement< libff::alt_bn128_Fq >( components[2] );
-        ret.value.Y.c1 = bytesToFieldElement< libff::alt_bn128_Fq >( components[3] );
+        ret.value.X.c0 = FqElement::fromBytes( components[0] ).value;
+        ret.value.X.c1 = FqElement::fromBytes( components[1] ).value;
+        ret.value.Y.c0 = FqElement::fromBytes( components[2] ).value;
+        ret.value.Y.c1 = FqElement::fromBytes( components[3] ).value;
         break;
     case Base::DEC:
         ret.value.X.c0 = libff::alt_bn128_Fq( arr[0].c_str() );
