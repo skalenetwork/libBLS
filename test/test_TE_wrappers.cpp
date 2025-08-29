@@ -608,7 +608,7 @@ BOOST_AUTO_TEST_CASE( TEPublicKey ) {
         // Components are not 64-char length
         std::vector< std::string > pkeyStr( { "0", "0", "0", "0" } );
         BOOST_REQUIRE_THROW( libBLS::TEPublicKey( std::vector< std::string >( pkeyStr ) ),
-            libBLS::ThresholdUtils::IsNotWellFormed );
+            libBLS::ThresholdUtils::IncorrectInput );
     }
     {
         // Components are not hexadecimal
@@ -939,7 +939,7 @@ BOOST_AUTO_TEST_CASE( TEDecryptionShare ) {
         std::string str = el.toString( libBLS::Base::HEXA );
         str[0] = 'U';  // make it not hexa
         BOOST_REQUIRE_THROW( libBLS::TEDecryptionShare share( str, signer ),
-            libBLS::ThresholdUtils::IsNotWellFormed );
+            libBLS::ThresholdUtils::IncorrectInput );
 
         // string has wrong length
         str[0] = 'A';  // make it hexa again
