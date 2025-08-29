@@ -143,8 +143,8 @@ int main() {
 
     float elapsedTime = totalTime / ( float ) 1'000'000;  // convert to seconds
     std::cout << "Total time: " << elapsedTime << " seconds" << std::endl;
-    std::cout << "Throughput / node: " << ( nMessagesBatch * nBatches * n ) / elapsedTime
-              << " TPS" << std::endl;
+    std::cout << "Throughput / node: " << ( nMessagesBatch * nBatches * n ) / elapsedTime << " TPS"
+              << std::endl;
     return 0;
 }
 

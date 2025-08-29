@@ -28,9 +28,9 @@
 #include <atomic>
 #include <iomanip>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
 
 static constexpr size_t BLS_MAX_COMPONENT_LEN = 77;
 
