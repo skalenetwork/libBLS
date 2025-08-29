@@ -89,7 +89,7 @@ CipheredKeyResult TE::getCiphertext(
     }
 
     std::vector< CipheredKey > cipheredKeys;
-    algebra::G2Point U = r * algebra::G2Point::identity();
+    algebra::G2Point U = r * algebra::G2Point::generator();
     // convert to affine coordinate here to avoid doing it twice inside the loop
     U.toAffineCoordinates();
     for ( const auto& commonPublic : commonPublicVector ) {
@@ -197,7 +197,7 @@ std::pair< std::string, RandSecret > TE::encryptMessage(
     const std::vector< uint8_t >& message, const std::vector< std::string >& commonPublicVector ) {
     std::vector< algebra::G2Point > commonPublicRaw;
     for ( const auto& commonPublicStr : commonPublicVector ) {
-        algebra::G2Point commonPublic = algebra::G2Point::fromString( commonPublicStr, Base::DEC );
+        algebra::G2Point commonPublic = algebra::G2Point::fromString( commonPublicStr, Base::HEXA );
         commonPublicRaw.push_back( commonPublic );
     }
     libBLS::CipherResult ciphertext = encryptWithAES( message, commonPublicRaw );

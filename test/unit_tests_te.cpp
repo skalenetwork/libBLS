@@ -379,15 +379,7 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToBytes ) {
 
     libBLS::algebra::G2Point public_key = secret_key * libBLS::algebra::G2Point::generator();
 
-    auto str = public_key.toStringArray( libBLS::Base::HEXA );
-    std::string common_public_str = "";
-    for ( auto& elem : str ) {
-        while ( elem.size() < 64 ) {
-            elem = "0" + elem;
-        }
-        common_public_str += elem;
-    }
-
+    std::string common_public_str = public_key.toString( libBLS::Base::HEXA );
     auto result = te_instance.encryptMessage( message_bytes, common_public_str );
     libBLS::RandSecret rand_secret = result.second;
 
