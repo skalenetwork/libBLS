@@ -232,14 +232,14 @@ if(BUILD_TESTS)
     add_test(NAME dkg_attack COMMAND dkg_attack)
 
 	add_custom_target(all_bls_tests
-			COMMAND ./bls_unit_test
-			COMMAND ./dkg_unit_test
-			COMMAND ./bls_test
-			COMMAND ./utils_unit_test
-			DEPENDS bls_unit_test dkg_unit_test
-			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-			COMMENT "Run all BLS and DKG tests"
-			)
+		COMMAND ./bls_unit_test
+		COMMAND ./dkg_unit_test
+		COMMAND ./bls_test
+		COMMAND ./utils_unit_test
+		DEPENDS bls_unit_test dkg_unit_test
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		COMMENT "Run all BLS and DKG tests"
+	)
 endif()
 
 if(NOT SKALE_SKIP_INSTALLING_DIRECTIVES)
@@ -250,3 +250,6 @@ if(NOT SKALE_SKIP_INSTALLING_DIRECTIVES)
 	install( TARGETS bls_glue DESTINATION bin )
 	install( TARGETS verify_bls DESTINATION bin )
 endif()
+
+## Benchmarks
+# add_subdirectory(benchmarks)
