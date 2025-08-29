@@ -83,8 +83,10 @@ FrScalar FrScalar::fromBytes( const std::vector< uint8_t >& bytes ) {
 
 FrScalar FrScalar::fromString( const std::string& str, Base base ) {
     switch ( base ) {
-    case Base::HEXA:
-        // let it go to default case
+    case Base::HEXA: {
+        auto decStr = convertHexToDec( str );
+        return FrScalar( libff::alt_bn128_Fr( decStr.c_str() ) );
+    }
     case Base::DEC:
         return FrScalar( libff::alt_bn128_Fr( str.c_str() ) );
     default:
