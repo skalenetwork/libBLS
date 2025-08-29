@@ -76,25 +76,25 @@ algebra::G1Point TE::HashToGroup( const algebra::G2Point& U, const std::string& 
 
 
 CipheredKeyResult TE::getCiphertext(
-    const AES256Key& key, const libff::alt_bn128_G2& commonPublic ) {
-    return getCiphertext( key, std::vector< libff::algebra::G2Point >{ commonPublic } );
+    const AES256Key& key, const algebra::G2Point& commonPublic ) {
+    return getCiphertext( key, std::vector< algebra::G2Point >{ commonPublic } );
 }
 
 
 CipheredKeyResult TE::getCiphertext(
-    const AES256Key& key, const std::vector< libff::algebra::G2Point >& commonPublicVector ) {
-    libff::alt_bn128_Fr r = libff::algebra::GrScalar::random();
+    const AES256Key& key, const std::vector< algebra::G2Point >& commonPublicVector ) {
+    algebra::FrScalar r = algebra::FrScalar::random();
 
     while ( r.isZero() ) {
         r = algebra::FrScalar::random();
     }
 
     std::vector< CipheredKey > cipheredKeys;
-    libff::algebra::G2Point U = r * libff::algebra::G2Point::identity();
+    algebra::G2Point U = r * algebra::G2Point::identity();
     // convert to affine coordinate here to avoid doing it twice inside the loop
     U.toAffineCoordinates();
     for ( const auto& commonPublic : commonPublicVector ) {
-        libff::algebra::G2Point Y;
+        algebra::G2Point Y;
         Y = r * commonPublic;
 
         std::string hash = Hash( Y );
@@ -119,7 +119,7 @@ CipheredKeyResult TE::getCiphertext(
         cipheredKeys.emplace_back( U, V, W );
     }
 
-    RandSecret random_secret = ThresholdUtils::fieldElementToBytesArray( r );
+    RandSecret random_secret = r.toByteArray();
 
     return { cipheredKeys, std::move( random_secret ) };
 }
@@ -144,12 +144,12 @@ CipheredKeyResult TE::getCiphertext(
  * @note Initializes AES before encryption
  */
 CipherResult TE::encryptWithAES(
-    const std::vector< uint8_t >& message, const libff::algebra::G2Point& commonPublic ) {
-    return encryptWithAES( message, std::vector< libff::algebra::G2Point >{ commonPublic } );
+    const std::vector< uint8_t >& message, const algebra::G2Point& commonPublic ) {
+    return encryptWithAES( message, std::vector< algebra::G2Point >{ commonPublic } );
 }
 
 CipherResult TE::encryptWithAES( const std::vector< uint8_t >& message,
-    const std::vector< libff::algebra::G2Point >& commonPublic ) {
+    const std::vector< algebra::G2Point >& commonPublic ) {
     // create random AES key
     AES256Key key;
     if ( RAND_bytes( key.data(), key.size() ) != 1 ) {
@@ -193,11 +193,12 @@ std::pair< std::string, RandSecret > TE::encryptMessage(
     return encryptMessage( message, std::vector< std::string >{ commonPublic } );
 }
 
+// TODO - check if this function and the one above are still used anywhere
 std::pair< std::string, RandSecret > TE::encryptMessage(
     const std::vector< uint8_t >& message, const std::vector< std::string >& commonPublicVector ) {
-    std::vector< libff::algebra::G2Point > commonPublicRaw;
+    std::vector< algebra::G2Point > commonPublicRaw;
     for ( const auto& commonPublicStr : commonPublicVector ) {
-        libff::alt_bn128_G2 commonPublic = ThresholdUtils::stringToG2( commonPublicStr );
+        algebra::G2Point commonPublic = algebra::G2Point::fromString( commonPublicStr, Base::DEC );
         commonPublicRaw.push_back( commonPublic );
     }
     libBLS::CipherResult ciphertext = encryptWithAES( message, commonPublicRaw );

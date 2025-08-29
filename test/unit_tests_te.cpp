@@ -215,7 +215,7 @@ BOOST_AUTO_TEST_CASE( CiphertextException ) {
     libBLS::Ciphertext ciphertext;
 
     for ( auto cipheredKey : ciphertext.keys ) {
-        cipheredKey.U = libff::algebra::G2Point::zero();
+        cipheredKey.U = libBLS::algebra::G2Point::identity();
         BOOST_REQUIRE_THROW(
             cipheredKey.getDecryptionShareInput(), libBLS::ThresholdUtils::IncorrectInput );
     }
@@ -254,12 +254,12 @@ BOOST_AUTO_TEST_CASE( SimpleEncryption ) {
     auto result = te_instance.getCiphertext( random_aes_key, public_key );
 
     for ( const auto& cipheredKey : result.ciphertext ) {
-        libff::algebra::G2Point decryption_share =
+        libBLS::algebra::G2Point decryption_share =
             te_instance.getDecryptionShare( cipheredKey, secret_key );
 
         BOOST_REQUIRE( te_instance.Verify( cipheredKey, decryption_share, public_key ) );
 
-        std::vector< std::pair< libff::algebra::G2Point, size_t > > shares;
+        std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares;
         shares.push_back( std::make_pair( decryption_share, size_t( 1 ) ) );
 
         libBLS::AES256Key res = te_instance.CombineShares( cipheredKey, shares );
@@ -283,12 +283,12 @@ BOOST_AUTO_TEST_CASE( SimpleEncryptionWithAES ) {
 
     auto encrypted_message = ciphertext_with_aes.ciphertext->getData();
     for ( const auto& cipheredKey : ciphertext_with_aes.ciphertext->getKeys() ) {
-        libff::algebra::G2Point decryption_share =
+        libBLS::algebra::G2Point decryption_share =
             te_instance.getDecryptionShare( cipheredKey, secret_key );
 
         BOOST_REQUIRE( te_instance.Verify( cipheredKey, decryption_share, public_key ) );
 
-        std::vector< std::pair< libff::algebra::G2Point, size_t > > shares;
+        std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares;
         shares.push_back( std::make_pair( decryption_share, size_t( 1 ) ) );
 
         libBLS::AES256Key decrypted_aes_key = te_instance.CombineShares( cipheredKey, shares );
@@ -318,7 +318,7 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongKey ) {
 
     auto encrypted_message = ciphertext_with_aes.ciphertext->getData();
     for ( const auto& cipheredKey : ciphertext_with_aes.ciphertext->getKeys() ) {
-        libff::algebra::G2Point decryption_share =
+        libBLS::algebra::G2Point decryption_share =
             te_instance.getDecryptionShare( cipheredKey, secret_key );
 
         BOOST_REQUIRE( te_instance.Verify( cipheredKey, decryption_share, public_key ) );
@@ -399,7 +399,7 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToBytes ) {
 
     for ( const auto& cipheredkey : ciphertext.getKeys() ) {
     libBLS::algebra::G2Point decryption_share =
-        te_instance.getDecryptionShare( cipheredKey, secret_key );
+        te_instance.getDecryptionShare( cipheredkey, secret_key );
 
         BOOST_REQUIRE( te_instance.Verify( cipheredkey, decryption_share, public_key ) );
 
@@ -457,12 +457,12 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
     auto result = obj.getCiphertext( key, common_public );
 
     for ( const auto& cipheredKey : result.ciphertext ) {
-        std::vector< std::pair< libff::alt_bn128_G2, size_t > > shares( 11 );
+        std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares( 11 );
 
         for ( size_t i = 0; i < 11; ++i ) {
-            libff::algebra::G2Point decrypted = obj.getDecryptionShare( cipheredKey, secret_keys[i] );
+            libBLS::algebra::G2Point decrypted = obj.getDecryptionShare( cipheredKey, secret_keys[i] );
 
-            libff::algebra::G2Point public_key = secret_keys[i] * libff::alt_bn128_G2::one();
+            libBLS::algebra::G2Point public_key = secret_keys[i] * libBLS::algebra::G2Point::generator();
 
 
             BOOST_REQUIRE( obj.Verify( cipheredKey, decrypted, public_key ) );
@@ -476,7 +476,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
 
         BOOST_REQUIRE( res == key );
 
-        std::vector< std::pair< libff::algebra::G2Point, size_t > > tooFewShares(
+        std::vector< std::pair< libBLS::algebra::G2Point, size_t > > tooFewShares(
             shares.begin(), shares.begin() + shares.size() - 2 );  // t - 1 elements
 
         BOOST_REQUIRE_THROW( obj.CombineShares( cipheredKey, tooFewShares ),
@@ -525,8 +525,8 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomPK ) {
 
     for ( const auto& cipheredKey : result.ciphertext ) {
         for ( size_t i = 0; i < 11; ++i ) {
-            libff::algebra::G2Point decrypted = obj.getDecryptionShare( cipheredKey, secret_keys[i] );
-            libff::algebra::G2Point public_key = secret_keys[i] * libff::algebra::G2Point::one();
+            libBLS::algebra::G2Point decrypted = obj.getDecryptionShare( cipheredKey, secret_keys[i] );
+            libBLS::algebra::G2Point public_key = secret_keys[i] * libBLS::algebra::G2Point::generator();
 
             BOOST_REQUIRE( obj.Verify( cipheredKey, decrypted, public_key ) );
 
@@ -585,11 +585,11 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomSK ) {
     auto result = obj.getCiphertext( key, common_public );
 
     for ( const auto& cipheredKey : result.ciphertext ) {
-        std::vector< std::pair< libff::algebra::G2Point, size_t > > shares( 11 );
+        std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares( 11 );
 
         for ( size_t i = 0; i < 11; ++i ) {
-            libff::algebra::G2Point decrypted = obj.getDecryptionShare( cipheredKey, secret_keys[i] );
-            libff::algebra::G2Point public_key = secret_keys[i] * libff::algebra::G2Point::one();
+            libBLS::algebra::G2Point decrypted = obj.getDecryptionShare( cipheredKey, secret_keys[i] );
+            libBLS::algebra::G2Point public_key = secret_keys[i] * libBLS::algebra::G2Point::generator();
 
             BOOST_REQUIRE( obj.Verify( cipheredKey, decrypted, public_key ) );
 

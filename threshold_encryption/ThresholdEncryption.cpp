@@ -115,7 +115,7 @@ Ciphertext ThresholdEncryption::encrypt(
         throw ThresholdUtils::IncorrectInput(
             "Must provide exactly 1 or 2 public keys for encryption" );
 
-    std::vector< libff::algebra:::G2Point > rawPublicKeys;
+    std::vector< algebra::G2Point > rawPublicKeys;
     for ( const auto& publicKey : _commonPublic ) {
         publicKey.validate();
         rawPublicKeys.push_back( publicKey.getPublicKeyRaw() );
@@ -180,8 +180,8 @@ void ThresholdEncryption::validateDecryptionShare( const CipheredKey& _cipherTex
 }
 
 AES256Key ThresholdEncryption::combineShares(
-    const CipheredKey& _cypheredKey, TEDecryptSet& _decryptionSet ) {
-    _cypheredKey.validate();
+    const CipheredKey& _cipheredKey, TEDecryptSet& _decryptionSet ) {
+    _cipheredKey.validate();
 
 
     switch ( _decryptionSet.getMergeStatus() ) {
@@ -205,7 +205,6 @@ AES256Key ThresholdEncryption::combineShares(
 
 void ThresholdEncryption::validateCombinedDecryption(
     const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
-    TEBase::initializeIfNecessary();
 
     _ciphertext.validate();
 
@@ -217,8 +216,8 @@ void ThresholdEncryption::validateCombinedDecryption(
 
 
 std::vector< uint8_t > ThresholdEncryption::decrypt(
-    const Ciphertext& _cyphertext, const AES256Key& _aesKey ) {
-    _cyphertext.validate();
+    const Ciphertext& _ciphertext, const AES256Key& _aesKey ) {
+    _ciphertext.validate();
 
     // decipher & validate plaintext
     std::vector< uint8_t > data = decipherAESAndValidate( _ciphertext, _aesKey );
@@ -230,7 +229,6 @@ std::vector< uint8_t > ThresholdEncryption::decrypt(
 
 std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
     const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
-    TEBase::initializeIfNecessary();
 
     _ciphertext.validate();
 

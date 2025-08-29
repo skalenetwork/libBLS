@@ -1,6 +1,7 @@
 #pragma once
 
 #include <tools/utils.h>
+#include "backends/interface/WrapperCore.hpp"
 
 namespace libBLS::algebra {
 

@@ -60,7 +60,7 @@ struct CipheredKey {
 public:
     CipheredKey() = default;
     CipheredKey(
-        libff::algebra::G2Point _U, AES256Key _V, libff::algebra::G1Point _W, bool _validate = true )
+        algebra::G2Point _U, AES256Key _V, algebra::G1Point _W, bool _validate = true )
         : U( _U ), V( std::move( _V ) ), W( _W ) {
         if ( _validate )
             validate();
@@ -391,14 +391,14 @@ public:
      * @note This is an auxiliar function, used within `encryptWithAES`
      */
     static CipheredKeyResult getCiphertext(
-        const AES256Key& key, const libff::algebra::G2Point& commonPublic );
+        const AES256Key& key, const algebra::G2Point& commonPublic );
     static CipheredKeyResult getCiphertext(
-        const AES256Key& key, const std::vector< libff::algebra::G2Point >& commonPublic );
+        const AES256Key& key, const std::vector< algebra::G2Point >& commonPublic );
 
     static CipherResult encryptWithAES(
-        const std::vector< uint8_t >& message, const libff::algebra::G2Point& commonPublic );
+        const std::vector< uint8_t >& message, const algebra::G2Point& commonPublic );
     static CipherResult encryptWithAES( const std::vector< uint8_t >& message,
-        const std::vector< libff::algebra::G2Point >& commonPublic );
+        const std::vector< algebra::G2Point >& commonPublic );
 
     static std::pair< std::string, RandSecret > encryptMessage(
         const std::vector< uint8_t >& message, const std::string& commonPublic );
