@@ -110,7 +110,6 @@ Ciphertext ThresholdEncryption::encrypt(
 
 Ciphertext ThresholdEncryption::encrypt(
     const std::vector< uint8_t >& _message, const std::vector< TEPublicKey >& _commonPublic ) {
-
     if ( _commonPublic.size() == 0 || _commonPublic.size() > 2 )
         throw ThresholdUtils::IncorrectInput(
             "Must provide exactly 1 or 2 public keys for encryption" );
@@ -205,7 +204,6 @@ AES256Key ThresholdEncryption::combineShares(
 
 void ThresholdEncryption::validateCombinedDecryption(
     const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
-
     _ciphertext.validate();
 
     // decipher & validate plaintext
@@ -229,7 +227,6 @@ std::vector< uint8_t > ThresholdEncryption::decrypt(
 
 std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
     const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
-
     _ciphertext.validate();
 
     // decipher & validate plaintext

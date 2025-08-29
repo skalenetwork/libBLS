@@ -75,8 +75,7 @@ algebra::G1Point TE::HashToGroup( const algebra::G2Point& U, const std::string& 
 }
 
 
-CipheredKeyResult TE::getCiphertext(
-    const AES256Key& key, const algebra::G2Point& commonPublic ) {
+CipheredKeyResult TE::getCiphertext( const AES256Key& key, const algebra::G2Point& commonPublic ) {
     return getCiphertext( key, std::vector< algebra::G2Point >{ commonPublic } );
 }
 
@@ -148,8 +147,8 @@ CipherResult TE::encryptWithAES(
     return encryptWithAES( message, std::vector< algebra::G2Point >{ commonPublic } );
 }
 
-CipherResult TE::encryptWithAES( const std::vector< uint8_t >& message,
-    const std::vector< algebra::G2Point >& commonPublic ) {
+CipherResult TE::encryptWithAES(
+    const std::vector< uint8_t >& message, const std::vector< algebra::G2Point >& commonPublic ) {
     // create random AES key
     AES256Key key;
     if ( RAND_bytes( key.data(), key.size() ) != 1 ) {

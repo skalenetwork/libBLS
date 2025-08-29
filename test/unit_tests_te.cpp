@@ -398,8 +398,8 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToBytes ) {
     auto encrypted_message = ciphertext.getData();
 
     for ( const auto& cipheredkey : ciphertext.getKeys() ) {
-    libBLS::algebra::G2Point decryption_share =
-        te_instance.getDecryptionShare( cipheredkey, secret_key );
+        libBLS::algebra::G2Point decryption_share =
+            te_instance.getDecryptionShare( cipheredkey, secret_key );
 
         BOOST_REQUIRE( te_instance.Verify( cipheredkey, decryption_share, public_key ) );
 
@@ -460,9 +460,11 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
         std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares( 11 );
 
         for ( size_t i = 0; i < 11; ++i ) {
-            libBLS::algebra::G2Point decrypted = obj.getDecryptionShare( cipheredKey, secret_keys[i] );
+            libBLS::algebra::G2Point decrypted =
+                obj.getDecryptionShare( cipheredKey, secret_keys[i] );
 
-            libBLS::algebra::G2Point public_key = secret_keys[i] * libBLS::algebra::G2Point::generator();
+            libBLS::algebra::G2Point public_key =
+                secret_keys[i] * libBLS::algebra::G2Point::generator();
 
 
             BOOST_REQUIRE( obj.Verify( cipheredKey, decrypted, public_key ) );
@@ -525,8 +527,10 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomPK ) {
 
     for ( const auto& cipheredKey : result.ciphertext ) {
         for ( size_t i = 0; i < 11; ++i ) {
-            libBLS::algebra::G2Point decrypted = obj.getDecryptionShare( cipheredKey, secret_keys[i] );
-            libBLS::algebra::G2Point public_key = secret_keys[i] * libBLS::algebra::G2Point::generator();
+            libBLS::algebra::G2Point decrypted =
+                obj.getDecryptionShare( cipheredKey, secret_keys[i] );
+            libBLS::algebra::G2Point public_key =
+                secret_keys[i] * libBLS::algebra::G2Point::generator();
 
             BOOST_REQUIRE( obj.Verify( cipheredKey, decrypted, public_key ) );
 
@@ -588,8 +592,10 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomSK ) {
         std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares( 11 );
 
         for ( size_t i = 0; i < 11; ++i ) {
-            libBLS::algebra::G2Point decrypted = obj.getDecryptionShare( cipheredKey, secret_keys[i] );
-            libBLS::algebra::G2Point public_key = secret_keys[i] * libBLS::algebra::G2Point::generator();
+            libBLS::algebra::G2Point decrypted =
+                obj.getDecryptionShare( cipheredKey, secret_keys[i] );
+            libBLS::algebra::G2Point public_key =
+                secret_keys[i] * libBLS::algebra::G2Point::generator();
 
             BOOST_REQUIRE( obj.Verify( cipheredKey, decrypted, public_key ) );
 

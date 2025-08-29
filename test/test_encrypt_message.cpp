@@ -120,7 +120,8 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
         std::vector< std::string > publicKeysStr( 2 );
         for ( size_t j = 0; j < 2; ++j ) {
             // convert key to string
-            std::string pKeyStr = keys[j].commonPublic.getPublicKeyRaw().toString( libBLS::Base::HEXA );
+            std::string pKeyStr =
+                keys[j].commonPublic.getPublicKeyRaw().toString( libBLS::Base::HEXA );
             publicKeysStr[j] = pKeyStr;
         }
 

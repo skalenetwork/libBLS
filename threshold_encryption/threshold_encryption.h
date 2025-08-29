@@ -59,8 +59,7 @@ struct CipheredKey {
 
 public:
     CipheredKey() = default;
-    CipheredKey(
-        algebra::G2Point _U, AES256Key _V, algebra::G1Point _W, bool _validate = true )
+    CipheredKey( algebra::G2Point _U, AES256Key _V, algebra::G1Point _W, bool _validate = true )
         : U( _U ), V( std::move( _V ) ), W( _W ) {
         if ( _validate )
             validate();
