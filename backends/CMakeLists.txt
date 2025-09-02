@@ -11,26 +11,20 @@ if(USE_LIBFF AND USE_MCL)
 endif()
 
 if(NOT USE_LIBFF AND NOT USE_MCL)
-  message(STATUS "No backend selected, defaulting to libff")
-  set(USE_LIBFF ON)
+  message(STATUS "No backend selected, defaulting to mcl")
+  set(USE_MCL ON)
 endif()
 
 find_library( GMP_LIBRARY NAMES "gmp" PATHS "${DEPS_INSTALL_ROOT}/lib" )
 find_library( GMPXX_LIBRARY NAMES "gmpxx" PATHS "${DEPS_INSTALL_ROOT}/lib" )
 
-# TODO - remove - debug only
-add_compile_options(-g -fno-omit-frame-pointer -fasynchronous-unwind-tables)
-add_link_options(-rdynamic)
-
 if(USE_LIBFF)
-    message("Using libff backend")
     set(BACKEND_NAME "libff")                           # used as the directory name
     set(BACKEND_LIB "ff")                               # used as the library name when linking
     set(BACKEND_COMPILE_OPTIONS "")
     set(BACKEND_DEPS ${GMPXX_LIBRARY} ${GMP_LIBRARY})   # extra dependencies that may be used by the backend
     set(BACKEND_DEFINE LIBFF)
 elseif(USE_MCL)
-    message("Using mcl backend")
     set(BACKEND_NAME "mcl")
     set(BACKEND_LIB "mcl")
     set(BACKEND_COMPILE_OPTIONS "MCL_USE_GMP=1")
@@ -38,6 +32,8 @@ elseif(USE_MCL)
     set(BACKEND_DEFINE MCL)
     # add more backends below if needed
 endif()
+
+message("Using backend: ${BACKEND_NAME}")
 
 
 ############### DO NOT CHANGE BELOW THIS LINE ###############
@@ -113,7 +109,7 @@ target_compile_definitions(backend PUBLIC
 target_link_libraries(backend PUBLIC 
     ${BACKEND_LIB}
     ${BACKEND_DEPS}
-    ${CRYPTOPP_LIBRARY}  
+    ${CRYPTOPP_LIBRARY} # only needed for tests because tests use utils.cpp. Need to refactor this
 )
 
 
@@ -148,4 +144,3 @@ if(BUILD_TESTS)
 
   add_backend_test(backend_unit_test unit_tests_backend.cpp)
 endif()
-

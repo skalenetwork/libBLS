@@ -9,7 +9,6 @@ if(BUILD_TESTS)
 endif()
 
 set(SOURCES
-    ${TOOLS_DIR}/utils.cpp
     threshold_encryption.cpp
     TEBase.cpp
     TEDecryptionShare.cpp
@@ -50,7 +49,15 @@ include_directories(${CMAKE_BINARY_DIR}/deps/include )
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 
 target_include_directories(te PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
-target_link_libraries(te PRIVATE bls ${CRYPTOPP_LIBRARY} backend)
+target_link_libraries(te PRIVATE backend ${CRYPTOPP_LIBRARY})
+
+# Re-expose backend’s interface macros from te to its consumers
+# TODO we should not re-export the macros - this should be something self-contained.
+# cmake-generated header with conditional #define would be better. 
+target_compile_definitions(te
+  INTERFACE
+    $<TARGET_PROPERTY:backend,INTERFACE_COMPILE_DEFINITIONS>
+)
 
 if (BUILD_TESTS)
 
@@ -110,14 +117,15 @@ if (BUILD_TESTS)
 endif()
 
 if (EMSCRIPTEN)
-    add_executable(encrypt ../threshold_encryption/encryptMessage.cpp)
-    set_target_properties(encrypt PROPERTIES LINK_FLAGS "-s EXIT_RUNTIME=1 -s USE_PTHREADS=0 -s MODULARIZE -s ALLOW_MEMORY_GROWTH=1 -s NO_DISABLE_EXCEPTION_CATCHING=1 -s EXPORTED_RUNTIME_METHODS='[\"ccall\"]' -s EXPORTED_FUNCTIONS='[\"_encryptMessage\", \"_encryptMessageDualKey\",\"_encryptMessageMockup\"]' -s MAIN_MODULE=1 -s ENVIRONMENT='node,web' -s SINGLE_FILE=1")
+    add_executable(encrypt ../threshold_encryption/encryptMessage.cpp ../tools/utils.cpp)
+    set_target_properties(encrypt PROPERTIES LINK_FLAGS "-s EXIT_RUNTIME=1 -s USE_PTHREADS=0 -s MODULARIZE -s ALLOW_MEMORY_GROWTH=1 -s NO_DISABLE_EXCEPTION_CATCHING=1 -s EXPORTED_RUNTIME_METHODS='[\"ccall\"]' -s EXPORTED_FUNCTIONS='[\"_encryptMessage\", \"_encryptMessageDualKey\",\"_encryptMessageMockup\"]' -s ENVIRONMENT='node,web' -s SINGLE_FILE=1")
     target_include_directories(encrypt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
-    target_link_libraries(encrypt PRIVATE te ${CRYPTOPP_LIBRARY} backend)
+    target_compile_definitions(encrypt PRIVATE)
+    target_link_libraries(encrypt PRIVATE te ${CRYPTOPP_LIBRARY})
 
-    add_executable(encrypt_message ../test/encryptMessageJS.cpp)
+    add_executable(encrypt_message ../test/encryptMessageJS.cpp ../tools/utils.cpp)
     target_include_directories(encrypt_message PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
-    target_compile_options(encrypt_message PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
-    set_target_properties(encrypt_message PROPERTIES LINK_FLAGS "-s EXIT_RUNTIME=1 -s USE_PTHREADS=0 -s EXPORTED_FUNCTIONS=['_main'] -s MAIN_MODULE=1 --bind")
-    target_link_libraries(encrypt_message PRIVATE te ${CRYPTOPP_LIBRARY} backend)
+    target_compile_definitions(encrypt_message PRIVATE)
+    set_target_properties(encrypt_message PROPERTIES LINK_FLAGS "-s EXIT_RUNTIME=1 -s USE_PTHREADS=0 -s EXPORTED_FUNCTIONS=['_main'] --bind")
+    target_link_libraries(encrypt_message PRIVATE te ${CRYPTOPP_LIBRARY})
 endif()

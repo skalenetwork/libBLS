@@ -108,7 +108,6 @@ set(sourses_bls
 	dkg/DKGTEWrapper.cpp
 	dkg/DKGTESecret.cpp
 	third_party/cryptlite/base64.cpp
-	tools/utils.cpp
 )
 
 set(headers_bls
@@ -154,6 +153,14 @@ link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 
 add_subdirectory(backends)
 
+
+# TMP fix for emscripten
+# Build utils exactly once
+add_library(common_utils STATIC tools/utils.cpp)
+target_include_directories(common_utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(common_utils PRIVATE ${CRYPTOPP_LIBRARY} backend)
+
+
 add_library(bls ${sourses_bls} ${headers_bls})
 
 include_directories(${Boost_INCLUDE_DIRS})
@@ -170,7 +177,7 @@ set(BLS_INCLUDE_DIRS
 )
 
 target_include_directories(bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(bls PUBLIC backend PRIVATE ${CRYPTOPP_LIBRARY})
+target_link_libraries(bls PUBLIC backend PRIVATE ${CRYPTOPP_LIBRARY} common_utils)
 
 add_subdirectory(threshold_encryption)
 
