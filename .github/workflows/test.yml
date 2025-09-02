@@ -271,6 +271,7 @@ jobs:
           export TARGET=all
           cd deps
           ./build.sh WITH_EMSCRIPTEN=1
+          bash ../backends/mcl/patch_mcl_emscripten.sh 
           cd ..
       - name: Build all
         run: >
