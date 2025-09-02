@@ -36,12 +36,12 @@
 namespace libBLS {
 
 TE::TE( const TEBase& base ) : t_( base.getRequiredSigners() ), n_( base.getTotalSigners() ) {
-    libff::init_alt_bn128_params();
+    ThresholdUtils::initCurve();
     libff::inhibit_profiling_info = true;
 }
 
 TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {
-    libff::init_alt_bn128_params();
+    ThresholdUtils::initCurve();
     libff::inhibit_profiling_info = true;
 }
 
