@@ -179,8 +179,22 @@ size_t ThresholdUtils::validateHexCString( const char* hexStr ) {
 
     // Ensure the string contains only valid hexadecimal characters
     for ( size_t i = 0; i < len; i++ ) {
-        if ( !std::isxdigit( hexStr[i] ) ) {
-            throw IncorrectInput( "Hex string contains invalid characters." + hexStr[i] );
+        if ( !std::isxdigit( static_cast< unsigned char >( hexStr[i] ) ) ) {
+            throw IncorrectInput(
+                "Hex string contains invalid characters: " + std::string( 1, hexStr[i] ) );
+        }
+    }
+    return len;
+}
+
+size_t ThresholdUtils::validateDecimalCString( const char* decStr ) {
+    size_t len = std::strlen( decStr );
+
+    // Ensure the string contains only valid hexadecimal characters
+    for ( size_t i = 0; i < len; i++ ) {
+        if ( !std::isdigit( static_cast< unsigned char >( decStr[i] ) ) ) {
+            throw IncorrectInput(
+                "Decimal string contains invalid characters: " + std::string( 1, decStr[i] ) );
         }
     }
     return len;

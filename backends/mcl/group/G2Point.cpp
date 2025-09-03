@@ -5,6 +5,7 @@
 #include "backends/algebra_types.hpp"
 #include "backends/interface/field/FqElement.hpp"
 #include "backends/interface/field/FrScalar.hpp"
+#include <iostream>
 
 namespace libBLS::algebra {
 
@@ -144,10 +145,9 @@ G2Point G2Point::fromString( const std::string& str, Base base ) {
             "G2Point is currently only supported to be built from hexadecimal base string" );
     }
 
-    const size_t stringSize = 256;
-    const size_t elementStringSize = 64;
+    const size_t elementStringSize = MAX_FIELD_ELEMENT_SIZE_BYTES * 2;
 
-    if ( str.size() != stringSize ) {
+    if ( str.size() != STRING_HEXA_CHARS ) {
         throw ThresholdUtils::IncorrectInput( "Wrong string size to convert to G2" );
     }
 
@@ -166,6 +166,7 @@ G2Point G2Point::fromString( const std::string& str, Base base ) {
         trySettingFieldWithString(
             ret.value.y.b, str.substr( 3 * elementStringSize, std::string::npos ), base );
     } catch ( const std::exception& e ) {
+        std::cout << "EXCEPTION: " << e.what() << std::endl;
         throw ThresholdUtils::IncorrectInput(
             std::string( "Failed to set G2Point components from string: " ) + e.what() );
     }

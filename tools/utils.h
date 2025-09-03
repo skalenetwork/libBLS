@@ -104,8 +104,6 @@ public:
     static std::shared_ptr< std::vector< std::string > > SplitString(
         const std::shared_ptr< std::string >, const std::string& delim );
 
-    static bool checkHex( const std::string& hex );
-
     static std::string bytesToHexString( const std::vector< uint8_t >& bytes );
 
     static std::vector< uint8_t > hexCStringToBytes( const char* hexStr );
@@ -119,13 +117,14 @@ public:
     template < class T >
     static void validatePointWithException( const T& point );
 
-private:
     /**
      * @brief Helper function that validates input char*
      * as a valid hex string, and returns its length.
      * @throw IncorrectInput if the input is not a valid hex string.
      */
     static size_t validateHexCString( const char* hexStr );
+
+    static size_t validateDecimalCString( const char* decStr );
 };
 
 template < size_t N >

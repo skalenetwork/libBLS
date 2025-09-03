@@ -4,26 +4,9 @@
 #include "../utils.hpp"
 #include "backends/algebra_types.hpp"
 #include "tools/utils.h"
-#include <gmpxx.h>
 #include <iostream>
 
 namespace libBLS::algebra {
-
-// -------------------- Private Methods -------------------- //
-
-mpz_class FqElement::toMpzClass() const {
-    std::string s = value.getStr( 10 );  // base 10 decimal string
-    mpz_class t;
-    if ( mpz_set_str( t.get_mpz_t(), s.c_str(), 10 ) != 0 ) {
-        THROW( "mpz_set_str failed" );
-    }
-    return t;
-}
-
-FqBackendType FqElement::fromMpzClass( const mpz_class& m ) {
-    FqBackendType x( m.get_str( 10 ).c_str(), 10 );
-    return x;
-}
 
 // -------------------- Template Specializations -------------------- //
 // Should be placed at start of file - must be defined before any
@@ -78,7 +61,11 @@ std::string FqElement::toString( Base base ) const {
 }
 
 std::array< uint8_t, FqElement::SIZE_BYTES > FqElement::toByteArray() const {
-    return toByteArrayDefault();
+    std::array< uint8_t, SIZE_BYTES > arr;
+    // returns in little endian
+    value.serialize( arr.data(), arr.size() );
+    std::reverse( arr.begin(), arr.end() );  // convert to big endian
+    return arr;
 }
 
 FqElement FqElement::fromString( const std::string& str, Base base ) {
@@ -88,7 +75,15 @@ FqElement FqElement::fromString( const std::string& str, Base base ) {
 }
 
 FqElement FqElement::fromBytes( const std::array< uint8_t, SIZE_BYTES >& bytes ) {
-    return fromBytesDefault( bytes );
+    FqBackendType field_elem;
+    // assume input is in big endian - convert to little endian
+    std::array< uint8_t, SIZE_BYTES > bytes_copy = bytes;
+    std::reverse( bytes_copy.begin(), bytes_copy.end() );
+
+    if ( !field_elem.deserialize( bytes_copy.data(), bytes_copy.size() ) ) {
+        throw ThresholdUtils::IncorrectInput( "Invalid byte array for FqElement" );
+    }
+    return FqElement( field_elem );
 }
 
 // -------------------- Operator Overloads -------------------- //

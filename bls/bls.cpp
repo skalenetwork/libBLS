@@ -31,7 +31,6 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 #include <stdexcept>
 #include <thread>
 
-#include <gmpxx.h>
 #include <boost/multiprecision/cpp_int.hpp>
 
 namespace libBLS {

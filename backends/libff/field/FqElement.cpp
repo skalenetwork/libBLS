@@ -7,18 +7,6 @@
 
 namespace libBLS::algebra {
 
-mpz_class FqElement::toMpzClass() const {
-    mpz_class t;
-    value.as_bigint().to_mpz( t.get_mpz_t() );
-    return t;
-}
-
-FqBackendType FqElement::fromMpzClass( const mpz_class& m ) {
-    FqBackendType field_elem( m.get_mpz_t() );
-    return field_elem;
-}
-
-
 template <>
 FqElement Field< FqBackendType, FqElement >::zero() {
     return FqElement( libff::alt_bn128_Fq::zero() );
@@ -51,11 +39,15 @@ FqElement::FqElement( uint64_t x ) : Field( libff::alt_bn128_Fq( x ) ) {}
 // -------------------- Serialization / Deserialization Methods -------------------- //
 
 std::string FqElement::toString( Base base ) const {
-    return toStringDefault( base );
+    mpz_class t;
+    value.as_bigint().to_mpz( t.get_mpz_t() );
+    return mpzClassToString( t, static_cast< size_t >( base ) );
 }
 
 std::array< uint8_t, FqElement::SIZE_BYTES > FqElement::toByteArray() const {
-    return toByteArrayDefault();
+    mpz_class t;
+    value.as_bigint().to_mpz( t.get_mpz_t() );
+    return mpzClassToByteArray( t );
 }
 
 FqElement FqElement::fromString( const std::string& str, Base base ) {
@@ -70,7 +62,9 @@ FqElement FqElement::fromString( const std::string& str, Base base ) {
 }
 
 FqElement FqElement::fromBytes( const std::array< uint8_t, SIZE_BYTES >& bytes ) {
-    return fromBytesDefault( bytes );
+    mpz_class mpz = bytesToMpzClass( bytes );
+    FqBackendType field_elem( mpz.get_mpz_t() );
+    return field_elem;
 }
 
 // -------------------- Operator Overloads -------------------- //

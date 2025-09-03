@@ -1,7 +1,6 @@
 #ifdef MCL
 
 #include "backends/interface/functions.hpp"
-// #include <gmpxx.h>
 
 namespace libBLS::algebra {
 
@@ -21,7 +20,7 @@ FqElement power( const FqElement& fq, const std::string& exponent ) {
 #ifdef MCL_USE_GMP
     mpz_class e;
     e.set_str( exponent, 10 );
-#else
+#else  // emscripten
     mcl::Vint e;
     e.setStr( exponent, 10 );
 #endif
@@ -38,7 +37,12 @@ FqElement hashToFq( const std::array< uint8_t, 32 >& hash_byte_arr ) {
 }
 
 void normalizeYCoordinate( FqElement& element ) {
+#ifdef MCL_USE_GMP
     mpz_class y, y_neg;
+#else  // emscripten
+    mcl::Vint y, y_neg;
+#endif
+
     element.value.getMpz( y );
     mcl::bn::Fp neg;
     mcl::bn::Fp::neg( neg, element.value );

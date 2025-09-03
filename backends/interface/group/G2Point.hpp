@@ -18,6 +18,7 @@ class G2Point
       public PointSerializer< G2Point, G2_NUM_COMPONENTS_AFFINE, G2_NUM_COMPONENTS_PROJECTIVE > {
 public:
     static constexpr size_t SIZE_BYTES = 128;
+    static constexpr size_t STRING_HEXA_CHARS = 2 * SIZE_BYTES;
     static constexpr size_t NUM_COMPONENTS_AFFINE = G2_NUM_COMPONENTS_AFFINE;
 
     G2Point();

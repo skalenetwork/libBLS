@@ -7,20 +7,6 @@
 namespace libBLS {
 namespace algebra {
 
-mpz_class FrScalar::toMpzClass() const {
-    std::string s = value.getStr( 10 );  // base 10 decimal string
-    mpz_class t;
-    if ( mpz_set_str( t.get_mpz_t(), s.c_str(), 10 ) != 0 ) {
-        THROW( "mpz_set_str failed" );
-    }
-    return t;
-}
-
-FrBackendType FrScalar::fromMpzClass( const mpz_class& m ) {
-    FrBackendType x( m.get_str( 10 ).c_str(), 10 );
-    return x;
-}
-
 // -------------------- Template Specializations -------------------- //
 // Should be placed at start of file - must be defined before any
 // code that uses them
@@ -72,12 +58,20 @@ FrScalar FrScalar::inverse() const {
 
 // TODO check if there is a more efficient way to do this
 std::vector< uint8_t > FrScalar::toByteVector() const {
-    return toByteVectorDefault();
+    std::vector< uint8_t > vec( SIZE_BYTES );
+    // returns in little endian
+    value.serialize( vec.data(), vec.size() );
+    std::reverse( vec.begin(), vec.end() );  // convert to big endian
+    return vec;
 }
 
 // TODO check if there is a more efficient way to do this
 std::array< uint8_t, FrScalar::SIZE_BYTES > FrScalar::toByteArray() const {
-    return toByteArrayDefault();
+    std::array< uint8_t, SIZE_BYTES > arr;
+    // returns in little endian
+    value.serialize( arr.data(), arr.size() );
+    std::reverse( arr.begin(), arr.end() );  // convert to big endian
+    return arr;
 }
 
 std::string FrScalar::toString( Base base ) const {
@@ -94,11 +88,27 @@ std::string FrScalar::toString( Base base ) const {
 // ---------- Deserialization ----------- //
 
 FrScalar FrScalar::fromBytes( const std::array< uint8_t, SIZE_BYTES >& bytes ) {
-    return fromBytesDefault( bytes );
+    FrBackendType field_elem;
+    // assume input is in big endian - convert to little endian
+    std::array< uint8_t, SIZE_BYTES > bytes_copy = bytes;
+    std::reverse( bytes_copy.begin(), bytes_copy.end() );
+
+    if ( !field_elem.deserialize( bytes_copy.data(), bytes_copy.size() ) ) {
+        throw ThresholdUtils::IncorrectInput( "Invalid byte array for FrScalar" );
+    }
+    return FrScalar( field_elem );
 }
 
 FrScalar FrScalar::fromBytes( const std::vector< uint8_t >& bytes ) {
-    return fromBytesDefault( bytes );
+    FrBackendType field_elem;
+    // assume input is in big endian - convert to little endian
+    std::vector< uint8_t > bytes_copy = bytes;
+    std::reverse( bytes_copy.begin(), bytes_copy.end() );
+
+    if ( !field_elem.deserialize( bytes_copy.data(), bytes_copy.size() ) ) {
+        throw ThresholdUtils::IncorrectInput( "Invalid byte vector for FrScalar" );
+    }
+    return FrScalar( field_elem );
 }
 
 FrScalar FrScalar::fromString( const std::string& str, Base base ) {
