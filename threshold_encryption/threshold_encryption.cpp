@@ -38,6 +38,7 @@ TE::TE( const TEBase& base ) : t_( base.getRequiredSigners() ), n_( base.getTota
 
 TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {}
 
+
 TE::~TE() {}
 
 std::string TE::Hash(
