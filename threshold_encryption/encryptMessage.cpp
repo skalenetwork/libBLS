@@ -24,11 +24,9 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include "ThresholdEncryption.h"
 #include <threshold_encryption.h>
 #include <tools/utils.h>
-#include <emscripten/emscripten.h>
 
 extern "C" {
 
-EMSCRIPTEN_KEEPALIVE
 const char* encryptMessage( const char* data, const char* key ) {
     static std::string cipheredMessageStr;
 
@@ -51,7 +49,6 @@ const char* encryptMessage( const char* data, const char* key ) {
     return cipheredMessageStr.c_str();
 }
 
-EMSCRIPTEN_KEEPALIVE
 const char* encryptMessageDualKey( const char* data, const char* firstKey, const char* secondKey ) {
     static std::string cipheredMessageStr;
 
@@ -79,7 +76,6 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
     return cipheredMessageStr.c_str();
 }
 
-EMSCRIPTEN_KEEPALIVE
 const char* encryptMessageMockup( const char* data ) {
     static std::string cipheredMessageStr;
 
