@@ -31,8 +31,6 @@ namespace libBLS {
 BLSPrivateKey::BLSPrivateKey(
     const std::shared_ptr< std::string >& _key, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    libBLS::ThresholdUtils::initCurve();
-
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
     if ( _key == nullptr ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Secret key share is null" );

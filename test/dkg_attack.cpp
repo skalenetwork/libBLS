@@ -11,7 +11,7 @@
 
 int main() {
     // Initialize paring parameters
-    libBLS::initCurve();
+    libBLS::init();
 
     // (num_signed, num_all)=(11,13)
     size_t num_signed = 11;

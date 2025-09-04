@@ -53,8 +53,6 @@ BOOST_AUTO_TEST_CASE( RandomPolynomial ) {
 
     std::vector< libBLS::algebra::FrScalar > pol( deg + 1 );
 
-    libBLS::ThresholdUtils::initCurve();
-
     // random polynomial generation
     for ( size_t i = 0; i < deg + 1; ++i ) {
         pol[i] = libBLS::algebra::FrScalar::random();
@@ -111,8 +109,6 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE( TestFieldConversions )
 
 BOOST_AUTO_TEST_CASE( G1ToAndFromBytes ) {
-    libBLS::ThresholdUtils::initCurve();
-
     for ( size_t i = 0; i < 10000; i++ ) {
         libBLS::algebra::G1Point point = libBLS::algebra::G1Point::random();
         std::array< uint8_t, libBLS::G1_SIZE_BYTES > point_bytes = point.toByteArray();
@@ -123,8 +119,6 @@ BOOST_AUTO_TEST_CASE( G1ToAndFromBytes ) {
 }
 
 BOOST_AUTO_TEST_CASE( G2ToAndFromBytes ) {
-    libBLS::ThresholdUtils::initCurve();
-
     for ( size_t i = 0; i < 10000; i++ ) {
         libBLS::algebra::G2Point point = libBLS::algebra::G2Point::random();
         std::array< uint8_t, libBLS::G2_SIZE_BYTES > point_bytes = point.toByteArray();
@@ -135,8 +129,6 @@ BOOST_AUTO_TEST_CASE( G2ToAndFromBytes ) {
 }
 
 BOOST_AUTO_TEST_CASE( FieldElementToAndFromBytes ) {
-    libBLS::ThresholdUtils::initCurve();
-
     for ( size_t i = 0; i < 10000; i++ ) {
         // Fr element
         libBLS::algebra::FrScalar element = libBLS::algebra::FrScalar::random();
@@ -157,8 +149,6 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE( TestBytesToHexString )
 
 BOOST_AUTO_TEST_CASE( BytesToAndFromHexCString ) {
-    libBLS::ThresholdUtils::initCurve();
-
     for ( size_t i = 0; i < 10000; i++ ) {
         size_t len = rand() % 1000 + libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES;
         std::vector< uint8_t > bytes( len );

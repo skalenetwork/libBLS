@@ -35,9 +35,7 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
-Bls::Bls( const size_t t, const size_t n ) : t_( t ), n_( n ) {
-    ThresholdUtils::initCurve();
-}
+Bls::Bls( const size_t t, const size_t n ) : t_( t ), n_( n ) {}
 
 std::pair< algebra::FrScalar, algebra::G2Point > Bls::KeyGeneration() {
     // generate sample secret and public keys

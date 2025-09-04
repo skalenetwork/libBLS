@@ -29,39 +29,31 @@
 namespace libBLS {
 
 BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > pkey_str_vect ) {
-    libBLS::ThresholdUtils::initCurve();
-
     CHECK( pkey_str_vect )
 
     // TODO get rid of unnecessary shared_ptr
-    libffPublicKey = std::make_shared< algebra::G2Point >(
+    publicKey = std::make_shared< algebra::G2Point >(
         algebra::G2Point::fromString( *pkey_str_vect, Base::DEC ) );
 
-    // TODO change field name - remove libff from it
-    libffPublicKey->validate();
+    publicKey->validate();
 }
 
 BLSPublicKey::BLSPublicKey( const algebra::G2Point& pkey, size_t t, size_t n ) : t( t ), n( n ) {
-    libBLS::ThresholdUtils::initCurve();  // we can get rid of this
+    libBLS::ThresholdUtils::checkSigners( t, n );
 
-    // TODO - check this commented out code (?)
-    // do not check signers for compatibility
-    // libBLS::ThresholdUtils::checkSigners( t, n );
-
-    libffPublicKey = std::make_shared< algebra::G2Point >( pkey );
+    publicKey = std::make_shared< algebra::G2Point >( pkey );
 
     // TODO - maybe we should call isValid instead (?)
-    if ( libffPublicKey->isIdentity() ) {
+    if ( publicKey->isIdentity() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Zero BLS Public Key" );
     }
 }
 
 BLSPublicKey::BLSPublicKey( const algebra::FrScalar& skey, size_t t, size_t n ) : t( t ), n( n ) {
-    // do not check signers for compatibility
-    // libBLS::ThresholdUtils::checkSigners( t, n );
+    libBLS::ThresholdUtils::checkSigners( t, n );
 
-    libffPublicKey = std::make_shared< algebra::G2Point >( skey * algebra::G2Point::generator() );
-    if ( libffPublicKey->isIdentity() ) {
+    publicKey = std::make_shared< algebra::G2Point >( skey * algebra::G2Point::generator() );
+    if ( publicKey->isIdentity() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Public Key is equal to zero or corrupt" );
     }
 }
@@ -69,8 +61,6 @@ BLSPublicKey::BLSPublicKey( const algebra::FrScalar& skey, size_t t, size_t n ) 
 // TODO - get rid of shared pointer no need here
 bool BLSPublicKey::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
     std::shared_ptr< BLSSignature > sign_ptr ) {
-    libBLS::ThresholdUtils::initCurve();
-
     if ( !hash_ptr ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "hash is null" );
     }
@@ -79,7 +69,7 @@ bool BLSPublicKey::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Sig share is equal to zero or corrupt" );
     }
 
-    bool res = Bls::Verification( *hash_ptr, *( sign_ptr->getSig() ), *libffPublicKey );
+    bool res = Bls::Verification( *hash_ptr, *( sign_ptr->getSig() ), *publicKey );
     return res;
 }
 
@@ -109,14 +99,12 @@ bool BLSPublicKey::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32
     algebra::G1Point hash( x.value, y_shift_x.first.value, algebra::FqElement::one().value );
 
     return ( algebra::pairing( *sign_ptr->getSig(), algebra::G2Point::generator() ) ==
-             algebra::pairing( hash, *libffPublicKey ) );
+             algebra::pairing( hash, *publicKey ) );
 }
 
 bool BLSPublicKey::AggregatedVerifySig(
     std::vector< std::shared_ptr< std::array< uint8_t, 32 > > >& hash_ptr_vec,
     std::vector< std::shared_ptr< BLSSignature > >& sign_ptr_vec ) {
-    libBLS::ThresholdUtils::initCurve();
-
     if ( hash_ptr_vec.size() != sign_ptr_vec.size() ) {
         throw libBLS::ThresholdUtils::IncorrectInput(
             "Number of signatures and hashes do not match" );
@@ -140,7 +128,7 @@ bool BLSPublicKey::AggregatedVerifySig(
         libff_sig_vec.push_back( *( sign_ptr->getSig() ) );
     }
 
-    bool res = libBLS::Bls::AggregatedVerification( hash_ptr_vec, libff_sig_vec, *libffPublicKey );
+    bool res = libBLS::Bls::AggregatedVerification( hash_ptr_vec, libff_sig_vec, *publicKey );
     return res;
 }
 
@@ -148,8 +136,6 @@ BLSPublicKey::BLSPublicKey(
     std::shared_ptr< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > > koefs_pkeys_map,
     size_t _requiredSigners, size_t _totalSigners )
     : t( _requiredSigners ), n( _totalSigners ) {
-    libBLS::ThresholdUtils::initCurve();
-
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     if ( !koefs_pkeys_map ) {
@@ -177,20 +163,20 @@ BLSPublicKey::BLSPublicKey(
         }
     }
 
-    libffPublicKey = std::make_shared< algebra::G2Point >( key );
-    if ( libffPublicKey->isIdentity() ) {
+    publicKey = std::make_shared< algebra::G2Point >( key );
+    if ( publicKey->isIdentity() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Public Key is equal to zero or corrupt" );
     }
 }
 
 std::shared_ptr< std::vector< std::string > > BLSPublicKey::toString() {
-    libffPublicKey->toAffineCoordinates();
+    publicKey->toAffineCoordinates();
     return std::make_shared< std::vector< std::string > >(
-        libffPublicKey->toStringVector( algebra::Base::DEC ) );
+        publicKey->toStringVector( algebra::Base::DEC ) );
 }
 
 std::shared_ptr< algebra::G2Point > BLSPublicKey::getPublicKey() const {
-    return libffPublicKey;
+    return publicKey;
 }
 
 }  // namespace libBLS

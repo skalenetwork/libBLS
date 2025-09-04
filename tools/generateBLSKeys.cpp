@@ -29,7 +29,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 using namespace libBLS;
 
 int main() {
-    ThresholdUtils::initCurve();
+    libBLS::init();
     algebra::FrScalar secret_key = algebra::FrScalar::random();
     algebra::G2Point public_key = secret_key * algebra::G2Point::generator();
 

@@ -87,6 +87,8 @@ public:
 
     static std::atomic< bool > is_initialized;
 
+    static void init();
+
     static void initCurve();
 
     static void initRAND();
@@ -155,6 +157,11 @@ std::array< uint8_t, N > ThresholdUtils::hexCStringToBytesArray( const char* hex
     }
 
     return bytes;
+}
+
+// Expose init() to libBLS users
+inline void init() {
+    ThresholdUtils::init();
 }
 
 }  // namespace libBLS

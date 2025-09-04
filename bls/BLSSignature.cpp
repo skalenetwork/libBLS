@@ -40,8 +40,6 @@ BLSSignature::BLSSignature( const std::shared_ptr< algebra::G1Point > sig, std::
 
     CHECK( sig );
 
-    libBLS::ThresholdUtils::initCurve();
-
     if ( sig->isIdentity() ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Zero BLS signature" );
     }
@@ -56,8 +54,6 @@ BLSSignature::BLSSignature(
     CHECK( _sig );
 
     libBLS::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
-
-    libBLS::ThresholdUtils::initCurve();
 
     if ( _sig->size() < 10 ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed(

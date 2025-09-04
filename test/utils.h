@@ -28,7 +28,7 @@ struct keys {
 struct GlobalConfig {
     GlobalConfig() {
         // runs before any test
-        libBLS::initCurve();
+        libBLS::init();
     }
 };
 

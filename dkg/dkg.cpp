@@ -30,9 +30,7 @@ namespace libBLS {
 
 typedef std::vector< algebra::FrScalar > Polynomial;
 
-Dkg::Dkg( const size_t t, const size_t n ) : t_( t ), n_( n ) {
-    ThresholdUtils::initCurve();
-}
+Dkg::Dkg( const size_t t, const size_t n ) : t_( t ), n_( n ) {}
 
 Polynomial Dkg::GeneratePolynomial() {
     // generate polynomial of degree t for each node that takes part in DKG

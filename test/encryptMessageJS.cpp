@@ -12,7 +12,7 @@ int main( int argc, char* argv[] ) {
     std::string common_public_str = argv[1];
     std::string message = argv[2];
 
-    libBLS::ThresholdUtils::initCurve();
+    libBLS::init();
 
     // convert from char into vec of bytes
     std::vector< uint8_t > messageBytes =

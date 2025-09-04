@@ -30,7 +30,7 @@ extern "C" {
 const char* encryptMessage( const char* data, const char* key ) {
     static std::string cipheredMessageStr;
 
-    libBLS::ThresholdUtils::initCurve();
+    libBLS::init();
 
     // convert from char into vec of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
@@ -52,7 +52,7 @@ const char* encryptMessage( const char* data, const char* key ) {
 const char* encryptMessageDualKey( const char* data, const char* firstKey, const char* secondKey ) {
     static std::string cipheredMessageStr;
 
-    libBLS::ThresholdUtils::initCurve();
+    libBLS::init();
 
     // convert from char into vec of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
@@ -79,7 +79,7 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
 const char* encryptMessageMockup( const char* data ) {
     static std::string cipheredMessageStr;
 
-    libBLS::ThresholdUtils::initCurve();
+    libBLS::init();
 
     // convert from char into vec of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );

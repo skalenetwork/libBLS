@@ -55,9 +55,6 @@ BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _sign
       totalSigners( _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
 
-    // TODO - try getting rid of this
-    libBLS::ThresholdUtils::initCurve();
-
     if ( _signerIndex == 0 ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Zero signer index" );
     }
@@ -108,7 +105,6 @@ BLSSigShare::BLSSigShare( const std::shared_ptr< algebra::G1Point >& _sigShare, 
       signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    libBLS::ThresholdUtils::initCurve();
     libBLS::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
     if ( !_sigShare ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Null _s" );

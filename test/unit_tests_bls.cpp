@@ -479,8 +479,6 @@ lagrange_coeffs);
 BOOST_AUTO_TEST_CASE( blsAggregatedSignatures ) {
     std::cout << "Testing blsAggregatedSignatures\n";
 
-    libBLS::ThresholdUtils::initCurve();
-
     auto first_key = libBLS::Bls::KeyGeneration();
     auto second_key = libBLS::Bls::KeyGeneration();
 

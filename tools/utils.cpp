@@ -34,17 +34,17 @@
 
 namespace libBLS {
 
-
-std::atomic< bool > ThresholdUtils::is_initialized = false;
-
-std::mutex initMutex;
+void ThresholdUtils::init() {
+    initRAND();
+    initCurve();
+}
 
 void ThresholdUtils::initCurve() {
-    std::lock_guard< std::mutex > lock( initMutex );
-    if ( !is_initialized ) {
+    static std::once_flag initFlag;
+    std::call_once( initFlag, []() {
         algebra::initCurve();
         is_initialized = true;
-    }
+    } );
 }
 
 void ThresholdUtils::initRAND() {

@@ -35,7 +35,7 @@ class BLSPublicKeyShare;
 
 class BLSPublicKey {
 private:
-    std::shared_ptr< algebra::G2Point > libffPublicKey;
+    std::shared_ptr< algebra::G2Point > publicKey;
     size_t t;
     size_t n;
 

@@ -33,7 +33,6 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(
     const std::string& _key, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
-    libBLS::ThresholdUtils::initCurve();
     if ( _key.empty() ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Secret key share string is empty" );
     }

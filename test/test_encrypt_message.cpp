@@ -43,7 +43,7 @@
 BOOST_AUTO_TEST_SUITE( EncryptMessageJS )
 
 BOOST_AUTO_TEST_CASE( EncryptMessage ) {
-    libBLS::initCurve();
+    libBLS::init();
     size_t required = 10;
     size_t total = 15;
 

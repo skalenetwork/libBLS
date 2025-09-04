@@ -36,8 +36,6 @@ BLSPublicKeyShare::BLSPublicKeyShare(
 
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    libBLS::ThresholdUtils::initCurve();  // TODO - maybe we can get rid of this
-
     // TODO - should not use shared_ptr
     publicKey = std::make_shared< algebra::G2Point >(
         algebra::G2Point::fromString( *pkey_str_vect, Base::DEC ) );
@@ -54,7 +52,6 @@ BLSPublicKeyShare::BLSPublicKeyShare(
 BLSPublicKeyShare::BLSPublicKeyShare(
     const algebra::FrScalar& _skey, size_t _totalSigners, size_t _requiredSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    libBLS::ThresholdUtils::initCurve();
     if ( _skey.isZero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "Zero BLS Secret Key" );
     }

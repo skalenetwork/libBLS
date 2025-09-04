@@ -43,7 +43,7 @@ int main( int argc, char* argv[] ) {
     std::string expectedMessage = argv[3];
     size_t keyIndexToKeep = std::stoul( argv[4] );
 
-    libBLS::ThresholdUtils::initCurve();
+    libBLS::init();
 
     auto encryptedDataBytes = libBLS::ThresholdUtils::hexCStringToBytes( encryptedData.c_str() );
 

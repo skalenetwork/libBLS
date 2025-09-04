@@ -22,7 +22,6 @@ enum class Base : std::size_t {
 
 // allow libBLS users to use from libBLS namespace directly
 using Base = algebra::Base;
-using algebra::initCurve;
 using algebra::MAX_FIELD_ELEMENT_SIZE_BYTES;
 
 }  // namespace libBLS
