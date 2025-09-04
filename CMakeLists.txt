@@ -90,6 +90,7 @@ set( CLANG_FORMAT_EXCLUDE_PATTERNS
 )
 include( BlsFindClangFormat )
 
+set( TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test/")
 set( TOOLS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tools/")
 set( DKG_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dkg/")
 
@@ -259,4 +260,4 @@ if(NOT SKALE_SKIP_INSTALLING_DIRECTIVES)
 endif()
 
 ## Benchmarks
-# add_subdirectory(benchmarks)
+add_subdirectory(benchmarks)

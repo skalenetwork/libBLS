@@ -1,4 +1,4 @@
-# Run tests
+## Tests
 
 ```bash
 ./build/dkg_unit_test                           # run all dkg unit tests
@@ -11,3 +11,23 @@
 ./build/threshold_encryption/te_unit_test       # run all te unit tests
 ./build/threshold_encryption/te_test            # run all te tests
 ```
+
+## Benchmarks
+
+### Running benchmarks
+
+```bash
+# You can pass args to the bench
+./build/benchmarks/te_bench -- --rounds 1000
+```
+
+### Adding benchmarks
+
+1. Add new .cpp file under `./benchmarks`
+2. Add it to `./benchmarks/CMakeLists.txt`
+3. Edit expected input params if needed from global param list in `bench_util.hpp`
+
+### Results
+
+You can previous benchmark result [here](./benchmarks/main.md)
+
