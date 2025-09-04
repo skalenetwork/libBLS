@@ -56,6 +56,8 @@ int main() {
     size_t nMessagesBatch;
     size_t nBatches;
 
+    libBLS::init();
+
     if ( const char* envT = std::getenv( "t" ) ) {
         t = std::stoi( envT );
     } else {
