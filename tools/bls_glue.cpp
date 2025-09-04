@@ -81,7 +81,7 @@ int main( int argc, const char* argv[] ) {
     int r = 1;
     try {
         libBLS::init();
-        
+
         boost::program_options::options_description desc( "Options" );
         desc.add_options()( "help", "Show this help screen" )( "version", "Show version number" )(
             "t", boost::program_options::value< size_t >(), "Threshold" )(
