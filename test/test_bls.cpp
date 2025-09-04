@@ -25,6 +25,7 @@
 #include <dkg/dkg.h>
 #include <ctime>
 
+#include "test/utils.h"
 #include <bls/BLSPrivateKey.h>
 #include <bls/BLSPrivateKeyShare.h>
 #include <bls/BLSPublicKey.h>
@@ -135,6 +136,8 @@ std::string rand32HexStr() {
 
     return res;
 }
+
+BOOST_TEST_GLOBAL_CONFIGURATION( GlobalConfig );
 
 BOOST_AUTO_TEST_CASE( libBls ) {
     std::cerr << "STARTING LIBBLS TESTS" << std::endl;
@@ -802,8 +805,6 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDSIGNATURESSCHEME ) {
 }
 
 BOOST_AUTO_TEST_CASE( BLSAGGREGATEDPOPPROVEVERIFY ) {
-    libBLS::ThresholdUtils::initCurve();
-
     auto key_pair = libBLS::Bls::KeyGeneration();
 
     auto pop_prove = libBLS::Bls::PopProve( key_pair.first );

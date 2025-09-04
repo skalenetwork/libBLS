@@ -21,6 +21,7 @@
   @date 2019
 */
 
+#include "test/utils.h"
 #include <bls/BLSPrivateKey.h>
 #include <bls/BLSPrivateKeyShare.h>
 #include <bls/BLSPublicKey.h>
@@ -43,6 +44,8 @@
 
 #include <gmpxx.h>
 #include <boost/test/included/unit_test.hpp>
+
+BOOST_TEST_GLOBAL_CONFIGURATION( GlobalConfig );
 
 BOOST_AUTO_TEST_SUITE( DkgAlgorithm )
 

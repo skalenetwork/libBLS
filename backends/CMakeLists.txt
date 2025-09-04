@@ -94,6 +94,7 @@ set(BACKEND_SPECIFIC_SOURCES
 set(BACKEND_SOURCES 
   "${BACKEND_BASE_DIR}/interface/functions.cpp"
   "${BACKEND_BASE_DIR}/interface/curve_contract_altbn128.cpp"
+  ${TOOLS_DIR}/utils.cpp
 ) 
 
 

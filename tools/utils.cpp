@@ -41,10 +41,7 @@ void ThresholdUtils::init() {
 
 void ThresholdUtils::initCurve() {
     static std::once_flag initFlag;
-    std::call_once( initFlag, []() {
-        algebra::initCurve();
-        is_initialized = true;
-    } );
+    std::call_once( initFlag, []() { algebra::initCurve(); } );
 }
 
 void ThresholdUtils::initRAND() {

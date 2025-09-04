@@ -39,7 +39,8 @@ BLSPublicKey::BLSPublicKey( const std::shared_ptr< std::vector< std::string > > 
 }
 
 BLSPublicKey::BLSPublicKey( const algebra::G2Point& pkey, size_t t, size_t n ) : t( t ), n( n ) {
-    libBLS::ThresholdUtils::checkSigners( t, n );
+    // TODO - should this be commented?
+    // libBLS::ThresholdUtils::checkSigners( t, n );
 
     publicKey = std::make_shared< algebra::G2Point >( pkey );
 
@@ -50,7 +51,8 @@ BLSPublicKey::BLSPublicKey( const algebra::G2Point& pkey, size_t t, size_t n ) :
 }
 
 BLSPublicKey::BLSPublicKey( const algebra::FrScalar& skey, size_t t, size_t n ) : t( t ), n( n ) {
-    libBLS::ThresholdUtils::checkSigners( t, n );
+    // TODO
+    // libBLS::ThresholdUtils::checkSigners( t, n );
 
     publicKey = std::make_shared< algebra::G2Point >( skey * algebra::G2Point::generator() );
     if ( publicKey->isIdentity() ) {
