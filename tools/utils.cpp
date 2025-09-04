@@ -43,6 +43,7 @@ void ThresholdUtils::initCurve() {
     std::lock_guard< std::mutex > lock( initMutex );
     if ( !is_initialized ) {
         algebra::initCurve();
+        is_initialized = true;
     }
 }
 

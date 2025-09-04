@@ -34,8 +34,8 @@ TEPrivateKeyShare::TEPrivateKeyShare( const std::string& _hexaField, size_t _sig
         throw ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
     }
 
-    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > fieldBytes =
-        ThresholdUtils::hexCStringToBytesArray< MAX_FIELD_ELEMENT_SIZE_BYTES >(
+    std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > fieldBytes =
+        ThresholdUtils::hexCStringToBytesArray< algebra::FrScalar::SIZE_BYTES >(
             _hexaField.c_str() );
     privateKey = algebra::FrScalar::fromBytes( fieldBytes );
 
@@ -64,7 +64,7 @@ TEPrivateKeyShare::TEPrivateKeyShare( const std::vector< uint8_t >& _bytes, size
           algebra::FrScalar::fromBytes( _bytes ), _signerIndex, _requiredSigners, _totalSigners ) {}
 
 TEPrivateKeyShare::TEPrivateKeyShare(
-    const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& _bytes, size_t _signerIndex,
+    const std::array< uint8_t, algebra::FrScalar::SIZE_BYTES >& _bytes, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : TEPrivateKeyShare(
           algebra::FrScalar::fromBytes( _bytes ), _signerIndex, _requiredSigners, _totalSigners ) {}
@@ -91,7 +91,7 @@ std::vector< uint8_t > TEPrivateKeyShare::toBytesVec() const {
     return privateKey.toByteVector();
 }
 
-std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > TEPrivateKeyShare::toBytesArray() const {
+std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > TEPrivateKeyShare::toBytesArray() const {
     return privateKey.toByteArray();
 }
 
