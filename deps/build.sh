@@ -775,12 +775,11 @@ fi
 
 if [ "$WITH_MCL" = "yes" ]; then
   echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}MCL${COLOR_SEPARATOR} ===========================================${COLOR_RESET}"
-  if [ ! -f "$INSTALL_ROOT/lib/libmcl.a" ] && [ ! -f "$INSTALL_ROOT/lib64/libmcl.a" ]; then
+  if [ ! -f "$INSTALL_ROOT/lib/libmcl.a" ]; then
     env_restore
     cd "$SOURCES_ROOT"
     if [ ! -d "mcl" ]; then
       echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
-      # Pin to a known good commit or tag
       eval git clone https://github.com/herumi/mcl.git
     fi
     cd mcl
@@ -794,7 +793,7 @@ if [ "$WITH_MCL" = "yes" ]; then
     #  -DMCL_USE_XBYAK=ON enables JIT (fast on x86; disable if your env forbids JIT)
     #  -DMCL_USE_GMP=OFF uses builtin bigint (set ON if you prefer GMP and have it installed)
     #  -DBUILD_SHARED_LIBS=OFF to get static libmcl.a
-    MCL_CMAKE_OPTS="-DMCL_USE_GMP=ON -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release"
+    MCL_CMAKE_OPTS="-DMCL_USE_GMP=ON -DBUILD_SHARED_LIBS=OFF DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE"
 
     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
     if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]]; then
@@ -804,7 +803,6 @@ if [ "$WITH_MCL" = "yes" ]; then
 		-DMCL_BINT_ASM_X64=OFF \
         -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" \
 		-DCMAKE_PREFIX_PATH="$INSTALL_ROOT" \
-        -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" \
 		-DGMP_INCLUDE_DIR="$INSTALL_ROOT/include" \
 		-DGMP_GMPXX_INCLUDE_DIR="$INSTALL_ROOT/include" \
 		-DGMP_LIBRARY="$INSTALL_ROOT/lib/libgmp.a" \
@@ -814,7 +812,6 @@ if [ "$WITH_MCL" = "yes" ]; then
     else
       eval "$CMAKE" ${CMAKE_CROSSCOMPILING_OPTS} \
         -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" \
-        -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" \
         ${MCL_CMAKE_OPTS} -DMCL_USE_XBYAK=ON ..
       eval "$MAKE" ${PARALLEL_MAKE_OPTIONS}
     fi
