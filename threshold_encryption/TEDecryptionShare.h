@@ -56,7 +56,7 @@ public:
 
     size_t getSignerIndex() const;
 
-    algebra::G2Point getShareRaw() const;
+    const algebra::G2Point& getShareRaw() const;
 
     /**
      * Basic validation on the share (G2 point)

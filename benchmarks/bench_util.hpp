@@ -1,32 +1,9 @@
 #pragma once
-#include <chrono>
 #include <cstdint>
 #include <random>
 #include <string>
 #include <vector>
-
-
-// Simple RAII timer. Starts on construction; stops on destruction.
-// Accumulates into an external double reference (milliseconds).
-struct ScopedTimer {
-    using clock = std::chrono::steady_clock;
-    std::chrono::time_point< clock > start;
-    double& acc_ms;
-    bool stopped{ false };
-
-    explicit ScopedTimer( double& acc ) : start( clock::now() ), acc_ms( acc ) {}
-
-    ~ScopedTimer() { stop(); }
-
-    void stop() {
-        if ( stopped )
-            return;
-        auto end = clock::now();
-        acc_ms += std::chrono::duration< double, std::milli >( end - start ).count();
-        stopped = true;
-    }
-};
-
+#include "benchmarks/ScopedTimer.hpp"
 
 inline std::vector< std::uint8_t > make_msg( std::size_t bytes, std::uint64_t seed = 1337 ) {
     std::mt19937_64 rng( seed );
@@ -65,4 +42,17 @@ inline BenchArgs parse_args( int argc, char** argv ) {
     }
 
     return a;
+}
+
+inline void print_args( const BenchArgs& args ) {
+    std::cout << "Benchmarking Threshold Encryption with parameters:\n";
+    std::cout << "  - t (required signers): " << args.t << "\n";
+    std::cout << "  - n (total signers): " << args.n << "\n";
+    std::cout << "  - message size (bytes): " << args.msg_bytes << "\n";
+    std::cout << "  - backend: " << LIBBLS_BACKEND_NAME << "\n";
+    std::cout << "  - runs: " << args.rounds << "\n";
+}
+
+inline void print_progress(int currentIteration, int totalIterations) {
+    std::cout << "\rProgress: " << (float)currentIteration / totalIterations * 100 << "%" << std::flush;
 }

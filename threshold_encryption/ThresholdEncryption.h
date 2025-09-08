@@ -92,6 +92,20 @@ public:
     static void validateDecryptionShare( const CipheredKey& _cipheredKey,
         const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey );
 
+
+    /**
+     * @brief Validates a batch of decryption shares
+     *
+     * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
+     * struct. Assumed to have been already validated via `validateEncryption` call.
+     * @param _decryptionShares Vector of decryption shares
+     * @param _publicKeys Vector of public keys corresponding to the decryption shares.
+     * @return Vec of bools, each idx specifying if it was successfully validated or not
+     */
+    static std::vector< bool > validateDecryptionSharesBatch( const CipheredKey& _cipheredKey,
+        const std::vector< std::shared_ptr< TEDecryptionShare > >& _decryptionShares, 
+        const std::vector< std::shared_ptr< TEPublicKeyShare > >& _publicKeys );
+
     /**
      * @brief Combines decryption shares to reconstruct the original AES key.
      * It combines all shares to derive the AES key.

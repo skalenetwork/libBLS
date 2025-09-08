@@ -18,33 +18,45 @@ configure_file(
     @ONLY # only replace variables of the form @VAR@.
 )
 
-add_executable(te_bench
-    bench_te.cpp
-    bench_bls.cpp
-    ${TEST_DIR}/utils.cpp
-    bench_util.hpp
-)
 
-target_include_directories(te_bench PRIVATE
-    ${CMAKE_CURRENT_BINARY_DIR} # for backend_info.hpp
+
+function(add_bench name main_source)
+  add_executable(${name}
+    ${main_source}
+    ${TEST_DIR}/utils.cpp
+  )
+
+  target_compile_features(${name} PRIVATE cxx_std_20)
+
+  target_include_directories(${name} PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}           # for bench_util.hpp and local includes
+    ${CMAKE_CURRENT_BINARY_DIR}           # for generated headers like backend_info.hpp
     ${CMAKE_SOURCE_DIR}/threshold_encryption
     ${CMAKE_SOURCE_DIR}
-)
+  )
 
-target_link_libraries(te_bench PRIVATE
-    backend
+  # Link order: put highest-level libs first
+  target_link_libraries(${name} PRIVATE
     te
     bls
-)
+    backend
+  )
 
-# Optimization flags for timing
-if (MSVC)
-    target_compile_options(te_bench PRIVATE /O2 /DNDEBUG)
-else()
-    target_compile_options(te_bench PRIVATE -O3 -DNDEBUG)
-endif()
+  # Optimization: respect build type
+  if(MSVC)
+    target_compile_options(${name} PRIVATE
+      /O2 /DNDEBUG
+    )
+  else()
+    target_compile_options(${name} PRIVATE
+      -O3 -DNDEBUG
+    )
+  endif()
 
-target_compile_features(te_bench PRIVATE cxx_std_20)
+  add_test(NAME ${name} COMMAND ${name})
+endfunction()
 
-# Make the bench easy to run via `ctest` if desired
-add_test(NAME te_bench COMMAND te_bench)
+######### Add Benchmarks #########
+
+add_bench(bench_te   bench_te.cpp)
+add_bench(bench_bls  bench_bls.cpp)

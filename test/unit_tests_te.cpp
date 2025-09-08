@@ -26,6 +26,7 @@
 #include "test/utils.h"
 #include <threshold_encryption.h>
 #include <tools/utils.h>
+#include <memory>
 
 #include <openssl/rand.h>
 
@@ -253,11 +254,22 @@ BOOST_AUTO_TEST_CASE( SimpleEncryption ) {
 
     auto result = te_instance.getCiphertext( random_aes_key, public_key );
 
+    // one decrypt share at a time
     for ( const auto& cipheredKey : result.ciphertext ) {
+        std::vector< std::reference_wrapper< const libBLS::algebra::G2Point > > shares1;
+
         libBLS::algebra::G2Point decryption_share =
             te_instance.getDecryptionShare( cipheredKey, secret_key );
+        shares1.push_back( std::cref( decryption_share ) );
 
+        // standalone validation
         BOOST_REQUIRE( te_instance.Verify( cipheredKey, decryption_share, public_key ) );
+
+        // batched decryption - optimistic
+        std::vector< bool > verifications_key1 = te_instance.VerifyBatch(
+            cipheredKey, shares1, { public_key } );
+        BOOST_REQUIRE( std::all_of( verifications_key1.begin(), verifications_key1.end(), []( bool v ) { return v; } ) );
+
 
         std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares;
         shares.push_back( std::make_pair( decryption_share, size_t( 1 ) ) );
@@ -451,13 +463,21 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
     for ( const auto& cipheredKey : result.ciphertext ) {
         std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares( 11 );
 
+        std::vector< std::reference_wrapper< const libBLS::algebra::G2Point > > sharesBatch;
+        std::vector< std::reference_wrapper< const libBLS::algebra::G2Point > > publicKeysBatch;
+        std::vector< libBLS::algebra::G2Point > pubKeys;
+
         for ( size_t i = 0; i < 11; ++i ) {
             libBLS::algebra::G2Point decrypted =
                 obj.getDecryptionShare( cipheredKey, secret_keys[i] );
 
+            sharesBatch.push_back( std::cref( decrypted ) );
+
             libBLS::algebra::G2Point public_key =
                 secret_keys[i] * libBLS::algebra::G2Point::generator();
+            pubKeys.push_back( public_key ); // push to make it live long enough
 
+            publicKeysBatch.push_back( std::cref( public_key ) );
 
             BOOST_REQUIRE( obj.Verify( cipheredKey, decrypted, public_key ) );
 
@@ -465,6 +485,12 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
 
             shares[i].second = i + 1;
         }
+
+        // batched decryption - optimistic
+        auto verifications = obj.VerifyBatch(
+            cipheredKey, sharesBatch, publicKeysBatch );
+        BOOST_REQUIRE( std::all_of( verifications.begin(), verifications.end(), []( bool v ) { return v; } ) );
+
 
         libBLS::AES256Key res = obj.CombineShares( cipheredKey, shares );
 
@@ -647,17 +673,16 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionCorruptedCiphertext ) {
         rand };
 
     for ( size_t i = 0; i < 11; ++i ) {
-        libBLS::algebra::G2Point decrypted;
-
-        BOOST_REQUIRE_THROW(
-            decrypted = obj.getDecryptionShare( corrupted_ciphered_key, secret_keys[i] ),
-            libBLS::ThresholdUtils::IncorrectInput );
-
-        decrypted = obj.getDecryptionShare( cipheredKeyToCorrupt, secret_keys[i] );
+        libBLS::algebra::G2Point decryptedWrong = obj.getDecryptionShare( corrupted_ciphered_key, secret_keys[i] );
+        libBLS::algebra::G2Point decryptedCorrect = obj.getDecryptionShare( cipheredKeyToCorrupt, secret_keys[i] );
 
         libBLS::algebra::G2Point public_key = secret_keys[i] * libBLS::algebra::G2Point::identity();
 
-        BOOST_REQUIRE( !obj.Verify( corrupted_ciphered_key, decrypted, public_key ) );
+        // wrong cipher key, correct decrypted key - should return false
+        BOOST_REQUIRE( !obj.Verify( corrupted_ciphered_key, decryptedCorrect, public_key ) );
+
+        // wrong decrypted key, correct cipher key - should return false
+        BOOST_REQUIRE( !obj.Verify( cipheredKeyToCorrupt, decryptedWrong, public_key ) );
     }
 }
 

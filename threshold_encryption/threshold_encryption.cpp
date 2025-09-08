@@ -212,9 +212,9 @@ std::pair< std::string, RandSecret > TE::encryptMessage(
 /**
  * @brief Generates a decryption share for threshold encryption using a secret key
  *
- * This function creates a decryption share by validating the ciphertext and performing
- * pairing-based cryptographic operations. It implements part of the threshold encryption scheme
- * using the BLS12-381 elliptic curve.
+ * This function assumes both ciphertext has been validated prior to this call
+ * via `ThresholdEncryption::validateCiphertext()` call. Also assumes secret_key
+ * is non-zero
  *
  * @param ciphertext A tuple containing encryption components (U, V, W) where:
  *        - U is an element of G2
@@ -222,39 +222,10 @@ std::pair< std::string, RandSecret > TE::encryptMessage(
  *        - W is an element of G1
  * This field usually refers to the threshold-encrypted AES key
  * @param secret_key The secret key share (element of Fr) used for decryption
- *
- * @return algebra::G2Point The decryption share (U multiplied by the secret key)
- *
- * @throws ThresholdUtils::ZeroSecretKey if the provided secret key is zero
- * @throws ThresholdUtils::IncorrectInput if the ciphertext fails validation checks
- *
- * @note The function verifies the ciphertext integrity using pairing-based checks before generating
- *       the decryption share
  */
 algebra::G2Point TE::getDecryptionShare(
     const CipheredKey& ciphertext, const algebra::FrScalar& secret_key ) {
-    ciphertext.validate();
-
-    if ( secret_key.isZero() )
-        throw ThresholdUtils::ZeroSecretKey( "zero secret key" );
-
-    auto [U, V, W] = ciphertext;
-
-    std::string v_str = ThresholdUtils::bytesToHexString( V );
-    algebra::G1Point H = HashToGroup( U, v_str );
-
-    algebra::GTElement fst, snd;
-    fst = algebra::pairing( W, algebra::G2Point::generator() );
-    snd = algebra::pairing( H, U );
-
-    bool res = fst == snd;
-
-    if ( !res ) {
-        throw ThresholdUtils::IncorrectInput( "cannot decrypt data" );
-    }
-
-    algebra::G2Point ret_val = secret_key * U;
-
+    algebra::G2Point ret_val = secret_key * ciphertext.U;
     return ret_val;
 }
 
@@ -278,26 +249,71 @@ algebra::G2Point TE::getDecryptionShare(
 bool TE::Verify( const CipheredKey& ciphertext, const algebra::G2Point& decryptionShare,
     const algebra::G2Point& public_key ) {
     auto [U, V, W] = ciphertext;
+    
     std::string v_str = ThresholdUtils::bytesToHexString( V );
     algebra::G1Point H = HashToGroup( U, v_str );
-
-    // TODO - check if this is necessary
     H.validate();
+    
+    bool isPairingValid = algebra::verifyPairingEq(W, algebra::G2Point::generator(), H, U);
 
-    algebra::GTElement fst, snd;
-    fst = algebra::pairing( W, algebra::G2Point::generator() );
-    snd = algebra::pairing( H, U );
-
-    if ( fst == snd ) {
-        algebra::GTElement pp1, pp2;
-        pp1 = algebra::pairing( W, public_key );
-        pp2 = algebra::pairing( H, decryptionShare );
-
-        return pp1 == pp2;
+    if ( isPairingValid ) {
+        bool isSecondPairingValid = algebra::verifyPairingEq(
+            W, public_key, H, decryptionShare );
+        
+        return isSecondPairingValid;
     }
 
     return false;
 }
+
+
+/**
+ * @brief Verifies a ciphertext and decryption share against a public key
+ *
+ * This function performs verification of a threshold encryption decryption share.
+ * It checks two main conditions:
+ * 1. Whether the ciphertext is valid by verifying the pairing equality e(W,1) = e(H(U,V),U)
+ * 2. Whether the decryption share is valid by verifying e(W,PK) = e(H(U,V),S)
+ * where PK is the public key and S is the decryption share
+ *
+ * @param ciphertext A tuple containing the encryption components (U,V,W). Assumes is already
+ * validated
+ * @param decryptionShare The decryption share to verify. Assumes is valid & well formed
+ * @param public_key The public key used for verification. Assumes is valid & well formed
+ *
+ * @return true if both the ciphertext and decryption share are valid
+ * @return false if either the ciphertext is invalid or the decryption share verification fails
+ */
+std::vector< bool > TE::VerifyBatch( const CipheredKey& ciphertext, 
+    const std::vector< std::reference_wrapper< const algebra::G2Point > >& decryptionShares,
+    const std::vector< std::reference_wrapper< const algebra::G2Point > >& publicKeys ) {
+    const size_t size = decryptionShares.size();
+
+    if (size != publicKeys.size()) {
+        throw ThresholdUtils::IncorrectInput("decryption shares and public keys must have same size");
+    }
+
+    std::vector< bool > verifications(size, false);
+
+    const auto [U, V, W] = ciphertext;
+    
+    std::string v_str = ThresholdUtils::bytesToHexString( V );
+    algebra::G1Point H = HashToGroup( U, v_str );
+    // no need to validate H - assumes H has been validated already when performing the ciphertext validation
+    // at the start of TE process
+    
+    bool isPairingValid = algebra::verifyPairingEq(W, algebra::G2Point::generator(), H, U);
+
+    if ( isPairingValid ) {
+        algebra::PairingEqualityBatch batch(W, H, publicKeys, decryptionShares);
+        batch.useOptimisticValidation();
+        verifications = algebra::verifyPairingEqBatch(batch);
+    }
+
+    return verifications;
+}
+
+
 
 /**
  * @brief Combines decryption shares to recover the original message from a ciphertext
@@ -320,22 +336,8 @@ bool TE::Verify( const CipheredKey& ciphertext, const algebra::G2Point& decrypti
  */
 AES256Key TE::CombineShares( const CipheredKey& ciphertext,
     const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShares ) {
-    auto [U, V, W] = ciphertext;
-    std::string v_str = ThresholdUtils::bytesToHexString( V );
-    algebra::G1Point H = this->HashToGroup( U, v_str );
-
-    algebra::GTElement fst, snd;
-    fst = algebra::pairing( W, algebra::G2Point::generator() );
-    snd = algebra::pairing( H, U );
-
-    bool res = fst == snd;
-
-    if ( !res ) {
-        throw ThresholdUtils::IncorrectInput( "error during share combining" );
-    }
 
     auto secret = CombineSharesIntoAESKey( decryptionShares );
-
 
     if ( secret.size() < AES_256_KEY_SIZE_BYTES ) {
         throw ThresholdUtils::IncorrectInput( "Invalid secret size" );
@@ -344,7 +346,7 @@ AES256Key TE::CombineShares( const CipheredKey& ciphertext,
     AES256Key aesKey;
 
     for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
-        aesKey[i] = secret[i] ^ static_cast< uint8_t >( V[i] );
+        aesKey[i] = secret[i] ^ static_cast< uint8_t >( ciphertext.V[i] );
     }
 
     return aesKey;

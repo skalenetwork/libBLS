@@ -41,7 +41,7 @@ size_t TEDecryptionShare::getSignerIndex() const {
     return signerIndex;
 }
 
-algebra::G2Point TEDecryptionShare::getShareRaw() const {
+const algebra::G2Point& TEDecryptionShare::getShareRaw() const {
     return share;
 }
 
