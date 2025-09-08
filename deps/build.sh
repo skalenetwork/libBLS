@@ -812,7 +812,10 @@ if [ "$WITH_MCL" = "yes" ]; then
     else
       eval "$CMAKE" ${CMAKE_CROSSCOMPILING_OPTS} \
         -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" \
-        ${MCL_CMAKE_OPTS} -DMCL_USE_XBYAK=ON ..
+		-DMCL_BINT_ASM_X64=1 \
+		-DMCL_USE_XBYAK=ON \
+		-DMCL_USE_OMP=ON \
+        ${MCL_CMAKE_OPTS} ..
       eval "$MAKE" ${PARALLEL_MAKE_OPTIONS}
     fi
 
