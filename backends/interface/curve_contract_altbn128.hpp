@@ -47,6 +47,7 @@ struct AltBn128Contract {
         "4082367875863433681332203403145435568316851327593401208105741076214120093531";
 
     static const FqElement& coeffB();
+    static const FqElement& modP();
 };
 
 

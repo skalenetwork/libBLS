@@ -85,13 +85,12 @@ Fq2RefWrapper Group< G2BackendType, G2Point, Fq2RefWrapper >::getZRef() {
 
 template <>
 bool Group< G2BackendType, G2Point, Fq2RefWrapper >::isWellFormed() const {
-    // On-curve & valid coordinates. (Does NOT imply subgroup membership.)
     return value.isValid();
 }
 
 template <>
 bool Group< G2BackendType, G2Point, Fq2RefWrapper >::isInGroup() const {
-    return value.isValid() && value.isValidOrder();
+    return value.isValidOrder();
 }
 
 // -------------------- Static Methods -------------------- //
