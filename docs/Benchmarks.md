@@ -7,20 +7,20 @@
 | Required signers (t) | 15    |
 | Total signers (n)    | 22    |
 | Message size (bytes) | 256   |
-| Runs                 | 100   |
+| Runs                 | 1000   |
 
 #### Results
 
-| Result Metric                            | Libff (ms) | MCL (ms) | MCL Optimizations 1 & 2 (ms) | MCL prev. Opt. + Batching (ms) | MCL prev. Opt. + Vectorization (ms) |
+| Result Metric                            | Libff (ms) | MCL (ms) | MCL Optimizations 1 & 2 (ms) | MCL prev. Opt. + Batching (ms) | MCL prev. Opt. + optimistic validation |
 | ---------------------------------------- | --------- | --------- | ---------------------------  | -------------------------      | ----------------------------------- |
-| Average encryption time                  | 12.75     | 3.23      | 2.72                         | 1.90                           | 2.07
-| Avg. validation encryption time          | 15.52     | 2.05      | 1.08                         | 0.84                           | 0.92
-| Avg. partial decryption time             | 24.93     | 4.17      | 3.15                         | 0.75                           | 0.82
-| Avg. validation decryption share time    | 425.42    | 76.54     | 35.39                        | 11.36                          | 6.11
-| Avg. combine shares time                 | 27.24     | 3.66      | 1.76                         | 1.26                           | 1.38
-| Avg. validation combined decryption time | 4.14      | 0.89      | 0.16                         | 0.10                           | 0.11
-| Avg. decryption time                     | 2.10      | 0.73      | 0.003                        | 0.002                          | 0.002
-| Avg. full cycle time                     | 512.11    | 91.26     | 43.77                        | 16.22                          | 11.5
+| Average encryption time                  | 12.75     | 3.23      | 1.92                         | 2.16                           | 2.3
+| Avg. validation encryption time          | 15.52     | 2.05      | 0.86                         | 0.96                           | 1.03
+| Avg. partial decryption time             | 24.93     | 4.17      | 0.76                         | 0.86                           | 0.92
+| Avg. validation decryption share time    | 425.42    | 76.54     | 23.57                        | 13.02                          | 3.77
+| Avg. combine shares time                 | 27.24     | 3.66      | 1.27                         | 1.09                           | 1.16
+| Avg. validation combined decryption time | 4.14      | 0.89      | 0.11                         | 0.12                           | 0.13
+| Avg. decryption time                     | 2.10      | 0.73      | 0.002                        | 0.002                          | 0.002
+| Avg. full cycle time                     | 512.11    | 91.26     | 28.48                        | 18.19                          | 9.31
 
 
 ---
@@ -31,9 +31,9 @@
 
 | Input Parameter      | Value |
 | -------------------- | ----- |
-| Required signers (t) | 15     |
-| Total signers (n)    | 22     |
-| Runs                 | 100  |
+| Required signers (t) | 15    |
+| Total signers (n)    | 22    |
+| Runs                 | 100   |
 
 #### Results
 

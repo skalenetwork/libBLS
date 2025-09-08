@@ -111,6 +111,16 @@ FrScalar FrScalar::fromBytes( const std::vector< uint8_t >& bytes ) {
     return FrScalar( field_elem );
 }
 
+FrScalar FrScalar::fromHashBytes( const uint8_t* bytes, const size_t size ) {
+    if ( size != 32 ) {
+        throw ThresholdUtils::IncorrectInput( "Invalid byte array size for FrScalar hash" );
+    }
+
+    FrBackendType field_elem;
+    field_elem.setHashOf( bytes, size );
+    return FrScalar( field_elem );
+}
+
 FrScalar FrScalar::fromString( const std::string& str, Base base ) {
     FrBackendType x;
     trySettingFieldWithString( x, str, base );
@@ -152,6 +162,11 @@ FrScalar FrScalar::operator+=( const FrScalar& other ) {
 
 FrScalar FrScalar::operator*=( const FrScalar& other ) {
     value *= other.value;
+    return *this;
+}
+
+FrScalar FrScalar::operator-=( const FrScalar& other ) {
+    value -= other.value;
     return *this;
 }
 

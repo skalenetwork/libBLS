@@ -306,7 +306,7 @@ std::vector< bool > TE::VerifyBatch( const CipheredKey& ciphertext,
 
     if ( isPairingValid ) {
         algebra::PairingEqualityBatch batch( W, H, publicKeys, decryptionShares );
-        batch.useOptimisticValidation();
+        // batch.useOptimisticValidation();
         verifications = algebra::verifyPairingEqBatch( batch );
     }
 
@@ -376,16 +376,13 @@ std::vector< uint8_t > TE::CombineSharesIntoAESKey(
         idx[i] = decryptionShares[i].second;
     }
 
-    std::vector< algebra::FrScalar > lagrange_coeffs = algebra::lagrangeCoeffs( idx, this->t_ );
-
-    algebra::G2Point sum = algebra::G2Point::identity();
+    std::vector< std::reference_wrapper< const algebra::G2Point > > shares_ref;
     for ( size_t i = 0; i < this->t_; ++i ) {
-        algebra::G2Point temp = lagrange_coeffs[i] * decryptionShares[i].first;
-
-        sum = sum + temp;
+        shares_ref.emplace_back( std::cref( decryptionShares[i].first ) );
     }
+    algebra::G2Point rebuiltG2 = algebra::lagrangeInterpolateAt0( idx, this->t_, shares_ref );
 
-    std::string hash = this->Hash( sum );
+    std::string hash = this->Hash( rebuiltG2 );
 
     std::vector< uint8_t > ret( hash.size() );
     for ( size_t i = 0; i < hash.size(); ++i ) {

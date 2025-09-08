@@ -206,6 +206,11 @@ G2Point G2Point::operator+( const G2Point& other ) const {
     return G2Point( value + other.value );
 }
 
+G2Point G2Point::operator+=( const G2Point& other ) {
+    value += other.value;
+    return *this;
+}
+
 G2Point G2Point::operator-( const G2Point& other ) const {
     return G2Point( value - other.value );
 }

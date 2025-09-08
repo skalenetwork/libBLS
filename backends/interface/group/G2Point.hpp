@@ -28,6 +28,7 @@ public:
     // -------------------- Operator Overloads -------------------- //
 
     G2Point operator+( const G2Point& other ) const;
+    G2Point operator+=( const G2Point& other );
     G2Point operator-( const G2Point& other ) const;
     G2Point operator-() const;
     bool operator==( const G2Point& other ) const;

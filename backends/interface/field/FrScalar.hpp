@@ -27,6 +27,7 @@ public:
 
     static FrScalar fromBytes( const std::array< uint8_t, SIZE_BYTES >& bytes );
     static FrScalar fromBytes( const std::vector< uint8_t >& bytes );
+    static FrScalar fromHashBytes( const uint8_t* bytes, const size_t size );
     static FrScalar fromString( const std::string& str, Base base );
 
     // -------------------- Static Methods -------------------- //
@@ -41,6 +42,7 @@ public:
     FrScalar operator*( const FrScalar& other ) const;
     FrScalar operator+=( const FrScalar& other );
     FrScalar operator*=( const FrScalar& other );
+    FrScalar operator-=( const FrScalar& other );
     bool operator==( const FrScalar& other ) const;
     bool operator!=( const FrScalar& other ) const;
 };

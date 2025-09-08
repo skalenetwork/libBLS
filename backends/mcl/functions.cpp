@@ -1,7 +1,7 @@
 #ifdef MCL
 
 #include "backends/interface/functions.hpp"
-
+#include <iostream>
 namespace libBLS::algebra {
 
 GTElement pairing( const G1Point& g1, const G2Point& g2 ) {
@@ -72,34 +72,67 @@ bool verifyPairingEq(
 }
 
 std::vector< bool > verifyPairingEqBatch( const PairingEqualityBatch& batch ) {
-    // negate g1P2 only once
-    G1BackendType g1P2Negatted = batch.commonG1P2.get().value;
-    G1BackendType::neg( g1P2Negatted, batch.commonG1P2.get().value );  // -g1P2
+    static thread_local FastRandFrScalar fastRndFr = [] {
+        FastRandFrScalar r;
+        std::array< uint8_t, 32 > key{};
+        std::array< uint8_t, 12 > nonce{};
+        if ( RAND_bytes( key.data(), key.size() ) != 1 )
+            throw std::runtime_error( "RAND_bytes(key) failed" );
+        if ( RAND_bytes( nonce.data(), nonce.size() ) != 1 )
+            throw std::runtime_error( "RAND_bytes(nonce) failed" );
+        r.seed( key.data(), nonce.data(), /*counter=*/0 );
+        return r;  // constructed once per thread on first entry
+    }();
 
-    std::vector< bool > isValidVec( batch.size, true );
+    const size_t n = batch.size;
 
-    // Multiplies all miller loops together, and then final single exponentiation
-    // If the result is 1, then all pairings must be valid.
-    // Else, there is at least 1 element that is not valid.
+    std::vector< bool > isValidVec( n, true );
+
+    // --- (allocated once per thread) ---
+    static thread_local std::vector< FrBackendType > r_backend;
+    static thread_local std::vector< G2BackendType > g2P1s;  // g2P1_i
+    static thread_local std::vector< G2BackendType > g2P2s;  // g2P2_i
+
+    // Reserve once (upper bound you expect)
+    if ( r_backend.capacity() < 32 )
+        r_backend.reserve( 32 );
+    if ( g2P1s.capacity() < 32 )
+        g2P1s.reserve( 32 );
+    if ( g2P2s.capacity() < 32 )
+        g2P2s.reserve( 32 );
+
+    // clear
+    r_backend.clear();
+    r_backend.resize( n );
+    g2P1s.clear();
+    g2P1s.resize( n );
+    g2P2s.clear();
+    g2P2s.resize( n );
+
     const auto optimisticValidation = [&]() {
-        std::vector< G1BackendType > g1Points;
-        std::vector< G2BackendType > g2Points;
-
         for ( size_t i = 0; i < batch.size; ++i ) {
-            g1Points.push_back( batch.commonG1P1.get().value );
-            g1Points.push_back( g1P2Negatted );  // use negated point
-            g2Points.push_back( batch.g2P1s[i].get().value );
-            g2Points.push_back( batch.g2P2s[i].get().value );
+            g2P1s[i] = batch.g2P1s[i].get().value;    // g2 for W
+            g2P2s[i] = batch.g2P2s[i].get().value;    // g2 for H
+            r_backend[i] = fastRndFr.nextFr().value;  // copy to backend type
         }
 
-        mcl::Fp12 f;
-        mcl::millerLoopVec( f, g1Points.data(), g2Points.data(), g1Points.size() );
-        mcl::finalExp( f, f );  // f1 = FE( ... )
-        return f.isOne();       // product == 1 ?
+        // 3) MSM in G2 (Straus via mulVec)
+        G2BackendType G2P1, G2P2;
+        G2BackendType::mulVec( G2P1, g2P1s.data(), r_backend.data(),
+            ( int ) g2P1s.size() );  // G2P1 = sum r_i * g2P1_i
+        G2BackendType::mulVec( G2P2, g2P2s.data(), r_backend.data(),
+            ( int ) g2P2s.size() );  // G2P2 = sum r_i * g2P2_i
+
+        return verifyPairingEq( batch.commonG1P1.get(), G2P1, batch.commonG1P2.get(), G2P2 );
     };
 
     // Do each pairing equality individually, and identify which ones are invalid
     const auto pessimisticValidation = [&]() {
+        // negate g1P2 only once
+        G1BackendType g1P2Negatted = batch.commonG1P2.get().value;
+        G1BackendType::neg( g1P2Negatted, batch.commonG1P2.get().value );  // -g1P2
+        G1Point g1P2NegPoint( g1P2Negatted );
+
         for ( size_t i = 0; i < batch.size; ++i ) {
             const algebra::G2Point& currentG2P1 = batch.g2P1s[i].get();
             const algebra::G2Point& currentG2P2 = batch.g2P2s[i].get();
@@ -127,6 +160,25 @@ std::vector< bool > verifyPairingEqBatch( const PairingEqualityBatch& batch ) {
     }
 
     return isValidVec;
+}
+
+G2Point lagrangeInterpolateAt0( const std::vector< size_t >& idx, size_t t,
+    const std::vector< std::reference_wrapper< const G2Point > >& shares ) {
+    std::vector< algebra::FrScalar > lagrange_coeffs = algebra::lagrangeCoeffs( idx, t );
+
+    std::vector< G2BackendType > shares_backend( t );
+    std::vector< FrBackendType > coeffs_backend( t );
+
+    for ( size_t i = 0; i < t; ++i ) {
+        shares_backend[i] = shares[i].get().value;
+        coeffs_backend[i] = lagrange_coeffs[i].value;
+    }
+
+    G2BackendType sum;
+    sum.clear();
+    // sum = sum{ r_i * share_i }
+    G2BackendType::mulVec( sum, shares_backend.data(), coeffs_backend.data(), ( int ) t );
+    return sum;
 }
 
 }  // namespace libBLS::algebra
