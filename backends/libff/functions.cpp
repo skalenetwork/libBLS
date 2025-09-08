@@ -46,10 +46,8 @@ FqElement hashToFq( const std::array< uint8_t, 32 >& hash_byte_arr ) {
     return algebra::FqElement( ret_val );
 }
 
-bool verifyPairingEq(const G1Point& W, const G1Point& H, const G2Point& U, const G2Point& g2)
-{
-    return algebra::pairing( W, algebra::G2Point::generator() ) ==
-           algebra::pairing( H, U );
+bool verifyPairingEq( const G1Point& W, const G1Point& H, const G2Point& U, const G2Point& g2 ) {
+    return algebra::pairing( W, algebra::G2Point::generator() ) == algebra::pairing( H, U );
 }
 
 }  // namespace libBLS::algebra

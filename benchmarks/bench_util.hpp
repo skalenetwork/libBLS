@@ -1,9 +1,9 @@
 #pragma once
+#include "benchmarks/ScopedTimer.hpp"
 #include <cstdint>
 #include <random>
 #include <string>
 #include <vector>
-#include "benchmarks/ScopedTimer.hpp"
 
 inline std::vector< std::uint8_t > make_msg( std::size_t bytes, std::uint64_t seed = 1337 ) {
     std::mt19937_64 rng( seed );
@@ -53,6 +53,7 @@ inline void print_args( const BenchArgs& args ) {
     std::cout << "  - runs: " << args.rounds << "\n";
 }
 
-inline void print_progress(int currentIteration, int totalIterations) {
-    std::cout << "\rProgress: " << (float)currentIteration / totalIterations * 100 << "%" << std::flush;
+inline void print_progress( int currentIteration, int totalIterations ) {
+    std::cout << "\rProgress: " << ( float ) currentIteration / totalIterations * 100 << "%"
+              << std::flush;
 }

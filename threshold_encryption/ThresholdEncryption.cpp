@@ -136,7 +136,6 @@ Ciphertext ThresholdEncryption::encrypt(
 }
 
 void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
-    
     auto [U, V, W] = _ciphertext;
     std::string v_str = ThresholdUtils::bytesToHexString( V );
 
@@ -144,7 +143,7 @@ void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
     H.validate();
 
     // pairing( W, P ) == pairing( H, U )
-    bool validPairing = algebra::verifyPairingEq(W, algebra::G2Point::generator(), H, U);
+    bool validPairing = algebra::verifyPairingEq( W, algebra::G2Point::generator(), H, U );
 
     if ( !validPairing ) {
         throw ThresholdUtils::IsNotWellFormed( "Invalid encryption" );
@@ -153,7 +152,6 @@ void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
 
 TEDecryptionShare ThresholdEncryption::partialDecrypt(
     const CipheredKey& _ciphertext, const TEPrivateKeyShare& _pkeyShare ) {
-
     // ciphertext is validated in getDecryptionShare
     algebra::G2Point decryption_share =
         TE::getDecryptionShare( _ciphertext, _pkeyShare.getPrivateKeyRaw() );
@@ -167,21 +165,20 @@ TEDecryptionShare ThresholdEncryption::partialDecrypt(
 
 void ThresholdEncryption::validateDecryptionShare( const CipheredKey& _cipherText,
     const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey ) {
-
     if ( !TE::Verify(
              _cipherText, _decryptionShare.getShareRaw(), _publicKey.getPublicKeyRaw() ) ) {
         throw ThresholdUtils::IsNotWellFormed( "Invalid decryption share" );
     }
 }
 
-std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatch( const CipheredKey& _cipherText,
-    const std::vector< std::shared_ptr< TEDecryptionShare > >& _decryptionShares, 
+std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatch(
+    const CipheredKey& _cipherText,
+    const std::vector< std::shared_ptr< TEDecryptionShare > >& _decryptionShares,
     const std::vector< std::shared_ptr< TEPublicKeyShare > >& _publicKeys ) {
-
     // convert from keys to G points
     std::vector< std::reference_wrapper< const algebra::G2Point > > decryptionSharesRaw;
     for ( const auto& share : _decryptionShares ) {
-        if (!share) {
+        if ( !share ) {
             throw ThresholdUtils::IncorrectInput( "Null decryption share pointer" );
         }
         decryptionSharesRaw.push_back( std::cref( share->getShareRaw() ) );
@@ -189,19 +186,17 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatch( const Ci
 
     std::vector< std::reference_wrapper< const algebra::G2Point > > publicKeysRaw;
     for ( const auto& key : _publicKeys ) {
-        if (!key) {
+        if ( !key ) {
             throw ThresholdUtils::IncorrectInput( "Null public key pointer" );
         }
         publicKeysRaw.push_back( std::cref( key->getPublicKeyRaw() ) );
     }
 
-    return TE::VerifyBatch(
-             _cipherText, decryptionSharesRaw, publicKeysRaw );
+    return TE::VerifyBatch( _cipherText, decryptionSharesRaw, publicKeysRaw );
 }
 
 AES256Key ThresholdEncryption::combineShares(
     const CipheredKey& _cipheredKey, TEDecryptSet& _decryptionSet ) {
-
     switch ( _decryptionSet.getMergeStatus() ) {
     case TEDecryptSet::MergeStatus::READY_TO_MERGE:
         break;
@@ -223,7 +218,6 @@ AES256Key ThresholdEncryption::combineShares(
 
 void ThresholdEncryption::validateCombinedDecryption(
     const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
-
     // decipher & validate plaintext
     std::vector< uint8_t > decipheredMessage = decipherAESAndValidate( _ciphertext, _aesKey );
 
@@ -233,7 +227,6 @@ void ThresholdEncryption::validateCombinedDecryption(
 
 std::vector< uint8_t > ThresholdEncryption::decrypt(
     const Ciphertext& _ciphertext, const AES256Key& _aesKey ) {
-
     // decipher & validate plaintext
     std::vector< uint8_t > data = decipherAESAndValidate( _ciphertext, _aesKey );
 
@@ -244,7 +237,6 @@ std::vector< uint8_t > ThresholdEncryption::decrypt(
 
 std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
     const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
-
     // decipher & validate plaintext
     std::vector< uint8_t > decipheredMessage = decipherAESAndValidate( _ciphertext, _aesKey );
 
@@ -258,7 +250,6 @@ std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
 void ThresholdEncryption::validateDecipheredMessage(
     const std::vector< uint8_t >& _decipheredMessage, const Ciphertext& _ciphertext,
     const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
-        
     if ( _ciphertext.getKeys().size() != 1 )
         throw ThresholdUtils::IncorrectInput(
             "Ciphertext must include only 1 encrypted key in payload "

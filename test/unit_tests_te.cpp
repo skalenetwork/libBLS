@@ -266,9 +266,10 @@ BOOST_AUTO_TEST_CASE( SimpleEncryption ) {
         BOOST_REQUIRE( te_instance.Verify( cipheredKey, decryption_share, public_key ) );
 
         // batched decryption - optimistic
-        std::vector< bool > verifications_key1 = te_instance.VerifyBatch(
-            cipheredKey, shares1, { public_key } );
-        BOOST_REQUIRE( std::all_of( verifications_key1.begin(), verifications_key1.end(), []( bool v ) { return v; } ) );
+        std::vector< bool > verifications_key1 =
+            te_instance.VerifyBatch( cipheredKey, shares1, { public_key } );
+        BOOST_REQUIRE( std::all_of(
+            verifications_key1.begin(), verifications_key1.end(), []( bool v ) { return v; } ) );
 
 
         std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares;
@@ -475,7 +476,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
 
             libBLS::algebra::G2Point public_key =
                 secret_keys[i] * libBLS::algebra::G2Point::generator();
-            pubKeys.push_back( public_key ); // push to make it live long enough
+            pubKeys.push_back( public_key );  // push to make it live long enough
 
             publicKeysBatch.push_back( std::cref( public_key ) );
 
@@ -487,9 +488,9 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
         }
 
         // batched decryption - optimistic
-        auto verifications = obj.VerifyBatch(
-            cipheredKey, sharesBatch, publicKeysBatch );
-        BOOST_REQUIRE( std::all_of( verifications.begin(), verifications.end(), []( bool v ) { return v; } ) );
+        auto verifications = obj.VerifyBatch( cipheredKey, sharesBatch, publicKeysBatch );
+        BOOST_REQUIRE(
+            std::all_of( verifications.begin(), verifications.end(), []( bool v ) { return v; } ) );
 
 
         libBLS::AES256Key res = obj.CombineShares( cipheredKey, shares );
@@ -673,8 +674,10 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionCorruptedCiphertext ) {
         rand };
 
     for ( size_t i = 0; i < 11; ++i ) {
-        libBLS::algebra::G2Point decryptedWrong = obj.getDecryptionShare( corrupted_ciphered_key, secret_keys[i] );
-        libBLS::algebra::G2Point decryptedCorrect = obj.getDecryptionShare( cipheredKeyToCorrupt, secret_keys[i] );
+        libBLS::algebra::G2Point decryptedWrong =
+            obj.getDecryptionShare( corrupted_ciphered_key, secret_keys[i] );
+        libBLS::algebra::G2Point decryptedCorrect =
+            obj.getDecryptionShare( cipheredKeyToCorrupt, secret_keys[i] );
 
         libBLS::algebra::G2Point public_key = secret_keys[i] * libBLS::algebra::G2Point::identity();
 

@@ -44,20 +44,27 @@
 #### Code changes
 
 ```C++
-    // compute pairing equality for each element in the vector
-    mcl::Fp12 f1, f2;
 
-    // Two Miller loops (no final exponentiation yet)
-    mcl::millerLoop(f1, g1P1.value,  g2P1.value);    // f1 = ML(g1P1, g2P1)
-    G1BackendType g1P2Negatted = g1P2.value;
-    G1BackendType::neg(g1P2Negatted, g1P2.value);  // -g1P2
-    mcl::millerLoop(f2, g1P2Negatted, g2P2.value);         // f2 = ML(-g1P2, g2P2)
+// --------------- OLD --------------- 
+(...)
+return pairing(g1P1.value, g1P2.value) == pairing(g1P2.value, g2P2.value)
 
-    // Combine, then a single final exponentiation
-    f1 *= f2;                    // f1 = ML(g1P1,g2P1) * ML(-g1P2,g2P2)
-    mcl::finalExp(f1, f1);       // f1 = FE( ... )
+// --------------- NEW --------------- 
+(...)
+// compute pairing equality for each element in the vector
+mcl::Fp12 f1, f2;
 
-    return f1.isOne();           // product == 1 ?
+// Two Miller loops (no final exponentiation yet)
+mcl::millerLoop(f1, g1P1.value,  g2P1.value);    // f1 = ML(g1P1, g2P1)
+G1BackendType g1P2Negatted = g1P2.value;
+G1BackendType::neg(g1P2Negatted, g1P2.value);  // -g1P2
+mcl::millerLoop(f2, g1P2Negatted, g2P2.value);         // f2 = ML(-g1P2, g2P2)
+
+// Combine, then a single final exponentiation
+f1 *= f2;                    // f1 = ML(g1P1,g2P1) * ML(-g1P2,g2P2)
+mcl::finalExp(f1, f1);       // f1 = FE( ... )
+
+return f1.isOne();           // product == 1 ?
 ```
 
 
@@ -86,5 +93,34 @@ Let `Hminus := −H`, computed once. For each i, replacing `ML(−H,Ui)` by `ML(
 3. Determinism of Miller loop: with fixed inputs, ML(·,·) is deterministic. Therefore `ML(−H,Ui) = ML(Hminus,Ui)` for each i.
 
 **Conclusion.** Precomputing `Hminus` once and reusing it across the batch is algebraically exact and avoids redundant negations/normalizations. It does not change acceptance/rejection outcomes nor the ability to isolate bad items when followed by per‑item checks or group testing.
+
+#### Code changes
+
+```C++
+// negate g1P2 only once
+G1BackendType g1P2Negatted = batch.commonG1P2.get().value;
+G1BackendType::neg(g1P2Negatted, batch.commonG1P2.get().value);  // -g1P2
+
+std::vector< bool > isValidVec(batch.size, true);
+
+// Do each pairing equality individually, and identify which ones are invalid
+for (size_t i = 0; i < batch.size; ++i) {
+    const algebra::G2Point& currentG2P1 = batch.g2P1s[i].get();
+    const algebra::G2Point& currentG2P2 = batch.g2P2s[i].get();
+
+    // compute pairing equality for each element in the vector
+    mcl::Fp12 f1, f2;
+
+    // Two Miller loops (no final exponentiation yet)
+    mcl::millerLoop(f1, batch.commonG1P1.get().value,  currentG2P1.value);    // f1 = ML(g1P1, g2P1)
+    mcl::millerLoop(f2, g1P2Negatted, currentG2P2.value);         // f2 = ML(-g1P2, g2P2)
+
+    // Combine, then a single final exponentiation
+    f1 *= f2;                    // f1 = ML(g1P1,g2P1) * ML(-g1P2,g2P2)
+    mcl::finalExp(f1, f1);       // f1 = FE( ... )
+
+    isValidVec[i] = f1.isOne();           // product == 1 ?
+}
+```
 
 

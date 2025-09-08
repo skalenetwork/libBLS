@@ -38,8 +38,8 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <tools/utils.h>
 
 // TODO - remove this
-#include <iostream>
 #include "benchmarks/ScopedTimer.hpp"
+#include <iostream>
 
 
 namespace libBLS {
@@ -420,7 +420,7 @@ public:
     static bool Verify( const CipheredKey& ciphertext, const algebra::G2Point& decryptionShare,
         const algebra::G2Point& public_key );
 
-    static std::vector< bool > VerifyBatch( const CipheredKey& ciphertext, 
+    static std::vector< bool > VerifyBatch( const CipheredKey& ciphertext,
         const std::vector< std::reference_wrapper< const algebra::G2Point > >& decryptionShares,
         const std::vector< std::reference_wrapper< const algebra::G2Point > >& publicKeys );
 

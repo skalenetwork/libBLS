@@ -33,7 +33,6 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
     auto message = make_msg( args.msg_bytes );
 
     for ( size_t i = 0; i < args.rounds; i++ ) {
-
         // encrypt
         libBLS::Ciphertext cypher = [&]() {
             ScopedTimer timer( encryption_total_ms );
@@ -64,26 +63,28 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
                 }
             }();
 
-            shares.push_back(decr_share);
+            shares.push_back( decr_share );
         }
 
         auto validated = [&]() {
-            ScopedTimer t(validate_decryption_share_total_ms);
+            ScopedTimer t( validate_decryption_share_total_ms );
 
             std::vector< std::shared_ptr< libBLS::TEDecryptionShare > > sharesRefs;
             std::vector< std::shared_ptr< libBLS::TEPublicKeyShare > > publicKeysRefs;
 
-            for (size_t i = 0; i < numSigned; ++i) {
-                sharesRefs.push_back(std::make_shared<libBLS::TEDecryptionShare>(shares[i]));
-                publicKeysRefs.push_back(std::make_shared<libBLS::TEPublicKeyShare>(keys.publicKeys[i]));
+            for ( size_t i = 0; i < numSigned; ++i ) {
+                sharesRefs.push_back( std::make_shared< libBLS::TEDecryptionShare >( shares[i] ) );
+                publicKeysRefs.push_back(
+                    std::make_shared< libBLS::TEPublicKeyShare >( keys.publicKeys[i] ) );
             }
 
-            return libBLS::ThresholdEncryption::validateDecryptionSharesBatch(cypher.keys[0], sharesRefs, publicKeysRefs);
+            return libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
+                cypher.keys[0], sharesRefs, publicKeysRefs );
         }();
 
-        for (size_t i = 0; i < numSigned; ++i) {
-            if (!validated[i]) {
-                throw libBLS::ThresholdUtils::IncorrectInput("not validated");
+        for ( size_t i = 0; i < numSigned; ++i ) {
+            if ( !validated[i] ) {
+                throw libBLS::ThresholdUtils::IncorrectInput( "not validated" );
             }
 
             // TODO - check if maybe we can set the entire set of shares at once..?
@@ -140,7 +141,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
         // check correctness
         BOOST_REQUIRE( decipheredMsg == message );
 
-        print_progress(i, args.rounds);
+        print_progress( i, args.rounds );
     }
 
     // print results

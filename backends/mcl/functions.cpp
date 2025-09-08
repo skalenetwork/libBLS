@@ -53,33 +53,30 @@ void normalizeYCoordinate( FqElement& element ) {
     }
 }
 
-bool verifyPairingEq(const G1Point& g1P1, const G2Point& g2P1, const G1Point& g1P2, const G2Point& g2P2)
-{
-    
+bool verifyPairingEq(
+    const G1Point& g1P1, const G2Point& g2P1, const G1Point& g1P2, const G2Point& g2P2 ) {
     // compute pairing equality for each element in the vector
     mcl::Fp12 f1, f2;
 
     // Two Miller loops (no final exponentiation yet)
-    mcl::millerLoop(f1, g1P1.value,  g2P1.value);    // f1 = ML(g1P1, g2P1)
+    mcl::millerLoop( f1, g1P1.value, g2P1.value );  // f1 = ML(g1P1, g2P1)
     G1BackendType g1P2Negatted = g1P2.value;
-    G1BackendType::neg(g1P2Negatted, g1P2.value);  // -g1P2
-    mcl::millerLoop(f2, g1P2Negatted, g2P2.value);         // f2 = ML(-g1P2, g2P2)
+    G1BackendType::neg( g1P2Negatted, g1P2.value );   // -g1P2
+    mcl::millerLoop( f2, g1P2Negatted, g2P2.value );  // f2 = ML(-g1P2, g2P2)
 
     // Combine, then a single final exponentiation
-    f1 *= f2;                    // f1 = ML(g1P1,g2P1) * ML(-g1P2,g2P2)
-    mcl::finalExp(f1, f1);       // f1 = FE( ... )
+    f1 *= f2;                 // f1 = ML(g1P1,g2P1) * ML(-g1P2,g2P2)
+    mcl::finalExp( f1, f1 );  // f1 = FE( ... )
 
-    return f1.isOne();           // product == 1 ?
-
+    return f1.isOne();  // product == 1 ?
 }
 
-std::vector< bool > verifyPairingEqBatch(const PairingEqualityBatch& batch)
-{
+std::vector< bool > verifyPairingEqBatch( const PairingEqualityBatch& batch ) {
     // negate g1P2 only once
     G1BackendType g1P2Negatted = batch.commonG1P2.get().value;
-    G1BackendType::neg(g1P2Negatted, batch.commonG1P2.get().value);  // -g1P2
+    G1BackendType::neg( g1P2Negatted, batch.commonG1P2.get().value );  // -g1P2
 
-    std::vector< bool > isValidVec(batch.size, true);
+    std::vector< bool > isValidVec( batch.size, true );
 
     // Multiplies all miller loops together, and then final single exponentiation
     // If the result is 1, then all pairings must be valid.
@@ -88,22 +85,22 @@ std::vector< bool > verifyPairingEqBatch(const PairingEqualityBatch& batch)
         std::vector< G1BackendType > g1Points;
         std::vector< G2BackendType > g2Points;
 
-        for (size_t i = 0; i < batch.size; ++i) {
-            g1Points.push_back(batch.commonG1P1.get().value);
-            g1Points.push_back(g1P2Negatted); // use negated point
-            g2Points.push_back(batch.g2P1s[i].get().value);
-            g2Points.push_back(batch.g2P2s[i].get().value);
+        for ( size_t i = 0; i < batch.size; ++i ) {
+            g1Points.push_back( batch.commonG1P1.get().value );
+            g1Points.push_back( g1P2Negatted );  // use negated point
+            g2Points.push_back( batch.g2P1s[i].get().value );
+            g2Points.push_back( batch.g2P2s[i].get().value );
         }
 
         mcl::Fp12 f;
-        mcl::millerLoopVec(f, g1Points.data(), g2Points.data(), g1Points.size());
-        mcl::finalExp(f, f);       // f1 = FE( ... )
-        return f.isOne();           // product == 1 ?
+        mcl::millerLoopVec( f, g1Points.data(), g2Points.data(), g1Points.size() );
+        mcl::finalExp( f, f );  // f1 = FE( ... )
+        return f.isOne();       // product == 1 ?
     };
 
     // Do each pairing equality individually, and identify which ones are invalid
     const auto pessimisticValidation = [&]() {
-        for (size_t i = 0; i < batch.size; ++i) {
+        for ( size_t i = 0; i < batch.size; ++i ) {
             const algebra::G2Point& currentG2P1 = batch.g2P1s[i].get();
             const algebra::G2Point& currentG2P2 = batch.g2P2s[i].get();
 
@@ -111,20 +108,21 @@ std::vector< bool > verifyPairingEqBatch(const PairingEqualityBatch& batch)
             mcl::Fp12 f1, f2;
 
             // Two Miller loops (no final exponentiation yet)
-            mcl::millerLoop(f1, batch.commonG1P1.get().value,  currentG2P1.value);    // f1 = ML(g1P1, g2P1)
-            mcl::millerLoop(f2, g1P2Negatted, currentG2P2.value);         // f2 = ML(-g1P2, g2P2)
+            mcl::millerLoop(
+                f1, batch.commonG1P1.get().value, currentG2P1.value );  // f1 = ML(g1P1, g2P1)
+            mcl::millerLoop( f2, g1P2Negatted, currentG2P2.value );     // f2 = ML(-g1P2, g2P2)
 
             // Combine, then a single final exponentiation
-            f1 *= f2;                    // f1 = ML(g1P1,g2P1) * ML(-g1P2,g2P2)
-            mcl::finalExp(f1, f1);       // f1 = FE( ... )
+            f1 *= f2;                 // f1 = ML(g1P1,g2P1) * ML(-g1P2,g2P2)
+            mcl::finalExp( f1, f1 );  // f1 = FE( ... )
 
-            isValidVec[i] = f1.isOne();           // product == 1 ?
+            isValidVec[i] = f1.isOne();  // product == 1 ?
         }
     };
 
     // If optimistic validation is ON and passes -> return all true (current vector)
     // Else, set false for all invalid and return
-    if (!batch.optimisticValidation || !optimisticValidation() ) {
+    if ( !batch.optimisticValidation || !optimisticValidation() ) {
         pessimisticValidation();
     }
 

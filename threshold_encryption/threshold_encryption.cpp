@@ -249,17 +249,16 @@ algebra::G2Point TE::getDecryptionShare(
 bool TE::Verify( const CipheredKey& ciphertext, const algebra::G2Point& decryptionShare,
     const algebra::G2Point& public_key ) {
     auto [U, V, W] = ciphertext;
-    
+
     std::string v_str = ThresholdUtils::bytesToHexString( V );
     algebra::G1Point H = HashToGroup( U, v_str );
     H.validate();
-    
-    bool isPairingValid = algebra::verifyPairingEq(W, algebra::G2Point::generator(), H, U);
+
+    bool isPairingValid = algebra::verifyPairingEq( W, algebra::G2Point::generator(), H, U );
 
     if ( isPairingValid ) {
-        bool isSecondPairingValid = algebra::verifyPairingEq(
-            W, public_key, H, decryptionShare );
-        
+        bool isSecondPairingValid = algebra::verifyPairingEq( W, public_key, H, decryptionShare );
+
         return isSecondPairingValid;
     }
 
@@ -284,35 +283,35 @@ bool TE::Verify( const CipheredKey& ciphertext, const algebra::G2Point& decrypti
  * @return true if both the ciphertext and decryption share are valid
  * @return false if either the ciphertext is invalid or the decryption share verification fails
  */
-std::vector< bool > TE::VerifyBatch( const CipheredKey& ciphertext, 
+std::vector< bool > TE::VerifyBatch( const CipheredKey& ciphertext,
     const std::vector< std::reference_wrapper< const algebra::G2Point > >& decryptionShares,
     const std::vector< std::reference_wrapper< const algebra::G2Point > >& publicKeys ) {
     const size_t size = decryptionShares.size();
 
-    if (size != publicKeys.size()) {
-        throw ThresholdUtils::IncorrectInput("decryption shares and public keys must have same size");
+    if ( size != publicKeys.size() ) {
+        throw ThresholdUtils::IncorrectInput(
+            "decryption shares and public keys must have same size" );
     }
 
-    std::vector< bool > verifications(size, false);
+    std::vector< bool > verifications( size, false );
 
     const auto [U, V, W] = ciphertext;
-    
+
     std::string v_str = ThresholdUtils::bytesToHexString( V );
     algebra::G1Point H = HashToGroup( U, v_str );
-    // no need to validate H - assumes H has been validated already when performing the ciphertext validation
-    // at the start of TE process
-    
-    bool isPairingValid = algebra::verifyPairingEq(W, algebra::G2Point::generator(), H, U);
+    // no need to validate H - assumes H has been validated already when performing the ciphertext
+    // validation at the start of TE process
+
+    bool isPairingValid = algebra::verifyPairingEq( W, algebra::G2Point::generator(), H, U );
 
     if ( isPairingValid ) {
-        algebra::PairingEqualityBatch batch(W, H, publicKeys, decryptionShares);
+        algebra::PairingEqualityBatch batch( W, H, publicKeys, decryptionShares );
         batch.useOptimisticValidation();
-        verifications = algebra::verifyPairingEqBatch(batch);
+        verifications = algebra::verifyPairingEqBatch( batch );
     }
 
     return verifications;
 }
-
 
 
 /**
@@ -336,7 +335,6 @@ std::vector< bool > TE::VerifyBatch( const CipheredKey& ciphertext,
  */
 AES256Key TE::CombineShares( const CipheredKey& ciphertext,
     const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShares ) {
-
     auto secret = CombineSharesIntoAESKey( decryptionShares );
 
     if ( secret.size() < AES_256_KEY_SIZE_BYTES ) {
