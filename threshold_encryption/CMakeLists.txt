@@ -84,7 +84,7 @@ if (BUILD_TESTS)
     if(NOT EMSCRIPTEN AND NOT APPLE)
         add_executable(te_sample_sgx ../test/te_sample_sgx.cpp ../test/utils.cpp) 
         target_include_directories(te_sample_sgx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR} ../test)
-        target_link_libraries(te_sample_sgx PRIVATE te bls ${CRYPTOPP_LIBRARY} jsonrpccpp-client jsonrpccpp-server jsonrpccpp-common jsoncpp curl psl pthread ssl crypto z idn2)
+        target_link_libraries(te_sample_sgx PRIVATE te bls ${CRYPTOPP_LIBRARY} jsonrpccpp-client jsonrpccpp-server jsonrpccpp-common jsoncpp curl pthread ssl crypto z idn2)
     endif()
 
     if(NOT EMSCRIPTEN AND NOT APPLE)

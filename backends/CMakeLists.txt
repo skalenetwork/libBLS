@@ -15,31 +15,24 @@ if(NOT USE_LIBFF AND NOT USE_MCL)
   set(USE_MCL ON)
 endif()
 
-find_library( GMP_LIBRARY NAMES "gmp" PATHS "${DEPS_INSTALL_ROOT}/lib" )
-find_library( GMPXX_LIBRARY NAMES "gmpxx" PATHS "${DEPS_INSTALL_ROOT}/lib" )
-
 if(USE_LIBFF)
-    set(BACKEND_NAME libff)                           # used as the directory name
-    set(BACKEND_LIB ff)                               # used as the library name when linking
-    set(BACKEND_COMPILE_OPTIONS "")
-    set(BACKEND_DEPS ${GMPXX_LIBRARY} ${GMP_LIBRARY})
-    set(BACKEND_DEFINE LIBFF)
+  find_library( GMP_LIBRARY NAMES "gmp" PATHS "${DEPS_INSTALL_ROOT}/lib" )
+  find_library( GMPXX_LIBRARY NAMES "gmpxx" PATHS "${DEPS_INSTALL_ROOT}/lib" )
+  set(BACKEND_NAME libff)                           # used as the directory name
+  set(BACKEND_LIB ff)                               # used as the library name when linking
+  set(BACKEND_COMPILE_OPTIONS "")
+  set(BACKEND_DEPS ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+  set(BACKEND_DEFINE LIBFF)
 elseif(USE_MCL)
-    set(BACKEND_NAME mcl)
-    set(BACKEND_LIB mcl)
-
-    if(EMSCRIPTEN) # MCL cannot use GMP when compiling to wasm
-      set(BACKEND_DEPS "")
-      set(BACKEND_COMPILE_OPTIONS "")
-      message(STATUS "Compiling MCL backend without GMP support")
-    else()
-      set(BACKEND_DEPS ${GMPXX_LIBRARY} ${GMP_LIBRARY})
-      set(BACKEND_COMPILE_OPTIONS "MCL_USE_GMP=1")
-      message(STATUS "Compiling MCL backend with GMP support")
-    endif()
-
-    set(BACKEND_DEFINE MCL)
-    # add more backends below if needed
+  set(BACKEND_NAME mcl)
+  set(BACKEND_LIB mcl)
+  set(BACKEND_DEPS "")
+  set(BACKEND_COMPILE_OPTIONS 
+    MCL_FP_BIT=256
+    MCL_FR_BIT=256
+  )
+  set(BACKEND_DEFINE MCL)
+  # add more backends below if needed
 endif()
 
 message("Using backend: ${BACKEND_NAME}")

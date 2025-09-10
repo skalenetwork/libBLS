@@ -8,6 +8,7 @@
 
 #include <functional>
 #include <utility>
+#include <limits>
 
 namespace libBLS::algebra {
 
@@ -118,31 +119,61 @@ public:
         reinit_ctx();
     }
 
-    // Fill 'out' with 'len' bytes of keystream (no syscalls).
-    void fill( uint8_t* out, size_t len ) {
-        // OpenSSL's EVP_chacha20 uses a 16-byte IV: [4B counter (LE)] || [12B nonce]
-        // We keep the ctx initialized; to advance the keystream, we just encrypt zero bytes.
-        std::vector< uint8_t > zero( len, 0 );
-        int outlen = 0;
-        if ( !EVP_EncryptUpdate( ctx_, out, &outlen, zero.data(), ( int ) len ) ) {
-            throw std::runtime_error( "EVP_EncryptUpdate failed" );
+    // Fill 'out' with 'len' bytes of ChaCha20 keystream (no syscalls).
+    // - Keeps ctx_ hot: no re-init, no heap allocs.
+    // - Handles large lengths by chunking to INT_MAX per EVP API.
+    void fill(uint8_t* out, size_t len) {
+        constexpr size_t kMaxChunk = static_cast<size_t>(std::numeric_limits<int>::max());
+        size_t remaining = len;
+        while (remaining > 0) {
+            const int chunk = static_cast<int>(std::min(remaining, kMaxChunk));
+            // For a stream cipher, encrypting zeros yields raw keystream.
+            // Do it in-place: zero the output slice, then XOR with keystream into itself.
+            std::memset(out, 0, static_cast<size_t>(chunk));
+            int outlen = 0;
+            if (!EVP_EncryptUpdate(ctx_, out, &outlen, out, chunk)) {
+                throw std::runtime_error("EVP_EncryptUpdate failed");
+            }
+            if (outlen != chunk) {
+                throw std::runtime_error("EVP_EncryptUpdate produced partial output");
+            }
+            out       += chunk;
+            remaining -= static_cast<size_t>(chunk);
         }
-        // outlen == len for stream ciphers; no finalization needed for pure keystream.
     }
 
     // Convenience: produce one BN254 scalar Fr (32B → Fr via hash-to-field reduction).
-    FrScalar nextFr() {
-        uint8_t buf[32];
-        fill( buf, sizeof( buf ) );
-        return FrScalar::fromHashBytes( buf, sizeof( buf ) );
+    // Enforce non-zero by resampling if needed.
+    FrScalar nextFr(bool nonZero = false) {
+        uint8_t buf[FrScalar::SIZE_BYTES];
+        FrScalar r;
+        do {
+            fill(buf, sizeof(buf));
+            r = FrScalar::fromHashBytes(buf, sizeof(buf));
+        } while (nonZero && r.isZero());
+        return r;
     }
 
-    // Bulk: fill a vector of Fr
-    std::vector< FrScalar > nextFrVec( size_t n ) {
-        std::vector< FrScalar > v( n );
-        for ( auto& x : v )
-            x = nextFr();
-        return v;
+    // Bulk: produce N random scalars in one shot (single keystream call).
+    // - Generates 32*N bytes once, then maps each 32B slice → FrScalar.
+    // - Optional nonZero to enforce.
+    void nextFrVec(std::vector< FrBackendType >& rndScalars, size_t n, bool nonZero = false) {
+        std::vector<uint8_t> buf(FrScalar::SIZE_BYTES * n);
+        fill(buf.data(), buf.size());
+
+        const uint8_t* p = buf.data();
+        for (size_t i = 0; i < n; ++i, p += FrScalar::SIZE_BYTES) {
+            FrScalar r = FrScalar::fromHashBytes(p, FrScalar::SIZE_BYTES);
+            if (nonZero && r.isZero()) {
+                // Rare; resample a single 32B slice without redoing the whole batch.
+                uint8_t tmp[FrScalar::SIZE_BYTES];
+                do {
+                    fill(tmp, sizeof(tmp));
+                    r = FrScalar::fromHashBytes(tmp, sizeof(tmp));
+                } while (nonZero && r.isZero());
+            }
+            rndScalars[i] = r.asBackendType();
+        }
     }
 
 private:

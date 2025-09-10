@@ -306,7 +306,7 @@ std::vector< bool > TE::VerifyBatch( const CipheredKey& ciphertext,
 
     if ( isPairingValid ) {
         algebra::PairingEqualityBatch batch( W, H, publicKeys, decryptionShares );
-        // batch.useOptimisticValidation();
+        batch.useOptimisticValidation();
         verifications = algebra::verifyPairingEqBatch( batch );
     }
 

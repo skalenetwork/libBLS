@@ -152,11 +152,9 @@ void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
 
 TEDecryptionShare ThresholdEncryption::partialDecrypt(
     const CipheredKey& _ciphertext, const TEPrivateKeyShare& _pkeyShare ) {
-    // ciphertext is validated in getDecryptionShare
-    algebra::G2Point decryption_share =
-        TE::getDecryptionShare( _ciphertext, _pkeyShare.getPrivateKeyRaw() );
-
-    decryption_share.validate();
+    algebra::G2Point decryption_share = _pkeyShare.getPrivateKeyRaw() * _ciphertext.U;
+    // no need to validate G2Point - if both inputs are already valid, multiplication
+    // always produces a valid point
 
     TEDecryptionShare share( decryption_share, _pkeyShare.getSignerIndex() );
 

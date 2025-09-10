@@ -2,7 +2,9 @@
 
 #include "backends/interface/functions.hpp"
 #include <iostream>
+
 namespace libBLS::algebra {
+
 
 GTElement pairing( const G1Point& g1, const G2Point& g2 ) {
     GTBackendType res;
@@ -56,23 +58,27 @@ void normalizeYCoordinate( FqElement& element ) {
 bool verifyPairingEq(
     const G1Point& g1P1, const G2Point& g2P1, const G1Point& g1P2, const G2Point& g2P2 ) {
     // compute pairing equality for each element in the vector
-    mcl::Fp12 f1, f2;
+    mcl::Fp12 f;
 
-    // Two Miller loops (no final exponentiation yet)
-    mcl::millerLoop( f1, g1P1.value, g2P1.value );  // f1 = ML(g1P1, g2P1)
     G1BackendType g1P2Negatted = g1P2.value;
     G1BackendType::neg( g1P2Negatted, g1P2.value );   // -g1P2
-    mcl::millerLoop( f2, g1P2Negatted, g2P2.value );  // f2 = ML(-g1P2, g2P2)
+
+    // Two Miller loops (no final exponentiation yet)
+    std::array< G1BackendType, 2> g1s = { g1P1.value, g1P2Negatted };
+    std::array< G2BackendType, 2> g2s = { g2P1.value, g2P2.value };
+    mcl::millerLoopVec(f, g1s.data(), g2s.data(), 2); // f = ML(g1P1,g2P1) * ML(-g1P2,g2P2)
 
     // Combine, then a single final exponentiation
-    f1 *= f2;                 // f1 = ML(g1P1,g2P1) * ML(-g1P2,g2P2)
-    mcl::finalExp( f1, f1 );  // f1 = FE( ... )
-
-    return f1.isOne();  // product == 1 ?
+    mcl::finalExp( f, f );  // f1 = FE( ... )
+    return f.isOne();  // product == 1 ?
 }
 
 std::vector< bool > verifyPairingEqBatch( const PairingEqualityBatch& batch ) {
     static thread_local FastRandFrScalar fastRndFr = [] {
+
+        std::cout << "Fr size: " << sizeof(FrBackendType) << " bytes\n";
+        std::cout << "Fq size: " << sizeof(FqBackendType) << " bytes\n";
+
         FastRandFrScalar r;
         std::array< uint8_t, 32 > key{};
         std::array< uint8_t, 12 > nonce{};
@@ -110,10 +116,12 @@ std::vector< bool > verifyPairingEqBatch( const PairingEqualityBatch& batch ) {
     g2P2s.resize( n );
 
     const auto optimisticValidation = [&]() {
+        // get random scalars r_i
+        fastRndFr.nextFrVec( r_backend, n, /*nonZero=*/true );
+
         for ( size_t i = 0; i < batch.size; ++i ) {
             g2P1s[i] = batch.g2P1s[i].get().value;    // g2 for W
             g2P2s[i] = batch.g2P2s[i].get().value;    // g2 for H
-            r_backend[i] = fastRndFr.nextFr().value;  // copy to backend type
         }
 
         // 3) MSM in G2 (Straus via mulVec)

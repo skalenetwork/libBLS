@@ -72,7 +72,8 @@ public:
 
     /**
      * @brief Generates a decryption share for the given ciphered key
-     *
+     * @note Assumes ciphertext has already been validated via `validateEncryption` call, and that
+     * private key share is also valid.
      * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
      * struct
      * @param _pkeyShare The private key share

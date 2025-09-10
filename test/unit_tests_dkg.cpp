@@ -42,7 +42,6 @@
 #define BOOST_TEST_DISABLE_ALT_STACK
 #endif  // EMSCRIPTEN
 
-#include <gmpxx.h>
 #include <boost/test/included/unit_test.hpp>
 
 BOOST_TEST_GLOBAL_CONFIGURATION( GlobalConfig );
