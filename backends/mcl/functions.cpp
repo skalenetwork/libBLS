@@ -61,23 +61,22 @@ bool verifyPairingEq(
     mcl::Fp12 f;
 
     G1BackendType g1P2Negatted = g1P2.value;
-    G1BackendType::neg( g1P2Negatted, g1P2.value );   // -g1P2
+    G1BackendType::neg( g1P2Negatted, g1P2.value );  // -g1P2
 
     // Two Miller loops (no final exponentiation yet)
-    std::array< G1BackendType, 2> g1s = { g1P1.value, g1P2Negatted };
-    std::array< G2BackendType, 2> g2s = { g2P1.value, g2P2.value };
-    mcl::millerLoopVec(f, g1s.data(), g2s.data(), 2); // f = ML(g1P1,g2P1) * ML(-g1P2,g2P2)
+    std::array< G1BackendType, 2 > g1s = { g1P1.value, g1P2Negatted };
+    std::array< G2BackendType, 2 > g2s = { g2P1.value, g2P2.value };
+    mcl::millerLoopVec( f, g1s.data(), g2s.data(), 2 );  // f = ML(g1P1,g2P1) * ML(-g1P2,g2P2)
 
     // Combine, then a single final exponentiation
     mcl::finalExp( f, f );  // f1 = FE( ... )
-    return f.isOne();  // product == 1 ?
+    return f.isOne();       // product == 1 ?
 }
 
 std::vector< bool > verifyPairingEqBatch( const PairingEqualityBatch& batch ) {
     static thread_local FastRandFrScalar fastRndFr = [] {
-
-        std::cout << "Fr size: " << sizeof(FrBackendType) << " bytes\n";
-        std::cout << "Fq size: " << sizeof(FqBackendType) << " bytes\n";
+        std::cout << "Fr size: " << sizeof( FrBackendType ) << " bytes\n";
+        std::cout << "Fq size: " << sizeof( FqBackendType ) << " bytes\n";
 
         FastRandFrScalar r;
         std::array< uint8_t, 32 > key{};
@@ -120,8 +119,8 @@ std::vector< bool > verifyPairingEqBatch( const PairingEqualityBatch& batch ) {
         fastRndFr.nextFrVec( r_backend, n, /*nonZero=*/true );
 
         for ( size_t i = 0; i < batch.size; ++i ) {
-            g2P1s[i] = batch.g2P1s[i].get().value;    // g2 for W
-            g2P2s[i] = batch.g2P2s[i].get().value;    // g2 for H
+            g2P1s[i] = batch.g2P1s[i].get().value;  // g2 for W
+            g2P2s[i] = batch.g2P2s[i].get().value;  // g2 for H
         }
 
         // 3) MSM in G2 (Straus via mulVec)
