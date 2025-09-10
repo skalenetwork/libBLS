@@ -37,7 +37,6 @@ endif()
 
 message("Using backend: ${BACKEND_NAME}")
 
-
 ############### DO NOT CHANGE BELOW THIS LINE ###############
 
 # Directories - assumes all backends have the same common

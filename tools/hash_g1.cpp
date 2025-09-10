@@ -37,7 +37,6 @@ static bool g_b_rehash = false;
 
 void hash_g1( const size_t t, const size_t n ) {
     libBLS::init();
-    libBLS::Bls bls_instance = libBLS::Bls( t, n );
 
     nlohmann::json hash_in;
 

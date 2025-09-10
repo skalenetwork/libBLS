@@ -252,7 +252,6 @@ void G2Point::forEachAffineComponentImpl(
 
 void G2Point::forEachProjectiveComponentImpl(
     const std::function< void( const FqElement&, size_t i ) >& fn ) const {
-    auto projective = value;
     fn( FqElement( value.x.a ), 0 );
     fn( FqElement( value.x.b ), 1 );
     fn( FqElement( value.y.a ), 2 );

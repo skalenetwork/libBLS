@@ -75,9 +75,6 @@ bool verifyPairingEq(
 
 std::vector< bool > verifyPairingEqBatch( const PairingEqualityBatch& batch ) {
     static thread_local FastRandFrScalar fastRndFr = [] {
-        std::cout << "Fr size: " << sizeof( FrBackendType ) << " bytes\n";
-        std::cout << "Fq size: " << sizeof( FqBackendType ) << " bytes\n";
-
         FastRandFrScalar r;
         std::array< uint8_t, 32 > key{};
         std::array< uint8_t, 12 > nonce{};

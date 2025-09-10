@@ -793,7 +793,7 @@ if [ "$WITH_MCL" = "yes" ]; then
     #  -DMCL_USE_XBYAK=ON enables JIT (fast on x86; disable if your env forbids JIT)
     #  -DMCL_USE_GMP=OFF uses builtin bigint (set ON if you prefer GMP and have it installed)
     #  -DBUILD_SHARED_LIBS=OFF to get static libmcl.a
-    MCL_CMAKE_OPTS="-DBUILD_SHARED_LIBS=OFF DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE"
+    MCL_CMAKE_OPTS="-DMCL_FP_BIT=256 -DMCL_FR_BIT=256 -DBUILD_SHARED_LIBS=OFF DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE"
 
     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
     if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]]; then
@@ -812,8 +812,6 @@ if [ "$WITH_MCL" = "yes" ]; then
     else
       eval "$CMAKE" ${CMAKE_CROSSCOMPILING_OPTS} \
         -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" \
-		-DMCL_FP_BIT=256 \
-		-DMCL_FR_BIT=256 \
         ${MCL_CMAKE_OPTS} ..
       eval "$MAKE" ${PARALLEL_MAKE_OPTIONS}
     fi

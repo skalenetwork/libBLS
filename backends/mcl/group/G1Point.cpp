@@ -224,7 +224,6 @@ void G1Point::forEachAffineComponentImpl(
 
 void G1Point::forEachProjectiveComponentImpl(
     const std::function< void( const FqElement&, size_t i ) >& fn ) const {
-    auto projective = value;
     fn( FqElement( value.x ), 0 );
     fn( FqElement( value.y ), 1 );
     fn( FqElement( value.z ), 2 );

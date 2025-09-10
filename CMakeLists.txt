@@ -66,6 +66,8 @@ else()
 	message( INFO "---- CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE} is not supported explicitly" )
 endif()
 
+option(ENABLE_ASAN "Build with Address/LeakSanitizer" OFF)
+
 if(BUILD_TESTS)
 	enable_testing()
 endif()
