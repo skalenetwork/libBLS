@@ -20,7 +20,6 @@ struct BenchArgs {
     int n{ 5 };
     size_t msg_bytes{ 256 };
     size_t numTxs{ 1 };
-
 };
 
 

@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
     auto message = make_msg( args.msg_bytes );
 
     // keep all ciphered keys stored in a vector
-    std::vector< std::shared_ptr< libBLS::Ciphertext > > ciphertexts; 
+    std::vector< std::shared_ptr< libBLS::Ciphertext > > ciphertexts;
     std::vector< std::shared_ptr< libBLS::CipheredKey > > cipheredKeys;
 
     std::vector< std::shared_ptr< libBLS::TEDecryptionShare > > decryptionShares;
@@ -41,11 +41,11 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
 
     std::cout << "Encryption + validate encryption + partial decrypt: \n";
     for ( size_t i = 0; i < args.numTxs; i++ ) {
-
         // encrypt
         {
             ScopedTimer timer( encryption_total_ms );
-            libBLS::Ciphertext cypher = libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
+            libBLS::Ciphertext cypher =
+                libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
             ciphertexts.push_back( std::make_shared< libBLS::Ciphertext >( cypher ) );
             cipheredKeys.push_back( std::make_shared< libBLS::CipheredKey >( cypher.keys[0] ) );
         }
@@ -68,8 +68,10 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
                 }
             }();
 
-            decryptionShares.push_back( std::make_shared< libBLS::TEDecryptionShare >( decr_share ) );
-            publicKeys.push_back( std::make_shared< libBLS::TEPublicKeyShare >( keys.publicKeys[j] ) );
+            decryptionShares.push_back(
+                std::make_shared< libBLS::TEDecryptionShare >( decr_share ) );
+            publicKeys.push_back(
+                std::make_shared< libBLS::TEPublicKeyShare >( keys.publicKeys[j] ) );
         }
 
         print_progress( i, args.numTxs );
@@ -126,20 +128,17 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
     // print results
     print_args( args );
     std::cout << "Total encryption time: " << encryption_total_ms << " ms\n";
-    std::cout << "Total validation encryption time: "
-              << validate_encryption_total_ms << " ms\n";
-    std::cout << "Total partial decryption time: " << partial_decrypt_total_ms
+    std::cout << "Total validation encryption time: " << validate_encryption_total_ms << " ms\n";
+    std::cout << "Total partial decryption time: " << partial_decrypt_total_ms << " ms\n";
+    std::cout << "Total validation decryption share time: " << validate_decryption_share_total_ms
               << " ms\n";
-    std::cout << "Total validation decryption share time: "
-              << validate_decryption_share_total_ms << " ms\n";
-    std::cout << "Total combine shares time: " << combine_shares_total_ms
-              << " ms\n";
+    std::cout << "Total combine shares time: " << combine_shares_total_ms << " ms\n";
     std::cout << "Total validation combined decryption time: "
               << validate_combined_decryption_total_ms << " ms\n";
     std::cout << "Total decryption time: " << decrypt_total_ms << " ms\n";
     std::cout << "Total full cycle time: "
               << ( encryption_total_ms + validate_encryption_total_ms + partial_decrypt_total_ms +
-                       validate_decryption_share_total_ms + combine_shares_total_ms +
-                       validate_combined_decryption_total_ms + decrypt_total_ms )
+                     validate_decryption_share_total_ms + combine_shares_total_ms +
+                     validate_combined_decryption_total_ms + decrypt_total_ms )
               << " ms\n";
 }
