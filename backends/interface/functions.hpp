@@ -8,8 +8,8 @@
 
 #include <functional>
 #include <limits>
-#include <utility>
 #include <optional>
+#include <utility>
 
 namespace libBLS::algebra {
 
@@ -39,9 +39,7 @@ struct PairingEqualityBatch {
 
     // Used to construct a mega-batch of M batches of N shares, where g1P1 and g1P2
     // are NOT constant across batches
-    PairingEqualityBatch( 
-        const std::vector< G1Point >& p1,
-        const std::vector< G1Point >& p2,
+    PairingEqualityBatch( const std::vector< G1Point >& p1, const std::vector< G1Point >& p2,
         const std::vector< std::reference_wrapper< const G2Point > >& v1,
         const std::vector< std::reference_wrapper< const G2Point > >& v2 )
         : g1P1s( std::move( p1 ) ),

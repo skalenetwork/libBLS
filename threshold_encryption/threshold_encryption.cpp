@@ -268,18 +268,20 @@ bool TE::Verify( const CipheredKey& ciphertext, const algebra::G2Point& decrypti
  * Each small batch contains N shares, and for each small batch the same ciphertext is shared.
  * Thus, the number of small batches in the big batch is equal to the number of ciphertexts.
  *
- * @param ciphertext Vector of tuples containing the encryption components (U,V,W). Assumes is already
- * validated
- * @param decryptionShares The decryption shares to verify. Assumes is valid & well formed. Contains num of small batches * N shares
- * @param public_key The public key used for verification. Assumes is valid & well formed. Contains num of small batches * N shares
+ * @param ciphertext Vector of tuples containing the encryption components (U,V,W). Assumes is
+ * already validated
+ * @param decryptionShares The decryption shares to verify. Assumes is valid & well formed. Contains
+ * num of small batches * N shares
+ * @param public_key The public key used for verification. Assumes is valid & well formed. Contains
+ * num of small batches * N shares
  *
- * @return true only for the shares that are valid. If a ciphertext is invalid, it invalidates the whole shares in that batch.
+ * @return true only for the shares that are valid. If a ciphertext is invalid, it invalidates the
+ * whole shares in that batch.
  */
-std::vector< bool > TE::VerifyBatch( 
+std::vector< bool > TE::VerifyBatch(
     const std::vector< std::shared_ptr< CipheredKey > >& ciphertexts,
     const std::vector< std::reference_wrapper< const algebra::G2Point > >& decryptionShares,
     const std::vector< std::reference_wrapper< const algebra::G2Point > >& publicKeys ) {
-
     const size_t size = decryptionShares.size();
     const size_t numberOfBatches = ciphertexts.size();
     const size_t sizeEachBatch = size / ciphertexts.size();
@@ -294,13 +296,13 @@ std::vector< bool > TE::VerifyBatch(
     g1P1s.reserve( ciphertexts.size() );
     g1P2s.reserve( ciphertexts.size() );
 
-    for (const auto& cipher : ciphertexts ) {
+    for ( const auto& cipher : ciphertexts ) {
         const auto [U, V, W] = *cipher;
 
         std::string v_str = ThresholdUtils::bytesToHexString( V );
         algebra::G1Point H = HashToGroup( U, v_str );
-        // no need to validate H - assumes H has been validated already when performing the ciphertext
-        // validation at the start of TE process
+        // no need to validate H - assumes H has been validated already when performing the
+        // ciphertext validation at the start of TE process
 
         g1P1s.emplace_back( W );
         g1P2s.emplace_back( H );
@@ -309,7 +311,6 @@ std::vector< bool > TE::VerifyBatch(
     algebra::PairingEqualityBatch batch( g1P1s, g1P2s, publicKeys, decryptionShares );
     batch.useOptimisticValidation();
     return algebra::verifyPairingEqBatch( batch );
-
 }
 
 

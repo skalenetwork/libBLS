@@ -267,7 +267,8 @@ BOOST_AUTO_TEST_CASE( SimpleEncryption ) {
 
         // batched decryption - optimistic
         std::vector< std::shared_ptr< libBLS::CipheredKey > > cipheredKeys = {
-            std::make_shared< libBLS::CipheredKey >( cipheredKey ) };
+            std::make_shared< libBLS::CipheredKey >( cipheredKey )
+        };
         std::vector< bool > verifications_key1 =
             te_instance.VerifyBatch( cipheredKeys, shares1, { public_key } );
         BOOST_REQUIRE( std::all_of(
