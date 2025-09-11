@@ -89,7 +89,7 @@ with two full pairings (two Miller loops + two final exponentiations), we can:
    $$
    we have  
    $$
-   FE(f_1) = e(P_1,Q_1), \qquad FE(f_2) = e(-P_2,Q_2).
+   FE(f_1) = e(P_1,Q_1), \qquad FE(f_2) = e(-P_2,Q_2).S
    $$
 
 4. **Final exponentiation is a homomorphism**  

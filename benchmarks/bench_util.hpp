@@ -18,8 +18,9 @@ inline std::vector< std::uint8_t > make_msg( std::size_t bytes, std::uint64_t se
 struct BenchArgs {
     int t{ 3 };
     int n{ 5 };
-    std::size_t msg_bytes{ 256 };
-    std::uint64_t rounds{ 100 };
+    size_t msg_bytes{ 256 };
+    size_t numTxs{ 1 };
+
 };
 
 
@@ -37,8 +38,8 @@ inline BenchArgs parse_args( int argc, char** argv ) {
             a.n = std::stoi( next( i ) );
         else if ( s == "--msg" )
             a.msg_bytes = static_cast< std::size_t >( std::stoul( next( i ) ) );
-        else if ( s == "--rounds" )
-            a.rounds = static_cast< std::uint64_t >( std::stoull( next( i ) ) );
+        else if ( s == "--numTxs" )
+            a.numTxs = static_cast< std::size_t >( std::stoul( next( i ) ) );
     }
 
     return a;
@@ -46,11 +47,11 @@ inline BenchArgs parse_args( int argc, char** argv ) {
 
 inline void print_args( const BenchArgs& args ) {
     std::cout << "Benchmarking Threshold Encryption with parameters:\n";
-    std::cout << "  - t (required signers): " << args.t << "\n";
+    std::cout << "  - t (required signers = number of shares per tx): " << args.t << "\n";
     std::cout << "  - n (total signers): " << args.n << "\n";
     std::cout << "  - message size (bytes): " << args.msg_bytes << "\n";
+    std::cout << "  - number of txs: " << args.numTxs << "\n";
     std::cout << "  - backend: " << LIBBLS_BACKEND_NAME << "\n";
-    std::cout << "  - runs: " << args.rounds << "\n";
 }
 
 inline void print_progress( int currentIteration, int totalIterations ) {

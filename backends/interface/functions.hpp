@@ -9,6 +9,7 @@
 #include <functional>
 #include <limits>
 #include <utility>
+#include <optional>
 
 namespace libBLS::algebra {
 
@@ -16,9 +17,11 @@ constexpr size_t BASE_HEXA = 16;
 constexpr size_t BASE_DEC = 10;
 
 struct PairingEqualityBatch {
-    // common bases (stored as reference_wrappers)
-    std::reference_wrapper< const G1Point > commonG1P1;
-    std::reference_wrapper< const G1Point > commonG1P2;
+    // store the common G1 points per batch. I.e, for each G1Point, there are N G2Points.
+    // no reference wrapper - these values usually have to be computed within a limited scope.
+    // thus moving ownership to this struct works best.
+    std::vector< G1Point > g1P1s;
+    std::vector< G1Point > g1P2s;
 
     // vectors of points to be paired with the common bases (as reference_wrappers)
     std::vector< std::reference_wrapper< const G2Point > > g2P1s;
@@ -30,23 +33,42 @@ struct PairingEqualityBatch {
     bool optimisticValidation = false;
 
     // size cached after construction
-    size_t size;
+    size_t numBatches;
+    size_t sizeEachBatch;
+    size_t sizeTotal;
 
-    PairingEqualityBatch( const G1Point& p1, const G1Point& p2,
-        std::vector< std::reference_wrapper< const G2Point > > v1,
-        std::vector< std::reference_wrapper< const G2Point > > v2 )
-        : commonG1P1( std::cref( p1 ) ),
-          commonG1P2( std::cref( p2 ) ),
+    // Used to construct a mega-batch of M batches of N shares, where g1P1 and g1P2
+    // are NOT constant across batches
+    PairingEqualityBatch( 
+        const std::vector< G1Point >& p1,
+        const std::vector< G1Point >& p2,
+        const std::vector< std::reference_wrapper< const G2Point > >& v1,
+        const std::vector< std::reference_wrapper< const G2Point > >& v2 )
+        : g1P1s( std::move( p1 ) ),
+          g1P2s( std::move( p2 ) ),
           g2P1s( std::move( v1 ) ),
           g2P2s( std::move( v2 ) ),
-          size( g2P1s.size() ) {
+          numBatches( g1P1s.size() ),
+          sizeEachBatch( g2P1s.size() / g1P1s.size() ),
+          sizeTotal( g2P1s.size() ) {
         if ( g2P1s.size() != g2P2s.size() ) {
             throw std::invalid_argument(
                 "PairingEqualityBatch: size mismatch between g2P1s and g2P2s" );
         }
+        if ( g1P1s.size() != g1P2s.size() ) {
+            throw std::invalid_argument(
+                "PairingEqualityBatch: size mismatch between g1P1s and g1P2s" );
+        }
+        if ( g2P1s.size() % g1P1s.size() != 0 ) {
+            throw std::invalid_argument(
+                "PairingEqualityBatch: g2P1s size is not multiple of g1P1s size" );
+        }
     }
 
     void useOptimisticValidation() { optimisticValidation = true; }
+
+    // Returns true if this is a mega-batch (multiple batches of sizeEach)
+    bool isMegaBatch() const { return numBatches > 1; }
 };
 
 // -------------------- Backend Specific -------------------- //

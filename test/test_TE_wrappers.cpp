@@ -1238,7 +1238,10 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionShare ) {
 /**
  * Validate a batch of decryption shares for a given ciphered key and public keys.
  * First 10 iterations are not tampered, the rest have random shares tampered.
- * Randomly select which indices / decryptShares to tamper. Run N times
+ * Randomly select which indices / decryptShares to tamper. Run N times.
+ * 
+ * This tests the simple case where all shares from the (inner) batch
+ * have the same cipheredKey.
  */
 BOOST_AUTO_TEST_CASE( ValidateDecryptionSharesBatch ) {
     size_t requiredSigners = 15;
@@ -1278,9 +1281,11 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionSharesBatch ) {
             }
 
             // batch validate
+            std::vector< std::shared_ptr< libBLS::CipheredKey > > cipheredKeys = {
+                std::make_shared< libBLS::CipheredKey >( cipheredKey ) };
             std::vector< bool > results =
                 libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
-                    cipheredKey, shares, pubKeys );
+                    cipheredKeys, shares, pubKeys );
 
             for ( size_t j = 0; j < totalSigners; ++j ) {
                 // only the ones not tampered should pass

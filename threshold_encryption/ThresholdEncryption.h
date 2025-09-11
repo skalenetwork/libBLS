@@ -103,7 +103,8 @@ public:
      * @param _publicKeys Vector of public keys corresponding to the decryption shares.
      * @return Vec of bools, each idx specifying if it was successfully validated or not
      */
-    static std::vector< bool > validateDecryptionSharesBatch( const CipheredKey& _cipheredKey,
+    static std::vector< bool > validateDecryptionSharesBatch( 
+        const std::vector< std::shared_ptr< CipheredKey > >& _cipheredKeys,
         const std::vector< std::shared_ptr< TEDecryptionShare > >& _decryptionShares,
         const std::vector< std::shared_ptr< TEPublicKeyShare > >& _publicKeys );
 

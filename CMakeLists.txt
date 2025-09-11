@@ -68,6 +68,34 @@ endif()
 
 option(ENABLE_ASAN "Build with Address/LeakSanitizer" OFF)
 
+# Create an INTERFACE target that carries sanitizer flags project-wide
+if (ENABLE_ASAN)
+  # Create a normal INTERFACE target, then expose a namespaced ALIAS for convenience.
+  add_library(sanitize_address INTERFACE)
+  add_library(sanitize::address ALIAS sanitize_address)
+
+  # Compile-time instrumentation
+  target_compile_options(sanitize_address INTERFACE
+    $<$<CONFIG:Debug,RelWithDebInfo>:
+      -fsanitize=address
+      -fsanitize=leak
+      -fno-omit-frame-pointer
+      -g>
+  )
+
+  # Link-time: pull in runtimes
+  target_link_options(sanitize_address INTERFACE
+    $<$<CONFIG:Debug,RelWithDebInfo>:
+      -fsanitize=address
+      -fsanitize=leak>
+  )
+
+  # Propagate to all *future* targets in this dir and its subdirs.
+  # (Do this BEFORE add_subdirectory calls.)
+  set_property(DIRECTORY PROPERTY LINK_LIBRARIES sanitize_address)
+endif()
+
+
 if(BUILD_TESTS)
 	enable_testing()
 endif()

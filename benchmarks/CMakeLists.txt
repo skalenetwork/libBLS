@@ -3,14 +3,6 @@ project(libbls_te_bench CXX)
 
 message("Building threshold encryption benchmarks")
 
-if(USE_MCL)
-    set(LIBBLS_BACKEND "mcl")
-elseif(USE_LIBFF)
-    set(LIBBLS_BACKEND "libff")
-else() # set MCL by default
-    set(LIBBLS_BACKEND "mcl")
-endif()
-
 # Configure header exposing backend string into the bench binary
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/backend_info.hpp.in
@@ -42,14 +34,17 @@ function(add_bench name main_source)
     backend
   )
 
-  # Optimization: respect build type
-  if(MSVC)
+  if (MSVC)
     target_compile_options(${name} PRIVATE
-      /O2 /DNDEBUG
+      $<$<CONFIG:Release>:/O2 /DNDEBUG>
+      $<$<CONFIG:RelWithDebInfo>:/O2 /Zi>
+      $<$<CONFIG:Debug>:/Od /Zi>
     )
   else()
     target_compile_options(${name} PRIVATE
-      -O3 -DNDEBUG
+      $<$<CONFIG:Release>:-O3 -DNDEBUG>
+      $<$<CONFIG:RelWithDebInfo>:-O2 -g>
+      $<$<CONFIG:Debug>:-O0 -g>
     )
   endif()
 

@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
     std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr =
         std::make_shared< std::array< uint8_t, 32 > >( hash_byte_arr );
 
-    for ( size_t i = 0; i < args.rounds; i++ ) {
+    for ( size_t i = 0; i < args.numTxs; i++ ) {
         // actual work
         libBLS::BLSSigShareSet sigSet( numSigned, numAll );
 
@@ -94,19 +94,19 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
 
         BOOST_REQUIRE( sigIsValid );
 
-        print_progress( i, args.rounds );
+        print_progress( i, args.numTxs );
     }
 
     // print results
     print_args( args );
-    std::cout << "Average partial signature time: " << ( partialSignature / args.rounds )
+    std::cout << "Average partial signature time: " << ( partialSignature / args.numTxs )
               << " ms\n";
-    std::cout << "Average signature merge time: " << ( signatureMerge / args.rounds ) << " ms\n";
-    std::cout << "Average adding signature share time: " << ( addingSigShare / args.rounds )
+    std::cout << "Average signature merge time: " << ( signatureMerge / args.numTxs ) << " ms\n";
+    std::cout << "Average adding signature share time: " << ( addingSigShare / args.numTxs )
               << " ms\n";
-    std::cout << "Average signature verification time: " << ( verifySig / args.rounds ) << " ms\n";
+    std::cout << "Average signature verification time: " << ( verifySig / args.numTxs ) << " ms\n";
     std::cout << "Average full cycle time: "
               << ( ( partialSignature + signatureMerge + addingSigShare + verifySig ) /
-                     args.rounds )
+                     args.numTxs )
               << " ms\n";
 }

@@ -170,7 +170,7 @@ void ThresholdEncryption::validateDecryptionShare( const CipheredKey& _cipherTex
 }
 
 std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatch(
-    const CipheredKey& _cipherText,
+    const std::vector< std::shared_ptr< CipheredKey > >& _cipherTexts,
     const std::vector< std::shared_ptr< TEDecryptionShare > >& _decryptionShares,
     const std::vector< std::shared_ptr< TEPublicKeyShare > >& _publicKeys ) {
     // convert from keys to G points
@@ -190,8 +190,9 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatch(
         publicKeysRaw.push_back( std::cref( key->getPublicKeyRaw() ) );
     }
 
-    return TE::VerifyBatch( _cipherText, decryptionSharesRaw, publicKeysRaw );
+    return TE::VerifyBatch( _cipherTexts, decryptionSharesRaw, publicKeysRaw );
 }
+
 
 AES256Key ThresholdEncryption::combineShares(
     const CipheredKey& _cipheredKey, TEDecryptSet& _decryptionSet ) {

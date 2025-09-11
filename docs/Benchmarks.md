@@ -11,7 +11,7 @@
 
 #### Results
 
-| Result Metric                            | Libff (ms) | MCL (ms) | MCL - batches (ms)      |
+| Result Metric                            | Libff (ms) | MCL (ms) | MCL - batches (ms)      | 
 | ---------------------------------------- | --------- | --------- | ----------------------- |
 | Average encryption time                  | 13.82     | 3.08      | 2.3                     |
 | Avg. validation encryption time          | 13.92     | 1.95      | 1.03                    |
@@ -26,6 +26,23 @@
 - All but encryption speedup: **73.5x**
 - Decryption share validation speedup: **117.5x**
 
+| Result Metric  (1k Txns)                  | MCL - batches (seconds) | 
+| ----------------------------------------  | ----------------------- |
+| Total encryption time                     | 2.1                     |
+| Total validation encryption time          | 0.97                    |
+| Total partial decryption time             | 0.47                    |
+| Total validation decryption share time    | 2.1                     |
+| Total combine shares time                 | 0.69                    |
+| Total validation combined decryption time | 0.11                    |
+| Total decryption time                     | 0.004                   |
+| Total full cycle time                     | 6.5                     |
+
+- Libff would have taken 529 seconds.
+- MCL takes 6.7
+
+- Full cycle speedup: **79x**
+- All but encryption speedup: **112x**
+- Decryption share validation speedup: **210x**
 
 ---
 

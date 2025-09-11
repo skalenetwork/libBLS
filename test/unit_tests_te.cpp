@@ -266,8 +266,10 @@ BOOST_AUTO_TEST_CASE( SimpleEncryption ) {
         BOOST_REQUIRE( te_instance.Verify( cipheredKey, decryption_share, public_key ) );
 
         // batched decryption - optimistic
+        std::vector< std::shared_ptr< libBLS::CipheredKey > > cipheredKeys = {
+            std::make_shared< libBLS::CipheredKey >( cipheredKey ) };
         std::vector< bool > verifications_key1 =
-            te_instance.VerifyBatch( cipheredKey, shares1, { public_key } );
+            te_instance.VerifyBatch( cipheredKeys, shares1, { public_key } );
         BOOST_REQUIRE( std::all_of(
             verifications_key1.begin(), verifications_key1.end(), []( bool v ) { return v; } ) );
 
@@ -488,7 +490,10 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
         }
 
         // batched decryption - optimistic
-        auto verifications = obj.VerifyBatch( cipheredKey, sharesBatch, publicKeysBatch );
+        std::vector< std::shared_ptr< libBLS::CipheredKey > > keysBatch;
+        keysBatch.push_back( std::make_shared< libBLS::CipheredKey >( cipheredKey ) );
+
+        auto verifications = obj.VerifyBatch( keysBatch, sharesBatch, publicKeysBatch );
         BOOST_REQUIRE(
             std::all_of( verifications.begin(), verifications.end(), []( bool v ) { return v; } ) );
 

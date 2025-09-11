@@ -252,65 +252,64 @@ bool TE::Verify( const CipheredKey& ciphertext, const algebra::G2Point& decrypti
 
     std::string v_str = ThresholdUtils::bytesToHexString( V );
     algebra::G1Point H = HashToGroup( U, v_str );
-    H.validate();
+    // no need to validate ciphertext's pairing - assumed to be validated already via
+    // `validateEncryption` call
 
-    bool isPairingValid = algebra::verifyPairingEq( W, algebra::G2Point::generator(), H, U );
-
-    if ( isPairingValid ) {
-        bool isSecondPairingValid = algebra::verifyPairingEq( W, public_key, H, decryptionShare );
-
-        return isSecondPairingValid;
-    }
-
-    return false;
+    bool isSecondPairingValid = algebra::verifyPairingEq( W, public_key, H, decryptionShare );
+    return isSecondPairingValid;
 }
 
 
 /**
  * @brief Verifies a ciphertext and decryption share against a public key
  *
- * This function performs verification of a threshold encryption decryption share.
- * It checks two main conditions:
- * 1. Whether the ciphertext is valid by verifying the pairing equality e(W,1) = e(H(U,V),U)
- * 2. Whether the decryption share is valid by verifying e(W,PK) = e(H(U,V),S)
- * where PK is the public key and S is the decryption share
+ * This function performs verification of a batch of batches of threshold encryption shares.
+ * Meaning that conceptually there is a big batch that contains smaller batches.
+ * Each small batch contains N shares, and for each small batch the same ciphertext is shared.
+ * Thus, the number of small batches in the big batch is equal to the number of ciphertexts.
  *
- * @param ciphertext A tuple containing the encryption components (U,V,W). Assumes is already
+ * @param ciphertext Vector of tuples containing the encryption components (U,V,W). Assumes is already
  * validated
- * @param decryptionShare The decryption share to verify. Assumes is valid & well formed
- * @param public_key The public key used for verification. Assumes is valid & well formed
+ * @param decryptionShares The decryption shares to verify. Assumes is valid & well formed. Contains num of small batches * N shares
+ * @param public_key The public key used for verification. Assumes is valid & well formed. Contains num of small batches * N shares
  *
- * @return true if both the ciphertext and decryption share are valid
- * @return false if either the ciphertext is invalid or the decryption share verification fails
+ * @return true only for the shares that are valid. If a ciphertext is invalid, it invalidates the whole shares in that batch.
  */
-std::vector< bool > TE::VerifyBatch( const CipheredKey& ciphertext,
+std::vector< bool > TE::VerifyBatch( 
+    const std::vector< std::shared_ptr< CipheredKey > >& ciphertexts,
     const std::vector< std::reference_wrapper< const algebra::G2Point > >& decryptionShares,
     const std::vector< std::reference_wrapper< const algebra::G2Point > >& publicKeys ) {
+
     const size_t size = decryptionShares.size();
+    const size_t numberOfBatches = ciphertexts.size();
+    const size_t sizeEachBatch = size / ciphertexts.size();
 
     if ( size != publicKeys.size() ) {
         throw ThresholdUtils::IncorrectInput(
             "decryption shares and public keys must have same size" );
     }
 
-    std::vector< bool > verifications( size, false );
+    std::vector< algebra::G1Point > g1P1s;
+    std::vector< algebra::G1Point > g1P2s;
+    g1P1s.reserve( ciphertexts.size() );
+    g1P2s.reserve( ciphertexts.size() );
 
-    const auto [U, V, W] = ciphertext;
+    for (const auto& cipher : ciphertexts ) {
+        const auto [U, V, W] = *cipher;
 
-    std::string v_str = ThresholdUtils::bytesToHexString( V );
-    algebra::G1Point H = HashToGroup( U, v_str );
-    // no need to validate H - assumes H has been validated already when performing the ciphertext
-    // validation at the start of TE process
+        std::string v_str = ThresholdUtils::bytesToHexString( V );
+        algebra::G1Point H = HashToGroup( U, v_str );
+        // no need to validate H - assumes H has been validated already when performing the ciphertext
+        // validation at the start of TE process
 
-    bool isPairingValid = algebra::verifyPairingEq( W, algebra::G2Point::generator(), H, U );
-
-    if ( isPairingValid ) {
-        algebra::PairingEqualityBatch batch( W, H, publicKeys, decryptionShares );
-        batch.useOptimisticValidation();
-        verifications = algebra::verifyPairingEqBatch( batch );
+        g1P1s.emplace_back( W );
+        g1P2s.emplace_back( H );
     }
 
-    return verifications;
+    algebra::PairingEqualityBatch batch( g1P1s, g1P2s, publicKeys, decryptionShares );
+    batch.useOptimisticValidation();
+    return algebra::verifyPairingEqBatch( batch );
+
 }
 
 
