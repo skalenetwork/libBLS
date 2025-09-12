@@ -66,36 +66,6 @@ else()
 	message( INFO "---- CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE} is not supported explicitly" )
 endif()
 
-option(ENABLE_ASAN "Build with Address/LeakSanitizer" OFF)
-
-# Create an INTERFACE target that carries sanitizer flags project-wide
-if (ENABLE_ASAN)
-  # Create a normal INTERFACE target, then expose a namespaced ALIAS for convenience.
-  add_library(sanitize_address INTERFACE)
-  add_library(sanitize::address ALIAS sanitize_address)
-
-  # Compile-time instrumentation
-  target_compile_options(sanitize_address INTERFACE
-    $<$<CONFIG:Debug,RelWithDebInfo>:
-      -fsanitize=address
-      -fsanitize=leak
-      -fno-omit-frame-pointer
-      -g>
-  )
-
-  # Link-time: pull in runtimes
-  target_link_options(sanitize_address INTERFACE
-    $<$<CONFIG:Debug,RelWithDebInfo>:
-      -fsanitize=address
-      -fsanitize=leak>
-  )
-
-  # Propagate to all *future* targets in this dir and its subdirs.
-  # (Do this BEFORE add_subdirectory calls.)
-  set_property(DIRECTORY PROPERTY LINK_LIBRARIES sanitize_address)
-endif()
-
-
 if(BUILD_TESTS)
 	enable_testing()
 endif()
@@ -113,6 +83,32 @@ if(COVERAGE)
 	set(CMAKE_SHARED_LINKER_FLAGS "--coverage ${CMAKE_SHARED_LINKER_FLAGS}")
 	set(CMAKE_EXE_LINKER_FLAGS "--coverage ${CMAKE_EXE_LINKER_FLAGS}")
 endif()
+
+
+#######################################
+# Sanitizers
+#######################################
+
+option(ENABLE_SANITIZERS "Enable ASan + LSan" OFF)
+set(SAN_CFLAGS 
+  -fsanitize=address 
+  -fsanitize=leak 
+  -fno-omit-frame-pointer 
+  -g
+)
+set(SAN_LFLAGS 
+  -fsanitize=address 
+  -fsanitize=leak
+)
+
+# Helper to apply to any target
+function(apply_sanitizers tgt)
+  if (ENABLE_SANITIZERS)
+    target_compile_options(${tgt} PRIVATE ${SAN_CFLAGS})
+    target_link_options(${tgt}    PRIVATE ${SAN_LFLAGS})
+  endif()
+endfunction()
+
 
 set( CLANG_FORMAT_EXCLUDE_PATTERNS
     ${CMAKE_BINARY_DIR}
@@ -184,7 +180,6 @@ link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 
 add_subdirectory(backends)
 
-
 # TMP fix for emscripten
 # Build utils exactly once
 add_library(common_utils STATIC tools/utils.cpp)
@@ -193,6 +188,7 @@ target_link_libraries(common_utils PRIVATE ${CRYPTOPP_LIBRARY} backend)
 
 
 add_library(bls ${sourses_bls} ${headers_bls})
+apply_sanitizers(bls)
 
 include_directories(${Boost_INCLUDE_DIRS})
 
@@ -224,6 +220,7 @@ if (BUILD_UTILS)
 		endif()
 
 		target_link_libraries(${name} PRIVATE bls ${CRYPTOPP_LIBRARY} boost_program_options)
+		apply_sanitizers(${name})
 	endfunction()
 
 	# Add all tools using the function
@@ -253,6 +250,7 @@ if(BUILD_TESTS)
 		endif()
 
 		target_link_libraries(${name} PRIVATE bls ${CRYPTOPP_LIBRARY} boost_program_options ${extra_libs})
+		apply_sanitizers(${name})
 		add_test(NAME ${name} COMMAND ${name})
 	endfunction()
 
@@ -267,6 +265,7 @@ if(BUILD_TESTS)
     add_executable(dkg_attack test/dkg_attack.cpp)
     target_include_directories(dkg_attack PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     target_link_libraries(dkg_attack PRIVATE bls ${CRYPTOPP_LIBRARY} boost_program_options)
+	apply_sanitizers(dkg_attack)
     add_test(NAME dkg_attack COMMAND dkg_attack)
 
 	add_custom_target(all_bls_tests

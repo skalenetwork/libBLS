@@ -1,4 +1,4 @@
-## Tests
+# Tests
 
 ```bash
 ./build/dkg_unit_test                           # run all dkg unit tests
@@ -12,7 +12,7 @@
 ./build/threshold_encryption/te_test            # run all te tests
 ```
 
-## Benchmarks
+# Benchmarks
 
 ### Running benchmarks
 
@@ -31,3 +31,21 @@
 
 You can previous benchmark result [here](./benchmarks/main.md)
 
+# Memory Leak Analysis
+
+The project is also configured to allow running with address sanitizer to check for memory leaks:
+```bash
+cmake -H. -Bbuild -DENABLE_SANITIZERS=ON -DCMAKE_BUILD_TYPE=Debug
+
+cmake --build build -- -j$(nproc)
+```
+
+This sets up address sanitizer for all binaries produced (including tests, except for emscripten) + all libraries built (te, backend, bls)
+
+External dependencies must be configured individually in the `deps/build.sh` script, by adding the following flags to the cmake command:
+```bash
+-DCMAKE_C_FLAGS='-fsanitize=address -fno-omit-frame-pointer' \
+-DCMAKE_CXX_FLAGS='-fsanitize=address -fno-omit-frame-pointer' \
+-DCMAKE_EXE_LINKER_FLAGS='-fsanitize=address' \
+-DCMAKE_SHARED_LINKER_FLAGS='-fsanitize=address' \
+```
