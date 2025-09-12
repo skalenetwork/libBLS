@@ -10,8 +10,6 @@ configure_file(
     @ONLY # only replace variables of the form @VAR@.
 )
 
-
-
 function(add_bench name main_source)
   add_executable(${name}
     ${main_source}
@@ -47,9 +45,14 @@ function(add_bench name main_source)
       $<$<CONFIG:Debug>:-O0 -g>
     )
   endif()
+  apply_sanitizers(${name})
 
   add_test(NAME ${name} COMMAND ${name})
 endfunction()
+
+# apply_sanitizers(bls)
+# apply_sanitizers(te)
+# apply_sanitizers(backend)
 
 ######### Add Benchmarks #########
 

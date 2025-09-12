@@ -282,9 +282,14 @@ std::vector< bool > TE::VerifyBatch(
     const std::vector< std::shared_ptr< CipheredKey > >& ciphertexts,
     const std::vector< std::reference_wrapper< const algebra::G2Point > >& decryptionShares,
     const std::vector< std::reference_wrapper< const algebra::G2Point > >& publicKeys ) {
+
     const size_t size = decryptionShares.size();
     const size_t numberOfBatches = ciphertexts.size();
-    const size_t sizeEachBatch = size / ciphertexts.size();
+
+    if (size % numberOfBatches != 0) {
+        throw ThresholdUtils::IncorrectInput(
+            "decryption shares size must be multiple of ciphertexts size" );
+    }
 
     if ( size != publicKeys.size() ) {
         throw ThresholdUtils::IncorrectInput(

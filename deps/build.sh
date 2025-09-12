@@ -810,9 +810,9 @@ if [ "$WITH_MCL" = "yes" ]; then
         ${MCL_CMAKE_OPTS} ..
       eval emmake "$MAKE" ${PARALLEL_MAKE_OPTIONS}
     else
-      eval "$CMAKE" ${CMAKE_CROSSCOMPILING_OPTS} \
+      eval "$CMAKE ${CMAKE_CROSSCOMPILING_OPTS} \
         -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" \
-        ${MCL_CMAKE_OPTS} ..
+        ${MCL_CMAKE_OPTS} .."
       eval "$MAKE" ${PARALLEL_MAKE_OPTIONS}
     fi
 

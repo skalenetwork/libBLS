@@ -1235,6 +1235,36 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionShare ) {
 }
 
 
+
+std::pair< std::vector< bool >, std::vector< std::shared_ptr< libBLS::TEDecryptionShare > > > 
+randomTamperDecryptionShares(size_t totalSigners, libBLS::CipheredKey cipheredKey, std::vector< libBLS::TEPrivateKeyShare >& privKeys, bool skipTampering) {
+    std::vector< bool > tampered(totalSigners, false);
+    std::vector< std::shared_ptr< libBLS::TEDecryptionShare > > shares;
+    libBLS::TEDecryptionShare decrShare( libBLS::algebra::G2Point::random(), 1 ); // random init value - wil be replaced below
+
+    // collect decryption shares
+    for ( size_t j = 0; j < totalSigners; ++j ) {
+        decrShare =
+            libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, privKeys[j] );
+
+        // allow tampering for all but the first 10 iterations
+        if ( !skipTampering ) {
+            // randomly decide which indices to tamper
+            const auto rnd = rand_gen() % 10;
+            if ( rnd < 3 ) {
+                // tamper decryption share
+                decrShare =
+                    libBLS::TEDecryptionShare( libBLS::algebra::G2Point::random(), j );
+                tampered[j] = true;
+            }
+        }
+        shares.push_back( std::make_shared< libBLS::TEDecryptionShare >( decrShare ) );
+    }
+
+    return std::make_pair(tampered, shares);
+}
+
+
 /**
  * Validate a batch of decryption shares for a given ciphered key and public keys.
  * First 10 iterations are not tampered, the rest have random shares tampered.
@@ -1254,31 +1284,17 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionSharesBatch ) {
     for ( size_t i = 0; i < 40; ++i ) {
         cipher = generateRandomCiphertext( dataSize, keys );
         for ( const auto& cipheredKey : cipher.getKeys() ) {
-            std::vector< std::shared_ptr< libBLS::TEDecryptionShare > > shares;
+            
             std::vector< std::shared_ptr< libBLS::TEPublicKeyShare > > pubKeys;
-            std::vector< bool > tampered( totalSigners, false );
+            std::vector< libBLS::TEPrivateKeyShare > privKeys;
 
-            // collect decryption shares
-            for ( size_t j = 0; j < totalSigners; ++j ) {
-                decrShare =
-                    libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[j] );
-
-                // allow tampering for all but the first 10 iterations
-                if ( i > 10 ) {
-                    // randomly decide which indices to tamper
-                    const auto rnd = rand_gen() % 10;
-                    if ( rnd < 3 ) {
-                        // tamper decryption share
-                        decrShare =
-                            libBLS::TEDecryptionShare( libBLS::algebra::G2Point::random(), j );
-                        tampered[j] = true;
-                    }
-                }
-
-                shares.push_back( std::make_shared< libBLS::TEDecryptionShare >( decrShare ) );
+            for( size_t j = 0; j < totalSigners; ++j ) {
+                privKeys.push_back( keys.secretKeys[j] );
                 pubKeys.push_back(
                     std::make_shared< libBLS::TEPublicKeyShare >( keys.publicKeys[j] ) );
             }
+
+            auto [tampered, shares] = randomTamperDecryptionShares(totalSigners, cipheredKey, privKeys, i <= 10);
 
             // batch validate
             std::vector< std::shared_ptr< libBLS::CipheredKey > > cipheredKeys = {
@@ -1295,6 +1311,58 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionSharesBatch ) {
                 } else {
                     BOOST_REQUIRE( results[j] );
                 }
+            }
+        }
+    }
+}
+
+
+/**
+ * Validate a batch of batches of decryption shares.
+ * 'Randomly' select which shares from which batches to tamper &
+ * check that only those fail validation.
+ */
+BOOST_AUTO_TEST_CASE( ValidateDecryptionSharesMegaBatch ) {
+    size_t numOfBatchesPerRun = 5;
+    size_t requiredSigners = 15;
+    size_t totalSigners = 22;
+    keys keys = generateKeys( requiredSigners, totalSigners );
+    size_t dataSize = 100;
+    libBLS::TEDecryptionShare decrShare( libBLS::algebra::G2Point::random(), 1 );
+    libBLS::Ciphertext cipher;
+
+    size_t totalNumShares = numOfBatchesPerRun * totalSigners;
+
+    for ( size_t i = 0; i < 40; ++i ) {
+        std::vector< bool > tampered( totalNumShares, false );
+        std::vector< std::shared_ptr< libBLS::CipheredKey > > cipheredKeys(numOfBatchesPerRun);
+        std::vector< std::shared_ptr< libBLS::TEDecryptionShare > > shares(totalNumShares);
+        std::vector< std::shared_ptr< libBLS::TEPublicKeyShare > > pubKeys(totalNumShares);
+
+        for ( size_t j = 0; j < numOfBatchesPerRun; ++j) {
+            cipher = generateRandomCiphertext( dataSize, keys );
+            cipheredKeys[j] = std::make_shared< libBLS::CipheredKey >( cipher.getKeys()[0] );
+            auto [tamperedCurrent, batchShares] = randomTamperDecryptionShares(totalSigners, *cipheredKeys[j], keys.secretKeys, (i + j)  % 2 == 0);
+
+            for (size_t k = 0; k < totalSigners; ++k ) {
+                shares[j * totalSigners + k] = batchShares[k];
+                pubKeys[j * totalSigners + k] = std::make_shared< libBLS::TEPublicKeyShare >( keys.publicKeys[k] );
+                if ( tamperedCurrent[k] ) {
+                    tampered[j * totalSigners + k] = true;
+                }
+            }
+        }
+
+        std::vector< bool > results =
+            libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
+                cipheredKeys, shares, pubKeys );
+
+        for ( size_t j = 0; j < totalNumShares; ++j ) {
+            // only the ones not tampered should pass
+            if ( tampered[j] ) {
+                BOOST_REQUIRE( !results[j] );
+            } else {
+                BOOST_REQUIRE( results[j] );
             }
         }
     }
@@ -1540,70 +1608,5 @@ BOOST_AUTO_TEST_CASE( ValidateCombinedDecryptionAndDecrypt ) {
             std::exception );
     }
 }
-
-
-// ############### Performance Tests #####################
-// DO NOT CHANGE TEST BELOW - used for performance measurements through scripts
-// DO NOT ADD ANY OTHER OUTPUTS TO THE TEST - breaks the measurement scripts
-
-BOOST_AUTO_TEST_CASE( FullEncryptionDecryptionCycle, *utf::label( "performance" ) ) {
-    std::chrono::nanoseconds base_total{ 0 };
-
-    constexpr size_t RUNS = 100;
-
-    for ( size_t i = 0; i < RUNS; i++ ) {
-        // initial setup
-        size_t numAll = rand_gen() % 15 + 2;
-        size_t numSigned = rand_gen() % numAll + 1;
-        const keys keys = generateKeys( numSigned, numAll );
-
-        std::vector< uint8_t > message;
-        size_t msg_length = rand_gen() % 800;
-
-        for ( size_t length = 0; length < msg_length; ++length ) {
-            message.push_back( rand_gen() % 256 );
-        }
-
-        // actual work
-        auto loop_start = std::chrono::high_resolution_clock::now();
-        libBLS::Ciphertext cypher =
-            libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
-
-        libBLS::ThresholdEncryption::validateEncryption( cypher.keys[0] );
-
-        libBLS::TEDecryptSet decrSet( numSigned, numAll );
-        for ( size_t i = 0; i < numSigned; i++ ) {
-            libBLS::TEDecryptionShare decr_share =
-                libBLS::ThresholdEncryption::partialDecrypt( cypher.keys[0], keys.secretKeys[i] );
-
-            libBLS::ThresholdEncryption::validateDecryptionShare(
-                cypher.keys[0], decr_share, keys.publicKeys[i] );
-
-            decrSet.addDecryptShare( decr_share );
-        }
-
-        libBLS::AES256Key key_deciphered =
-            libBLS::ThresholdEncryption::combineShares( cypher.keys[0], decrSet );
-
-        libBLS::ThresholdEncryption::validateCombinedDecryption(
-            cypher, key_deciphered, keys.commonPublic );
-
-        std::vector< uint8_t > decipheredMsg =
-            libBLS::ThresholdEncryption::decrypt( cypher, key_deciphered );
-
-        // increase timer
-        auto loop_end = std::chrono::high_resolution_clock::now();
-        base_total +=
-            std::chrono::duration_cast< std::chrono::nanoseconds >( loop_end - loop_start );
-
-        // check correctness
-        BOOST_REQUIRE( decipheredMsg == message );
-    }
-
-    auto average = base_total / RUNS;
-    auto avgSec = std::chrono::duration_cast< std::chrono::duration< double > >( average );
-    std::cout << "Average time for full encryption-decryption cycle: " << avgSec.count() << " s\n";
-}
-
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -427,9 +427,11 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToBytes ) {
 }
 
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
-    libBLS::TE obj = libBLS::TE( 11, 16 );
+    size_t t = 11;
+    size_t n = 16;
+    libBLS::TE obj = libBLS::TE( t, n );
 
-    std::vector< libBLS::algebra::FrScalar > coeffs( 11 );
+    std::vector< libBLS::algebra::FrScalar > coeffs( t );
     for ( auto& elem : coeffs ) {
         elem = libBLS::algebra::FrScalar::random();
         while ( elem.isZero() ) {
@@ -437,7 +439,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
         }
     }
 
-    std::vector< libBLS::algebra::FrScalar > secret_keys( 16 );
+    std::vector< libBLS::algebra::FrScalar > secret_keys( n );
 
     for ( size_t i = 0; i < 16; ++i ) {
         libBLS::algebra::FrScalar sk = libBLS::algebra::FrScalar::zero();
@@ -465,23 +467,24 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
     auto result = obj.getCiphertext( key, common_public );
 
     for ( const auto& cipheredKey : result.ciphertext ) {
-        std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares( 11 );
-
+        std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares(t);
+        std::vector< libBLS::algebra::G2Point > decrypted_shares(t); 
+        std::vector< libBLS::algebra::G2Point > pubKeys(t);
         std::vector< std::reference_wrapper< const libBLS::algebra::G2Point > > sharesBatch;
         std::vector< std::reference_wrapper< const libBLS::algebra::G2Point > > publicKeysBatch;
-        std::vector< libBLS::algebra::G2Point > pubKeys;
 
-        for ( size_t i = 0; i < 11; ++i ) {
+        for ( size_t i = 0; i < t; ++i ) {
             libBLS::algebra::G2Point decrypted =
                 obj.getDecryptionShare( cipheredKey, secret_keys[i] );
 
-            sharesBatch.push_back( std::cref( decrypted ) );
+            decrypted_shares[i] = decrypted; // push it to live long enough
+            sharesBatch.push_back( std::cref( decrypted_shares[i] ) );
 
             libBLS::algebra::G2Point public_key =
                 secret_keys[i] * libBLS::algebra::G2Point::generator();
-            pubKeys.push_back( public_key );  // push to make it live long enough
 
-            publicKeysBatch.push_back( std::cref( public_key ) );
+            pubKeys[i] = public_key;  // push to make it live long enough
+            publicKeysBatch.push_back( std::cref( pubKeys[i] ) );
 
             BOOST_REQUIRE( obj.Verify( cipheredKey, decrypted, public_key ) );
 

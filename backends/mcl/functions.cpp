@@ -98,7 +98,6 @@ std::vector< bool > verifyPairingEqBatch( const PairingEqualityBatch& batch ) {
     std::vector< bool > isValidVec( batch.sizeTotal, true );
 
     size_t startingBatch = 0;
-    size_t sizeEach = batch.sizeEachBatch;
     size_t numBatches = batch.numBatches;
 
     // If optimistic validation is ON and passes -> return all true (current vector)
@@ -115,12 +114,7 @@ std::vector< bool > verifyPairingEqBatch( const PairingEqualityBatch& batch ) {
                 const size_t startingBatch = i;
                 const size_t numBatches = 1;
                 if ( !optimisticBatchPairingValidation( batch, startingBatch, numBatches ) ) {
-                    size_t startIdx = i * sizeEach;
-                    size_t endIdx = startIdx + sizeEach;
-                    for ( size_t j = startIdx; j < endIdx; ++j ) {
-                        isValidVec[j] = verifyPairingEq( batch.g1P1s[j], batch.g2P1s[j].get(),
-                            batch.g1P2s[j], batch.g2P2s[j].get() );
-                    }
+                    pessimisticBatchPairingValidation( batch, isValidVec, startingBatch);
                 }
             }
         } else {  // simple batch - batch of shares - identify which share failed
@@ -211,7 +205,6 @@ bool optimisticBatchPairingValidation(
     static constexpr size_t kExpectedBatchSize = 15000;
     const size_t millerLoopPointsCapacity = 2 * numBatches;
 
-    size_t n = batch.sizeTotal;
     size_t numSharesToProcess = batch.sizeEachBatch * numBatches;
 
     // Reserve once (upper bound you expect)
