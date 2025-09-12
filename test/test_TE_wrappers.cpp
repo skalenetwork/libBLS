@@ -1235,17 +1235,17 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionShare ) {
 }
 
 
-
-std::pair< std::vector< bool >, std::vector< std::shared_ptr< libBLS::TEDecryptionShare > > > 
-randomTamperDecryptionShares(size_t totalSigners, libBLS::CipheredKey cipheredKey, std::vector< libBLS::TEPrivateKeyShare >& privKeys, bool skipTampering) {
-    std::vector< bool > tampered(totalSigners, false);
+std::pair< std::vector< bool >, std::vector< std::shared_ptr< libBLS::TEDecryptionShare > > >
+randomTamperDecryptionShares( size_t totalSigners, libBLS::CipheredKey cipheredKey,
+    std::vector< libBLS::TEPrivateKeyShare >& privKeys, bool skipTampering ) {
+    std::vector< bool > tampered( totalSigners, false );
     std::vector< std::shared_ptr< libBLS::TEDecryptionShare > > shares;
-    libBLS::TEDecryptionShare decrShare( libBLS::algebra::G2Point::random(), 1 ); // random init value - wil be replaced below
+    libBLS::TEDecryptionShare decrShare(
+        libBLS::algebra::G2Point::random(), 1 );  // random init value - wil be replaced below
 
     // collect decryption shares
     for ( size_t j = 0; j < totalSigners; ++j ) {
-        decrShare =
-            libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, privKeys[j] );
+        decrShare = libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, privKeys[j] );
 
         // allow tampering for all but the first 10 iterations
         if ( !skipTampering ) {
@@ -1253,15 +1253,14 @@ randomTamperDecryptionShares(size_t totalSigners, libBLS::CipheredKey cipheredKe
             const auto rnd = rand_gen() % 10;
             if ( rnd < 3 ) {
                 // tamper decryption share
-                decrShare =
-                    libBLS::TEDecryptionShare( libBLS::algebra::G2Point::random(), j );
+                decrShare = libBLS::TEDecryptionShare( libBLS::algebra::G2Point::random(), j );
                 tampered[j] = true;
             }
         }
         shares.push_back( std::make_shared< libBLS::TEDecryptionShare >( decrShare ) );
     }
 
-    return std::make_pair(tampered, shares);
+    return std::make_pair( tampered, shares );
 }
 
 
@@ -1284,17 +1283,17 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionSharesBatch ) {
     for ( size_t i = 0; i < 40; ++i ) {
         cipher = generateRandomCiphertext( dataSize, keys );
         for ( const auto& cipheredKey : cipher.getKeys() ) {
-            
             std::vector< std::shared_ptr< libBLS::TEPublicKeyShare > > pubKeys;
             std::vector< libBLS::TEPrivateKeyShare > privKeys;
 
-            for( size_t j = 0; j < totalSigners; ++j ) {
+            for ( size_t j = 0; j < totalSigners; ++j ) {
                 privKeys.push_back( keys.secretKeys[j] );
                 pubKeys.push_back(
                     std::make_shared< libBLS::TEPublicKeyShare >( keys.publicKeys[j] ) );
             }
 
-            auto [tampered, shares] = randomTamperDecryptionShares(totalSigners, cipheredKey, privKeys, i <= 10);
+            auto [tampered, shares] =
+                randomTamperDecryptionShares( totalSigners, cipheredKey, privKeys, i <= 10 );
 
             // batch validate
             std::vector< std::shared_ptr< libBLS::CipheredKey > > cipheredKeys = {
@@ -1335,27 +1334,28 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionSharesMegaBatch ) {
 
     for ( size_t i = 0; i < 40; ++i ) {
         std::vector< bool > tampered( totalNumShares, false );
-        std::vector< std::shared_ptr< libBLS::CipheredKey > > cipheredKeys(numOfBatchesPerRun);
-        std::vector< std::shared_ptr< libBLS::TEDecryptionShare > > shares(totalNumShares);
-        std::vector< std::shared_ptr< libBLS::TEPublicKeyShare > > pubKeys(totalNumShares);
+        std::vector< std::shared_ptr< libBLS::CipheredKey > > cipheredKeys( numOfBatchesPerRun );
+        std::vector< std::shared_ptr< libBLS::TEDecryptionShare > > shares( totalNumShares );
+        std::vector< std::shared_ptr< libBLS::TEPublicKeyShare > > pubKeys( totalNumShares );
 
-        for ( size_t j = 0; j < numOfBatchesPerRun; ++j) {
+        for ( size_t j = 0; j < numOfBatchesPerRun; ++j ) {
             cipher = generateRandomCiphertext( dataSize, keys );
             cipheredKeys[j] = std::make_shared< libBLS::CipheredKey >( cipher.getKeys()[0] );
-            auto [tamperedCurrent, batchShares] = randomTamperDecryptionShares(totalSigners, *cipheredKeys[j], keys.secretKeys, (i + j)  % 2 == 0);
+            auto [tamperedCurrent, batchShares] = randomTamperDecryptionShares(
+                totalSigners, *cipheredKeys[j], keys.secretKeys, ( i + j ) % 2 == 0 );
 
-            for (size_t k = 0; k < totalSigners; ++k ) {
+            for ( size_t k = 0; k < totalSigners; ++k ) {
                 shares[j * totalSigners + k] = batchShares[k];
-                pubKeys[j * totalSigners + k] = std::make_shared< libBLS::TEPublicKeyShare >( keys.publicKeys[k] );
+                pubKeys[j * totalSigners + k] =
+                    std::make_shared< libBLS::TEPublicKeyShare >( keys.publicKeys[k] );
                 if ( tamperedCurrent[k] ) {
                     tampered[j * totalSigners + k] = true;
                 }
             }
         }
 
-        std::vector< bool > results =
-            libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
-                cipheredKeys, shares, pubKeys );
+        std::vector< bool > results = libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
+            cipheredKeys, shares, pubKeys );
 
         for ( size_t j = 0; j < totalNumShares; ++j ) {
             // only the ones not tampered should pass

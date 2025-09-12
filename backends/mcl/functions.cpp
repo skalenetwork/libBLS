@@ -114,7 +114,7 @@ std::vector< bool > verifyPairingEqBatch( const PairingEqualityBatch& batch ) {
                 const size_t startingBatch = i;
                 const size_t numBatches = 1;
                 if ( !optimisticBatchPairingValidation( batch, startingBatch, numBatches ) ) {
-                    pessimisticBatchPairingValidation( batch, isValidVec, startingBatch);
+                    pessimisticBatchPairingValidation( batch, isValidVec, startingBatch );
                 }
             }
         } else {  // simple batch - batch of shares - identify which share failed

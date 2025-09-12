@@ -467,9 +467,9 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
     auto result = obj.getCiphertext( key, common_public );
 
     for ( const auto& cipheredKey : result.ciphertext ) {
-        std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares(t);
-        std::vector< libBLS::algebra::G2Point > decrypted_shares(t); 
-        std::vector< libBLS::algebra::G2Point > pubKeys(t);
+        std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares( t );
+        std::vector< libBLS::algebra::G2Point > decrypted_shares( t );
+        std::vector< libBLS::algebra::G2Point > pubKeys( t );
         std::vector< std::reference_wrapper< const libBLS::algebra::G2Point > > sharesBatch;
         std::vector< std::reference_wrapper< const libBLS::algebra::G2Point > > publicKeysBatch;
 
@@ -477,7 +477,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
             libBLS::algebra::G2Point decrypted =
                 obj.getDecryptionShare( cipheredKey, secret_keys[i] );
 
-            decrypted_shares[i] = decrypted; // push it to live long enough
+            decrypted_shares[i] = decrypted;  // push it to live long enough
             sharesBatch.push_back( std::cref( decrypted_shares[i] ) );
 
             libBLS::algebra::G2Point public_key =
