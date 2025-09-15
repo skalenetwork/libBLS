@@ -49,6 +49,16 @@ FqElement::FqElement( uint64_t x ) : Field( FqBackendType( x ) ) {}
 
 // -------------------- Serialization / Deserialization Methods -------------------- //
 
+uint64_t FqElement::toUlong() const {
+    std::array<uint8_t, SIZE_BYTES> be{};
+    const size_t n = value.serialize(be.data(), be.size()); // big-endian canonical
+    std::reverse(be.begin(), be.end()); // convert to little-endian
+    uint64_t v = 0;
+    const size_t start = n > 8 ? n - 8 : 0;       // take lowest 8 bytes
+    for (size_t i = start; i < n; ++i) v = (v << 8) | be[i];
+    return v;
+}
+
 std::string FqElement::toString( Base base ) const {
     constexpr size_t width = 2 * SIZE_BYTES;
     auto string = value.getStr( toIoBase( base ) );

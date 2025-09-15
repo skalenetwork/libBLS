@@ -67,6 +67,10 @@ FqElement FqElement::fromBytes( const std::array< uint8_t, SIZE_BYTES >& bytes )
     return field_elem;
 }
 
+uint64_t FqElement::toUlong() const {
+    return value.as_ulong();
+}
+
 // -------------------- Operator Overloads -------------------- //
 
 FqElement FqElement::operator+( const FqElement& other ) const {

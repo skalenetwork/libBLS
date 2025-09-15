@@ -109,4 +109,10 @@ size_t BLSSignature::getRequiredSigners() const {
     return requiredSigners;
 }
 
+uint64_t BLSSignature::toSeed() const {
+    CHECK( sig );
+    sig->toAffineCoordinates();
+    return sig->getX().toUlong() + sig->getY().toUlong();
+}
+
 }  // namespace libBLS

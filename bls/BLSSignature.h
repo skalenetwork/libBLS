@@ -46,6 +46,13 @@ public:
     std::string getHint() const;
     size_t getTotalSigners() const;
     size_t getRequiredSigners() const;
+
+    /**
+     * @brief Converts the signature share to a seed value.
+     * This can be used for generating randomness based on the signature share.
+     * @return A 64-bit unsigned integer seed derived from the signature share.
+     */
+    uint64_t toSeed() const;
 };
 
 }  // namespace libBLS

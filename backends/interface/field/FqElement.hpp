@@ -26,6 +26,12 @@ public:
     static FqElement fromString( const std::string& str, Base base );
     static FqElement fromBytes( const std::array< uint8_t, SIZE_BYTES >& bytes );
 
+    /**
+     * Convert to uint64_t
+     * If the value is larger than what can fit in uint64_t, apply modulo 2^64.
+     * This is the same as returning the lowest 64 bits of the value.
+     */
+    uint64_t toUlong() const;
 
     // -------------------- Operator Overloads -------------------- //
 
