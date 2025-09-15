@@ -1,9 +1,9 @@
 #ifdef LIBFF
 
+#include "backends/interface/functions.hpp"
 #include "backends/interface/group/G1Point.hpp"
 #include "backends/interface/group/G2Point.hpp"
 #include "backends/interface/group/GTElement.hpp"
-#include "backends/interface/functions.hpp"
 #include "tools/utils.h"
 #include <gmpxx.h>
 
@@ -47,7 +47,8 @@ FqElement hashToFq( const std::array< uint8_t, 32 >& hash_byte_arr ) {
     return algebra::FqElement( ret_val );
 }
 
-bool verifyPairingEq( const G1Point& g1P1, const G2Point& g2P1, const G1Point& g1P2, const G2Point& g2P2 ) {
+bool verifyPairingEq(
+    const G1Point& g1P1, const G2Point& g2P1, const G1Point& g1P2, const G2Point& g2P2 ) {
     return algebra::pairing( g1P1, g2P1 ) == algebra::pairing( g1P2, g2P2 );
 }
 
@@ -57,7 +58,6 @@ std::vector< bool > verifyPairingEqBatch( const PairingEqualityBatch& batch ) {
 
 G2Point lagrangeInterpolateAt0( const std::vector< size_t >& idx, size_t t,
     const std::vector< std::reference_wrapper< const G2Point > >& shares ) {
-
     std::vector< algebra::FrScalar > lagrange_coeffs = algebra::lagrangeCoeffs( idx, t );
 
     G2BackendType sum = G2Point::identity().value;
@@ -68,7 +68,6 @@ G2Point lagrangeInterpolateAt0( const std::vector< size_t >& idx, size_t t,
     }
 
     return sum;
-
 }
 
 }  // namespace libBLS::algebra
