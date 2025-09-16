@@ -58,12 +58,10 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
             std::shared_ptr< libBLS::BLSSigShare > sigShare = [&]() {
                 if ( i == 0 ) {  // only time one participant
                     ScopedTimer timer( partialSignature );
-                    return skey->sign( hash_ptr, participants.at( i ) );
+                    return skey->sign( hash_ptr, participants.at( j ) );
                 } else {
-                    return skey->sign( hash_ptr, participants.at( i ) );
+                    return skey->sign( hash_ptr, participants.at( j ) );
                 }
-
-                return skey->sign( hash_ptr, participants.at( i ) );
             }();
 
             {
@@ -75,7 +73,6 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
         std::shared_ptr< libBLS::BLSSignature > common_sig_ptr = [&]() {
             ScopedTimer timer( signatureMerge );
             return sigSet.merge();
-            ;
         }();
 
         // create common private key from private keys of each participant
