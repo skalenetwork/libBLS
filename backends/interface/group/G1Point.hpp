@@ -81,6 +81,11 @@ public:
         const std::function< void( const FqElement&, size_t i ) >& fn ) const;
 };
 
+inline std::ostream& operator<<(std::ostream& os, G1Point const& point) {
+    // Choose HEX or DEC encoding depending on your needs
+    return os << point.toString(libBLS::Base::HEXA);
+}
+
 G1Point operator*( const FrScalar& scalar, const G1Point& point );
 
 }  // namespace algebra
