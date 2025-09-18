@@ -376,7 +376,8 @@ BOOST_AUTO_TEST_CASE( WrappersFromString ) {
         libBLS::TEPrivateKeyShare pr_key_share( test2, signer, numSigned, numAll );
 
         std::string a( pr_key_share.toStringHex() );
-        libBLS::TEPrivateKeyShare pr_key_share_from_str( a, signer, numSigned, numAll );
+        libBLS::TEPrivateKeyShare pr_key_share_from_str(
+            a, libBLS::Base::HEXA, signer, numSigned, numAll );
         BOOST_REQUIRE(
             pr_key_share.getPrivateKeyRaw() == pr_key_share_from_str.getPrivateKeyRaw() );
     }
@@ -590,7 +591,7 @@ BOOST_AUTO_TEST_CASE( TEPublicKey ) {
 
         // construct from vec of hexadecimal strings
         std::vector< std::string > vecOfStrings = pub.toStringVector( libBLS::Base::HEXA );
-        libBLS::TEPublicKey pkey2( vecOfStrings );
+        libBLS::TEPublicKey pkey2( vecOfStrings, libBLS::Base::HEXA );
         BOOST_REQUIRE( pkey.getPublicKeyRaw() == pkey2.getPublicKeyRaw() );
 
         // Convert To and From concatenated string
@@ -638,13 +639,15 @@ BOOST_AUTO_TEST_CASE( TEPublicKey ) {
     {
         // Vec has incorrect length
         std::vector< std::string > pkeyStr( { "0", "0", "0" } );
-        BOOST_REQUIRE_THROW( libBLS::TEPublicKey( std::vector< std::string >( pkeyStr ) ),
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPublicKey( std::vector< std::string >( pkeyStr ), libBLS::Base::HEXA ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
     {
         // Components are not 64-char length
         std::vector< std::string > pkeyStr( { "0", "0", "0", "0" } );
-        BOOST_REQUIRE_THROW( libBLS::TEPublicKey( std::vector< std::string >( pkeyStr ) ),
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPublicKey( std::vector< std::string >( pkeyStr ), libBLS::Base::HEXA ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
     {
@@ -652,7 +655,8 @@ BOOST_AUTO_TEST_CASE( TEPublicKey ) {
         std::vector< std::string > pkeyStr(
             { "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP",
                 randomHexaString( 64 ), randomHexaString( 64 ), randomHexaString( 64 ) } );
-        BOOST_REQUIRE_THROW( libBLS::TEPublicKey( std::vector< std::string >( pkeyStr ) ),
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPublicKey( std::vector< std::string >( pkeyStr ), libBLS::Base::HEXA ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
@@ -843,7 +847,8 @@ BOOST_AUTO_TEST_CASE( TEPrivateKeyShare ) {
 
         // construct from hexadecimal string
         std::string stringField = priv.toString( libBLS::Base::HEXA );
-        libBLS::TEPrivateKeyShare share2( stringField, signer, numSigned, numAll );
+        libBLS::TEPrivateKeyShare share2(
+            stringField, libBLS::Base::HEXA, signer, numSigned, numAll );
         BOOST_REQUIRE( share.getPrivateKeyRaw() == share2.getPrivateKeyRaw() );
 
         // convert To and From array of bytes
@@ -894,32 +899,33 @@ BOOST_AUTO_TEST_CASE( TEPrivateKeyShare ) {
     {
         // string has wrong length
         std::string priv = "a";
-        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare p( priv, 1, 10, 15 ),
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare p( priv, libBLS::Base::HEXA, 1, 10, 15 ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
     {
         // not hexa
         std::string hexa = randomHexaString( 64 );
         spoilRandomChar( hexa, 1, 'U' );
-        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare p( hexa, 1, 10, 15 ),
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare p( hexa, libBLS::Base::HEXA, 1, 10, 15 ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
     {
         // signer index > total signers
         std::string hexa = randomHexaString( 64 );
-        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( hexa, 11, 10, 10 ),
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPrivateKeyShare share( hexa, libBLS::Base::HEXA, 11, 10, 10 ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
     {
         // required signers > total signers
         std::string hexa = randomHexaString( 64 );
-        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( hexa, 1, 12, 11 ),
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( hexa, libBLS::Base::HEXA, 1, 12, 11 ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
     {
         // zero required signer & total signers
         std::string hexa = randomHexaString( 64 );
-        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( hexa, 1, 0, 0 ),
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( hexa, libBLS::Base::HEXA, 1, 0, 0 ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
