@@ -49,9 +49,9 @@ public:
     static FqElement random();
 };
 
-inline std::ostream& operator<<(std::ostream& os, FqElement const& element) {
+inline std::ostream& operator<<( std::ostream& os, FqElement const& element ) {
     // Choose HEX or DEC encoding depending on your needs
-    return os << element.toString(libBLS::Base::HEXA);
+    return os << element.toString( libBLS::Base::HEXA );
 }
 
 class FqRefWrapper {
