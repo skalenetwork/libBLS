@@ -67,13 +67,8 @@ TEPrivateKeyShare::TEPrivateKeyShare(
           algebra::FrScalar::fromBytes( _bytes ), _signerIndex, _requiredSigners, _totalSigners ) {}
 
 
-std::string TEPrivateKeyShare::toString() const {
-    return privateKey.toString( Base::DEC );
-}
-
-// TODO - should refactor to a single toString method that accepts a Base parameter
-std::string TEPrivateKeyShare::toStringHex() const {
-    return privateKey.toString( Base::HEXA );
+std::string TEPrivateKeyShare::toString( Base base ) const {
+    return privateKey.toString( base );
 }
 
 size_t TEPrivateKeyShare::getSignerIndex() const {

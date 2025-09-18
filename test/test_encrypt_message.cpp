@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
             libBLS::ThresholdUtils::hexCStringToBytes( cipheredMessage );
 
         // encrypt message using libBLS
-        libBLS::TEPublicKey publicKey( pKeyStr );
+        libBLS::TEPublicKey publicKey( pKeyStr, libBLS::Base::HEXA );
         libBLS::Ciphertext ciphertext = libBLS::ThresholdEncryption::encrypt( data, publicKey );
         std::vector< uint8_t > cipheredMessageBytesTarget = ciphertext.toBytes();
 
@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
         // encrypt message using libBLS
         std::vector< libBLS::TEPublicKey > commonPublicKeys;
         for ( const auto& publicKey : publicKeysStr ) {
-            commonPublicKeys.push_back( libBLS::TEPublicKey( publicKey ) );
+            commonPublicKeys.push_back( libBLS::TEPublicKey( publicKey, libBLS::Base::HEXA ) );
         }
         libBLS::Ciphertext ciphertext =
             libBLS::ThresholdEncryption::encrypt( data, commonPublicKeys );

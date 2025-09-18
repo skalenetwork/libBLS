@@ -57,10 +57,9 @@ public:
 
     /**
      * @brief Returns the public key as a single string, with
-     * with all 4 components concatenated and encoded in hexadecimal.AES256Key
-     * String size is always 256 characters long.
+     * with all 4 components concatenated
      */
-    std::string toString() const;
+    std::string toString( Base base ) const;
 
     inline void validate() const { publicKey.validate(); }
 

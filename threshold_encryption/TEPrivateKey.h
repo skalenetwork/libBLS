@@ -34,7 +34,7 @@ private:
     algebra::FrScalar privateKey;
 
 public:
-    TEPrivateKey( const std::string& _keyStr );
+    TEPrivateKey( const std::string& _keyStr, Base base );
 
     TEPrivateKey( const algebra::FrScalar& _skey );
 
@@ -42,7 +42,7 @@ public:
 
     TEPrivateKey( const std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > _keyBytes );
 
-    std::string toString() const;
+    std::string toString( Base base ) const;
 
     const algebra::FrScalar& getPrivateKeyRaw() const;
 

@@ -62,9 +62,7 @@ public:
         }
     }
 
-    std::string toString() const;
-
-    std::string toStringHex() const;
+    std::string toString( Base base ) const;
 
     size_t getSignerIndex() const;
 

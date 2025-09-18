@@ -37,7 +37,7 @@ const char* encryptMessage( const char* data, const char* key ) {
 
     // build public key
     std::string keyStr( key );
-    libBLS::TEPublicKey commonPublic( keyStr );
+    libBLS::TEPublicKey commonPublic( keyStr, libBLS::Base::HEXA );
 
     // encrypt message
     libBLS::Ciphertext cipheredMessage =
@@ -60,9 +60,9 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
     std::vector< libBLS::TEPublicKey > commonPublicKeys;
     // build public keys
     std::string firstKeyStr( firstKey );
-    libBLS::TEPublicKey firstCommonPublic( firstKeyStr );
+    libBLS::TEPublicKey firstCommonPublic( firstKeyStr, libBLS::Base::HEXA );
     std::string secondKeyStr( secondKey );
-    libBLS::TEPublicKey secondCommonPublic( secondKeyStr );
+    libBLS::TEPublicKey secondCommonPublic( secondKeyStr, libBLS::Base::HEXA );
     commonPublicKeys.push_back( firstCommonPublic );
     commonPublicKeys.push_back( secondCommonPublic );
 

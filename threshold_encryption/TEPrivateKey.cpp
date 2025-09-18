@@ -26,12 +26,8 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
-TEPrivateKey::TEPrivateKey( const std::string& _keyStr ) {
-    // already validates the string
-    std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > privBytes =
-        ThresholdUtils::hexCStringToBytesArray< algebra::FrScalar::SIZE_BYTES >( _keyStr.c_str() );
-
-    privateKey = algebra::FrScalar::fromBytes( privBytes );
+TEPrivateKey::TEPrivateKey( const std::string& _keyStr, Base base ) {
+    privateKey = algebra::FrScalar::fromString( _keyStr, base );
 
     if ( privateKey.isZero() ) {
         throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
@@ -65,8 +61,8 @@ std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > TEPrivateKey::toBytesArray(
     return privateKey.toByteArray();
 }
 
-std::string TEPrivateKey::toString() const {
-    return privateKey.toString( Base::HEXA );
+std::string TEPrivateKey::toString( Base base ) const {
+    return privateKey.toString( base );
 }
 
 const algebra::FrScalar& TEPrivateKey::getPrivateKeyRaw() const {

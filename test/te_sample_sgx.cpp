@@ -180,7 +180,7 @@ void importBLSKeys( const std::vector< libBLS::TEPrivateKeyShare >& secretKeys,
 
     for ( size_t i = 0; i < secretKeys.size(); ++i ) {
         Json::Value p;
-        p["keyShare"] = secretKeys[i].toStringHex();
+        p["keyShare"] = secretKeys[i].toString( libBLS::Base::HEXA );
         p["keyShareName"] = "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:" + std::to_string( i + 1 ) +
                             ":DKG_ID:" + dkgRandId;
 

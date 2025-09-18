@@ -19,7 +19,7 @@ int main( int argc, char* argv[] ) {
         libBLS::ThresholdUtils::hexCStringToBytes( message.c_str() );
 
     // build public key
-    libBLS::TEPublicKey commonPublic( common_public_str );
+    libBLS::TEPublicKey commonPublic( common_public_str, libBLS::Base::HEXA );
 
     // encrypt message
     libBLS::Ciphertext cipheredMessage =

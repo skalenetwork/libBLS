@@ -365,7 +365,8 @@ BOOST_AUTO_TEST_CASE( WrappersFromString ) {
         libBLS::algebra::G2Point test0 = libBLS::algebra::G2Point::random();
         libBLS::TEPublicKey common_pkey( test0 );
 
-        libBLS::TEPublicKey common_pkey_from_str( common_pkey.toString() );
+        libBLS::TEPublicKey common_pkey_from_str(
+            common_pkey.toString( libBLS::Base::HEXA ), libBLS::Base::HEXA );
         BOOST_REQUIRE( common_pkey.getPublicKeyRaw() == common_pkey_from_str.getPublicKeyRaw() );
 
         libBLS::algebra::FrScalar test = libBLS::algebra::FrScalar::random();
@@ -375,7 +376,7 @@ BOOST_AUTO_TEST_CASE( WrappersFromString ) {
         size_t signer = rand_gen() % numAll;
         libBLS::TEPrivateKeyShare pr_key_share( test2, signer, numSigned, numAll );
 
-        std::string a( pr_key_share.toStringHex() );
+        std::string a( pr_key_share.toString( libBLS::Base::HEXA ) );
         libBLS::TEPrivateKeyShare pr_key_share_from_str(
             a, libBLS::Base::HEXA, signer, numSigned, numAll );
         BOOST_REQUIRE(
@@ -599,10 +600,10 @@ BOOST_AUTO_TEST_CASE( TEPublicKey ) {
         for ( const auto& str : vecOfStrings ) {
             concatenatedPubKey += str;
         }
-        libBLS::TEPublicKey pkey3( concatenatedPubKey );
+        libBLS::TEPublicKey pkey3( concatenatedPubKey, libBLS::Base::HEXA );
         BOOST_REQUIRE( pkey.getPublicKeyRaw() == pkey3.getPublicKeyRaw() );
-        std::string concatenatedPubKey2 = pkey3.toString();
-        libBLS::TEPublicKey pkey4( concatenatedPubKey2 );
+        std::string concatenatedPubKey2 = pkey3.toString( libBLS::Base::HEXA );
+        libBLS::TEPublicKey pkey4( concatenatedPubKey2, libBLS::Base::HEXA );
         BOOST_REQUIRE( pkey.getPublicKeyRaw() == pkey4.getPublicKeyRaw() );
 
         // construct from private key
@@ -664,15 +665,15 @@ BOOST_AUTO_TEST_CASE( TEPublicKey ) {
     {
         // string has wrong length
         std::string pkey = "a";
-        BOOST_REQUIRE_THROW(
-            libBLS::TEPublicKey p( pkey ), libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( libBLS::TEPublicKey p( pkey, libBLS::Base::HEXA ),
+            libBLS::ThresholdUtils::IncorrectInput );
     }
     {
         // not hexa
         std::string hexa = randomHexaString( 256 );
         spoilRandomChar( hexa, 1, 'U' );
-        BOOST_REQUIRE_THROW(
-            libBLS::TEPublicKey p( hexa ), libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( libBLS::TEPublicKey p( hexa, libBLS::Base::HEXA ),
+            libBLS::ThresholdUtils::IncorrectInput );
     }
 
     // From byte vector
@@ -768,12 +769,12 @@ BOOST_AUTO_TEST_CASE( TEPrivateKey ) {
 
         // construct from hexadecimal string
         std::string stringField = priv.toString( libBLS::Base::HEXA );
-        libBLS::TEPrivateKey pkey2( stringField );
+        libBLS::TEPrivateKey pkey2( stringField, libBLS::Base::HEXA );
         BOOST_REQUIRE( pkey.getPrivateKeyRaw() == pkey2.getPrivateKeyRaw() );
 
         // to and from string
-        std::string stringField2 = pkey.toString();
-        libBLS::TEPrivateKey pkey3( stringField2 );
+        std::string stringField2 = pkey.toString( libBLS::Base::HEXA );
+        libBLS::TEPrivateKey pkey3( stringField2, libBLS::Base::HEXA );
         BOOST_REQUIRE( pkey3.getPrivateKeyRaw() == pkey2.getPrivateKeyRaw() );
 
         // convert To and From array of bytes
@@ -805,15 +806,15 @@ BOOST_AUTO_TEST_CASE( TEPrivateKey ) {
     {
         // string has wrong length
         std::string priv = "aadwad";
-        BOOST_REQUIRE_THROW(
-            libBLS::TEPrivateKey pkey( priv ), libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKey pkey( priv, libBLS::Base::HEXA ),
+            libBLS::ThresholdUtils::IncorrectInput );
     }
     {
         // not hexa
         std::string hexa = randomHexaString( 64 );
         spoilRandomChar( hexa, 1, 'U' );
-        BOOST_REQUIRE_THROW(
-            libBLS::TEPrivateKey pkey( hexa ), libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKey pkey( hexa, libBLS::Base::HEXA ),
+            libBLS::ThresholdUtils::IncorrectInput );
     }
 
     // From byte vector
