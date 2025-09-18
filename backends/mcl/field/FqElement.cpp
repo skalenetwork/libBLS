@@ -56,7 +56,7 @@ uint64_t FqElement::toUlong() const {
     uint64_t v = 0;
     const size_t start = n > 8 ? n - 8 : 0;  // take lowest 8 bytes
     for ( size_t i = start; i < n; ++i )
-        v = ( v << 8 ) | be.at(i);
+        v = ( v << 8 ) | be.at( i );
     return v;
 }
 

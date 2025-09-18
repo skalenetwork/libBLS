@@ -37,8 +37,8 @@ FqElement hashToFq( const std::array< uint8_t, 32 >& hash_byte_arr ) {
 
     std::vector< uint8_t > hex( 2 * HASH_SIZE );
     for ( size_t i = 0; i < HASH_SIZE; ++i ) {
-        hex.at(2 * i) = static_cast< int >( hash_byte_arr.at( i ) ) / 16;
-        hex.at(2 * i + 1) = static_cast< int >( hash_byte_arr.at( i ) ) % 16;
+        hex.at( 2 * i ) = static_cast< int >( hash_byte_arr.at( i ) ) / 16;
+        hex.at( 2 * i + 1 ) = static_cast< int >( hash_byte_arr.at( i ) ) % 16;
     }
     mpn_set_str( from_hex.data, hex.data(), 2 * HASH_SIZE, 16 );
 
@@ -63,7 +63,8 @@ G2Point lagrangeInterpolateAt0( const std::vector< size_t >& idx, size_t t,
     G2BackendType sum = G2Point::identity().asBackendType();
 
     for ( size_t i = 0; i < t; ++i ) {
-        G2BackendType n = lagrange_coeffs.at(i).asBackendType() * shares.at(i).get().asBackendType();
+        G2BackendType n =
+            lagrange_coeffs.at( i ).asBackendType() * shares.at( i ).get().asBackendType();
         sum = sum + n;
     }
 

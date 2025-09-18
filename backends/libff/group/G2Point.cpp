@@ -169,24 +169,25 @@ G2Point G2Point::fromString(
         std::array< std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >, 4 > components;
         // convert from hexa to bytes
         for ( size_t i = 0; i < arr.size(); ++i ) {
-            if ( arr.at(i).length() != MAX_FIELD_ELEMENT_SIZE_BYTES * 2 ) {
+            if ( arr.at( i ).length() != MAX_FIELD_ELEMENT_SIZE_BYTES * 2 ) {
                 throw ThresholdUtils::IncorrectInput( "wrong string length in public key share" );
             }
             // throws if cannot hexa is not valid
-            components.at(i) = ThresholdUtils::hexCStringToBytesArray< MAX_FIELD_ELEMENT_SIZE_BYTES >(
-                arr.at(i).c_str() );
+            components.at( i ) =
+                ThresholdUtils::hexCStringToBytesArray< MAX_FIELD_ELEMENT_SIZE_BYTES >(
+                    arr.at( i ).c_str() );
         }
 
-        ret.asBackendType().X.c0 = FqElement::fromBytes( components.at(0) ).asBackendType();
-        ret.asBackendType().X.c1 = FqElement::fromBytes( components.at(1) ).asBackendType();
-        ret.asBackendType().Y.c0 = FqElement::fromBytes( components.at(2) ).asBackendType();
-        ret.asBackendType().Y.c1 = FqElement::fromBytes( components.at(3) ).asBackendType();
+        ret.asBackendType().X.c0 = FqElement::fromBytes( components.at( 0 ) ).asBackendType();
+        ret.asBackendType().X.c1 = FqElement::fromBytes( components.at( 1 ) ).asBackendType();
+        ret.asBackendType().Y.c0 = FqElement::fromBytes( components.at( 2 ) ).asBackendType();
+        ret.asBackendType().Y.c1 = FqElement::fromBytes( components.at( 3 ) ).asBackendType();
         break;
     case Base::DEC:
-        ret.asBackendType().X.c0 = libff::alt_bn128_Fq( arr.at(0).c_str() );
-        ret.asBackendType().X.c1 = libff::alt_bn128_Fq( arr.at(1).c_str() );
-        ret.asBackendType().Y.c0 = libff::alt_bn128_Fq( arr.at(2).c_str() );
-        ret.asBackendType().Y.c1 = libff::alt_bn128_Fq( arr.at(3).c_str() );
+        ret.asBackendType().X.c0 = libff::alt_bn128_Fq( arr.at( 0 ).c_str() );
+        ret.asBackendType().X.c1 = libff::alt_bn128_Fq( arr.at( 1 ).c_str() );
+        ret.asBackendType().Y.c0 = libff::alt_bn128_Fq( arr.at( 2 ).c_str() );
+        ret.asBackendType().Y.c1 = libff::alt_bn128_Fq( arr.at( 3 ).c_str() );
         break;
     default:
         throw ThresholdUtils::IncorrectInput( "Unsupported base" );

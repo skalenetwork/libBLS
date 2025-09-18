@@ -160,8 +160,8 @@ G1Point G1Point::fromString(
     ret.value.z = FqBackendType::one();
 
     try {
-        trySettingFieldWithString( ret.value.x, arr.at(0), base );
-        trySettingFieldWithString( ret.value.y, arr.at(1), base );
+        trySettingFieldWithString( ret.value.x, arr.at( 0 ), base );
+        trySettingFieldWithString( ret.value.y, arr.at( 1 ), base );
         return ret;
     } catch ( const std::exception& e ) {
         throw ThresholdUtils::IncorrectInput(

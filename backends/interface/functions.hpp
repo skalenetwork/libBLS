@@ -46,8 +46,7 @@ struct PairingEqualityBatch {
           g1P2s( std::move( p2 ) ),
           g2P1s( std::move( v1 ) ),
           g2P2s( std::move( v2 ) ) {
-            
-        if ( g1P1s.size() == 0) {
+        if ( g1P1s.size() == 0 ) {
             throw std::invalid_argument( "PairingEqualityBatch: no batches provided" );
         }
 
@@ -124,7 +123,6 @@ std::vector< FrScalar > lagrangeCoeffs( const std::vector< size_t >& idx, size_t
 // - Generate bytes by encrypting a zero buffer (classic stream-cipher usage).
 // - Allows generating single FrScalar or a vector of FrScalars in one shot.
 class FastRandFrScalar {
-
 public:
     static constexpr size_t KEY_SIZE = 32;
     static constexpr size_t NONCE_SIZE = 12;
@@ -136,16 +134,16 @@ private:
     uint32_t counter_;
 
 public:
-
     FastRandFrScalar() : ctx_( EVP_CIPHER_CTX_new() ), counter_( 0 ) {
         if ( !ctx_ )
             throw std::runtime_error( "EVP_CIPHER_CTX_new failed" );
     }
     ~FastRandFrScalar() { EVP_CIPHER_CTX_free( ctx_ ); }
 
-    // Pass a 32B key and 12B nonce. 
+    // Pass a 32B key and 12B nonce.
     // Re-seeds and resets the internal counter to 'counter0' (usually 0).
-    void seed( const std::array< uint8_t, KEY_SIZE >& key, const std::array< uint8_t, NONCE_SIZE >& nonce12, uint32_t counter0 = 0 ) {
+    void seed( const std::array< uint8_t, KEY_SIZE >& key,
+        const std::array< uint8_t, NONCE_SIZE >& nonce12, uint32_t counter0 = 0 ) {
         std::memcpy( key_.data(), key.data(), KEY_SIZE );
         std::memcpy( nonce_.data(), nonce12.data(), NONCE_SIZE );
         counter_ = counter0;
@@ -203,7 +201,7 @@ public:
                     r = FrScalar::fromHashBytes( tmp, sizeof( tmp ) );
                 } while ( nonZero && r.isZero() );
             }
-            rndScalars.at(i) = r.asBackendType();
+            rndScalars.at( i ) = r.asBackendType();
         }
     }
 
@@ -211,11 +209,11 @@ private:
     void reinit_ctx() {
         // Build IV = counter(4B LE) || nonce(12B)
         std::array< uint8_t, 16 > iv{};
-        iv.at(0) = ( uint8_t ) ( counter_ );
-        iv.at(1) = ( uint8_t ) ( counter_ >> 8 );
-        iv.at(2) = ( uint8_t ) ( counter_ >> 16 );
-        iv.at(3) = ( uint8_t ) ( counter_ >> 24 );
-        std::memcpy( &iv.at(4), nonce_.data(), 12 );
+        iv.at( 0 ) = ( uint8_t ) ( counter_ );
+        iv.at( 1 ) = ( uint8_t ) ( counter_ >> 8 );
+        iv.at( 2 ) = ( uint8_t ) ( counter_ >> 16 );
+        iv.at( 3 ) = ( uint8_t ) ( counter_ >> 24 );
+        std::memcpy( &iv.at( 4 ), nonce_.data(), 12 );
 
         // Reset + init context
         EVP_CIPHER_CTX_reset( ctx_ );

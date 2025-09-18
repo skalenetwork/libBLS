@@ -152,12 +152,12 @@ G1Point G1Point::fromString(
 
     switch ( base ) {
     case Base::HEXA:
-        ret.asBackendType().X = libff::alt_bn128_Fq( convertHexToDec( arr.at(0) ).c_str() );
-        ret.asBackendType().Y = libff::alt_bn128_Fq( convertHexToDec( arr.at(1) ).c_str() );
+        ret.asBackendType().X = libff::alt_bn128_Fq( convertHexToDec( arr.at( 0 ) ).c_str() );
+        ret.asBackendType().Y = libff::alt_bn128_Fq( convertHexToDec( arr.at( 1 ) ).c_str() );
         break;
     case Base::DEC:
-        ret.asBackendType().X = libff::alt_bn128_Fq( arr.at(0).c_str() );
-        ret.asBackendType().Y = libff::alt_bn128_Fq( arr.at(1).c_str() );
+        ret.asBackendType().X = libff::alt_bn128_Fq( arr.at( 0 ).c_str() );
+        ret.asBackendType().Y = libff::alt_bn128_Fq( arr.at( 1 ).c_str() );
         break;
     default:
         throw ThresholdUtils::IncorrectInput(

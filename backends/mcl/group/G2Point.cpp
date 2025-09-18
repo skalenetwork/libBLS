@@ -180,10 +180,10 @@ G2Point G2Point::fromString(
     ret.value.z.a = FqBackendType::one();
 
     try {
-        trySettingFieldWithString( ret.value.x.a, arr.at(0), base );
-        trySettingFieldWithString( ret.value.x.b, arr.at(1), base );
-        trySettingFieldWithString( ret.value.y.a, arr.at(2), base );
-        trySettingFieldWithString( ret.value.y.b, arr.at(3), base );
+        trySettingFieldWithString( ret.value.x.a, arr.at( 0 ), base );
+        trySettingFieldWithString( ret.value.x.b, arr.at( 1 ), base );
+        trySettingFieldWithString( ret.value.y.a, arr.at( 2 ), base );
+        trySettingFieldWithString( ret.value.y.b, arr.at( 3 ), base );
         return ret;
     } catch ( const std::exception& e ) {
         throw ThresholdUtils::IncorrectInput(

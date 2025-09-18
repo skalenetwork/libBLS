@@ -38,8 +38,8 @@ private:
     size_t signerIndex;
 
 public:
-    TEPrivateKeyShare( const std::string& _hexaField, Base base, size_t _signerIndex, size_t _requiredSigners,
-        size_t _totalSigners );
+    TEPrivateKeyShare( const std::string& _hexaField, Base base, size_t _signerIndex,
+        size_t _requiredSigners, size_t _totalSigners );
 
     TEPrivateKeyShare( const algebra::FrScalar& _skeyShare, size_t _signerIndex,
         size_t _requiredSigners, size_t _totalSigners );

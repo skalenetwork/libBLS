@@ -11,7 +11,8 @@ namespace libBLS::algebra {
 template < typename BackendType, typename Wrapper >
 class WrapperCore {
 protected:
-   BackendType value;
+    BackendType value;
+
 public:
     WrapperCore() {}
     WrapperCore( const BackendType& backendValue ) : value( backendValue ) {}

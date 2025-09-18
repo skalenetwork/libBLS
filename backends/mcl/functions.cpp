@@ -132,8 +132,8 @@ G2Point lagrangeInterpolateAt0( const std::vector< size_t >& idx, size_t t,
     std::vector< FrBackendType > coeffs_backend( t );
 
     for ( size_t i = 0; i < t; ++i ) {
-        shares_backend.at(i) = shares.at(i).get().asBackendType();
-        coeffs_backend.at(i) = lagrange_coeffs.at(i).asBackendType();
+        shares_backend.at( i ) = shares.at( i ).get().asBackendType();
+        coeffs_backend.at( i ) = lagrange_coeffs.at( i ).asBackendType();
     }
 
     G2BackendType sum;
@@ -165,22 +165,22 @@ void pessimisticBatchPairingValidation(
     size_t startingIdx = batchIdx * batch.sizeEachBatch;
     size_t endIdx = startingIdx + batch.sizeEachBatch;
     for ( size_t i = startingIdx; i < endIdx; ++i ) {
-        const algebra::G2Point& currentG2P1 = batch.g2P1s.at(i).get();
-        const algebra::G2Point& currentG2P2 = batch.g2P2s.at(i).get();
+        const algebra::G2Point& currentG2P1 = batch.g2P1s.at( i ).get();
+        const algebra::G2Point& currentG2P2 = batch.g2P2s.at( i ).get();
 
         // compute pairing equality for each element in the vector
         mcl::Fp12 f1, f2;
 
         // Two Miller loops (no final exponentiation yet)
-        mcl::millerLoop(
-            f1, batch.g1P1s.at( batchIdx ).asBackendType(), currentG2P1.asBackendType() );  // f1 = ML(g1P1, g2P1)
-        mcl::millerLoop( f2, g1P2Negatted, currentG2P2.asBackendType() );         // f2 = ML(-g1P2, g2P2)
+        mcl::millerLoop( f1, batch.g1P1s.at( batchIdx ).asBackendType(),
+            currentG2P1.asBackendType() );                                 // f1 = ML(g1P1, g2P1)
+        mcl::millerLoop( f2, g1P2Negatted, currentG2P2.asBackendType() );  // f2 = ML(-g1P2, g2P2)
 
         // Combine, then a single final exponentiation
         f1 *= f2;                 // f1 = ML(g1P1,g2P1) * ML(-g1P2,g2P2)
         mcl::finalExp( f1, f1 );  // f1 = FE( ... )
 
-        isValidVec.at(i) = f1.isOne();  // product == 1 ?
+        isValidVec.at( i ) = f1.isOne();  // product == 1 ?
     }
 }
 
@@ -237,8 +237,8 @@ bool optimisticBatchPairingValidation(
     // convert from algebra::G2Point into G2BackendType
     const size_t startingIdx = startingBatch * batch.sizeEachBatch;
     for ( size_t i = 0; i < numSharesToProcess; ++i ) {
-        g2P1s.at(i) = batch.g2P1s.at( startingIdx + i ).get().asBackendType();  // g2P1s
-        g2P2s.at(i) = batch.g2P2s.at( startingIdx + i ).get().asBackendType();  // g2P2s
+        g2P1s.at( i ) = batch.g2P1s.at( startingIdx + i ).get().asBackendType();  // g2P1s
+        g2P2s.at( i ) = batch.g2P2s.at( startingIdx + i ).get().asBackendType();  // g2P2s
     }
 
     // convert from algebra::G1Point into G1BackendType
@@ -259,11 +259,11 @@ bool optimisticBatchPairingValidation(
         G1BackendType::neg( g1P2, g1P2 );  // -g1P2
 
         // pairing 1 - e(g1P1, G2P1)
-        millerLoopG1s.at(2 * i) = g1P1;
-        millerLoopG2s.at(2 * i) = G2P1;
+        millerLoopG1s.at( 2 * i ) = g1P1;
+        millerLoopG2s.at( 2 * i ) = G2P1;
         // pairing 2 - e(-g1P2, G2P2)
-        millerLoopG1s.at(2 * i + 1) = g1P2;
-        millerLoopG2s.at(2 * i + 1) = G2P2;
+        millerLoopG1s.at( 2 * i + 1 ) = g1P2;
+        millerLoopG2s.at( 2 * i + 1 ) = G2P2;
     }
 
     mcl::Fp12 f_batch;
