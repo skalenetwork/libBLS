@@ -58,6 +58,10 @@ G1Point hashToG1( const std::array< uint8_t, HASH_SIZE >& hash_byte_arr ) {
 G1Point hashToG1( const std::string& message ) {
     auto hash_bytes_arr = std::array< uint8_t, HASH_SIZE >();
 
+    if (message.length() > HASH_SIZE * 2) {
+        throw std::runtime_error( "Hash string too long" );
+    }
+
     uint64_t bin_len;
     if ( !ThresholdUtils::hex2carray( message.c_str(), &bin_len, hash_bytes_arr.data() ) ) {
         throw std::runtime_error( "Invalid hash" );
@@ -76,32 +80,32 @@ std::vector< FrScalar > lagrangeCoeffs( const std::vector< size_t >& idx, size_t
     FrScalar w = FrScalar::one();
 
     for ( size_t i = 0; i < t; ++i ) {
-        w *= FrScalar( idx[i] );
+        w *= FrScalar( idx.at(i) );
     }
 
     for ( size_t i = 0; i < t; ++i ) {
-        FrScalar v = FrScalar( idx[i] );
+        FrScalar v = FrScalar( idx.at(i) );
 
         for ( size_t j = 0; j < t; ++j ) {
             if ( j != i ) {
-                if ( FrScalar( idx[i] ) == FrScalar( idx[j] ) ) {
+                if ( FrScalar( idx.at(i) ) == FrScalar( idx.at(j) ) ) {
                     throw ThresholdUtils::IncorrectInput(
                         "during the interpolation, have same indexes in list of indexes" );
                 }
 
-                v *= ( FrScalar( idx[j] ) - FrScalar( idx[i] ) );  // calculating Lagrange
+                v *= ( FrScalar( idx.at(j) ) - FrScalar( idx.at(i) ) );  // calculating Lagrange
                                                                    // coefficients
             }
         }
 
-        res[i] = w * v.inverse();
+        res.at(i) = w * v.inverse();
     }
 
     std::vector< FrScalar > output;
     output.reserve( t );
 
     for ( size_t i = 0; i < t; ++i ) {
-        output.push_back( FrScalar( res[i] ) );
+        output.push_back( FrScalar( res.at(i) ) );
     }
 
     return output;

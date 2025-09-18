@@ -39,17 +39,15 @@ public:
 
     /**
      * @brief Construct a public key from a vector of strings,
-     * each representing a coordinate of the public key in
-     * hexadecimal format.
+     * each representing a coordinate of the public key.
      */
-    TEPublicKey( const std::vector< std::string >& _keyStrPtr );
+    TEPublicKey( const std::vector< std::string >& _keyStrPtr, Base base );
 
     /**
      * @brief Construct a public key from a string containing
-     * the 4 components concatenated, and encoded in hexadecimal
-     * format.
+     * the 4 components concatenated
      */
-    TEPublicKey( const std::string& _keyStr );
+    TEPublicKey( const std::string& _keyStr, Base base );
 
     TEPublicKey( const TEPrivateKey& _comonPrivate );
 
@@ -71,6 +69,11 @@ public:
     std::vector< uint8_t > toBytesVec() const;
 
     const algebra::G2Point& getPublicKeyRaw() const;
+
+    /**
+     * @brief Generate a random TEPublicKey.
+     */
+    static TEPublicKey random();
 };
 
 }  // namespace libBLS

@@ -45,10 +45,12 @@ struct PairingEqualityBatch {
         : g1P1s( std::move( p1 ) ),
           g1P2s( std::move( p2 ) ),
           g2P1s( std::move( v1 ) ),
-          g2P2s( std::move( v2 ) ),
-          numBatches( g1P1s.size() ),
-          sizeEachBatch( g2P1s.size() / g1P1s.size() ),
-          sizeTotal( g2P1s.size() ) {
+          g2P2s( std::move( v2 ) ) {
+            
+        if ( g1P1s.size() == 0) {
+            throw std::invalid_argument( "PairingEqualityBatch: no batches provided" );
+        }
+
         if ( g2P1s.size() != g2P2s.size() ) {
             throw std::invalid_argument(
                 "PairingEqualityBatch: size mismatch between g2P1s and g2P2s" );
@@ -61,6 +63,10 @@ struct PairingEqualityBatch {
             throw std::invalid_argument(
                 "PairingEqualityBatch: g2P1s size is not multiple of g1P1s size" );
         }
+
+        numBatches = g1P1s.size();
+        sizeEachBatch = g2P1s.size() / g1P1s.size();
+        sizeTotal = g2P1s.size();
     }
 
     void useOptimisticValidation() { optimisticValidation = true; }
@@ -112,36 +118,41 @@ std::vector< FrScalar > lagrangeCoeffs( const std::vector< size_t >& idx, size_t
 
 // -------------------- Helper Class -------------------- //
 
-// Thread-local RNG using OpenSSL EVP_chacha20 as a keystream generator.
-// - Seed once with a 32B key + 12B nonce (RFC7539 style).
+// RNG using OpenSSL EVP_chacha20 as a keystream generator.
+// - Seed once with a 32B key + 12B nonce.
 // - Counter is 32-bit little-endian in the first 4 bytes of the IV for EVP_chacha20.
 // - Generate bytes by encrypting a zero buffer (classic stream-cipher usage).
+// - Allows generating single FrScalar or a vector of FrScalars in one shot.
 class FastRandFrScalar {
+
+public:
+    static constexpr size_t KEY_SIZE = 32;
+    static constexpr size_t NONCE_SIZE = 12;
+
 private:
     EVP_CIPHER_CTX* ctx_;
-    std::array< uint8_t, 32 > key_{};
-    std::array< uint8_t, 12 > nonce_{};
+    std::array< uint8_t, KEY_SIZE > key_{};
+    std::array< uint8_t, NONCE_SIZE > nonce_{};
     uint32_t counter_;
 
 public:
+
     FastRandFrScalar() : ctx_( EVP_CIPHER_CTX_new() ), counter_( 0 ) {
         if ( !ctx_ )
             throw std::runtime_error( "EVP_CIPHER_CTX_new failed" );
     }
     ~FastRandFrScalar() { EVP_CIPHER_CTX_free( ctx_ ); }
 
-    // Secure seeding: pass a 32B key and 12B nonce (you can get them from RAND_bytes once at
-    // startup). Re-seeds and resets the internal counter to 'counter0' (usually 0).
-    void seed( const uint8_t key[32], const uint8_t nonce12[12], uint32_t counter0 = 0 ) {
-        std::memcpy( key_.data(), key, 32 );
-        std::memcpy( nonce_.data(), nonce12, 12 );
+    // Pass a 32B key and 12B nonce. 
+    // Re-seeds and resets the internal counter to 'counter0' (usually 0).
+    void seed( const std::array< uint8_t, KEY_SIZE >& key, const std::array< uint8_t, NONCE_SIZE >& nonce12, uint32_t counter0 = 0 ) {
+        std::memcpy( key_.data(), key.data(), KEY_SIZE );
+        std::memcpy( nonce_.data(), nonce12.data(), NONCE_SIZE );
         counter_ = counter0;
         reinit_ctx();
     }
 
     // Fill 'out' with 'len' bytes of ChaCha20 keystream (no syscalls).
-    // - Keeps ctx_ hot: no re-init, no heap allocs.
-    // - Handles large lengths by chunking to INT_MAX per EVP API.
     void fill( uint8_t* out, size_t len ) {
         constexpr size_t kMaxChunk = static_cast< size_t >( std::numeric_limits< int >::max() );
         size_t remaining = len;
@@ -162,19 +173,19 @@ public:
         }
     }
 
-    // Convenience: produce one BN254 scalar Fr (32B → Fr via hash-to-field reduction).
+    // Produce one BN254 scalar Fr (32B → Fr via hash-to-field reduction).
     // Enforce non-zero by resampling if needed.
     FrScalar nextFr( bool nonZero = false ) {
         uint8_t buf[FrScalar::SIZE_BYTES];
         FrScalar r;
         do {
-            fill( buf, sizeof( buf ) );
+            fill( buf, FrScalar::SIZE_BYTES );
             r = FrScalar::fromHashBytes( buf, sizeof( buf ) );
         } while ( nonZero && r.isZero() );
         return r;
     }
 
-    // Bulk: produce N random scalars in one shot (single keystream call).
+    // Produce N random scalars in one shot (single keystream call).
     // - Generates 32*N bytes once, then maps each 32B slice → FrScalar.
     // - Optional nonZero to enforce.
     void nextFrVec( std::vector< FrBackendType >& rndScalars, size_t n, bool nonZero = false ) {
@@ -192,7 +203,7 @@ public:
                     r = FrScalar::fromHashBytes( tmp, sizeof( tmp ) );
                 } while ( nonZero && r.isZero() );
             }
-            rndScalars[i] = r.asBackendType();
+            rndScalars.at(i) = r.asBackendType();
         }
     }
 
@@ -200,18 +211,17 @@ private:
     void reinit_ctx() {
         // Build IV = counter(4B LE) || nonce(12B)
         std::array< uint8_t, 16 > iv{};
-        iv[0] = ( uint8_t ) ( counter_ );
-        iv[1] = ( uint8_t ) ( counter_ >> 8 );
-        iv[2] = ( uint8_t ) ( counter_ >> 16 );
-        iv[3] = ( uint8_t ) ( counter_ >> 24 );
-        std::memcpy( &iv[4], nonce_.data(), 12 );
+        iv.at(0) = ( uint8_t ) ( counter_ );
+        iv.at(1) = ( uint8_t ) ( counter_ >> 8 );
+        iv.at(2) = ( uint8_t ) ( counter_ >> 16 );
+        iv.at(3) = ( uint8_t ) ( counter_ >> 24 );
+        std::memcpy( &iv.at(4), nonce_.data(), 12 );
 
         // Reset + init context
         EVP_CIPHER_CTX_reset( ctx_ );
         if ( !EVP_EncryptInit_ex( ctx_, EVP_chacha20(), nullptr, key_.data(), iv.data() ) ) {
             throw std::runtime_error( "EVP_EncryptInit_ex(EVP_chacha20) failed" );
         }
-        // No padding in stream ciphers; nothing else needed.
     }
 };
 

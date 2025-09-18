@@ -27,17 +27,14 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
-TEPrivateKeyShare::TEPrivateKeyShare( const std::string& _hexaField, size_t _signerIndex,
+TEPrivateKeyShare::TEPrivateKeyShare( const std::string& _fieldStr, Base _base, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
     if ( _signerIndex > _totalSigners ) {
         throw ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
     }
 
-    std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > fieldBytes =
-        ThresholdUtils::hexCStringToBytesArray< algebra::FrScalar::SIZE_BYTES >(
-            _hexaField.c_str() );
-    privateKey = algebra::FrScalar::fromBytes( fieldBytes );
+    privateKey = algebra::FrScalar::fromString( _fieldStr, _base );
 
     if ( privateKey.isZero() ) {
         throw ThresholdUtils::ZeroSecretKey( "Zero private key share" );

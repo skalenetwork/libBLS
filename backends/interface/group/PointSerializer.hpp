@@ -62,7 +62,7 @@ public:
     std::array< std::string, NUM_AFFINE_COMPONENTS > toStringArray( Base base ) const {
         std::array< std::string, NUM_AFFINE_COMPONENTS > out;
         forEachAffineComponent(
-            [&]( const FqElement& c, size_t i ) { out[i] = c.toString( base ); } );
+            [&]( const FqElement& c, size_t i ) { out.at(i) = c.toString( base ); } );
         return out;
     }
 
@@ -78,7 +78,7 @@ public:
         Base base ) const {
         std::array< std::string, NUM_PROJECTIVE_COMPONENTS > out;
         forEachProjectiveComponent(
-            [&]( const FqElement& c, size_t i ) { out[i] = c.toString( base ); } );
+            [&]( const FqElement& c, size_t i ) { out.at(i) = c.toString( base ); } );
         return out;
     }
 };

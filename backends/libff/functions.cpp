@@ -10,25 +10,25 @@
 namespace libBLS::algebra {
 
 GTElement pairing( const G1Point& g1, const G2Point& g2 ) {
-    return libff::alt_bn128_ate_reduced_pairing( g1.value, g2.value );
+    return libff::alt_bn128_ate_reduced_pairing( g1.asBackendType(), g2.asBackendType() );
 }
 
 FrScalar power( const FrScalar& fr, size_t exponent ) {
-    return libff::power( fr.value, exponent );
+    return libff::power( fr.asBackendType(), exponent );
 }
 
 FqElement power( const FqElement& fq, const std::string& exponent ) {
-    return fq.value ^ libff::bigint< libff::alt_bn128_q_limbs >( exponent.c_str() );
+    return fq.asBackendType() ^ libff::bigint< libff::alt_bn128_q_limbs >( exponent.c_str() );
 }
 
 void normalizeYCoordinate( FqElement& element ) {
     mpz_class y, y_neg;
-    element.value.as_bigint().to_mpz( y.get_mpz_t() );
+    element.asBackendType().as_bigint().to_mpz( y.get_mpz_t() );
     // get -y in Fq first, then convert to mpz
-    ( -element.value ).as_bigint().to_mpz( y_neg.get_mpz_t() );
+    ( -element.asBackendType() ).as_bigint().to_mpz( y_neg.get_mpz_t() );
 
     if ( y < y_neg ) {
-        element.value = -element.value;
+        element.asBackendType() = -element.asBackendType();
     }
 }
 
@@ -37,8 +37,8 @@ FqElement hashToFq( const std::array< uint8_t, 32 >& hash_byte_arr ) {
 
     std::vector< uint8_t > hex( 2 * HASH_SIZE );
     for ( size_t i = 0; i < HASH_SIZE; ++i ) {
-        hex[2 * i] = static_cast< int >( hash_byte_arr.at( i ) ) / 16;
-        hex[2 * i + 1] = static_cast< int >( hash_byte_arr.at( i ) ) % 16;
+        hex.at(2 * i) = static_cast< int >( hash_byte_arr.at( i ) ) / 16;
+        hex.at(2 * i + 1) = static_cast< int >( hash_byte_arr.at( i ) ) % 16;
     }
     mpn_set_str( from_hex.data, hex.data(), 2 * HASH_SIZE, 16 );
 
@@ -60,10 +60,10 @@ G2Point lagrangeInterpolateAt0( const std::vector< size_t >& idx, size_t t,
     const std::vector< std::reference_wrapper< const G2Point > >& shares ) {
     std::vector< algebra::FrScalar > lagrange_coeffs = algebra::lagrangeCoeffs( idx, t );
 
-    G2BackendType sum = G2Point::identity().value;
+    G2BackendType sum = G2Point::identity().asBackendType();
 
     for ( size_t i = 0; i < t; ++i ) {
-        G2BackendType n = lagrange_coeffs[i].value * shares[i].get().value;
+        G2BackendType n = lagrange_coeffs.at(i).asBackendType() * shares.at(i).get().asBackendType();
         sum = sum + n;
     }
 

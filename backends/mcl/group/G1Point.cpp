@@ -40,15 +40,15 @@ G1Point::G1Point() {
 }
 
 G1Point::G1Point( const FqElement& x, const FqElement& y ) {
-    value.x = x.value;
-    value.y = y.value;
-    value.z = 1;
+    value.x = x.asBackendType();
+    value.y = y.asBackendType();
+    value.z = FqBackendType::one();
 }
 
 G1Point::G1Point( const FqElement& x, const FqElement& y, const FqElement& z ) {
-    value.x = x.value;
-    value.y = y.value;
-    value.z = z.value;
+    value.x = x.asBackendType();
+    value.y = y.asBackendType();
+    value.z = z.asBackendType();
 }
 
 template <>
@@ -160,8 +160,8 @@ G1Point G1Point::fromString(
     ret.value.z = FqBackendType::one();
 
     try {
-        trySettingFieldWithString( ret.value.x, arr[0], base );
-        trySettingFieldWithString( ret.value.y, arr[1], base );
+        trySettingFieldWithString( ret.value.x, arr.at(0), base );
+        trySettingFieldWithString( ret.value.y, arr.at(1), base );
         return ret;
     } catch ( const std::exception& e ) {
         throw ThresholdUtils::IncorrectInput(
@@ -205,7 +205,7 @@ bool G1Point::operator!=( const G1Point& other ) const {
 
 G1Point operator*( const FrScalar& scalar, const G1Point& point ) {
     G1BackendType result;
-    mcl::G1::mul( result, point.value, scalar.value );
+    mcl::G1::mul( result, point.asBackendType(), scalar.asBackendType() );
     return G1Point( result );
 }
 

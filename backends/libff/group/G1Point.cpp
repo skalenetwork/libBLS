@@ -45,15 +45,15 @@ G1Point::G1Point() {
 }
 
 G1Point::G1Point( const FqElement& x, const FqElement& y ) {
-    value.X = x.value;
-    value.Y = y.value;
+    value.X = x.asBackendType();
+    value.Y = y.asBackendType();
     value.Z = libff::alt_bn128_Fq::one();
 }
 
 G1Point::G1Point( const FqElement& x, const FqElement& y, const FqElement& z ) {
-    value.X = x.value;
-    value.Y = y.value;
-    value.Z = z.value;
+    value.X = x.asBackendType();
+    value.Y = y.asBackendType();
+    value.Z = z.asBackendType();
 }
 
 FqElement G1Point::getX() const {
@@ -105,18 +105,18 @@ G1Point G1Point::fromBytes( const std::array< uint8_t, G1Point::SIZE_BYTES >& by
     std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > currentField;
 
     algebra::G1Point ret;
-    ret.value.Z = libff::alt_bn128_Fq::one();
+    ret.asBackendType().Z = libff::alt_bn128_Fq::one();
 
     const uint8_t* source = bytes.data();
 
     // Get X
     std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
-    ret.value.X = FqElement::fromBytes( currentField ).value;
+    ret.asBackendType().X = FqElement::fromBytes( currentField ).asBackendType();
     source += MAX_FIELD_ELEMENT_SIZE_BYTES;
 
     // Get Y
     std::memcpy( currentField.data(), source, MAX_FIELD_ELEMENT_SIZE_BYTES );
-    ret.value.Y = FqElement::fromBytes( currentField ).value;
+    ret.asBackendType().Y = FqElement::fromBytes( currentField ).asBackendType();
 
     return ret;
 }
@@ -136,10 +136,10 @@ G1Point G1Point::fromString( const std::string& str, Base base ) {
 
     algebra::G1Point ret;
 
-    ret.value.Z = libff::alt_bn128_Fq::one();
-    ret.value.X = libff::alt_bn128_Fq(
+    ret.asBackendType().Z = libff::alt_bn128_Fq::one();
+    ret.asBackendType().X = libff::alt_bn128_Fq(
         convertHexToDec( str.substr( 0 * elementStringSize, elementStringSize ) ).c_str() );
-    ret.value.Y = libff::alt_bn128_Fq(
+    ret.asBackendType().Y = libff::alt_bn128_Fq(
         convertHexToDec( str.substr( 1 * elementStringSize, elementStringSize ) ).c_str() );
 
     return ret;
@@ -148,16 +148,16 @@ G1Point G1Point::fromString( const std::string& str, Base base ) {
 G1Point G1Point::fromString(
     const std::array< std::string, G1Point::NUM_COMPONENTS_AFFINE >& arr, Base base ) {
     algebra::G1Point ret;
-    ret.value.Z = libff::alt_bn128_Fq::one();
+    ret.asBackendType().Z = libff::alt_bn128_Fq::one();
 
     switch ( base ) {
     case Base::HEXA:
-        ret.value.X = libff::alt_bn128_Fq( convertHexToDec( arr[0] ).c_str() );
-        ret.value.Y = libff::alt_bn128_Fq( convertHexToDec( arr[1] ).c_str() );
+        ret.asBackendType().X = libff::alt_bn128_Fq( convertHexToDec( arr.at(0) ).c_str() );
+        ret.asBackendType().Y = libff::alt_bn128_Fq( convertHexToDec( arr.at(1) ).c_str() );
         break;
     case Base::DEC:
-        ret.value.X = libff::alt_bn128_Fq( arr[0].c_str() );
-        ret.value.Y = libff::alt_bn128_Fq( arr[1].c_str() );
+        ret.asBackendType().X = libff::alt_bn128_Fq( arr.at(0).c_str() );
+        ret.asBackendType().Y = libff::alt_bn128_Fq( arr.at(1).c_str() );
         break;
     default:
         throw ThresholdUtils::IncorrectInput(
@@ -182,11 +182,11 @@ G1Point G1Point::fromString( const std::vector< std::string >& arr, Base base ) 
 // -------------------- Operator Overloads -------------------- //
 
 G1Point G1Point::operator+( const G1Point& other ) const {
-    return G1Point( value + other.value );
+    return G1Point( value + other.asBackendType() );
 }
 
 G1Point G1Point::operator-( const G1Point& other ) const {
-    return G1Point( value - other.value );
+    return G1Point( value - other.asBackendType() );
 }
 
 G1Point G1Point::operator-() const {
@@ -194,15 +194,15 @@ G1Point G1Point::operator-() const {
 }
 
 bool G1Point::operator==( const G1Point& other ) const {
-    return value == other.value;
+    return value == other.asBackendType();
 }
 
 bool G1Point::operator!=( const G1Point& other ) const {
-    return value != other.value;
+    return value != other.asBackendType();
 }
 
 G1Point operator*( const FrScalar& scalar, const G1Point& point ) {
-    return G1Point( scalar.value * point.value );
+    return G1Point( scalar.asBackendType() * point.asBackendType() );
 }
 
 // -------------------- Helper methods for PointSerializer -------------------- //
@@ -217,7 +217,6 @@ void G1Point::forEachAffineComponentImpl(
 
 void G1Point::forEachProjectiveComponentImpl(
     const std::function< void( const FqElement&, size_t i ) >& fn ) const {
-    auto projective = value;
     fn( FqElement( value.X ), 0 );
     fn( FqElement( value.Y ), 1 );
     fn( FqElement( value.Z ), 2 );

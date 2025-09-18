@@ -39,12 +39,12 @@ G2Point::G2Point() {
 }
 
 G2Point::G2Point( const Fq2Element& x, const Fq2Element& y, const Fq2Element& z ) {
-    value.X.c0 = x.value.c0;
-    value.X.c1 = x.value.c1;
-    value.Y.c0 = y.value.c0;
-    value.Y.c1 = y.value.c1;
-    value.Z.c0 = z.value.c0;
-    value.Z.c1 = z.value.c1;
+    value.X.c0 = x.asBackendType().c0;
+    value.X.c1 = x.asBackendType().c1;
+    value.Y.c0 = y.asBackendType().c0;
+    value.Y.c1 = y.asBackendType().c1;
+    value.Z.c0 = z.asBackendType().c0;
+    value.Z.c1 = z.asBackendType().c1;
 }
 
 template <>
@@ -92,28 +92,28 @@ G2Point G2Point::fromBytes( const std::array< uint8_t, G2Point::SIZE_BYTES >& by
     std::array< uint8_t, FQ_SIZE_BYTES > currentField;
 
     algebra::G2Point ret;
-    ret.value.Z = libff::alt_bn128_Fq2::one();
+    ret.asBackendType().Z = libff::alt_bn128_Fq2::one();
 
     const uint8_t* source = bytes.data();
 
     // Get x.c0
     std::memcpy( currentField.data(), source, FQ_SIZE_BYTES );
-    ret.value.X.c0 = FqElement::fromBytes( currentField ).value;
+    ret.asBackendType().X.c0 = FqElement::fromBytes( currentField ).asBackendType();
     source += FQ_SIZE_BYTES;
 
     // Get x.c1
     std::memcpy( currentField.data(), source, FQ_SIZE_BYTES );
-    ret.value.X.c1 = FqElement::fromBytes( currentField ).value;
+    ret.asBackendType().X.c1 = FqElement::fromBytes( currentField ).asBackendType();
     source += FQ_SIZE_BYTES;
 
     // Get y.c0
     std::memcpy( currentField.data(), source, FQ_SIZE_BYTES );
-    ret.value.Y.c0 = FqElement::fromBytes( currentField ).value;
+    ret.asBackendType().Y.c0 = FqElement::fromBytes( currentField ).asBackendType();
     source += FQ_SIZE_BYTES;
 
     // Get y.c1
     std::memcpy( currentField.data(), source, FQ_SIZE_BYTES );
-    ret.value.Y.c1 = FqElement::fromBytes( currentField ).value;
+    ret.asBackendType().Y.c1 = FqElement::fromBytes( currentField ).asBackendType();
 
     return ret;
 }
@@ -144,15 +144,15 @@ G2Point G2Point::fromString( const std::string& str, Base base ) {
 
     algebra::G2Point ret;
 
-    ret.value.Z = libff::alt_bn128_Fq2::one();
+    ret.asBackendType().Z = libff::alt_bn128_Fq2::one();
 
-    ret.value.X.c0 = libff::alt_bn128_Fq(
+    ret.asBackendType().X.c0 = libff::alt_bn128_Fq(
         convertHexToDec( str.substr( 0 * elementStringSize, elementStringSize ) ).c_str() );
-    ret.value.X.c1 = libff::alt_bn128_Fq(
+    ret.asBackendType().X.c1 = libff::alt_bn128_Fq(
         convertHexToDec( str.substr( 1 * elementStringSize, elementStringSize ) ).c_str() );
-    ret.value.Y.c0 = libff::alt_bn128_Fq(
+    ret.asBackendType().Y.c0 = libff::alt_bn128_Fq(
         convertHexToDec( str.substr( 2 * elementStringSize, elementStringSize ) ).c_str() );
-    ret.value.Y.c1 = libff::alt_bn128_Fq(
+    ret.asBackendType().Y.c1 = libff::alt_bn128_Fq(
         convertHexToDec( str.substr( 3 * elementStringSize, std::string::npos ) ).c_str() );
 
     return ret;
@@ -161,7 +161,7 @@ G2Point G2Point::fromString( const std::string& str, Base base ) {
 G2Point G2Point::fromString(
     const std::array< std::string, G2_NUM_COMPONENTS_AFFINE >& arr, Base base ) {
     algebra::G2Point ret;
-    ret.value.Z = libff::alt_bn128_Fq2::one();
+    ret.asBackendType().Z = libff::alt_bn128_Fq2::one();
 
     switch ( base ) {
     case Base::HEXA:
@@ -169,24 +169,24 @@ G2Point G2Point::fromString(
         std::array< std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >, 4 > components;
         // convert from hexa to bytes
         for ( size_t i = 0; i < arr.size(); ++i ) {
-            if ( arr[i].length() != MAX_FIELD_ELEMENT_SIZE_BYTES * 2 ) {
+            if ( arr.at(i).length() != MAX_FIELD_ELEMENT_SIZE_BYTES * 2 ) {
                 throw ThresholdUtils::IncorrectInput( "wrong string length in public key share" );
             }
             // throws if cannot hexa is not valid
-            components[i] = ThresholdUtils::hexCStringToBytesArray< MAX_FIELD_ELEMENT_SIZE_BYTES >(
-                arr[i].c_str() );
+            components.at(i) = ThresholdUtils::hexCStringToBytesArray< MAX_FIELD_ELEMENT_SIZE_BYTES >(
+                arr.at(i).c_str() );
         }
 
-        ret.value.X.c0 = FqElement::fromBytes( components[0] ).value;
-        ret.value.X.c1 = FqElement::fromBytes( components[1] ).value;
-        ret.value.Y.c0 = FqElement::fromBytes( components[2] ).value;
-        ret.value.Y.c1 = FqElement::fromBytes( components[3] ).value;
+        ret.asBackendType().X.c0 = FqElement::fromBytes( components.at(0) ).asBackendType();
+        ret.asBackendType().X.c1 = FqElement::fromBytes( components.at(1) ).asBackendType();
+        ret.asBackendType().Y.c0 = FqElement::fromBytes( components.at(2) ).asBackendType();
+        ret.asBackendType().Y.c1 = FqElement::fromBytes( components.at(3) ).asBackendType();
         break;
     case Base::DEC:
-        ret.value.X.c0 = libff::alt_bn128_Fq( arr[0].c_str() );
-        ret.value.X.c1 = libff::alt_bn128_Fq( arr[1].c_str() );
-        ret.value.Y.c0 = libff::alt_bn128_Fq( arr[2].c_str() );
-        ret.value.Y.c1 = libff::alt_bn128_Fq( arr[3].c_str() );
+        ret.asBackendType().X.c0 = libff::alt_bn128_Fq( arr.at(0).c_str() );
+        ret.asBackendType().X.c1 = libff::alt_bn128_Fq( arr.at(1).c_str() );
+        ret.asBackendType().Y.c0 = libff::alt_bn128_Fq( arr.at(2).c_str() );
+        ret.asBackendType().Y.c1 = libff::alt_bn128_Fq( arr.at(3).c_str() );
         break;
     default:
         throw ThresholdUtils::IncorrectInput( "Unsupported base" );
@@ -206,11 +206,11 @@ G2Point G2Point::fromString( const std::vector< std::string >& arr, Base base ) 
 // -------------------- Operator Overloads -------------------- //
 
 G2Point G2Point::operator+( const G2Point& other ) const {
-    return G2Point( value + other.value );
+    return G2Point( value + other.asBackendType() );
 }
 
 G2Point G2Point::operator-( const G2Point& other ) const {
-    return G2Point( value - other.value );
+    return G2Point( value - other.asBackendType() );
 }
 
 G2Point G2Point::operator-() const {
@@ -218,16 +218,16 @@ G2Point G2Point::operator-() const {
 }
 
 bool G2Point::operator==( const G2Point& other ) const {
-    return value == other.value;
+    return value == other.asBackendType();
 }
 
 bool G2Point::operator!=( const G2Point& other ) const {
-    return value != other.value;
+    return value != other.asBackendType();
 }
 
 
 G2Point operator*( const FrScalar& scalar, const G2Point& point ) {
-    return scalar.value * point.value;
+    return scalar.asBackendType() * point.asBackendType();
 }
 
 // -------------------- Helper methods for PointSerializer -------------------- //
@@ -244,7 +244,6 @@ void G2Point::forEachAffineComponentImpl(
 
 void G2Point::forEachProjectiveComponentImpl(
     const std::function< void( const FqElement&, size_t i ) >& fn ) const {
-    auto projective = value;
     fn( FqElement( value.X.c0 ), 0 );
     fn( FqElement( value.X.c1 ), 1 );
     fn( FqElement( value.Y.c0 ), 2 );

@@ -10,8 +10,6 @@ namespace libBLS::algebra {
 class FqElement : public Field< FqBackendType, FqElement > {
 public:
     static constexpr size_t SIZE_BYTES = 32;
-
-public:
     static constexpr std::string_view EULER = AltBn128Contract::fq_euler_dec;
 
     FqElement();

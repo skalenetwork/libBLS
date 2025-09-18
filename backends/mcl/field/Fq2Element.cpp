@@ -48,7 +48,7 @@ Fq2Element::Fq2Element() {
 }
 
 Fq2Element::Fq2Element( const FqElement& a, const FqElement& b ) {
-    value = Fq2BackendType( a.value, b.value );
+    value = Fq2BackendType( a.asBackendType(), b.asBackendType() );
 }
 
 Fq2Element::Fq2Element( const FqBackendType& a, const FqBackendType& b ) {

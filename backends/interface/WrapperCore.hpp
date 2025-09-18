@@ -10,9 +10,9 @@ namespace libBLS::algebra {
 /// @tparam Wrapper - Wrapper class - needed for the one() and zero() methods
 template < typename BackendType, typename Wrapper >
 class WrapperCore {
+protected:
+   BackendType value;
 public:
-    BackendType value;
-
     WrapperCore() {}
     WrapperCore( const BackendType& backendValue ) : value( backendValue ) {}
 

@@ -98,7 +98,7 @@ bool BLSPublicKey::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32
     if ( y_sqr != x3B )
         return false;
 
-    algebra::G1Point hash( x.value, y_shift_x.first.value, algebra::FqElement::one().value );
+    algebra::G1Point hash( x, y_shift_x.first, algebra::FqElement::one() );
 
     return ( algebra::pairing( *sign_ptr->getSig(), algebra::G2Point::generator() ) ==
              algebra::pairing( hash, *publicKey ) );

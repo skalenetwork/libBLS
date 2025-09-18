@@ -30,13 +30,13 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 namespace libBLS {
 
 
-TEPublicKey::TEPublicKey( const std::vector< std::string >& _keyStrPtr ) {
-    publicKey = algebra::G2Point::fromString( _keyStrPtr, Base::HEXA );
+TEPublicKey::TEPublicKey( const std::vector< std::string >& _keyStrPtr, Base base ) {
+    publicKey = algebra::G2Point::fromString( _keyStrPtr, base );
     publicKey.validate();
 }
 
-TEPublicKey::TEPublicKey( const std::string& _keyStr )
-    : TEPublicKey( algebra::G2Point::fromString( _keyStr, Base::HEXA ) ) {}
+TEPublicKey::TEPublicKey( const std::string& _keyStr, Base base )
+    : TEPublicKey( algebra::G2Point::fromString( _keyStr, base ) ) {}
 
 TEPublicKey::TEPublicKey( const TEPrivateKey& _commonPrivate ) {
     if ( _commonPrivate.getPrivateKeyRaw().isZero() ) {
@@ -79,6 +79,10 @@ std::array< uint8_t, algebra::G2Point::SIZE_BYTES > TEPublicKey::toBytesArray() 
 
 std::vector< uint8_t > TEPublicKey::toBytesVec() const {
     return publicKey.toByteVector();
+}
+
+TEPublicKey TEPublicKey::random() {
+    return TEPublicKey( algebra::G2Point::random() );
 }
 
 }  // namespace libBLS

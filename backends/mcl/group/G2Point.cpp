@@ -15,12 +15,12 @@ G2Point::G2Point() {
 }
 
 G2Point::G2Point( const Fq2Element& x, const Fq2Element& y, const Fq2Element& z ) {
-    value.x.a = x.value.a;
-    value.x.b = x.value.b;
-    value.y.a = y.value.a;
-    value.y.b = y.value.b;
-    value.z.a = z.value.a;
-    value.z.b = z.value.b;
+    value.x.a = x.asBackendType().a;
+    value.x.b = x.asBackendType().b;
+    value.y.a = y.asBackendType().a;
+    value.y.b = y.asBackendType().b;
+    value.z.a = z.asBackendType().a;
+    value.z.b = z.asBackendType().b;
 }
 
 template <>
@@ -180,10 +180,10 @@ G2Point G2Point::fromString(
     ret.value.z.a = FqBackendType::one();
 
     try {
-        trySettingFieldWithString( ret.value.x.a, arr[0], base );
-        trySettingFieldWithString( ret.value.x.b, arr[1], base );
-        trySettingFieldWithString( ret.value.y.a, arr[2], base );
-        trySettingFieldWithString( ret.value.y.b, arr[3], base );
+        trySettingFieldWithString( ret.value.x.a, arr.at(0), base );
+        trySettingFieldWithString( ret.value.x.b, arr.at(1), base );
+        trySettingFieldWithString( ret.value.y.a, arr.at(2), base );
+        trySettingFieldWithString( ret.value.y.b, arr.at(3), base );
         return ret;
     } catch ( const std::exception& e ) {
         throw ThresholdUtils::IncorrectInput(
@@ -229,7 +229,7 @@ bool G2Point::operator!=( const G2Point& other ) const {
 
 G2Point operator*( const FrScalar& scalar, const G2Point& point ) {
     G2BackendType result;
-    mcl::G2::mul( result, point.value, scalar.value );
+    mcl::G2::mul( result, point.asBackendType(), scalar.asBackendType() );
     return G2Point( result );
 }
 
