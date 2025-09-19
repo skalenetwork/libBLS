@@ -45,12 +45,6 @@ public:
 
     static std::pair< algebra::FrScalar, algebra::G2Point > KeyGeneration();
 
-    static algebra::G1Point Hashing( const std::string& message,
-        std::string ( *hash_func )( const std::string& str ) = cryptlite::sha256::hash_hex );
-
-    static algebra::G1Point HashBytes( const char* raw_bytes, size_t length,
-        std::string ( *hash_func )( const std::string& str ) = cryptlite::sha256::hash_hex );
-
     static algebra::G1Point HashPublicKeyToG1( const algebra::G2Point& elem );
 
     static std::pair< algebra::G1Point, std::string > HashPublicKeyToG1WithHint(
@@ -70,14 +64,11 @@ public:
     static bool FastAggregateVerify( const std::vector< algebra::G2Point >& public_keys,
         const std::string& message, const algebra::G1Point& signature );
 
-    static bool Verification( const std::string& to_be_hashed, const algebra::G1Point& sign,
-        const algebra::G2Point& public_key );
-
-    static bool Verification( const std::array< uint8_t, 32 >& hash_byte_arr,
+    static bool Verify( const std::array< uint8_t, 32 >& hash_byte_arr,
         const algebra::G1Point& sign, const algebra::G2Point& public_key );
 
-    static bool AggregatedVerification(
-        const std::vector< std::shared_ptr< std::array< uint8_t, 32 > > >& hash_byte_arr,
+    static bool AggregateVerify(
+        const std::vector< std::array< uint8_t, 32 > >& hash_byte_arr,
         const std::vector< algebra::G1Point >& sign, const algebra::G2Point& public_key );
 
     std::pair< algebra::FrScalar, algebra::G2Point > KeysRecover(

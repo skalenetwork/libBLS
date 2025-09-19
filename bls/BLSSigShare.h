@@ -30,7 +30,7 @@ namespace libBLS {
 
 class BLSSigShare {
 private:
-    std::shared_ptr< algebra::G1Point > sigShare;
+    algebra::G1Point sigShare;
 
     std::string hint;
 
@@ -40,20 +40,20 @@ private:
     size_t totalSigners;
 
 public:
-    BLSSigShare( const std::shared_ptr< algebra::G1Point >& sigShare, std::string& hint,
+    BLSSigShare( const algebra::G1Point& sigShare, std::string& hint,
         size_t signerIndex, size_t _requiredSigners, size_t _totalSigners );
 
 
-    BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t signerIndex,
+    BLSSigShare( const std::string& _sigShare, size_t signerIndex,
         size_t _requiredSigners, size_t _totalSigners );
 
-    std::shared_ptr< algebra::G1Point > getSigShare() const;
+    const algebra::G1Point& getSigShare() const;
 
     size_t getSignerIndex() const;
 
     std::string getHint() const;
 
-    std::shared_ptr< std::string > toString();
+    std::string toString();
     size_t getTotalSigners() const;
     size_t getRequiredSigners() const;
 };

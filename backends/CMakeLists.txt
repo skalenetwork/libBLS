@@ -96,7 +96,6 @@ foreach(file ${BACKEND_SPECIFIC_SOURCES})
 endforeach()
 
 add_library(backend STATIC ${BACKEND_SOURCES})
-apply_sanitizers(backend)
 
 target_include_directories(backend PUBLIC
     "${BACKEND_BASE_DIR}/.."  # This allows "backends/interface/..." includes
@@ -142,7 +141,6 @@ if(BUILD_TESTS)
     target_link_libraries(${name} PRIVATE backend)
 
     # Register test with the full path to the built binary (portable)
-    apply_sanitizers(${name})
     add_test(NAME ${name} COMMAND $<TARGET_FILE:${name}>)
   endfunction()
 

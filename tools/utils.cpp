@@ -123,22 +123,19 @@ bool ThresholdUtils::hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* 
 }
 
 std::shared_ptr< std::vector< std::string > > ThresholdUtils::SplitString(
-    std::shared_ptr< std::string > str, const std::string& delim ) {
-    if ( !str ) {
-        throw IncorrectInput( " str pointer is null in SplitString " );
-    }
+    const std::string& str, const std::string& delim ) {
 
     std::vector< std::string > tokens;
     size_t prev = 0, pos = 0;
     do {
-        pos = str->find( delim, prev );
+        pos = str.find( delim, prev );
         if ( pos == std::string::npos )
-            pos = str->length();
-        std::string token = str->substr( prev, pos - prev );
+            pos = str.length();
+        std::string token = str.substr( prev, pos - prev );
         if ( !token.empty() )
             tokens.push_back( token );
         prev = pos + delim.length();
-    } while ( pos < str->length() && prev < str->length() );
+    } while ( pos < str.length() && prev < str.length() );
 
     return std::make_shared< std::vector< std::string > >( tokens );
 }

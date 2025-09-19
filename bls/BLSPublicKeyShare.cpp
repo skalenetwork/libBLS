@@ -29,22 +29,19 @@
 namespace libBLS {
 
 BLSPublicKeyShare::BLSPublicKeyShare(
-    const std::shared_ptr< std::vector< std::string > > pkey_str_vect, size_t _requiredSigners,
+    const std::vector< std::string >& pkey_str_vect, size_t _requiredSigners,
     size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    CHECK( pkey_str_vect );
 
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    // TODO - should not use shared_ptr
-    publicKey = std::make_shared< algebra::G2Point >(
-        algebra::G2Point::fromString( *pkey_str_vect, Base::DEC ) );
+    publicKey = algebra::G2Point::fromString( pkey_str_vect, Base::DEC );
 
-    if ( publicKey->isIdentity() ) {
+    if ( publicKey.isIdentity() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Zero BLS public Key share" );
     }
 
-    if ( !( publicKey->isWellFormed() ) ) {
+    if ( !( publicKey.isWellFormed() ) ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Corrupt BLS public key share" );
     }
 }
@@ -55,56 +52,48 @@ BLSPublicKeyShare::BLSPublicKeyShare(
     if ( _skey.isZero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "Zero BLS Secret Key" );
     }
-    publicKey = std::make_shared< algebra::G2Point >( _skey * algebra::G2Point::generator() );
+    publicKey = _skey * algebra::G2Point::generator();
 }
 
-std::shared_ptr< algebra::G2Point > BLSPublicKeyShare::getPublicKey() const {
-    CHECK( publicKey );
+const algebra::G2Point& BLSPublicKeyShare::getPublicKey() const {
     return publicKey;
 }
 
-// TODO - should be named to toStringVec to remove ambiguity
-std::shared_ptr< std::vector< std::string > > BLSPublicKeyShare::toString() {
-    return std::make_shared< std::vector< std::string > >(
-        publicKey->toStringVector( libBLS::Base::DEC ) );
+std::vector< std::string > BLSPublicKeyShare::toString() {
+    return publicKey.toStringVector( libBLS::Base::DEC );
 }
 
-bool BLSPublicKeyShare::VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
-    std::shared_ptr< BLSSigShare > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
-    CHECK( hash_ptr );
-    CHECK( sign_ptr );
+bool BLSPublicKeyShare::VerifySig( const std::array< uint8_t, 32 >& hash_ptr,
+    const BLSSigShare& sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
 
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    if ( sign_ptr->getSigShare()->isIdentity() ) {
+    if ( sign_ptr.getSigShare().isIdentity() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Zero BLS Sig share" );
     }
 
     libBLS::Bls obj = libBLS::Bls( _requiredSigners, _totalSigners );
 
-    bool res = obj.Verification( *hash_ptr, *( sign_ptr->getSigShare() ), *publicKey );
+    bool res = obj.Verify( hash_ptr, sign_ptr.getSigShare(), publicKey );
     return res;
 }
 
 // TODO - this function is replicated in BLSPublicKey - refactor it
-bool BLSPublicKeyShare::VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
-    std::shared_ptr< BLSSigShare > sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
-    CHECK( sign_ptr )
+bool BLSPublicKeyShare::VerifySigWithHelper( const std::array< uint8_t, 32 >& hash_ptr,
+    const BLSSigShare& sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
 
     std::shared_ptr< libBLS::Bls > obj;
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
-    if ( !hash_ptr ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "hash is null" );
-    }
-    if ( sign_ptr->getSigShare()->isIdentity() ) {
+
+    if ( sign_ptr.getSigShare().isIdentity() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Sig share is equal to zero" );
     }
 
-    std::string hint = sign_ptr->getHint();
+    std::string hint = sign_ptr.getHint();
 
     std::pair< algebra::FqElement, algebra::FqElement > y_shift_x = algebra::parseHint( hint );
 
-    algebra::FqElement x = algebra::hashToFq( *hash_ptr );
+    algebra::FqElement x = algebra::hashToFq( hash_ptr );
 
     x = x + y_shift_x.second;
 
@@ -118,8 +107,8 @@ bool BLSPublicKeyShare::VerifySigWithHelper( std::shared_ptr< std::array< uint8_
 
     algebra::G1Point hash( x, y_shift_x.first, algebra::FqElement::one() );
 
-    return algebra::pairing( *sign_ptr->getSigShare(), algebra::G2Point::generator() ) ==
-           algebra::pairing( hash, *publicKey );
+    return algebra::verifyPairingEq( sign_ptr.getSigShare(), algebra::G2Point::generator(), hash,
+        publicKey );
 }
 
 }  // namespace libBLS

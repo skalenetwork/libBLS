@@ -13,7 +13,7 @@ constexpr size_t GT_NUM_COMPONENTS_AFFINE = 2;
 constexpr size_t GT_NUM_COMPONENTS_PROJECTIVE = 3;
 
 class GTElement
-    : public WrapperCore< GTBackendType, GTElement >,
+    : public WrapperCore< GTBackendType >,
       public PointSerializer< GTElement, GT_NUM_COMPONENTS_AFFINE, GT_NUM_COMPONENTS_PROJECTIVE > {
 public:
     GTElement() {}

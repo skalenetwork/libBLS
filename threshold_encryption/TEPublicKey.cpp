@@ -58,15 +58,7 @@ TEPublicKey::TEPublicKey( const std::vector< uint8_t >& _keyBytes )
     : TEPublicKey( algebra::G2Point::fromBytes( _keyBytes ) ) {}
 
 std::string TEPublicKey::toString( Base base ) const {
-    auto serializedKey = publicKey.toStringArray( base );
-    std::string concatenated;
-    // Nbr of hexa digits = 2 x byte size
-    concatenated.reserve( 2 * algebra::G2Point::SIZE_BYTES );
-    for ( const auto& str : serializedKey ) {
-        concatenated += str;
-    }
-
-    return concatenated;
+    return publicKey.toString( base );
 }
 
 const algebra::G2Point& TEPublicKey::getPublicKeyRaw() const {

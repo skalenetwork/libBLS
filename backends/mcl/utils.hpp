@@ -16,21 +16,12 @@ inline int toIoBase( Base base ) {
 /// Reduces a string representing an integer in the given base mod M_dec
 /// and returns the result as a decimal string
 inline std::string reduce_mod( std::string_view s, int base, std::string_view M_dec ) {
-#ifdef MCL_USE_GMP
-    mpz_class z;
-    z.set_str( s.data(), base );
-    static thread_local mpz_class M;
-    M.set_str( std::string( M_dec ).c_str(), 10 );
-    z %= M;
-    return z.get_str( 10 );  // canonical decimal
-#else                        // EMSCRIPTEN
     mcl::Vint z;
     z.setStr( s.data(), base );
     static thread_local mpz_class M;
     M.setStr( std::string( M_dec ).c_str(), 10 );
     z %= M;
     return z.getStr( 10 );  // canonical decimal
-#endif
 }
 
 /// @brief  Try to set the field element from the given string and base.

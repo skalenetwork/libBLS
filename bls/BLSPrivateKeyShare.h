@@ -34,33 +34,32 @@ class BLSSigShare;
 
 class BLSPrivateKeyShare {
 protected:
-    std::shared_ptr< algebra::FrScalar > privateKey;
+    algebra::FrScalar privateKey;
 
     size_t requiredSigners;
     size_t totalSigners;
 
 public:
+    BLSPrivateKeyShare() = default;
     BLSPrivateKeyShare( const std::string& _key, size_t _requiredSigners, size_t _totalSigners );
 
-    std::shared_ptr< BLSSigShare > sign(
-        std::shared_ptr< std::array< uint8_t, 32 > >, size_t _signerIndex );
+    BLSSigShare sign(
+        const std::array< uint8_t, 32 >&, size_t _signerIndex );
 
-    std::shared_ptr< BLSSigShare > signWithHelper(
-        std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr, size_t _signerIndex );
+    BLSSigShare signWithHelper(
+        const std::array< uint8_t, 32 >& hash_byte_arr, size_t _signerIndex );
 
     BLSPrivateKeyShare( const algebra::FrScalar&, size_t _requiredSigners, size_t _totalSigners );
 
     // generate a vector of correct _totalSigners private keys that work together and common public
     // key
 
-    static std::shared_ptr<
-        std::pair< std::shared_ptr< std::vector< std::shared_ptr< BLSPrivateKeyShare > > >,
-            std::shared_ptr< BLSPublicKey > > >
+    static std::pair< std::vector< BLSPrivateKeyShare > , BLSPublicKey >
     generateSampleKeys( size_t _requiredSigners, size_t _totalSigners );
 
-    std::shared_ptr< algebra::FrScalar > getPrivateKey() const;
+    const algebra::FrScalar& getPrivateKey() const;
 
-    std::shared_ptr< std::string > toString();
+    std::string toString();
 };
 
 }  // namespace libBLS

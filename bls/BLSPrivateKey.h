@@ -35,19 +35,19 @@ private:
     size_t requiredSigners;
     size_t totalSigners;
 
-    std::shared_ptr< algebra::FrScalar > privateKey;
+    algebra::FrScalar privateKey;
 
 public:
     BLSPrivateKey(
-        const std::shared_ptr< std::string >& _key, size_t _requiredSigners, size_t _totalSigners );
+        const std::string& _key, size_t _requiredSigners, size_t _totalSigners );
 
-    BLSPrivateKey( std::shared_ptr< std::vector< std::shared_ptr< BLSPrivateKeyShare > > >,
-        std::shared_ptr< std::vector< size_t > > koefs, size_t _requiredSigners,
+    BLSPrivateKey( const std::vector< BLSPrivateKeyShare >&,
+        const std::vector< size_t >& koefs, size_t _requiredSigners,
         size_t _totalSigners );
 
-    std::shared_ptr< algebra::FrScalar > getPrivateKey() const;
+    const algebra::FrScalar& getPrivateKey() const;
 
-    std::shared_ptr< std::string > toString();
+    std::string toString();
 };
 
 }  // namespace libBLS

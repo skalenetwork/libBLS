@@ -30,18 +30,18 @@ namespace libBLS {
 
 class BLSSignature {
 private:
-    std::shared_ptr< algebra::G1Point > sig;
+    algebra::G1Point sig;
     std::string hint;
 
     size_t requiredSigners;
     size_t totalSigners;
 
 public:
-    BLSSignature( std::shared_ptr< std::string > s, size_t _requiredSigners, size_t _totalSigners );
-    BLSSignature( const std::shared_ptr< algebra::G1Point > sig, std::string& _hint,
+    BLSSignature( const std::string& s, size_t _requiredSigners, size_t _totalSigners );
+    BLSSignature( const algebra::G1Point& sig, const std::string& _hint,
         size_t _requiredSigners, size_t _totalSigners );
-    std::shared_ptr< algebra::G1Point > getSig() const;
-    std::shared_ptr< std::string > toString();
+    const algebra::G1Point& getSig() const;
+    std::string toString();
 
     std::string getHint() const;
     size_t getTotalSigners() const;
@@ -52,7 +52,7 @@ public:
      * This can be used for generating randomness based on the signature share.
      * @return A 64-bit unsigned integer seed derived from the signature share.
      */
-    uint64_t toSeed() const;
+    uint64_t toSeed();
 };
 
 }  // namespace libBLS

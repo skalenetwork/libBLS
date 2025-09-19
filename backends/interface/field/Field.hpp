@@ -10,11 +10,11 @@ namespace libBLS::algebra {
 /// @tparam BackendType - concrete backend type to be held by the wrappers
 /// @tparam Wrapper - Wrapper class - needed for the one() and zero() methods
 template < typename BackendType, typename Wrapper >
-class Field : public WrapperCore< BackendType, Wrapper > {
+class Field : public WrapperCore< BackendType > {
 protected:
 public:
-    Field() : WrapperCore< BackendType, Wrapper >() {}
-    Field( const BackendType& v ) : WrapperCore< BackendType, Wrapper >( v ) {}
+    Field() : WrapperCore< BackendType >() {}
+    Field( const BackendType& v ) : WrapperCore< BackendType >( v ) {}
 
     // Must be declared as static functions, not fields.
     // We need to have initialized the curve before calling them.

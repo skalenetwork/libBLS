@@ -50,7 +50,6 @@ public:
 };
 
 inline std::ostream& operator<<( std::ostream& os, FqElement const& element ) {
-    // Choose HEX or DEC encoding depending on your needs
     return os << element.toString( libBLS::Base::HEXA );
 }
 

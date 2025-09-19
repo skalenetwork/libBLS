@@ -40,13 +40,8 @@ FrScalar power( const FrScalar& fr, size_t exponent ) {
 }
 
 FqElement power( const FqElement& fq, const std::string& exponent ) {
-#ifdef MCL_USE_GMP
-    mpz_class e;
-    e.set_str( exponent, 10 );
-#else  // emscripten
     mcl::Vint e;
     e.setStr( exponent, 10 );
-#endif
 
     FqBackendType out;
     mcl::Fp::pow( out, fq.asBackendType(), e );
@@ -60,11 +55,7 @@ FqElement hashToFq( const std::array< uint8_t, 32 >& hash_byte_arr ) {
 }
 
 void normalizeYCoordinate( FqElement& element ) {
-#ifdef MCL_USE_GMP
-    mpz_class y, y_neg;
-#else  // emscripten
     mcl::Vint y, y_neg;
-#endif
 
     element.asBackendType().getMpz( y );
     mcl::bn::Fp neg;

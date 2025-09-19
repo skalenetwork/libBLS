@@ -37,6 +37,13 @@ keys generateKeys( size_t t, size_t n );
 
 std::string randomHexaString( size_t length );
 
+template <size_t N>
+std::array< uint8_t, N > randomByteArray() {
+    std::array< uint8_t, N > bytes;
+    RAND_bytes( bytes.data(), N );
+    return bytes;
+}
+
 std::vector< uint8_t > randomByteVec( size_t length );
 
 void spoilRandomChar( std::string& str, size_t numCharsToSpoil, char charToReplace );

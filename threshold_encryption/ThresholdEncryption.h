@@ -97,11 +97,15 @@ public:
     /**
      * @brief Validates a batch of decryption shares
      *
-     * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
+     * @param _cipheredKeys Vector of encrypted AESKeys used to encrypt the message held by Ciphertext
      * struct. Assumed to have been already validated via `validateEncryption` call.
-     * @param _decryptionShares Vector of decryption shares
+     * There should be only 1 `CipheredKey` per each N `TEDecryptionShare` and `TEPublicKeyShare`.
+     * Meaning, if there are 5 `CipheredKeys`, there should be 5 * N `TEDecryptionShare` and
+     * `TEPublicKeyShare` each.
+     * @param _decryptionShares Vector of decryption shares. Must be same size as _publicKeys.
      * @param _publicKeys Vector of public keys corresponding to the decryption shares.
-     * @return Vec of bools, each idx specifying if it was successfully validated or not
+     * @return Vec of bools, each idx specifying if it was successfully validated or not.
+     * Each idx corresponds to the same idx on _decryptionShares and _publicKeys.
      */
     static std::vector< bool > validateDecryptionSharesBatch(
         const std::vector< std::shared_ptr< CipheredKey > >& _cipheredKeys,

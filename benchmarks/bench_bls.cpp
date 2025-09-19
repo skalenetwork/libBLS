@@ -35,8 +35,8 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
     for ( size_t i = 0; i < numSigned; ++i )
         participants.at( i ) = i + 1;  // set participants indices 1,2,3
 
-    std::shared_ptr< std::vector< std::shared_ptr< libBLS::BLSPrivateKeyShare > > > Skeys =
-        libBLS::BLSPrivateKeyShare::generateSampleKeys( numSigned, numAll )->first;
+    std::vector< libBLS::BLSPrivateKeyShare > Skeys =
+        libBLS::BLSPrivateKeyShare::generateSampleKeys( numSigned, numAll ).first;
 
     std::default_random_engine rand_gen( ( unsigned int ) time( 0 ) );
     std::array< uint8_t, 32 > hash_byte_arr;
@@ -44,23 +44,20 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
         hash_byte_arr.at( i ) = rand_gen() % 255;
     }
 
-    std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr =
-        std::make_shared< std::array< uint8_t, 32 > >( hash_byte_arr );
-
     for ( size_t i = 0; i < args.numTxs; i++ ) {
         // actual work
         libBLS::BLSSigShareSet sigSet( numSigned, numAll );
 
         for ( size_t j = 0; j < numSigned; ++j ) {
-            std::shared_ptr< libBLS::BLSPrivateKeyShare > skey = Skeys->at( j );
+            libBLS::BLSPrivateKeyShare skey = Skeys.at( j );
 
             // create signature share for each participant
-            std::shared_ptr< libBLS::BLSSigShare > sigShare = [&]() {
+            libBLS::BLSSigShare sigShare = [&]() {
                 if ( i == 0 ) {  // only time one participant
                     ScopedTimer timer( partialSignature );
-                    return skey->sign( hash_ptr, participants.at( j ) );
+                    return skey.sign( hash_byte_arr, participants.at( j ) );
                 } else {
-                    return skey->sign( hash_ptr, participants.at( j ) );
+                    return skey.sign( hash_byte_arr, participants.at( j ) );
                 }
             }();
 
@@ -70,23 +67,23 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
             }
         }
 
-        std::shared_ptr< libBLS::BLSSignature > common_sig_ptr = [&]() {
+        libBLS::BLSSignature common_sig_ptr = [&]() {
             ScopedTimer timer( signatureMerge );
             return sigSet.merge();
         }();
 
         // create common private key from private keys of each participant
         libBLS::BLSPrivateKey common_skey(
-            Skeys, std::make_shared< std::vector< size_t > >( participants ), numSigned, numAll );
+            Skeys, participants, numSigned, numAll );
 
         // create common public key from common private key
-        libBLS::BLSPublicKey common_pkey( *( common_skey.getPrivateKey() ), numSigned, numAll );
+        libBLS::BLSPublicKey common_pkey( common_skey.getPrivateKey(), numSigned, numAll );
 
 
         // verify common signature with common public key
         bool sigIsValid = [&]() {
             ScopedTimer timer( verifySig );
-            return common_pkey.VerifySig( hash_ptr, common_sig_ptr );
+            return common_pkey.VerifySig( hash_byte_arr, common_sig_ptr );
         }();
 
         BOOST_REQUIRE( sigIsValid );

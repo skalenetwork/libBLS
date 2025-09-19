@@ -35,34 +35,34 @@ class BLSPublicKeyShare;
 
 class BLSPublicKey {
 private:
-    std::shared_ptr< algebra::G2Point > publicKey;
+    algebra::G2Point publicKey;
     size_t t;
     size_t n;
 
 public:
-    BLSPublicKey( const std::shared_ptr< std::vector< std::string > > );
+    BLSPublicKey( const std::vector< std::string >& pkey_str_vect );
     // default value set to 0 for compatibility
     BLSPublicKey( const algebra::FrScalar& skey, size_t t = 0, size_t n = 0 );
     // default value set to 0 for compatibility
     BLSPublicKey( const algebra::G2Point& skey, size_t t = 0, size_t n = 0 );
 
     BLSPublicKey(
-        std::shared_ptr< std::map< size_t, std::shared_ptr< BLSPublicKeyShare > > > map_pkeys_koefs,
+        const std::map< size_t, BLSPublicKeyShare >& map_pkeys_koefs,
         size_t _requiredSigners, size_t _totalSigners );
 
-    bool VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
-        std::shared_ptr< BLSSignature > sign_ptr );
+    bool VerifySig( const std::array< uint8_t, 32 >& hash,
+        const BLSSignature& sign );
 
-    bool VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
-        std::shared_ptr< BLSSignature > sign_ptr );
+    bool VerifySigWithHelper( const std::array< uint8_t, 32 >& hash,
+        const BLSSignature& sign );
 
     bool AggregatedVerifySig(
-        std::vector< std::shared_ptr< std::array< uint8_t, 32 > > >& hash_ptr_vec,
-        std::vector< std::shared_ptr< BLSSignature > >& sign_ptr_vec );
+        std::vector< std::array< uint8_t, 32 > >& hash_ptr_vec,
+        std::vector< BLSSignature >& sign_ptr_vec );
 
-    std::shared_ptr< std::vector< std::string > > toString();
+    std::vector< std::string > toString();
 
-    std::shared_ptr< algebra::G2Point > getPublicKey() const;
+    const algebra::G2Point& getPublicKey() const;
 
     size_t getRequiredSigners() const { return t; }
 

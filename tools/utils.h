@@ -104,7 +104,7 @@ public:
     static bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin );
 
     static std::shared_ptr< std::vector< std::string > > SplitString(
-        const std::shared_ptr< std::string >, const std::string& delim );
+        const std::string& str, const std::string& delim );
 
     static std::string bytesToHexString( const std::vector< uint8_t >& bytes );
 

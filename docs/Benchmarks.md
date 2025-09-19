@@ -1,3 +1,18 @@
+# Hardware Used
+
+| Component        | Specification                          |
+|------------------|-------------------------------         |
+| CPU              | 12th Gen Intel(R) Core(TM) i7-1280P    |
+| Cores/Threads    | 14 physical CPUs, 20 Threads           |
+| RAM              | 32 GB                                  |
+| Storage          | 1TB                                    |
+| Operating System | Ubuntu 24.04.2 LTS                     |
+
+> **NOTE:** The performance results below show the performance running libBLS single-threaded
+
+
+
+
 # Threshold Encryption
 
 #### Test Inputs

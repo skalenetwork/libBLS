@@ -26,11 +26,11 @@
 
 namespace libBLS {
 
-std::shared_ptr< algebra::G1Point > BLSSignature::getSig() const {
-    CHECK( sig );
+const algebra::G1Point& BLSSignature::getSig() const {
     return sig;
 }
-BLSSignature::BLSSignature( const std::shared_ptr< algebra::G1Point > sig, std::string& _hint,
+
+BLSSignature::BLSSignature( const algebra::G1Point& sig, const std::string& _hint,
     size_t _requiredSigners, size_t _totalSigners )
     : sig( sig ),
       hint( _hint ),
@@ -38,9 +38,7 @@ BLSSignature::BLSSignature( const std::shared_ptr< algebra::G1Point > sig, std::
       totalSigners( _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    CHECK( sig );
-
-    if ( sig->isIdentity() ) {
+    if ( sig.isIdentity() ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Zero BLS signature" );
     }
     if ( _hint.length() == 0 || _hint.length() > 2 * BLS_MAX_COMPONENT_LEN ) {
@@ -49,20 +47,19 @@ BLSSignature::BLSSignature( const std::shared_ptr< algebra::G1Point > sig, std::
 }
 
 BLSSignature::BLSSignature(
-    std::shared_ptr< std::string > _sig, size_t _requiredSigners, size_t _totalSigners )
+    const std::string& _sig, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    CHECK( _sig );
 
     libBLS::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
 
-    if ( _sig->size() < 10 ) {
+    if ( _sig.size() < 10 ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed(
-            "Signature too short:" + std::to_string( _sig->size() ) );
+            "Signature too short:" + std::to_string( _sig.size() ) );
     }
 
-    if ( _sig->size() > BLS_MAX_SIG_LEN ) {
+    if ( _sig.size() > BLS_MAX_SIG_LEN ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed(
-            "Signature too long:" + std::to_string( _sig->size() ) );
+            "Signature too long:" + std::to_string( _sig.size() ) );
     }
 
     std::shared_ptr< std::vector< std::string > > result =
@@ -80,22 +77,21 @@ BLSSignature::BLSSignature(
         }
     }
 
-    sig = std::make_shared< algebra::G1Point >(
+    sig = algebra::G1Point(
         algebra::FqElement::fromString( result->at( 0 ), Base::DEC ),
         algebra::FqElement::fromString( result->at( 1 ), Base::DEC ) );
     hint = result->at( 2 ) + ":" + result->at( 3 );
 
-    if ( !( sig->isWellFormed() ) ) {
+    if ( !( sig.isWellFormed() ) ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
     }
 }
 
-std::shared_ptr< std::string > BLSSignature::toString() {
-    sig->toAffineCoordinates();
+std::string BLSSignature::toString() {
+    sig.toAffineCoordinates();
     std::string ret = "";
-    ret += sig->getX().toString( Base::DEC ) + ':' + sig->getY().toString( Base::DEC ) + ':' + hint;
-
-    return std::make_shared< std::string >( ret );
+    ret += sig.getX().toString( Base::DEC ) + ':' + sig.getY().toString( Base::DEC ) + ':' + hint;
+    return ret;
 }
 
 std::string BLSSignature::getHint() const {
@@ -109,10 +105,9 @@ size_t BLSSignature::getRequiredSigners() const {
     return requiredSigners;
 }
 
-uint64_t BLSSignature::toSeed() const {
-    CHECK( sig );
-    sig->toAffineCoordinates();
-    return sig->getX().toUlong() + sig->getY().toUlong();
+uint64_t BLSSignature::toSeed() {
+    sig.toAffineCoordinates();
+    return sig.getX().toUlong() + sig.getY().toUlong();
 }
 
 }  // namespace libBLS

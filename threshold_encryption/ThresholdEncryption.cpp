@@ -27,10 +27,6 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <tools/utils.h>
 #include <valarray>
 
-// TODO - remove
-#include "benchmarks/ScopedTimer.hpp"
-#include <iostream>
-
 namespace libBLS {
 
 std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(

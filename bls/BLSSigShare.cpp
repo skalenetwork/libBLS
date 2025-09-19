@@ -30,25 +30,23 @@
 
 namespace libBLS {
 
-std::shared_ptr< algebra::G1Point > BLSSigShare::getSigShare() const {
-    CHECK( sigShare );
+const algebra::G1Point& BLSSigShare::getSigShare() const {
     return sigShare;
 }
 size_t BLSSigShare::getSignerIndex() const {
     return signerIndex;
 }
 
-std::shared_ptr< std::string > BLSSigShare::toString() {
-    sigShare->toAffineCoordinates();
+std::string BLSSigShare::toString() {
+    sigShare.toAffineCoordinates();
     std::string ret = "";
     // TODO - need to refactor this - uses .value
-    ret += sigShare->getX().toString( Base::DEC ) + ':' + sigShare->getY().toString( Base::DEC ) +
+    ret += sigShare.getX().toString( Base::DEC ) + ':' + sigShare.getY().toString( Base::DEC ) +
            ':' + hint;
-
-    return std::make_shared< std::string >( ret );
+    return ret;
 }
 
-BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _signerIndex,
+BLSSigShare::BLSSigShare( const std::string& _sigShare, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
@@ -59,19 +57,15 @@ BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _sign
         throw libBLS::ThresholdUtils::IncorrectInput( "Zero signer index" );
     }
 
-    if ( !_sigShare ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Null _sigShare" );
+
+    if ( _sigShare.size() < 10 ) {
+        throw libBLS::ThresholdUtils::IsNotWellFormed(
+            "Signature too short:" + std::to_string( _sigShare.size() ) );
     }
 
-
-    if ( _sigShare->size() < 10 ) {
+    if ( _sigShare.size() > BLS_MAX_SIG_LEN ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed(
-            "Signature too short:" + std::to_string( _sigShare->size() ) );
-    }
-
-    if ( _sigShare->size() > BLS_MAX_SIG_LEN ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed(
-            "Signature too long:" + std::to_string( _sigShare->size() ) );
+            "Signature too long:" + std::to_string( _sigShare.size() ) );
     }
 
 
@@ -88,17 +82,17 @@ BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _sign
         }
     }
 
-    sigShare = std::make_shared< algebra::G1Point >(
+    sigShare = algebra::G1Point(
         algebra::FqElement::fromString( result->at( 0 ), Base::DEC ),
         algebra::FqElement::fromString( result->at( 1 ), Base::DEC ) );
 
     hint = result->at( 2 ) + ":" + result->at( 3 );
 
-    if ( !sigShare->isWellFormed() )
+    if ( !sigShare.isWellFormed() )
         throw libBLS::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
 }
 
-BLSSigShare::BLSSigShare( const std::shared_ptr< algebra::G1Point >& _sigShare, std::string& _hint,
+BLSSigShare::BLSSigShare( const algebra::G1Point& _sigShare, std::string& _hint,
     size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
     : sigShare( _sigShare ),
       hint( _hint ),
@@ -106,10 +100,8 @@ BLSSigShare::BLSSigShare( const std::shared_ptr< algebra::G1Point >& _sigShare, 
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
-    if ( !_sigShare ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Null _s" );
-    }
-    if ( _sigShare->isIdentity() ) {
+
+    if ( _sigShare.isIdentity() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Zero signature" );
     }
     if ( _signerIndex == 0 ) {
@@ -123,7 +115,7 @@ BLSSigShare::BLSSigShare( const std::shared_ptr< algebra::G1Point >& _sigShare, 
     // TODO unused return value
     algebra::parseHint( _hint );
 
-    if ( !_sigShare->isWellFormed() ) {
+    if ( !_sigShare.isWellFormed() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
     }
 }

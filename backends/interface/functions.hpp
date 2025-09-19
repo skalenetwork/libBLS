@@ -95,7 +95,7 @@ FqElement power( const FqElement& fq, const std::string& exponent );
 
 void normalizeYCoordinate( FqElement& element );
 
-FqElement hashToFq( const std::array< uint8_t, 32 >& hash_byte_arr );
+FqElement hashToFq( const std::array< uint8_t, HASH_SIZE >& hash_byte_arr );
 
 G2Point lagrangeInterpolateAt0( const std::vector< size_t >& idx, size_t t,
     const std::vector< std::reference_wrapper< const G2Point > >& shares );
@@ -107,9 +107,9 @@ G2Point lagrangeInterpolateAt0( const std::vector< size_t >& idx, size_t t,
 std::pair< FqElement, FqElement > parseHint( const std::string& _hint );
 
 std::pair< G1Point, std::string > hashToG1withHint(
-    const std::array< uint8_t, 32 >& hash_byte_arr );
+    const std::array< uint8_t, HASH_SIZE >& hash_byte_arr );
 
-G1Point hashToG1( const std::array< uint8_t, 32 >& hash_byte_arr );
+G1Point hashToG1( const std::array< uint8_t, HASH_SIZE >& hash_byte_arr );
 
 G1Point hashToG1( const std::string& message );
 

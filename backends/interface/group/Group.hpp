@@ -10,14 +10,14 @@ namespace libBLS::algebra {
 /// @tparam BackendType - concrete backend type to be held by the wrappers
 /// @tparam Wrapper - Wrapper class - needed for the one() and zero() methods
 template < typename BackendType, typename Wrapper, typename BackendRefWrapper >
-class Group : public WrapperCore< BackendType, Wrapper > {
+class Group : public WrapperCore< BackendType > {
 protected:
     static const BackendType& generatorBackend();
     static const BackendType& identityBackend();
 
 public:
-    Group() : WrapperCore< BackendType, Wrapper >() {}
-    Group( const BackendType& v ) : WrapperCore< BackendType, Wrapper >( v ) {}
+    Group() : WrapperCore< BackendType >() {}
+    Group( const BackendType& v ) : WrapperCore< BackendType >( v ) {}
 
     void toAffineCoordinates();
 
@@ -65,17 +65,6 @@ public:
     }
 
     static Wrapper random();
-
-    // static Wrapper fromBytes( const std::array< uint8_t, Wrapper::SIZE_BYTES >& bytes );
-    // static Wrapper fromBytes( const std::vector< uint8_t >& bytes );
-
-    // static Wrapper fromString( const std::string& str, Base base );
-    // static Wrapper fromString(
-    //     const std::array< std::string, Wrapper::NUM_COMPONENTS_AFFINE >& arr, Base base );
-    // // TODO - we should get rid of this for perf. reasons. no need to use vectors when we know
-    // the
-    // // size
-    // static Wrapper fromString( const std::vector< std::string >& arr, Base base );
 };
 
 }  // namespace libBLS::algebra

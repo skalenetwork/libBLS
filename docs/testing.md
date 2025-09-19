@@ -16,9 +16,18 @@
 
 ### Running benchmarks
 
+| Argument      | Description                        | Example Value | Default Value |
+|---------------|------------------------------------|-------------- | ------------- |
+| `--n`         | Total number of nodes              | `22`          | 5             |
+| `--t`         | Required number of nodes (t<n)     | `15`          | 3             |
+| `--numTxs`    | Number of transactions to process  | `1000`        | 1             |
+| `--msg`       | Message size in bytes              | `1000`        | 256           |
+
 ```bash
-# You can pass args to the bench
-./build/benchmarks/te_bench -- --rounds 1000
+# Override numTxs, n and t args
+./build/benchmarks/bench_te -- --numTxs 1000 --n 22 --t 15
+# runs with all default args
+./build/benchmarks/bench_bls
 ```
 
 ### Adding benchmarks

@@ -51,44 +51,6 @@ std::pair< algebra::FrScalar, algebra::G2Point > Bls::KeyGeneration() {
     return std::make_pair( secret_key, public_key );
 }
 
-// TODO move out to backends/libff/utils
-algebra::G1Point Bls::Hashing(
-    const std::string& message, std::string ( *hash_func )( const std::string& str ) ) {
-    CHECK( hash_func );
-
-    std::string sha256hex = hash_func( message );
-
-    boost::multiprecision::uint256_t num = 0;
-    boost::multiprecision::uint256_t pow = 1;
-    for ( auto sym : sha256hex ) {
-        // converting from hex to bigint
-        num += ( ( sym >= 'a' ) * 10 + static_cast< int >( ( sym - 'a' ) ) ) * pow;
-        pow *= 16;
-    }
-
-    std::string s = num.convert_to< std::string >();
-
-    const algebra::G1Point hash =
-        algebra::FrScalar::fromString( s, Base::DEC ) * algebra::G1Point::generator();
-
-    return hash;
-}
-
-
-algebra::G1Point Bls::HashBytes(
-    const char* raw_bytes, size_t length, std::string ( *hash_func )( const std::string& str ) ) {
-    CHECK( raw_bytes );
-    CHECK( hash_func );
-
-    CHECK( raw_bytes );
-
-    std::string from_bytes( raw_bytes, length );
-
-    algebra::G1Point hash = Hashing( from_bytes, *hash_func );
-
-    return hash;
-}
-
 algebra::G1Point Bls::HashPublicKeyToG1( const algebra::G2Point& elem ) {
     auto serialized_elem_vector = elem.toStringArray( Base::HEXA );
 
@@ -184,21 +146,7 @@ bool Bls::FastAggregateVerify( const std::vector< algebra::G2Point >& public_key
     return CoreVerify( sum, message, signature );
 }
 
-bool Bls::Verification( const std::string& to_be_hashed, const algebra::G1Point& sign,
-    const algebra::G2Point& public_key ) {
-    // verifies that a given signature corresponds to given public key
-
-    sign.validate();
-    public_key.validate();
-
-    algebra::G1Point hash = Hashing( to_be_hashed );
-
-    return ( algebra::pairing( sign, algebra::G2Point::generator() ) ==
-             algebra::pairing( hash, public_key ) );
-    // there are several types of pairing, it does not matter which one is chosen for verification
-}
-
-bool Bls::Verification( const std::array< uint8_t, 32 >& hash_byte_arr,
+bool Bls::Verify( const std::array< uint8_t, 32 >& hash_byte_arr,
     const algebra::G1Point& sign, const algebra::G2Point& public_key ) {
     // verifies that a given signature corresponds to given public key
 
@@ -212,12 +160,9 @@ bool Bls::Verification( const std::array< uint8_t, 32 >& hash_byte_arr,
     // there are several types of pairing, it does not matter which one is chosen for verification
 }
 
-bool Bls::AggregatedVerification(
-    const std::vector< std::shared_ptr< std::array< uint8_t, 32 > > >& hash_byte_arr,
+bool Bls::AggregateVerify(
+    const std::vector< std::array< uint8_t, 32 > >& hash_byte_arr,
     const std::vector< algebra::G1Point >& sign, const algebra::G2Point& public_key ) {
-    for ( auto& hash : hash_byte_arr ) {
-        CHECK( hash );
-    }
 
     for ( auto& sig : sign ) {
         sig.validate();
@@ -226,8 +171,8 @@ bool Bls::AggregatedVerification(
     public_key.validate();
 
     algebra::G1Point aggregated_hash = algebra::G1Point::identity();
-    for ( const std::shared_ptr< std::array< uint8_t, 32 > >& hash : hash_byte_arr ) {
-        aggregated_hash = aggregated_hash + algebra::G1Point::fromHash( *hash );
+    for ( const std::array< uint8_t, 32 >& hash : hash_byte_arr ) {
+        aggregated_hash = aggregated_hash + algebra::G1Point::fromHash( hash );
     }
 
     algebra::G1Point aggregated_sig = algebra::G1Point::identity();

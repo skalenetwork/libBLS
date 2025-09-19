@@ -8,7 +8,7 @@ namespace libBLS::algebra {
 /// This is common logic for all algebraic types.
 /// @tparam BackendType - concrete backend type to be held by the wrappers
 /// @tparam Wrapper - Wrapper class - needed for the one() and zero() methods
-template < typename BackendType, typename Wrapper >
+template < typename BackendType >
 class WrapperCore {
 protected:
     BackendType value;

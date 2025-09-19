@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.5)
 project(libbls_te_bench CXX)
 
 message("Building threshold encryption benchmarks")
@@ -45,14 +45,9 @@ function(add_bench name main_source)
       $<$<CONFIG:Debug>:-O0 -g>
     )
   endif()
-  apply_sanitizers(${name})
 
   add_test(NAME ${name} COMMAND ${name})
 endfunction()
-
-# apply_sanitizers(bls)
-# apply_sanitizers(te)
-# apply_sanitizers(backend)
 
 ######### Add Benchmarks #########
 

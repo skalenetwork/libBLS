@@ -65,9 +65,7 @@ BOOST_AUTO_TEST_CASE( zeroSecretKey ) {
 
     libBLS::Bls obj = libBLS::Bls( 1, 1 );
 
-    std::string message = rand32HexStr();
-
-    libBLS::algebra::G1Point hash = obj.Hashing( message );
+    libBLS::algebra::G1Point hash = libBLS::algebra::G1Point::random();
 
     BOOST_REQUIRE_THROW( obj.Signing( hash, secret_key ), libBLS::ThresholdUtils::ZeroSecretKey );
 
@@ -84,9 +82,9 @@ BOOST_AUTO_TEST_CASE( singleBlsrun ) {
     libBLS::algebra::FrScalar secret_key = keys.first;
     libBLS::algebra::G2Point public_key = keys.second;
 
-    std::string message = rand32HexStr();
+    auto message = randomByteArray<32>();
 
-    libBLS::algebra::G1Point hash = obj.Hashing( message );
+    libBLS::algebra::G1Point hash = libBLS::algebra::G1Point::fromHash( message );
 
     BOOST_CHECK( hash.isWellFormed() );  // is hash belongs to group G1
 
@@ -94,19 +92,7 @@ BOOST_AUTO_TEST_CASE( singleBlsrun ) {
 
     BOOST_CHECK( signature.isWellFormed() );  // is signature belongs to group G1
 
-    BOOST_REQUIRE( obj.Verification( message, signature, public_key ) );
-
-    std::cout << "DONE\n";
-}
-
-BOOST_AUTO_TEST_CASE( SimillarHashes ) {
-    std::cout << "Testing SimillarHashes\n";
-
-    libBLS::Bls obj = libBLS::Bls( 1, 1 );
-
-    const char message[5] = { 104, 101, 108, 108, 111 };
-
-    BOOST_REQUIRE( obj.HashBytes( message, 5 ) == obj.Hashing( "hello" ) );
+    BOOST_REQUIRE( obj.Verify( message, signature, public_key ) );
 
     std::cout << "DONE\n";
 }
@@ -147,9 +133,9 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignatures ) {
     libBLS::algebra::G2Point public_key =
         libBLS::algebra::G2Point( first_coord, second_coord, libBLS::algebra::Fq2Element::one() );
 
-    std::string message = rand32HexStr();
+    auto message = randomByteArray<32>();
 
-    libBLS::algebra::G1Point hash = obj.Hashing( message );
+    libBLS::algebra::G1Point hash = libBLS::algebra::G1Point::fromHash( message );
 
     BOOST_CHECK( hash.isWellFormed() );  // hash belongs to group G1
 
@@ -172,7 +158,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignatures ) {
     libBLS::algebra::G1Point common_signature =
         obj.SignatureRecover( single_signatures, lagrange_coeffs );
 
-    BOOST_REQUIRE( obj.Verification( message, common_signature, common_public ) );
+    BOOST_REQUIRE( obj.Verify( message, common_signature, common_public ) );
 
     std::cout << "DONE\n";
 }
@@ -215,9 +201,9 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesFalse ) {
     libBLS::algebra::G2Point public_key =
         libBLS::algebra::G2Point( first_coord, second_coord, libBLS::algebra::Fq2Element::one() );
 
-    std::string message = rand32HexStr();
+    auto message = randomByteArray<32>();
 
-    libBLS::algebra::G1Point hash = obj.Hashing( message );
+    libBLS::algebra::G1Point hash = libBLS::algebra::G1Point::fromHash( message );
 
     BOOST_CHECK( hash.isWellFormed() );  // hash belongs to group G1
 
@@ -234,7 +220,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesFalse ) {
     libBLS::algebra::G1Point common_signature =
         obj.SignatureRecover( single_signatures, lagrange_coeffs );
 
-    BOOST_REQUIRE( obj.Verification( message, common_signature, public_key ) == false );
+    BOOST_REQUIRE( obj.Verify( message, common_signature, public_key ) == false );
 
     std::cout << "DONE\n";
 }
@@ -268,9 +254,9 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesReal ) {
         }
     }
 
-    std::string message = rand32HexStr();
+    auto message = randomByteArray<32>();
 
-    libBLS::algebra::G1Point hash = obj.Hashing( message );
+    libBLS::algebra::G1Point hash = libBLS::algebra::G1Point::fromHash( message );
 
     BOOST_CHECK( hash.isWellFormed() );  // hash belongs to group G1
 
@@ -301,7 +287,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesReal ) {
 
     BOOST_CHECK( common_signature == obj.Signing( hash, common_secret ) );
 
-    BOOST_REQUIRE( obj.Verification( message, common_signature, common_public ) );
+    BOOST_REQUIRE( obj.Verify( message, common_signature, common_public ) );
 
     std::cout << "DONE\n";
 }
@@ -335,9 +321,9 @@ BOOST_AUTO_TEST_CASE( simillarSignatures ) {
         }
     }
 
-    std::string message = rand32HexStr();
+    auto message = randomByteArray<32>();
 
-    libBLS::algebra::G1Point hash = obj.Hashing( message );
+    libBLS::algebra::G1Point hash = libBLS::algebra::G1Point::fromHash( message );
 
     BOOST_CHECK( hash.isWellFormed() );  // hash belongs to group G1
 
@@ -472,7 +458,7 @@ j);
     libBLS::algebra::G1Point common_signature = obj.SignatureRecover(single_signatures,
 lagrange_coeffs);
 
-    BOOST_REQUIRE(obj.Verification(message, common_signature, common_public));
+    BOOST_REQUIRE(obj.Verify(message, common_signature, common_public));
   }
 }*/
 
@@ -530,8 +516,9 @@ BOOST_AUTO_TEST_CASE( SignVerification ) {
         libBLS::algebra::FqElement::fromString( "234", libBLS::Base::DEC ),
         libBLS::algebra::FqElement::fromString( "345", libBLS::Base::DEC ) );
 
+    auto rndMsg = randomByteArray<32>();
     BOOST_REQUIRE_THROW(
-        obj.Verification( "bla-bla-bla", sign, libBLS::algebra::G2Point::random() ),
+        obj.Verify( rndMsg, sign, libBLS::algebra::G2Point::random() ),
         libBLS::ThresholdUtils::IsNotWellFormed );
 
     libBLS::algebra::G2Point pkey = libBLS::algebra::G2Point::random();
@@ -540,7 +527,7 @@ BOOST_AUTO_TEST_CASE( SignVerification ) {
 
     const libBLS::algebra::FqElement el( pkey.getXRef().getC0Ref().asBackendRef() );
     BOOST_REQUIRE_THROW(
-        obj.Verification( "bla-bla-bla", libBLS::algebra::G1Point::random(), pkey ),
+        obj.Verify( rndMsg, libBLS::algebra::G1Point::random(), pkey ),
         libBLS::ThresholdUtils::IsNotWellFormed );
 
     std::vector< libBLS::algebra::FrScalar > coeffs;
