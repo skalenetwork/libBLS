@@ -137,45 +137,33 @@ std::vector< libBLS::algebra::G2Point > SpoilVerifVector(
     std::vector< libBLS::algebra::G2Point > bad_verif_vect = verif_vect;
     switch ( bad_coord_num ) {
     case 0: {
-        libBLS::algebra::FqRefWrapper ref_to_elem(
-            bad_verif_vect.at( elem_to_spoil ).getXRef().getC0Ref() );
-        ref_to_elem.asBackendRef() =
-            libBLS::algebra::FqElementTestAccessor::spoil( ref_to_elem.asBackendRef() );
+        auto p = bad_verif_vect.at( elem_to_spoil );
+        p.setXC0( libBLS::algebra::FqElementTestAccessor::spoil( p.getXC0() ) );
         break;
     }
     case 1: {
-        libBLS::algebra::FqRefWrapper ref_to_elem(
-            bad_verif_vect.at( elem_to_spoil ).getXRef().getC1Ref() );
-        ref_to_elem.asBackendRef() =
-            libBLS::algebra::FqElementTestAccessor::spoil( ref_to_elem.asBackendRef() );
+        auto p = bad_verif_vect.at( elem_to_spoil );
+        p.setXC1( libBLS::algebra::FqElementTestAccessor::spoil( p.getXC1() ) );
         break;
     }
     case 2: {
-        libBLS::algebra::FqRefWrapper ref_to_elem(
-            bad_verif_vect.at( elem_to_spoil ).getYRef().getC0Ref() );
-        ref_to_elem.asBackendRef() =
-            libBLS::algebra::FqElementTestAccessor::spoil( ref_to_elem.asBackendRef() );
+        auto p = bad_verif_vect.at( elem_to_spoil );
+        p.setYC0( libBLS::algebra::FqElementTestAccessor::spoil( p.getYC0() ) );
         break;
     }
     case 3: {
-        libBLS::algebra::FqRefWrapper ref_to_elem(
-            bad_verif_vect.at( elem_to_spoil ).getYRef().getC1Ref() );
-        ref_to_elem.asBackendRef() =
-            libBLS::algebra::FqElementTestAccessor::spoil( ref_to_elem.asBackendRef() );
+        auto p = bad_verif_vect.at( elem_to_spoil );
+        p.setYC1( libBLS::algebra::FqElementTestAccessor::spoil( p.getYC1() ) );
         break;
     }
     case 4: {
-        libBLS::algebra::FqRefWrapper ref_to_elem(
-            bad_verif_vect.at( elem_to_spoil ).getZRef().getC0Ref() );
-        ref_to_elem.asBackendRef() =
-            libBLS::algebra::FqElementTestAccessor::spoil( ref_to_elem.asBackendRef() );
+        auto p = bad_verif_vect.at( elem_to_spoil );
+        p.setZC0( libBLS::algebra::FqElementTestAccessor::spoil( p.getZC0() ) );
         break;
     }
     case 5: {
-        libBLS::algebra::FqRefWrapper ref_to_elem(
-            bad_verif_vect.at( elem_to_spoil ).getZRef().getC1Ref() );
-        ref_to_elem.asBackendRef() =
-            libBLS::algebra::FqElementTestAccessor::spoil( ref_to_elem.asBackendRef() );
+        auto p = bad_verif_vect.at( elem_to_spoil );
+        p.setZC1( libBLS::algebra::FqElementTestAccessor::spoil( p.getZC1() ) );
         break;
     }
     }

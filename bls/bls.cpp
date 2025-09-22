@@ -146,8 +146,8 @@ bool Bls::FastAggregateVerify( const std::vector< algebra::G2Point >& public_key
     return CoreVerify( sum, message, signature );
 }
 
-bool Bls::Verify( const std::array< uint8_t, 32 >& hash_byte_arr,
-    const algebra::G1Point& sign, const algebra::G2Point& public_key ) {
+bool Bls::Verify( const std::array< uint8_t, 32 >& hash_byte_arr, const algebra::G1Point& sign,
+    const algebra::G2Point& public_key ) {
     // verifies that a given signature corresponds to given public key
 
     sign.validate();
@@ -160,10 +160,8 @@ bool Bls::Verify( const std::array< uint8_t, 32 >& hash_byte_arr,
     // there are several types of pairing, it does not matter which one is chosen for verification
 }
 
-bool Bls::AggregateVerify(
-    const std::vector< std::array< uint8_t, 32 > >& hash_byte_arr,
+bool Bls::AggregateVerify( const std::vector< std::array< uint8_t, 32 > >& hash_byte_arr,
     const std::vector< algebra::G1Point >& sign, const algebra::G2Point& public_key ) {
-
     for ( auto& sig : sign ) {
         sig.validate();
     }

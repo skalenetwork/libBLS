@@ -46,10 +46,8 @@ BLSSignature::BLSSignature( const algebra::G1Point& sig, const std::string& _hin
     }
 }
 
-BLSSignature::BLSSignature(
-    const std::string& _sig, size_t _requiredSigners, size_t _totalSigners )
+BLSSignature::BLSSignature( const std::string& _sig, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-
     libBLS::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
 
     if ( _sig.size() < 10 ) {
@@ -77,8 +75,7 @@ BLSSignature::BLSSignature(
         }
     }
 
-    sig = algebra::G1Point(
-        algebra::FqElement::fromString( result->at( 0 ), Base::DEC ),
+    sig = algebra::G1Point( algebra::FqElement::fromString( result->at( 0 ), Base::DEC ),
         algebra::FqElement::fromString( result->at( 1 ), Base::DEC ) );
     hint = result->at( 2 ) + ":" + result->at( 3 );
 

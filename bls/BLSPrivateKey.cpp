@@ -43,11 +43,9 @@ BLSPrivateKey::BLSPrivateKey(
     }
 }
 
-BLSPrivateKey::BLSPrivateKey(
-    const std::vector< BLSPrivateKeyShare >& skeys,
+BLSPrivateKey::BLSPrivateKey( const std::vector< BLSPrivateKeyShare >& skeys,
     const std::vector< size_t >& koefs, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     auto lagrange_koefs = algebra::lagrangeCoeffs( koefs, this->requiredSigners );

@@ -46,18 +46,14 @@ public:
     // default value set to 0 for compatibility
     BLSPublicKey( const algebra::G2Point& skey, size_t t = 0, size_t n = 0 );
 
-    BLSPublicKey(
-        const std::map< size_t, BLSPublicKeyShare >& map_pkeys_koefs,
+    BLSPublicKey( const std::map< size_t, BLSPublicKeyShare >& map_pkeys_koefs,
         size_t _requiredSigners, size_t _totalSigners );
 
-    bool VerifySig( const std::array< uint8_t, 32 >& hash,
-        const BLSSignature& sign );
+    bool VerifySig( const std::array< uint8_t, 32 >& hash, const BLSSignature& sign );
 
-    bool VerifySigWithHelper( const std::array< uint8_t, 32 >& hash,
-        const BLSSignature& sign );
+    bool VerifySigWithHelper( const std::array< uint8_t, 32 >& hash, const BLSSignature& sign );
 
-    bool AggregatedVerifySig(
-        std::vector< std::array< uint8_t, 32 > >& hash_ptr_vec,
+    bool AggregatedVerifySig( std::vector< std::array< uint8_t, 32 > >& hash_ptr_vec,
         std::vector< BLSSignature >& sign_ptr_vec );
 
     std::vector< std::string > toString();

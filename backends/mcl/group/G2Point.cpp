@@ -3,7 +3,7 @@
 #include "backends/interface/group/G2Point.hpp"
 #include "../utils.hpp"
 #include "backends/algebra_types.hpp"
-#include "backends/interface/field/FqElement.hpp"
+#include "backends/interface/field/Fq2Element.hpp"
 #include "backends/interface/field/FrScalar.hpp"
 #include <iostream>
 
@@ -24,7 +24,7 @@ G2Point::G2Point( const Fq2Element& x, const Fq2Element& y, const Fq2Element& z 
 }
 
 template <>
-const G2BackendType& Group< G2BackendType, G2Point, Fq2RefWrapper >::identityBackend() {
+const G2BackendType& Group< G2BackendType, G2Point, Fq2Element >::identityBackend() {
     static const G2BackendType identity = [] {
         G2BackendType t;
         t.clear();
@@ -34,7 +34,7 @@ const G2BackendType& Group< G2BackendType, G2Point, Fq2RefWrapper >::identityBac
 }
 
 template <>
-const G2BackendType& Group< G2BackendType, G2Point, Fq2RefWrapper >::generatorBackend() {
+const G2BackendType& Group< G2BackendType, G2Point, Fq2Element >::generatorBackend() {
     static const G2BackendType one = [] {
         G2BackendType one;
         one.clear();
@@ -52,51 +52,107 @@ const G2BackendType& Group< G2BackendType, G2Point, Fq2RefWrapper >::generatorBa
 }
 
 template <>
-bool Group< G2BackendType, G2Point, Fq2RefWrapper >::isIdentity() const {
+bool Group< G2BackendType, G2Point, Fq2Element >::isIdentity() const {
     return value.isZero();
 }
 
 template <>
-bool Group< G2BackendType, G2Point, Fq2RefWrapper >::isGenerator() const {
+bool Group< G2BackendType, G2Point, Fq2Element >::isGenerator() const {
     return value == generatorBackend();
 }
 
 template <>
-void Group< G2BackendType, G2Point, Fq2RefWrapper >::toAffineCoordinates() {
+void Group< G2BackendType, G2Point, Fq2Element >::toAffineCoordinates() {
     value.normalize();
 }
 
+// ------------------- Getters ------------------- //
+
 template <>
-Fq2RefWrapper Group< G2BackendType, G2Point, Fq2RefWrapper >::getXRef() {
-    return Fq2RefWrapper( value.x );
+Fq2Element Group< G2BackendType, G2Point, Fq2Element >::getX() const {
+    return Fq2Element( value.x );
+}
+template <>
+Fq2Element Group< G2BackendType, G2Point, Fq2Element >::getY() const {
+    return Fq2Element( value.y );
+}
+template <>
+Fq2Element Group< G2BackendType, G2Point, Fq2Element >::getZ() const {
+    return Fq2Element( value.z );
+}
+
+// ------------------- Setters ------------------- //
+
+template <>
+void Group< G2BackendType, G2Point, Fq2Element >::setX( const Fq2Element& x ) {
+    value.x = x.asBackendType();
 }
 
 template <>
-Fq2RefWrapper Group< G2BackendType, G2Point, Fq2RefWrapper >::getYRef() {
-    return Fq2RefWrapper( value.y );
+void Group< G2BackendType, G2Point, Fq2Element >::setY( const Fq2Element& y ) {
+    value.y = y.asBackendType();
 }
 
 template <>
-Fq2RefWrapper Group< G2BackendType, G2Point, Fq2RefWrapper >::getZRef() {
-    return Fq2RefWrapper( value.z );
+void Group< G2BackendType, G2Point, Fq2Element >::setZ( const Fq2Element& z ) {
+    value.z = z.asBackendType();
+}
+
+FqElement G2Point::getXC0() const {
+    return FqElement( value.x.a );
+}
+FqElement G2Point::getXC1() const {
+    return FqElement( value.x.b );
+}
+FqElement G2Point::getYC0() const {
+    return FqElement( value.y.a );
+}
+FqElement G2Point::getYC1() const {
+    return FqElement( value.y.b );
+}
+FqElement G2Point::getZC0() const {
+    return FqElement( value.z.a );
+}
+FqElement G2Point::getZC1() const {
+    return FqElement( value.z.b );
+}
+
+
+void G2Point::setXC0( const FqElement& x ) {
+    value.x.a = x.asBackendType();
+}
+void G2Point::setXC1( const FqElement& x ) {
+    value.x.b = x.asBackendType();
+}
+void G2Point::setYC0( const FqElement& y ) {
+    value.y.a = y.asBackendType();
+}
+void G2Point::setYC1( const FqElement& y ) {
+    value.y.b = y.asBackendType();
+}
+void G2Point::setZC0( const FqElement& z ) {
+    value.z.a = z.asBackendType();
+}
+void G2Point::setZC1( const FqElement& z ) {
+    value.z.b = z.asBackendType();
 }
 
 // -------------------- Validation Methods -------------------- //
 
 template <>
-bool Group< G2BackendType, G2Point, Fq2RefWrapper >::isWellFormed() const {
+bool Group< G2BackendType, G2Point, Fq2Element >::isWellFormed() const {
     return value.isValid();
 }
 
 template <>
-bool Group< G2BackendType, G2Point, Fq2RefWrapper >::isInGroup() const {
+bool Group< G2BackendType, G2Point, Fq2Element >::isInGroup() const {
     return value.isValidOrder();
 }
 
 // -------------------- Static Methods -------------------- //
 
 template <>
-G2Point Group< G2BackendType, G2Point, Fq2RefWrapper >::random() {
+G2Point Group< G2BackendType, G2Point, Fq2Element >::random() {
     FrBackendType r;
     r.setByCSPRNG();
     const G2BackendType& G = generatorBackend();

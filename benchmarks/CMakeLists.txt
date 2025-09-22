@@ -31,21 +31,7 @@ function(add_bench name main_source)
     bls
     backend
   )
-
-  if (MSVC)
-    target_compile_options(${name} PRIVATE
-      $<$<CONFIG:Release>:/O2 /DNDEBUG>
-      $<$<CONFIG:RelWithDebInfo>:/O2 /Zi>
-      $<$<CONFIG:Debug>:/Od /Zi>
-    )
-  else()
-    target_compile_options(${name} PRIVATE
-      $<$<CONFIG:Release>:-O3 -DNDEBUG>
-      $<$<CONFIG:RelWithDebInfo>:-O2 -g>
-      $<$<CONFIG:Debug>:-O0 -g>
-    )
-  endif()
-
+  
   add_test(NAME ${name} COMMAND ${name})
 endfunction()
 

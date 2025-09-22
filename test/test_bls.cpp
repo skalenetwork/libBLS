@@ -65,16 +65,13 @@ G1Point SpoilSignature( G1Point& sign ) {
         size_t bad_coord_num = rand_gen() % 3;
         switch ( bad_coord_num ) {
         case 0:
-            bad_sign.getXRef().asBackendRef() =
-                FqElementTestAccessor::spoil( sign.getXRef().asBackendRef() );
+            bad_sign.setX( FqElementTestAccessor::spoil( sign.getX() ) );
             break;
         case 1:
-            bad_sign.getYRef().asBackendRef() =
-                FqElementTestAccessor::spoil( sign.getYRef().asBackendRef() );
+            bad_sign.setY( FqElementTestAccessor::spoil( sign.getY() ) );
             break;
         case 2:
-            bad_sign.getZRef().asBackendRef() =
-                FqElementTestAccessor::spoil( sign.getZRef().asBackendRef() );
+            bad_sign.setZ( FqElementTestAccessor::spoil( sign.getZ() ) );
             break;
         }
     }
@@ -87,28 +84,22 @@ G2Point SpoilPublicKey( G2Point& elem ) {
         size_t bad_coord_num = rand_gen() % 6;
         switch ( bad_coord_num ) {
         case 0:
-            bad_elem.getXRef().getC0Ref().asBackendRef() =
-                FqElementTestAccessor::spoil( elem.getXRef().getC0Ref().asBackendRef() );
+            bad_elem.setXC0( FqElementTestAccessor::spoil( elem.getXC0() ) );
             break;
         case 1:
-            bad_elem.getXRef().getC1Ref().asBackendRef() =
-                FqElementTestAccessor::spoil( elem.getXRef().getC1Ref().asBackendRef() );
+            bad_elem.setXC1( FqElementTestAccessor::spoil( elem.getXC1() ) );
             break;
         case 2:
-            bad_elem.getYRef().getC0Ref().asBackendRef() =
-                FqElementTestAccessor::spoil( elem.getYRef().getC0Ref().asBackendRef() );
+            bad_elem.setYC0( FqElementTestAccessor::spoil( elem.getYC0() ) );
             break;
         case 3:
-            bad_elem.getYRef().getC1Ref().asBackendRef() =
-                FqElementTestAccessor::spoil( elem.getYRef().getC1Ref().asBackendRef() );
+            bad_elem.setYC1( FqElementTestAccessor::spoil( elem.getYC1() ) );
             break;
         case 4:
-            bad_elem.getZRef().getC0Ref().asBackendRef() =
-                FqElementTestAccessor::spoil( elem.getZRef().getC0Ref().asBackendRef() );
+            bad_elem.setZC0( FqElementTestAccessor::spoil( elem.getZC0() ) );
             break;
         case 5:
-            bad_elem.getZRef().getC1Ref().asBackendRef() =
-                FqElementTestAccessor::spoil( elem.getZRef().getC1Ref().asBackendRef() );
+            bad_elem.setZC1( FqElementTestAccessor::spoil( elem.getZC1() ) );
             break;
         }
     }
@@ -187,9 +178,8 @@ BOOST_AUTO_TEST_CASE( libBls ) {
                 obj.Verify( *hash_ptr, SpoilSignature( signature ), recovered_keys.second ),
                 libBLS::ThresholdUtils::IsNotWellFormed );
 
-            recovered_keys.second.getXRef().getC0Ref().asBackendRef() =
-                FqElementTestAccessor::spoil(
-                    recovered_keys.second.getXRef().getC0Ref().asBackendRef() );
+            recovered_keys.second.setXC0(
+                FqElementTestAccessor::spoil( recovered_keys.second.getXC0() ) );
             BOOST_REQUIRE_THROW( obj.Verify( *hash_ptr, signature, recovered_keys.second ),
                 libBLS::ThresholdUtils::IsNotWellFormed );
         }
@@ -221,18 +211,15 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
 
             for ( size_t i = 0; i < num_signed; ++i ) {
                 BLSPrivateKeyShare skey = Skeys.at( participants.at( i ) - 1 );
-                BLSSigShare sigShare =
-                    skey.sign( hash_ptr, participants.at( i ) );
+                BLSSigShare sigShare = skey.sign( hash_ptr, participants.at( i ) );
                 sigSet.addSigShare( sigShare );
             }
 
             for ( size_t i = 0; i < num_signed; ++i ) {
                 BLSPublicKeyShare pkey_share(
                     Skeys.at( participants.at( i ) - 1 ).getPrivateKey(), num_signed, num_all );
-                BLSSigShare sig_share =
-                    sigSet.getSigShareByIndex( participants.at( i ) );
-                BOOST_REQUIRE(
-                    pkey_share.VerifySig( hash_ptr, sig_share, num_signed, num_all ) );
+                BLSSigShare sig_share = sigSet.getSigShareByIndex( participants.at( i ) );
+                BOOST_REQUIRE( pkey_share.VerifySig( hash_ptr, sig_share, num_signed, num_all ) );
                 algebra::G1Point good_sig = sig_share.getSigShare();
                 algebra::G1Point bad_sig = SpoilSignature( good_sig );
                 std::string hint = sig_share.getHint();
@@ -246,8 +233,7 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
 
             BLSSignature common_sig_ptr = sigSet.merge();  // verifying signature
             std::vector< size_t > participants_vec( participants );
-            BLSPrivateKey common_skey( Skeys,
-                participants_vec, num_signed, num_all );
+            BLSPrivateKey common_skey( Skeys, participants_vec, num_signed, num_all );
             BLSPublicKey common_pkey( common_skey.getPrivateKey() );
             BOOST_REQUIRE( common_pkey.VerifySig( hash_ptr, common_sig_ptr ) );
             algebra::G1Point good_sig = common_sig_ptr.getSig();
@@ -255,8 +241,7 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
             std::string hint = common_sig_ptr.getHint();
             BLSSignature bad_sign( bad_sig, hint, num_signed, num_all );
 
-            BOOST_REQUIRE_THROW(
-                common_pkey.VerifySig( hash_ptr, BLSSignature( bad_sign ) ),
+            BOOST_REQUIRE_THROW( common_pkey.VerifySig( hash_ptr, BLSSignature( bad_sign ) ),
                 libBLS::ThresholdUtils::IsNotWellFormed );
 
             std::map< size_t, BLSPublicKeyShare > pkeys_map1;
@@ -266,7 +251,7 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
                 pkeys_map1.insert_or_assign( participants.at( i ), BLSPublicKeyShare( cur_pkey ) );
             }
 
-            auto map = std::map< size_t, BLSPublicKeyShare >(pkeys_map1 );
+            auto map = std::map< size_t, BLSPublicKeyShare >( pkeys_map1 );
             BLSPublicKey common_pkey1( map, num_signed, num_all );
 
             BOOST_REQUIRE( common_pkey1.getRequiredSigners() == num_signed );
@@ -286,8 +271,7 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
             }
 
             BLSPublicKey common_pkey2(
-                std::map< size_t, BLSPublicKeyShare>(pkeys_map2 ),
-                num_signed, num_all );
+                std::map< size_t, BLSPublicKeyShare >( pkeys_map2 ), num_signed, num_all );
 
             BOOST_REQUIRE( common_pkey2.VerifySig( hash_ptr, common_sig_ptr ) );
         }
@@ -322,10 +306,10 @@ BOOST_AUTO_TEST_CASE( libffObjsToString ) {
                 BLSPrivateKeyShare( skey_str_ptr, num_signed, num_all );
             BOOST_REQUIRE( skey_from_str.getPrivateKey() == skey.getPrivateKey() );
 
-            BLSSigShare sigShare =
-                skey.signWithHelper( hash_ptr, participants.at( i ) );
+            BLSSigShare sigShare = skey.signWithHelper( hash_ptr, participants.at( i ) );
             std::string sig_str_ptr = sigShare.toString();
-            BLSSigShare sigShare_from_str = BLSSigShare( sig_str_ptr, participants.at( i ), num_signed, num_all );
+            BLSSigShare sigShare_from_str =
+                BLSSigShare( sig_str_ptr, participants.at( i ), num_signed, num_all );
             BOOST_REQUIRE( sigShare.getSigShare() == sigShare_from_str.getSigShare() );
             BOOST_REQUIRE( sigShare.getHint() == sigShare_from_str.getHint() );
             BOOST_REQUIRE(
@@ -372,9 +356,7 @@ BOOST_AUTO_TEST_CASE( libffObjsToString ) {
         }
 
         BLSPublicKey common_pkey1(
-            std::map< size_t, BLSPublicKeyShare >(
-                pkeys_map ),
-            num_signed, num_all );
+            std::map< size_t, BLSPublicKeyShare >( pkeys_map ), num_signed, num_all );
         std::vector< std::string > common_pkey_str_vect1 = common_pkey.toString();
         BLSPublicKey common_pkey_from_str1( common_pkey_str_vect1 );
 
@@ -426,8 +408,7 @@ BOOST_AUTO_TEST_CASE( threshold_signs_equality ) {
             sigSet.addSigShare( sigShare );
 
             BLSPrivateKeyShare skey1 = Skeys.at( participants1->at( i ) - 1 );
-            BLSSigShare sigShare1 =
-                skey1.sign( hash_ptr, participants1->at( i ) );
+            BLSSigShare sigShare1 = skey1.sign( hash_ptr, participants1->at( i ) );
             sigSet1.addSigShare( sigShare1 );
         }
 
@@ -557,8 +538,7 @@ BOOST_AUTO_TEST_CASE( BLSWITHDKG ) {
         for ( size_t i = 0; i < num_signed; ++i ) {
             BLSPublicKeyShare pkey_share(
                 skeys.at( participants.at( i ) - 1 ).getPrivateKey(), num_signed, num_all );
-            BLSSigShare sig_share_ptr =
-                sigSet.getSigShareByIndex( participants.at( i ) );
+            BLSSigShare sig_share_ptr = sigSet.getSigShareByIndex( participants.at( i ) );
             BOOST_REQUIRE( pkey_share.VerifySig( hash_ptr, sig_share_ptr, num_signed, num_all ) );
         }
 
@@ -577,8 +557,7 @@ BOOST_AUTO_TEST_CASE( BLSWITHDKG ) {
         std::string common_secret_str = common_secret.toString( Base::DEC );
         BLSPrivateKey common_skey( common_secret_str, num_signed, num_all );
 
-        BLSPrivateKey common_skey2(
-            std::vector< BLSPrivateKeyShare >( ptr_skeys ),
+        BLSPrivateKey common_skey2( std::vector< BLSPrivateKeyShare >( ptr_skeys ),
             std::vector< size_t >( participants ), num_signed, num_all );
         BOOST_REQUIRE( common_skey.getPrivateKey() == common_skey2.getPrivateKey() );
         BOOST_REQUIRE( common_secret * algebra::G2Point::generator() == common_public );
@@ -594,9 +573,7 @@ BOOST_AUTO_TEST_CASE( BLSWITHDKG ) {
         }
 
         BLSPublicKey common_pkey1(
-            std::map< size_t, BLSPublicKeyShare >(
-                pkeys_map ),
-            num_signed, num_all );
+            std::map< size_t, BLSPublicKeyShare >( pkeys_map ), num_signed, num_all );
 
         BOOST_REQUIRE( common_pkey1.VerifySig( hash_ptr, common_sig_ptr ) );
     }
@@ -684,12 +661,10 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDVERIFICATIONONLY ) {
                 // simulate a malicious signer
                 if ( invalid_sig && ( j == malicious_signer ) ) {
                     std::array< uint8_t, 32 > bad_hash_ptr = GenerateRandHash();
-                    BLSSigShare sigShare =
-                        skey.sign( bad_hash_ptr, participants.at( j ) );
+                    BLSSigShare sigShare = skey.sign( bad_hash_ptr, participants.at( j ) );
                     sigSets.at( i ).addSigShare( sigShare );
                 } else {
-                    BLSSigShare sigShare =
-                        skey.sign( hash_ptrs.at( i ), participants.at( j ) );
+                    BLSSigShare sigShare = skey.sign( hash_ptrs.at( i ), participants.at( j ) );
                     sigSets.at( i ).addSigShare( sigShare );
                 }
             }
@@ -707,8 +682,7 @@ BOOST_AUTO_TEST_CASE( BLSAGGREGATEDVERIFICATIONONLY ) {
             ptr_skeys.push_back( BLSPrivateKeyShare( skeys.at( i ) ) );
         }
 
-        BLSPrivateKey common_skey(
-            std::vector< BLSPrivateKeyShare >( ptr_skeys ),
+        BLSPrivateKey common_skey( std::vector< BLSPrivateKeyShare >( ptr_skeys ),
             std::vector< size_t >( participants ), num_signed, num_all );
         BLSPublicKey common_pkey( common_skey.getPrivateKey() );
 
@@ -825,22 +799,19 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
         participants.at( i ) = i + 1;
 
     {
-        BOOST_REQUIRE_THROW(
-            BLSPrivateKey pkey( std::string( "" ), num_signed, num_all ),
+        BOOST_REQUIRE_THROW( BLSPrivateKey pkey( std::string( "" ), num_signed, num_all ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
-        BOOST_REQUIRE_THROW(
-            BLSPrivateKey skey( std::string( "0" ), num_signed, num_all ),
+        BOOST_REQUIRE_THROW( BLSPrivateKey skey( std::string( "0" ), num_signed, num_all ),
             libBLS::ThresholdUtils::ZeroSecretKey );
     }
 
     {
         BOOST_REQUIRE_THROW(
-            BLSPrivateKey skey(
-                BLSPrivateKeyShare::generateSampleKeys( num_signed, num_all ).first, {},
-                num_signed, num_all ),
+            BLSPrivateKey skey( BLSPrivateKeyShare::generateSampleKeys( num_signed, num_all ).first,
+                {}, num_signed, num_all ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
@@ -876,10 +847,8 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
             secret_keys[i] = BLSPrivateKeyShare( tmp, 11, 16 );
         }
 
-        BOOST_REQUIRE_THROW(
-            BLSPrivateKey skey(
-                std::vector< BLSPrivateKeyShare >( secret_keys ),
-                std::vector< size_t >( ids ), 11, 16 ),
+        BOOST_REQUIRE_THROW( BLSPrivateKey skey( std::vector< BLSPrivateKeyShare >( secret_keys ),
+                                 std::vector< size_t >( ids ), 11, 16 ),
             libBLS::ThresholdUtils::ZeroSecretKey );
     }
 
@@ -902,21 +871,18 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     {
         BLSPrivateKeyShare skey( algebra::FrScalar::random(), num_signed, num_all );
         BOOST_REQUIRE_THROW(
-            skey.sign( GenerateRandHash() , 0 ),
-            libBLS::ThresholdUtils::IncorrectInput );
+            skey.sign( GenerateRandHash(), 0 ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
         BLSPrivateKeyShare skey( algebra::FrScalar::random(), num_signed, num_all );
         BOOST_REQUIRE_THROW(
-            skey.signWithHelper( GenerateRandHash(), 0 ),
-            libBLS::ThresholdUtils::IncorrectInput );
+            skey.signWithHelper( GenerateRandHash(), 0 ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
         std::vector< std::string > coords = { "0", "0", "0", "0" };
-        BOOST_REQUIRE_THROW(
-            BLSPublicKey pkey( coords ), libBLS::ThresholdUtils::IsNotWellFormed );
+        BOOST_REQUIRE_THROW( BLSPublicKey pkey( coords ), libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
@@ -978,15 +944,13 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
     {
         std::string empty_hint = "";
         BOOST_REQUIRE_THROW(
-            BLSSignature( algebra::G1Point::random(),
-                empty_hint, num_signed, num_all ),
+            BLSSignature( algebra::G1Point::random(), empty_hint, num_signed, num_all ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
         std::string short_sig = "1:1:1:1";
-        BOOST_REQUIRE_THROW(
-            BLSSignature( short_sig, num_signed, num_all ),
+        BOOST_REQUIRE_THROW( BLSSignature( short_sig, num_signed, num_all ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
@@ -998,8 +962,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
                 if ( i == 99 && j != 2 )
                     long_sig += ":";
             }
-        BOOST_REQUIRE_THROW(
-            BLSSignature( long_sig, num_signed, num_all ),
+        BOOST_REQUIRE_THROW( BLSSignature( long_sig, num_signed, num_all ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
@@ -1012,8 +975,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
                     long_sig += ":";
             }
         BOOST_REQUIRE_THROW(
-            BLSSignature( long_sig, num_signed, num_all ),
-            libBLS::ThresholdUtils::IncorrectInput );
+            BLSSignature( long_sig, num_signed, num_all ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
@@ -1025,8 +987,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
                     long_sig += ":";
             }
 
-        BOOST_REQUIRE_THROW(
-            BLSSignature( long_sig, num_signed, num_all ),
+        BOOST_REQUIRE_THROW( BLSSignature( long_sig, num_signed, num_all ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
@@ -1040,46 +1001,40 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
             }
         long_sig[25] = 'a';
         BOOST_REQUIRE_THROW(
-            BLSSignature( long_sig, num_signed, num_all ),
-            libBLS::ThresholdUtils::IncorrectInput );
+            BLSSignature( long_sig, num_signed, num_all ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
         algebra::G1Point zero_sig = algebra::G1Point::identity();
         std::string hint = "123:1";
-        BOOST_REQUIRE_THROW( BLSSignature( zero_sig, hint,
-                                 num_signed, num_all ),
+        BOOST_REQUIRE_THROW( BLSSignature( zero_sig, hint, num_signed, num_all ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
         std::string empty_hint = "";
         BOOST_REQUIRE_THROW(
-            BLSSigShare( algebra::G1Point::random(),
-                empty_hint, 1, num_signed, num_all ),
+            BLSSigShare( algebra::G1Point::random(), empty_hint, 1, num_signed, num_all ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
         std::string hint = "123:1";
         BOOST_REQUIRE_THROW(
-            BLSSigShare( algebra::G1Point::identity(), hint,
-                1, num_signed, num_all ),
+            BLSSigShare( algebra::G1Point::identity(), hint, 1, num_signed, num_all ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
     {
         std::string hint = "123:1";
         BOOST_REQUIRE_THROW(
-            BLSSigShare( algebra::G1Point::random(), hint,
-                0, num_signed, num_all ),
+            BLSSigShare( algebra::G1Point::random(), hint, 0, num_signed, num_all ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
         std::string short_sig = "1:1:1:1";
-        BOOST_REQUIRE_THROW(
-            BLSSigShare( short_sig, 1, num_signed, num_all ),
+        BOOST_REQUIRE_THROW( BLSSigShare( short_sig, 1, num_signed, num_all ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
@@ -1092,8 +1047,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
                     long_sig += ":";
             }
         }
-        BOOST_REQUIRE_THROW(
-            BLSSigShare( long_sig, 1, num_signed, num_all ),
+        BOOST_REQUIRE_THROW( BLSSigShare( long_sig, 1, num_signed, num_all ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
@@ -1105,8 +1059,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
                 if ( i == 19 && j < 2 )
                     long_sig += ":";
             }
-        BOOST_REQUIRE_THROW(
-            BLSSigShare( long_sig, 1, num_signed, num_all ),
+        BOOST_REQUIRE_THROW( BLSSigShare( long_sig, 1, num_signed, num_all ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
@@ -1120,8 +1073,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
                 }
             }
 
-        BOOST_REQUIRE_THROW(
-            BLSSigShare( long_sig, 1, num_signed, num_all ),
+        BOOST_REQUIRE_THROW( BLSSigShare( long_sig, 1, num_signed, num_all ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 
@@ -1134,15 +1086,13 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
                     long_sig += ":";
             }
         long_sig[25] = 'a';
-        BOOST_REQUIRE_THROW(
-            BLSSigShare( long_sig, 1, num_signed, num_all ),
+        BOOST_REQUIRE_THROW( BLSSigShare( long_sig, 1, num_signed, num_all ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {
         std::string hint = "123:1";
-        BLSSigShare sigShare1( algebra::G1Point::random(),
-            hint, 1, num_signed, num_all );
+        BLSSigShare sigShare1( algebra::G1Point::random(), hint, 1, num_signed, num_all );
         BLSSigShare sigShare2 = sigShare1;
         BLSSigShareSet sig_set( num_signed, num_all );
         sig_set.addSigShare( BLSSigShare( sigShare1 ) );
@@ -1152,8 +1102,7 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
     {
         std::string hint = "123:1";
-        BLSSigShare sigShare1( algebra::G1Point::random(),
-            hint, 1, num_signed, num_all );
+        BLSSigShare sigShare1( algebra::G1Point::random(), hint, 1, num_signed, num_all );
         BLSSigShareSet sig_set( 1, 1 );
         sig_set.addSigShare( BLSSigShare( sigShare1 ) );
         sig_set.merge();
@@ -1168,7 +1117,8 @@ BOOST_AUTO_TEST_CASE( Exceptions ) {
 
     {
         BLSSigShareSet sig_set( num_signed, num_all );
-        BOOST_REQUIRE_THROW( sig_set.getSigShareByIndex( 1 ), libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW(
+            sig_set.getSigShareByIndex( 1 ), libBLS::ThresholdUtils::IncorrectInput );
     }
 
     {

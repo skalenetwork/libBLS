@@ -7,8 +7,8 @@ namespace libBLS::algebra {
 std::default_random_engine libBLS::algebra::FqElementTestAccessor::rand_gen(
     static_cast< unsigned int >( std::time( 0 ) ) );
 
-FqBackendType FqElementTestAccessor::spoil( FqBackendType& elem ) {
-    FqBackendType elem_copy = elem;
+FqElement FqElementTestAccessor::spoil( const FqElement& elem ) {
+    FqBackendType elem_copy = elem.asBackendType();
     for ( ;; ) {
         // Serialize to bytes (Fp is 256-bit on BN254; 32 bytes is enough)
         uint8_t buf[FqElement::SIZE_BYTES];
@@ -26,7 +26,7 @@ FqBackendType FqElementTestAccessor::spoil( FqBackendType& elem ) {
         }
 
         if ( !spoiled.isZero() )
-            return spoiled;
+            return FqElement( spoiled );
         elem_copy = spoiled;
     }
 }

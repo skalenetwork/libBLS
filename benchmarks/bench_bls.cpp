@@ -73,8 +73,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
         }();
 
         // create common private key from private keys of each participant
-        libBLS::BLSPrivateKey common_skey(
-            Skeys, participants, numSigned, numAll );
+        libBLS::BLSPrivateKey common_skey( Skeys, participants, numSigned, numAll );
 
         // create common public key from common private key
         libBLS::BLSPublicKey common_pkey( common_skey.getPrivateKey(), numSigned, numAll );

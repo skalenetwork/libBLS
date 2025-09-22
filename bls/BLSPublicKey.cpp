@@ -55,9 +55,7 @@ BLSPublicKey::BLSPublicKey( const algebra::FrScalar& skey, size_t t, size_t n ) 
     }
 }
 
-bool BLSPublicKey::VerifySig( const std::array< uint8_t, 32 >& hash,
-    const BLSSignature& sign ) {
-
+bool BLSPublicKey::VerifySig( const std::array< uint8_t, 32 >& hash, const BLSSignature& sign ) {
     if ( !sign.getSig().isValid() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Sig share is not valid" );
     }
@@ -66,9 +64,8 @@ bool BLSPublicKey::VerifySig( const std::array< uint8_t, 32 >& hash,
     return res;
 }
 
-bool BLSPublicKey::VerifySigWithHelper( const std::array< uint8_t, 32 >& hash,
-    const BLSSignature& sign ) {
-
+bool BLSPublicKey::VerifySigWithHelper(
+    const std::array< uint8_t, 32 >& hash, const BLSSignature& sign ) {
     if ( !sign.getSig().isValid() ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Sig share is not valid" );
     }
@@ -89,12 +86,11 @@ bool BLSPublicKey::VerifySigWithHelper( const std::array< uint8_t, 32 >& hash,
 
     algebra::G1Point hashG1( x, y_shift_x.first, algebra::FqElement::one() );
 
-    return algebra::verifyPairingEq( sign.getSig(), algebra::G2Point::generator(), hashG1,
-        publicKey );
+    return algebra::verifyPairingEq(
+        sign.getSig(), algebra::G2Point::generator(), hashG1, publicKey );
 }
 
-bool BLSPublicKey::AggregatedVerifySig(
-    std::vector< std::array< uint8_t, 32 > >& hash_ptr_vec,
+bool BLSPublicKey::AggregatedVerifySig( std::vector< std::array< uint8_t, 32 > >& hash_ptr_vec,
     std::vector< BLSSignature >& sign_ptr_vec ) {
     if ( hash_ptr_vec.size() != sign_ptr_vec.size() ) {
         throw libBLS::ThresholdUtils::IncorrectInput(
@@ -106,8 +102,7 @@ bool BLSPublicKey::AggregatedVerifySig(
 
     for ( auto& sign_ptr : sign_ptr_vec ) {
         if ( !sign_ptr.getSig().isValid() ) {
-            throw libBLS::ThresholdUtils::IsNotWellFormed(
-                "Sig share is not valid" );
+            throw libBLS::ThresholdUtils::IsNotWellFormed( "Sig share is not valid" );
         }
 
         libff_sig_vec.push_back( sign_ptr.getSig() );
@@ -117,8 +112,7 @@ bool BLSPublicKey::AggregatedVerifySig(
     return res;
 }
 
-BLSPublicKey::BLSPublicKey(
-    const std::map< size_t, BLSPublicKeyShare >& koefs_pkeys_map,
+BLSPublicKey::BLSPublicKey( const std::map< size_t, BLSPublicKeyShare >& koefs_pkeys_map,
     size_t _requiredSigners, size_t _totalSigners )
     : t( _requiredSigners ), n( _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );

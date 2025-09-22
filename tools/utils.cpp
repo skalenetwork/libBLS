@@ -124,7 +124,6 @@ bool ThresholdUtils::hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* 
 
 std::shared_ptr< std::vector< std::string > > ThresholdUtils::SplitString(
     const std::string& str, const std::string& delim ) {
-
     std::vector< std::string > tokens;
     size_t prev = 0, pos = 0;
     do {

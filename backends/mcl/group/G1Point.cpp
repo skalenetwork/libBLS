@@ -11,7 +11,7 @@ namespace libBLS {
 namespace algebra {
 
 template <>
-const G1BackendType& Group< G1BackendType, G1Point, FqRefWrapper >::identityBackend() {
+const G1BackendType& Group< G1BackendType, G1Point, FqElement >::identityBackend() {
     static const G1BackendType identity = [] {
         G1BackendType identity;
         identity.clear();
@@ -21,7 +21,7 @@ const G1BackendType& Group< G1BackendType, G1Point, FqRefWrapper >::identityBack
 }
 
 template <>
-const G1BackendType& Group< G1BackendType, G1Point, FqRefWrapper >::generatorBackend() {
+const G1BackendType& Group< G1BackendType, G1Point, FqElement >::generatorBackend() {
     static const G1BackendType generator = [] {
         G1BackendType generator;
         generator.clear();
@@ -52,56 +52,67 @@ G1Point::G1Point( const FqElement& x, const FqElement& y, const FqElement& z ) {
 }
 
 template <>
-bool Group< G1BackendType, G1Point, FqRefWrapper >::isIdentity() const {
+bool Group< G1BackendType, G1Point, FqElement >::isIdentity() const {
     return value.isZero();
 }
 
 template <>
-bool Group< G1BackendType, G1Point, FqRefWrapper >::isGenerator() const {
+bool Group< G1BackendType, G1Point, FqElement >::isGenerator() const {
     return value == generatorBackend();
 }
 
 template <>
-void Group< G1BackendType, G1Point, FqRefWrapper >::toAffineCoordinates() {
+void Group< G1BackendType, G1Point, FqElement >::toAffineCoordinates() {
     value.normalize();
 }
 
 template <>
-bool Group< G1BackendType, G1Point, FqRefWrapper >::isWellFormed() const {
+bool Group< G1BackendType, G1Point, FqElement >::isWellFormed() const {
     return value.isValid();
 }
 
 template <>
-bool Group< G1BackendType, G1Point, FqRefWrapper >::isInGroup() const {
+bool Group< G1BackendType, G1Point, FqElement >::isInGroup() const {
     return value.isValid() && value.isValidOrder();
 }
 
-FqElement G1Point::getX() const {
+// ------------------- Getters ------------------- //
+
+template <>
+FqElement Group< G1BackendType, G1Point, FqElement >::getX() const {
     return FqElement( value.x );
 }
-
-FqElement G1Point::getY() const {
+template <>
+FqElement Group< G1BackendType, G1Point, FqElement >::getY() const {
     return FqElement( value.y );
 }
+template <>
+FqElement Group< G1BackendType, G1Point, FqElement >::getZ() const {
+    return FqElement( value.z );
+}
+
+// ------------------- Setters ------------------- //
 
 template <>
-FqRefWrapper Group< G1BackendType, G1Point, FqRefWrapper >::getXRef() {
-    return FqRefWrapper( value.x );
+void Group< G1BackendType, G1Point, FqElement >::setX( const FqElement& x ) {
+    value.x = x.asBackendType();
 }
+
 template <>
-FqRefWrapper Group< G1BackendType, G1Point, FqRefWrapper >::getYRef() {
-    return FqRefWrapper( value.y );
+void Group< G1BackendType, G1Point, FqElement >::setY( const FqElement& y ) {
+    value.y = y.asBackendType();
 }
+
 template <>
-FqRefWrapper Group< G1BackendType, G1Point, FqRefWrapper >::getZRef() {
-    return FqRefWrapper( value.z );
+void Group< G1BackendType, G1Point, FqElement >::setZ( const FqElement& z ) {
+    value.z = z.asBackendType();
 }
 
 // --------------------- Static Methods -------------------- //
 
 
 template <>
-G1Point Group< G1BackendType, G1Point, FqRefWrapper >::random() {
+G1Point Group< G1BackendType, G1Point, FqElement >::random() {
     return randomGroupPoint< G1Point, GroupPoint::G1 >();
 }
 

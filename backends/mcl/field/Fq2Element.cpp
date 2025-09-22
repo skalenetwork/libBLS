@@ -55,13 +55,6 @@ Fq2Element::Fq2Element( const FqBackendType& a, const FqBackendType& b ) {
     value = Fq2BackendType( a, b );
 }
 
-FqRefWrapper Fq2RefWrapper::getC0Ref() {
-    return FqRefWrapper( ref_.a );
-}
-FqRefWrapper Fq2RefWrapper::getC1Ref() {
-    return FqRefWrapper( ref_.b );
-}
-
 
 }  // namespace libBLS::algebra
 

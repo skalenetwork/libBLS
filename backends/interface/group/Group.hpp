@@ -9,7 +9,7 @@ namespace libBLS::algebra {
 /// Declares both zero() and one() static methods.
 /// @tparam BackendType - concrete backend type to be held by the wrappers
 /// @tparam Wrapper - Wrapper class - needed for the one() and zero() methods
-template < typename BackendType, typename Wrapper, typename BackendRefWrapper >
+template < typename BackendType, typename Wrapper, typename CoordsType >
 class Group : public WrapperCore< BackendType > {
 protected:
     static const BackendType& generatorBackend();
@@ -23,9 +23,15 @@ public:
 
     // ------------------- Getters ------------------- //
 
-    BackendRefWrapper getXRef();
-    BackendRefWrapper getYRef();
-    BackendRefWrapper getZRef();
+    void setX( const CoordsType& x );
+    void setY( const CoordsType& y );
+    void setZ( const CoordsType& z );
+
+    // -------------------- Setters ------------------- //
+
+    CoordsType getX() const;
+    CoordsType getY() const;
+    CoordsType getZ() const;
 
     // -------------------- Validation Methods -------------------- //
 

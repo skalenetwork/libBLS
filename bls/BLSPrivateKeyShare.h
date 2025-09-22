@@ -43,8 +43,7 @@ public:
     BLSPrivateKeyShare() = default;
     BLSPrivateKeyShare( const std::string& _key, size_t _requiredSigners, size_t _totalSigners );
 
-    BLSSigShare sign(
-        const std::array< uint8_t, 32 >&, size_t _signerIndex );
+    BLSSigShare sign( const std::array< uint8_t, 32 >&, size_t _signerIndex );
 
     BLSSigShare signWithHelper(
         const std::array< uint8_t, 32 >& hash_byte_arr, size_t _signerIndex );
@@ -54,8 +53,8 @@ public:
     // generate a vector of correct _totalSigners private keys that work together and common public
     // key
 
-    static std::pair< std::vector< BLSPrivateKeyShare > , BLSPublicKey >
-    generateSampleKeys( size_t _requiredSigners, size_t _totalSigners );
+    static std::pair< std::vector< BLSPrivateKeyShare >, BLSPublicKey > generateSampleKeys(
+        size_t _requiredSigners, size_t _totalSigners );
 
     const algebra::FrScalar& getPrivateKey() const;
 

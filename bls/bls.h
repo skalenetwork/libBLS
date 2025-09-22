@@ -67,8 +67,7 @@ public:
     static bool Verify( const std::array< uint8_t, 32 >& hash_byte_arr,
         const algebra::G1Point& sign, const algebra::G2Point& public_key );
 
-    static bool AggregateVerify(
-        const std::vector< std::array< uint8_t, 32 > >& hash_byte_arr,
+    static bool AggregateVerify( const std::vector< std::array< uint8_t, 32 > >& hash_byte_arr,
         const std::vector< algebra::G1Point >& sign, const algebra::G2Point& public_key );
 
     std::pair< algebra::FrScalar, algebra::G2Point > KeysRecover(

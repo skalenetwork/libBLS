@@ -82,8 +82,7 @@ BLSSigShare::BLSSigShare( const std::string& _sigShare, size_t _signerIndex,
         }
     }
 
-    sigShare = algebra::G1Point(
-        algebra::FqElement::fromString( result->at( 0 ), Base::DEC ),
+    sigShare = algebra::G1Point( algebra::FqElement::fromString( result->at( 0 ), Base::DEC ),
         algebra::FqElement::fromString( result->at( 1 ), Base::DEC ) );
 
     hint = result->at( 2 ) + ":" + result->at( 3 );

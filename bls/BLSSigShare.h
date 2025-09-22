@@ -40,12 +40,12 @@ private:
     size_t totalSigners;
 
 public:
-    BLSSigShare( const algebra::G1Point& sigShare, std::string& hint,
-        size_t signerIndex, size_t _requiredSigners, size_t _totalSigners );
-
-
-    BLSSigShare( const std::string& _sigShare, size_t signerIndex,
+    BLSSigShare( const algebra::G1Point& sigShare, std::string& hint, size_t signerIndex,
         size_t _requiredSigners, size_t _totalSigners );
+
+
+    BLSSigShare( const std::string& _sigShare, size_t signerIndex, size_t _requiredSigners,
+        size_t _totalSigners );
 
     const algebra::G1Point& getSigShare() const;
 

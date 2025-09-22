@@ -91,8 +91,11 @@ endif()
 
 option(ENABLE_SANITIZERS "Enable ASan + LSan" OFF)
 if (ENABLE_SANITIZERS)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=leak -fno-omit-frame-pointer -g")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -fsanitize=leak")
+	message(STATUS "**********************")
+	message(STATUS "*** ENABLE_SANITIZERS is ON ***")
+	message(STATUS "**********************")
+	set(CMAKE_CXX_FLAGS "-fsanitize=address -fsanitize=leak -fno-omit-frame-pointer -g ${CMAKE_CXX_FLAGS}")
+	set(CMAKE_EXE_LINKER_FLAGS "-fsanitize=address -fsanitize=leak ${CMAKE_EXE_LINKER_FLAGS}")
 endif()
 
 
@@ -168,7 +171,7 @@ add_subdirectory(backends)
 
 # TMP fix for emscripten
 # Build utils exactly once
-add_library(common_utils STATIC tools/utils.cpp)
+add_library(common_utils STATIC tools/utils.cpp tools/utils.h)
 target_include_directories(common_utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(common_utils PRIVATE ${CRYPTOPP_LIBRARY} backend)
 

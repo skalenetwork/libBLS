@@ -53,12 +53,4 @@ inline std::ostream& operator<<( std::ostream& os, FqElement const& element ) {
     return os << element.toString( libBLS::Base::HEXA );
 }
 
-class FqRefWrapper {
-    FqBackendType& ref_;
-
-public:
-    explicit FqRefWrapper( FqBackendType& ref ) : ref_( ref ) {}
-    FqBackendType& asBackendRef() { return ref_; }
-};
-
 }  // namespace libBLS::algebra

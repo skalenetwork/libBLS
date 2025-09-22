@@ -22,7 +22,7 @@ constexpr size_t G1_NUM_COMPONENTS_AFFINE = 2;
 constexpr size_t G1_NUM_COMPONENTS_PROJECTIVE = 3;
 
 class G1Point
-    : public Group< G1BackendType, G1Point, FqRefWrapper >,
+    : public Group< G1BackendType, G1Point, FqElement >,
       public PointSerializer< G1Point, G1_NUM_COMPONENTS_AFFINE, G1_NUM_COMPONENTS_PROJECTIVE > {
 public:
     static constexpr size_t SIZE_BYTES = 64;
@@ -32,9 +32,6 @@ public:
     G1Point( const FqElement& x, const FqElement& y );
     G1Point( const FqElement& x, const FqElement& y, const FqElement& z );
     G1Point( const G1BackendType& v ) : Group( v ) {}
-
-    FqElement getX() const;
-    FqElement getY() const;
 
     // -------------------- Operator Overloads -------------------- //
 

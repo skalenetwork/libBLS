@@ -97,8 +97,8 @@ public:
     /**
      * @brief Validates a batch of decryption shares
      *
-     * @param _cipheredKeys Vector of encrypted AESKeys used to encrypt the message held by Ciphertext
-     * struct. Assumed to have been already validated via `validateEncryption` call.
+     * @param _cipheredKeys Vector of encrypted AESKeys used to encrypt the message held by
+     * Ciphertext struct. Assumed to have been already validated via `validateEncryption` call.
      * There should be only 1 `CipheredKey` per each N `TEDecryptionShare` and `TEPublicKeyShare`.
      * Meaning, if there are 5 `CipheredKeys`, there should be 5 * N `TEDecryptionShare` and
      * `TEPublicKeyShare` each.

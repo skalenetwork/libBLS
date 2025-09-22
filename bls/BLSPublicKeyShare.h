@@ -37,16 +37,16 @@ private:
     size_t totalSigners;
 
 public:
-    BLSPublicKeyShare( const std::vector< std::string >& vec, size_t _requiredSigners,
-        size_t _totalSigners );
+    BLSPublicKeyShare(
+        const std::vector< std::string >& vec, size_t _requiredSigners, size_t _totalSigners );
 
     BLSPublicKeyShare(
         const algebra::FrScalar& skey, size_t _requiredSigners, size_t _totalSigners );
 
     const algebra::G2Point& getPublicKey() const;
 
-    bool VerifySig( const std::array< uint8_t, 32 >& hash_ptr,
-        const BLSSigShare& sign_ptr, size_t _requiredSigners, size_t _totalSigners );
+    bool VerifySig( const std::array< uint8_t, 32 >& hash_ptr, const BLSSigShare& sign_ptr,
+        size_t _requiredSigners, size_t _totalSigners );
 
     bool VerifySigWithHelper( const std::array< uint8_t, 32 >& hash_ptr,
         const BLSSigShare& sign_ptr, size_t _requiredSigners, size_t _totalSigners );

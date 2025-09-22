@@ -11,6 +11,6 @@ class FqElementTestAccessor {
     static std::default_random_engine rand_gen;
 
 public:
-    static FqBackendType spoil( FqBackendType& elem );
+    static FqElement spoil( const FqElement& elem );
 };
 }  // namespace libBLS::algebra

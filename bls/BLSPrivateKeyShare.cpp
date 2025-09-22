@@ -58,7 +58,6 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(
 
 BLSSigShare BLSPrivateKeyShare::sign(
     const std::array< uint8_t, 32 >& hash_byte_arr, size_t _signerIndex ) {
-    
     if ( _signerIndex == 0 ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Zero signer index during BLS sign" );
     }
@@ -80,7 +79,6 @@ BLSSigShare BLSPrivateKeyShare::sign(
 
 BLSSigShare BLSPrivateKeyShare::signWithHelper(
     const std::array< uint8_t, 32 >& hash_byte_arr, size_t _signerIndex ) {
-
     if ( _signerIndex == 0 ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Zero signer index" );
     }
@@ -99,8 +97,8 @@ BLSSigShare BLSPrivateKeyShare::signWithHelper(
     return BLSSigShare( ss, hint, _signerIndex, requiredSigners, totalSigners );
 }
 
-std::pair< std::vector< BLSPrivateKeyShare >, BLSPublicKey >
-BLSPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSigners ) {
+std::pair< std::vector< BLSPrivateKeyShare >, BLSPublicKey > BLSPrivateKeyShare::generateSampleKeys(
+    size_t _requiredSigners, size_t _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
     std::vector< BLSPrivateKeyShare > skeys_shares;
@@ -110,8 +108,7 @@ BLSPrivateKeyShare::generateSampleKeys( size_t _requiredSigners, size_t _totalSi
     std::vector< algebra::FrScalar > skeys = dkg_obj.SecretKeyContribution( pol );
 
     algebra::FrScalar common_skey = pol.at( 0 );
-    BLSPublicKey pkey_ptr =
-        BLSPublicKey( common_skey, _requiredSigners, _totalSigners );
+    BLSPublicKey pkey_ptr = BLSPublicKey( common_skey, _requiredSigners, _totalSigners );
 
     for ( size_t i = 0; i < _totalSigners; ++i ) {
         std::string key_str = skeys.at( i ).toString( Base::DEC );

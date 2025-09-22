@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE( singleBlsrun ) {
     libBLS::algebra::FrScalar secret_key = keys.first;
     libBLS::algebra::G2Point public_key = keys.second;
 
-    auto message = randomByteArray<32>();
+    auto message = randomByteArray< 32 >();
 
     libBLS::algebra::G1Point hash = libBLS::algebra::G1Point::fromHash( message );
 
@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignatures ) {
     libBLS::algebra::G2Point public_key =
         libBLS::algebra::G2Point( first_coord, second_coord, libBLS::algebra::Fq2Element::one() );
 
-    auto message = randomByteArray<32>();
+    auto message = randomByteArray< 32 >();
 
     libBLS::algebra::G1Point hash = libBLS::algebra::G1Point::fromHash( message );
 
@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesFalse ) {
     libBLS::algebra::G2Point public_key =
         libBLS::algebra::G2Point( first_coord, second_coord, libBLS::algebra::Fq2Element::one() );
 
-    auto message = randomByteArray<32>();
+    auto message = randomByteArray< 32 >();
 
     libBLS::algebra::G1Point hash = libBLS::algebra::G1Point::fromHash( message );
 
@@ -254,7 +254,7 @@ BOOST_AUTO_TEST_CASE( BlsThresholdSignaturesReal ) {
         }
     }
 
-    auto message = randomByteArray<32>();
+    auto message = randomByteArray< 32 >();
 
     libBLS::algebra::G1Point hash = libBLS::algebra::G1Point::fromHash( message );
 
@@ -321,7 +321,7 @@ BOOST_AUTO_TEST_CASE( simillarSignatures ) {
         }
     }
 
-    auto message = randomByteArray<32>();
+    auto message = randomByteArray< 32 >();
 
     libBLS::algebra::G1Point hash = libBLS::algebra::G1Point::fromHash( message );
 
@@ -516,18 +516,14 @@ BOOST_AUTO_TEST_CASE( SignVerification ) {
         libBLS::algebra::FqElement::fromString( "234", libBLS::Base::DEC ),
         libBLS::algebra::FqElement::fromString( "345", libBLS::Base::DEC ) );
 
-    auto rndMsg = randomByteArray<32>();
-    BOOST_REQUIRE_THROW(
-        obj.Verify( rndMsg, sign, libBLS::algebra::G2Point::random() ),
+    auto rndMsg = randomByteArray< 32 >();
+    BOOST_REQUIRE_THROW( obj.Verify( rndMsg, sign, libBLS::algebra::G2Point::random() ),
         libBLS::ThresholdUtils::IsNotWellFormed );
 
     libBLS::algebra::G2Point pkey = libBLS::algebra::G2Point::random();
-    pkey.getXRef().getC0Ref().asBackendRef() =
-        libBLS::algebra::FqElement::fromString( "123", libBLS::Base::DEC ).asBackendType();
+    pkey.setXC0( libBLS::algebra::FqElement::fromString( "123", libBLS::Base::DEC ) );
 
-    const libBLS::algebra::FqElement el( pkey.getXRef().getC0Ref().asBackendRef() );
-    BOOST_REQUIRE_THROW(
-        obj.Verify( rndMsg, libBLS::algebra::G1Point::random(), pkey ),
+    BOOST_REQUIRE_THROW( obj.Verify( rndMsg, libBLS::algebra::G1Point::random(), pkey ),
         libBLS::ThresholdUtils::IsNotWellFormed );
 
     std::vector< libBLS::algebra::FrScalar > coeffs;
@@ -567,8 +563,7 @@ BOOST_AUTO_TEST_CASE( SignVerification ) {
 
     sig_shares.push_back( libBLS::algebra::G1Point::random() );
     libBLS::algebra::G1Point g1_spoiled = libBLS::algebra::G1Point::random();
-    g1_spoiled.getYRef().asBackendRef() =
-        libBLS::algebra::FqElement::fromString( "257", libBLS::Base::DEC ).asBackendType();
+    g1_spoiled.setY( libBLS::algebra::FqElement::fromString( "257", libBLS::Base::DEC ) );
     sig_shares.push_back( g1_spoiled );
 
     BOOST_REQUIRE_THROW(

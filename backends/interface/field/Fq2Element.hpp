@@ -17,16 +17,4 @@ public:
     Fq2Element( const FqBackendType& a, const FqBackendType& b );
 };
 
-class Fq2RefWrapper {
-    Fq2BackendType& ref_;
-
-public:
-    explicit Fq2RefWrapper( Fq2BackendType& ref ) : ref_( ref ) {}
-
-    FqRefWrapper getC0Ref();
-    FqRefWrapper getC1Ref();
-
-    Fq2BackendType& asBackendRef() { return ref_; }
-};
-
 }  // namespace libBLS::algebra

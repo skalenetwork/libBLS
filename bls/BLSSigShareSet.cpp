@@ -41,8 +41,8 @@ bool BLSSigShareSet::addSigShare( const BLSSigShare& _sigShare ) {
             "Already have this index:" + std::to_string( _sigShare.getSignerIndex() ) );
         return false;
     }
-    
-    sigShares.insert_or_assign(_sigShare.getSignerIndex(), _sigShare);
+
+    sigShares.insert_or_assign( _sigShare.getSignerIndex(), _sigShare );
 
     return true;
 }
@@ -92,8 +92,8 @@ BLSSignature BLSSigShareSet::merge() {
 
     algebra::G1Point signature = obj.SignatureRecover( shares, lagrangeCoeffs );
 
-    auto k = participatingNodes.at(0);
-    const auto& s = sigShares.at(k);
+    auto k = participatingNodes.at( 0 );
+    const auto& s = sigShares.at( k );
     std::string hint = s.getHint();
 
     return BLSSignature( signature, hint, requiredSigners, totalSigners );

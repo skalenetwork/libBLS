@@ -34,10 +34,10 @@ std::pair< G1Point, std::string > hashToG1withHint(
         FqElement euler = algebra::power( y1_sqr, fq_euler_str );
 
         if ( euler.isOne() || euler.isZero() ) {  // if y1_sqr is a square
-            point.getXRef().asBackendRef() = x1.asBackendType();
+            point.setX( x1 );
             FqElement temp_y = y1_sqr.sqrt();
             normalizeYCoordinate( temp_y );
-            point.getYRef().asBackendRef() = temp_y.asBackendType();
+            point.setY( temp_y );
             break;
         } else {
             counter = counter + FqElement::one();
@@ -45,7 +45,7 @@ std::pair< G1Point, std::string > hashToG1withHint(
         }
     }
 
-    point.getZRef().asBackendRef() = FqElement::one().asBackendType();
+    point.setZ( FqElement::one() );
 
     FqElement counter_fq( counter );
     return std::make_pair( point, counter_fq.toString( Base::DEC ) );

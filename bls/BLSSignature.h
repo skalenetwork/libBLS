@@ -38,8 +38,8 @@ private:
 
 public:
     BLSSignature( const std::string& s, size_t _requiredSigners, size_t _totalSigners );
-    BLSSignature( const algebra::G1Point& sig, const std::string& _hint,
-        size_t _requiredSigners, size_t _totalSigners );
+    BLSSignature( const algebra::G1Point& sig, const std::string& _hint, size_t _requiredSigners,
+        size_t _totalSigners );
     const algebra::G1Point& getSig() const;
     std::string toString();
 

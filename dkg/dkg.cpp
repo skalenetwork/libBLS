@@ -37,10 +37,10 @@ Polynomial Dkg::GeneratePolynomial() {
     Polynomial pol( this->t_ );
 
     for ( size_t i = 0; i < this->t_; ++i ) {
-        pol.at(i) = algebra::FrScalar::random();
+        pol.at( i ) = algebra::FrScalar::random();
 
-        while ( i == this->t_ - 1 && pol.at(i).isZero() ) {
-            pol.at(i) = algebra::FrScalar::random();
+        while ( i == this->t_ - 1 && pol.at( i ).isZero() ) {
+            pol.at( i ) = algebra::FrScalar::random();
         }
     }
 
@@ -54,7 +54,7 @@ std::vector< algebra::G2Point > Dkg::VerificationVector(
     // vector of public values that each node will broadcast
     std::vector< algebra::G2Point > verification_vector( this->t_ );
     for ( size_t i = 0; i < this->t_; ++i ) {
-        verification_vector.at(i) = polynomial.at(i) * algebra::G2Point::generator();
+        verification_vector.at( i ) = polynomial.at( i ) * algebra::G2Point::generator();
     }
 
     return verification_vector;
@@ -68,10 +68,10 @@ algebra::FrScalar Dkg::PolynomialValue( const Polynomial& pol, algebra::FrScalar
 
     algebra::FrScalar pow = algebra::FrScalar::one();
     for ( size_t i = 0; i < this->t_; ++i ) {
-        if ( i == this->t_ - 1 && pol.at(i).isZero() ) {
+        if ( i == this->t_ - 1 && pol.at( i ).isZero() ) {
             throw std::logic_error( "Error, incorrect degree of a polynomial" );
         }
-        value += pol.at(i) * pow;
+        value += pol.at( i ) * pow;
         pow *= point;
     }
 
@@ -83,7 +83,7 @@ std::vector< algebra::FrScalar > Dkg::SecretKeyContribution(
     // calculate for each node a list of secret values that will be used for verification
     std::vector< algebra::FrScalar > secret_key_contribution( this->n_ );
     for ( size_t i = 0; i < this->n_; ++i ) {
-        secret_key_contribution.at(i) = PolynomialValue( polynomial, algebra::FrScalar( i + 1 ) );
+        secret_key_contribution.at( i ) = PolynomialValue( polynomial, algebra::FrScalar( i + 1 ) );
     }
 
     return secret_key_contribution;
@@ -98,7 +98,7 @@ algebra::FrScalar Dkg::SecretKeyShareCreate(
     algebra::FrScalar secret_key_share = algebra::FrScalar::zero();
 
     for ( size_t i = 0; i < this->n_; ++i ) {
-        secret_key_share = secret_key_share + secret_key_contribution.at(i);
+        secret_key_share = secret_key_share + secret_key_contribution.at( i );
     }
 
     if ( secret_key_share.isZero() ) {
@@ -115,10 +115,11 @@ bool Dkg::Verification( size_t idx, algebra::FrScalar share,
     // idx-th node verifies that share corresponds to the verification vector
     algebra::G2Point value = algebra::G2Point::identity();
     for ( size_t i = 0; i < this->t_; ++i ) {
-        if ( !verification_vector.at(i).isValid() ) {
+        if ( !verification_vector.at( i ).isValid() ) {
             return false;
         }
-        value = value + algebra::power( algebra::FrScalar( idx + 1 ), i ) * verification_vector.at(i);
+        value =
+            value + algebra::power( algebra::FrScalar( idx + 1 ), i ) * verification_vector.at( i );
     }
     return ( value == share * algebra::G2Point::generator() );
 }

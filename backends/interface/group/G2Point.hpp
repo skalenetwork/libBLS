@@ -14,7 +14,7 @@ constexpr size_t G2_NUM_COMPONENTS_AFFINE = 4;
 constexpr size_t G2_NUM_COMPONENTS_PROJECTIVE = 6;
 
 class G2Point
-    : public Group< G2BackendType, G2Point, Fq2RefWrapper >,
+    : public Group< G2BackendType, G2Point, Fq2Element >,
       public PointSerializer< G2Point, G2_NUM_COMPONENTS_AFFINE, G2_NUM_COMPONENTS_PROJECTIVE > {
 public:
     static constexpr size_t SIZE_BYTES = 128;
@@ -24,6 +24,20 @@ public:
     G2Point();
     G2Point( const G2BackendType v ) : Group( v ) {}
     G2Point( const Fq2Element& x, const Fq2Element& y, const Fq2Element& z );
+
+    FqElement getXC0() const;
+    FqElement getXC1() const;
+    FqElement getYC0() const;
+    FqElement getYC1() const;
+    FqElement getZC0() const;
+    FqElement getZC1() const;
+
+    void setXC0( const FqElement& xC0 );
+    void setXC1( const FqElement& xC1 );
+    void setYC0( const FqElement& yC0 );
+    void setYC1( const FqElement& yC1 );
+    void setZC0( const FqElement& zC0 );
+    void setZC1( const FqElement& zC1 );
 
     // -------------------- Operator Overloads -------------------- //
 

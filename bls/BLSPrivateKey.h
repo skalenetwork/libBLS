@@ -38,12 +38,10 @@ private:
     algebra::FrScalar privateKey;
 
 public:
-    BLSPrivateKey(
-        const std::string& _key, size_t _requiredSigners, size_t _totalSigners );
+    BLSPrivateKey( const std::string& _key, size_t _requiredSigners, size_t _totalSigners );
 
-    BLSPrivateKey( const std::vector< BLSPrivateKeyShare >&,
-        const std::vector< size_t >& koefs, size_t _requiredSigners,
-        size_t _totalSigners );
+    BLSPrivateKey( const std::vector< BLSPrivateKeyShare >&, const std::vector< size_t >& koefs,
+        size_t _requiredSigners, size_t _totalSigners );
 
     const algebra::FrScalar& getPrivateKey() const;
 

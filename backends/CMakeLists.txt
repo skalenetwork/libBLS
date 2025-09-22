@@ -35,6 +35,8 @@ elseif(USE_MCL)
   # add more backends below if needed
 endif()
 
+# make the selected backend visible to the rest of the system
+set(BACKEND_DEFINE "${BACKEND_DEFINE}" CACHE STRING "Selected libBLS backend" FORCE)
 message("Using backend: ${BACKEND_NAME}")
 
 ############### DO NOT CHANGE BELOW THIS LINE ###############
