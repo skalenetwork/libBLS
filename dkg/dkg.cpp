@@ -25,112 +25,108 @@
 #include <tools/utils.h>
 
 #include <boost/multiprecision/cpp_int.hpp>
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-#include <libff/algebra/exponentiation/exponentiation.hpp>
 
 namespace libBLS {
 
-typedef std::vector< libff::alt_bn128_Fr > Polynomial;
+typedef std::vector< algebra::FrScalar > Polynomial;
 
-Dkg::Dkg( const size_t t, const size_t n ) : t_( t ), n_( n ) {
-    ThresholdUtils::initCurve();
-}
+Dkg::Dkg( const size_t t, const size_t n ) : t_( t ), n_( n ) {}
 
 Polynomial Dkg::GeneratePolynomial() {
     // generate polynomial of degree t for each node that takes part in DKG
     Polynomial pol( this->t_ );
 
     for ( size_t i = 0; i < this->t_; ++i ) {
-        pol[i] = libff::alt_bn128_Fr::random_element();
+        pol.at( i ) = algebra::FrScalar::random();
 
-        while ( i == this->t_ - 1 && pol[i] == libff::alt_bn128_Fr::zero() ) {
-            pol[i] = libff::alt_bn128_Fr::random_element();
+        while ( i == this->t_ - 1 && pol.at( i ).isZero() ) {
+            pol.at( i ) = algebra::FrScalar::random();
         }
     }
 
     return pol;
 }
 
-std::vector< libff::alt_bn128_G2 > Dkg::VerificationVector(
-    const std::vector< libff::alt_bn128_Fr >& polynomial ) {
+std::vector< algebra::G2Point > Dkg::VerificationVector(
+    const std::vector< algebra::FrScalar >& polynomial ) {
     if ( polynomial.size() < t_ )
         throw ThresholdUtils::IncorrectInput( "Wrong polynomial degree: must be at least t" );
     // vector of public values that each node will broadcast
-    std::vector< libff::alt_bn128_G2 > verification_vector( this->t_ );
+    std::vector< algebra::G2Point > verification_vector( this->t_ );
     for ( size_t i = 0; i < this->t_; ++i ) {
-        verification_vector[i] = polynomial[i] * libff::alt_bn128_G2::one();
+        verification_vector.at( i ) = polynomial.at( i ) * algebra::G2Point::generator();
     }
 
     return verification_vector;
 }
 
-libff::alt_bn128_Fr Dkg::PolynomialValue( const Polynomial& pol, libff::alt_bn128_Fr point ) {
+algebra::FrScalar Dkg::PolynomialValue( const Polynomial& pol, algebra::FrScalar point ) {
     if ( pol.size() < t_ )
         throw ThresholdUtils::IncorrectInput( "Wrong polynomial degree: must be at least t" );
     // calculate value of polynomial in a random integer point
-    libff::alt_bn128_Fr value = libff::alt_bn128_Fr::zero();
+    algebra::FrScalar value = algebra::FrScalar::zero();
 
-    libff::alt_bn128_Fr pow = libff::alt_bn128_Fr::one();
+    algebra::FrScalar pow = algebra::FrScalar::one();
     for ( size_t i = 0; i < this->t_; ++i ) {
-        if ( i == this->t_ - 1 && pol[i] == libff::alt_bn128_Fr::zero() ) {
+        if ( i == this->t_ - 1 && pol.at( i ).isZero() ) {
             throw std::logic_error( "Error, incorrect degree of a polynomial" );
         }
-        value += pol[i] * pow;
+        value += pol.at( i ) * pow;
         pow *= point;
     }
 
     return value;
 }
 
-std::vector< libff::alt_bn128_Fr > Dkg::SecretKeyContribution(
-    const std::vector< libff::alt_bn128_Fr >& polynomial ) {
+std::vector< algebra::FrScalar > Dkg::SecretKeyContribution(
+    const std::vector< algebra::FrScalar >& polynomial ) {
     // calculate for each node a list of secret values that will be used for verification
-    std::vector< libff::alt_bn128_Fr > secret_key_contribution( this->n_ );
+    std::vector< algebra::FrScalar > secret_key_contribution( this->n_ );
     for ( size_t i = 0; i < this->n_; ++i ) {
-        secret_key_contribution[i] = PolynomialValue( polynomial, libff::alt_bn128_Fr( i + 1 ) );
+        secret_key_contribution.at( i ) = PolynomialValue( polynomial, algebra::FrScalar( i + 1 ) );
     }
 
     return secret_key_contribution;
 }
 
-libff::alt_bn128_Fr Dkg::SecretKeyShareCreate(
-    const std::vector< libff::alt_bn128_Fr >& secret_key_contribution ) {
+algebra::FrScalar Dkg::SecretKeyShareCreate(
+    const std::vector< algebra::FrScalar >& secret_key_contribution ) {
     if ( secret_key_contribution.size() < n_ )
         throw ThresholdUtils::IncorrectInput(
             "Secret key contribution must be at least of size n" );
     // create secret key share from secret key contribution
-    libff::alt_bn128_Fr secret_key_share = libff::alt_bn128_Fr::zero();
+    algebra::FrScalar secret_key_share = algebra::FrScalar::zero();
 
     for ( size_t i = 0; i < this->n_; ++i ) {
-        secret_key_share = secret_key_share + secret_key_contribution[i];
+        secret_key_share = secret_key_share + secret_key_contribution.at( i );
     }
 
-    if ( secret_key_share == libff::alt_bn128_Fr::zero() ) {
+    if ( secret_key_share.isZero() ) {
         throw std::logic_error( "Error, at least one secret key share is equal to zero" );
     }
 
     return secret_key_share;
 }
 
-bool Dkg::Verification( size_t idx, libff::alt_bn128_Fr share,
-    const std::vector< libff::alt_bn128_G2 >& verification_vector ) {
+bool Dkg::Verification( size_t idx, algebra::FrScalar share,
+    const std::vector< algebra::G2Point >& verification_vector ) {
     if ( verification_vector.size() < t_ )
         throw ThresholdUtils::IncorrectInput( "Verification vector must be at least of size n" );
     // idx-th node verifies that share corresponds to the verification vector
-    libff::alt_bn128_G2 value = libff::alt_bn128_G2::zero();
+    algebra::G2Point value = algebra::G2Point::identity();
     for ( size_t i = 0; i < this->t_; ++i ) {
-        if ( !ThresholdUtils::ValidateKey( verification_vector[i] ) ) {
+        if ( !verification_vector.at( i ).isValid() ) {
             return false;
         }
-        value = value + power( libff::alt_bn128_Fr( idx + 1 ), i ) * verification_vector[i];
+        value =
+            value + algebra::power( algebra::FrScalar( idx + 1 ), i ) * verification_vector.at( i );
     }
-
-    return ( value == share * libff::alt_bn128_G2::one() );
+    return ( value == share * algebra::G2Point::generator() );
 }
 
-libff::alt_bn128_G2 Dkg::GetPublicKeyFromSecretKey( const libff::alt_bn128_Fr& secret_key ) {
-    libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
-    public_key.to_affine_coordinates();
+algebra::G2Point Dkg::GetPublicKeyFromSecretKey( const algebra::FrScalar& secret_key ) {
+    algebra::G2Point public_key = secret_key * algebra::G2Point::generator();
+    public_key.toAffineCoordinates();
 
     return public_key;
 }

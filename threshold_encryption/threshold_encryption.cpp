@@ -31,25 +31,19 @@
 
 #include "TEBase.h"
 #include <openssl/rand.h>
-#include <libff/common/profiling.hpp>
 
 namespace libBLS {
 
-TE::TE( const TEBase& base ) : t_( base.getRequiredSigners() ), n_( base.getTotalSigners() ) {
-    ThresholdUtils::initCurve();
-    libff::inhibit_profiling_info = true;
-}
+TE::TE( const TEBase& base ) : t_( base.getRequiredSigners() ), n_( base.getTotalSigners() ) {}
 
-TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {
-    ThresholdUtils::initCurve();
-    libff::inhibit_profiling_info = true;
-}
+TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {}
+
 
 TE::~TE() {}
 
 std::string TE::Hash(
-    const libff::alt_bn128_G2& Y, std::string ( *hash_func )( const std::string& str ) ) {
-    auto vectorCoordinates = ThresholdUtils::G2ToString( Y );
+    const algebra::G2Point& Y, std::string ( *hash_func )( const std::string& str ) ) {
+    auto vectorCoordinates = Y.toStringArray( Base::DEC );
 
     std::string tmp = "";
     for ( const auto& coord : vectorCoordinates ) {
@@ -61,11 +55,11 @@ std::string TE::Hash(
     return sha256hex;
 }
 
-libff::alt_bn128_G1 TE::HashToGroup( const libff::alt_bn128_G2& U, const std::string& V,
+algebra::G1Point TE::HashToGroup( const algebra::G2Point& U, const std::string& V,
     std::string ( *hash_func )( const std::string& str ) ) {
     // assumed that U lies in G2
 
-    auto U_str = ThresholdUtils::G2ToString( U );
+    auto U_str = U.toStringArray( Base::DEC );
 
     const std::string sha256hex = hash_func( U_str[0] + U_str[1] + U_str[2] + U_str[3] + V );
 
@@ -74,35 +68,33 @@ libff::alt_bn128_G1 TE::HashToGroup( const libff::alt_bn128_G2& U, const std::st
     std::vector< uint8_t > bytes = ThresholdUtils::hexCStringToBytes( hash_str.c_str() );
 
     // copy first 32 bytes
-    auto hash_bytes_arr =
-        std::make_shared< std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > >();
-    std::copy( bytes.begin(), bytes.begin() + libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES,
-        hash_bytes_arr->begin() );
+    auto hash_bytes_arr = std::array< uint8_t, algebra::MAX_FIELD_ELEMENT_SIZE_BYTES >();
+    std::copy( bytes.begin(), bytes.begin() + algebra::MAX_FIELD_ELEMENT_SIZE_BYTES,
+        hash_bytes_arr.begin() );
 
-    return ThresholdUtils::HashtoG1( hash_bytes_arr );
+    return algebra::G1Point::fromHash( hash_bytes_arr );
+}
+
+
+CipheredKeyResult TE::getCiphertext( const AES256Key& key, const algebra::G2Point& commonPublic ) {
+    return getCiphertext( key, std::vector< algebra::G2Point >{ commonPublic } );
 }
 
 
 CipheredKeyResult TE::getCiphertext(
-    const AES256Key& key, const libff::alt_bn128_G2& commonPublic ) {
-    return getCiphertext( key, std::vector< libff::alt_bn128_G2 >{ commonPublic } );
-}
+    const AES256Key& key, const std::vector< algebra::G2Point >& commonPublicVector ) {
+    algebra::FrScalar r = algebra::FrScalar::random();
 
-
-CipheredKeyResult TE::getCiphertext(
-    const AES256Key& key, const std::vector< libff::alt_bn128_G2 >& commonPublicVector ) {
-    libff::alt_bn128_Fr r = libff::alt_bn128_Fr::random_element();
-
-    while ( r.is_zero() ) {
-        r = libff::alt_bn128_Fr::random_element();
+    while ( r.isZero() ) {
+        r = algebra::FrScalar::random();
     }
 
     std::vector< CipheredKey > cipheredKeys;
-    libff::alt_bn128_G2 U = r * libff::alt_bn128_G2::one();
+    algebra::G2Point U = r * algebra::G2Point::generator();
     // convert to affine coordinate here to avoid doing it twice inside the loop
-    U.to_affine_coordinates();
+    U.toAffineCoordinates();
     for ( const auto& commonPublic : commonPublicVector ) {
-        libff::alt_bn128_G2 Y;
+        algebra::G2Point Y;
         Y = r * commonPublic;
 
         std::string hash = Hash( Y );
@@ -119,7 +111,7 @@ CipheredKeyResult TE::getCiphertext(
 
         std::string v_str = ThresholdUtils::bytesToHexString( V );
 
-        libff::alt_bn128_G1 W, H;
+        algebra::G1Point W, H;
 
         H = HashToGroup( U, v_str );
         W = r * H;
@@ -127,7 +119,7 @@ CipheredKeyResult TE::getCiphertext(
         cipheredKeys.emplace_back( U, V, W );
     }
 
-    RandSecret random_secret = ThresholdUtils::fieldElementToBytesArray( r );
+    RandSecret random_secret = r.toByteArray();
 
     return { cipheredKeys, std::move( random_secret ) };
 }
@@ -152,12 +144,12 @@ CipheredKeyResult TE::getCiphertext(
  * @note Initializes AES before encryption
  */
 CipherResult TE::encryptWithAES(
-    const std::vector< uint8_t >& message, const libff::alt_bn128_G2& commonPublic ) {
-    return encryptWithAES( message, std::vector< libff::alt_bn128_G2 >{ commonPublic } );
+    const std::vector< uint8_t >& message, const algebra::G2Point& commonPublic ) {
+    return encryptWithAES( message, std::vector< algebra::G2Point >{ commonPublic } );
 }
 
-CipherResult TE::encryptWithAES( const std::vector< uint8_t >& message,
-    const std::vector< libff::alt_bn128_G2 >& commonPublic ) {
+CipherResult TE::encryptWithAES(
+    const std::vector< uint8_t >& message, const std::vector< algebra::G2Point >& commonPublic ) {
     // create random AES key
     AES256Key key;
     if ( RAND_bytes( key.data(), key.size() ) != 1 ) {
@@ -201,11 +193,12 @@ std::pair< std::string, RandSecret > TE::encryptMessage(
     return encryptMessage( message, std::vector< std::string >{ commonPublic } );
 }
 
+// TODO - check if this function and the one above are still used anywhere
 std::pair< std::string, RandSecret > TE::encryptMessage(
     const std::vector< uint8_t >& message, const std::vector< std::string >& commonPublicVector ) {
-    std::vector< libff::alt_bn128_G2 > commonPublicRaw;
+    std::vector< algebra::G2Point > commonPublicRaw;
     for ( const auto& commonPublicStr : commonPublicVector ) {
-        libff::alt_bn128_G2 commonPublic = ThresholdUtils::stringToG2( commonPublicStr );
+        algebra::G2Point commonPublic = algebra::G2Point::fromString( commonPublicStr, Base::HEXA );
         commonPublicRaw.push_back( commonPublic );
     }
     libBLS::CipherResult ciphertext = encryptWithAES( message, commonPublicRaw );
@@ -219,9 +212,9 @@ std::pair< std::string, RandSecret > TE::encryptMessage(
 /**
  * @brief Generates a decryption share for threshold encryption using a secret key
  *
- * This function creates a decryption share by validating the ciphertext and performing
- * pairing-based cryptographic operations. It implements part of the threshold encryption scheme
- * using the BLS12-381 elliptic curve.
+ * This function assumes both ciphertext has been validated prior to this call
+ * via `ThresholdEncryption::validateCiphertext()` call. Also assumes secret_key
+ * is non-zero
  *
  * @param ciphertext A tuple containing encryption components (U, V, W) where:
  *        - U is an element of G2
@@ -229,39 +222,10 @@ std::pair< std::string, RandSecret > TE::encryptMessage(
  *        - W is an element of G1
  * This field usually refers to the threshold-encrypted AES key
  * @param secret_key The secret key share (element of Fr) used for decryption
- *
- * @return libff::alt_bn128_G2 The decryption share (U multiplied by the secret key)
- *
- * @throws ThresholdUtils::ZeroSecretKey if the provided secret key is zero
- * @throws ThresholdUtils::IncorrectInput if the ciphertext fails validation checks
- *
- * @note The function verifies the ciphertext integrity using pairing-based checks before generating
- *       the decryption share
  */
-libff::alt_bn128_G2 TE::getDecryptionShare(
-    const CipheredKey& ciphertext, const libff::alt_bn128_Fr& secret_key ) {
-    ciphertext.validate();
-
-    if ( secret_key.is_zero() )
-        throw ThresholdUtils::ZeroSecretKey( "zero secret key" );
-
-    auto [U, V, W] = ciphertext;
-
-    std::string v_str = ThresholdUtils::bytesToHexString( V );
-    libff::alt_bn128_G1 H = HashToGroup( U, v_str );
-
-    libff::alt_bn128_GT fst, snd;
-    fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
-    snd = libff::alt_bn128_ate_reduced_pairing( H, U );
-
-    bool res = fst == snd;
-
-    if ( !res ) {
-        throw ThresholdUtils::IncorrectInput( "cannot decrypt data" );
-    }
-
-    libff::alt_bn128_G2 ret_val = secret_key * U;
-
+algebra::G2Point TE::getDecryptionShare(
+    const CipheredKey& ciphertext, const algebra::FrScalar& secret_key ) {
+    algebra::G2Point ret_val = secret_key * ciphertext.U;
     return ret_val;
 }
 
@@ -282,28 +246,77 @@ libff::alt_bn128_G2 TE::getDecryptionShare(
  * @return true if both the ciphertext and decryption share are valid
  * @return false if either the ciphertext is invalid or the decryption share verification fails
  */
-bool TE::Verify( const CipheredKey& ciphertext, const libff::alt_bn128_G2& decryptionShare,
-    const libff::alt_bn128_G2& public_key ) {
+bool TE::Verify( const CipheredKey& ciphertext, const algebra::G2Point& decryptionShare,
+    const algebra::G2Point& public_key ) {
     auto [U, V, W] = ciphertext;
+
     std::string v_str = ThresholdUtils::bytesToHexString( V );
-    libff::alt_bn128_G1 H = HashToGroup( U, v_str );
+    algebra::G1Point H = HashToGroup( U, v_str );
+    // no need to validate ciphertext's pairing - assumed to be validated already via
+    // `validateEncryption` call
 
-    ThresholdUtils::validateG1( H );
+    bool isSecondPairingValid = algebra::verifyPairingEq( W, public_key, H, decryptionShare );
+    return isSecondPairingValid;
+}
 
-    libff::alt_bn128_GT fst, snd;
-    fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
-    snd = libff::alt_bn128_ate_reduced_pairing( H, U );
 
-    if ( fst == snd ) {
-        libff::alt_bn128_GT pp1, pp2;
-        pp1 = libff::alt_bn128_ate_reduced_pairing( W, public_key );
-        pp2 = libff::alt_bn128_ate_reduced_pairing( H, decryptionShare );
+/**
+ * @brief Verifies a ciphertext and decryption share against a public key
+ *
+ * This function performs verification of a batch of batches of threshold encryption shares.
+ * Meaning that conceptually there is a big batch that contains smaller batches.
+ * Each small batch contains N shares, and for each small batch the same ciphertext is shared.
+ * Thus, the number of small batches in the big batch is equal to the number of ciphertexts.
+ *
+ * @param ciphertext Vector of tuples containing the encryption components (U,V,W). Assumes is
+ * already validated
+ * @param decryptionShares The decryption shares to verify. Assumes is valid & well formed. Contains
+ * num of small batches * N shares
+ * @param public_key The public key used for verification. Assumes is valid & well formed. Contains
+ * num of small batches * N shares
+ *
+ * @return true only for the shares that are valid. If a ciphertext is invalid, it invalidates the
+ * whole shares in that batch.
+ */
+std::vector< bool > TE::VerifyBatch(
+    const std::vector< std::shared_ptr< CipheredKey > >& ciphertexts,
+    const std::vector< std::reference_wrapper< const algebra::G2Point > >& decryptionShares,
+    const std::vector< std::reference_wrapper< const algebra::G2Point > >& publicKeys ) {
+    const size_t size = decryptionShares.size();
+    const size_t numberOfBatches = ciphertexts.size();
 
-        return pp1 == pp2;
+    if ( size % numberOfBatches != 0 ) {
+        throw ThresholdUtils::IncorrectInput(
+            "decryption shares size must be multiple of ciphertexts size" );
     }
 
-    return false;
+    if ( size != publicKeys.size() ) {
+        throw ThresholdUtils::IncorrectInput(
+            "decryption shares and public keys must have same size" );
+    }
+
+    std::vector< algebra::G1Point > g1P1s;
+    std::vector< algebra::G1Point > g1P2s;
+    g1P1s.reserve( ciphertexts.size() );
+    g1P2s.reserve( ciphertexts.size() );
+
+    for ( const auto& cipher : ciphertexts ) {
+        const auto [U, V, W] = *cipher;
+
+        std::string v_str = ThresholdUtils::bytesToHexString( V );
+        algebra::G1Point H = HashToGroup( U, v_str );
+        // no need to validate H - assumes H has been validated already when performing the
+        // ciphertext validation at the start of TE process
+
+        g1P1s.emplace_back( W );
+        g1P2s.emplace_back( H );
+    }
+
+    algebra::PairingEqualityBatch batch( g1P1s, g1P2s, publicKeys, decryptionShares );
+    batch.useOptimisticValidation();
+    return algebra::verifyPairingEqBatch( batch );
 }
+
 
 /**
  * @brief Combines decryption shares to recover the original message from a ciphertext
@@ -325,23 +338,8 @@ bool TE::Verify( const CipheredKey& ciphertext, const libff::alt_bn128_G2& decry
  * @throws ThresholdUtils::IncorrectInput if the ciphertext validation fails
  */
 AES256Key TE::CombineShares( const CipheredKey& ciphertext,
-    const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShares ) {
-    auto [U, V, W] = ciphertext;
-    std::string v_str = ThresholdUtils::bytesToHexString( V );
-    libff::alt_bn128_G1 H = this->HashToGroup( U, v_str );
-
-    libff::alt_bn128_GT fst, snd;
-    fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
-    snd = libff::alt_bn128_ate_reduced_pairing( H, U );
-
-    bool res = fst == snd;
-
-    if ( !res ) {
-        throw ThresholdUtils::IncorrectInput( "error during share combining" );
-    }
-
+    const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShares ) {
     auto secret = CombineSharesIntoAESKey( decryptionShares );
-
 
     if ( secret.size() < AES_256_KEY_SIZE_BYTES ) {
         throw ThresholdUtils::IncorrectInput( "Invalid secret size" );
@@ -350,7 +348,7 @@ AES256Key TE::CombineShares( const CipheredKey& ciphertext,
     AES256Key aesKey;
 
     for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
-        aesKey[i] = secret[i] ^ static_cast< uint8_t >( V[i] );
+        aesKey[i] = secret[i] ^ static_cast< uint8_t >( ciphertext.V[i] );
     }
 
     return aesKey;
@@ -374,7 +372,7 @@ AES256Key TE::CombineShares( const CipheredKey& ciphertext,
  * message
  */
 std::vector< uint8_t > TE::CombineSharesIntoAESKey(
-    const std::vector< std::pair< libff::alt_bn128_G2, size_t > >& decryptionShares ) {
+    const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShares ) {
     if ( decryptionShares.size() < t_ )
         throw ThresholdUtils::IncorrectInput( "Expect at least t shares to be provided" );
     std::vector< size_t > idx( this->t_ );
@@ -382,17 +380,13 @@ std::vector< uint8_t > TE::CombineSharesIntoAESKey(
         idx[i] = decryptionShares[i].second;
     }
 
-    std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
-        ThresholdUtils::LagrangeCoeffs( idx, this->t_ );
-
-    libff::alt_bn128_G2 sum = libff::alt_bn128_G2::zero();
+    std::vector< std::reference_wrapper< const algebra::G2Point > > shares_ref;
     for ( size_t i = 0; i < this->t_; ++i ) {
-        libff::alt_bn128_G2 temp = lagrange_coeffs[i] * decryptionShares[i].first;
-
-        sum = sum + temp;
+        shares_ref.emplace_back( std::cref( decryptionShares[i].first ) );
     }
+    algebra::G2Point rebuiltG2 = algebra::lagrangeInterpolateAt0( idx, this->t_, shares_ref );
 
-    std::string hash = this->Hash( sum );
+    std::string hash = this->Hash( rebuiltG2 );
 
     std::vector< uint8_t > ret( hash.size() );
     for ( size_t i = 0; i < hash.size(); ++i ) {

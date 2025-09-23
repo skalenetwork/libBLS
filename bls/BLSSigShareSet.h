@@ -24,8 +24,13 @@
 #ifndef LIBBLS_BLSSIGSHARESET_H
 #define LIBBLS_BLSSIGSHARESET_H
 
+#include "BLSSigShare.h"
+#include "BLSSignature.h"
 #include <bls/bls.h>
-class BLSSignature;
+#include <map>
+#include <optional>
+
+namespace libBLS {
 
 class BLSSigShareSet {
 private:
@@ -34,19 +39,20 @@ private:
 
     bool was_merged;
 
-    std::map< size_t, std::shared_ptr< BLSSigShare > > sigShares;
+    std::map< size_t, BLSSigShare > sigShares;
 
 public:
     BLSSigShareSet( size_t requiredSigners, size_t totalSigners );
 
     bool isEnough();
 
-    bool addSigShare( std::shared_ptr< BLSSigShare > _sigShare );
+    bool addSigShare( const BLSSigShare& _sigShare );
 
     unsigned long getTotalSigSharesCount();
-    std::shared_ptr< BLSSigShare > getSigShareByIndex( size_t _index );
-    std::shared_ptr< BLSSignature > merge();
+    const BLSSigShare& getSigShareByIndex( size_t _index );
+    BLSSignature merge();
 };
 
+}  // namespace libBLS
 
-#endif  // LIBBLS_BLSSIGSHARESET_H-
+#endif  // LIBBLS_BLSSIGSHARESET_H

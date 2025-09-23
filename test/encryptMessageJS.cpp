@@ -12,14 +12,14 @@ int main( int argc, char* argv[] ) {
     std::string common_public_str = argv[1];
     std::string message = argv[2];
 
-    libBLS::ThresholdUtils::initCurve();
+    libBLS::init();
 
     // convert from char into vec of bytes
     std::vector< uint8_t > messageBytes =
         libBLS::ThresholdUtils::hexCStringToBytes( message.c_str() );
 
     // build public key
-    libBLS::TEPublicKey commonPublic( common_public_str );
+    libBLS::TEPublicKey commonPublic( common_public_str, libBLS::Base::HEXA );
 
     // encrypt message
     libBLS::Ciphertext cipheredMessage =

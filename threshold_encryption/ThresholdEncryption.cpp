@@ -110,13 +110,11 @@ Ciphertext ThresholdEncryption::encrypt(
 
 Ciphertext ThresholdEncryption::encrypt(
     const std::vector< uint8_t >& _message, const std::vector< TEPublicKey >& _commonPublic ) {
-    TEBase::initializeIfNecessary();
-
     if ( _commonPublic.size() == 0 || _commonPublic.size() > 2 )
         throw ThresholdUtils::IncorrectInput(
             "Must provide exactly 1 or 2 public keys for encryption" );
 
-    std::vector< libff::alt_bn128_G2 > rawPublicKeys;
+    std::vector< algebra::G2Point > rawPublicKeys;
     for ( const auto& publicKey : _commonPublic ) {
         publicKey.validate();
         rawPublicKeys.push_back( publicKey.getPublicKeyRaw() );
@@ -134,38 +132,25 @@ Ciphertext ThresholdEncryption::encrypt(
 }
 
 void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
-    TEBase::initializeIfNecessary();
-
-    _ciphertext.validate();
-
     auto [U, V, W] = _ciphertext;
     std::string v_str = ThresholdUtils::bytesToHexString( V );
 
-    libff::alt_bn128_G1 H = TE::HashToGroup( U, v_str );
-
-    libff::alt_bn128_GT fst, snd;
+    algebra::G1Point H = TE::HashToGroup( U, v_str );
+    H.validate();
 
     // pairing( W, P ) == pairing( H, U )
-    fst = libff::alt_bn128_ate_reduced_pairing( W, libff::alt_bn128_G2::one() );
-    snd = libff::alt_bn128_ate_reduced_pairing( H, U );
+    bool validPairing = algebra::verifyPairingEq( W, algebra::G2Point::generator(), H, U );
 
-    if ( fst != snd ) {
+    if ( !validPairing ) {
         throw ThresholdUtils::IsNotWellFormed( "Invalid encryption" );
     }
 }
 
 TEDecryptionShare ThresholdEncryption::partialDecrypt(
     const CipheredKey& _ciphertext, const TEPrivateKeyShare& _pkeyShare ) {
-    TEBase::initializeIfNecessary();
-
-    _ciphertext.validate();
-    _pkeyShare.validate();
-
-    // ciphertext is validated in getDecryptionShare
-    libff::alt_bn128_G2 decryption_share =
-        TE::getDecryptionShare( _ciphertext, _pkeyShare.getPrivateKeyRaw() );
-
-    ThresholdUtils::validateG2( decryption_share );
+    algebra::G2Point decryption_share = _pkeyShare.getPrivateKeyRaw() * _ciphertext.U;
+    // no need to validate G2Point - if both inputs are already valid, multiplication
+    // always produces a valid point
 
     TEDecryptionShare share( decryption_share, _pkeyShare.getSignerIndex() );
 
@@ -174,24 +159,39 @@ TEDecryptionShare ThresholdEncryption::partialDecrypt(
 
 void ThresholdEncryption::validateDecryptionShare( const CipheredKey& _cipherText,
     const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey ) {
-    TEBase::initializeIfNecessary();
-
-    _cipherText.validate();
-    _decryptionShare.validate();
-    _publicKey.validate();
-
     if ( !TE::Verify(
              _cipherText, _decryptionShare.getShareRaw(), _publicKey.getPublicKeyRaw() ) ) {
         throw ThresholdUtils::IsNotWellFormed( "Invalid decryption share" );
     }
 }
 
+std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatch(
+    const std::vector< std::shared_ptr< CipheredKey > >& _cipherTexts,
+    const std::vector< std::shared_ptr< TEDecryptionShare > >& _decryptionShares,
+    const std::vector< std::shared_ptr< TEPublicKeyShare > >& _publicKeys ) {
+    // convert from keys to G points
+    std::vector< std::reference_wrapper< const algebra::G2Point > > decryptionSharesRaw;
+    for ( const auto& share : _decryptionShares ) {
+        if ( !share ) {
+            throw ThresholdUtils::IncorrectInput( "Null decryption share pointer" );
+        }
+        decryptionSharesRaw.push_back( std::cref( share->getShareRaw() ) );
+    }
+
+    std::vector< std::reference_wrapper< const algebra::G2Point > > publicKeysRaw;
+    for ( const auto& key : _publicKeys ) {
+        if ( !key ) {
+            throw ThresholdUtils::IncorrectInput( "Null public key pointer" );
+        }
+        publicKeysRaw.push_back( std::cref( key->getPublicKeyRaw() ) );
+    }
+
+    return TE::VerifyBatch( _cipherTexts, decryptionSharesRaw, publicKeysRaw );
+}
+
+
 AES256Key ThresholdEncryption::combineShares(
     const CipheredKey& _cipheredKey, TEDecryptSet& _decryptionSet ) {
-    TEBase::initializeIfNecessary();
-
-    _cipheredKey.validate();
-
     switch ( _decryptionSet.getMergeStatus() ) {
     case TEDecryptSet::MergeStatus::READY_TO_MERGE:
         break;
@@ -213,10 +213,6 @@ AES256Key ThresholdEncryption::combineShares(
 
 void ThresholdEncryption::validateCombinedDecryption(
     const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
-    TEBase::initializeIfNecessary();
-
-    _ciphertext.validate();
-
     // decipher & validate plaintext
     std::vector< uint8_t > decipheredMessage = decipherAESAndValidate( _ciphertext, _aesKey );
 
@@ -226,10 +222,6 @@ void ThresholdEncryption::validateCombinedDecryption(
 
 std::vector< uint8_t > ThresholdEncryption::decrypt(
     const Ciphertext& _ciphertext, const AES256Key& _aesKey ) {
-    TEBase::initializeIfNecessary();
-
-    _ciphertext.validate();
-
     // decipher & validate plaintext
     std::vector< uint8_t > data = decipherAESAndValidate( _ciphertext, _aesKey );
 
@@ -240,10 +232,6 @@ std::vector< uint8_t > ThresholdEncryption::decrypt(
 
 std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
     const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
-    TEBase::initializeIfNecessary();
-
-    _ciphertext.validate();
-
     // decipher & validate plaintext
     std::vector< uint8_t > decipheredMessage = decipherAESAndValidate( _ciphertext, _aesKey );
 
@@ -269,8 +257,8 @@ void ThresholdEncryption::validateDecipheredMessage(
     const AES256Key& cipheredAesKey = cipheredKey.V;
 
     // Compute G(r'Y)
-    libff::alt_bn128_Fr r = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( secret );
-    libff::alt_bn128_G2 Y = r * _publicKey.getPublicKeyRaw();
+    algebra::FrScalar r = algebra::FrScalar::fromBytes( secret );
+    algebra::G2Point Y = r * _publicKey.getPublicKeyRaw();
     std::string hash = TE::Hash( Y );
 
     // Compute V xor G(r'Y) to get M (AES key)

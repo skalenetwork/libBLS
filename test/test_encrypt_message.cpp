@@ -34,6 +34,7 @@
 #define BOOST_TEST_DISABLE_ALT_STACK
 #endif  // EMSCRIPTEN
 
+#include "backends/algebra.hpp"
 #include "utils.h"
 #include <TEPublicKey.h>
 #include <ThresholdEncryption.h>
@@ -42,7 +43,7 @@
 BOOST_AUTO_TEST_SUITE( EncryptMessageJS )
 
 BOOST_AUTO_TEST_CASE( EncryptMessage ) {
-    libBLS::TEBase::initializeIfNecessary();
+    libBLS::init();
     size_t required = 10;
     size_t total = 15;
 
@@ -57,12 +58,7 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
         RAND_bytes( data.data(), data.size() );
 
         // convert key & data to string
-        std::vector< std::string > pKeyVec = libBLS::ThresholdUtils::G2ToString(
-            keys.commonPublic.getPublicKeyRaw(), libBLS::BASE_HEXA );
-        std::string pKeyStr;
-        for ( auto& str : pKeyVec ) {
-            pKeyStr += str;
-        }
+        std::string pKeyStr = keys.commonPublic.getPublicKeyRaw().toString( libBLS::Base::HEXA );
 
         std::string str = libBLS::ThresholdUtils::bytesToHexString( data );
         const char* dataStr = str.c_str();
@@ -73,7 +69,7 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
             libBLS::ThresholdUtils::hexCStringToBytes( cipheredMessage );
 
         // encrypt message using libBLS
-        libBLS::TEPublicKey publicKey( pKeyStr );
+        libBLS::TEPublicKey publicKey( pKeyStr, libBLS::Base::HEXA );
         libBLS::Ciphertext ciphertext = libBLS::ThresholdEncryption::encrypt( data, publicKey );
         std::vector< uint8_t > cipheredMessageBytesTarget = ciphertext.toBytes();
 
@@ -124,12 +120,8 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
         std::vector< std::string > publicKeysStr( 2 );
         for ( size_t j = 0; j < 2; ++j ) {
             // convert key to string
-            std::vector< std::string > pKeyVec = libBLS::ThresholdUtils::G2ToString(
-                keys[j].commonPublic.getPublicKeyRaw(), libBLS::BASE_HEXA );
-            std::string pKeyStr;
-            for ( auto& str : pKeyVec ) {
-                pKeyStr += str;
-            }
+            std::string pKeyStr =
+                keys[j].commonPublic.getPublicKeyRaw().toString( libBLS::Base::HEXA );
             publicKeysStr[j] = pKeyStr;
         }
 
@@ -142,7 +134,7 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
         // encrypt message using libBLS
         std::vector< libBLS::TEPublicKey > commonPublicKeys;
         for ( const auto& publicKey : publicKeysStr ) {
-            commonPublicKeys.push_back( libBLS::TEPublicKey( publicKey ) );
+            commonPublicKeys.push_back( libBLS::TEPublicKey( publicKey, libBLS::Base::HEXA ) );
         }
         libBLS::Ciphertext ciphertext =
             libBLS::ThresholdEncryption::encrypt( data, commonPublicKeys );

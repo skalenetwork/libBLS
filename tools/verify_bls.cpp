@@ -22,18 +22,11 @@
 */
 
 
-#include <fstream>
-
-#include <boost/program_options.hpp>
-
-#include <libff/common/profiling.hpp>
-
-#include <bls/bls.h>
-
-#include <third_party/json.hpp>
-
-
 #include <bls/BLSPublicKey.h>
+#include <bls/bls.h>
+#include <boost/program_options.hpp>
+#include <fstream>
+#include <third_party/json.hpp>
 
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
 #define __EXPAND_AS_STR__( x ) #x
@@ -72,17 +65,17 @@ bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin ) {
 }
 
 void Verify( const size_t t, const size_t n, std::istream& sign_file, int j = -1 ) {
-    libff::inhibit_profiling_info = true;
     libBLS::Bls bls_instance = libBLS::Bls( t, n );
 
     nlohmann::json signature;
     sign_file >> signature;
 
-    libff::alt_bn128_G1 sign;
-
-    sign.X = libff::alt_bn128_Fq( signature["signature"]["X"].get< std::string >().c_str() );
-    sign.Y = libff::alt_bn128_Fq( signature["signature"]["Y"].get< std::string >().c_str() );
-    sign.Z = libff::alt_bn128_Fq::one();
+    libBLS::algebra::G1Point sign(
+        libBLS::algebra::FqElement::fromString(
+            signature["signature"]["X"].get< std::string >(), libBLS::Base::DEC ),
+        libBLS::algebra::FqElement::fromString(
+            signature["signature"]["Y"].get< std::string >(), libBLS::Base::DEC ),
+        libBLS::algebra::FqElement::one() );
 
     nlohmann::json hash_in;
 
@@ -91,15 +84,15 @@ void Verify( const size_t t, const size_t n, std::istream& sign_file, int j = -1
 
     std::string to_be_hashed = hash_in["message"].get< std::string >();
 
-    auto hash_bytes_arr = std::make_shared< std::array< uint8_t, 32 > >();
+    auto hash_bytes_arr = std::array< uint8_t, 32 >();
     if ( g_b_rehash ) {
         std::string hash_str = cryptlite::sha256::hash_hex( to_be_hashed );
         for ( size_t i = 0; i < 32; i++ ) {
-            hash_bytes_arr->at( i ) = static_cast< uint8_t >( hash_str[i] );
+            hash_bytes_arr.at( i ) = static_cast< uint8_t >( hash_str[i] );
         }
     } else {
         uint64_t bin_len;
-        if ( !hex2carray( to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+        if ( !hex2carray( to_be_hashed.c_str(), &bin_len, hash_bytes_arr.data() ) ) {
             throw std::runtime_error( "Invalid hash" );
         }
     }
@@ -122,13 +115,13 @@ void Verify( const size_t t, const size_t n, std::istream& sign_file, int j = -1
         }
     }
 
-    BLSPublicKey pkey( std::make_shared< std::vector< std::string > >( pkey_str ) );
+    libBLS::BLSPublicKey pkey( pkey_str );
 
-    if ( !sign.is_well_formed() ) {
+    if ( !sign.isWellFormed() ) {
         std::cout << "Bad value, signature was not verified\n";
     }
 
-    bool bRes = bls_instance.Verification( hash_bytes_arr, sign, *pkey.getPublicKey() );
+    bool bRes = bls_instance.Verify( hash_bytes_arr, sign, pkey.getPublicKey() );
 
     if ( g_b_verbose_mode ) {
         std::cout << "Signature verification result: " << ( bRes ? "True" : "False" ) << '\n';
@@ -145,6 +138,7 @@ int main( int argc, const char* argv[] ) {
     std::istream* p_in = &std::cin;
     int r = 1;
     try {
+        libBLS::init();
         boost::program_options::options_description desc( "Options" );
         desc.add_options()( "help", "Show this help screen" )( "version", "Show version number" )(
             "t", boost::program_options::value< size_t >(), "Threshold" )(

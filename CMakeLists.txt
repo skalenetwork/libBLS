@@ -33,8 +33,6 @@ set( CMAKE_PREFIX_PATH "${DEPS_INSTALL_ROOT}" )
 set( LIBBLS_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake" CACHE PATH "The path to the cmake directory" )
 list( APPEND CMAKE_MODULE_PATH ${LIBBLS_CMAKE_DIR} )
 
-find_library( GMP_LIBRARY NAMES "gmp" PATHS "${DEPS_INSTALL_ROOT}/lib" )
-find_library( GMPXX_LIBRARY NAMES "gmpxx" PATHS "${DEPS_INSTALL_ROOT}/lib" )
 find_library( CRYPTOPP_LIBRARY NAMES "crypto" PATHS "${DEPS_INSTALL_ROOT}/lib" )
 
 option(BUILD_TESTS "Build tests" ON)
@@ -86,12 +84,28 @@ if(COVERAGE)
 	set(CMAKE_EXE_LINKER_FLAGS "--coverage ${CMAKE_EXE_LINKER_FLAGS}")
 endif()
 
+
+#######################################
+# Sanitizers
+#######################################
+
+option(ENABLE_SANITIZERS "Enable ASan + LSan" OFF)
+if (ENABLE_SANITIZERS)
+	message(STATUS "**********************")
+	message(STATUS "*** ENABLE_SANITIZERS is ON ***")
+	message(STATUS "**********************")
+	set(CMAKE_CXX_FLAGS "-fsanitize=address -fsanitize=leak -fno-omit-frame-pointer -g ${CMAKE_CXX_FLAGS}")
+	set(CMAKE_EXE_LINKER_FLAGS "-fsanitize=address -fsanitize=leak ${CMAKE_EXE_LINKER_FLAGS}")
+endif()
+
+
 set( CLANG_FORMAT_EXCLUDE_PATTERNS
     ${CMAKE_BINARY_DIR}
     ${DEPS_SOURCES_ROOT}
 )
 include( BlsFindClangFormat )
 
+set( TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test/")
 set( TOOLS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tools/")
 set( DKG_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dkg/")
 
@@ -107,8 +121,9 @@ set(sourses_bls
 	dkg/dkg.cpp
 	dkg/DKGBLSWrapper.cpp
 	dkg/DKGBLSSecret.cpp
+	dkg/DKGTEWrapper.cpp
+	dkg/DKGTESecret.cpp
 	third_party/cryptlite/base64.cpp
-	tools/utils.cpp
 )
 
 set(headers_bls
@@ -143,14 +158,23 @@ else()
                 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wunreachable-code -Wextra -Wno-error=deprecated-copy -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=maybe-uninitialized -Wno-error=int-in-bool-context -fPIC -std=c++20")
 		if( CMAKE_BUILD_TYPE STREQUAL "Debug" )
 			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wparentheses -Wunused -Wno-error=deprecated-copy -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=maybe-uninitialized" )
-                else()
-                    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=deprecated-copy -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=maybe-uninitialized" )
+		else()
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=deprecated-copy -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=maybe-uninitialized" )
 		endif()
 	endif()
 endif()
 
 include_directories(${CMAKE_BINARY_DIR}/deps/include)
 link_directories(${CMAKE_BINARY_DIR}/deps/lib)
+
+add_subdirectory(backends)
+
+# TMP fix for emscripten
+# Build utils exactly once
+add_library(common_utils STATIC tools/utils.cpp tools/utils.h)
+target_include_directories(common_utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(common_utils PRIVATE ${CRYPTOPP_LIBRARY} backend)
+
 
 add_library(bls ${sourses_bls} ${headers_bls})
 
@@ -168,7 +192,7 @@ set(BLS_INCLUDE_DIRS
 )
 
 target_include_directories(bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(bls PRIVATE ff ${CRYPTOPP_LIBRARY} ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+target_link_libraries(bls PUBLIC backend PRIVATE ${CRYPTOPP_LIBRARY} common_utils)
 
 add_subdirectory(threshold_encryption)
 
@@ -183,7 +207,7 @@ if (BUILD_UTILS)
 			set_target_properties(${name} PROPERTIES LINK_FLAGS "-s -fwasm-exceptions")
 		endif()
 
-		target_link_libraries(${name} PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} boost_program_options)
+		target_link_libraries(${name} PRIVATE bls ${CRYPTOPP_LIBRARY} boost_program_options)
 	endfunction()
 
 	# Add all tools using the function
@@ -212,7 +236,7 @@ if(BUILD_TESTS)
 			target_compile_options(${name} PRIVATE -Wno-format-overflow)
 		endif()
 
-		target_link_libraries(${name} PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options ${extra_libs})
+		target_link_libraries(${name} PRIVATE bls ${CRYPTOPP_LIBRARY} boost_program_options ${extra_libs})
 		add_test(NAME ${name} COMMAND ${name})
 	endfunction()
 
@@ -226,18 +250,18 @@ if(BUILD_TESTS)
     # Special case for dkg_attack (no compile options)
     add_executable(dkg_attack test/dkg_attack.cpp)
     target_include_directories(dkg_attack PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-    target_link_libraries(dkg_attack PRIVATE bls ${CRYPTOPP_LIBRARY} ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} boost_program_options)
+    target_link_libraries(dkg_attack PRIVATE bls ${CRYPTOPP_LIBRARY} boost_program_options)
     add_test(NAME dkg_attack COMMAND dkg_attack)
 
 	add_custom_target(all_bls_tests
-			COMMAND ./bls_unit_test
-			COMMAND ./dkg_unit_test
-			COMMAND ./bls_test
-			COMMAND ./utils_unit_test
-			DEPENDS bls_unit_test dkg_unit_test
-			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-			COMMENT "Run all BLS and DKG tests"
-			)
+		COMMAND ./bls_unit_test
+		COMMAND ./dkg_unit_test
+		COMMAND ./bls_test
+		COMMAND ./utils_unit_test
+		DEPENDS bls_unit_test dkg_unit_test
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		COMMENT "Run all BLS and DKG tests"
+	)
 endif()
 
 if(NOT SKALE_SKIP_INSTALLING_DIRECTIVES)
@@ -248,3 +272,6 @@ if(NOT SKALE_SKIP_INSTALLING_DIRECTIVES)
 	install( TARGETS bls_glue DESTINATION bin )
 	install( TARGETS verify_bls DESTINATION bin )
 endif()
+
+## Benchmarks
+add_subdirectory(benchmarks)

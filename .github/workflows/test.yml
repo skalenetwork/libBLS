@@ -163,6 +163,7 @@ jobs:
         run: |
           cp scripts/parameters.json build/
           cd build
+          ./backends/backend_unit_test
           ./bls_unit_test
           ./dkg_unit_test
           ./utils_unit_test
@@ -216,6 +217,7 @@ jobs:
         run: |
           cp scripts/parameters.json build/
           cd build
+          ./backends/backend_unit_test
           ./bls_unit_test
           ./dkg_unit_test
           ./bls_test

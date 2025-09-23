@@ -27,24 +27,21 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
-TEPrivateKeyShare::TEPrivateKeyShare( const std::string& _hexaField, size_t _signerIndex,
+TEPrivateKeyShare::TEPrivateKeyShare( const std::string& _fieldStr, Base _base, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
     if ( _signerIndex > _totalSigners ) {
         throw ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
     }
 
-    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > fieldBytes =
-        ThresholdUtils::hexCStringToBytesArray< MAX_FIELD_ELEMENT_SIZE_BYTES >(
-            _hexaField.c_str() );
-    privateKey = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( fieldBytes );
+    privateKey = algebra::FrScalar::fromString( _fieldStr, _base );
 
-    if ( privateKey.is_zero() ) {
+    if ( privateKey.isZero() ) {
         throw ThresholdUtils::ZeroSecretKey( "Zero private key share" );
     }
 }
 
-TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skeyShare, size_t _signerIndex,
+TEPrivateKeyShare::TEPrivateKeyShare( const algebra::FrScalar& _skeyShare, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ),
       privateKey( _skeyShare ),
@@ -53,7 +50,7 @@ TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skeyShare, size_t _si
         throw ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
     }
 
-    if ( _skeyShare.is_zero() ) {
+    if ( _skeyShare.isZero() ) {
         throw ThresholdUtils::ZeroSecretKey( "Zero private key share" );
     }
 }
@@ -61,39 +58,33 @@ TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skeyShare, size_t _si
 TEPrivateKeyShare::TEPrivateKeyShare( const std::vector< uint8_t >& _bytes, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : TEPrivateKeyShare(
-          libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( _bytes ),
-          _signerIndex, _requiredSigners, _totalSigners ) {}
+          algebra::FrScalar::fromBytes( _bytes ), _signerIndex, _requiredSigners, _totalSigners ) {}
 
 TEPrivateKeyShare::TEPrivateKeyShare(
-    const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& _bytes, size_t _signerIndex,
+    const std::array< uint8_t, algebra::FrScalar::SIZE_BYTES >& _bytes, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : TEPrivateKeyShare(
-          libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( _bytes ),
-          _signerIndex, _requiredSigners, _totalSigners ) {}
+          algebra::FrScalar::fromBytes( _bytes ), _signerIndex, _requiredSigners, _totalSigners ) {}
 
 
-std::string TEPrivateKeyShare::toString() const {
-    return ThresholdUtils::fieldElementToString( privateKey, BASE_DEC );
-}
-
-std::string TEPrivateKeyShare::toStringHex() const {
-    return ThresholdUtils::fieldElementToString( privateKey, BASE_HEXA );
+std::string TEPrivateKeyShare::toString( Base base ) const {
+    return privateKey.toString( base );
 }
 
 size_t TEPrivateKeyShare::getSignerIndex() const {
     return signerIndex;
 }
 
-libff::alt_bn128_Fr TEPrivateKeyShare::getPrivateKeyRaw() const {
+const algebra::FrScalar& TEPrivateKeyShare::getPrivateKeyRaw() const {
     return privateKey;
 }
 
 std::vector< uint8_t > TEPrivateKeyShare::toBytesVec() const {
-    return ThresholdUtils::fieldElementToBytes( privateKey );
+    return privateKey.toByteVector();
 }
 
-std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > TEPrivateKeyShare::toBytesArray() const {
-    return ThresholdUtils::fieldElementToBytesArray( privateKey );
+std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > TEPrivateKeyShare::toBytesArray() const {
+    return privateKey.toByteArray();
 }
 
 }  // namespace libBLS
