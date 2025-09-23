@@ -51,6 +51,11 @@ link_directories(${CMAKE_BINARY_DIR}/deps/lib)
 target_include_directories(te PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
 target_link_libraries(te PRIVATE backend ${CRYPTOPP_LIBRARY})
 
+target_compile_definitions(te
+  INTERFACE
+    $<TARGET_PROPERTY:backend,INTERFACE_COMPILE_DEFINITIONS>
+)
+
 if (BUILD_TESTS)
 
     # Helper function to add tests
