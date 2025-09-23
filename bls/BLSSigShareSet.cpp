@@ -30,7 +30,6 @@
 namespace libBLS {
 
 bool BLSSigShareSet::addSigShare( const BLSSigShare& _sigShare ) {
-    _sigShare;
 
     if ( was_merged ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Invalid state:was already merged" );
