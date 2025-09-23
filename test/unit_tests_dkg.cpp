@@ -135,7 +135,7 @@ std::vector< libBLS::algebra::G2Point > SpoilVerifVector(
     size_t elem_to_spoil = rand_gen() % verif_vect.size();
     size_t bad_coord_num = rand_gen() % 6;
     std::vector< libBLS::algebra::G2Point > bad_verif_vect = verif_vect;
-    auto& p = bad_verif_vect.at(elem_to_spoil);
+    auto& p = bad_verif_vect.at( elem_to_spoil );
 
     switch ( bad_coord_num ) {
     case 0: {
