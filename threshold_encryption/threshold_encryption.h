@@ -150,7 +150,8 @@ public:
         return U.toString( Base::HEXA );
     }
 
-    static std::vector< std::string > getDecryptionShareInputBatch( const std::vector< CipheredKey >& keys ) {
+    static std::vector< std::string > getDecryptionShareInputBatch(
+        const std::vector< CipheredKey >& keys ) {
         std::vector< algebra::G2Point > U_points;
         U_points.reserve( keys.size() );
         for ( const auto& key : keys ) {

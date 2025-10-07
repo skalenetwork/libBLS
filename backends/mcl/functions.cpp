@@ -30,7 +30,8 @@ inline FastRandFrScalar& fastRndFr() {
 bool optimisticBatchPairing1CommonBaseValidation( const PairingEquality1CommonBaseBatch& batch );
 
 
-std::vector< bool > verifyPairingEquality1CommonBaseBatch( const PairingEquality1CommonBaseBatch& batch ) {
+std::vector< bool > verifyPairingEquality1CommonBaseBatch(
+    const PairingEquality1CommonBaseBatch& batch ) {
     std::vector< bool > isValidVec( batch.sizeTotal, true );
 
     // If optimistic validation is ON and passes -> return all true (current vector)
@@ -40,8 +41,8 @@ std::vector< bool > verifyPairingEquality1CommonBaseBatch( const PairingEquality
         // pessimistic validation
         std::cout << "Failing" << std::endl;
         for ( size_t i = 0; i < batch.sizeTotal; ++i ) {
-            isValidVec.at(i) = verifyPairingEq( batch.g1P1s.at( i ), batch.g2P1, batch.g1P2s.at( i ),
-                batch.g2P2s.at( i ) );
+            isValidVec.at( i ) = verifyPairingEq(
+                batch.g1P1s.at( i ), batch.g2P1, batch.g1P2s.at( i ), batch.g2P2s.at( i ) );
         }
     }
     return isValidVec;
@@ -53,15 +54,17 @@ bool optimisticBatchPairing1CommonBaseValidation( const PairingEquality1CommonBa
         G1BackendType::neg( negatedG1P2s[i], batch.g1P2s.at( i ).asBackendType() );  // -P2_i
     }
 
-    std::vector< G1BackendType > x; x.reserve( batch.sizeTotal );
-    std::vector< G2BackendType > y; y.reserve( batch.sizeTotal );
+    std::vector< G1BackendType > x;
+    x.reserve( batch.sizeTotal );
+    std::vector< G2BackendType > y;
+    y.reserve( batch.sizeTotal );
 
     for ( size_t i = 0; i < batch.sizeTotal; ++i ) {
         // e(g1P1_i, g2P1)
         x.push_back( batch.g1P1s.at( i ).asBackendType() );
         y.push_back( batch.g2P1.asBackendType() );
         // e(-g1P2_i, g2P2_i)
-        x.push_back( negatedG1P2s.at(i) );
+        x.push_back( negatedG1P2s.at( i ) );
         y.push_back( batch.g2P2s.at( i ).asBackendType() );
     }
 
@@ -76,10 +79,11 @@ bool optimisticBatchPairing1CommonBaseValidation( const PairingEquality1CommonBa
 
 bool optimisticBatchPairing2CommonBasesValidation(
     const PairingEquality2CommonBasesBatch& batch, size_t startingBatch, size_t numBatches );
-void pessimisticBatchPairing2CommonBasesValidation(
-    const PairingEquality2CommonBasesBatch& batch, std::vector< bool >& isValidVec, size_t batchIdx );
+void pessimisticBatchPairing2CommonBasesValidation( const PairingEquality2CommonBasesBatch& batch,
+    std::vector< bool >& isValidVec, size_t batchIdx );
 
-std::vector< bool > verifyPairingEquality2CommonBasesBatch( const PairingEquality2CommonBasesBatch& batch ) {
+std::vector< bool > verifyPairingEquality2CommonBasesBatch(
+    const PairingEquality2CommonBasesBatch& batch ) {
     std::vector< bool > isValidVec( batch.sizeTotal, true );
 
     size_t startingBatch = 0;
@@ -98,8 +102,10 @@ std::vector< bool > verifyPairingEquality2CommonBasesBatch( const PairingEqualit
                 // if this batch has failed - run pessimistic validation for it
                 const size_t startingBatch = i;
                 const size_t numBatches = 1;
-                if ( !optimisticBatchPairing2CommonBasesValidation( batch, startingBatch, numBatches ) ) {
-                    pessimisticBatchPairing2CommonBasesValidation( batch, isValidVec, startingBatch );
+                if ( !optimisticBatchPairing2CommonBasesValidation(
+                         batch, startingBatch, numBatches ) ) {
+                    pessimisticBatchPairing2CommonBasesValidation(
+                        batch, isValidVec, startingBatch );
                 }
             }
         } else {  // simple batch - batch of shares - identify which share failed
@@ -114,11 +120,12 @@ std::vector< bool > verifyPairingEquality2CommonBasesBatch( const PairingEqualit
  * Only does pessimistic pass over a single (inner) batch.
  *
  */
-void pessimisticBatchPairing2CommonBasesValidation(
-    const PairingEquality2CommonBasesBatch& batch, std::vector< bool >& isValidVec, size_t batchIdx ) {
+void pessimisticBatchPairing2CommonBasesValidation( const PairingEquality2CommonBasesBatch& batch,
+    std::vector< bool >& isValidVec, size_t batchIdx ) {
     if ( isValidVec.size() != batch.sizeTotal ) {
         throw std::invalid_argument(
-            "pessimisticBatchPairing2CommonBasesValidation: isValidVec size mismatch with batch.sizeTotal" );
+            "pessimisticBatchPairing2CommonBasesValidation: isValidVec size mismatch with "
+            "batch.sizeTotal" );
     }
 
     // Do pessimistic approach

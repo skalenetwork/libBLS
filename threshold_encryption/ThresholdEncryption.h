@@ -77,7 +77,8 @@ public:
      * @return Vec of bools, each idx specifying if it was successfully validated or not.
      * Each idx corresponds to the same idx on _ciphertexts.
      */
-    static std::vector< bool > validateEncryptionBatch( const std::vector< CipheredKey >& _ciphertexts );
+    static std::vector< bool > validateEncryptionBatch(
+        const std::vector< CipheredKey >& _ciphertexts );
 
     /**
      * @brief Generates a decryption share for the given ciphered key

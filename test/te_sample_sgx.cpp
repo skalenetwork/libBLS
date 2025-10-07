@@ -204,14 +204,14 @@ std::vector< libBLS::TEDecryptionShare > getDecryptionShares(
 
     for ( size_t i = 0; i < ciphertexts.size(); i++ ) {
         std::shared_ptr< libBLS::Ciphertext > ciphertext = ciphertexts[i];
-        keys.push_back(ciphertexts[i]->getKeys()[keyIndex]);
+        keys.push_back( ciphertexts[i]->getKeys()[keyIndex] );
     }
 
     libBLS::ThresholdEncryption::validateEncryptionBatch( keys );
 
     auto sharesInputs = libBLS::CipheredKey::getDecryptionShareInputBatch( keys );
     for ( size_t i = 0; i < ciphertexts.size(); i++ ) {
-        batch.append(sharesInputs[i]);
+        batch.append( sharesInputs[i] );
     }
 
     TIMER(

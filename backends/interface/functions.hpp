@@ -34,11 +34,8 @@ struct PairingEquality1CommonBaseBatch {
     bool optimisticValidation = false;
     size_t sizeTotal;
 
-    PairingEquality1CommonBaseBatch( 
-        const std::vector< G1Point >& v1,
-        const std::vector< G1Point >& v2,
-        const G2Point& p1,
-        const std::vector< G2Point >& v3 )
+    PairingEquality1CommonBaseBatch( const std::vector< G1Point >& v1,
+        const std::vector< G1Point >& v2, const G2Point& p1, const std::vector< G2Point >& v3 )
         : g2P1( p1 ), g1P1s( std::move( v1 ) ), g1P2s( std::move( v2 ) ), g2P2s( std::move( v3 ) ) {
         if ( g1P1s.size() != g1P2s.size() || g1P1s.size() != g2P2s.size() ) {
             throw std::invalid_argument(
@@ -50,12 +47,13 @@ struct PairingEquality1CommonBaseBatch {
     void useOptimisticValidation() { optimisticValidation = true; }
 };
 
-std::vector< bool > verifyPairingEquality1CommonBaseBatch( const PairingEquality1CommonBaseBatch& batch );
+std::vector< bool > verifyPairingEquality1CommonBaseBatch(
+    const PairingEquality1CommonBaseBatch& batch );
 
 // -------------------- 2 Common Bases Batched Pairing -------------------- //
 
 // Holds all data needed to batch validate pairings of the form e(P1, Q1,i) == e(P2, Q2,i)
-// That is, P1 and P2 are constant across the batch, while Q1,i and Q2,i vary. 
+// That is, P1 and P2 are constant across the batch, while Q1,i and Q2,i vary.
 struct PairingEquality2CommonBasesBatch {
     // store the common G1 points per batch. I.e, for each G1Point, there are N G2Points.
     // no reference wrapper - these values usually have to be computed within a limited scope.
@@ -79,7 +77,8 @@ struct PairingEquality2CommonBasesBatch {
 
     // Used to construct a mega-batch of M batches of N shares, where g1P1 and g1P2
     // are NOT constant across batches
-    PairingEquality2CommonBasesBatch( const std::vector< G1Point >& p1, const std::vector< G1Point >& p2,
+    PairingEquality2CommonBasesBatch( const std::vector< G1Point >& p1,
+        const std::vector< G1Point >& p2,
         const std::vector< std::reference_wrapper< const G2Point > >& v1,
         const std::vector< std::reference_wrapper< const G2Point > >& v2 )
         : g1P1s( std::move( p1 ) ),
@@ -115,7 +114,8 @@ struct PairingEquality2CommonBasesBatch {
 };
 
 // Returns vec of bools where each bool at index i is true iff
-std::vector< bool > verifyPairingEquality2CommonBasesBatch( const PairingEquality2CommonBasesBatch& batch );
+std::vector< bool > verifyPairingEquality2CommonBasesBatch(
+    const PairingEquality2CommonBasesBatch& batch );
 
 
 // -------------------- Backend Specific -------------------- //
