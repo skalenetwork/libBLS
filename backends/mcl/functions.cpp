@@ -39,7 +39,6 @@ std::vector< bool > verifyPairingEquality1CommonBaseBatch(
     // Else, at least 1 share has failed
     if ( !batch.optimisticValidation || !optimisticBatchPairing1CommonBaseValidation( batch ) ) {
         // pessimistic validation
-        std::cout << "Failing" << std::endl;
         for ( size_t i = 0; i < batch.sizeTotal; ++i ) {
             isValidVec.at( i ) = verifyPairingEq(
                 batch.g1P1s.at( i ), batch.g2P1, batch.g1P2s.at( i ), batch.g2P2s.at( i ) );

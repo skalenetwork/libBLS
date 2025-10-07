@@ -132,7 +132,7 @@ Ciphertext ThresholdEncryption::encrypt(
 }
 
 void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
-    auto [U, V, W] = _ciphertext;
+    const auto& [U, V, W] = _ciphertext;
     std::string v_str = ThresholdUtils::bytesToHexString( V );
 
     algebra::G1Point H = TE::HashToGroup( U, v_str );
@@ -158,7 +158,7 @@ std::vector< bool > ThresholdEncryption::validateEncryptionBatch(
     const algebra::G2Point g2P1 = algebra::G2Point::generator();
 
     for ( const auto& ck : _ciphertexts ) {
-        auto [U, V, W] = ck;
+        const auto& [U, V, W] = ck;
         const std::string vStr = ThresholdUtils::bytesToHexString( V );
         const algebra::G1Point H = TE::HashToGroup( U, vStr );
 
