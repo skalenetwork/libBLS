@@ -71,6 +71,15 @@ public:
     static void validateEncryption( const CipheredKey& _cipheredKey );
 
     /**
+     * @brief Validates a batch of TE ciphered keys. Same as above, but more performant
+     * @param _ciphertexts Vector of encrypted AESKeys used to encrypt the message held by
+     * Ciphertext struct
+     * @return Vec of bools, each idx specifying if it was successfully validated or not.
+     * Each idx corresponds to the same idx on _ciphertexts.
+     */
+    static std::vector< bool > validateEncryptionBatch( const std::vector< CipheredKey >& _ciphertexts );
+
+    /**
      * @brief Generates a decryption share for the given ciphered key
      * @note Assumes ciphertext has already been validated via `validateEncryption` call, and that
      * private key share is also valid.

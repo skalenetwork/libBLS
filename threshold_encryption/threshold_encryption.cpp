@@ -312,9 +312,9 @@ std::vector< bool > TE::VerifyBatch(
         g1P2s.emplace_back( H );
     }
 
-    algebra::PairingEqualityBatch batch( g1P1s, g1P2s, publicKeys, decryptionShares );
+    algebra::PairingEquality2CommonBasesBatch batch( g1P1s, g1P2s, publicKeys, decryptionShares );
     batch.useOptimisticValidation();
-    return algebra::verifyPairingEqBatch( batch );
+    return algebra::verifyPairingEquality2CommonBasesBatch( batch );
 }
 
 

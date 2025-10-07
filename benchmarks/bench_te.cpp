@@ -39,7 +39,6 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
     std::vector< std::shared_ptr< libBLS::TEDecryptionShare > > decryptionShares;
     std::vector< std::shared_ptr< libBLS::TEPublicKeyShare > > publicKeys;
 
-    std::cout << "Encryption + validate encryption + partial decrypt: \n";
     for ( size_t i = 0; i < args.numTxs; i++ ) {
         // encrypt
         {
@@ -77,7 +76,6 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
         print_progress( i, args.numTxs );
     }
 
-    std::cout << "ValidateDecryptionSharesBatch: \n";
     // validate entire batch of shares
     std::vector< bool > validated = [&]() {
         ScopedTimer t( validate_decryption_share_total_ms );
@@ -86,7 +84,6 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
             cipheredKeys, decryptionShares, publicKeys );
     }();
 
-    std::cout << "merge shares + validate combined shares + decrypt: \n";
     for ( size_t i = 0; i < args.numTxs; i++ ) {
         libBLS::TEDecryptSet decrSet( numSigned, numAll );
 

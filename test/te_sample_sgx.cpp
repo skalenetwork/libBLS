@@ -61,13 +61,13 @@ int main() {
     if ( const char* envT = std::getenv( "t" ) ) {
         t = std::stoi( envT );
     } else {
-        t = 11;
+        t = 16;
     }
 
     if ( const char* env_n = std::getenv( "n" ) ) {
         n = std::stoi( env_n );
     } else {
-        n = 16;
+        n = 22;
     }
 
     if ( const char* envUrl = std::getenv( "SGXWALLET_URL" ) ) {
@@ -79,7 +79,7 @@ int main() {
     if ( const char* envNmessagesBatch = std::getenv( "N_MESSAGES_BATCH" ) ) {
         nMessagesBatch = std::stoi( envNmessagesBatch );
     } else {
-        nMessagesBatch = 100;
+        nMessagesBatch = 250;
     }
 
     if ( const char* envBatchSize = std::getenv( "N_BATCHES" ) ) {
@@ -198,12 +198,20 @@ std::vector< libBLS::TEDecryptionShare > getDecryptionShares(
     p["blsKeyName"] = keyName;
 
     Json::Value batch;
-    // batch.reserve( 256 * ciphertexts.size());
+
+    int64_t timeToGetDecryptionShares = 0;
+    std::vector< libBLS::CipheredKey > keys;
+
     for ( size_t i = 0; i < ciphertexts.size(); i++ ) {
         std::shared_ptr< libBLS::Ciphertext > ciphertext = ciphertexts[i];
-        libBLS::CipheredKey cipheredKey = ciphertexts[i]->getKeys()[keyIndex];
-        libBLS::ThresholdEncryption::validateEncryption( cipheredKey );
-        batch.append( cipheredKey.getDecryptionShareInput() );
+        keys.push_back(ciphertexts[i]->getKeys()[keyIndex]);
+    }
+
+    libBLS::ThresholdEncryption::validateEncryptionBatch( keys );
+
+    auto sharesInputs = libBLS::CipheredKey::getDecryptionShareInputBatch( keys );
+    for ( size_t i = 0; i < ciphertexts.size(); i++ ) {
+        batch.append(sharesInputs[i]);
     }
 
     TIMER(

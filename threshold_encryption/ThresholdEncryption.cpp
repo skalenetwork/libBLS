@@ -136,7 +136,6 @@ void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
     std::string v_str = ThresholdUtils::bytesToHexString( V );
 
     algebra::G1Point H = TE::HashToGroup( U, v_str );
-    H.validate();
 
     // pairing( W, P ) == pairing( H, U )
     bool validPairing = algebra::verifyPairingEq( W, algebra::G2Point::generator(), H, U );
@@ -144,6 +143,32 @@ void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
     if ( !validPairing ) {
         throw ThresholdUtils::IsNotWellFormed( "Invalid encryption" );
     }
+}
+
+std::vector< bool > ThresholdEncryption::validateEncryptionBatch( const std::vector< CipheredKey >& _ciphertexts ) {
+    // Store concrete values (no reference_wrapper)
+    std::vector< algebra::G1Point > g1P1s;  // W_i
+    std::vector< algebra::G1Point > g1P2s;  // H_i
+    std::vector< algebra::G2Point > g2P2s;  // U_i
+    g1P1s.reserve(_ciphertexts.size());
+    g1P2s.reserve(_ciphertexts.size());
+    g2P2s.reserve(_ciphertexts.size());
+
+    const algebra::G2Point g2P1 = algebra::G2Point::generator();
+
+    for (const auto& ck : _ciphertexts) {
+        auto [U, V, W] = ck;
+        const std::string vStr = ThresholdUtils::bytesToHexString(V);
+        const algebra::G1Point H = TE::HashToGroup(U, vStr);
+
+        g1P1s.emplace_back( W );
+        g1P2s.emplace_back( H );
+        g2P2s.emplace_back( U );
+    }
+
+    algebra::PairingEquality1CommonBaseBatch batch(g1P1s, g1P2s, g2P1, g2P2s);
+    batch.useOptimisticValidation();
+    return algebra::verifyPairingEquality1CommonBaseBatch(batch);
 }
 
 TEDecryptionShare ThresholdEncryption::partialDecrypt(

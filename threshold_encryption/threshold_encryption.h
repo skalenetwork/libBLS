@@ -147,26 +147,32 @@ public:
      */
     std::string getDecryptionShareInput() {
         U.toAffineCoordinates();
-        U.validate();
-
-        auto u_splitted = U.toStringArray( Base::HEXA );
-
-        // convert to string
-        std::string public_decryption_value;
-        size_t total_size = 0;
-
-        for ( const auto& part : u_splitted ) {
-            total_size += part.size();
-        }
-
-        public_decryption_value.reserve( total_size );
-
-        for ( const auto& part : u_splitted ) {
-            public_decryption_value += part;
-        }
-
-        return public_decryption_value;
+        return U.toString( Base::HEXA );
     }
+
+    static std::vector< std::string > getDecryptionShareInputBatch( const std::vector< CipheredKey >& keys ) {
+        std::vector< algebra::G2Point > U_points;
+        U_points.reserve( keys.size() );
+        for ( const auto& key : keys ) {
+            U_points.push_back( key.U );
+        }
+
+        // batch convert all to affine coordinates
+        toAffineVec( U_points );
+
+        std::vector< std::string > res;
+        res.reserve( keys.size() );
+        for ( const auto& U : U_points ) {
+            auto u_splitted = U.toString( Base::HEXA );
+            res.push_back( u_splitted );
+        }
+
+        return res;
+    }
+
+    const algebra::G2Point& getU() const { return U; }
+    const AES256Key& getV() const { return V; }
+    const algebra::G1Point& getW() const { return W; }
 };
 
 /**
