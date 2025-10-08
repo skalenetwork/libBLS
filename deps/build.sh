@@ -147,23 +147,31 @@ echo -e "${COLOR_SEPARATOR}=====================================================
 echo -e "${COLOR_YELLOW}BLS dependencies build actions...${COLOR_RESET}"
 echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}PREPARE BUILD${COLOR_SEPARATOR} ================================${COLOR_RESET}"
 
-if [ -z "${ARCH}" ];
-then
-	# if we don't have explicit ARCH=something from command line arguments
-	ARCH="x86_or_x64"
+# If emscripten - force arch to wasm32-emscripten
+if [[ "${WITH_EMSCRIPTEN:-}" == "1" ]]; then
+	ARCH="wasm32-emscripten"
 else
-	if [ "$ARCH" = "arm" ];
+	if [ -z "${ARCH}" ];
 	then
-		ARCH="arm"
-	else
+		# if we don't have explicit ARCH=something from command line arguments
 		ARCH="x86_or_x64"
+	else
+		if [ "$ARCH" = "arm" ];
+		then
+			ARCH="arm"
+		else
+			ARCH="x86_or_x64"
+		fi
+	fi
+
+	if [ "$ARM" = "1" ];
+	then
+		# if we have explicit ARM=1 from command line arguments
+		ARCH="arm"
 	fi
 fi
-if [ "$ARM" = "1" ];
-then
-	# if we have explicit ARM=1 from command line arguments
-	ARCH="arm"
-fi
+
+echo "---- ARCH = ${ARCH}"
 #
 TOP_CMAKE_BUILD_TYPE="Release"
 if [ "$DEBUG" = "1" ];
@@ -274,7 +282,7 @@ then
     SET_CC=$CC
 fi
 
-if [ "$ARCH" = "x86_or_x64" ];
+if [[ "$ARCH" = "x86_or_x64" || "$ARCH" = "wasm32-emscripten" ]];
 then
 	export CMAKE_CROSSCOMPILING_OPTS="-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
 	export CONF_CROSSCOMPILING_OPTS_GENERIC=""
@@ -641,7 +649,7 @@ then
 			cd openssl
 			eval git fetch
 			eval git checkout OpenSSL_1_1_1n
-			if [ "$ARCH" = "x86_or_x64" ];
+			if [[ "$ARCH" = "x86_or_x64" || "$ARCH" = "wasm32-emscripten" ]];
 			then
 				if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
 				then
