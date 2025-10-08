@@ -1150,6 +1150,48 @@ BOOST_AUTO_TEST_CASE( Encryption ) {
     }
 }
 
+BOOST_AUTO_TEST_CASE( BatchedEncryptionValidation ) {
+    keys keys = generateKeys( 16, 22 );
+    size_t dataSize = 100;
+    std::vector< libBLS::CipheredKey > ciphers;
+    for ( size_t i = 0; i < 20; ++i ) {
+        std::vector< uint8_t > data = randomByteVec( dataSize );
+        libBLS::Ciphertext cipher = libBLS::ThresholdEncryption::encrypt( data, keys.commonPublic );
+
+        // should be big enough to contain message and random secret
+        BOOST_REQUIRE( cipher.getData().size() >= data.size() + libBLS::RANDOM_SECRET_SIZE_BYTES );
+        ciphers.push_back( cipher.keys[0] );
+    }
+
+    // should validate correctly
+    auto validation = libBLS::ThresholdEncryption::validateEncryptionBatch( ciphers );
+    BOOST_REQUIRE( std::find( validation.begin(), validation.end(), false ) == validation.end() );
+
+    // Faulty key
+    auto rnd = rand_gen() % ciphers.size();
+    auto originalCipher = ciphers[rnd];
+    tamperCipheredKeyV( ciphers[rnd] );
+    auto validation2 = libBLS::ThresholdEncryption::validateEncryptionBatch( ciphers );
+    BOOST_REQUIRE( validation2[rnd] == false );
+
+    ciphers[rnd] = originalCipher;  // restore original
+
+    // Faulty U
+    rnd = rand_gen() % ciphers.size();
+    originalCipher = ciphers[rnd];
+    ciphers[rnd].U = libBLS::algebra::G2Point::random();
+    auto validation3 = libBLS::ThresholdEncryption::validateEncryptionBatch( ciphers );
+    BOOST_REQUIRE( validation3[rnd] == false );
+    ciphers[rnd] = originalCipher;  // restore original
+
+    // Faulty W
+    rnd = rand_gen() % ciphers.size();
+    originalCipher = ciphers[rnd];
+    ciphers[rnd].W = libBLS::algebra::G1Point::random();
+    auto validation4 = libBLS::ThresholdEncryption::validateEncryptionBatch( ciphers );
+    BOOST_REQUIRE( validation4[rnd] == false );
+}
+
 BOOST_AUTO_TEST_CASE( PartialDecrypt ) {
     keys keys = generateKeys( 1, 1 );
     size_t dataSize = 100;
