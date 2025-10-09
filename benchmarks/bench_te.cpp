@@ -10,6 +10,51 @@
 
 #include "threshold_encryption/ThresholdEncryption.h"
 
+BOOST_AUTO_TEST_CASE( EncryptionValidation ) {
+    auto& ts = boost::unit_test::framework::master_test_suite();
+    BenchArgs args = parse_args( ts.argc, ts.argv );
+    BOOST_REQUIRE( args.t >= 2 && args.t <= args.n );
+
+    // Success cases only
+    double pessimistic_validation_ms = 0.0;
+    double batched_validation_ms = 0.0;
+    double concurrent_validation_ms = 0.0;
+
+    libBLS::init();
+
+    // initial setup
+    size_t numAll = args.n;
+    size_t numSigned = args.t;
+    const keys keys = generateKeys( numSigned, numAll );
+
+    auto message = make_msg( args.msg_bytes );
+
+    // keep all ciphered keys stored in a vector
+    std::vector< libBLS::CipheredKey > cipheredKeys;
+
+    for ( size_t i = 0; i < args.numTxs; i++ ) {
+        // encrypt
+        libBLS::Ciphertext cypher =
+            libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
+        cipheredKeys.push_back( cypher.keys[0] );
+
+        {  // validate encryption
+            ScopedTimer timer( pessimistic_validation_ms );
+            libBLS::ThresholdEncryption::validateEncryption( cipheredKeys[i] );
+        }
+    }
+
+    {
+        ScopedTimer timer( batched_validation_ms );
+        libBLS::ThresholdEncryption::validateEncryptionBatch( cipheredKeys );
+    }
+
+    print_args( args );
+    std::cout << "Encryption validation (single, pessimistic) took " << pessimistic_validation_ms
+              << " ms\n";
+    std::cout << "Encryption validation (batched) took " << batched_validation_ms << " ms\n";
+}
+
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
     auto& ts = boost::unit_test::framework::master_test_suite();
     BenchArgs args = parse_args( ts.argc, ts.argv );
