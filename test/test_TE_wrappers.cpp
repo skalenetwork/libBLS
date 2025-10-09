@@ -1155,7 +1155,6 @@ BOOST_AUTO_TEST_CASE( BatchedEncryptionValidation ) {
     keys keys = generateKeys( 16, 22 );
     size_t dataSize = 100;
     std::vector< libBLS::CipheredKey > ciphers1;
-    std::vector< libBLS::CipheredKey > ciphers2;
     for ( size_t i = 0; i < 100; ++i ) {
         std::vector< uint8_t > data = randomByteVec( dataSize );
         libBLS::Ciphertext cipher = libBLS::ThresholdEncryption::encrypt( data, keys.commonPublic );
@@ -1181,12 +1180,12 @@ BOOST_AUTO_TEST_CASE( BatchedEncryptionValidation ) {
     ciphers1[rnd] = originalCipher;  // restore original
 
     // Faulty U
-    rnd = rand_gen() % ciphers2.size();
-    originalCipher = ciphers2[rnd];
-    ciphers2[rnd].U = libBLS::algebra::G2Point::random();
-    auto validation3 = libBLS::ThresholdEncryption::validateEncryptionBatch( ciphers2 );
+    rnd = rand_gen() % ciphers1.size();
+    originalCipher = ciphers1[rnd];
+    ciphers1[rnd].U = libBLS::algebra::G2Point::random();
+    auto validation3 = libBLS::ThresholdEncryption::validateEncryptionBatch( ciphers1 );
     BOOST_REQUIRE( validation3[rnd] == false );
-    ciphers2[rnd] = originalCipher;  // restore original
+    ciphers1[rnd] = originalCipher;  // restore original
 
     // Faulty W
     rnd = rand_gen() % ciphers1.size();
