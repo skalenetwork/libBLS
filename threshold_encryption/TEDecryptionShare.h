@@ -39,6 +39,7 @@ private:
     algebra::G2Point share;
 
 public:
+    
     /**
      * @param _signerIndex Index of the signer
      * @param _share Decryption share

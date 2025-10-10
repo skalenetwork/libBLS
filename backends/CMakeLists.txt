@@ -66,6 +66,7 @@ set(INTERFACE_DIRS
 set(BACKEND_SPECIFIC_SOURCES
     # field scalars
     "field/FqElement.cpp"
+    "field/Fq12Element.cpp"
     "field/Fq2Element.cpp"
     "field/FrScalar.cpp"
 
@@ -99,8 +100,10 @@ endforeach()
 
 add_library(backend STATIC ${BACKEND_SOURCES})
 
-target_include_directories(backend PUBLIC
+target_include_directories(backend 
+    SYSTEM PRIVATE
     "${BACKEND_BASE_DIR}/.."  # This allows "backends/interface/..." includes
+    PUBLIC
     "${BACKEND_BASE_DIR}/interface"
 )
 
@@ -130,8 +133,10 @@ if(BUILD_TESTS)
       ${TOOLS_DIR}/utils.cpp
     )
 
-    target_include_directories(${name} PRIVATE
-      ${CMAKE_CURRENT_SOURCE_DIR}
+    message(STATUS "Adding backend test: ${BACKEND_BASE_DIR}")
+
+    target_include_directories(${name} SYSTEM PRIVATE
+      ${BACKEND_BASE_DIR}/.. # allow imports as "backends/..."
       ${THIRD_PARTY_DIR}
       ${TEST_DIR}
     )
@@ -140,7 +145,7 @@ if(BUILD_TESTS)
       $<$<CXX_COMPILER_ID:GNU,Clang>:-Wno-format-overflow>
     )
 
-    target_link_libraries(${name} PRIVATE backend)
+    target_link_libraries(${name} PRIVATE backend ${FOLLY_STATIC_LIBS})
 
     # Register test with the full path to the built binary (portable)
     add_test(NAME ${name} COMMAND $<TARGET_FILE:${name}>)

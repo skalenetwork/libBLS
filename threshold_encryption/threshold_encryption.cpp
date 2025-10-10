@@ -31,6 +31,7 @@
 
 #include "TEBase.h"
 #include <openssl/rand.h>
+#include "backends/algebra_types.hpp"
 
 namespace libBLS {
 
@@ -41,38 +42,35 @@ TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {}
 
 TE::~TE() {}
 
-std::string TE::Hash(
-    const algebra::G2Point& Y, std::string ( *hash_func )( const std::string& str ) ) {
-    auto vectorCoordinates = Y.toStringArray( Base::DEC );
+std::array<uint8_t, algebra::HASH_SIZE> TE::Hash( const algebra::G2Point& Y ) {
 
-    std::string tmp = "";
-    for ( const auto& coord : vectorCoordinates ) {
-        tmp += coord;
-    }
+    auto bytes = Y.toByteArray();
+    std::string view(reinterpret_cast<const char*>(bytes.data()), bytes.size());
 
-    const std::string sha256hex = hash_func( tmp );
+    std::array<uint8_t, algebra::HASH_SIZE> hash_result;
+    ThresholdUtils::sha256( view, hash_result );
 
-    return sha256hex;
+    return hash_result;
 }
 
-algebra::G1Point TE::HashToGroup( const algebra::G2Point& U, const std::string& V,
-    std::string ( *hash_func )( const std::string& str ) ) {
+algebra::G1Point TE::HashToGroup( const algebra::G2Point& U, const AES256Key& V ) {
     // assumed that U lies in G2
 
-    auto U_str = U.toStringArray( Base::DEC );
+    // convert U to bytes
+    auto U_bytes = U.toByteArray();
 
-    const std::string sha256hex = hash_func( U_str[0] + U_str[1] + U_str[2] + U_str[3] + V );
+    // concatenate both
+    std::array< uint8_t, algebra::G2Point::SIZE_BYTES + AES_256_KEY_SIZE_BYTES > u_v_bytes_arr;
+    std::memcpy( u_v_bytes_arr.data(), U_bytes.data(), U_bytes.size() );
+    std::memcpy( u_v_bytes_arr.data() + U_bytes.size(), V.data(), V.size() );
 
+    std::string view(reinterpret_cast<const char*>(u_v_bytes_arr.data()), u_v_bytes_arr.size());
 
-    std::string hash_str = cryptlite::sha256::hash_hex( sha256hex );
-    std::vector< uint8_t > bytes = ThresholdUtils::hexCStringToBytes( hash_str.c_str() );
+    // hash the concatenated value
+    std::array< uint8_t, algebra::HASH_SIZE > hash_result;
+    ThresholdUtils::sha256( view, hash_result );
 
-    // copy first 32 bytes
-    auto hash_bytes_arr = std::array< uint8_t, algebra::MAX_FIELD_ELEMENT_SIZE_BYTES >();
-    std::copy( bytes.begin(), bytes.begin() + algebra::MAX_FIELD_ELEMENT_SIZE_BYTES,
-        hash_bytes_arr.begin() );
-
-    return algebra::G1Point::fromHash( hash_bytes_arr );
+    return algebra::G1Point::fromHash( hash_result );
 }
 
 
@@ -97,23 +95,17 @@ CipheredKeyResult TE::getCiphertext(
         algebra::G2Point Y;
         Y = r * commonPublic;
 
-        std::string hash = Hash( Y );
-
-        if ( hash.size() < AES_256_KEY_SIZE_BYTES ) {
-            throw ThresholdUtils::IsNotWellFormed( "Hash cannot be less than key size" );
-        }
+        AES256Key hash = Hash( Y );
 
         AES256Key V;
 
         for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
-            V[i] = key[i] ^ static_cast< uint8_t >( hash[i] );
+            V[i] = key[i] ^ hash[i];
         }
-
-        std::string v_str = ThresholdUtils::bytesToHexString( V );
 
         algebra::G1Point W, H;
 
-        H = HashToGroup( U, v_str );
+        H = HashToGroup( U, V );
         W = r * H;
 
         cipheredKeys.emplace_back( U, V, W );
@@ -250,8 +242,7 @@ bool TE::Verify( const CipheredKey& ciphertext, const algebra::G2Point& decrypti
     const algebra::G2Point& public_key ) {
     auto [U, V, W] = ciphertext;
 
-    std::string v_str = ThresholdUtils::bytesToHexString( V );
-    algebra::G1Point H = HashToGroup( U, v_str );
+    algebra::G1Point H = HashToGroup( U, V );
     // no need to validate ciphertext's pairing - assumed to be validated already via
     // `validateEncryption` call
 
@@ -279,9 +270,9 @@ bool TE::Verify( const CipheredKey& ciphertext, const algebra::G2Point& decrypti
  * whole shares in that batch.
  */
 std::vector< bool > TE::VerifyBatch(
-    const std::vector< std::shared_ptr< CipheredKey > >& ciphertexts,
-    const std::vector< std::reference_wrapper< const algebra::G2Point > >& decryptionShares,
-    const std::vector< std::reference_wrapper< const algebra::G2Point > >& publicKeys ) {
+    const std::vector< CipheredKey >& ciphertexts,
+    const std::vector< algebra::G2Point >& decryptionShares,
+    const std::vector< algebra::G2Point >& publicKeys ) {
     const size_t size = decryptionShares.size();
     const size_t numberOfBatches = ciphertexts.size();
 
@@ -301,10 +292,9 @@ std::vector< bool > TE::VerifyBatch(
     g1P2s.reserve( ciphertexts.size() );
 
     for ( const auto& cipher : ciphertexts ) {
-        const auto [U, V, W] = *cipher;
+        const auto& [U, V, W] = cipher;
 
-        std::string v_str = ThresholdUtils::bytesToHexString( V );
-        algebra::G1Point H = HashToGroup( U, v_str );
+        algebra::G1Point H = HashToGroup( U, V );
         // no need to validate H - assumes H has been validated already when performing the
         // ciphertext validation at the start of TE process
 
@@ -341,14 +331,10 @@ AES256Key TE::CombineShares( const CipheredKey& ciphertext,
     const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShares ) {
     auto secret = CombineSharesIntoAESKey( decryptionShares );
 
-    if ( secret.size() < AES_256_KEY_SIZE_BYTES ) {
-        throw ThresholdUtils::IncorrectInput( "Invalid secret size" );
-    }
-
     AES256Key aesKey;
 
     for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
-        aesKey[i] = secret[i] ^ static_cast< uint8_t >( ciphertext.V[i] );
+        aesKey[i] = secret[i] ^ ciphertext.V[i];
     }
 
     return aesKey;
@@ -371,7 +357,7 @@ AES256Key TE::CombineShares( const CipheredKey& ciphertext,
  * @note This is an auxiliar function used by `combineShares` to combine shares & get original
  * message
  */
-std::vector< uint8_t > TE::CombineSharesIntoAESKey(
+AES256Key TE::CombineSharesIntoAESKey(
     const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShares ) {
     if ( decryptionShares.size() < t_ )
         throw ThresholdUtils::IncorrectInput( "Expect at least t shares to be provided" );
@@ -386,14 +372,9 @@ std::vector< uint8_t > TE::CombineSharesIntoAESKey(
     }
     algebra::G2Point rebuiltG2 = algebra::lagrangeInterpolateAt0( idx, this->t_, shares_ref );
 
-    std::string hash = this->Hash( rebuiltG2 );
+    AES256Key hash = this->Hash( rebuiltG2 );
 
-    std::vector< uint8_t > ret( hash.size() );
-    for ( size_t i = 0; i < hash.size(); ++i ) {
-        ret[i] = static_cast< uint8_t >( hash[i] );
-    }
-
-    return ret;
+    return hash;
 }
 
 }  // namespace libBLS

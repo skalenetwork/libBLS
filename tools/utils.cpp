@@ -34,9 +34,24 @@
 
 namespace libBLS {
 
+size_t ThresholdUtils::numThreads = DEFAULT_NUM_THREADS;
+std::unique_ptr<folly::CPUThreadPoolExecutor> ThresholdUtils::thread_pool = nullptr;
+
 void ThresholdUtils::init() {
     initRAND();
     initCurve();
+
+    // if numThreads was not set yet, try setting it to hardware concurrency
+    if ( numThreads == 0 ) {
+        numThreads = std::thread::hardware_concurrency();
+        if ( numThreads == 0 ) {
+            numThreads = 4;  // Fallback to 4 threads if hardware_concurrency cannot detect
+        }
+    }
+
+#ifndef WITH_EMSCRIPTEN
+    initThreadPool( numThreads );
+#endif
 }
 
 void ThresholdUtils::initCurve() {
@@ -52,6 +67,19 @@ void ThresholdUtils::initRAND() {
             throw std::runtime_error( "Failed to initialize random number generator" );
         }
     } );
+}
+
+void ThresholdUtils::setNumThreads( size_t _numThreads ) {
+    numThreads = _numThreads > 64 ? 64 : _numThreads;
+}
+
+void ThresholdUtils::initThreadPool( size_t _numThreads ) {
+#ifndef WITH_EMSCRIPTEN
+    static std::once_flag initFlag;
+    std::call_once( initFlag, [ _numThreads ]() {
+        thread_pool = std::make_unique< folly::CPUThreadPoolExecutor >( _numThreads );
+    } );
+#endif
 }
 
 void ThresholdUtils::checkSigners( size_t _requiredSigners, size_t _totalSigners ) {

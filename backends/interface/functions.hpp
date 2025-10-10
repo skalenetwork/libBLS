@@ -35,13 +35,12 @@ struct PairingEquality1CommonBaseBatch {
     size_t sizeTotal;
 
     PairingEquality1CommonBaseBatch( const std::vector< G1Point >& v1,
-        const std::vector< G1Point >& v2, const G2Point& p1, const std::vector< G2Point >& v3 )
-        : g2P1( p1 ), g1P1s( std::move( v1 ) ), g1P2s( std::move( v2 ) ), g2P2s( std::move( v3 ) ) {
+        const std::vector< G1Point >& v2, const G2Point& p1, const std::vector< G2Point >& v3, size_t size )
+        : g2P1( p1 ), g1P1s( std::move( v1 ) ), g1P2s( std::move( v2 ) ), g2P2s( std::move( v3 ) ), sizeTotal(size) {
         if ( g1P1s.size() != g1P2s.size() || g1P1s.size() != g2P2s.size() ) {
             throw std::invalid_argument(
                 "PairingEquality1CommonBaseBatch: size mismatch between input vectors" );
         }
-        sizeTotal = g1P1s.size();
     }
 
     void useOptimisticValidation() { optimisticValidation = true; }
@@ -62,8 +61,8 @@ struct PairingEquality2CommonBasesBatch {
     std::vector< G1Point > g1P2s;
 
     // vectors of points to be paired with the common bases (as reference_wrappers)
-    std::vector< std::reference_wrapper< const G2Point > > g2P1s;
-    std::vector< std::reference_wrapper< const G2Point > > g2P2s;
+    std::vector< G2Point > g2P1s;
+    std::vector< G2Point > g2P2s;
 
     // Specifies whether to optimize the verification by assuming first
     // that all shares are valid with high probability. If batch verification
@@ -79,8 +78,8 @@ struct PairingEquality2CommonBasesBatch {
     // are NOT constant across batches
     PairingEquality2CommonBasesBatch( const std::vector< G1Point >& p1,
         const std::vector< G1Point >& p2,
-        const std::vector< std::reference_wrapper< const G2Point > >& v1,
-        const std::vector< std::reference_wrapper< const G2Point > >& v2 )
+        const std::vector< G2Point >& v1,
+        const std::vector< G2Point >& v2 )
         : g1P1s( std::move( p1 ) ),
           g1P2s( std::move( p2 ) ),
           g2P1s( std::move( v1 ) ),

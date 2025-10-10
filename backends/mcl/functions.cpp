@@ -48,30 +48,52 @@ std::vector< bool > verifyPairingEquality1CommonBaseBatch(
 }
 
 bool optimisticBatchPairing1CommonBaseValidation( const PairingEquality1CommonBaseBatch& batch ) {
-    std::vector< G1BackendType > negatedG1P2s( batch.sizeTotal );
-    for ( size_t i = 0; i < batch.sizeTotal; ++i ) {
-        G1BackendType::neg( negatedG1P2s[i], batch.g1P2s.at( i ).asBackendType() );  // -P2_i
+    // Holds random scalars for each thread
+    static thread_local std::vector< FrBackendType > randomScalars;
+    static thread_local std::vector< G1BackendType > g1P1s;
+    // hold tmp values for millerLoop computation
+    static thread_local std::vector< G1BackendType > x;
+    static thread_local std::vector< G2BackendType > y;
+
+    const size_t size = batch.sizeTotal;
+
+    // clear & resize
+    randomScalars.resize(size);
+    g1P1s.resize(size);
+    x.resize( size + 1);
+    y.resize( size + 1);
+
+    // get random scalars r_i
+    fastRndFr().nextFrVec( randomScalars, size, /*nonZero=*/true );
+
+    // convert g1P1s into G1BackendTypes
+    for ( size_t i = 0; i < size; ++i ) {
+        g1P1s[i] = batch.g1P1s[i].asBackendType();
     }
 
-    std::vector< G1BackendType > x;
-    x.reserve( batch.sizeTotal );
-    std::vector< G2BackendType > y;
-    y.reserve( batch.sizeTotal );
+    // sum up all G1P1 = sum ( r_i * g1p1_i )
+    G1BackendType G1P1;
+    G1BackendType::mulVec( G1P1, g1P1s.data(), randomScalars.data(),
+    ( int ) size );
 
-    for ( size_t i = 0; i < batch.sizeTotal; ++i ) {
-        // e(g1P1_i, g2P1)
-        x.push_back( batch.g1P1s.at( i ).asBackendType() );
-        y.push_back( batch.g2P1.asBackendType() );
-        // e(-g1P2_i, g2P2_i)
-        x.push_back( negatedG1P2s.at( i ) );
-        y.push_back( batch.g2P2s.at( i ).asBackendType() );
+    // e( sum( r_i * g1P1_i) , g2P1)
+    x.at(0) = G1P1;
+    y.at(0) = batch.g2P1.asBackendType();
+
+    for ( size_t i = 0; i < size; ++i ) {
+        // e(-(r_i * g1P2_i), g2P2_i)
+        G1BackendType rTimesG1 = batch.g1P2s.at( i ).asBackendType() * randomScalars.at(i);
+        G1BackendType::neg(x[i + 1], rTimesG1);
+        y[i + 1] = batch.g2P2s.at( i ).asBackendType();
     }
 
     mcl::bn::Fp12 f;
     mcl::bn::millerLoopVec( f, x.data(), y.data(), x.size() );
+
     mcl::bn::finalExp( f, f );
     return f.isOne();
 }
+
 
 
 // -------------------- 2 Common Bases Batched Pairing -------------------- //
@@ -135,8 +157,8 @@ void pessimisticBatchPairing2CommonBasesValidation( const PairingEquality2Common
     size_t startingIdx = batchIdx * batch.sizeEachBatch;
     size_t endIdx = startingIdx + batch.sizeEachBatch;
     for ( size_t i = startingIdx; i < endIdx; ++i ) {
-        const algebra::G2Point& currentG2P1 = batch.g2P1s.at( i ).get();
-        const algebra::G2Point& currentG2P2 = batch.g2P2s.at( i ).get();
+        const algebra::G2Point& currentG2P1 = batch.g2P1s.at( i );
+        const algebra::G2Point& currentG2P2 = batch.g2P2s.at( i );
 
         // compute pairing equality for each element in the vector
         mcl::Fp12 f1, f2;
@@ -207,8 +229,8 @@ bool optimisticBatchPairing2CommonBasesValidation(
     // convert from algebra::G2Point into G2BackendType
     const size_t startingIdx = startingBatch * batch.sizeEachBatch;
     for ( size_t i = 0; i < numSharesToProcess; ++i ) {
-        g2P1s.at( i ) = batch.g2P1s.at( startingIdx + i ).get().asBackendType();  // g2P1s
-        g2P2s.at( i ) = batch.g2P2s.at( startingIdx + i ).get().asBackendType();  // g2P2s
+        g2P1s.at( i ) = batch.g2P1s.at( startingIdx + i ).asBackendType();  // g2P1s
+        g2P2s.at( i ) = batch.g2P2s.at( startingIdx + i ).asBackendType();  // g2P2s
     }
 
     // convert from algebra::G1Point into G1BackendType

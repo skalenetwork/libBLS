@@ -169,16 +169,34 @@ else()
 	endif()
 endif()
 
-include_directories(${CMAKE_BINARY_DIR}/deps/include)
-link_directories(${CMAKE_BINARY_DIR}/deps/lib)
+set(DEPS_LIB_DIR "${DEPS_INSTALL_ROOT}/lib")
+
+set(FOLLY_STATIC_LIBS
+  "${DEPS_LIB_DIR}/libfolly.a"
+  "${DEPS_LIB_DIR}/libglog.a"
+  "${DEPS_LIB_DIR}/libgflags.a"
+  "${DEPS_LIB_DIR}/libfmt.a"
+  "${DEPS_LIB_DIR}/libdouble-conversion.a"
+  "${DEPS_LIB_DIR}/libevent.a"
+  "${DEPS_LIB_DIR}/libboost_context.a"
+)
+
+include_directories(${DEPS_INSTALL_ROOT}/include)
+link_directories(${DEPS_INSTALL_ROOT}/lib)
 
 add_subdirectory(backends)
 
 # TMP fix for emscripten
 # Build utils exactly once
 add_library(common_utils STATIC tools/utils.cpp tools/utils.h)
-target_include_directories(common_utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(common_utils PRIVATE ${CRYPTOPP_LIBRARY} backend)
+# SYSTEM - silence warnings from third-party code
+target_include_directories(common_utils SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(common_utils
+  PRIVATE
+    backend
+    ${CRYPTOPP_LIBRARY}
+    ${FOLLY_STATIC_LIBS}
+)
 
 
 add_library(bls ${sourses_bls} ${headers_bls})
@@ -196,7 +214,9 @@ set(BLS_INCLUDE_DIRS
     PARENT_SCOPE
 )
 
-target_include_directories(bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_compile_options(bls PRIVATE -Wno-error=sign-compare -Wsign-compare)
+target_include_directories(bls SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(bls PUBLIC backend PRIVATE ${CRYPTOPP_LIBRARY} common_utils)
 
 add_subdirectory(threshold_encryption)
@@ -205,7 +225,7 @@ if (BUILD_UTILS)
 	# Helper function for utils setup
 	function(add_bls_tool name source)
 		add_executable(${name} ${source})
-		target_include_directories(${name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+		target_include_directories(${name} SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 		if (EMSCRIPTEN)
 			target_compile_options(${name} PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
@@ -232,7 +252,7 @@ if(BUILD_TESTS)
 		set(extra_libs ${ARGN})  # Capture any extra libraries passed as arguments
 
 		add_executable(${name} ${source})
-		target_include_directories(${name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+		target_include_directories(${name} SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 		if (EMSCRIPTEN)
 			target_compile_options(${name} PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
@@ -241,7 +261,13 @@ if(BUILD_TESTS)
 			target_compile_options(${name} PRIVATE -Wno-format-overflow)
 		endif()
 
-		target_link_libraries(${name} PRIVATE bls ${CRYPTOPP_LIBRARY} boost_program_options ${extra_libs})
+		target_link_libraries(${name} PRIVATE 
+			bls 
+			${CRYPTOPP_LIBRARY} 
+			boost_program_options 
+			${extra_libs}
+			${FOLLY_STATIC_LIBS}
+		)
 		add_test(NAME ${name} COMMAND ${name})
 	endfunction()
 
@@ -254,7 +280,7 @@ if(BUILD_TESTS)
 
     # Special case for dkg_attack (no compile options)
     add_executable(dkg_attack test/dkg_attack.cpp)
-    target_include_directories(dkg_attack PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(dkg_attack SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     target_link_libraries(dkg_attack PRIVATE bls ${CRYPTOPP_LIBRARY} boost_program_options)
     add_test(NAME dkg_attack COMMAND dkg_attack)
 

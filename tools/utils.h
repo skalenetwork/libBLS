@@ -31,6 +31,11 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <openssl/evp.h>
+
+#ifndef WITH_EMSCRIPTEN
+#include <folly/executors/CPUThreadPoolExecutor.h>
+#endif
 
 static constexpr size_t BLS_MAX_COMPONENT_LEN = 77;
 
@@ -38,6 +43,20 @@ namespace libBLS {
 
 constexpr size_t BASE_HEXA = 16;
 constexpr size_t BASE_DEC = 10;
+constexpr size_t HASH_SIZE = 32;
+
+// Thread-local EVP_MD_CTX for SHA-256 hashing
+inline EVP_MD_CTX* tl_sha256_ctx() {
+    // One ctx per thread; constructed on first use, reused thereafter.
+    static thread_local EVP_MD_CTX* ctx = nullptr;
+    if (!ctx) {
+        ctx = EVP_MD_CTX_new();
+    }
+    // Reset the context to SHA-256 each call (cheap).
+    EVP_DigestInit_ex(ctx, EVP_sha256(), nullptr);
+    return ctx;
+}
+
 
 #define REQUIRE_OR_THROW( cond, msg )                                                     \
     do {                                                                                  \
@@ -63,7 +82,18 @@ private:
         virtual const char* what() const noexcept override { return what_str.c_str(); }
     };
 
+    static constexpr size_t DEFAULT_NUM_THREADS = 0;
+
+    static void initThreadPool( size_t _numThreads );
+
 public:
+
+#ifndef WITH_EMSCRIPTEN
+    static std::unique_ptr<folly::CPUThreadPoolExecutor> thread_pool;
+#endif
+
+    static size_t numThreads;
+
     class IsNotWellFormed : public Exception {
     public:
         IsNotWellFormed( const std::string& err_str ) : Exception( err_str ) {
@@ -92,6 +122,8 @@ public:
     static void initCurve();
 
     static void initRAND();
+
+    static void setNumThreads( size_t _numThreads );
 
     static void checkSigners( size_t _requiredSigners, size_t _totalSigners );
 
@@ -127,6 +159,21 @@ public:
     static size_t validateHexCString( const char* hexStr );
 
     static size_t validateDecimalCString( const char* decStr );
+
+    /**
+     * @brief Computes SHA256 hash of input data
+     * @param data Input data to hash
+     * @param out Output buffer (32 bytes) to store the hash
+     * @note Uses OpenSSL EVP interface for hashing
+     * Reuses a thread-local EVP_MD_CTX to avoid repeated allocations
+     */
+    static inline void sha256(std::string_view data, std::array<uint8_t, HASH_SIZE>& out) {
+        EVP_MD_CTX* ctx = tl_sha256_ctx();
+        EVP_DigestInit_ex(ctx, EVP_sha256(), nullptr);   // reset, no malloc
+        EVP_DigestUpdate(ctx, data.data(), data.size());
+        unsigned int out_len = out.size();
+        EVP_DigestFinal_ex(ctx, out.data(), &out_len);
+    }
 };
 
 template < size_t N >

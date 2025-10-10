@@ -16,6 +16,8 @@ std::pair< FqElement, FqElement > parseHint( const std::string& _hint ) {
     return std::make_pair( y, shift_x );
 }
 
+// TODO see 'SWU' - maps a field element to a point in constant time, no loop.
+// maybe faster than this simple try-and-increment method.
 std::pair< G1Point, std::string > hashToG1withHint(
     const std::array< uint8_t, 32 >& hash_byte_arr ) {
     static const FqElement coeff_b =
