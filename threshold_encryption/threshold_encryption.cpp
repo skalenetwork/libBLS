@@ -30,8 +30,8 @@
 #include <tools/utils.h>
 
 #include "TEBase.h"
-#include <openssl/rand.h>
 #include "backends/algebra_types.hpp"
+#include <openssl/rand.h>
 
 namespace libBLS {
 
@@ -42,12 +42,11 @@ TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {}
 
 TE::~TE() {}
 
-std::array<uint8_t, algebra::HASH_SIZE> TE::Hash( const algebra::G2Point& Y ) {
-
+std::array< uint8_t, algebra::HASH_SIZE > TE::Hash( const algebra::G2Point& Y ) {
     auto bytes = Y.toByteArray();
-    std::string view(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+    std::string view( reinterpret_cast< const char* >( bytes.data() ), bytes.size() );
 
-    std::array<uint8_t, algebra::HASH_SIZE> hash_result;
+    std::array< uint8_t, algebra::HASH_SIZE > hash_result;
     ThresholdUtils::sha256( view, hash_result );
 
     return hash_result;
@@ -64,7 +63,8 @@ algebra::G1Point TE::HashToGroup( const algebra::G2Point& U, const AES256Key& V 
     std::memcpy( u_v_bytes_arr.data(), U_bytes.data(), U_bytes.size() );
     std::memcpy( u_v_bytes_arr.data() + U_bytes.size(), V.data(), V.size() );
 
-    std::string view(reinterpret_cast<const char*>(u_v_bytes_arr.data()), u_v_bytes_arr.size());
+    std::string view(
+        reinterpret_cast< const char* >( u_v_bytes_arr.data() ), u_v_bytes_arr.size() );
 
     // hash the concatenated value
     std::array< uint8_t, algebra::HASH_SIZE > hash_result;
@@ -269,8 +269,7 @@ bool TE::Verify( const CipheredKey& ciphertext, const algebra::G2Point& decrypti
  * @return true only for the shares that are valid. If a ciphertext is invalid, it invalidates the
  * whole shares in that batch.
  */
-std::vector< bool > TE::VerifyBatch(
-    const std::vector< CipheredKey >& ciphertexts,
+std::vector< bool > TE::VerifyBatch( const std::vector< CipheredKey >& ciphertexts,
     const std::vector< algebra::G2Point >& decryptionShares,
     const std::vector< algebra::G2Point >& publicKeys ) {
     const size_t size = decryptionShares.size();

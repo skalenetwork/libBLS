@@ -35,7 +35,7 @@
 namespace libBLS {
 
 size_t ThresholdUtils::numThreads = DEFAULT_NUM_THREADS;
-std::unique_ptr<folly::CPUThreadPoolExecutor> ThresholdUtils::thread_pool = nullptr;
+std::unique_ptr< folly::CPUThreadPoolExecutor > ThresholdUtils::thread_pool = nullptr;
 
 void ThresholdUtils::init() {
     initRAND();
@@ -76,7 +76,7 @@ void ThresholdUtils::setNumThreads( size_t _numThreads ) {
 void ThresholdUtils::initThreadPool( size_t _numThreads ) {
 #ifndef WITH_EMSCRIPTEN
     static std::once_flag initFlag;
-    std::call_once( initFlag, [ _numThreads ]() {
+    std::call_once( initFlag, [_numThreads]() {
         thread_pool = std::make_unique< folly::CPUThreadPoolExecutor >( _numThreads );
     } );
 #endif

@@ -24,6 +24,7 @@
 #ifndef LIBBLS_UTILS_H
 #define LIBBLS_UTILS_H
 
+#include <openssl/evp.h>
 #include <array>
 #include <atomic>
 #include <iomanip>
@@ -31,7 +32,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <openssl/evp.h>
 
 #ifndef WITH_EMSCRIPTEN
 #include <folly/executors/CPUThreadPoolExecutor.h>
@@ -49,11 +49,11 @@ constexpr size_t HASH_SIZE = 32;
 inline EVP_MD_CTX* tl_sha256_ctx() {
     // One ctx per thread; constructed on first use, reused thereafter.
     static thread_local EVP_MD_CTX* ctx = nullptr;
-    if (!ctx) {
+    if ( !ctx ) {
         ctx = EVP_MD_CTX_new();
     }
     // Reset the context to SHA-256 each call (cheap).
-    EVP_DigestInit_ex(ctx, EVP_sha256(), nullptr);
+    EVP_DigestInit_ex( ctx, EVP_sha256(), nullptr );
     return ctx;
 }
 
@@ -87,9 +87,8 @@ private:
     static void initThreadPool( size_t _numThreads );
 
 public:
-
 #ifndef WITH_EMSCRIPTEN
-    static std::unique_ptr<folly::CPUThreadPoolExecutor> thread_pool;
+    static std::unique_ptr< folly::CPUThreadPoolExecutor > thread_pool;
 #endif
 
     static size_t numThreads;
@@ -167,12 +166,12 @@ public:
      * @note Uses OpenSSL EVP interface for hashing
      * Reuses a thread-local EVP_MD_CTX to avoid repeated allocations
      */
-    static inline void sha256(std::string_view data, std::array<uint8_t, HASH_SIZE>& out) {
+    static inline void sha256( std::string_view data, std::array< uint8_t, HASH_SIZE >& out ) {
         EVP_MD_CTX* ctx = tl_sha256_ctx();
-        EVP_DigestInit_ex(ctx, EVP_sha256(), nullptr);   // reset, no malloc
-        EVP_DigestUpdate(ctx, data.data(), data.size());
+        EVP_DigestInit_ex( ctx, EVP_sha256(), nullptr );  // reset, no malloc
+        EVP_DigestUpdate( ctx, data.data(), data.size() );
         unsigned int out_len = out.size();
-        EVP_DigestFinal_ex(ctx, out.data(), &out_len);
+        EVP_DigestFinal_ex( ctx, out.data(), &out_len );
     }
 };
 

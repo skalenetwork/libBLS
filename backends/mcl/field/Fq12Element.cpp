@@ -20,7 +20,7 @@ Fq12Element Field< Fq12BackendType, Fq12Element >::zero() {
 
 template <>
 Fq12Element Field< Fq12BackendType, Fq12Element >::one() {
-    assert( false ); // TODO: implement isOne for Fq12
+    assert( false );  // TODO: implement isOne for Fq12
     Fq12BackendType one;
     return Fq12Element( one );
 }
@@ -32,7 +32,7 @@ bool Field< Fq12BackendType, Fq12Element >::isZero() const {
 
 template <>
 bool Field< Fq12BackendType, Fq12Element >::isOne() const {
-    assert( false ); // TODO: implement isOne for Fq12
+    assert( false );  // TODO: implement isOne for Fq12
     Fq12BackendType one;
     return value == one;
 }

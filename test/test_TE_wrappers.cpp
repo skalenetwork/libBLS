@@ -1347,9 +1347,7 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionSharesBatch ) {
                 randomTamperDecryptionShares( totalSigners, cipheredKey, privKeys, i <= 10 );
 
             // batch validate
-            std::vector< libBLS::CipheredKey > cipheredKeys = {
-                cipheredKey
-            };
+            std::vector< libBLS::CipheredKey > cipheredKeys = { cipheredKey };
             std::vector< bool > results =
                 libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
                     cipheredKeys, shares, pubKeys );
@@ -1410,8 +1408,9 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionSharesMegaBatch ) {
         std::vector< bool > results = libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
             cipheredKeys, shares, pubKeys );
 
-        std::vector< bool > resultsParallel = libBLS::ThresholdEncryption::
-            validateDecryptionSharesBatchParallel( cipheredKeys, shares, pubKeys );
+        std::vector< bool > resultsParallel =
+            libBLS::ThresholdEncryption::validateDecryptionSharesBatchParallel(
+                cipheredKeys, shares, pubKeys );
 
         for ( size_t j = 0; j < totalNumShares; ++j ) {
             // only the ones not tampered should pass

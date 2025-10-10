@@ -58,8 +58,8 @@ BOOST_AUTO_TEST_CASE( EncryptionValidation ) {
     std::cout << "Encryption validation (single, pessimistic) took " << pessimistic_validation_ms
               << " ms\n";
     std::cout << "Encryption validation (batched) took " << batched_validation_ms << " ms\n";
-    std::cout << "Encryption validation (batched, multi-threaded) took "
-              << concurrent_validation_ms << " ms\n";
+    std::cout << "Encryption validation (batched, multi-threaded) took " << concurrent_validation_ms
+              << " ms\n";
 }
 
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
@@ -175,13 +175,13 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
         std::vector< uint8_t > decipheredMsg;
         {  // decrypt
             ScopedTimer timer( decrypt_total_ms );
-            decipheredMsg = libBLS::ThresholdEncryption::decrypt( ciphertexts[i], combinedSharesValidation[i] );
+            decipheredMsg =
+                libBLS::ThresholdEncryption::decrypt( ciphertexts[i], combinedSharesValidation[i] );
         }
 
         // check correctness
         BOOST_REQUIRE( decipheredMsg == message );
     }
-
 
 
     // print results

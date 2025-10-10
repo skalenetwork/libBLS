@@ -163,13 +163,13 @@ std::vector< bool > ThresholdEncryption::validateEncryptionBatch(
         g2P2s.resize( size );
     }
 
-    for ( size_t i = 0 ; i < size ; ++i ) {
-        const auto& [U, V, W] = _ciphertexts.at(i);
+    for ( size_t i = 0; i < size; ++i ) {
+        const auto& [U, V, W] = _ciphertexts.at( i );
         const algebra::G1Point H = TE::HashToGroup( U, V );
 
-        g1P1s.at(i) = W;
-        g1P2s.at(i) = H;
-        g2P2s.at(i) = U;
+        g1P1s.at( i ) = W;
+        g1P2s.at( i ) = H;
+        g2P2s.at( i ) = U;
     }
 
     algebra::PairingEquality1CommonBaseBatch batch( g1P1s, g1P2s, g2P1, g2P2s, size );
@@ -179,7 +179,6 @@ std::vector< bool > ThresholdEncryption::validateEncryptionBatch(
 
 std::vector< bool > ThresholdEncryption::validateEncryptionBatchParallel(
     const std::vector< CipheredKey >& _ciphertexts ) {
-
 #ifdef WITH_EMSCRIPTEN
     return ThresholdEncryption::validateEncryptionBatch( _ciphertexts );
 #else
@@ -193,27 +192,26 @@ std::vector< bool > ThresholdEncryption::validateEncryptionBatchParallel(
         size_t startIdx = i * sizePerThread;
         size_t endIdx = std::min( startIdx + sizePerThread, _ciphertexts.size() );
 
-        futures.push_back( folly::via(
-            ThresholdUtils::thread_pool.get(), [startIdx, endIdx, & _ciphertexts]() {
+        futures.push_back(
+            folly::via( ThresholdUtils::thread_pool.get(), [startIdx, endIdx, &_ciphertexts]() {
                 std::vector< CipheredKey > subset(
                     _ciphertexts.begin() + startIdx, _ciphertexts.begin() + endIdx );
                 return ThresholdEncryption::validateEncryptionBatch( subset );
-            } 
-        ));
+            } ) );
     }
 
     auto results = folly::collectAll( futures ).get();
     std::vector< bool > finalResults;
     finalResults.reserve( _ciphertexts.size() );
 
-    for (auto& r : results) {
-        for (auto b : r.value()) {
-            finalResults.push_back(b);
+    for ( auto& r : results ) {
+        for ( auto b : r.value() ) {
+            finalResults.push_back( b );
         }
     }
 
     return finalResults;
-#endif 
+#endif
 }
 
 TEDecryptionShare ThresholdEncryption::partialDecrypt(
@@ -257,18 +255,16 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatchParallel(
     const std::vector< CipheredKey >& _cipherTexts,
     const std::vector< TEDecryptionShare >& _decryptionShares,
     const std::vector< TEPublicKeyShare >& _publicKeys ) {
-
 #ifdef WITH_EMSCRIPTEN
-    return ThresholdEncryption::validateDecryptionSharesBatch( 
+    return ThresholdEncryption::validateDecryptionSharesBatch(
         _cipherTexts, _decryptionShares, _publicKeys );
 #else
 
     if ( _decryptionShares.size() != _publicKeys.size() ) {
-        throw ThresholdUtils::IncorrectInput(
-            "Decryption shares and public keys size mismatch" );
+        throw ThresholdUtils::IncorrectInput( "Decryption shares and public keys size mismatch" );
     }
 
-    if (_decryptionShares.size() % _cipherTexts.size() != 0) {
+    if ( _decryptionShares.size() % _cipherTexts.size() != 0 ) {
         throw ThresholdUtils::IncorrectInput(
             "Decryption shares size must be multiple of ciphertexts size" );
     }
@@ -286,8 +282,8 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatchParallel(
         size_t endIdx = std::min( startIdx + sizePerThread, _cipherTexts.size() );
 
         futures.push_back( folly::via(
-            ThresholdUtils::thread_pool.get(), [startIdx, endIdx, &_cipherTexts, &_decryptionShares, &_publicKeys, sharesPerCiphertext]() {
-
+            ThresholdUtils::thread_pool.get(), [startIdx, endIdx, &_cipherTexts, &_decryptionShares,
+                                                   &_publicKeys, sharesPerCiphertext]() {
                 const std::vector< CipheredKey > ciphertexts(
                     _cipherTexts.begin() + startIdx, _cipherTexts.begin() + endIdx );
                 const std::vector< TEDecryptionShare > decryptionShares(
@@ -296,21 +292,19 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatchParallel(
                 const std::vector< TEPublicKeyShare > publicKeys(
                     _publicKeys.begin() + startIdx * sharesPerCiphertext,
                     _publicKeys.begin() + endIdx * sharesPerCiphertext );
-                
-                return ThresholdEncryption::validateDecryptionSharesBatch( 
-                    ciphertexts, decryptionShares, publicKeys
-                );
-            } 
-        ));
+
+                return ThresholdEncryption::validateDecryptionSharesBatch(
+                    ciphertexts, decryptionShares, publicKeys );
+            } ) );
     }
 
     auto results = folly::collectAll( futures ).get();
     std::vector< bool > finalResults;
     finalResults.reserve( _cipherTexts.size() );
 
-    for (auto& r : results) {
-        for (auto b : r.value()) {
-            finalResults.push_back(b);
+    for ( auto& r : results ) {
+        for ( auto b : r.value() ) {
+            finalResults.push_back( b );
         }
     }
 
@@ -350,10 +344,8 @@ AES256Key ThresholdEncryption::combineShares(
 
 std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatch(
     std::vector< CipheredKey >& _cipheredKeys, std::vector< TEDecryptSet >& _decryptionSets ) {
-
     if ( _cipheredKeys.size() != _decryptionSets.size() ) {
-        throw ThresholdUtils::IncorrectInput(
-            "Ciphertexts and decryption sets size mismatch" );
+        throw ThresholdUtils::IncorrectInput( "Ciphertexts and decryption sets size mismatch" );
     }
 
     std::vector< std::optional< AES256Key > > results;
@@ -361,9 +353,8 @@ std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatc
 
     for ( size_t i = 0; i < _cipheredKeys.size(); ++i ) {
         try {
-            results.push_back( ThresholdEncryption::combineShares( 
-                _cipheredKeys[i], _decryptionSets[i] 
-            ));
+            results.push_back(
+                ThresholdEncryption::combineShares( _cipheredKeys[i], _decryptionSets[i] ) );
         } catch ( const std::exception& e ) {
             std::cerr << "Error combining shares for ciphertext " << i << ": " << e.what() << "\n";
             results.push_back( std::nullopt );
@@ -374,16 +365,13 @@ std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatc
 }
 
 std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatchParallel(
-    std::vector< CipheredKey >& _cipheredKeys, std::vector< TEDecryptSet >& _decryptionSets
-) {
-
+    std::vector< CipheredKey >& _cipheredKeys, std::vector< TEDecryptSet >& _decryptionSets ) {
 #ifdef WITH_EMSCRIPTEN
     return ThresholdEncryption::combineSharesBatch( _cipheredKeys, _decryptionSets );
 #else
 
     if ( _cipheredKeys.size() != _decryptionSets.size() ) {
-        throw ThresholdUtils::IncorrectInput(
-            "Ciphertexts and decryption sets size mismatch" );
+        throw ThresholdUtils::IncorrectInput( "Ciphertexts and decryption sets size mismatch" );
     }
 
     std::vector< folly::Future< std::vector< std::optional< AES256Key > > > > futures;
@@ -396,36 +384,35 @@ std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatc
         size_t startIdx = i * sizePerThread;
         size_t endIdx = std::min( startIdx + sizePerThread, _cipheredKeys.size() );
 
-        futures.push_back( folly::via(
-            ThresholdUtils::thread_pool.get(), [startIdx, endIdx, & _cipheredKeys, & _decryptionSets]() {
+        futures.push_back( folly::via( ThresholdUtils::thread_pool.get(),
+            [startIdx, endIdx, &_cipheredKeys, &_decryptionSets]() {
                 std::vector< std::optional< AES256Key > > subset;
                 subset.reserve( endIdx - startIdx );
                 for ( size_t j = startIdx; j < endIdx; ++j ) {
                     try {
-                        subset.push_back( ThresholdEncryption::combineShares( 
-                            _cipheredKeys[j], _decryptionSets[j] 
-                        ));
+                        subset.push_back( ThresholdEncryption::combineShares(
+                            _cipheredKeys[j], _decryptionSets[j] ) );
                     } catch ( const std::exception& e ) {
-                        std::cerr << "Error combining shares for ciphertext " << j << ": " << e.what() << "\n";
+                        std::cerr << "Error combining shares for ciphertext " << j << ": "
+                                  << e.what() << "\n";
                         subset.push_back( std::nullopt );
                     }
                 }
                 return subset;
-            } 
-        ));
+            } ) );
     }
 
     auto results = folly::collectAll( futures ).get();
     std::vector< std::optional< AES256Key > > finalResults;
     finalResults.reserve( _cipheredKeys.size() );
 
-    for (auto& r : results) {
-        for (auto& optKey : r.value()) {
-            finalResults.push_back(optKey);
+    for ( auto& r : results ) {
+        for ( auto& optKey : r.value() ) {
+            finalResults.push_back( optKey );
         }
     }
 
-    return finalResults;    
+    return finalResults;
 #endif
 }
 
@@ -438,11 +425,10 @@ void ThresholdEncryption::validateCombinedDecryption(
 }
 
 std::vector< bool > ThresholdEncryption::validateCombinedDecryptionBatch(
-    const std::vector< Ciphertext >& _ciphertexts, const std::vector< AES256Key >& _aesKeys, const TEPublicKey& _publicKey ) {
-
+    const std::vector< Ciphertext >& _ciphertexts, const std::vector< AES256Key >& _aesKeys,
+    const TEPublicKey& _publicKey ) {
     if ( _ciphertexts.size() != _aesKeys.size() ) {
-        throw ThresholdUtils::IncorrectInput(
-            "Ciphertexts and AES keys size mismatch" );
+        throw ThresholdUtils::IncorrectInput( "Ciphertexts and AES keys size mismatch" );
     }
 
     std::vector< bool > results;
@@ -450,8 +436,10 @@ std::vector< bool > ThresholdEncryption::validateCombinedDecryptionBatch(
 
     for ( size_t i = 0; i < _ciphertexts.size(); ++i ) {
         try {
-            std::vector< uint8_t > decipheredMessage = decipherAESAndValidate( _ciphertexts[i], _aesKeys[i] );
-            validateDecipheredMessage( decipheredMessage, _ciphertexts[i], _aesKeys[i], _publicKey );
+            std::vector< uint8_t > decipheredMessage =
+                decipherAESAndValidate( _ciphertexts[i], _aesKeys[i] );
+            validateDecipheredMessage(
+                decipheredMessage, _ciphertexts[i], _aesKeys[i], _publicKey );
             results.push_back( true );
         } catch ( const std::exception& e ) {
             std::cerr << "Error combining shares for ciphertext " << i << ": " << e.what() << "\n";
@@ -463,15 +451,15 @@ std::vector< bool > ThresholdEncryption::validateCombinedDecryptionBatch(
 }
 
 std::vector< bool > ThresholdEncryption::validateCombinedDecryptionBatchParallel(
-    const std::vector< Ciphertext >& _ciphertexts, const std::vector< AES256Key >& _aesKeys, const TEPublicKey& _publicKey ) {
-
+    const std::vector< Ciphertext >& _ciphertexts, const std::vector< AES256Key >& _aesKeys,
+    const TEPublicKey& _publicKey ) {
 #ifdef WITH_EMSCRIPTEN
-    return ThresholdEncryption::validateCombinedDecryptionBatch( _ciphertexts, _aesKeys, _publicKey );
+    return ThresholdEncryption::validateCombinedDecryptionBatch(
+        _ciphertexts, _aesKeys, _publicKey );
 #else
 
     if ( _ciphertexts.size() != _aesKeys.size() ) {
-        throw ThresholdUtils::IncorrectInput(
-            "Ciphertexts and AES keys size mismatch" );
+        throw ThresholdUtils::IncorrectInput( "Ciphertexts and AES keys size mismatch" );
     }
 
     std::vector< folly::Future< std::vector< bool > > > futures;
@@ -484,36 +472,38 @@ std::vector< bool > ThresholdEncryption::validateCombinedDecryptionBatchParallel
         size_t startIdx = i * sizePerThread;
         size_t endIdx = std::min( startIdx + sizePerThread, _ciphertexts.size() );
 
-        futures.push_back( folly::via(
-            ThresholdUtils::thread_pool.get(), [startIdx, endIdx, & _ciphertexts, & _aesKeys, & _publicKey]() {
+        futures.push_back( folly::via( ThresholdUtils::thread_pool.get(),
+            [startIdx, endIdx, &_ciphertexts, &_aesKeys, &_publicKey]() {
                 std::vector< bool > subset;
                 subset.reserve( endIdx - startIdx );
                 for ( size_t j = startIdx; j < endIdx; ++j ) {
                     try {
-                        std::vector< uint8_t > decipheredMessage = decipherAESAndValidate( _ciphertexts[j], _aesKeys[j] );
-                        validateDecipheredMessage( decipheredMessage, _ciphertexts[j], _aesKeys[j], _publicKey );
+                        std::vector< uint8_t > decipheredMessage =
+                            decipherAESAndValidate( _ciphertexts[j], _aesKeys[j] );
+                        validateDecipheredMessage(
+                            decipheredMessage, _ciphertexts[j], _aesKeys[j], _publicKey );
                         subset.push_back( true );
                     } catch ( const std::exception& e ) {
-                        std::cerr << "Error combining shares for ciphertext " << j << ": " << e.what() << "\n";
+                        std::cerr << "Error combining shares for ciphertext " << j << ": "
+                                  << e.what() << "\n";
                         subset.push_back( false );
                     }
                 }
                 return subset;
-            } 
-        ));
+            } ) );
     }
 
     auto results = folly::collectAll( futures ).get();
     std::vector< bool > finalResults;
     finalResults.reserve( _ciphertexts.size() );
 
-    for (auto& r : results) {
-        for (auto b : r.value()) {
-            finalResults.push_back(b);
+    for ( auto& r : results ) {
+        for ( auto b : r.value() ) {
+            finalResults.push_back( b );
         }
     }
 
-    return finalResults;   
+    return finalResults;
 #endif
 }
 

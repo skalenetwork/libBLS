@@ -420,13 +420,12 @@ public:
 
     static algebra::G1Point HashToGroup( const algebra::G2Point& U, const AES256Key& V );
 
-    static std::array<uint8_t, algebra::HASH_SIZE> Hash( const algebra::G2Point& Y );
+    static std::array< uint8_t, algebra::HASH_SIZE > Hash( const algebra::G2Point& Y );
 
     static bool Verify( const CipheredKey& ciphertext, const algebra::G2Point& decryptionShare,
         const algebra::G2Point& public_key );
 
-    static std::vector< bool > VerifyBatch(
-        const std::vector< CipheredKey >& ciphertexts,
+    static std::vector< bool > VerifyBatch( const std::vector< CipheredKey >& ciphertexts,
         const std::vector< algebra::G2Point >& decryptionShares,
         const std::vector< algebra::G2Point >& publicKeys );
 

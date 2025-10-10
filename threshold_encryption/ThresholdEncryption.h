@@ -180,8 +180,7 @@ public:
     static void validateCombinedDecryption(
         const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey );
 
-    static void validateCombinedDecryptionBatch(
-        const std::vector< Ciphertext >& _ciphertexts, 
+    static void validateCombinedDecryptionBatch( const std::vector< Ciphertext >& _ciphertexts,
         const std::vector< AES256Key >& _aesKeys, const TEPublicKey& _publicKey );
 
     /**
@@ -190,8 +189,8 @@ public:
      * @return Vec of bools, each idx specifying if it was successfully validated or not.
      */
     static std::vector< bool > validateCombinedDecryptionBatchParallel(
-        const std::vector< Ciphertext >& _ciphertexts,
-        const std::vector< AES256Key >& _aesKeys, const TEPublicKey& _publicKey );
+        const std::vector< Ciphertext >& _ciphertexts, const std::vector< AES256Key >& _aesKeys,
+        const TEPublicKey& _publicKey );
 
     /**
      * @brief Decrypts a message using the AES key

@@ -58,10 +58,10 @@ bool optimisticBatchPairing1CommonBaseValidation( const PairingEquality1CommonBa
     const size_t size = batch.sizeTotal;
 
     // clear & resize
-    randomScalars.resize(size);
-    g1P1s.resize(size);
-    x.resize( size + 1);
-    y.resize( size + 1);
+    randomScalars.resize( size );
+    g1P1s.resize( size );
+    x.resize( size + 1 );
+    y.resize( size + 1 );
 
     // get random scalars r_i
     fastRndFr().nextFrVec( randomScalars, size, /*nonZero=*/true );
@@ -73,17 +73,16 @@ bool optimisticBatchPairing1CommonBaseValidation( const PairingEquality1CommonBa
 
     // sum up all G1P1 = sum ( r_i * g1p1_i )
     G1BackendType G1P1;
-    G1BackendType::mulVec( G1P1, g1P1s.data(), randomScalars.data(),
-    ( int ) size );
+    G1BackendType::mulVec( G1P1, g1P1s.data(), randomScalars.data(), ( int ) size );
 
     // e( sum( r_i * g1P1_i) , g2P1)
-    x.at(0) = G1P1;
-    y.at(0) = batch.g2P1.asBackendType();
+    x.at( 0 ) = G1P1;
+    y.at( 0 ) = batch.g2P1.asBackendType();
 
     for ( size_t i = 0; i < size; ++i ) {
         // e(-(r_i * g1P2_i), g2P2_i)
-        G1BackendType rTimesG1 = batch.g1P2s.at( i ).asBackendType() * randomScalars.at(i);
-        G1BackendType::neg(x[i + 1], rTimesG1);
+        G1BackendType rTimesG1 = batch.g1P2s.at( i ).asBackendType() * randomScalars.at( i );
+        G1BackendType::neg( x[i + 1], rTimesG1 );
         y[i + 1] = batch.g2P2s.at( i ).asBackendType();
     }
 
@@ -93,7 +92,6 @@ bool optimisticBatchPairing1CommonBaseValidation( const PairingEquality1CommonBa
     mcl::bn::finalExp( f, f );
     return f.isOne();
 }
-
 
 
 // -------------------- 2 Common Bases Batched Pairing -------------------- //

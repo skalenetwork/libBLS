@@ -35,8 +35,13 @@ struct PairingEquality1CommonBaseBatch {
     size_t sizeTotal;
 
     PairingEquality1CommonBaseBatch( const std::vector< G1Point >& v1,
-        const std::vector< G1Point >& v2, const G2Point& p1, const std::vector< G2Point >& v3, size_t size )
-        : g2P1( p1 ), g1P1s( std::move( v1 ) ), g1P2s( std::move( v2 ) ), g2P2s( std::move( v3 ) ), sizeTotal(size) {
+        const std::vector< G1Point >& v2, const G2Point& p1, const std::vector< G2Point >& v3,
+        size_t size )
+        : g2P1( p1 ),
+          g1P1s( std::move( v1 ) ),
+          g1P2s( std::move( v2 ) ),
+          g2P2s( std::move( v3 ) ),
+          sizeTotal( size ) {
         if ( g1P1s.size() != g1P2s.size() || g1P1s.size() != g2P2s.size() ) {
             throw std::invalid_argument(
                 "PairingEquality1CommonBaseBatch: size mismatch between input vectors" );
@@ -77,8 +82,7 @@ struct PairingEquality2CommonBasesBatch {
     // Used to construct a mega-batch of M batches of N shares, where g1P1 and g1P2
     // are NOT constant across batches
     PairingEquality2CommonBasesBatch( const std::vector< G1Point >& p1,
-        const std::vector< G1Point >& p2,
-        const std::vector< G2Point >& v1,
+        const std::vector< G1Point >& p2, const std::vector< G2Point >& v1,
         const std::vector< G2Point >& v2 )
         : g1P1s( std::move( p1 ) ),
           g1P2s( std::move( p2 ) ),
