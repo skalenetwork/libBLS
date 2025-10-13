@@ -255,10 +255,14 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatchParallel(
     const std::vector< CipheredKey >& _cipherTexts,
     const std::vector< TEDecryptionShare >& _decryptionShares,
     const std::vector< TEPublicKeyShare >& _publicKeys ) {
-#ifdef WITH_EMSCRIPTEN
+#ifdef WITH_EMSCRIPTEN  // single-threaded
     return ThresholdEncryption::validateDecryptionSharesBatch(
         _cipherTexts, _decryptionShares, _publicKeys );
 #else
+
+    if ( _cipherTexts.empty() ) {
+        throw ThresholdUtils::IncorrectInput( "Empty ciphertexts" );
+    }
 
     if ( _decryptionShares.size() != _publicKeys.size() ) {
         throw ThresholdUtils::IncorrectInput( "Decryption shares and public keys size mismatch" );
@@ -280,6 +284,10 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatchParallel(
     for ( size_t i = 0; i < ThresholdUtils::numThreads; ++i ) {
         size_t startIdx = i * sizePerThread;
         size_t endIdx = std::min( startIdx + sizePerThread, _cipherTexts.size() );
+
+        // ran out of tasks for threads
+        if ( startIdx >= _cipherTexts.size() )
+            break;
 
         futures.push_back( folly::via(
             ThresholdUtils::thread_pool.get(), [startIdx, endIdx, &_cipherTexts, &_decryptionShares,

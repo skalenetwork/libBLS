@@ -275,6 +275,10 @@ std::vector< bool > TE::VerifyBatch( const std::vector< CipheredKey >& ciphertex
     const size_t size = decryptionShares.size();
     const size_t numberOfBatches = ciphertexts.size();
 
+    if ( numberOfBatches == 0 ) {
+        throw ThresholdUtils::IncorrectInput( "ciphertexts cannot be empty" );
+    }
+
     if ( size % numberOfBatches != 0 ) {
         throw ThresholdUtils::IncorrectInput(
             "decryption shares size must be multiple of ciphertexts size" );

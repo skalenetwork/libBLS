@@ -1371,7 +1371,7 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionSharesBatch ) {
  * check that only those fail validation.
  */
 BOOST_AUTO_TEST_CASE( ValidateDecryptionSharesMegaBatch ) {
-    size_t numOfBatchesPerRun = 5;
+    std::vector< size_t > numOfBatchesPerRunVec = { 0, 1, 10 };
     size_t requiredSigners = 15;
     size_t totalSigners = 22;
     keys keys = generateKeys( requiredSigners, totalSigners );
@@ -1379,47 +1379,63 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionSharesMegaBatch ) {
     libBLS::TEDecryptionShare decrShare( libBLS::algebra::G2Point::random(), 1 );
     libBLS::Ciphertext cipher;
 
-    size_t totalNumShares = numOfBatchesPerRun * totalSigners;
+    // test different batch sizes - catch edge cases like 0, 1, and larger sizes
+    for ( auto numOfBatchesPerRun : numOfBatchesPerRunVec ) {
+        size_t totalNumShares = numOfBatchesPerRun * totalSigners;
 
-    for ( size_t i = 0; i < 40; ++i ) {
-        std::vector< bool > tampered( totalNumShares, false );
-        std::vector< libBLS::CipheredKey > cipheredKeys;
-        std::vector< libBLS::TEDecryptionShare > shares;
-        std::vector< libBLS::TEPublicKeyShare > pubKeys;
-        cipheredKeys.reserve( numOfBatchesPerRun );
-        shares.reserve( totalNumShares );
-        pubKeys.reserve( totalNumShares );
+        for ( size_t i = 0; i < 20; ++i ) {
+            std::vector< bool > tampered( totalNumShares, false );
+            std::vector< libBLS::CipheredKey > cipheredKeys;
+            std::vector< libBLS::TEDecryptionShare > shares;
+            std::vector< libBLS::TEPublicKeyShare > pubKeys;
+            cipheredKeys.reserve( numOfBatchesPerRun );
+            shares.reserve( totalNumShares );
+            pubKeys.reserve( totalNumShares );
 
-        for ( size_t j = 0; j < numOfBatchesPerRun; ++j ) {
-            cipher = generateRandomCiphertext( dataSize, keys );
-            cipheredKeys.emplace_back( cipher.getKeys()[0] );
-            auto [tamperedCurrent, batchShares] = randomTamperDecryptionShares(
-                totalSigners, cipheredKeys[j], keys.secretKeys, ( i + j ) % 2 == 0 );
+            for ( size_t j = 0; j < numOfBatchesPerRun; ++j ) {
+                cipher = generateRandomCiphertext( dataSize, keys );
+                cipheredKeys.emplace_back( cipher.getKeys()[0] );
+                auto [tamperedCurrent, batchShares] = randomTamperDecryptionShares(
+                    totalSigners, cipheredKeys[j], keys.secretKeys, ( i + j ) % 2 == 0 );
 
-            for ( size_t k = 0; k < totalSigners; ++k ) {
-                shares.emplace_back( batchShares[k] );
-                pubKeys.emplace_back( keys.publicKeys[k] );
-                if ( tamperedCurrent[k] ) {
-                    tampered[j * totalSigners + k] = true;
+                for ( size_t k = 0; k < totalSigners; ++k ) {
+                    shares.emplace_back( batchShares[k] );
+                    pubKeys.emplace_back( keys.publicKeys[k] );
+                    if ( tamperedCurrent[k] ) {
+                        tampered[j * totalSigners + k] = true;
+                    }
                 }
             }
-        }
 
-        std::vector< bool > results = libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
-            cipheredKeys, shares, pubKeys );
+            // throw exception if no batches
+            if ( numOfBatchesPerRun == 0 ) {
+                BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
+                                         cipheredKeys, shares, pubKeys ),
+                    libBLS::ThresholdUtils::IncorrectInput );
 
-        std::vector< bool > resultsParallel =
-            libBLS::ThresholdEncryption::validateDecryptionSharesBatchParallel(
-                cipheredKeys, shares, pubKeys );
-
-        for ( size_t j = 0; j < totalNumShares; ++j ) {
-            // only the ones not tampered should pass
-            if ( tampered[j] ) {
-                BOOST_REQUIRE( !results[j] );
-                BOOST_REQUIRE( !resultsParallel[j] );
+                BOOST_REQUIRE_THROW(
+                    libBLS::ThresholdEncryption::validateDecryptionSharesBatchParallel(
+                        cipheredKeys, shares, pubKeys ),
+                    libBLS::ThresholdUtils::IncorrectInput );
             } else {
-                BOOST_REQUIRE( results[j] );
-                BOOST_REQUIRE( resultsParallel[j] );
+                std::vector< bool > results =
+                    libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
+                        cipheredKeys, shares, pubKeys );
+
+                std::vector< bool > resultsParallel =
+                    libBLS::ThresholdEncryption::validateDecryptionSharesBatchParallel(
+                        cipheredKeys, shares, pubKeys );
+
+                for ( size_t j = 0; j < totalNumShares; ++j ) {
+                    // only the ones not tampered should pass
+                    if ( tampered[j] ) {
+                        BOOST_REQUIRE( !results[j] );
+                        BOOST_REQUIRE( !resultsParallel[j] );
+                    } else {
+                        BOOST_REQUIRE( results[j] );
+                        BOOST_REQUIRE( resultsParallel[j] );
+                    }
+                }
             }
         }
     }
