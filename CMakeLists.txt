@@ -40,9 +40,10 @@ list( APPEND CMAKE_MODULE_PATH ${LIBBLS_CMAKE_DIR} )
 
 find_library( CRYPTOPP_LIBRARY NAMES "crypto" PATHS "${DEPS_INSTALL_ROOT}/lib" )
 
-option(BUILD_TESTS "Build tests" ON)
-option(BUILD_WITH_FPIC "Build with -fPIC" OFF)
-option(BUILD_UTILS "Build utils" ON)
+option(LIBBLS_BUILD_TESTS "Build tests" ON)
+option(LIBBLS_BUILD_WITH_FPIC "Build with -fPIC" OFF)
+option(LIBBLS_BUILD_UTILS "Build utils" ON)
+option(LIBBLS_BUILD_BENCHMARKS "Build benchmarks" ON)
 
 option( BLS_PROFILING "Build for profiling" OFF )
 if( SKALED_PROFILING OR CONSENSUS_PROFILING )
@@ -71,7 +72,7 @@ else()
 	message( INFO "---- CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE} is not supported explicitly" )
 endif()
 
-if(BUILD_TESTS)
+if(LIBBLS_BUILD_TESTS)
 	enable_testing()
 endif()
 
@@ -232,7 +233,7 @@ target_link_libraries(bls PUBLIC backend PRIVATE ${CRYPTOPP_LIBRARY} common_util
 
 add_subdirectory(threshold_encryption)
 
-if (BUILD_UTILS)
+if (LIBBLS_BUILD_UTILS)
 	# Helper function for utils setup
 	function(add_bls_tool name source)
 		add_executable(${name} ${source})
@@ -257,7 +258,7 @@ if (BUILD_UTILS)
 
 endif()
 
-if(BUILD_TESTS)
+if(LIBBLS_BUILD_TESTS)
 	# Helper function to add tests
 	function(add_bls_test name source)
 		set(extra_libs ${ARGN})  # Capture any extra libraries passed as arguments
@@ -315,5 +316,6 @@ if(NOT SKALE_SKIP_INSTALLING_DIRECTIVES)
 	install( TARGETS verify_bls DESTINATION bin )
 endif()
 
-## Benchmarks
-add_subdirectory(benchmarks)
+if (LIBBLS_BUILD_BENCHMARKS)
+	add_subdirectory(benchmarks)
+endif()
