@@ -24,7 +24,7 @@
 #ifndef LIBBLS_UTILS_H
 #define LIBBLS_UTILS_H
 
-#include <openssl/evp.h>
+#include <third_party/cryptlite/sha256.h>
 #include <array>
 #include <atomic>
 #include <iomanip>
@@ -44,19 +44,6 @@ namespace libBLS {
 constexpr size_t BASE_HEXA = 16;
 constexpr size_t BASE_DEC = 10;
 constexpr size_t HASH_SIZE = 32;
-
-// Thread-local EVP_MD_CTX for SHA-256 hashing
-inline EVP_MD_CTX* tl_sha256_ctx() {
-    // One ctx per thread; constructed on first use, reused thereafter.
-    static thread_local EVP_MD_CTX* ctx = nullptr;
-    if ( !ctx ) {
-        ctx = EVP_MD_CTX_new();
-    }
-    // Reset the context to SHA-256 each call (cheap).
-    EVP_DigestInit_ex( ctx, EVP_sha256(), nullptr );
-    return ctx;
-}
-
 
 #define REQUIRE_OR_THROW( cond, msg )                                                     \
     do {                                                                                  \
@@ -166,12 +153,9 @@ public:
      * @note Uses OpenSSL EVP interface for hashing
      * Reuses a thread-local EVP_MD_CTX to avoid repeated allocations
      */
-    static inline void sha256( std::string_view data, std::array< uint8_t, HASH_SIZE >& out ) {
-        EVP_MD_CTX* ctx = tl_sha256_ctx();
-        EVP_DigestInit_ex( ctx, EVP_sha256(), nullptr );  // reset, no malloc
-        EVP_DigestUpdate( ctx, data.data(), data.size() );
-        unsigned int out_len = out.size();
-        EVP_DigestFinal_ex( ctx, out.data(), &out_len );
+    static inline void sha256( std::string data, std::array< uint8_t, HASH_SIZE >& out ) {
+        static_assert( HASH_SIZE == cryptlite::sha256::HASH_SIZE, "HASH_SIZE mismatch" );
+        cryptlite::sha256::hash( data, out.data() );
     }
 };
 

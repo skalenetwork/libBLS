@@ -89,7 +89,6 @@ set(BACKEND_SPECIFIC_SOURCES
 set(BACKEND_SOURCES 
   "${BACKEND_BASE_DIR}/interface/functions.cpp"
   "${BACKEND_BASE_DIR}/interface/curve_contract_altbn128.cpp"
-  ${TOOLS_DIR}/utils.cpp
 ) 
 
 
@@ -97,6 +96,7 @@ set(BACKEND_SOURCES
 foreach(file ${BACKEND_SPECIFIC_SOURCES})
     list(APPEND BACKEND_SOURCES "${BACKEND_SRC_DIR}/${file}")
 endforeach()
+
 
 add_library(backend STATIC ${BACKEND_SOURCES})
 
@@ -117,6 +117,7 @@ target_link_libraries(backend PUBLIC
     ${BACKEND_LIB}
     ${BACKEND_DEPS}
     ${CRYPTOPP_LIBRARY} # only needed for tests because tests use utils.cpp. Need to refactor this
+    common_utils # add utils built from root CMakeLists.txt
 )
 
 

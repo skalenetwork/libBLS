@@ -30,8 +30,6 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <utility>
 #include <vector>
 
-#include <third_party/cryptlite/sha256.h>
-
 #include "AesGcmCipher.h"
 #include "TEBase.h"
 #include "backends/algebra.hpp"

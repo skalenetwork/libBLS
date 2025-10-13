@@ -35,12 +35,16 @@
 namespace libBLS {
 
 size_t ThresholdUtils::numThreads = DEFAULT_NUM_THREADS;
+
+#ifndef WITH_EMSCRIPTEN
 std::unique_ptr< folly::CPUThreadPoolExecutor > ThresholdUtils::thread_pool = nullptr;
+#endif
 
 void ThresholdUtils::init() {
     initRAND();
     initCurve();
 
+#ifndef WITH_EMSCRIPTEN
     // if numThreads was not set yet, try setting it to hardware concurrency
     if ( numThreads == 0 ) {
         numThreads = std::thread::hardware_concurrency();
@@ -48,8 +52,6 @@ void ThresholdUtils::init() {
             numThreads = 4;  // Fallback to 4 threads if hardware_concurrency cannot detect
         }
     }
-
-#ifndef WITH_EMSCRIPTEN
     initThreadPool( numThreads );
 #endif
 }

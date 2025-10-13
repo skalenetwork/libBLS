@@ -58,7 +58,7 @@ public:
     inline void validate() const {
         if ( privateKey.isZero() ) {
             throw ThresholdUtils::IsNotWellFormed(
-                "Zero private key share, with signer index " + signerIndex );
+                "Zero private key share, with signer index " + std::to_string( signerIndex ) );
         }
     }
 

@@ -171,20 +171,24 @@ endif()
 
 set(DEPS_LIB_DIR "${DEPS_INSTALL_ROOT}/lib")
 
-set(FOLLY_STATIC_LIBS
-  "${DEPS_LIB_DIR}/libfolly.a"
-  "${DEPS_LIB_DIR}/libglog.a"
-  "${DEPS_LIB_DIR}/libgflags.a"
-  "${DEPS_LIB_DIR}/libfmt.a"
-  "${DEPS_LIB_DIR}/libdouble-conversion.a"
-  "${DEPS_LIB_DIR}/libevent.a"
-  "${DEPS_LIB_DIR}/libboost_context.a"
-)
+# Only set FOLLY_STATIC_LIBS if not building with emscripten
+if (EMSCRIPTEN)
+	set(FOLLY_STATIC_LIBS "")
+else()
+	set(FOLLY_STATIC_LIBS
+		"${DEPS_LIB_DIR}/libfolly.a"
+		"${DEPS_LIB_DIR}/libglog.a"
+		"${DEPS_LIB_DIR}/libgflags.a"
+		"${DEPS_LIB_DIR}/libfmt.a"
+		"${DEPS_LIB_DIR}/libdouble-conversion.a"
+		"${DEPS_LIB_DIR}/libevent.a"
+		"${DEPS_LIB_DIR}/libboost_context.a"
+	)
+endif()
+
 
 include_directories(${DEPS_INSTALL_ROOT}/include)
 link_directories(${DEPS_INSTALL_ROOT}/lib)
-
-add_subdirectory(backends)
 
 # TMP fix for emscripten
 # Build utils exactly once
@@ -198,6 +202,13 @@ target_link_libraries(common_utils
     ${FOLLY_STATIC_LIBS}
 )
 
+# utils.h imports folly which uses threads. If we are building with emscripten, we need to
+# define WITH_EMSCRIPTEN to avoid including folly
+if (EMSCRIPTEN)
+	target_compile_definitions(common_utils PUBLIC WITH_EMSCRIPTEN=1)
+endif()
+
+add_subdirectory(backends)
 
 add_library(bls ${sourses_bls} ${headers_bls})
 
