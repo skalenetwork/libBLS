@@ -153,9 +153,8 @@ public:
      * @note Uses OpenSSL EVP interface for hashing
      * Reuses a thread-local EVP_MD_CTX to avoid repeated allocations
      */
-    static inline void sha256( std::string data, std::array< uint8_t, HASH_SIZE >& out ) {
-        static_assert( HASH_SIZE == cryptlite::sha256::HASH_SIZE, "HASH_SIZE mismatch" );
-        cryptlite::sha256::hash( data, out.data() );
+    static inline std::string sha256( std::string data ) {
+        return cryptlite::sha256::hash_hex( data );
     }
 };
 

@@ -418,7 +418,7 @@ public:
 
     static algebra::G1Point HashToGroup( const algebra::G2Point& U, const AES256Key& V );
 
-    static std::array< uint8_t, algebra::HASH_SIZE > Hash( const algebra::G2Point& Y );
+    static std::string Hash( const algebra::G2Point& Y );
 
     static bool Verify( const CipheredKey& ciphertext, const algebra::G2Point& decryptionShare,
         const algebra::G2Point& public_key );

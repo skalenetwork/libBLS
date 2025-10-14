@@ -555,12 +555,16 @@ void ThresholdEncryption::validateDecipheredMessage(
     // Compute G(r'Y)
     algebra::FrScalar r = algebra::FrScalar::fromBytes( secret );
     algebra::G2Point Y = r * _publicKey.getPublicKeyRaw();
-    AES256Key hash = TE::Hash( Y );
+    std::string hash = TE::Hash( Y );
+
+    if ( hash.size() < AES_256_KEY_SIZE_BYTES ) {
+        throw ThresholdUtils::IsNotWellFormed( "Hash output size is less than AES key size" );
+    }
 
     // Compute V xor G(r'Y) to get M (AES key)
     AES256Key decipheredAesKey;
     for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
-        decipheredAesKey[i] = cipheredAesKey[i] ^ hash[i];
+        decipheredAesKey[i] = cipheredAesKey[i] ^ static_cast< uint8_t >( hash[i] );
     }
 
     // compare the aes keys

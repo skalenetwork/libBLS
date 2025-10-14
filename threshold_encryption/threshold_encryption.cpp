@@ -42,35 +42,37 @@ TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {}
 
 TE::~TE() {}
 
-std::array< uint8_t, algebra::HASH_SIZE > TE::Hash( const algebra::G2Point& Y ) {
-    auto bytes = Y.toByteArray();
-    std::string view( reinterpret_cast< const char* >( bytes.data() ), bytes.size() );
+std::string TE::Hash( const algebra::G2Point& Y ) {
+    auto vectorCoordinates = Y.toStringArray( Base::DEC );
 
-    std::array< uint8_t, algebra::HASH_SIZE > hash_result;
-    ThresholdUtils::sha256( view, hash_result );
+    std::string tmp = "";
+    for ( const auto& coord : vectorCoordinates ) {
+        tmp += coord;
+    }
 
-    return hash_result;
+    const std::string sha256hex = ThresholdUtils::sha256( tmp );
+
+    return sha256hex;
 }
 
 algebra::G1Point TE::HashToGroup( const algebra::G2Point& U, const AES256Key& V ) {
     // assumed that U lies in G2
 
-    // convert U to bytes
-    auto U_bytes = U.toByteArray();
+    auto U_str = U.toStringArray( Base::DEC );
+    std::string V_str = ThresholdUtils::bytesToHexString( V );
 
-    // concatenate both
-    std::array< uint8_t, algebra::G2Point::SIZE_BYTES + AES_256_KEY_SIZE_BYTES > u_v_bytes_arr;
-    std::memcpy( u_v_bytes_arr.data(), U_bytes.data(), U_bytes.size() );
-    std::memcpy( u_v_bytes_arr.data() + U_bytes.size(), V.data(), V.size() );
+    const std::string sha256hex =
+        cryptlite::sha256::hash_hex( U_str[0] + U_str[1] + U_str[2] + U_str[3] + V_str );
 
-    std::string view(
-        reinterpret_cast< const char* >( u_v_bytes_arr.data() ), u_v_bytes_arr.size() );
+    std::string hash_str = cryptlite::sha256::hash_hex( sha256hex );
+    std::vector< uint8_t > bytes = ThresholdUtils::hexCStringToBytes( hash_str.c_str() );
 
-    // hash the concatenated value
-    std::array< uint8_t, algebra::HASH_SIZE > hash_result;
-    ThresholdUtils::sha256( view, hash_result );
+    // copy first 32 bytes
+    auto hash_bytes_arr = std::array< uint8_t, algebra::MAX_FIELD_ELEMENT_SIZE_BYTES >();
+    std::copy( bytes.begin(), bytes.begin() + algebra::MAX_FIELD_ELEMENT_SIZE_BYTES,
+        hash_bytes_arr.begin() );
 
-    return algebra::G1Point::fromHash( hash_result );
+    return algebra::G1Point::fromHash( hash_bytes_arr );
 }
 
 
@@ -95,13 +97,19 @@ CipheredKeyResult TE::getCiphertext(
         algebra::G2Point Y;
         Y = r * commonPublic;
 
-        AES256Key hash = Hash( Y );
+        std::string hash = Hash( Y );
+
+        if ( hash.size() < AES_256_KEY_SIZE_BYTES ) {
+            throw ThresholdUtils::IsNotWellFormed( "Hash cannot be less than key size" );
+        }
 
         AES256Key V;
 
         for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
-            V[i] = key[i] ^ hash[i];
+            V[i] = key[i] ^ static_cast< uint8_t >( hash[i] );
         }
+
+        std::string v_str = ThresholdUtils::bytesToHexString( V );
 
         algebra::G1Point W, H;
 
@@ -375,9 +383,18 @@ AES256Key TE::CombineSharesIntoAESKey(
     }
     algebra::G2Point rebuiltG2 = algebra::lagrangeInterpolateAt0( idx, this->t_, shares_ref );
 
-    AES256Key hash = this->Hash( rebuiltG2 );
+    std::string hash = this->Hash( rebuiltG2 );
 
-    return hash;
+    if ( hash.size() < AES_256_KEY_SIZE_BYTES ) {
+        throw ThresholdUtils::IsNotWellFormed( "Hash cannot be less than key size" );
+    }
+
+    AES256Key ret;
+    for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
+        ret[i] = static_cast< uint8_t >( hash[i] );
+    }
+
+    return ret;
 }
 
 }  // namespace libBLS
