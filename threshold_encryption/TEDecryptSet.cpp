@@ -32,9 +32,7 @@ namespace libBLS {
 TEDecryptSet::TEDecryptSet( size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), mergeStatus( MergeStatus::NOT_ENOUGH_SHARES ) {}
 
-void TEDecryptSet::addDecryptShare( const TEDecryptionShare& _share ) {
-    _share.validate();
-
+bool TEDecryptSet::addDecryptShare( const TEDecryptionShare& _share ) {
     if ( mergeStatus == MergeStatus::ALREADY_MERGED ) {
         throw ThresholdUtils::IncorrectInput( "Already Merged" );
     }
@@ -47,12 +45,29 @@ void TEDecryptSet::addDecryptShare( const TEDecryptionShare& _share ) {
         throw ThresholdUtils::IncorrectInput( "Cannot add more shares than total signers" );
     }
 
-    decrypts.insert( _share );
+    auto [_, inserted] = decrypts.insert( _share );
 
     // only need to be set once - for the minimum amount of shares needed
     if ( decrypts.size() == requiredSigners ) {
         mergeStatus = MergeStatus::READY_TO_MERGE;
     }
+
+    return inserted > 0;
+}
+
+bool TEDecryptSet::removeDecryptShare( const TEDecryptionShare& _share ) {
+    if ( mergeStatus == MergeStatus::ALREADY_MERGED ) {
+        throw ThresholdUtils::IncorrectInput( "Already Merged" );
+    }
+
+    size_t removed = decrypts.erase( _share );
+
+    // If we remove a share and now have less than the required number, update status
+    if ( decrypts.size() < requiredSigners ) {
+        mergeStatus = MergeStatus::NOT_ENOUGH_SHARES;
+    }
+
+    return removed > 0;
 }
 
 size_t TEDecryptSet::size() const {

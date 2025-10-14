@@ -1018,7 +1018,7 @@ BOOST_AUTO_TEST_CASE( TEDecryptSet ) {
         for ( size_t i = 0; i < numSigned; ++i ) {
             libBLS::algebra::G2Point group = libBLS::algebra::G2Point::random();
             libBLS::TEDecryptionShare share( group, i );
-            decrSet.addDecryptShare( share );
+            BOOST_REQUIRE( decrSet.addDecryptShare( share ) );
             shares.push_back( std::make_pair( group, i ) );
         }
 
@@ -1034,6 +1034,17 @@ BOOST_AUTO_TEST_CASE( TEDecryptSet ) {
             BOOST_REQUIRE( std::find( shares.begin(), shares.end(), shares2[i] ) != shares.end() );
         }
     }
+
+    // removing
+    {
+        libBLS::TEDecryptSet decrSet( 1, 1 );
+        libBLS::TEDecryptionShare decr_share( libBLS::algebra::G2Point::random(), 0 );
+        decrSet.addDecryptShare( decr_share );
+        BOOST_REQUIRE( decrSet.size() == 1 );
+        decrSet.removeDecryptShare( decr_share );
+        BOOST_REQUIRE( decrSet.size() == 0 );
+    }
+
 
     // Exceptions
     {
