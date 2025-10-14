@@ -27,6 +27,7 @@
 #include <third_party/cryptlite/sha256.h>
 #include <array>
 #include <atomic>
+#include <functional>
 #include <iomanip>
 #include <memory>
 #include <sstream>
@@ -35,6 +36,7 @@
 
 #ifndef WITH_EMSCRIPTEN
 #include <folly/executors/CPUThreadPoolExecutor.h>
+#include <folly/futures/Future.h>
 #endif
 
 static constexpr size_t BLS_MAX_COMPONENT_LEN = 77;
@@ -156,6 +158,10 @@ public:
     static inline std::string sha256( std::string data ) {
         return cryptlite::sha256::hash_hex( data );
     }
+
+    template < typename T >
+    static std::vector< T > executeInParallel(
+        size_t numTasksPerThread, std::function< std::vector< T >( size_t, size_t ) > func );
 };
 
 template < size_t N >
@@ -186,6 +192,45 @@ std::array< uint8_t, N > ThresholdUtils::hexCStringToBytesArray( const char* hex
     }
 
     return bytes;
+}
+
+
+template < typename T >
+std::vector< T > ThresholdUtils::executeInParallel(
+    size_t totalSize, std::function< std::vector< T >( size_t, size_t ) > func ) {
+#ifdef WITH_EMSCRIPTEN
+    // single-threaded
+    return func( 0, totalSize );
+#else
+    std::vector< folly::Future< std::vector< T > > > futures;
+    futures.reserve( ThresholdUtils::numThreads );
+
+    size_t sizePerThread = ( totalSize + numThreads - 1 ) / numThreads;
+
+    for ( size_t i = 0; i < numThreads; ++i ) {
+        size_t startIdx = i * sizePerThread;
+        size_t endIdx = std::min( startIdx + sizePerThread, totalSize );
+
+        // ran out of tasks for threads
+        if ( startIdx >= totalSize )
+            break;
+
+        futures.push_back( folly::via( ThresholdUtils::thread_pool.get(),
+            [startIdx, endIdx, func]() { return func( startIdx, endIdx ); } ) );
+    }
+
+    auto results = folly::collectAll( futures ).get();
+    std::vector< T > finalResults;
+    finalResults.reserve( totalSize );
+
+    for ( auto& r : results ) {
+        for ( auto b : r.value() ) {
+            finalResults.push_back( b );
+        }
+    }
+
+    return finalResults;
+#endif
 }
 
 // Expose init() to libBLS users

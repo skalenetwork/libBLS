@@ -198,8 +198,6 @@ std::vector< libBLS::TEDecryptionShare > getDecryptionShares(
     p["blsKeyName"] = keyName;
 
     Json::Value batch;
-
-    int64_t timeToGetDecryptionShares = 0;
     std::vector< libBLS::CipheredKey > keys;
 
     for ( size_t i = 0; i < ciphertexts.size(); i++ ) {
