@@ -123,7 +123,7 @@ target_link_libraries(backend PUBLIC
 
 ######### Backend Unit Tests #########
 
-if(BUILD_TESTS)
+if(LIBBLS_BUILD_TESTS)
 
   set(TEST_DIR ${CMAKE_CURRENT_LIST_DIR}/../test)
   set(TOOLS_DIR ${CMAKE_CURRENT_LIST_DIR}/../tools)

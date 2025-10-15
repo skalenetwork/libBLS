@@ -61,10 +61,11 @@ algebra::G1Point TE::HashToGroup( const algebra::G2Point& U, const AES256Key& V 
     auto U_str = U.toStringArray( Base::DEC );
     std::string V_str = ThresholdUtils::bytesToHexString( V );
 
+    // hash 2x
     const std::string sha256hex =
-        cryptlite::sha256::hash_hex( U_str[0] + U_str[1] + U_str[2] + U_str[3] + V_str );
+        ThresholdUtils::sha256( U_str[0] + U_str[1] + U_str[2] + U_str[3] + V_str );
+    std::string hash_str = ThresholdUtils::sha256( sha256hex );
 
-    std::string hash_str = cryptlite::sha256::hash_hex( sha256hex );
     std::vector< uint8_t > bytes = ThresholdUtils::hexCStringToBytes( hash_str.c_str() );
 
     // copy first 32 bytes

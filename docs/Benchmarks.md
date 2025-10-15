@@ -43,9 +43,9 @@
 
 | Result Metric  (1k Txns)                  | MCL - batches (seconds) | MCL - Parallelized batches (seconds) |
 | ----------------------------------------  | ----------------------- | ------------------------------------ |
-| Total encryption time                     | 2.1                     | 1.65
+| Total encryption time                     | 2.1                     | 1.65 (not parallelized yet)
 | Total validation encryption time          | 0.97                    | 0.031
-| Total partial decryption time             | 0.47                    | 0.37
+| Total partial decryption time             | 0.47                    | 0.37 ( not parallelized yet)
 | Total validation decryption share time    | 2.1                     | 0.32
 | Total combine shares time                 | 0.69                    | 0.071
 | Total validation combined decryption time | 0.11                    | 0.014
@@ -53,11 +53,11 @@
 | Total full cycle time                     | 6.5                     | 2.47
 
 - Libff would have taken 529 seconds.
-- MCL takes 2.47
+- MCL takes 6.5
 
-- Full cycle speedup: **214x**
-- All but encryption speedup: **628x**
-- Decryption share validation speedup: **1384x**
+- Full cycle speedup: **79x**
+- All but encryption speedup: **112x**
+- Decryption share validation speedup: **210x**
 
 ---
 

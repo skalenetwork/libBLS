@@ -235,15 +235,15 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatchParallel(
     const std::vector< TEDecryptionShare >& _decryptionShares,
     const std::vector< TEPublicKeyShare >& _publicKeys ) {
     if ( _cipherTexts.empty() ) {
-        throw ThresholdUtils::IncorrectInput( "Empty ciphertexts" );
-    }
-
-    if ( _decryptionShares.empty() ) {
-        throw ThresholdUtils::IncorrectInput( "Empty decryption shares" );
+        return {};
     }
 
     if ( _decryptionShares.size() != _publicKeys.size() ) {
         throw ThresholdUtils::IncorrectInput( "Decryption shares and public keys size mismatch" );
+    }
+
+    if ( _decryptionShares.empty() ) {
+        return {};
     }
 
     if ( _decryptionShares.size() % _cipherTexts.size() != 0 ) {
@@ -303,7 +303,7 @@ AES256Key ThresholdEncryption::combineShares(
 std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatch(
     std::vector< CipheredKey >& _cipheredKeys, std::vector< TEDecryptSet >& _decryptionSets ) {
     if ( _cipheredKeys.empty() ) {
-        throw ThresholdUtils::IncorrectInput( "Empty ciphertexts" );
+        return {};
     }
 
     if ( _cipheredKeys.size() != _decryptionSets.size() ) {
@@ -329,7 +329,7 @@ std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatc
 std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatchParallel(
     std::vector< CipheredKey >& _cipheredKeys, std::vector< TEDecryptSet >& _decryptionSets ) {
     if ( _cipheredKeys.empty() ) {
-        throw ThresholdUtils::IncorrectInput( "Empty ciphertexts" );
+        return {};
     }
 
     if ( _cipheredKeys.size() != _decryptionSets.size() ) {
@@ -368,7 +368,7 @@ std::vector< bool > ThresholdEncryption::validateCombinedDecryptionBatch(
     const std::vector< Ciphertext >& _ciphertexts, const std::vector< AES256Key >& _aesKeys,
     const TEPublicKey& _publicKey ) {
     if ( _ciphertexts.empty() ) {
-        throw ThresholdUtils::IncorrectInput( "Empty ciphertexts" );
+        return {};
     }
 
     if ( _ciphertexts.size() != _aesKeys.size() ) {
@@ -398,7 +398,7 @@ std::vector< bool > ThresholdEncryption::validateCombinedDecryptionBatchParallel
     const std::vector< Ciphertext >& _ciphertexts, const std::vector< AES256Key >& _aesKeys,
     const TEPublicKey& _publicKey ) {
     if ( _ciphertexts.empty() ) {
-        throw ThresholdUtils::IncorrectInput( "Empty ciphertexts" );
+        return {};
     }
 
     if ( _ciphertexts.size() != _aesKeys.size() ) {

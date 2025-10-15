@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.5.1)
 
 project(libTE)
 
-option(BUILD_TESTS "Build tests" ON)
+option(LIBBLS_BUILD_TESTS "Build tests" ON)
 
-if(BUILD_TESTS)
+if(LIBBLS_BUILD_TESTS)
     enable_testing()
 endif()
 
@@ -57,7 +57,7 @@ target_compile_definitions(te
     $<TARGET_PROPERTY:backend,INTERFACE_COMPILE_DEFINITIONS>
 )
 
-if (BUILD_TESTS)
+if (LIBBLS_BUILD_TESTS)
 
     # Helper function to add tests
     function(add_te_test name source)
