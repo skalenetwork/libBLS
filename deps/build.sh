@@ -961,19 +961,19 @@ if [[ "${WITH_EMSCRIPTEN}" -eq 0 ]]; then
 	if [ "$WITH_GFLAGS" = "yes" ];
 	then
 		echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}libGFLAGS${COLOR_SEPARATOR} ====================================${COLOR_RESET}"
-		if [ ! -f "$INSTALL_ROOT/lib/libgflags${DEBUG__DEBUG}.a" ];
+	if [ ! -f "$INSTALL_ROOT/lib/libgflags${DEBUG__DEBUG}.a" ];
 		then
 			env_restore
 			cd "$SOURCES_ROOT"
-			if [ ! -d "gflags" ];
+			if [ ! -d "gflags-master" ];
 			then
 				echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
 				eval unzip -o "$PREDOWNLOADED_ROOT/gflags-master.zip"
 				echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
 				cd gflags-master
-				eval mkdir -p build
-				cd build
-				eval "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" \
+				eval mkdir -p cmake-build
+				cd cmake-build
+				eval $CMAKE ${CMAKE_CROSSCOMPILING_OPTS} -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" \
 					-DBUILD_SHARED_LIBS=OFF \
 					..
 				cd ..
@@ -981,18 +981,19 @@ if [[ "${WITH_EMSCRIPTEN}" -eq 0 ]]; then
 				cd gflags-master
 			fi
 			echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-			cd build
+			cd cmake-build
 			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
 			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}" install
 			cd "$SOURCES_ROOT"
 			if [ "$DEBUG" = "1" ];
-		then
-			cp "$INSTALL_ROOT/lib/libgflags_debug.a" "$INSTALL_ROOT/lib/libgflags.a"
-		fi
+			then
+				cp "$INSTALL_ROOT/lib/libgflags_debug.a" "$INSTALL_ROOT/lib/libgflags.a"
+			fi
 		else
 			echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
 		fi
 	fi
+
 
 	#https://github.com/google/glog
 	#git@github.com:google/glog.git
