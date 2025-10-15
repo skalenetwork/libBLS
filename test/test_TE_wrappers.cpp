@@ -1443,16 +1443,14 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionSharesMegaBatch ) {
                 }
             }
 
-            // throw exception if no batches
             if ( numOfBatchesPerRun == 0 ) {
-                BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
-                                         cipheredKeys, shares, pubKeys ),
-                    libBLS::ThresholdUtils::IncorrectInput );
-
-                BOOST_REQUIRE_THROW(
+                auto res = libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
+                                         cipheredKeys, shares, pubKeys );
+                auto res2 = 
                     libBLS::ThresholdEncryption::validateDecryptionSharesBatchParallel(
-                        cipheredKeys, shares, pubKeys ),
-                    libBLS::ThresholdUtils::IncorrectInput );
+                        cipheredKeys, shares, pubKeys );
+                BOOST_REQUIRE( res.size() == 0 );
+                BOOST_REQUIRE( res == res2 );
             } else {
                 std::vector< bool > results =
                     libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
