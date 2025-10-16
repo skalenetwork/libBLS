@@ -216,6 +216,11 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatch(
     const std::vector< CipheredKey >& _cipherTexts,
     const std::vector< TEDecryptionShare >& _decryptionShares,
     const std::vector< TEPublicKeyShare >& _publicKeys ) {
+    
+    if ( _cipherTexts.empty() ) {
+        return {};
+    }
+
     // convert from keys to G points
     std::vector< algebra::G2Point > decryptionSharesRaw;
     for ( const auto& share : _decryptionShares ) {
@@ -234,6 +239,7 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatchParallel(
     const std::vector< CipheredKey >& _cipherTexts,
     const std::vector< TEDecryptionShare >& _decryptionShares,
     const std::vector< TEPublicKeyShare >& _publicKeys ) {
+        
     if ( _cipherTexts.empty() ) {
         return {};
     }
