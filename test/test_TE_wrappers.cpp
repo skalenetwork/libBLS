@@ -1445,10 +1445,9 @@ BOOST_AUTO_TEST_CASE( ValidateDecryptionSharesMegaBatch ) {
 
             if ( numOfBatchesPerRun == 0 ) {
                 auto res = libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
-                                         cipheredKeys, shares, pubKeys );
-                auto res2 = 
-                    libBLS::ThresholdEncryption::validateDecryptionSharesBatchParallel(
-                        cipheredKeys, shares, pubKeys );
+                    cipheredKeys, shares, pubKeys );
+                auto res2 = libBLS::ThresholdEncryption::validateDecryptionSharesBatchParallel(
+                    cipheredKeys, shares, pubKeys );
                 BOOST_REQUIRE( res.size() == 0 );
                 BOOST_REQUIRE( res == res2 );
             } else {
