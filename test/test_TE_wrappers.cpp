@@ -1223,12 +1223,12 @@ BOOST_AUTO_TEST_CASE( BatchedEncryptionValidation ) {
     }
 
     // Exceptions - empty input
-    BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateEncryptionBatch(
-                             std::vector< libBLS::CipheredKey >() ),
-        libBLS::ThresholdUtils::IncorrectInput );
-    BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateEncryptionBatchParallel(
-                             std::vector< libBLS::CipheredKey >() ),
-        libBLS::ThresholdUtils::IncorrectInput );
+    auto res = libBLS::ThresholdEncryption::validateEncryptionBatch(
+        std::vector< libBLS::CipheredKey >() );
+    BOOST_REQUIRE( res.size() == 0 );
+    auto res2 = libBLS::ThresholdEncryption::validateEncryptionBatchParallel(
+        std::vector< libBLS::CipheredKey >() );
+    BOOST_REQUIRE( res2.size() == 0 );
 }
 
 BOOST_AUTO_TEST_CASE( PartialDecrypt ) {

@@ -147,7 +147,7 @@ void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
 std::vector< bool > ThresholdEncryption::validateEncryptionBatch(
     const std::vector< CipheredKey >& _ciphertexts ) {
     if ( _ciphertexts.empty() ) {
-        throw ThresholdUtils::IncorrectInput( "Empty ciphertexts" );
+        return {};
     }
 
     // Store concrete values (no reference_wrapper)
@@ -180,7 +180,7 @@ std::vector< bool > ThresholdEncryption::validateEncryptionBatch(
 std::vector< bool > ThresholdEncryption::validateEncryptionBatchParallel(
     const std::vector< CipheredKey >& _ciphertexts ) {
     if ( _ciphertexts.empty() ) {
-        throw ThresholdUtils::IncorrectInput( "Empty ciphertexts" );
+        return {};
     }
 
     auto result = ThresholdUtils::executeInParallel< bool >(
