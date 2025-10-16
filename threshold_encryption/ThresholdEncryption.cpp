@@ -216,7 +216,6 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatch(
     const std::vector< CipheredKey >& _cipherTexts,
     const std::vector< TEDecryptionShare >& _decryptionShares,
     const std::vector< TEPublicKeyShare >& _publicKeys ) {
-    
     if ( _cipherTexts.empty() ) {
         return {};
     }
@@ -239,7 +238,6 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatchParallel(
     const std::vector< CipheredKey >& _cipherTexts,
     const std::vector< TEDecryptionShare >& _decryptionShares,
     const std::vector< TEPublicKeyShare >& _publicKeys ) {
-        
     if ( _cipherTexts.empty() ) {
         return {};
     }
