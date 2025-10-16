@@ -45,6 +45,12 @@ option(LIBBLS_BUILD_WITH_FPIC "Build with -fPIC" OFF)
 option(LIBBLS_BUILD_UTILS "Build utils" ON)
 option(LIBBLS_BUILD_BENCHMARKS "Build benchmarks" ON)
 
+# No need to build tests and benchmarks with emscripten
+if (EMSCRIPTEN)
+  set(LIBBLS_BUILD_TESTS       OFF CACHE BOOL "Build tests"       FORCE)
+  set(LIBBLS_BUILD_BENCHMARKS  OFF CACHE BOOL "Build benchmarks"  FORCE)
+endif()
+
 option( BLS_PROFILING "Build for profiling" OFF )
 if( SKALED_PROFILING OR CONSENSUS_PROFILING )
     set( BLS_PROFILING ON )
