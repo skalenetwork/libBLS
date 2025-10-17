@@ -38,7 +38,7 @@ static constexpr size_t BLS_MAX_COMPONENT_LEN = 77;
 
 // forward declare to avoid including folly headers in this header
 namespace folly {
-    class CPUThreadPoolExecutor;
+class CPUThreadPoolExecutor;
 }
 
 namespace libBLS {
@@ -160,30 +160,29 @@ public:
     }
 
     /**
-     * @brief Executes tasks in parallel, merging the results and preserving the order of 
+     * @brief Executes tasks in parallel, merging the results and preserving the order of
      * `func` execution.
      * @param totalSize Total number of items to process.
-     * @param func Function that processes a range [startIdx, endIdx) and returns a vector of results.
+     * @param func Function that processes a range [startIdx, endIdx) and returns a vector of
+     * results.
      * @return A single vector containing all results from `func`, in the order of execution.
      * @note Uses a thread pool internally to parallelize the work.
      */
-    template <typename T>
-    static std::vector<T> executeInParallel(std::size_t totalSize,
-        const std::function<std::vector<T>(std::size_t, std::size_t)>& func);
+    template < typename T >
+    static std::vector< T > executeInParallel( std::size_t totalSize,
+        const std::function< std::vector< T >( std::size_t, std::size_t ) >& func );
 
-    private:
-
-    /** 
+private:
+    /**
      * Schedules tasks that cover [0, totalSize) in contiguous ranges.
      * For i-th task, it calls runTask(startIdx, endIdx, taskIndex).
      * Blocks until all tasks finish.
      * Implemented in .cpp file with Folly, hidden from headers.
      * Used as an internal helper for executeInParallel.
      */
-    static void parallel_for_ranges_blocking(std::size_t totalSize,
-                                    std::size_t numThreads,
-                                    std::size_t sizePerThread,
-                                    const std::function<void(std::size_t, std::size_t, std::size_t)>& runTask);
+    static void parallel_for_ranges_blocking( std::size_t totalSize, std::size_t numThreads,
+        std::size_t sizePerThread,
+        const std::function< void( std::size_t, std::size_t, std::size_t ) >& runTask );
 };
 
 template < size_t N >
@@ -217,41 +216,37 @@ std::array< uint8_t, N > ThresholdUtils::hexCStringToBytesArray( const char* hex
 }
 
 
-template <typename T>
-std::vector<T> ThresholdUtils::executeInParallel(std::size_t totalSize,
-    const std::function<std::vector<T>(std::size_t, std::size_t)>& func)
-{
+template < typename T >
+std::vector< T > ThresholdUtils::executeInParallel( std::size_t totalSize,
+    const std::function< std::vector< T >( std::size_t, std::size_t ) >& func ) {
 #ifdef WITH_EMSCRIPTEN
     // single-threaded
-    return func(0, totalSize);
+    return func( 0, totalSize );
 #else
     const std::size_t sizePerThread =
-        (totalSize + numThreads - 1) / (numThreads ? numThreads : 1);
+        ( totalSize + numThreads - 1 ) / ( numThreads ? numThreads : 1 );
 
     // Determine number of tasks (same chunking as before)
-    const std::size_t tasks =
-        (totalSize == 0 || sizePerThread == 0) ? 0
-        : ( (totalSize + sizePerThread - 1) / sizePerThread );
+    const std::size_t tasks = ( totalSize == 0 || sizePerThread == 0 ) ?
+                                  0 :
+                                  ( ( totalSize + sizePerThread - 1 ) / sizePerThread );
 
-    std::vector<std::vector<T>> chunks;
-    chunks.resize(tasks); // preserve submission order
+    std::vector< std::vector< T > > chunks;
+    chunks.resize( tasks );  // preserve submission order
 
-    parallel_for_ranges_blocking(
-        totalSize, numThreads, sizePerThread,
-        [&](std::size_t startIdx, std::size_t endIdx, std::size_t taskIndex) {
+    parallel_for_ranges_blocking( totalSize, numThreads, sizePerThread,
+        [&]( std::size_t startIdx, std::size_t endIdx, std::size_t taskIndex ) {
             // Same per-chunk logic: compute chunk via func(start,end)
-            chunks[taskIndex] = func(startIdx, endIdx);
-        }
-    );
+            chunks[taskIndex] = func( startIdx, endIdx );
+        } );
 
     // Flatten results in submission order (equivalent to collectAll order)
-    std::vector<T> finalResults;
+    std::vector< T > finalResults;
     // Reserve is optional since total element count may equal totalSize, as in your code
-    finalResults.reserve(totalSize);
-    for (auto& v : chunks) {
-        finalResults.insert(finalResults.end(),
-                            std::make_move_iterator(v.begin()),
-                            std::make_move_iterator(v.end()));
+    finalResults.reserve( totalSize );
+    for ( auto& v : chunks ) {
+        finalResults.insert( finalResults.end(), std::make_move_iterator( v.begin() ),
+            std::make_move_iterator( v.end() ) );
     }
     return finalResults;
 #endif

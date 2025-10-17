@@ -33,8 +33,13 @@
 #include "backends/algebra.hpp"
 
 #ifndef WITH_EMSCRIPTEN
+// error: comparison of integer expressions of different signedness: ‘const int’ and ‘const long
+// unsigned int’ [-Werror=sign-compare]
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
 #include <folly/executors/CPUThreadPoolExecutor.h>
 #include <folly/futures/Future.h>
+#pragma GCC diagnostic pop
 #endif
 
 namespace libBLS {
@@ -230,40 +235,37 @@ size_t ThresholdUtils::validateDecimalCString( const char* decStr ) {
 }
 
 
-void ThresholdUtils::parallel_for_ranges_blocking(std::size_t totalSize,
-                                  std::size_t numThreads,
-                                  std::size_t sizePerThread,
-                                  const std::function<void(std::size_t, std::size_t, std::size_t)>& runTask)
-{
-    if (totalSize == 0) return;
+void ThresholdUtils::parallel_for_ranges_blocking( std::size_t totalSize, std::size_t numThreads,
+    std::size_t sizePerThread,
+    const std::function< void( std::size_t, std::size_t, std::size_t ) >& runTask ) {
+    if ( totalSize == 0 )
+        return;
 
 #ifdef WITH_EMSCRIPTEN
     // single task - single-threaded execution
-    runTask(0, totalSize, 0);
+    runTask( 0, totalSize, 0 );
 #else
 
-    const std::size_t threads = std::max<std::size_t>(1, numThreads);
-    const std::size_t sp      = std::max<std::size_t>(1, sizePerThread);
-    const std::size_t tasks   = (totalSize + sp - 1) / sp;
+    const std::size_t threads = std::max< std::size_t >( 1, numThreads );
+    const std::size_t sp = std::max< std::size_t >( 1, sizePerThread );
+    const std::size_t tasks = ( totalSize + sp - 1 ) / sp;
 
-    folly::CPUThreadPoolExecutor pool(threads);
+    folly::CPUThreadPoolExecutor pool( threads );
 
-    std::vector<folly::Future<folly::Unit>> futures;
-    futures.reserve(tasks);
+    std::vector< folly::Future< folly::Unit > > futures;
+    futures.reserve( tasks );
 
-    for (std::size_t taskIndex = 0; taskIndex < tasks; ++taskIndex) {
+    for ( std::size_t taskIndex = 0; taskIndex < tasks; ++taskIndex ) {
         const std::size_t startIdx = taskIndex * sp;
-        const std::size_t endIdx   = std::min(startIdx + sp, totalSize);
+        const std::size_t endIdx = std::min( startIdx + sp, totalSize );
 
-        futures.push_back(
-            folly::via(&pool, [startIdx, endIdx, taskIndex, &runTask]() {
-                runTask(startIdx, endIdx, taskIndex);
-                return folly::Unit{};
-            })
-        );
+        futures.push_back( folly::via( &pool, [startIdx, endIdx, taskIndex, &runTask]() {
+            runTask( startIdx, endIdx, taskIndex );
+            return folly::Unit{};
+        } ) );
     }
 
-    folly::collectAll(futures).get(); // block until all tasks complete
+    folly::collectAll( futures ).get();  // block until all tasks complete
 #endif
 }
 
