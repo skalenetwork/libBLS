@@ -100,9 +100,9 @@ This means that:
 r * Y = r * (s * P) = s * (r * P) = s * U
 ``` 
 
-Since we have access to `U`, we need to somehow `s`. This is what the decryption process is about - collecting enough private key shares in order to merge them into `s`. This is all done implicitely, without ever allowing any party to know `s`. That is, the decryption process results in the production of `r * Y = s * U`, without ever:
-- Knowing any private key share `s_i`
-- Knowing the sphemeral secret `r`
+Since we have access to `U`, we need to somehow compute `s`. This is what the decryption process is about - collecting enough private key shares in order to merge them into `s`. This is all done implicitly, without ever allowing any party to know `s`. That is, the decryption process results in the production of `r * Y = s * U`, without ever:
+- Knowing any private key share `s_i` (besides possibly its own)
+- Knowing the ephemeral secret `r`
 - Knowing the common private key `s`
 
  
@@ -191,9 +191,207 @@ and we get the original plaintext.
 
 ---
 
-# 3. Validation (soon)
+# 3. Validation 
 
----
+`libBLS` provides a validation step after each main step in the TE flow.  
+Below we describe the encryption-time validation in detail.
+
+## 3.1 Validate Encryption
+
+**Goal.** Prove that the ciphertext `{U, V, W}` was built consistently with a single randomness `r`, i.e., that the same `r` links `U` and `W`, and that `W` binds to `(U, V)`.
+
+**Setup.**  
+- Groups: `G1`, `G2` with a bilinear pairing `e : G1 × G2 → GT`.  
+- Generators: `P ∈ G2`.  
+- Types: `U ∈ G2`, `W ∈ G1`, `H(U,V) ∈ G1`.  
+- Construction: `U = r ⋅ P`, `W = r ⋅ H(U,V)`.
+
+**Verifier computation.**
+1. Recompute the hash-to-curve point:  
+   `H' = H(U, V) ∈ G1`.
+2. Check the pairing equation:
+$$
+e(W, P) \stackrel{?}{=} e(H', U)
+$$
+
+**Why it works (bilinear proof).**  
+Assuming honest formation with the *same* scalar `r`:
+- Left side: $e(W, P) = e(r ⋅ H, P) = e(H, P)^r$.
+- Right side: $e(H', U) = e(H, r ⋅ P) = e(H, P)^r$ (since $H' = H$).
+
+Thus both sides are equal **iff**:
+- `W` was formed as `r ⋅ H(U,V)` for the same `U`, and
+- `U` encodes the *same* scalar `r` as used in `W`.
+
+**What it guarantees.**
+- **Consistency of randomness:** `U` and `W` use the same `r`.  
+- **Binding to ciphertext:** Because `H` hashes `(U,V)`, any change to `U` or `V` alters `H` and breaks the check.  
+- **Public verifiability:** Anyone can verify without knowing `r` or the plaintext `m`.  
+- **No leakage:** The check reveals nothing about `r`, `s`, or `m`.
+
+**Failure modes caught.**
+- If an adversary swaps `U` or `V`, the recomputed `H'` changes and the equation fails.  
+- If `U` and `W` are created with different scalars, bilinearity no longer aligns and the equation fails.  
+- If `W` is random/forged, it will not satisfy the equality with overwhelming probability.
+
+ 
+
+## 3.2 Validate Each Decryption Share
+
+**Goal.** 
+
+Given a ciphertext `{U, V, W}` and a purported decryption share $D_i$ from node $i$, verify that $D_i$ was computed correctly from the node’s secret share $s_i$ and that it matches the same encryption randomness $r$ that binds `{U,V,W}`.
+
+
+**Setup.** 
+
+During encryption:
+$$
+U = rP \in G_2,\qquad
+W = r\,H(U,V) \in G_1,
+$$
+where $H(U,V)\in G_1$ is a hash-to-curve of `(U,V)`.  
+For node $i$:
+$$
+Y_i = s_i P \in G_2,\qquad
+D_i = s_i U = s_i (rP) = (r s_i) P \in G_2.
+$$
+Let $e: G_1 \times G_2 \to G_T$ be a bilinear pairing.
+
+
+**Validation equations.**
+
+1) **Ciphertext integrity (same $r$ across `U` and `W`).**
+   $$
+   e(W, P)\;\stackrel{?}{=}\;e(H(U,V), U).
+   $$
+   If true, then $W = r H(U,V)$ and $U = rP$ share the same randomness $r$. (Smae as we did in 3.1)
+
+2) **Per-share correctness (same $s_i$, same $r$).**
+   $$
+   e(W, Y_i)\;\stackrel{?}{=}\;e(H(U,V), D_i).
+   $$
+
+**Why it works.**
+
+- For 1), we have already seen why it works from 3.1.
+
+- For 2), for a valid share with $Y_i=s_iP$ and $D_i=s_iU=s_i(rP)$:
+  $$
+  e(W,Y_i)=e(rH, s_iP)=e(H,P)^{r s_i},\qquad
+  e(H,D_i)=e(H, s_i r P)=e(H,P)^{r s_i},
+  $$
+  so the second equality holds **iff** $D_i$ was computed from the *same* $r$ (via $U$) and the *correct* secret share $s_i$ (via $Y_i$).
+
+
+
+## 3.3 Validate Combined Decryption Shares
+
+**Goal.** 
+
+Verify that the decrypted message is mathematically consistent with the ciphertext `{U, V, W}` and the public key $Y$, ensuring that the random scalar $r'$ recovered from the decrypted data corresponds to the same randomness $r$ used during encryption.
+
+
+**Setup.** 
+
+During encryption:
+
+$$
+U = rP, \quad V = G(rY) \oplus m
+$$
+
+where  
+- $r \in \mathbb{F}_r$ is a random scalar,  
+- $Y = sP$ is the public key,  
+- $G: G_2 \rightarrow \{0,1\}^{32}$ is a key-derivation hash,  
+- $m$ is the AES-256 key (plaintext).
+
+After decryption, the payload reveals a candidate scalar $r'$, which should equal $r$ if the decryption shares were correctly combined.
+
+**Validation Equation.** 
+
+Compute:
+
+$$
+Y' = r'Y
+$$
+
+Derive:
+
+$$
+m' = V \oplus G(Y')
+$$
+
+and verify:
+
+$$
+m' = m
+$$
+
+**Why it works.** 
+
+If the combined decryption shares are correct, then $r' = r$.  
+Hence:
+
+$$
+Y' = r'Y = rY
+$$
+
+and
+
+$$
+G(Y') = G(rY)
+$$
+
+Substituting into the expression for $m'$ gives:
+
+$$
+m' = V \oplus G(rY) = (G(rY) \oplus m) \oplus G(rY) = m
+$$
+
+The equality holds **if and only if** $r'$ matches the original randomness $r$ and the ciphertext `{U, V}` was not tampered with. Any alteration in $r'$, $V$, or $Y$ breaks the equality, making the decryption invalid.
+
+## 3.4 Validate Deciphered Message
+
+**Goal.** 
+
+Verify that the AES key recovered from the decrypted payload is consistent with the ciphertext `{U, V, W}` and the public key $Y$, by confirming that the random scalar $r'$ extracted from the plaintext explains $V$.
+
+**Setup.** 
+
+During encryption:
+$$
+U = rP,\qquad V = G(rY)\oplus m,
+$$
+where $r\in\mathbb{F}_r$ is random, $Y=sP$ is the public key, $G: G_2\to\{0,1\}^{32}$ is a KDF/hash-to-key, and $m$ is the AES-256 key.
+
+After decryption of the outer AES-GCM payload, we obtain a candidate scalar $r'$ (encoded in the plaintext). The ciphertext component $V$ is available from `{U,V,W}`.
+
+
+**Validation Equation.** 
+
+Compute:
+$$
+Y' = r'Y,\qquad K' = G(Y'),\qquad m' = V \oplus K'.
+$$
+Accept iff:
+$$
+m' = m.
+$$
+
+
+**Why it works.** 
+
+If the decrypted payload is correct and the combine of shares was honest, then $r'=r$. Hence:
+$$
+Y' = r'Y = rY,\qquad K' = G(Y') = G(rY).
+$$
+Substitute into $m'$:
+$$
+m' = V \oplus G(rY) = (G(rY)\oplus m)\oplus G(rY) = m.
+$$
+Therefore the equality holds **iff** $r'$ matches the original randomness and $V$ was not altered.
+
 
 ## Next Steps
 

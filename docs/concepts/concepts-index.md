@@ -16,7 +16,7 @@ The reader is expected to have basic familiarity with the following concepts:
 ## Threshold Encryption
 
 - [High Level Client Integration Flow](./threshold-encryption/3-full-client-flow.md)  
-  Explains the client role in th full process. Includes detailed data structured used, but provides very little detail on the processes. Good if you just need to know the basics.
+  Explains the client role in the full process. Includes detailes about data structures used, but provides little detail on the underlying processes. Good if you just need to know the basics.
 
 - [Threshold Encryption: Full Flow](./threshold-encryption/2-te-full-flow.md)  
   End-to-end description of the API-exposed threshold encryption process involving key generation, encryption, and decryption. Includes all process details of all stages. Does not include details on the underlying mathematics. Good if you need to know how the entire process works, and how threshold encryption is used.

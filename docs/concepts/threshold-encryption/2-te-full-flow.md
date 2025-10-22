@@ -130,7 +130,7 @@ Next we explain the decryption process without delving into math details. If you
 In the threshold decryption process, each node uses its private key share to compute a **partial decryption** of the ciphertext and broadcasts this decryption share to the network. Once a supermajority (i.e., at least the threshold number of valid shares) is received, any node can combine these shares to reconstruct the original plaintext, without needing the full private key.
 
 Since only the `CipheredKey` structure was ciphered using threshold encryption, only this needs to be merged using threshold encryption semantics.
-The **result of such merging will not be the original ciphertext, but the deciphered `AESKey`**
+The **result of such merging will not be the original plaintext, but the deciphered `AESKey`**
 
 The process is shown below:
 
@@ -143,7 +143,7 @@ The process is shown below:
 
 The **merge** process itself is detailed [here](./1-threshold-encryption.md).
 
-Having seen the threshold encryption decryption process to get the `AESKey`, we see next how we can use this to get the original plaintext `T` from the `Ciphertext` struct:
+Having seen the threshold encryption-decryption process to get the `AESKey`, we see next how we can use this to get the original plaintext `T` from the `Ciphertext` struct:
 
 
 <br>
@@ -161,6 +161,7 @@ Although the `r` field is not used during decryption, it is essential for valida
 
 # 3. Validation
 
+This section explains the validation checkpoints exposed by libBLS at a high level. Mathematical details are explain [here](./1-threshold-encryption.md)
 
 ## Overview
 
@@ -175,10 +176,10 @@ The validation stages are positioned at critical transition points - usually aft
 
 - **After Encryption**: Validates that the received ciphertext was properly formed before starting the decryption process.
 - **After Share Generation**: Ensures each decryption share is authentic upon receival, thus, before merging.
-- **After Share Combination**: Verifies the merged result before final decryption.
+- **After Share Merging**: Verifies the merged result before final decryption.
 - **After Final Decryption**: Confirms end-to-end integrity of the entire process.
 
-This creates a defense-in-depth strategy where each validation stage guards against different types of failures or attacks. By validating at these specific points, we prevent corrupted or malicious data from advancing to subsequent stages where it could cause otherwise have delayed the system into detecting the corrupted data only at the final stage.
+This creates a defense-in-depth strategy where each validation stage guards against different types of failures or attacks. By validating at these specific points, we prevent corrupted or malicious data from advancing to subsequent stages where it could otherwise have delayed the system into detecting the corrupted data only at the final stage.
 
 ## Validation Stages
 
@@ -229,3 +230,4 @@ The layered validation approach provides several key security benefits:
 **System Reliability**: The validations catch not just malicious behavior but also honest errors, hardware failures, and software bugs, making the entire system more robust and reliable.
 
 **Auditability**: Each validation stage provides a clear checkpoint where system integrity can be verified, making it easier to audit the system's behavior and troubleshoot any issues that arise.
+

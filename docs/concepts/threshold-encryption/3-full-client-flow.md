@@ -6,6 +6,8 @@ This document does not cover the details of encryption / decryption. These can b
 
 ---
 
+The following diagram shows the flow process, as well as some details on the ciphertext structure. The steps are all explained below the diagram.
+
 <img src="../../diagrams/threshold-encryption/full-client-flow.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
 
 <br>
@@ -25,7 +27,11 @@ The client begins by querying the network to obtain the current threshold encryp
 
 This dual-key mechanism allows the client to encrypt data such that it is decryptable by either the current or the upcoming committee. This is essential during periods when both committees must temporarily coexist.
 
+Note that this method is not provided by libBLS. It should be implemented by the application using libBLS. libBLS only deals with the two keys sent to the library. 
+
 ### 1.2. Encrypt Data
+
+From this step on, eveything is implemented by libBLS.
 
 The client generates:
 - A **symmetric key** `m` (AES key).
@@ -93,7 +99,7 @@ At this stage, the decryption is started. Each node first computes one decryptio
 
 <img src="../../diagrams/threshold-encryption/simplified-process-overview.svg" alt="Diagram" style="width: 100%; max-width: 1200px;" />
 
-At this stage, we have already gone through the `Ciphering` part on the left of the diagram, and we are exactly at the middle.
+At this stage, we have already gone through the `Ciphering` part ( **m** being the message, and $Y_1$ being the group's public key) on the left of the diagram, and we are exactly at the middle.
 
 
 ### 3.1. Compute Decryption Shares
