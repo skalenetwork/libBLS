@@ -1,0 +1,259 @@
+#ifdef LIBFF
+
+#include "backends/interface/group/G2Point.hpp"
+#include "../utils.hpp"
+#include "backends/algebra_types.hpp"
+#include "backends/interface/field/Fq2Element.hpp"
+#include "backends/interface/field/FqElement.hpp"
+#include "backends/interface/field/FrScalar.hpp"
+#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
+
+namespace libBLS {
+namespace algebra {
+
+template <>
+const G2BackendType& Group< G2BackendType, G2Point, Fq2RefWrapper >::identityBackend() {
+    static const G2BackendType identity = [] { return G2BackendType::zero(); }();
+    return identity;
+}
+
+template <>
+const G2BackendType& Group< G2BackendType, G2Point, Fq2RefWrapper >::generatorBackend() {
+    static const G2BackendType generator = [] { return G2BackendType::one(); }();
+    return generator;
+}
+
+template <>
+bool Group< G2BackendType, G2Point, Fq2RefWrapper >::isIdentity() const {
+    return value.is_zero();
+}
+
+template <>
+bool Group< G2BackendType, G2Point, Fq2RefWrapper >::isGenerator() const {
+    return value == libff::alt_bn128_G2::one();
+}
+
+
+G2Point::G2Point() {
+    value = libff::alt_bn128_G2::zero();
+}
+
+G2Point::G2Point( const Fq2Element& x, const Fq2Element& y, const Fq2Element& z ) {
+    value.X.c0 = x.asBackendType().c0;
+    value.X.c1 = x.asBackendType().c1;
+    value.Y.c0 = y.asBackendType().c0;
+    value.Y.c1 = y.asBackendType().c1;
+    value.Z.c0 = z.asBackendType().c0;
+    value.Z.c1 = z.asBackendType().c1;
+}
+
+template <>
+void Group< G2BackendType, G2Point, Fq2RefWrapper >::toAffineCoordinates() {
+    value.to_affine_coordinates();
+}
+
+template <>
+Fq2RefWrapper Group< G2BackendType, G2Point, Fq2RefWrapper >::getXRef() {
+    return Fq2RefWrapper( value.X );
+}
+
+template <>
+Fq2RefWrapper Group< G2BackendType, G2Point, Fq2RefWrapper >::getYRef() {
+    return Fq2RefWrapper( value.Y );
+}
+
+template <>
+Fq2RefWrapper Group< G2BackendType, G2Point, Fq2RefWrapper >::getZRef() {
+    return Fq2RefWrapper( value.Z );
+}
+
+// -------------------- Validation Methods -------------------- //
+
+template <>
+bool Group< G2BackendType, G2Point, Fq2RefWrapper >::isWellFormed() const {
+    return value.is_well_formed();
+}
+
+template <>
+bool Group< G2BackendType, G2Point, Fq2RefWrapper >::isInGroup() const {
+    return libff::alt_bn128_G2::order() * value == libff::alt_bn128_G2::zero();
+}
+
+
+// -------------------- Static Methods -------------------- //
+
+template <>
+G2Point Group< G2BackendType, G2Point, Fq2RefWrapper >::random() {
+    return G2Point( libff::alt_bn128_G2::random_element() );
+}
+
+G2Point G2Point::fromBytes( const std::array< uint8_t, G2Point::SIZE_BYTES >& bytes ) {
+    const size_t FQ_SIZE_BYTES = FqElement::SIZE_BYTES;
+    std::array< uint8_t, FQ_SIZE_BYTES > currentField;
+
+    algebra::G2Point ret;
+    ret.asBackendType().Z = libff::alt_bn128_Fq2::one();
+
+    const uint8_t* source = bytes.data();
+
+    // Get x.c0
+    std::memcpy( currentField.data(), source, FQ_SIZE_BYTES );
+    ret.asBackendType().X.c0 = FqElement::fromBytes( currentField ).asBackendType();
+    source += FQ_SIZE_BYTES;
+
+    // Get x.c1
+    std::memcpy( currentField.data(), source, FQ_SIZE_BYTES );
+    ret.asBackendType().X.c1 = FqElement::fromBytes( currentField ).asBackendType();
+    source += FQ_SIZE_BYTES;
+
+    // Get y.c0
+    std::memcpy( currentField.data(), source, FQ_SIZE_BYTES );
+    ret.asBackendType().Y.c0 = FqElement::fromBytes( currentField ).asBackendType();
+    source += FQ_SIZE_BYTES;
+
+    // Get y.c1
+    std::memcpy( currentField.data(), source, FQ_SIZE_BYTES );
+    ret.asBackendType().Y.c1 = FqElement::fromBytes( currentField ).asBackendType();
+
+    return ret;
+}
+
+G2Point G2Point::fromBytes( const std::vector< uint8_t >& bytes ) {
+    if ( bytes.size() != SIZE_BYTES ) {
+        throw ThresholdUtils::IncorrectInput( "Incorrect number of bytes" );
+    }
+
+    std::array< uint8_t, SIZE_BYTES > G2Bytes;
+    std::copy( bytes.begin(), bytes.end(), G2Bytes.begin() );
+
+    return fromBytes( G2Bytes );
+}
+
+G2Point G2Point::fromString( const std::string& str, Base base ) {
+    if ( base != libBLS::Base::HEXA ) {
+        throw ThresholdUtils::IncorrectInput(
+            "G2Point is currently only supported to be built from hexadecimal base string" );
+    }
+
+    const size_t stringSize = 256;
+    const size_t elementStringSize = 64;
+
+    if ( str.size() != stringSize ) {
+        throw ThresholdUtils::IncorrectInput( "Wrong string size to convert to G2" );
+    }
+
+    algebra::G2Point ret;
+
+    ret.asBackendType().Z = libff::alt_bn128_Fq2::one();
+
+    ret.asBackendType().X.c0 = libff::alt_bn128_Fq(
+        convertHexToDec( str.substr( 0 * elementStringSize, elementStringSize ) ).c_str() );
+    ret.asBackendType().X.c1 = libff::alt_bn128_Fq(
+        convertHexToDec( str.substr( 1 * elementStringSize, elementStringSize ) ).c_str() );
+    ret.asBackendType().Y.c0 = libff::alt_bn128_Fq(
+        convertHexToDec( str.substr( 2 * elementStringSize, elementStringSize ) ).c_str() );
+    ret.asBackendType().Y.c1 = libff::alt_bn128_Fq(
+        convertHexToDec( str.substr( 3 * elementStringSize, std::string::npos ) ).c_str() );
+
+    return ret;
+}
+
+G2Point G2Point::fromString(
+    const std::array< std::string, G2_NUM_COMPONENTS_AFFINE >& arr, Base base ) {
+    algebra::G2Point ret;
+    ret.asBackendType().Z = libff::alt_bn128_Fq2::one();
+
+    switch ( base ) {
+    case Base::HEXA:
+
+        std::array< std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >, 4 > components;
+        // convert from hexa to bytes
+        for ( size_t i = 0; i < arr.size(); ++i ) {
+            if ( arr.at( i ).length() != MAX_FIELD_ELEMENT_SIZE_BYTES * 2 ) {
+                throw ThresholdUtils::IncorrectInput( "wrong string length in public key share" );
+            }
+            // throws if cannot hexa is not valid
+            components.at( i ) =
+                ThresholdUtils::hexCStringToBytesArray< MAX_FIELD_ELEMENT_SIZE_BYTES >(
+                    arr.at( i ).c_str() );
+        }
+
+        ret.asBackendType().X.c0 = FqElement::fromBytes( components.at( 0 ) ).asBackendType();
+        ret.asBackendType().X.c1 = FqElement::fromBytes( components.at( 1 ) ).asBackendType();
+        ret.asBackendType().Y.c0 = FqElement::fromBytes( components.at( 2 ) ).asBackendType();
+        ret.asBackendType().Y.c1 = FqElement::fromBytes( components.at( 3 ) ).asBackendType();
+        break;
+    case Base::DEC:
+        ret.asBackendType().X.c0 = libff::alt_bn128_Fq( arr.at( 0 ).c_str() );
+        ret.asBackendType().X.c1 = libff::alt_bn128_Fq( arr.at( 1 ).c_str() );
+        ret.asBackendType().Y.c0 = libff::alt_bn128_Fq( arr.at( 2 ).c_str() );
+        ret.asBackendType().Y.c1 = libff::alt_bn128_Fq( arr.at( 3 ).c_str() );
+        break;
+    default:
+        throw ThresholdUtils::IncorrectInput( "Unsupported base" );
+    }
+    return ret;
+}
+
+G2Point G2Point::fromString( const std::vector< std::string >& arr, Base base ) {
+    if ( arr.size() != G2_NUM_COMPONENTS_AFFINE ) {
+        throw ThresholdUtils::IncorrectInput( "Wrong number of components in G2Point" );
+    }
+    std::array< std::string, G2_NUM_COMPONENTS_AFFINE > arrCopy;
+    std::copy( arr.begin(), arr.end(), arrCopy.begin() );
+    return fromString( arrCopy, base );
+}
+
+// -------------------- Operator Overloads -------------------- //
+
+G2Point G2Point::operator+( const G2Point& other ) const {
+    return G2Point( value + other.asBackendType() );
+}
+
+G2Point G2Point::operator-( const G2Point& other ) const {
+    return G2Point( value - other.asBackendType() );
+}
+
+G2Point G2Point::operator-() const {
+    return G2Point( -value );
+}
+
+bool G2Point::operator==( const G2Point& other ) const {
+    return value == other.asBackendType();
+}
+
+bool G2Point::operator!=( const G2Point& other ) const {
+    return value != other.asBackendType();
+}
+
+
+G2Point operator*( const FrScalar& scalar, const G2Point& point ) {
+    return scalar.asBackendType() * point.asBackendType();
+}
+
+// -------------------- Helper methods for PointSerializer -------------------- //
+
+void G2Point::forEachAffineComponentImpl(
+    const std::function< void( const FqElement&, size_t i ) >& fn ) const {
+    auto affine = value;
+    affine.to_affine_coordinates();
+    fn( FqElement( affine.X.c0 ), 0 );
+    fn( FqElement( affine.X.c1 ), 1 );
+    fn( FqElement( affine.Y.c0 ), 2 );
+    fn( FqElement( affine.Y.c1 ), 3 );
+}
+
+void G2Point::forEachProjectiveComponentImpl(
+    const std::function< void( const FqElement&, size_t i ) >& fn ) const {
+    fn( FqElement( value.X.c0 ), 0 );
+    fn( FqElement( value.X.c1 ), 1 );
+    fn( FqElement( value.Y.c0 ), 2 );
+    fn( FqElement( value.Y.c1 ), 3 );
+    fn( FqElement( value.Z.c0 ), 4 );
+    fn( FqElement( value.Z.c1 ), 5 );
+}
+
+}  // namespace algebra
+}  // namespace libBLS
+
+#endif  // LIBFF

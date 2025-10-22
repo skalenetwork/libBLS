@@ -25,65 +25,50 @@
 #include <bls/bls.h>
 #include <tools/utils.h>
 
+namespace libBLS {
 
+// TODO - should define clearly base of the string
 BLSPrivateKey::BLSPrivateKey(
-    const std::shared_ptr< std::string >& _key, size_t _requiredSigners, size_t _totalSigners )
+    const std::string& _key, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    libBLS::ThresholdUtils::initCurve();
-
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
-    if ( _key == nullptr ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Secret key share is null" );
-    }
-    if ( _key->empty() ) {
+    if ( _key.empty() ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Secret key share is empty" );
     }
 
-    privateKey = std::make_shared< libff::alt_bn128_Fr >( _key->c_str() );
-    if ( *privateKey == libff::alt_bn128_Fr::zero() ) {
+    privateKey = algebra::FrScalar::fromString( _key, Base::DEC );
+    if ( privateKey.isZero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey(
             "Secret key share is equal to zero or corrupt" );
     }
 }
 
-BLSPrivateKey::BLSPrivateKey(
-    std::shared_ptr< std::vector< std::shared_ptr< BLSPrivateKeyShare > > > skeys,
-    std::shared_ptr< std::vector< size_t > > koefs, size_t _requiredSigners, size_t _totalSigners )
+BLSPrivateKey::BLSPrivateKey( const std::vector< BLSPrivateKeyShare >& skeys,
+    const std::vector< size_t >& koefs, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
-    if ( skeys == nullptr ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Secret keys ptr is null" );
-    }
-    if ( koefs == nullptr ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Signers indices ptr is null" );
-    }
-
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    auto lagrange_koefs = libBLS::ThresholdUtils::LagrangeCoeffs( *koefs, this->requiredSigners );
-    libff::alt_bn128_Fr privateKeyObj( libff::alt_bn128_Fr::zero() );
+    auto lagrange_koefs = algebra::lagrangeCoeffs( koefs, this->requiredSigners );
+    algebra::FrScalar privateKeyObj = algebra::FrScalar::zero();
     for ( size_t i = 0; i < requiredSigners; ++i ) {
-        libff::alt_bn128_Fr skey = *skeys->at( koefs->at( i ) - 1 )->getPrivateKey();
+        algebra::FrScalar skey = skeys.at( koefs.at( i ) - 1 ).getPrivateKey();
         privateKeyObj = privateKeyObj + lagrange_koefs.at( i ) * skey;
     }
 
-    if ( privateKeyObj == libff::alt_bn128_Fr::zero() ) {
+    if ( privateKeyObj.isZero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey(
             "Secret key share is equal to zero or corrupt" );
     }
 
-    privateKey = std::make_shared< libff::alt_bn128_Fr >( privateKeyObj );
+    privateKey = privateKeyObj;
 }
 
-std::shared_ptr< libff::alt_bn128_Fr > BLSPrivateKey::getPrivateKey() const {
+const algebra::FrScalar& BLSPrivateKey::getPrivateKey() const {
     return privateKey;
 }
 
-std::shared_ptr< std::string > BLSPrivateKey::toString() {
-    std::shared_ptr< std::string > key_str = std::make_shared< std::string >(
-        libBLS::ThresholdUtils::fieldElementToString( *privateKey ) );
-
-    if ( key_str->empty() )
-        throw libBLS::ThresholdUtils::ZeroSecretKey( "Secret key share string is empty" );
-
-    return key_str;
+std::string BLSPrivateKey::toString() {
+    return privateKey.toString( Base::DEC );
 }
+
+}  // namespace libBLS

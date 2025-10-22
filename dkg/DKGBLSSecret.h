@@ -26,19 +26,22 @@
 
 #include <bls/bls.h>
 
+namespace libBLS {
+
 class DKGBLSSecret {
 private:
     size_t requiredSigners;
     size_t totalSigners;
-    std::vector< libff::alt_bn128_Fr > poly;
+    std::vector< algebra::FrScalar > poly;
 
 public:
     DKGBLSSecret( size_t _requiredSigners, size_t _totalSigners );
-    void setPoly( std::vector< libff::alt_bn128_Fr > _poly );
-    std::vector< libff::alt_bn128_Fr > getDKGBLSSecretShares();
-    std::vector< libff::alt_bn128_G2 > getDKGBLSPublicShares();
-    libff::alt_bn128_Fr getValueAt0();
+    void setPoly( std::vector< algebra::FrScalar > _poly );
+    std::vector< algebra::FrScalar > getDKGBLSSecretShares();
+    std::vector< algebra::G2Point > getDKGBLSPublicShares();
+    algebra::FrScalar getValueAt0();
 };
 
+}  // namespace libBLS
 
 #endif  // LIBBLS_DKGBLSSECRET_H

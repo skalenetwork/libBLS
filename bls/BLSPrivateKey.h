@@ -28,26 +28,27 @@
 #include <bls/BLSPrivateKeyShare.h>
 #include <bls/bls.h>
 
+namespace libBLS {
 
 class BLSPrivateKey {
 private:
     size_t requiredSigners;
     size_t totalSigners;
 
-    std::shared_ptr< libff::alt_bn128_Fr > privateKey;
+    algebra::FrScalar privateKey;
 
 public:
-    BLSPrivateKey(
-        const std::shared_ptr< std::string >& _key, size_t _requiredSigners, size_t _totalSigners );
+    BLSPrivateKey( const std::string& _key, size_t _requiredSigners, size_t _totalSigners );
 
-    BLSPrivateKey( std::shared_ptr< std::vector< std::shared_ptr< BLSPrivateKeyShare > > >,
-        std::shared_ptr< std::vector< size_t > > koefs, size_t _requiredSigners,
-        size_t _totalSigners );
+    BLSPrivateKey( const std::vector< BLSPrivateKeyShare >&, const std::vector< size_t >& koefs,
+        size_t _requiredSigners, size_t _totalSigners );
 
-    std::shared_ptr< libff::alt_bn128_Fr > getPrivateKey() const;
+    const algebra::FrScalar& getPrivateKey() const;
 
-    std::shared_ptr< std::string > toString();
+    std::string toString();
 };
+
+}  // namespace libBLS
 
 
 #endif  // LIBBLS_BLSPRIVATEKEY_H

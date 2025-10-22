@@ -26,16 +26,18 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <fstream>
 #include <iostream>
 
+using namespace libBLS;
+
 int main() {
-    libBLS::ThresholdUtils::initCurve();
-    libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();
-    libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();
+    libBLS::init();
+    algebra::FrScalar secret_key = algebra::FrScalar::random();
+    algebra::G2Point public_key = secret_key * algebra::G2Point::generator();
 
     std::ofstream secretKeyFile;
     secretKeyFile.open( "secret_key.txt" );
-    secretKeyFile << libBLS::ThresholdUtils::fieldElementToString( secret_key );
+    secretKeyFile << secret_key.toString( libBLS::Base::DEC );
 
-    auto vector_coordinates = libBLS::ThresholdUtils::G2ToString( public_key, 16 );
+    auto vector_coordinates = public_key.toStringArray( Base::HEXA );
 
     std::string result = "";
     for ( auto& coord : vector_coordinates ) {
@@ -51,8 +53,8 @@ int main() {
 
     std::string message = "0";
     while ( message.size() % 2 != 0 ) {
-        libff::alt_bn128_Fr message_number = libff::alt_bn128_Fr::random_element();
-        message = libBLS::ThresholdUtils::fieldElementToString( message_number, 16 );
+        algebra::FrScalar message_number = algebra::FrScalar::random();
+        message = message_number.toString( Base::DEC );
     }
 
     std::ofstream messageFile;

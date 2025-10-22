@@ -56,6 +56,8 @@ int main() {
     size_t nMessagesBatch;
     size_t nBatches;
 
+    libBLS::init();
+
     if ( const char* envT = std::getenv( "t" ) ) {
         t = std::stoi( envT );
     } else {
@@ -143,8 +145,8 @@ int main() {
 
     float elapsedTime = totalTime / ( float ) 1'000'000;  // convert to seconds
     std::cout << "Total time: " << elapsedTime << " seconds" << std::endl;
-    std::cout << "Throughput / node: " << ( nMessagesBatch * nBatches * n ) / elapsedTime
-              << " seconds" << std::endl;
+    std::cout << "Throughput / node: " << ( nMessagesBatch * nBatches * n ) / elapsedTime << " TPS"
+              << std::endl;
     return 0;
 }
 
@@ -178,7 +180,7 @@ void importBLSKeys( const std::vector< libBLS::TEPrivateKeyShare >& secretKeys,
 
     for ( size_t i = 0; i < secretKeys.size(); ++i ) {
         Json::Value p;
-        p["keyShare"] = secretKeys[i].toStringHex();
+        p["keyShare"] = secretKeys[i].toString( libBLS::Base::HEXA );
         p["keyShareName"] = "BLS_KEY:SCHAIN_ID:123456789:NODE_ID:" + std::to_string( i + 1 ) +
                             ":DKG_ID:" + dkgRandId;
 

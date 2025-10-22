@@ -21,26 +21,15 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 @date 2019
 */
 
+#include "backends/algebra_types.hpp"
 #include <threshold_encryption/TEBase.h>
 #include <tools/utils.h>
-#include <libff/common/profiling.hpp>
 
 namespace libBLS {
-
-std::atomic< bool > TEBase::isLibffInitialized{ false };
-
-void TEBase::initializeIfNecessary() {
-    bool expected = false;
-    if ( isLibffInitialized.compare_exchange_strong( expected, true ) ) {
-        libff::init_alt_bn128_params();
-        libff::inhibit_profiling_info = true;
-    }
-}
 
 TEBase::TEBase( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
-    initializeIfNecessary();
 }
 
 size_t TEBase::getRequiredSigners() const {

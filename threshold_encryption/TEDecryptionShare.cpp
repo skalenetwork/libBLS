@@ -26,47 +26,39 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
-TEDecryptionShare::TEDecryptionShare( libff::alt_bn128_G2 _share, size_t _signerIndex )
+TEDecryptionShare::TEDecryptionShare( const algebra::G2Point& _share, size_t _signerIndex )
     : signerIndex( _signerIndex ), share( _share ) {
-    ThresholdUtils::validateG2( share );
+    share.validate();
 }
 
 TEDecryptionShare::TEDecryptionShare( const std::string& _hexaEncoded, size_t _signerIndex )
     : signerIndex( _signerIndex ) {
-    share = ThresholdUtils::stringToG2( _hexaEncoded );
-    ThresholdUtils::validateG2( share );
+    share = algebra::G2Point::fromString( _hexaEncoded, Base::HEXA );
+    share.validate();
 }
 
 size_t TEDecryptionShare::getSignerIndex() const {
     return signerIndex;
 }
 
-libff::alt_bn128_G2 TEDecryptionShare::getShareRaw() const {
+const algebra::G2Point& TEDecryptionShare::getShareRaw() const {
     return share;
 }
 
 void TEDecryptionShare::validate() const {
-    ThresholdUtils::validateG2( share );
+    share.validate();
 }
 
 bool TEDecryptionShare::operator==( const TEDecryptionShare& _other ) const {
     return signerIndex == _other.signerIndex;
 }
 
-TEDecryptionShare::operator std::pair< libff::alt_bn128_G2, size_t >() const {
+TEDecryptionShare::operator std::pair< algebra::G2Point, size_t >() const {
     return std::make_pair( share, signerIndex );
 }
 
 std::string TEDecryptionShare::toString() const {
-    std::vector< std::string > str = ThresholdUtils::G2ToString( share, BASE_HEXA );
-    std::ostringstream oss;
-    for ( size_t i = 0; i < str.size(); ++i ) {
-        oss << str[i];
-    }
-
-    std::string s = oss.str();
-
-    return s;
+    return share.toString( Base::HEXA );
 }
 
 }  // namespace libBLS

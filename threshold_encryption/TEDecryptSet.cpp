@@ -21,8 +21,8 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 @date 2025
 */
 
-#include <threshold_encryption/TEBase.h>
-#include <threshold_encryption/TEDecryptSet.h>
+#include "TEDecryptSet.h"
+#include "TEBase.h"
 #include <utility>
 
 #include <tools/utils.h>
@@ -72,8 +72,8 @@ TEDecryptSet::MergeStatus TEDecryptSet::getMergeStatus() const {
 }
 
 
-std::vector< std::pair< libff::alt_bn128_G2, size_t > > TEDecryptSet::getSharesRaw() const {
-    std::vector< std::pair< libff::alt_bn128_G2, size_t > > decrypted;
+std::vector< std::pair< algebra::G2Point, size_t > > TEDecryptSet::getSharesRaw() const {
+    std::vector< std::pair< algebra::G2Point, size_t > > decrypted;
     for ( auto&& share : decrypts ) {
         decrypted.push_back( share );
     }

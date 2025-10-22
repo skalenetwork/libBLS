@@ -21,16 +21,14 @@
   @date 2021
 */
 
+#include "test/utils.h"
+#include <bls/bls.h>
+#include <openssl/rand.h>
+#include <tools/utils.h>
 #include <cstdlib>
 #include <ctime>
 #include <map>
 #include <set>
-
-#include <bls/bls.h>
-
-#include <tools/utils.h>
-
-#include <openssl/rand.h>
 
 
 #define BOOST_TEST_MODULE
@@ -39,6 +37,8 @@
 #endif  // EMSCRIPTEN
 
 #include <boost/test/included/unit_test.hpp>
+
+BOOST_GLOBAL_FIXTURE( GlobalConfig );
 
 BOOST_AUTO_TEST_SUITE( TestLagrange )
 
@@ -51,26 +51,24 @@ BOOST_AUTO_TEST_CASE( RandomPolynomial ) {
 
     size_t deg = std::rand() % 30 + 1;  // a degree of polynomial should never be 0
 
-    std::vector< libff::alt_bn128_Fr > pol( deg + 1 );
-
-    libBLS::ThresholdUtils::initCurve();
+    std::vector< libBLS::algebra::FrScalar > pol( deg + 1 );
 
     // random polynomial generation
     for ( size_t i = 0; i < deg + 1; ++i ) {
-        pol[i] = libff::alt_bn128_Fr::random_element();
+        pol[i] = libBLS::algebra::FrScalar::random();
 
-        while ( i == deg && pol[i] == libff::alt_bn128_Fr::zero() ) {
-            pol[i] = libff::alt_bn128_Fr::random_element();
+        while ( i == deg && pol[i] == libBLS::algebra::FrScalar::zero() ) {
+            pol[i] = libBLS::algebra::FrScalar::random();
         }
     }
 
-    auto polynomial_value = [&pol, deg]( libff::alt_bn128_Fr point ) {
-        libff::alt_bn128_Fr value = libff::alt_bn128_Fr::zero();
+    auto polynomial_value = [&pol, deg]( libBLS::algebra::FrScalar point ) {
+        libBLS::algebra::FrScalar value = libBLS::algebra::FrScalar::zero();
 
-        libff::alt_bn128_Fr pow = libff::alt_bn128_Fr::one();
+        libBLS::algebra::FrScalar pow = libBLS::algebra::FrScalar::one();
 
         for ( size_t i = 0; i < deg + 1; ++i ) {
-            if ( i == deg && pol[i] == libff::alt_bn128_Fr::zero() ) {
+            if ( i == deg && pol[i] == libBLS::algebra::FrScalar::zero() ) {
                 throw std::runtime_error( "Error, incorrect degree of a polynomial" );
             }
             value += pol[i] * pow;
@@ -92,14 +90,15 @@ BOOST_AUTO_TEST_CASE( RandomPolynomial ) {
     }
 
     libBLS::Bls obj = libBLS::Bls( deg + 1, deg + 1 );
-    auto coeffs = libBLS::ThresholdUtils::LagrangeCoeffs( indexes, deg + 1 );
+    auto coeffs = libBLS::algebra::lagrangeCoeffs( indexes, deg + 1 );
 
-    std::vector< libff::alt_bn128_Fr > values( deg + 1 );
+    std::vector< libBLS::algebra::FrScalar > values( deg + 1 );
     for ( size_t i = 0; i < deg + 1; ++i ) {
-        values[i] = polynomial_value( libff::alt_bn128_Fr( std::to_string( indexes[i] ).c_str() ) );
+        values[i] = polynomial_value( libBLS::algebra::FrScalar::fromString(
+            std::to_string( indexes[i] ), libBLS::Base::DEC ) );
     }
 
-    libff::alt_bn128_Fr value_at_zero_point = pol[0];
+    libBLS::algebra::FrScalar value_at_zero_point = pol[0];
 
     BOOST_REQUIRE( value_at_zero_point == obj.KeysRecover( coeffs, values ).first );
 }
@@ -110,44 +109,37 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE( TestFieldConversions )
 
 BOOST_AUTO_TEST_CASE( G1ToAndFromBytes ) {
-    libBLS::ThresholdUtils::initCurve();
-
     for ( size_t i = 0; i < 10000; i++ ) {
-        libff::alt_bn128_G1 point = libff::alt_bn128_G1::random_element();
-        std::array< uint8_t, libBLS::G1_SIZE_BYTES > point_bytes =
-            libBLS::ThresholdUtils::G1ToBytes( point );
-        libff::alt_bn128_G1 restored_point = libBLS::ThresholdUtils::bytesToG1( point_bytes );
+        libBLS::algebra::G1Point point = libBLS::algebra::G1Point::random();
+        std::array< uint8_t, libBLS::G1_SIZE_BYTES > point_bytes = point.toByteArray();
+        libBLS::algebra::G1Point restored_point =
+            libBLS::algebra::G1Point::fromBytes( point_bytes );
         BOOST_REQUIRE( point == restored_point );
     }
 }
 
 BOOST_AUTO_TEST_CASE( G2ToAndFromBytes ) {
-    libBLS::ThresholdUtils::initCurve();
-
     for ( size_t i = 0; i < 10000; i++ ) {
-        libff::alt_bn128_G2 point = libff::alt_bn128_G2::random_element();
-        std::array< uint8_t, libBLS::G2_SIZE_BYTES > point_bytes =
-            libBLS::ThresholdUtils::G2ToBytesArray( point );
-        libff::alt_bn128_G2 restored_point = libBLS::ThresholdUtils::bytesToG2( point_bytes );
+        libBLS::algebra::G2Point point = libBLS::algebra::G2Point::random();
+        std::array< uint8_t, libBLS::G2_SIZE_BYTES > point_bytes = point.toByteArray();
+        libBLS::algebra::G2Point restored_point =
+            libBLS::algebra::G2Point::fromBytes( point_bytes );
         BOOST_REQUIRE( point == restored_point );
     }
 }
 
 BOOST_AUTO_TEST_CASE( FieldElementToAndFromBytes ) {
-    libBLS::ThresholdUtils::initCurve();
-
     for ( size_t i = 0; i < 10000; i++ ) {
         // Fr element
-        libff::alt_bn128_Fr element = libff::alt_bn128_Fr::random_element();
-        auto bytes = libBLS::ThresholdUtils::fieldElementToBytes( element );
-        libff::alt_bn128_Fr restored_element =
-            libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( bytes );
+        libBLS::algebra::FrScalar element = libBLS::algebra::FrScalar::random();
+        auto bytes = element.toByteArray();
+        libBLS::algebra::FrScalar restored_element = libBLS::algebra::FrScalar::fromBytes( bytes );
         BOOST_REQUIRE( element == restored_element );
         // Fq element
-        libff::alt_bn128_Fq element2 = libff::alt_bn128_Fq::random_element();
-        auto bytes2 = libBLS::ThresholdUtils::fieldElementToBytes( element2 );
-        libff::alt_bn128_Fq restored_element2 =
-            libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( bytes2 );
+        libBLS::algebra::FqElement element2 = libBLS::algebra::FqElement::random();
+        auto bytes2 = element2.toByteArray();
+        libBLS::algebra::FqElement restored_element2 =
+            libBLS::algebra::FqElement::fromBytes( bytes2 );
         BOOST_REQUIRE( element2 == restored_element2 );
     }
 }
@@ -157,8 +149,6 @@ BOOST_AUTO_TEST_SUITE_END()
 BOOST_AUTO_TEST_SUITE( TestBytesToHexString )
 
 BOOST_AUTO_TEST_CASE( BytesToAndFromHexCString ) {
-    libBLS::ThresholdUtils::initCurve();
-
     for ( size_t i = 0; i < 10000; i++ ) {
         size_t len = rand() % 1000 + libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES;
         std::vector< uint8_t > bytes( len );

@@ -44,49 +44,43 @@ void GenerateKeys( const size_t t, const size_t n, std::ostream& outfile ) {
 
     auto polynomial = dkg_instance.GeneratePolynomial();
 
-    std::vector< libff::alt_bn128_Fr > secret_keys( n );
+    std::vector< libBLS::algebra::FrScalar > secret_keys( n );
     for ( size_t i = 0; i < n; ++i ) {
         secret_keys[i] = dkg_instance.PolynomialValue( polynomial, i + 1 );
     }
 
-    std::vector< libff::alt_bn128_G2 > public_keys( n );
+    std::vector< libBLS::algebra::G2Point > public_keys( n );
     for ( size_t i = 0; i < n; ++i ) {
         public_keys[i] = dkg_instance.GetPublicKeyFromSecretKey( secret_keys[i] );
-        public_keys[i].to_affine_coordinates();
+        public_keys[i].toAffineCoordinates();
     }
 
     std::vector< size_t > idx( n );
     for ( size_t i = 0; i < n; ++i ) {
         idx[i] = i + 1;
     }
-    auto lagrange_coeffs = libBLS::ThresholdUtils::LagrangeCoeffs( idx, t );
+    auto lagrange_coeffs = libBLS::algebra::lagrangeCoeffs( idx, t );
 
     auto common_keys = bls_instance.KeysRecover( lagrange_coeffs, secret_keys );
-    common_keys.second.to_affine_coordinates();
+    common_keys.second.toAffineCoordinates();
 
     nlohmann::json outdata;
 
-    outdata["commonBLSPublicKey"]["0"] =
-        libBLS::ThresholdUtils::fieldElementToString( common_keys.second.X.c0 );
-    outdata["commonBLSPublicKey"]["1"] =
-        libBLS::ThresholdUtils::fieldElementToString( common_keys.second.X.c1 );
-    outdata["commonBLSPublicKey"]["2"] =
-        libBLS::ThresholdUtils::fieldElementToString( common_keys.second.Y.c0 );
-    outdata["commonBLSPublicKey"]["3"] =
-        libBLS::ThresholdUtils::fieldElementToString( common_keys.second.Y.c1 );
+    auto g2String = common_keys.second.toStringArray( libBLS::Base::DEC );
+
+    outdata["commonBLSPublicKey"]["0"] = g2String[0];
+    outdata["commonBLSPublicKey"]["1"] = g2String[1];
+    outdata["commonBLSPublicKey"]["2"] = g2String[2];
+    outdata["commonBLSPublicKey"]["3"] = g2String[3];
 
     for ( size_t i = 0; i < n; ++i ) {
-        outdata["privateKey"][std::to_string( i )] =
-            libBLS::ThresholdUtils::fieldElementToString( secret_keys[i] );
+        outdata["privateKey"][std::to_string( i )] = secret_keys[i].toString( libBLS::Base::DEC );
 
-        outdata["BLSPublicKey"][std::to_string( i )]["0"] =
-            libBLS::ThresholdUtils::fieldElementToString( public_keys[i].X.c0 );
-        outdata["BLSPublicKey"][std::to_string( i )]["1"] =
-            libBLS::ThresholdUtils::fieldElementToString( public_keys[i].X.c1 );
-        outdata["BLSPublicKey"][std::to_string( i )]["2"] =
-            libBLS::ThresholdUtils::fieldElementToString( public_keys[i].Y.c0 );
-        outdata["BLSPublicKey"][std::to_string( i )]["3"] =
-            libBLS::ThresholdUtils::fieldElementToString( public_keys[i].Y.c1 );
+        auto g2String = public_keys[i].toStringArray( libBLS::Base::DEC );
+        outdata["BLSPublicKey"][std::to_string( i )]["0"] = g2String[0];
+        outdata["BLSPublicKey"][std::to_string( i )]["1"] = g2String[1];
+        outdata["BLSPublicKey"][std::to_string( i )]["2"] = g2String[2];
+        outdata["BLSPublicKey"][std::to_string( i )]["3"] = g2String[3];
     }
 
     outfile << outdata.dump( 4 ) << '\n';
@@ -96,6 +90,7 @@ int main( int argc, const char* argv[] ) {
     std::ostream* p_out = &std::cout;
     int r = 1;
     try {
+        libBLS::init();
         boost::program_options::options_description desc( "Options" );
         desc.add_options()( "help", "Show this help screen" )( "version", "Show version number" )(
             "t", boost::program_options::value< size_t >(), "Threshold" )(

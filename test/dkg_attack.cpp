@@ -11,7 +11,7 @@
 
 int main() {
     // Initialize paring parameters
-    libff::alt_bn128_pp::init_public_params();
+    libBLS::init();
 
     // (num_signed, num_all)=(11,13)
     size_t num_signed = 11;
@@ -19,20 +19,20 @@ int main() {
 
     // Initialize dkgs, secret_shares, public_shares, common_public_key_point,
     // private_keys, public_keys
-    std::vector< DKGBLSWrapper > dkgs;
-    std::vector< std::vector< libff::alt_bn128_Fr > > secret_shares_all;
-    std::vector< std::vector< libff::alt_bn128_G2 > > public_shares_all;
-    libff::alt_bn128_G2 common_public_key_point;
-    std::vector< BLSPrivateKeyShare > private_keys;
-    std::vector< BLSPublicKeyShare > public_keys;
+    std::vector< libBLS::DKGBLSWrapper > dkgs;
+    std::vector< std::vector< libBLS::algebra::FrScalar > > secret_shares_all;
+    std::vector< std::vector< libBLS::algebra::G2Point > > public_shares_all;
+    libBLS::algebra::G2Point common_public_key_point;
+    std::vector< libBLS::BLSPrivateKeyShare > private_keys;
+    std::vector< libBLS::BLSPublicKeyShare > public_keys;
 
     // Create ifstream from 'parameters.json'
     std::ifstream* malicious_parameters_if =
         new std::ifstream( "parameters.json", std::ifstream::binary );
     // Initialize malicious_parameters json, malicious_polynomial, subgroupPoint
     nlohmann::json malicious_parameters;
-    std::vector< libff::alt_bn128_Fr > malicious_polynomial;
-    libff::alt_bn128_G2 subgroupPoint;
+    std::vector< libBLS::algebra::FrScalar > malicious_polynomial;
+    libBLS::algebra::G2Point subgroupPoint;
 
     // Read 'parameters.json' stream into malicious_parameters
     *malicious_parameters_if >> malicious_parameters;
@@ -42,40 +42,41 @@ int main() {
 
     // Load malicious polynomial coefficients into malicious_polynomial
     for ( size_t i = 0; i < num_signed; i++ ) {
-        malicious_polynomial.push_back( libff::alt_bn128_Fr(
-            malicious_parameters["polynomial"][i].get< std::string >().c_str() ) );
+        malicious_polynomial.push_back( libBLS::algebra::FrScalar::fromString(
+            malicious_parameters["polynomial"][i].get< std::string >(), libBLS::Base::DEC ) );
     }
 
     // Initialize subgroupPoint with coordinates
-    subgroupPoint = libff::alt_bn128_G2(
-        libff::alt_bn128_Fq2(
-            libff::alt_bn128_Fq(
-                malicious_parameters["point"]["x"][0].get< std::string >().c_str() ),
-            libff::alt_bn128_Fq(
-                malicious_parameters["point"]["x"][1].get< std::string >().c_str() ) ),
-        libff::alt_bn128_Fq2(
-            libff::alt_bn128_Fq(
-                malicious_parameters["point"]["y"][0].get< std::string >().c_str() ),
-            libff::alt_bn128_Fq(
-                malicious_parameters["point"]["y"][1].get< std::string >().c_str() ) ),
-        libff::alt_bn128_Fq2( libff::alt_bn128_Fq( 1 ), libff::alt_bn128_Fq( 0 ) ) );
+    subgroupPoint = libBLS::algebra::G2Point(
+        libBLS::algebra::Fq2Element(
+            libBLS::algebra::FqElement::fromString(
+                malicious_parameters["point"]["x"][0].get< std::string >(), libBLS::Base::DEC ),
+            libBLS::algebra::FqElement::fromString(
+                malicious_parameters["point"]["x"][1].get< std::string >(), libBLS::Base::DEC ) ),
+        libBLS::algebra::Fq2Element(
+            libBLS::algebra::FqElement::fromString(
+                malicious_parameters["point"]["y"][0].get< std::string >(), libBLS::Base::DEC ),
+            libBLS::algebra::FqElement::fromString(
+                malicious_parameters["point"]["y"][1].get< std::string >(), libBLS::Base::DEC ) ),
+        libBLS::algebra::Fq2Element(
+            libBLS::algebra::FqElement( 1 ), libBLS::algebra::FqElement( 0 ) ) );
 
     // Check that the subgroupPoint is in the correct subgroup
     // and passes the is_well_formed check
     std::cout << "\nChecking that subgroupPoint is in subgroup of order 10069: "
-              << ( libff::alt_bn128_Fr( 10069 ) * subgroupPoint ).is_zero()
+              << ( libBLS::algebra::FrScalar( 10069 ) * subgroupPoint ).isIdentity()
               << "\nChecking that the point passes `is_well_formed`: "
-              << subgroupPoint.is_well_formed() << "\n";
+              << subgroupPoint.isWellFormed() << "\n";
 
     // Create dkgs, secret shares and public shares of honest participants (num_singed - 1)
     for ( size_t i = 0; i < num_signed - 1; i++ ) {
-        DKGBLSWrapper dkg_wrap( num_signed, num_all );
+        libBLS::DKGBLSWrapper dkg_wrap( num_signed, num_all );
         dkgs.push_back( dkg_wrap );
 
-        std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr =
+        std::shared_ptr< std::vector< libBLS::algebra::FrScalar > > secret_shares_ptr =
             dkg_wrap.createDKGSecretShares();
 
-        std::shared_ptr< std::vector< libff::alt_bn128_G2 > > public_shares_ptr =
+        std::shared_ptr< std::vector< libBLS::algebra::G2Point > > public_shares_ptr =
             dkg_wrap.createDKGPublicShares();
 
         secret_shares_all.push_back( *secret_shares_ptr );
@@ -84,17 +85,17 @@ int main() {
 
     // Create dkg, secret shares and public shares of the active adversary
 
-    DKGBLSWrapper malicious_dkg_wrap( num_signed, num_all );
+    libBLS::DKGBLSWrapper malicious_dkg_wrap( num_signed, num_all );
 
     // Set active adversary's polynomial to loaded malicious polynomial
     malicious_dkg_wrap.setDKGSecret(
-        std::make_shared< std::vector< libff::alt_bn128_Fr > >( malicious_polynomial ) );
+        std::make_shared< std::vector< libBLS::algebra::FrScalar > >( malicious_polynomial ) );
 
     dkgs.push_back( malicious_dkg_wrap );
 
-    std::shared_ptr< std::vector< libff::alt_bn128_Fr > > malicious_secret_shares =
+    std::shared_ptr< std::vector< libBLS::algebra::FrScalar > > malicious_secret_shares =
         malicious_dkg_wrap.createDKGSecretShares();
-    std::shared_ptr< std::vector< libff::alt_bn128_G2 > > malicious_public_shares =
+    std::shared_ptr< std::vector< libBLS::algebra::G2Point > > malicious_public_shares =
         malicious_dkg_wrap.createDKGPublicShares();
 
     // Add subgroupPoint*k_i to the i-th public share of the active adversary
@@ -108,13 +109,13 @@ int main() {
 
     // Create dkgs, secret and public shares for passive adversaries
     for ( size_t i = num_signed; i < num_all; i++ ) {
-        DKGBLSWrapper dkg_wrap( num_signed, num_all );
+        libBLS::DKGBLSWrapper dkg_wrap( num_signed, num_all );
         dkgs.push_back( dkg_wrap );
 
-        std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr =
+        std::shared_ptr< std::vector< libBLS::algebra::FrScalar > > secret_shares_ptr =
             dkg_wrap.createDKGSecretShares();
 
-        std::shared_ptr< std::vector< libff::alt_bn128_G2 > > public_shares_ptr =
+        std::shared_ptr< std::vector< libBLS::algebra::G2Point > > public_shares_ptr =
             dkg_wrap.createDKGPublicShares();
 
         secret_shares_all.push_back( *secret_shares_ptr );
@@ -127,7 +128,7 @@ int main() {
             continue;  // Skip checking active adversary's share
         for ( size_t j = 0; j < num_all; j++ ) {
             assert( dkgs.at( i ).VerifyDKGShare( j, secret_shares_all.at( i ).at( j ),
-                std::make_shared< std::vector< libff::alt_bn128_G2 > >(
+                std::make_shared< std::vector< libBLS::algebra::G2Point > >(
                     public_shares_all.at( i ) ) ) );
         }
     }
@@ -138,7 +139,7 @@ int main() {
     for ( size_t i = 0; i < num_signed - 1; i++ ) {
         verified += dkgs.at( num_signed - 1 )
                         .VerifyDKGShare( i, secret_shares_all.at( num_signed - 1 ).at( i ),
-                            std::make_shared< std::vector< libff::alt_bn128_G2 > >(
+                            std::make_shared< std::vector< libBLS::algebra::G2Point > >(
                                 public_shares_all.at( num_signed - 1 ) ) );
 
         if ( verified == 0 ) {
@@ -154,13 +155,13 @@ int main() {
     /*
     for (size_t i=num_signed-1; i<num_all; i++) {
         assert(dkgs.at(num_signed-1).VerifyDKGShare(i,secret_shares_all.at(num_signed-1).at(i),
-            std::make_shared<std::vector<libff::alt_bn128_G2>>(public_shares_all.at(num_signed-1))));
+            std::make_shared<std::vector<libBLS::algebra::G2Point>>(public_shares_all.at(num_signed-1))));
 
     }
     */
 
     // // Compute common_public_key_point
-    // common_public_key_point = libff::alt_bn128_G2::zero();
+    // common_public_key_point = libBLS::algebra::G2Point::zero();
     // for ( size_t i = 0; i < num_all; i++ )
     //     common_public_key_point = common_public_key_point + public_shares_all.at( i ).at( 0 );
 
@@ -170,16 +171,16 @@ int main() {
 
     // // Check that the public key is corrputed (it is not in G2)
     // std::cout << "Let's check if public key is in G2: "
-    //           << ( libff::alt_bn128_G2::order() * ( *common_public_key.getPublicKey() )
+    //           << ( libBLS::algebra::G2Point::order() * ( *common_public_key.getPublicKey() )
     //           ).is_zero()
     //           << "\n";
 
     // // Initialize secret_key_shares
-    // std::vector< std::vector< libff::alt_bn128_Fr > > secret_key_shares;
+    // std::vector< std::vector< libBLS::algebra::FrScalar > > secret_key_shares;
 
     // // Construct secret_key_shares
     // for ( size_t i = 0; i < num_all; i++ ) {
-    //     std::vector< libff::alt_bn128_Fr > secret_key_contribution;
+    //     std::vector< libBLS::algebra::FrScalar > secret_key_contribution;
     //     for ( size_t j = 0; j < num_all; j++ ) {
     //         secret_key_contribution.push_back( secret_shares_all.at( j ).at( i ) );
     //     }
@@ -188,11 +189,13 @@ int main() {
 
     // // Compute public and private key shares
     // for ( size_t i = 0; i < num_all; i++ ) {
-    //     BLSPrivateKeyShare private_key_share = dkgs.at( i ).CreateBLSPrivateKeyShare(
-    //         std::make_shared< std::vector< libff::alt_bn128_Fr > >( secret_key_shares.at( i ) )
+    //     libBLS::BLSPrivateKeyShare private_key_share = dkgs.at( i
+    //     ).CreatelibBLS::BLSPrivateKeyShare(
+    //         std::make_shared< std::vector< libBLS::algebra::FrScalar > >( secret_key_shares.at( i
+    //         ) )
     //         );
-    //     BLSPublicKeyShare public_key_share =
-    //         BLSPublicKeyShare( *private_key_share.getPrivateKey(), num_signed, num_all );
+    //     libBLS::BLSPublicKeyShare public_key_share =
+    //         libBLS::BLSPublicKeyShare( *private_key_share.getPrivateKey(), num_signed, num_all );
 
     //     private_keys.push_back( private_key_share );
     //     public_keys.push_back( public_key_share );

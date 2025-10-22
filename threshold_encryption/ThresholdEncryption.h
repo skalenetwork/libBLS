@@ -27,7 +27,7 @@
 #include "TEDecryptSet.h"
 #include "TEPrivateKeyShare.h"
 #include "TEPublicKeyShare.h"
-#include <threshold_encryption/threshold_encryption.h>
+#include "threshold_encryption.h"
 #include <tools/utils.h>
 #include <cstddef>
 
@@ -72,7 +72,8 @@ public:
 
     /**
      * @brief Generates a decryption share for the given ciphered key
-     *
+     * @note Assumes ciphertext has already been validated via `validateEncryption` call, and that
+     * private key share is also valid.
      * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
      * struct
      * @param _pkeyShare The private key share
@@ -91,6 +92,25 @@ public:
      */
     static void validateDecryptionShare( const CipheredKey& _cipheredKey,
         const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey );
+
+
+    /**
+     * @brief Validates a batch of decryption shares
+     *
+     * @param _cipheredKeys Vector of encrypted AESKeys used to encrypt the message held by
+     * Ciphertext struct. Assumed to have been already validated via `validateEncryption` call.
+     * There should be only 1 `CipheredKey` per each N `TEDecryptionShare` and `TEPublicKeyShare`.
+     * Meaning, if there are 5 `CipheredKeys`, there should be 5 * N `TEDecryptionShare` and
+     * `TEPublicKeyShare` each.
+     * @param _decryptionShares Vector of decryption shares. Must be same size as _publicKeys.
+     * @param _publicKeys Vector of public keys corresponding to the decryption shares.
+     * @return Vec of bools, each idx specifying if it was successfully validated or not.
+     * Each idx corresponds to the same idx on _decryptionShares and _publicKeys.
+     */
+    static std::vector< bool > validateDecryptionSharesBatch(
+        const std::vector< std::shared_ptr< CipheredKey > >& _cipheredKeys,
+        const std::vector< std::shared_ptr< TEDecryptionShare > >& _decryptionShares,
+        const std::vector< std::shared_ptr< TEPublicKeyShare > >& _publicKeys );
 
     /**
      * @brief Combines decryption shares to reconstruct the original AES key.

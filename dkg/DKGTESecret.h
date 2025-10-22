@@ -27,18 +27,21 @@
 
 #include <threshold_encryption/threshold_encryption.h>
 
+namespace libBLS {
+
 class DKGTESecret {
 private:
     size_t requiredSigners;
     size_t totalSigners;
-    std::vector< libff::alt_bn128_Fr > poly;
+    std::vector< algebra::FrScalar > poly;
 
 public:
     DKGTESecret( size_t _requiredSigners, size_t _totalSigners );
-    void setPoly( std::vector< libff::alt_bn128_Fr >& _poly );
-    std::vector< libff::alt_bn128_Fr > getDKGTESecretShares();
-    std::vector< libff::alt_bn128_G2 > getDKGTEPublicShares();
+    void setPoly( std::vector< algebra::FrScalar >& _poly );
+    std::vector< algebra::FrScalar > getDKGTESecretShares();
+    std::vector< algebra::G2Point > getDKGTEPublicShares();
 };
 
+}  // namespace libBLS
 
 #endif  // LIBBLS_DKGTESECRET_H
