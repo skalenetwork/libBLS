@@ -24,6 +24,9 @@ The reader is expected to have basic familiarity with the following concepts:
 - [How Threshold Encryption Works](./threshold-encryption/1-threshold-encryption.md)  
   Introduction to the core principles and structure of the threshold encryption scheme. INcludes details on the underlying mathematics. Good if you need to know how it works under the hood.
 
+- [Validation Optimizations](./threshold-encryption/4-optimizations.md)  
+  Explains optimizations implemented to speedup validation steps.
+
 ## Distributed Key Generation (DKG)
 
 - [Distributed Key Generation Protocol](./distributed-key-generation/dkg.md)  
