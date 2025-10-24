@@ -32,7 +32,7 @@
 
 #include "backends/algebra.hpp"
 
-#ifndef WITH_EMSCRIPTEN
+#ifndef EMSCRIPTEN
 // error: comparison of integer expressions of different signedness: ‘const int’ and ‘const long
 // unsigned int’ [-Werror=sign-compare]
 #pragma GCC diagnostic push
@@ -46,7 +46,7 @@ namespace libBLS {
 
 size_t ThresholdUtils::numThreads = DEFAULT_NUM_THREADS;
 
-#ifndef WITH_EMSCRIPTEN
+#ifndef EMSCRIPTEN
 std::unique_ptr< folly::CPUThreadPoolExecutor > ThresholdUtils::thread_pool = nullptr;
 #endif
 
@@ -54,7 +54,7 @@ void ThresholdUtils::init() {
     initRAND();
     initCurve();
 
-#ifndef WITH_EMSCRIPTEN
+#ifndef EMSCRIPTEN
     // if numThreads was not set yet, try setting it to hardware concurrency
     if ( numThreads == 0 ) {
         numThreads = std::thread::hardware_concurrency();
@@ -86,7 +86,7 @@ void ThresholdUtils::setNumThreads( size_t _numThreads ) {
 }
 
 void ThresholdUtils::initThreadPool( size_t _numThreads ) {
-#ifndef WITH_EMSCRIPTEN
+#ifndef EMSCRIPTEN
     static std::once_flag initFlag;
     std::call_once( initFlag, [_numThreads]() {
         thread_pool = std::make_unique< folly::CPUThreadPoolExecutor >( _numThreads );
@@ -241,7 +241,7 @@ void ThresholdUtils::parallel_for_ranges_blocking( std::size_t totalSize, std::s
     if ( totalSize == 0 )
         return;
 
-#ifdef WITH_EMSCRIPTEN
+#ifdef EMSCRIPTEN
     // single task - single-threaded execution
     runTask( 0, totalSize, 0 );
 #else

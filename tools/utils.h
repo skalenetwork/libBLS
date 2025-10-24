@@ -76,7 +76,7 @@ private:
     static void initThreadPool( size_t _numThreads );
 
 public:
-#ifndef WITH_EMSCRIPTEN
+#ifndef EMSCRIPTEN
     static std::unique_ptr< folly::CPUThreadPoolExecutor > thread_pool;
 #endif
 
@@ -155,7 +155,7 @@ public:
      * @note Uses OpenSSL EVP interface for hashing
      * Reuses a thread-local EVP_MD_CTX to avoid repeated allocations
      */
-    static inline std::string sha256( std::string data ) {
+    static inline std::string sha256( const std::string& data ) {
         return cryptlite::sha256::hash_hex( data );
     }
 
@@ -219,7 +219,7 @@ std::array< uint8_t, N > ThresholdUtils::hexCStringToBytesArray( const char* hex
 template < typename T >
 std::vector< T > ThresholdUtils::executeInParallel( std::size_t totalSize,
     const std::function< std::vector< T >( std::size_t, std::size_t ) >& func ) {
-#ifdef WITH_EMSCRIPTEN
+#ifdef EMSCRIPTEN
     // single-threaded
     return func( 0, totalSize );
 #else

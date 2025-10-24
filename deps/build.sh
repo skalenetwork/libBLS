@@ -974,6 +974,7 @@ if [[ "${WITH_EMSCRIPTEN}" -eq 0 ]]; then
 	#https://github.com/gflags/gflags
 	#git@github.com:gflags/gflags.git
 	#https://github.com/gflags/gflags.git
+	# version 0.6.0
 	if [ "$WITH_GFLAGS" = "yes" ];
 	then
 		echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}libGFLAGS${COLOR_SEPARATOR} ====================================${COLOR_RESET}"

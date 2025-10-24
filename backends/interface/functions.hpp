@@ -21,7 +21,7 @@ constexpr size_t BASE_DEC = 10;
 // Holds all data needed to batch validate pairings of the form e(P1,i, Q1) == e(P2,i, Q2,i)
 // where Q1 is constant across the batch, while P1,i, P2,i and Q2,i vary.
 struct PairingEquality1CommonBaseBatch {
-    // common G1 point for the batch
+    // common G2 point for the batch
     const G2Point g2P1;
 
     std::vector< G1Point > g1P1s;

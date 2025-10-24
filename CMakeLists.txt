@@ -209,12 +209,6 @@ target_link_libraries(common_utils
     ${FOLLY_STATIC_LIBS}
 )
 
-# utils.h imports folly which uses threads. If we are building with emscripten, we need to
-# define WITH_EMSCRIPTEN to avoid including folly
-if (EMSCRIPTEN)
-	target_compile_definitions(common_utils PUBLIC WITH_EMSCRIPTEN=1)
-endif()
-
 add_subdirectory(backends)
 
 add_library(bls ${sourses_bls} ${headers_bls})

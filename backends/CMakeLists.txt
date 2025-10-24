@@ -25,7 +25,13 @@ if(USE_LIBFF)
   set(BACKEND_DEFINE LIBFF)
 elseif(USE_MCL)
   set(BACKEND_NAME mcl)
-  set(BACKEND_LIB "${DEPS_INSTALL_ROOT}/lib/lishe256.a" "${DEPS_INSTALL_ROOT}/lib/libmcl.a" )
+  # emscripten build is done through cmake - only needs libmcl
+  if (EMSCRIPTEN)
+    set(BACKEND_LIB "${DEPS_INSTALL_ROOT}/lib/libmcl.a" )
+  # non-emscripten is built through Makefile - needs lishe256 + libmcl
+  else()
+    set(BACKEND_LIB "${DEPS_INSTALL_ROOT}/lib/lishe256.a" "${DEPS_INSTALL_ROOT}/lib/libmcl.a" )
+  endif()
   set(BACKEND_DEPS "")
   set(BACKEND_COMPILE_OPTIONS 
     MCL_FP_BIT=256
