@@ -25,7 +25,7 @@ if(USE_LIBFF)
   set(BACKEND_DEFINE LIBFF)
 elseif(USE_MCL)
   set(BACKEND_NAME mcl)
-  set(BACKEND_LIB "${DEPS_INSTALL_ROOT}/lib/libmcl.a")
+  set(BACKEND_LIB "${DEPS_INSTALL_ROOT}/lib/lishe256.a" "${DEPS_INSTALL_ROOT}/lib/libmcl.a" )
   set(BACKEND_DEPS "")
   set(BACKEND_COMPILE_OPTIONS 
     MCL_FP_BIT=256

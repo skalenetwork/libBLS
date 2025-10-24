@@ -300,6 +300,8 @@ then
 	export CONF_CROSSCOMPILING_OPTS_VPX=""
 	export CONF_CROSSCOMPILING_OPTS_X264=""
 	export CONF_CROSSCOMPILING_OPTS_FFMPEG=""
+	# disable FMA, ADX, AVX512 for better compatibility
+	export CONF_CROSSCOMPILING_OPTS_MCL="-march=x86-64 -mtune=generic -mno-avx512f -mno-adx -mno-fma -DMCL_DONT_USE_XBYAK -DMCL_MSM=0 -DMCL_BINT_ASM=0"
 	if [ "$USE_LLVM" = "1" ];
 	then
 		export CC=$(which clang)
@@ -811,7 +813,6 @@ if [ "$WITH_MCL" = "yes" ]; then
 	eval git fetch
 	eval git checkout e67f9e6eab43116a14751bf7166c59d98728297a # v3.03 released in 10/08/2025
     eval mkdir -p build
-    cd build
 
     # Build flags (tune as needed)
     #  -DMCL_USE_XBYAK=ON enables JIT (fast on x86; disable if your env forbids JIT)
@@ -821,8 +822,8 @@ if [ "$WITH_MCL" = "yes" ]; then
 
     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
     if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]]; then
+	  	cd build
 		eval emcmake "$CMAKE" ${CMAKE_CROSSCOMPILING_OPTS} \
-			-DBUILD_SHARED_LIBS=OFF \
 			-DMCL_USE_XBYAK=OFF \
 			-DMCL_BINT_ASM_X64=OFF \
 			-DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" \
@@ -834,14 +835,28 @@ if [ "$WITH_MCL" = "yes" ]; then
 			${MCL_CMAKE_OPTS} ..
       	eval emmake "$MAKE" mcl ${PARALLEL_MAKE_OPTIONS}        # build only mcl
 		eval emmake "$MAKE" install                              # install
+
     else
-		eval "$CMAKE ${CMAKE_CROSSCOMPILING_OPTS} \
-			-DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" \
-			${MCL_CMAKE_OPTS} .."
-		eval "$MAKE" ${PARALLEL_MAKE_OPTIONS}
+		# disable any adx, avx512, fma opcodes
+		# allow avx2
+		CFLAGS_USER='-march=x86-64 -mtune=generic -mavx2 -mno-avx512f -mno-adx -mno-fma'
+
+		"$MAKE" \
+			ARCH=x86_64 \
+			MCL_USE_XBYAK=1 \
+			MCL_BINT_ASM=0 \
+			MCL_MSM=0 \
+			MCL_FP_BIT=256 \
+			MCL_FR_BIT=256 \
+			CFLAGS_USER="$CFLAGS_USER" \
+			${PARALLEL_MAKE_OPTIONS}
+
+		cp lib/libmcl.a "$INSTALL_ROOT/lib/"
+		cp lib/lishe256.a "$INSTALL_ROOT/lib/"
+		cp -r include/mcl "$INSTALL_ROOT/include/"
+		cp -r include/cybozu "$INSTALL_ROOT/include/"
     fi
 
-    eval "$MAKE" ${PARALLEL_MAKE_OPTIONS} install
     cd "$SOURCES_ROOT"
   else
     echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
