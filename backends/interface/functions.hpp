@@ -60,7 +60,7 @@ std::vector< bool > verifyPairingEquality1CommonBaseBatch(
 // Holds all data needed to batch validate pairings of the form e(P1, Q1,i) == e(P2, Q2
 // That is, P1 and P2 are constant across the batch, while Q1,i and Q2,i vary.
 // This struct allows 2 types of batch validation:
-// 1) A single batch - sharing the same P1 and P2 across all shares, and having N Q1_i, Q2_i 
+// 1) A single batch - sharing the same P1 and P2 across all shares, and having N Q1_i, Q2_i
 //    associated with those P1 and P2. For this case, the vectors g1P1s and g1P2s will only
 //    contain 1 element.
 // 2) Multiple batches - M batches of type 1). In this case, each batch is as described in 1)
