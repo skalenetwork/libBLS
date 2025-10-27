@@ -841,7 +841,9 @@ if [ "$WITH_MCL" = "yes" ]; then
 		# allow avx2
 		CFLAGS_USER='-march=x86-64 -mtune=generic -mavx2 -mno-avx512f -mno-adx -mno-fma'
 
+		# disable asan (auto set when using DEBUG=1)
 		"$MAKE" \
+			DEBUG=0 SANITIZE_OPT= \
 			ARCH=x86_64 \
 			MCL_USE_XBYAK=1 \
 			MCL_BINT_ASM=0 \
