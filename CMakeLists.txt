@@ -227,7 +227,6 @@ set(BLS_INCLUDE_DIRS
 )
 
 
-target_compile_options(bls PRIVATE -Wno-error=sign-compare -Wsign-compare)
 target_include_directories(bls SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(bls PUBLIC backend PRIVATE ${CRYPTOPP_LIBRARY} common_utils)
 
