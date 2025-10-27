@@ -18,6 +18,7 @@ constexpr size_t BASE_DEC = 10;
 
 // -------------------- 1 Common Base Batched Pairing -------------------- //
 
+
 // Holds all data needed to batch validate pairings of the form e(P1,i, Q1) == e(P2,i, Q2,i)
 // where Q1 is constant across the batch, while P1,i, P2,i and Q2,i vary.
 struct PairingEquality1CommonBaseBatch {
@@ -56,16 +57,32 @@ std::vector< bool > verifyPairingEquality1CommonBaseBatch(
 
 // -------------------- 2 Common Bases Batched Pairing -------------------- //
 
-// Holds all data needed to batch validate pairings of the form e(P1, Q1,i) == e(P2, Q2,i)
+// Holds all data needed to batch validate pairings of the form e(P1, Q1,i) == e(P2, Q2
 // That is, P1 and P2 are constant across the batch, while Q1,i and Q2,i vary.
+// This struct allows 2 types of batch validation:
+// 1) A single batch - sharing the same P1 and P2 across all shares, and having N Q1_i, Q2_i 
+//    associated with those P1 and P2. For this case, the vectors g1P1s and g1P2s will only
+//    contain 1 element.
+// 2) Multiple batches - M batches of type 1). In this case, each batch is as described in 1)
+//    and g1P1s and g1P2s will contain the common P1 and P2 for each batch. Then, g2P1s and g2P2s
+//    will contain all the Q1_i and Q2_i for all batches concatenated together, in the same order
+//    as the common bases in g1P1s and g1P2s. I.e, if there are M batches of N shares each,
+//    then g2P1s and g2P2s will contain M*N elements, where the first N elements correspond
+//    to the first batch with common bases g1P1s[0] and g1P2s[0], the second N elements
+//    correspond to the second batch with common bases g1P1s[1] and g1P2s[1], and so on.
+// For case 2), we assume that all batches have the same size N. Else, it will simply
+// fail validation (will assign wrong shares to the wrong common bases).
 struct PairingEquality2CommonBasesBatch {
     // store the common G1 points per batch. I.e, for each G1Point, there are N G2Points.
     // no reference wrapper - these values usually have to be computed within a limited scope.
     // thus moving ownership to this struct works best.
+    // For a single batch, these vectors will only contain 1 element each.
     std::vector< G1Point > g1P1s;
     std::vector< G1Point > g1P2s;
 
     // vectors of points to be paired with the common bases (as reference_wrappers)
+    // These vectors will contain all the Q1_i and Q2_i for all batches concatenated together,
+    // in the same order as the common bases in g1P1s and g1P2s.
     std::vector< G2Point > g2P1s;
     std::vector< G2Point > g2P2s;
 
@@ -79,8 +96,6 @@ struct PairingEquality2CommonBasesBatch {
     size_t sizeEachBatch;
     size_t sizeTotal;
 
-    // Used to construct a mega-batch of M batches of N shares, where g1P1 and g1P2
-    // are NOT constant across batches
     PairingEquality2CommonBasesBatch( const std::vector< G1Point >& p1,
         const std::vector< G1Point >& p2, const std::vector< G2Point >& v1,
         const std::vector< G2Point >& v2 )
