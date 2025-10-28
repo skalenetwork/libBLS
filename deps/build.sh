@@ -292,6 +292,21 @@ fi
 if [[ "$ARCH" = "x86_or_x64" || "$ARCH" = "wasm32-emscripten" ]];
 then
 	export CMAKE_CROSSCOMPILING_OPTS="-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+
+	# disable FMA, ADX, AVX512 for better compatibility
+	if [ -z "$ISA_CEILING" ];
+	then
+		ISA_CEILING="-march=x86-64 -mtune=generic"
+	fi
+
+	if [ -z "$ISA_NO" ];
+	then 
+		ISA_NO="-mno-avx512f -mno-adx -mno-fma"
+	fi
+
+	export CFLAGS="$CFLAGS $ISA_CEILING $ISA_NO"
+	export CXXFLAGS="$CXXFLAGS $ISA_CEILING $ISA_NO"
+
 	export CONF_CROSSCOMPILING_OPTS_GENERIC=""
 	export CONF_CROSSCOMPILING_OPTS_GMP="--host=haswell-pc-linux-gnu"
 	export CONF_CROSSCOMPILING_OPTS_VORBIS=""
@@ -300,8 +315,7 @@ then
 	export CONF_CROSSCOMPILING_OPTS_VPX=""
 	export CONF_CROSSCOMPILING_OPTS_X264=""
 	export CONF_CROSSCOMPILING_OPTS_FFMPEG=""
-	# disable FMA, ADX, AVX512 for better compatibility
-	export CONF_CROSSCOMPILING_OPTS_MCL="-march=x86-64 -mtune=generic -mno-avx512f -mno-adx -mno-fma -DMCL_DONT_USE_XBYAK -DMCL_MSM=0 -DMCL_BINT_ASM=0"
+	
 	if [ "$USE_LLVM" = "1" ];
 	then
 		export CC=$(which clang)
@@ -593,7 +607,7 @@ then
 			if [ ! -f "${BOOST_NAME}.tar.bz2" ];
 			then
 				eval echo -e "${COLOR_INFO}downloading it${COLOR_DOTS}...${COLOR_RESET}"
-				eval "$WGET" https://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/${BOOST_NAME}.tar.bz2
+				eval "$WGET" https://archives.boost.io/release/${BOOST_VERSION}/source/${BOOST_NAME}.tar.bz2
 			fi
                         echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
                         tar -xf ${BOOST_NAME}.tar.bz2
@@ -678,7 +692,7 @@ then
 						eval emconfigure ./config -fPIC -no-asm -no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT" # -no-threads
 						sed -i 's/CROSS_COMPILE=.*/CROSS_COMPILE=/' Makefile
 					else
-						env CFLAGS="-O3 -march=native -fPIC" CXXFLAGS="-O3 -march=native -fPIC" \
+						env CFLAGS="$CFLAGS -O3" CXXFLAGS="$CXXFLAGS -O3" \
 						./Configure linux-x86_64 --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
 					fi
 				fi
@@ -814,12 +828,6 @@ if [ "$WITH_MCL" = "yes" ]; then
 	eval git checkout e67f9e6eab43116a14751bf7166c59d98728297a # v3.03 released in 10/08/2025
     eval mkdir -p build
 
-    # Build flags (tune as needed)
-    #  -DMCL_USE_XBYAK=ON enables JIT (fast on x86; disable if your env forbids JIT)
-    #  -DMCL_USE_GMP=OFF uses builtin bigint (set ON if you prefer GMP and have it installed)
-    #  -DBUILD_SHARED_LIBS=OFF to get static libmcl.a
-    MCL_CMAKE_OPTS="-DMCL_FP_BIT=256 -DMCL_FR_BIT=256 -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE"
-
     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
     if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]]; then
 	  	cd build
@@ -832,25 +840,20 @@ if [ "$WITH_MCL" = "yes" ]; then
 			-DGMP_GMPXX_INCLUDE_DIR="$INSTALL_ROOT/include" \
 			-DGMP_LIBRARY="$INSTALL_ROOT/lib/libgmp.a" \
 			-DGMP_GMPXX_LIBRARY="$INSTALL_ROOT/lib/libgmpxx.a" \
-			${MCL_CMAKE_OPTS} ..
+			-DMCL_FP_BIT=256 -DMCL_FR_BIT=256 \
+			-DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE ..
       	eval emmake "$MAKE" mcl ${PARALLEL_MAKE_OPTIONS}        # build only mcl
 		eval emmake "$MAKE" install                              # install
 
     else
-		# disable any adx, avx512, fma opcodes
-		# allow avx2
-		CFLAGS_USER='-march=x86-64 -mtune=generic -mavx2 -mno-avx512f -mno-adx -mno-fma'
-
-		# disable asan (auto set when using DEBUG=1)
 		"$MAKE" \
-			DEBUG=0 SANITIZE_OPT= \
+			DEBUG=0 \
 			ARCH=x86_64 \
 			MCL_USE_XBYAK=1 \
 			MCL_BINT_ASM=0 \
 			MCL_MSM=0 \
 			MCL_FP_BIT=256 \
 			MCL_FR_BIT=256 \
-			CFLAGS_USER="$CFLAGS_USER" \
 			${PARALLEL_MAKE_OPTIONS}
 
 		cp lib/libmcl.a "$INSTALL_ROOT/lib/"
@@ -901,7 +904,6 @@ if [[ "${WITH_EMSCRIPTEN}" -eq 0 ]]; then
 				then
 					OS_SPECIFIC_LIB_EVENT_FLAGS="-DEVENT__DISABLE_SAMPLES=ON -DEVENT__DISABLE_TESTS=ON -DEVENT__DISABLE_BENCHMARK=ON -DEVENT__DISABLE_REGRESS=ON"
 				fi
-				#$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" -DARCH=$ARCH ..
 				$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" "${OS_SPECIFIC_LIB_EVENT_FLAGS}" -DBUILD_SHARED_LIBS=OFF \
 					-DEVENT__DISABLE_OPENSSL=ON \
 					-DEVENT__DISABLE_TESTS=ON \
