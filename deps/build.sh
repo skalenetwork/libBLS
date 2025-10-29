@@ -293,15 +293,18 @@ if [[ "$ARCH" = "x86_or_x64" || "$ARCH" = "wasm32-emscripten" ]];
 then
 	export CMAKE_CROSSCOMPILING_OPTS="-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
 
-	# disable FMA, ADX, AVX512 for better compatibility
-	if [ -z "$ISA_CEILING" ];
+	if [ "$ARCH" = "x86_or_x64" ];
 	then
-		ISA_CEILING="-march=x86-64 -mtune=generic"
-	fi
+		# disable FMA, ADX, AVX512 for better compatibility - only for x86_or_x64
+		if [ -z "$ISA_CEILING" ];
+		then
+			ISA_CEILING="-march=x86-64 -mtune=generic"
+		fi
 
-	if [ -z "$ISA_NO" ];
-	then 
-		ISA_NO="-mno-avx512f -mno-adx -mno-fma"
+		if [ -z "$ISA_NO" ];
+		then 
+			ISA_NO="-mno-avx512f -mno-adx -mno-fma"
+		fi
 	fi
 
 	export CFLAGS="$CFLAGS $ISA_CEILING $ISA_NO"
