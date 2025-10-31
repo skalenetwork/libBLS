@@ -21,10 +21,250 @@ inline FastRandFrScalar& fastRndFr() {
     return r;
 }
 
-bool optimisticBatchPairingValidation(
-    const PairingEqualityBatch& batch, size_t startingBatch, size_t numBatches );
-void pessimisticBatchPairingValidation(
-    const PairingEqualityBatch& batch, std::vector< bool >& isValidVec, size_t batchIdx );
+// ======================= Main Functions' Implementations ======================= //
+
+
+// -------------------- 1 Common Base Batched Pairing -------------------- //
+
+// Single common base
+bool optimisticBatchPairing1CommonBaseValidation( const PairingEquality1CommonBaseBatch& batch );
+
+
+std::vector< bool > verifyPairingEquality1CommonBaseBatch(
+    const PairingEquality1CommonBaseBatch& batch ) {
+    std::vector< bool > isValidVec( batch.sizeTotal, true );
+
+    // If optimistic validation is ON and passes -> return all true (current vector)
+    // meaning all shares from all batches are valid.
+    // Else, at least 1 share has failed
+    if ( !batch.optimisticValidation || !optimisticBatchPairing1CommonBaseValidation( batch ) ) {
+        // pessimistic validation
+        for ( size_t i = 0; i < batch.sizeTotal; ++i ) {
+            isValidVec.at( i ) = verifyPairingEq(
+                batch.g1P1s.at( i ), batch.g2P1, batch.g1P2s.at( i ), batch.g2P2s.at( i ) );
+        }
+    }
+    return isValidVec;
+}
+
+bool optimisticBatchPairing1CommonBaseValidation( const PairingEquality1CommonBaseBatch& batch ) {
+    // Holds random scalars for each thread
+    static thread_local std::vector< FrBackendType > randomScalars;
+    static thread_local std::vector< G1BackendType > g1P1s;
+    // hold tmp values for millerLoop computation
+    static thread_local std::vector< G1BackendType > x;
+    static thread_local std::vector< G2BackendType > y;
+
+    const size_t size = batch.sizeTotal;
+
+    // clear & resize
+    randomScalars.resize( size );
+    g1P1s.resize( size );
+    x.resize( size + 1 );
+    y.resize( size + 1 );
+
+    // get random scalars r_i
+    fastRndFr().nextFrVec( randomScalars, size, /*nonZero=*/true );
+
+    // convert g1P1s into G1BackendTypes
+    for ( size_t i = 0; i < size; ++i ) {
+        g1P1s[i] = batch.g1P1s[i].asBackendType();
+    }
+
+    // sum up all G1P1 = sum ( r_i * g1p1_i )
+    G1BackendType G1P1;
+    G1BackendType::mulVec( G1P1, g1P1s.data(), randomScalars.data(), ( int ) size );
+
+    // e( sum( r_i * g1P1_i) , g2P1)
+    x.at( 0 ) = G1P1;
+    y.at( 0 ) = batch.g2P1.asBackendType();
+
+    for ( size_t i = 0; i < size; ++i ) {
+        // e(-(r_i * g1P2_i), g2P2_i)
+        G1BackendType rTimesG1 = batch.g1P2s.at( i ).asBackendType() * randomScalars.at( i );
+        G1BackendType::neg( x[i + 1], rTimesG1 );
+        y[i + 1] = batch.g2P2s.at( i ).asBackendType();
+    }
+
+    mcl::bn::Fp12 f;
+    mcl::bn::millerLoopVec( f, x.data(), y.data(), x.size() );
+
+    mcl::bn::finalExp( f, f );
+    return f.isOne();
+}
+
+
+// -------------------- 2 Common Bases Batched Pairing -------------------- //
+
+bool optimisticBatchPairing2CommonBasesValidation(
+    const PairingEquality2CommonBasesBatch& batch, size_t startingBatch, size_t numBatches );
+void pessimisticBatchPairing2CommonBasesValidation( const PairingEquality2CommonBasesBatch& batch,
+    std::vector< bool >& isValidVec, size_t batchIdx );
+
+std::vector< bool > verifyPairingEquality2CommonBasesBatch(
+    const PairingEquality2CommonBasesBatch& batch ) {
+    std::vector< bool > isValidVec( batch.sizeTotal, true );
+
+    size_t startingBatch = 0;
+    size_t numBatches = batch.numBatches;
+
+    // If optimistic validation is ON and passes -> return all true (current vector)
+    // meaning all shares from all batches are valid.
+    // Else, at least 1 share has failed
+    if ( !batch.optimisticValidation ||
+         !optimisticBatchPairing2CommonBasesValidation( batch, startingBatch, numBatches ) ) {
+        // check if we are parsing batch of batches, or simple batch
+        if ( batch.isMegaBatch() ) {
+            // TODO - the process below could be optimized to do it in logN time instead of linear
+            // Identify which batches failed (do it linearly)
+            for ( size_t i = 0; i < batch.numBatches; ++i ) {
+                // if this batch has failed - run pessimistic validation for it
+                const size_t startingBatch = i;
+                const size_t numBatches = 1;
+                if ( !optimisticBatchPairing2CommonBasesValidation(
+                         batch, startingBatch, numBatches ) ) {
+                    pessimisticBatchPairing2CommonBasesValidation(
+                        batch, isValidVec, startingBatch );
+                }
+            }
+        } else {  // simple batch - batch of shares - identify which share failed
+            pessimisticBatchPairing2CommonBasesValidation( batch, isValidVec, 0 );
+        }
+    }
+    return isValidVec;
+}
+
+/**
+ * Assumes P1 and P2 in e(P1, G1) == e(P2, G2) are fixed/common for all equalities.
+ * Only does pessimistic pass over a single (inner) batch.
+ *
+ */
+void pessimisticBatchPairing2CommonBasesValidation( const PairingEquality2CommonBasesBatch& batch,
+    std::vector< bool >& isValidVec, size_t batchIdx ) {
+    if ( isValidVec.size() != batch.sizeTotal ) {
+        throw std::invalid_argument(
+            "pessimisticBatchPairing2CommonBasesValidation: isValidVec size mismatch with "
+            "batch.sizeTotal" );
+    }
+
+    // Do pessimistic approach
+    // negate g1P2 only once
+    G1BackendType g1P2Negatted = batch.g1P2s.at( batchIdx ).asBackendType();
+    G1BackendType::neg( g1P2Negatted, batch.g1P2s.at( batchIdx ).asBackendType() );  // -g1P2
+
+    size_t startingIdx = batchIdx * batch.sizeEachBatch;
+    size_t endIdx = startingIdx + batch.sizeEachBatch;
+    for ( size_t i = startingIdx; i < endIdx; ++i ) {
+        const algebra::G2Point& currentG2P1 = batch.g2P1s.at( i );
+        const algebra::G2Point& currentG2P2 = batch.g2P2s.at( i );
+
+        // compute pairing equality for each element in the vector
+        mcl::Fp12 f1, f2;
+
+        // Two Miller loops (no final exponentiation yet)
+        mcl::millerLoop( f1, batch.g1P1s.at( batchIdx ).asBackendType(),
+            currentG2P1.asBackendType() );                                 // f1 = ML(g1P1, g2P1)
+        mcl::millerLoop( f2, g1P2Negatted, currentG2P2.asBackendType() );  // f2 = ML(-g1P2, g2P2)
+
+        // Combine, then a single final exponentiation
+        f1 *= f2;                 // f1 = ML(g1P1,g2P1) * ML(-g1P2,g2P2)
+        mcl::finalExp( f1, f1 );  // f1 = FE( ... )
+
+        isValidVec.at( i ) = f1.isOne();  // product == 1 ?
+    }
+}
+
+/**
+ * Optimistically validates a batch of pairing equalities.
+ * Returns true if all are valid, and false if at least one is invalid.
+ */
+bool optimisticBatchPairing2CommonBasesValidation(
+    const PairingEquality2CommonBasesBatch& batch, size_t startingBatch, size_t numBatches ) {
+    // holds random scalars - sizeTotal (1 per share)
+    static thread_local std::vector< FrBackendType > r_backend;
+    // holds each individual share's g2P1 and g2P2 - (1 per share)
+    // starts at idx 0. i.e, if startingBatch is 2, idx 0 will contain first
+    // share of batch 2
+    static thread_local std::vector< G2BackendType > g2P1s;  // g2P1_i
+    static thread_local std::vector< G2BackendType > g2P2s;  // g2P2_i
+
+    static thread_local std::vector< G1BackendType > millerLoopG1s;
+    static thread_local std::vector< G2BackendType > millerLoopG2s;
+
+    // amount of shares expected (15 shares * 1000 txs = 15k)
+    static constexpr size_t kExpectedBatchSize = 15000;
+    const size_t millerLoopPointsCapacity = 2 * numBatches;
+
+    size_t numSharesToProcess = batch.sizeEachBatch * numBatches;
+
+    // Reserve once (upper bound you expect)
+    if ( r_backend.capacity() < kExpectedBatchSize )
+        r_backend.reserve( kExpectedBatchSize );
+    if ( g2P1s.capacity() < kExpectedBatchSize )
+        g2P1s.reserve( kExpectedBatchSize );
+    if ( g2P2s.capacity() < kExpectedBatchSize )
+        g2P2s.reserve( kExpectedBatchSize );
+    if ( millerLoopG1s.capacity() < millerLoopPointsCapacity )
+        millerLoopG1s.reserve( millerLoopPointsCapacity );
+    if ( millerLoopG2s.capacity() < millerLoopPointsCapacity )
+        millerLoopG2s.reserve( millerLoopPointsCapacity );
+
+    // clear
+    r_backend.clear();
+    r_backend.resize( numSharesToProcess );
+    g2P1s.clear();
+    g2P1s.resize( numSharesToProcess );
+    g2P2s.clear();
+    g2P2s.resize( numSharesToProcess );
+    millerLoopG1s.clear();
+    millerLoopG1s.resize( 2 * numBatches );
+    millerLoopG2s.clear();
+    millerLoopG2s.resize( 2 * numBatches );
+
+    // get random scalars r_i
+    fastRndFr().nextFrVec( r_backend, numSharesToProcess, /*nonZero=*/true );
+
+    // convert from algebra::G2Point into G2BackendType
+    const size_t startingIdx = startingBatch * batch.sizeEachBatch;
+    for ( size_t i = 0; i < numSharesToProcess; ++i ) {
+        g2P1s.at( i ) = batch.g2P1s.at( startingIdx + i ).asBackendType();  // g2P1s
+        g2P2s.at( i ) = batch.g2P2s.at( startingIdx + i ).asBackendType();  // g2P2s
+    }
+
+    // convert from algebra::G1Point into G1BackendType
+    for ( size_t i = 0; i < numBatches; ++i ) {
+        // get constant G1P1 and G1P2 for this batch
+        G1BackendType g1P1 = batch.g1P1s.at( startingBatch + i ).asBackendType();  // g1P1
+        G1BackendType g1P2 = batch.g1P2s.at( startingBatch + i ).asBackendType();  // g1P2
+
+        // sum up all G2P1 and G2P2
+        size_t offset = i * batch.sizeEachBatch;
+        G2BackendType G2P1, G2P2;
+        G2BackendType::mulVec( G2P1, g2P1s.data() + offset, r_backend.data() + offset,
+            ( int ) batch.sizeEachBatch );  // G2P1 = sum r_i * g2P1_i
+        G2BackendType::mulVec( G2P2, g2P2s.data() + offset, r_backend.data() + offset,
+            ( int ) batch.sizeEachBatch );  // G2P2 = sum r_i * g2P2_i
+
+        // negate g1P2 once
+        G1BackendType::neg( g1P2, g1P2 );  // -g1P2
+
+        // pairing 1 - e(g1P1, G2P1)
+        millerLoopG1s.at( 2 * i ) = g1P1;
+        millerLoopG2s.at( 2 * i ) = G2P1;
+        // pairing 2 - e(-g1P2, G2P2)
+        millerLoopG1s.at( 2 * i + 1 ) = g1P2;
+        millerLoopG2s.at( 2 * i + 1 ) = G2P2;
+    }
+
+    mcl::Fp12 f_batch;
+    mcl::millerLoopVec( f_batch, millerLoopG1s.data(), millerLoopG2s.data(),
+        2 * numBatches );  // f = ML(g1P1,g2P1) * ML(-g1P2,g2P2) * ...
+    mcl::finalExp( f_batch, f_batch );
+    return f_batch.isOne();
+}
+
+
+// -------------------- Other Backend Specific Implementations -------------------- //
 
 
 GTElement pairing( const G1Point& g1, const G2Point& g2 ) {
@@ -85,36 +325,6 @@ bool verifyPairingEq(
     return f.isOne();       // product == 1 ?
 }
 
-std::vector< bool > verifyPairingEqBatch( const PairingEqualityBatch& batch ) {
-    std::vector< bool > isValidVec( batch.sizeTotal, true );
-
-    size_t startingBatch = 0;
-    size_t numBatches = batch.numBatches;
-
-    // If optimistic validation is ON and passes -> return all true (current vector)
-    // meaning all shares from all batches are valid.
-    // Else, at least 1 share has failed
-    if ( !batch.optimisticValidation ||
-         !optimisticBatchPairingValidation( batch, startingBatch, numBatches ) ) {
-        // check if we are parsing batch of batches, or simple batch
-        if ( batch.isMegaBatch() ) {
-            // TODO - the process below could be optimized to do it in logN time instead of linear
-            // Identify which batches failed (do it linearly)
-            for ( size_t i = 0; i < batch.numBatches; ++i ) {
-                // if this batch has failed - run pessimistic validation for it
-                const size_t startingBatch = i;
-                const size_t numBatches = 1;
-                if ( !optimisticBatchPairingValidation( batch, startingBatch, numBatches ) ) {
-                    pessimisticBatchPairingValidation( batch, isValidVec, startingBatch );
-                }
-            }
-        } else {  // simple batch - batch of shares - identify which share failed
-            pessimisticBatchPairingValidation( batch, isValidVec, 0 );
-        }
-    }
-    return isValidVec;
-}
-
 G2Point lagrangeInterpolateAt0( const std::vector< size_t >& idx, size_t t,
     const std::vector< std::reference_wrapper< const G2Point > >& shares ) {
     std::vector< algebra::FrScalar > lagrange_coeffs = algebra::lagrangeCoeffs( idx, t );
@@ -134,134 +344,17 @@ G2Point lagrangeInterpolateAt0( const std::vector< size_t >& idx, size_t t,
     return sum;
 }
 
-// ================= Helper Functions ================= //
-
-/**
- * Assumes P1 and P2 in e(P1, G1) == e(P2, G2) are fixed/common for all equalities.
- * Only does pessimistic pass over a single (inner) batch.
- *
- */
-void pessimisticBatchPairingValidation(
-    const PairingEqualityBatch& batch, std::vector< bool >& isValidVec, size_t batchIdx ) {
-    if ( isValidVec.size() != batch.sizeTotal ) {
-        throw std::invalid_argument(
-            "pessimisticBatchPairingValidation: isValidVec size mismatch with batch.sizeTotal" );
+void toAffineVec( std::vector< G2Point >& points ) {
+    // convert to underlying backend type
+    std::vector< G2BackendType > backendPoints( points.size() );
+    for ( size_t i = 0; i < points.size(); ++i ) {
+        backendPoints[i] = points[i].asBackendType();
     }
-
-    // Do pessimistic approach
-    // negate g1P2 only once
-    G1BackendType g1P2Negatted = batch.g1P2s.at( batchIdx ).asBackendType();
-    G1BackendType::neg( g1P2Negatted, batch.g1P2s.at( batchIdx ).asBackendType() );  // -g1P2
-
-    size_t startingIdx = batchIdx * batch.sizeEachBatch;
-    size_t endIdx = startingIdx + batch.sizeEachBatch;
-    for ( size_t i = startingIdx; i < endIdx; ++i ) {
-        const algebra::G2Point& currentG2P1 = batch.g2P1s.at( i ).get();
-        const algebra::G2Point& currentG2P2 = batch.g2P2s.at( i ).get();
-
-        // compute pairing equality for each element in the vector
-        mcl::Fp12 f1, f2;
-
-        // Two Miller loops (no final exponentiation yet)
-        mcl::millerLoop( f1, batch.g1P1s.at( batchIdx ).asBackendType(),
-            currentG2P1.asBackendType() );                                 // f1 = ML(g1P1, g2P1)
-        mcl::millerLoop( f2, g1P2Negatted, currentG2P2.asBackendType() );  // f2 = ML(-g1P2, g2P2)
-
-        // Combine, then a single final exponentiation
-        f1 *= f2;                 // f1 = ML(g1P1,g2P1) * ML(-g1P2,g2P2)
-        mcl::finalExp( f1, f1 );  // f1 = FE( ... )
-
-        isValidVec.at( i ) = f1.isOne();  // product == 1 ?
+    mcl::G2::normalizeVec( backendPoints.data(), backendPoints.data(), backendPoints.size() );
+    // convert back to wrapper type in-place
+    for ( size_t i = 0; i < points.size(); ++i ) {
+        points[i] = G2Point( backendPoints[i] );
     }
-}
-
-/**
- * Optimistically validates a batch of pairing equalities.
- * Returns true if all are valid, and false if at least one is invalid.
- */
-bool optimisticBatchPairingValidation(
-    const PairingEqualityBatch& batch, size_t startingBatch, size_t numBatches ) {
-    // holds random scalars - sizeTotal (1 per share)
-    static thread_local std::vector< FrBackendType > r_backend;
-    // holds each individual share's g2P1 and g2P2 - (1 per share)
-    // starts at idx 0. i.e, if startingBatch is 2, idx 0 will contain first
-    // share of batch 2
-    static thread_local std::vector< G2BackendType > g2P1s;  // g2P1_i
-    static thread_local std::vector< G2BackendType > g2P2s;  // g2P2_i
-
-    static thread_local std::vector< G1BackendType > millerLoopG1s;
-    static thread_local std::vector< G2BackendType > millerLoopG2s;
-
-    // amount of shares expected (15 shares * 1000 txs = 15k)
-    static constexpr size_t kExpectedBatchSize = 15000;
-    const size_t millerLoopPointsCapacity = 2 * numBatches;
-
-    size_t numSharesToProcess = batch.sizeEachBatch * numBatches;
-
-    // Reserve once (upper bound you expect)
-    if ( r_backend.capacity() < kExpectedBatchSize )
-        r_backend.reserve( kExpectedBatchSize );
-    if ( g2P1s.capacity() < kExpectedBatchSize )
-        g2P1s.reserve( kExpectedBatchSize );
-    if ( g2P2s.capacity() < kExpectedBatchSize )
-        g2P2s.reserve( kExpectedBatchSize );
-    if ( millerLoopG1s.capacity() < millerLoopPointsCapacity )
-        millerLoopG1s.reserve( millerLoopPointsCapacity );
-    if ( millerLoopG2s.capacity() < millerLoopPointsCapacity )
-        millerLoopG2s.reserve( millerLoopPointsCapacity );
-
-    // clear
-    r_backend.clear();
-    r_backend.resize( numSharesToProcess );
-    g2P1s.clear();
-    g2P1s.resize( numSharesToProcess );
-    g2P2s.clear();
-    g2P2s.resize( numSharesToProcess );
-    millerLoopG1s.clear();
-    millerLoopG1s.resize( 2 * numBatches );
-    millerLoopG2s.clear();
-    millerLoopG2s.resize( 2 * numBatches );
-
-    // get random scalars r_i
-    fastRndFr().nextFrVec( r_backend, numSharesToProcess, /*nonZero=*/true );
-
-    // convert from algebra::G2Point into G2BackendType
-    const size_t startingIdx = startingBatch * batch.sizeEachBatch;
-    for ( size_t i = 0; i < numSharesToProcess; ++i ) {
-        g2P1s.at( i ) = batch.g2P1s.at( startingIdx + i ).get().asBackendType();  // g2P1s
-        g2P2s.at( i ) = batch.g2P2s.at( startingIdx + i ).get().asBackendType();  // g2P2s
-    }
-
-    // convert from algebra::G1Point into G1BackendType
-    for ( size_t i = 0; i < numBatches; ++i ) {
-        // get constant G1P1 and G1P2 for this batch
-        G1BackendType g1P1 = batch.g1P1s.at( startingBatch + i ).asBackendType();  // g1P1
-        G1BackendType g1P2 = batch.g1P2s.at( startingBatch + i ).asBackendType();  // g1P2
-
-        // sum up all G2P1 and G2P2
-        size_t offset = i * batch.sizeEachBatch;
-        G2BackendType G2P1, G2P2;
-        G2BackendType::mulVec( G2P1, g2P1s.data() + offset, r_backend.data() + offset,
-            ( int ) batch.sizeEachBatch );  // G2P1 = sum r_i * g2P1_i
-        G2BackendType::mulVec( G2P2, g2P2s.data() + offset, r_backend.data() + offset,
-            ( int ) batch.sizeEachBatch );  // G2P2 = sum r_i * g2P2_i
-
-        // negate g1P2 once
-        G1BackendType::neg( g1P2, g1P2 );  // -g1P2
-
-        // pairing 1 - e(g1P1, G2P1)
-        millerLoopG1s.at( 2 * i ) = g1P1;
-        millerLoopG2s.at( 2 * i ) = G2P1;
-        // pairing 2 - e(-g1P2, G2P2)
-        millerLoopG1s.at( 2 * i + 1 ) = g1P2;
-        millerLoopG2s.at( 2 * i + 1 ) = G2P2;
-    }
-
-    mcl::Fp12 f_batch;
-    mcl::millerLoopVec( f_batch, millerLoopG1s.data(), millerLoopG2s.data(),
-        2 * numBatches );  // f = ML(g1P1,g2P1) * ML(-g1P2,g2P2) * ...
-    mcl::finalExp( f_batch, f_batch );
-    return f_batch.isOne();
 }
 
 }  // namespace libBLS::algebra

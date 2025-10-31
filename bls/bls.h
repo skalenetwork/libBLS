@@ -90,7 +90,7 @@ private:
 }  // namespace libBLS
 
 
-#define CHECK( _EXPRESSION_ )                                                                 \
+#define BLS_CHECK( _EXPRESSION_ )                                                             \
     if ( !( _EXPRESSION_ ) ) {                                                                \
         auto __msg__ = std::string( "Check failed:" ) + #_EXPRESSION_ + "\n" + __FUNCTION__ + \
                        +" " + std::string( __FILE__ ) + ":" + std::to_string( __LINE__ );     \

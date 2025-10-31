@@ -10,6 +10,58 @@
 
 #include "threshold_encryption/ThresholdEncryption.h"
 
+BOOST_AUTO_TEST_CASE( EncryptionValidation ) {
+    auto& ts = boost::unit_test::framework::master_test_suite();
+    BenchArgs args = parse_args( ts.argc, ts.argv );
+    BOOST_REQUIRE( args.t >= 2 && args.t <= args.n );
+
+    // Success cases only
+    double pessimistic_validation_ms = 0.0;
+    double batched_validation_ms = 0.0;
+    double concurrent_validation_ms = 0.0;
+
+    libBLS::init();
+
+    // initial setup
+    size_t numAll = args.n;
+    size_t numSigned = args.t;
+    const keys keys = generateKeys( numSigned, numAll );
+
+    auto message = make_msg( args.msg_bytes );
+
+    // keep all ciphered keys stored in a vector
+    std::vector< libBLS::CipheredKey > cipheredKeys;
+
+    for ( size_t i = 0; i < args.numTxs; i++ ) {
+        // encrypt
+        libBLS::Ciphertext cypher =
+            libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
+        cipheredKeys.push_back( cypher.keys[0] );
+
+        {  // validate encryption
+            ScopedTimer timer( pessimistic_validation_ms );
+            libBLS::ThresholdEncryption::validateEncryption( cipheredKeys[i] );
+        }
+    }
+
+    {
+        ScopedTimer timer( batched_validation_ms );
+        libBLS::ThresholdEncryption::validateEncryptionBatch( cipheredKeys );
+    }
+
+    {
+        ScopedTimer timer( concurrent_validation_ms );
+        libBLS::ThresholdEncryption::validateEncryptionBatchParallel( cipheredKeys );
+    }
+
+    print_args( args );
+    std::cout << "Encryption validation (single, pessimistic) took " << pessimistic_validation_ms
+              << " ms\n";
+    std::cout << "Encryption validation (batched) took " << batched_validation_ms << " ms\n";
+    std::cout << "Encryption validation (batched, multi-threaded) took " << concurrent_validation_ms
+              << " ms\n";
+}
+
 BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
     auto& ts = boost::unit_test::framework::master_test_suite();
     BenchArgs args = parse_args( ts.argc, ts.argv );
@@ -33,26 +85,20 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
     auto message = make_msg( args.msg_bytes );
 
     // keep all ciphered keys stored in a vector
-    std::vector< std::shared_ptr< libBLS::Ciphertext > > ciphertexts;
-    std::vector< std::shared_ptr< libBLS::CipheredKey > > cipheredKeys;
+    std::vector< libBLS::Ciphertext > ciphertexts;
+    std::vector< libBLS::CipheredKey > cipheredKeys;
 
-    std::vector< std::shared_ptr< libBLS::TEDecryptionShare > > decryptionShares;
-    std::vector< std::shared_ptr< libBLS::TEPublicKeyShare > > publicKeys;
+    std::vector< libBLS::TEDecryptionShare > decryptionShares;
+    std::vector< libBLS::TEPublicKeyShare > publicKeys;
 
-    std::cout << "Encryption + validate encryption + partial decrypt: \n";
     for ( size_t i = 0; i < args.numTxs; i++ ) {
         // encrypt
         {
             ScopedTimer timer( encryption_total_ms );
             libBLS::Ciphertext cypher =
                 libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
-            ciphertexts.push_back( std::make_shared< libBLS::Ciphertext >( cypher ) );
-            cipheredKeys.push_back( std::make_shared< libBLS::CipheredKey >( cypher.keys[0] ) );
-        }
-
-        {  // validate encryption
-            ScopedTimer timer( validate_encryption_total_ms );
-            libBLS::ThresholdEncryption::validateEncryption( ciphertexts[i]->keys[0] );
+            ciphertexts.push_back( cypher );
+            cipheredKeys.push_back( cypher.keys[0] );
         }
 
         for ( size_t j = 0; j < numSigned; j++ ) {
@@ -61,34 +107,38 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
                 if ( j == 0 ) {
                     ScopedTimer timer( partial_decrypt_total_ms );
                     return libBLS::ThresholdEncryption::partialDecrypt(
-                        ciphertexts[i]->keys[0], keys.secretKeys[j] );
+                        ciphertexts[i].keys[0], keys.secretKeys[j] );
                 } else {
                     return libBLS::ThresholdEncryption::partialDecrypt(
-                        ciphertexts[i]->keys[0], keys.secretKeys[j] );
+                        ciphertexts[i].keys[0], keys.secretKeys[j] );
                 }
             }();
 
-            decryptionShares.push_back(
-                std::make_shared< libBLS::TEDecryptionShare >( decr_share ) );
-            publicKeys.push_back(
-                std::make_shared< libBLS::TEPublicKeyShare >( keys.publicKeys[j] ) );
+            decryptionShares.push_back( decr_share );
+            publicKeys.push_back( keys.publicKeys[j] );
         }
 
         print_progress( i, args.numTxs );
     }
 
-    std::cout << "ValidateDecryptionSharesBatch: \n";
+    {  // validate encryption
+        ScopedTimer timer( validate_encryption_total_ms );
+        libBLS::ThresholdEncryption::validateEncryptionBatchParallel( cipheredKeys );
+    }
+
+
     // validate entire batch of shares
     std::vector< bool > validated = [&]() {
         ScopedTimer t( validate_decryption_share_total_ms );
 
-        return libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
+        return libBLS::ThresholdEncryption::validateDecryptionSharesBatchParallel(
             cipheredKeys, decryptionShares, publicKeys );
     }();
 
-    std::cout << "merge shares + validate combined shares + decrypt: \n";
+    std::vector< libBLS::TEDecryptSet > decryptSets;
     for ( size_t i = 0; i < args.numTxs; i++ ) {
         libBLS::TEDecryptSet decrSet( numSigned, numAll );
+        decryptSets.push_back( decrSet );
 
         for ( size_t j = 0; j < numSigned; ++j ) {
             size_t idx = i * numSigned + j;
@@ -96,34 +146,43 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
                 throw libBLS::ThresholdUtils::IncorrectInput( "not validated" );
             }
 
-            decrSet.addDecryptShare( *decryptionShares[idx] );
+            decryptSets[i].addDecryptShare( decryptionShares[idx] );
         }
+        print_progress( i, args.numTxs );
+    }
 
-        // combine shares
-        libBLS::AES256Key key_deciphered = [&]() {
-            ScopedTimer timer( combine_shares_total_ms );
-            return libBLS::ThresholdEncryption::combineShares( ciphertexts[i]->keys[0], decrSet );
-        }();
+    // combine shares
+    std::vector< std::optional< libBLS::AES256Key > > keys_deciphered = [&]() {
+        ScopedTimer timer( combine_shares_total_ms );
+        return libBLS::ThresholdEncryption::combineSharesBatchParallel( cipheredKeys, decryptSets );
+    }();
 
-        {  // validate combined decryption
-            ScopedTimer timer( validate_combined_decryption_total_ms );
-            libBLS::ThresholdEncryption::validateCombinedDecryption(
-                *ciphertexts[i], key_deciphered, keys.commonPublic );
+    std::vector< libBLS::AES256Key > combinedSharesValidation;
+    for ( size_t i = 0; i < keys_deciphered.size(); i++ ) {
+        if ( !keys_deciphered[i].has_value() ) {
+            throw libBLS::ThresholdUtils::IncorrectInput( "not all sets were merged" );
         }
+        combinedSharesValidation.push_back( keys_deciphered[i].value() );
+    }
 
+    {  // validate combined decryption
+        ScopedTimer timer( validate_combined_decryption_total_ms );
+        libBLS::ThresholdEncryption::validateCombinedDecryptionBatchParallel(
+            ciphertexts, combinedSharesValidation, keys.commonPublic );
+    }
+
+    for ( size_t i = 0; i < args.numTxs; i++ ) {
         std::vector< uint8_t > decipheredMsg;
-
         {  // decrypt
             ScopedTimer timer( decrypt_total_ms );
-            decipheredMsg = libBLS::ThresholdEncryption::decrypt( *ciphertexts[i], key_deciphered );
+            decipheredMsg =
+                libBLS::ThresholdEncryption::decrypt( ciphertexts[i], combinedSharesValidation[i] );
         }
 
         // check correctness
         BOOST_REQUIRE( decipheredMsg == message );
-
-
-        print_progress( i, args.numTxs );
     }
+
 
     // print results
     print_args( args );

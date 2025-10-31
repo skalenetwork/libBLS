@@ -30,8 +30,6 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <utility>
 #include <vector>
 
-#include <third_party/cryptlite/sha256.h>
-
 #include "AesGcmCipher.h"
 #include "TEBase.h"
 #include "backends/algebra.hpp"
@@ -147,26 +145,33 @@ public:
      */
     std::string getDecryptionShareInput() {
         U.toAffineCoordinates();
-        U.validate();
-
-        auto u_splitted = U.toStringArray( Base::HEXA );
-
-        // convert to string
-        std::string public_decryption_value;
-        size_t total_size = 0;
-
-        for ( const auto& part : u_splitted ) {
-            total_size += part.size();
-        }
-
-        public_decryption_value.reserve( total_size );
-
-        for ( const auto& part : u_splitted ) {
-            public_decryption_value += part;
-        }
-
-        return public_decryption_value;
+        return U.toString( Base::HEXA );
     }
+
+    static std::vector< std::string > getDecryptionShareInputBatch(
+        const std::vector< CipheredKey >& keys ) {
+        std::vector< algebra::G2Point > U_points;
+        U_points.reserve( keys.size() );
+        for ( const auto& key : keys ) {
+            U_points.push_back( key.U );
+        }
+
+        // batch convert all to affine coordinates
+        toAffineVec( U_points );
+
+        std::vector< std::string > res;
+        res.reserve( keys.size() );
+        for ( const auto& U : U_points ) {
+            auto u_splitted = U.toString( Base::HEXA );
+            res.push_back( u_splitted );
+        }
+
+        return res;
+    }
+
+    const algebra::G2Point& getU() const { return U; }
+    const AES256Key& getV() const { return V; }
+    const algebra::G1Point& getW() const { return W; }
 };
 
 /**
@@ -411,24 +416,21 @@ public:
     static algebra::G2Point getDecryptionShare(
         const CipheredKey& ciphertext, const algebra::FrScalar& secret_key );
 
-    static algebra::G1Point HashToGroup( const algebra::G2Point& U, const std::string& V,
-        std::string ( *hash_func )( const std::string& str ) = cryptlite::sha256::hash_hex );
+    static algebra::G1Point HashToGroup( const algebra::G2Point& U, const AES256Key& V );
 
-    static std::string Hash( const algebra::G2Point& Y,
-        std::string ( *hash_func )( const std::string& str ) = cryptlite::sha256::hash_hex );
+    static std::string Hash( const algebra::G2Point& Y );
 
     static bool Verify( const CipheredKey& ciphertext, const algebra::G2Point& decryptionShare,
         const algebra::G2Point& public_key );
 
-    static std::vector< bool > VerifyBatch(
-        const std::vector< std::shared_ptr< CipheredKey > >& ciphertexts,
-        const std::vector< std::reference_wrapper< const algebra::G2Point > >& decryptionShares,
-        const std::vector< std::reference_wrapper< const algebra::G2Point > >& publicKeys );
+    static std::vector< bool > VerifyBatch( const std::vector< CipheredKey >& ciphertexts,
+        const std::vector< algebra::G2Point >& decryptionShares,
+        const std::vector< algebra::G2Point >& publicKeys );
 
     AES256Key CombineShares( const CipheredKey& ciphertext,
         const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShare );
 
-    std::vector< uint8_t > CombineSharesIntoAESKey(
+    AES256Key CombineSharesIntoAESKey(
         const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShare );
 
 private:
