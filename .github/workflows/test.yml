@@ -187,44 +187,57 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.info
-  # osx_build_and_test:
-  #   runs-on: macos-13
-  #   steps:
-  #     - name: Extract repo name
-  #       run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
-  #         '{print $2}')
-  #       shell: bash
-  #       env:
-  #         ACTIONS_ALLOW_UNSECURE_COMMANDS: true
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-  #     - name: Install packages
-  #       run: |
-  #         brew install yasm texinfo shtool libtool coreutils
-  #     - name: Build dependencies
-  #       run: |
-  #         cd deps
-  #         ./build.sh
-  #     - name: Configure all
-  #       run: |
-  #         mkdir -p build && cd build
-  #         cmake ..
-  #     - name: Build all
-  #       run: |
-  #         cd build
-  #         make -j$(sysctl -n hw.ncpu)
-  #     - name: Run tests
-  #       run: |
-  #         cp scripts/parameters.json build/
-  #         cd build
-  #         ./backends/backend_unit_test
-  #         ./bls_unit_test
-  #         ./dkg_unit_test
-  #         ./bls_test
-  #         ./threshold_encryption/te_unit_test
-  #         ./threshold_encryption/te_test
-  #         ./threshold_encryption/te_encrypt_message
-  #         ./dkg_attack
+  osx_build_and_test:
+    runs-on: macos-15-intel
+    steps:
+      - name: Extract repo name
+        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
+          '{print $2}')
+        shell: bash
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install packages
+        run: |
+          brew install yasm texinfo shtool libtool coreutils
+      - name: Install CMake 3.21.0
+        run: |
+          set -euo pipefail
+          CMAKE_VERSION=3.21.0
+          CMAKE_DIR="cmake-${CMAKE_VERSION}-macos-universal"
+          if [[ ! -d "${CMAKE_DIR}" ]]; then
+            echo "Downloading CMake ${CMAKE_VERSION}..."
+            curl -L "https://cmake.org/files/v3.21/${CMAKE_DIR}.tar.gz" -o cmake.tar.gz
+            tar -xzf cmake.tar.gz
+          fi
+          sudo ln -sf "$PWD/${CMAKE_DIR}/CMake.app/Contents/bin/"* /usr/local/bin
+          which cmake
+          cmake --version
+      - name: Build dependencies
+        run: |
+          cd deps
+          ./build.sh
+      - name: Configure all
+        run: |
+          mkdir -p build && cd build
+          cmake ..
+      - name: Build all
+        run: |
+          cd build
+          make -j$(sysctl -n hw.ncpu)
+      - name: Run tests
+        run: |
+          cp scripts/parameters.json build/
+          cd build
+          ./backends/backend_unit_test
+          ./bls_unit_test
+          ./dkg_unit_test
+          ./bls_test
+          ./threshold_encryption/te_unit_test
+          ./threshold_encryption/te_test
+          ./threshold_encryption/te_encrypt_message
+          ./dkg_attack
   linux_build_with_emscripten:
     runs-on: ubuntu-22.04
     strategy:

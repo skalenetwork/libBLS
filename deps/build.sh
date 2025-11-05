@@ -742,7 +742,7 @@ then
 			if [ ! -f ""${GMP_NAME}".tar.xz" ];
 			then
 				echo -e "${COLOR_INFO}getting it from gmp website${COLOR_DOTS}...${COLOR_RESET}"
-				eval "$WGET" https://gmplib.org/download/gmp/"${GMP_NAME}".tar.xz
+				eval "$WGET" https://mirrors.kernel.org/gnu/gmp/${GMP_NAME}.tar.xz
 			fi
 			echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
 			eval tar -xf "${GMP_NAME}".tar.xz
@@ -1137,15 +1137,15 @@ if [[ "${WITH_EMSCRIPTEN}" -eq 0 ]]; then
 				fi
 				echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
 				cd double-conversion
-				eval mkdir -p build
-				cd build
+				eval mkdir -p build2
+				cd build2
 				eval "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" ..
 				cd ..
 			else
 				cd double-conversion
 			fi
 			echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-			cd build
+			cd build2
 			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
 			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}" install
 			cd "$SOURCES_ROOT"
