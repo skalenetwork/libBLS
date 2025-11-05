@@ -24,26 +24,67 @@
 #ifndef LIBBLS_TEDECRYPTSET_H
 #define LIBBLS_TEDECRYPTSET_H
 
-#include <map>
+#include <threshold_encryption/TEBase.h>
+#include <threshold_encryption/TEDecryptionShare.h>
 #include <threshold_encryption/threshold_encryption.h>
+#include <unordered_set>
 
-class TEDecryptSet {
- private:
+namespace libBLS {
 
-    size_t requiredSigners;
-    size_t totalSigners;
+/**
+ * @brief A class to manage threshold encryption's decryption sets
+ *
+ * TEDecryptSet handles partial decryption shares from multiple signers in a threshold encryption
+ * scheme. It collects and combines these shares to reconstruct the original encrypted message.
+ *
+ *
+ * @details The class maintains a collection of partial decrypts from different participants and
+ * keeps track of merging status on this set of decryption shares.
+ */
+class TEDecryptSet : public TEBase {
+public:
+    enum class MergeStatus {
+        NOT_ENOUGH_SHARES,
+        READY_TO_MERGE,
+        ALREADY_MERGED,
+    };
 
-    bool was_merged;
+private:
+    MergeStatus mergeStatus = MergeStatus::NOT_ENOUGH_SHARES;
 
-    std::map<size_t, std::shared_ptr< encryption::element_wrapper>> decrypts;
+    std::unordered_set< TEDecryptionShare, TEDecryptionShareHash > decrypts;
 
- public:
-    TEDecryptSet(size_t _requiredSigners, size_t _totalSigners);
+public:
+    TEDecryptSet( size_t _requiredSigners, size_t _totalSigners );
 
-    void addDecrypt(size_t _signerIndex, std::shared_ptr< encryption::element_wrapper>& _el);
 
-    std::string merge(const encryption::Ciphertext& ciphertext);
+    /**
+     * @brief Adds a decryption share to the decryption set. Once enough shares are added, its
+     * `mergeStatus` is updated to `READY_TO_MERGE`, and the shares can be merged.
+     * @param _share The decryption share to be added to the set
+     * @details This function adds a single decryption share to the collection of shares
+     * that will be used in the threshold decryption process. Each share represents
+     * a partial decryption from a participant in the threshold encryption scheme.
+     * @note The share must be valid and correspond to the same ciphertext as other shares
+     * in the set
+     */
+    void addDecryptShare( const TEDecryptionShare& _share );
+
+    size_t size() const;
+
+
+    /**
+     * @return true if the set has enough shares for decryption, false otherwise
+     */
+    bool canMerge() const;
+
+    void markAsMerged();
+
+    MergeStatus getMergeStatus() const;
+
+    std::vector< std::pair< libff::alt_bn128_G2, size_t > > getSharesRaw() const;
 };
 
+}  // namespace libBLS
 
-#endif //LIBBLS_TEDECRYPTSET_H
+#endif  // LIBBLS_TEDECRYPTSET_H

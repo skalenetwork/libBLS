@@ -1,0 +1,311 @@
+---
+name: Build and test libBLS
+on:
+  push:
+    branches-ignore:
+      - develop
+      - master
+      - beta
+      - stable
+defaults:
+  run:
+    shell: bash
+jobs:
+  linux_build_and_test:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Extract repo name
+        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
+          '{print $2}')
+        shell: bash
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: update apt
+        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test; sudo apt-get update
+      - name: install packages
+        run: |
+          sudo apt-get install -y software-properties-common
+          sudo apt-get install -y gcc-11 g++-11
+      - name: Use g++-11 and gcov-11 by default
+        run: >
+          echo "Updating all needed alternatives"
+
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 11
+
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 11
+
+          sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-11 11
+
+          sudo update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-11 11
+
+          sudo update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-11 11
+
+          echo "Checking alternative for gcc"
+
+          which gcc
+
+          gcc --version
+
+          echo "Checking alternative for g++"
+
+          which g++
+
+          g++ --version
+
+          echo "Checking alternative for gcov"
+
+          which gcov
+
+          gcov --version
+
+          echo "Checking alternative for gcov-dump"
+
+          which gcov-dump
+
+          gcov-dump --version
+
+          echo "Checking alternative for gcov-tool"
+
+          which gcov-tool
+
+          gcov-tool --version
+      - name: Update apt
+        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
+      - name: Install packages
+        run: >
+          sudo apt-get update
+
+          sudo apt-get install -y gawk sed shtool \
+            libffi-dev yasm texinfo libgnutls28-dev python3 gcc-multilib git
+          sudo apt-get update -qq
+
+          sudo apt-get install -y python3-pip
+
+          pip3 install --upgrade pip
+
+          sudo python3 -m pip install --upgrade pip
+
+          sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
+
+          sudo python3 -m pip install requests[security]
+
+      - name: install cmake
+        run: |
+          wget --no-check-certificate https://cmake.org/files/v3.21/cmake-3.21.0-linux-x86_64.sh && \
+          chmod +x cmake-3.21.0-linux-x86_64.sh && \
+          ./cmake-3.21.0-linux-x86_64.sh --skip-license --include-subdir && \
+          sudo ln -sf `pwd`/cmake-3.21.0-linux-x86_64/bin/* /usr/local/bin
+
+          cmake --version
+
+      - name: Get newest lcov
+        run: >
+          echo "Removing previous lcov version..."
+
+          sudo apt-get remove lcov || true
+
+          echo "Installing newest lcov version..."
+
+          rm -rf newer_lcov || true
+
+          mkdir newer_lcov
+
+          cd newer_lcov
+
+          git clone https://github.com/linux-test-project/lcov --recursive --recurse-submodules
+
+          cd lcov
+
+          git checkout 92e2121
+
+          sudo make install
+
+          cd ..
+
+          cd ..
+
+          echo "Checking installed lcov version..."
+
+          which lcov
+
+          lcov --version
+      - name: Build dependencies
+        run: |
+          export CC=gcc-11
+          export CXX=g++-11
+          export TARGET=all
+          cd deps
+          ./build.sh
+      - name: Configure all
+        run: |
+          export CC=gcc-11
+          export CXX=g++-11
+          export TARGET=all
+          CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+          mkdir -p build && cd build
+          cmake $CMAKE_BUILD_FLAGS ..
+      - name: Build all
+        run: |
+          export CC=gcc-11
+          export CXX=g++-11
+          export TARGET=all
+          CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+          cd build
+          make -j$(nproc)
+      - name: Run sgxwallet container
+        run: |
+          export SGX_WALLET_TAG=e548b375cae741af8fd11db54d6925c27a947af9
+          ./scripts/run_sgx_simulator.sh
+          sleep 60
+      - name: Run tests
+        run: |
+          cp scripts/parameters.json build/
+          cd build
+          ./bls_unit_test
+          ./dkg_unit_test
+          ./utils_unit_test
+          ./bls_test
+          ./threshold_encryption/te_unit_test
+          ./threshold_encryption/te_test
+          ./threshold_encryption/te_encrypt_message
+          ./dkg_attack
+          ./threshold_encryption/te_sample_sgx
+      - name: Create lcov report
+        run: >
+          cd build
+
+          lcov --capture --directory . --output-file coverage.info
+
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
+
+          lcov --remove coverage.info 'deps/*' --output-file coverage.info # filter dependency files
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.info
+  osx_build_and_test:
+    runs-on: macos-13
+    steps:
+      - name: Extract repo name
+        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
+          '{print $2}')
+        shell: bash
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Install packages
+        run: |
+          brew install yasm texinfo shtool libtool coreutils
+      - name: Install CMake 3.21.0
+        run: |
+          set -euo pipefail
+          CMAKE_VERSION=3.21.0
+          CMAKE_DIR="cmake-${CMAKE_VERSION}-macos-universal"
+          if [[ ! -d "${CMAKE_DIR}" ]]; then
+            echo "Downloading CMake ${CMAKE_VERSION}..."
+            curl -L "https://cmake.org/files/v3.21/${CMAKE_DIR}.tar.gz" -o cmake.tar.gz
+            tar -xzf cmake.tar.gz
+          fi
+          sudo ln -sf "$PWD/${CMAKE_DIR}/CMake.app/Contents/bin/"* /usr/local/bin
+          which cmake
+          cmake --version
+      - name: Build dependencies
+        run: |
+          cd deps
+          ./build.sh
+      - name: Configure all
+        run: |
+          mkdir -p build && cd build
+          cmake ..
+      - name: Build all
+        run: |
+          cd build
+          make -j$(sysctl -n hw.ncpu)
+      - name: Run tests
+        run: |
+          cp scripts/parameters.json build/
+          cd build
+          ./bls_unit_test
+          ./dkg_unit_test
+          ./bls_test
+          ./threshold_encryption/te_unit_test
+          ./threshold_encryption/te_test
+          ./threshold_encryption/te_encrypt_message
+          ./dkg_attack
+  linux_build_with_emscripten:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        node-version:
+          - 18.x
+    steps:
+      - name: Extract repo name
+        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
+          '{print $2}')
+        shell: bash
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Update apt
+        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-11 g++-11 gawk sed shtool libffi-dev yasm texinfo python3 gcc-multilib
+          sudo apt-get update -qq
+          sudo apt-get install -y python3-pip
+          pip3 install --upgrade pip
+          sudo python3 -m pip install --upgrade pip
+          sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
+          sudo python3 -m pip install requests[security]
+      - name: Install NODE JS
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: install cmake
+        run: |
+          wget --no-check-certificate https://cmake.org/files/v3.21/cmake-3.21.0-linux-x86_64.sh && \
+          chmod +x cmake-3.21.0-linux-x86_64.sh && \
+          ./cmake-3.21.0-linux-x86_64.sh --skip-license --include-subdir && \
+          sudo ln -sf `pwd`/cmake-3.21.0-linux-x86_64/bin/* /usr/local/bin
+
+          cmake --version
+      - name: Build dependencies
+        run: |
+          export CC=gcc-11
+          export CXX=g++-11
+          export TARGET=all
+          cd deps
+          ./build.sh WITH_EMSCRIPTEN=1
+          cd ..
+      - name: Build all
+        run: >
+          cd deps/emsdk
+
+          ./emsdk install latest
+
+          ./emsdk activate latest
+
+          source ./emsdk_env.sh
+
+          cd ../..
+
+          mkdir -p build_em
+
+          cd build_em
+
+          export LIBRARIES_ROOT=../deps/deps_inst/x86_or_x64/lib
+
+          emcmake cmake -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a .. 
+
+          emmake make -j$(nproc)
+
+          cd ..
+      - name: Run tests
+        run: |
+          bash scripts/run_emscripten_test.sh

@@ -14,7 +14,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 @file TEPublicKey.h
 @author Sveta Rogova
@@ -22,103 +22,87 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <threshold_encryption/TEPublicKey.h>
-#include <threshold_encryption/TEDataSingleton.h>
-#include <threshold_encryption/utils.h>
+#include <tools/utils.h>
 
 #include <iostream>
 #include <utility>
 
+namespace libBLS {
 
-TEPublicKey::TEPublicKey(std::shared_ptr<std::vector<std::string>> _key_str_ptr, size_t _requiredSigners, size_t _totalSigners)
-: requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
 
-  TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
+TEPublicKey::TEPublicKey( const std::vector< std::string >& _keyStrPtr ) {
+    if ( _keyStrPtr.size() != 4 ) {
+        throw ThresholdUtils::IncorrectInput( "wrong number of components in public key share" );
+    }
 
-  if (!_key_str_ptr) {
-    throw std::runtime_error("public key is null");
-  }
+    std::array< std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >, 4 > components;
 
-  std::string key_str = "[" + _key_str_ptr->at(0) + "," + _key_str_ptr->at(1) + "]";
+    // check each component
+    for ( size_t i = 0; i < _keyStrPtr.size(); ++i ) {
+        if ( _keyStrPtr[i].length() != MAX_FIELD_ELEMENT_SIZE_BYTES * 2 ) {
+            throw ThresholdUtils::IncorrectInput( "wrong string length in public key share" );
+        }
+        // throws if cannot hexa is not valid
+        components[i] = ThresholdUtils::hexCStringToBytesArray< MAX_FIELD_ELEMENT_SIZE_BYTES >(
+            _keyStrPtr[i].c_str() );
+    }
 
-  element_t pkey;
-  element_init_G1(pkey, TEDataSingleton::getData().pairing_);
-  element_set_str(pkey, key_str.c_str(), 10);
-  PublicKey = encryption::element_wrapper(pkey);
-  element_clear(pkey);
+    publicKey.Z = libff::alt_bn128_Fq2::one();
+    publicKey.X.c0 =
+        libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[0] );
+    publicKey.X.c1 =
+        libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[1] );
+    publicKey.Y.c0 =
+        libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[2] );
+    publicKey.Y.c1 =
+        libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fq >( components[3] );
 
-  if (isG1Element0(PublicKey.el_)) {
-    throw std::runtime_error("corrupted string or zero public key");
-  }
+    ThresholdUtils::validateG2( publicKey );
 }
 
-TEPublicKey::TEPublicKey (TEPrivateKey _comon_private, size_t  _requiredSigners, size_t _totalSigners)
-: requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
+TEPublicKey::TEPublicKey( const std::string& _keyStr )
+    : TEPublicKey( ThresholdUtils::stringToG2( _keyStr ) ) {}
 
-  TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
+TEPublicKey::TEPublicKey( const TEPrivateKey& _commonPrivate ) {
+    if ( _commonPrivate.getPrivateKeyRaw().is_zero() ) {
+        throw libBLS::ThresholdUtils::ZeroSecretKey( "zero key" );
+    }
 
-  if (element_is0(_comon_private.getPrivateKey().el_)) {
-    throw std::runtime_error("zero key");
-  }
-
-  element_t pkey;
-  element_init_G1(pkey, TEDataSingleton::getData().pairing_);
-  element_mul_zn(pkey, TEDataSingleton::getData().generator_, _comon_private.getPrivateKey().el_);
-
-  PublicKey = pkey;
-  element_clear(pkey);
+    publicKey = _commonPrivate.getPrivateKeyRaw() * libff::alt_bn128_G2::one();
 }
 
-TEPublicKey:: TEPublicKey (encryption::element_wrapper _pkey, size_t  _requiredSigners, size_t _totalSigners)
-: PublicKey(_pkey), requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
-
-  TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
-
-  if (isG1Element0(_pkey.el_)) {
-    throw std::runtime_error("zero public key");
-  }
+TEPublicKey::TEPublicKey( const libff::alt_bn128_G2& _pkey ) : publicKey( _pkey ) {
+    ThresholdUtils::validateG2( publicKey );
 }
 
-encryption::Ciphertext TEPublicKey::encrypt(const std::shared_ptr<std::string>& mes_ptr) {
+TEPublicKey::TEPublicKey( const std::array< uint8_t, G2_SIZE_BYTES >& _keyBytes )
+    : TEPublicKey( ThresholdUtils::bytesToG2( _keyBytes ) ) {}
 
-  encryption::TE te(requiredSigners, totalSigners);
+TEPublicKey::TEPublicKey( const std::vector< uint8_t >& _keyBytes )
+    : TEPublicKey( ThresholdUtils::bytesToG2( _keyBytes ) ) {}
 
-  if (mes_ptr == nullptr) {
-    throw std::runtime_error("Message is null");
-  }
+std::string TEPublicKey::toString() const {
+    std::vector< std::string > res = ThresholdUtils::G2ToString( publicKey, libBLS::BASE_HEXA );
+    std::string concatenated;
+    // Nbr of hexa digits = 2 x byte size
+    concatenated.reserve( 2 * G2_SIZE_BYTES );
+    for ( const auto& str : res ) {
+        concatenated += str;
+    }
 
-  if (mes_ptr->length() != 64) {
-    throw std::runtime_error("Message length is not equal to 64");
-  }
-
-  encryption::Ciphertext cypher = te.Encrypt(*mes_ptr, PublicKey.el_);
-  checkCypher(cypher);
-
-  element_t U;
-  element_init_G1(U, TEDataSingleton::getData().pairing_);
-  element_set(U, std::get<0>(cypher).el_);
-  encryption::element_wrapper U_wrap(U);
-  /*if (element_item_count(U) == 0 ) {
-    throw std::runtime_error("U is zero");
-  }*/
-
-  element_t W;
-  element_init_G1(W, TEDataSingleton::getData().pairing_);
-  element_set(W, std::get<2>(cypher).el_);
-  /*if (element_item_count(W) == 0) {
-    throw std::runtime_error("W is zero");
-  }*/
-  encryption::element_wrapper W_wrap(W);
-  element_clear(W);
-
-  element_clear(U);
-
-  return std::make_tuple(U_wrap, std::get<1>(cypher), W_wrap);
+    return concatenated;
 }
 
-std::shared_ptr<std::vector<std::string>> TEPublicKey::toString() {
-  return ElementG1ToString(PublicKey.el_);
+libff::alt_bn128_G2 TEPublicKey::getPublicKeyRaw() const {
+    return publicKey;
 }
 
-encryption::element_wrapper TEPublicKey::getPublicKey() const {
-  return PublicKey;
+std::array< uint8_t, G2_SIZE_BYTES > TEPublicKey::toBytesArray() const {
+    return libBLS::ThresholdUtils::G2ToBytesArray( publicKey );
 }
+
+std::vector< uint8_t > TEPublicKey::toBytesVec() const {
+    return libBLS::ThresholdUtils::G2ToBytes( publicKey );
+}
+
+}  // namespace libBLS

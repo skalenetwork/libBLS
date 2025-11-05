@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file TEPublicKey.h
   @author Sveta Rogova
@@ -24,30 +24,55 @@
 #ifndef LIBBLS_TEPUBLICKEY_H
 #define LIBBLS_TEPUBLICKEY_H
 
-#include <threshold_encryption/threshold_encryption.h>
+#include <threshold_encryption/TEBase.h>
 #include <threshold_encryption/TEPrivateKey.h>
+#include <threshold_encryption/threshold_encryption.h>
+
+namespace libBLS {
 
 class TEPublicKey {
- private:
-  encryption::element_wrapper PublicKey;
+private:
+    libff::alt_bn128_G2 publicKey;
 
-  size_t requiredSigners;
-  size_t totalSigners;
+public:
+    TEPublicKey( const libff::alt_bn128_G2& _pkey );
 
+    /**
+     * @brief Construct a public key from a vector of strings,
+     * each representing a coordinate of the public key in
+     * hexadecimal format.
+     */
+    TEPublicKey( const std::vector< std::string >& _keyStrPtr );
 
- public:
-    TEPublicKey(std::shared_ptr<std::vector<std::string>> _key_str_ptr, size_t  _requiredSigners, size_t _totalSigners);
+    /**
+     * @brief Construct a public key from a string containing
+     * the 4 components concatenated, and encoded in hexadecimal
+     * format.
+     */
+    TEPublicKey( const std::string& _keyStr );
 
-    TEPublicKey(encryption::element_wrapper _pkey, size_t  _requiredSigners, size_t _totalSigners);
+    TEPublicKey( const TEPrivateKey& _comonPrivate );
 
-    TEPublicKey(TEPrivateKey _comon_private, size_t  _requiredSigners, size_t _totalSigners);
+    TEPublicKey( const std::array< uint8_t, G2_SIZE_BYTES >& _keyBytes );
 
-    std::shared_ptr<std::vector<std::string>> toString();
+    TEPublicKey( const std::vector< uint8_t >& _keyBytes );
 
-    encryption::Ciphertext encrypt(const std::shared_ptr<std::string>& message);
+    /**
+     * @brief Returns the public key as a single string, with
+     * with all 4 components concatenated and encoded in hexadecimal.AES256Key
+     * String size is always 256 characters long.
+     */
+    std::string toString() const;
 
-    encryption::element_wrapper getPublicKey() const;
+    inline void validate() const { ThresholdUtils::validateG2( publicKey ); }
+
+    std::array< uint8_t, G2_SIZE_BYTES > toBytesArray() const;
+
+    std::vector< uint8_t > toBytesVec() const;
+
+    libff::alt_bn128_G2 getPublicKeyRaw() const;
 };
 
+}  // namespace libBLS
 
-#endif //LIBBLS_TEPUBLICKEY_H
+#endif  // LIBBLS_TEPUBLICKEY_H

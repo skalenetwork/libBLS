@@ -1,0 +1,161 @@
+name: libBLS Nightly Tests
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  
+  workflow_dispatch:
+
+jobs:
+  main_job:
+    runs-on: ubuntu-22.04
+    env:
+      NIGHTLY_BUILD_FLAGS: "valgrind --leak-check=yes"
+
+    steps:
+    - name: Extract repo name
+      run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
+      shell: bash
+      env:
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Update apt
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt-get update
+    - name: Install packages
+      run: |
+        sudo apt-get install -y software-properties-common
+        sudo apt-get install -y gcc-11 g++-11
+    - name: use g++-11 by default
+      run: |
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 11
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 11
+    - name: Install more packages
+      run: |
+        sudo apt-get install -y gawk sed shtool \
+          libffi-dev yasm texinfo libgnutls28-dev libc6-dbg gcc-multilib
+        sudo snap install valgrind --classic
+        python -m pip install --upgrade pip
+        pip install coincurve
+
+    - name: Build dependencies
+      run: |
+        export CC=gcc-11
+        export CXX=g++-11
+        export TARGET=all
+        cd deps
+        ./build.sh
+
+    - name: install cmake
+      run: |
+        wget --no-check-certificate https://cmake.org/files/v3.21/cmake-3.21.0-linux-x86_64.sh && \
+        chmod +x cmake-3.21.0-linux-x86_64.sh && \
+        ./cmake-3.21.0-linux-x86_64.sh --skip-license --include-subdir && \
+        sudo ln -sf `pwd`/cmake-3.21.0-linux-x86_64/bin/* /usr/local/bin
+
+        cmake --version
+
+    - name: Configure all
+      run: |
+        export CC=gcc-11
+        export CXX=g++-11
+        export TARGET=all
+        mkdir -p build && cd build
+        cmake ..
+    
+    - name: Build all
+      run: |
+        export CC=gcc-11
+        export CXX=g++-11
+        export TARGET=all
+        cd build
+        make -j$(nproc)
+
+    - name: Run tests
+      run: |
+        cp scripts/parameters.json build/
+        cd build
+        $NIGHTLY_BUILD_FLAGS ./bls_unit_test
+        $NIGHTLY_BUILD_FLAGS ./dkg_unit_test
+        $NIGHTLY_BUILD_FLAGS ./utils_unit_test
+        $NIGHTLY_BUILD_FLAGS ./bls_test
+        $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_unit_test
+        $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_test
+        $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_encrypt_message
+        $NIGHTLY_BUILD_FLAGS ./dkg_attack
+
+    - name: Run tools tests
+      run: |
+        ./scripts/run_tools_test.sh
+  
+  linux_build_with_emscripten:
+    runs-on: ubuntu-22.04
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+    - name: Extract repo name
+      run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
+      shell: bash
+      env:
+        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Update apt
+      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
+    - name: Install packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-11 g++-11 gawk sed shtool \
+          libffi-dev yasm texinfo python3.6 lcov gcc-multilib
+        sudo apt-get update -qq
+        sudo apt-get install -y python3-pip
+        pip3 install --upgrade pip
+        sudo python3 -m pip install --upgrade pip
+        sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
+        sudo python3 -m pip install requests[security]
+
+    - name: Install NODE JS
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+  
+    - name: Build dependencies
+      run: |
+        export CC=gcc-11
+        export CXX=g++-11
+        export TARGET=all
+        cd deps
+        ./build.sh WITH_EMSCRIPTEN=1
+        cd ..
+
+    - name: install cmake
+      run: |
+        wget --no-check-certificate https://cmake.org/files/v3.21/cmake-3.21.0-linux-x86_64.sh && \
+        chmod +x cmake-3.21.0-linux-x86_64.sh && \
+        ./cmake-3.21.0-linux-x86_64.sh --skip-license --include-subdir && \
+        sudo ln -sf `pwd`/cmake-3.21.0-linux-x86_64/bin/* /usr/local/bin
+
+        cmake --version
+
+    - name: Build all
+      run: |
+        cd deps/emsdk
+        ./emsdk install latest
+        ./emsdk activate latest
+        source ./emsdk_env.sh
+        cd ../..
+        mkdir -p build_em
+        cd build_em
+        export LIBRARIES_ROOT=../deps/deps_inst/x86_or_x64/lib
+        emcmake cmake -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a .. 
+        emmake make -j$(nproc)
+        cd ..
+
+    - name: Run tests
+      run: |
+        bash scripts/run_emscripten_test.sh

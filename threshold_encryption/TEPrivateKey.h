@@ -14,35 +14,43 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file TEPublicKey.h
   @author Sveta Rogova
-  @date 2019
+  @date 2025
 */
 
 #ifndef LIBBLS_TEPRIVATEKEY_H
 #define LIBBLS_TEPRIVATEKEY_H
 
+#include <threshold_encryption/TEBase.h>
 #include <threshold_encryption/threshold_encryption.h>
-#include <threshold_encryption/TEDataSingleton.h>
+
+namespace libBLS {
 
 class TEPrivateKey {
- private:
-    encryption::element_wrapper  privateKey;
+private:
+    libff::alt_bn128_Fr privateKey;
 
-    size_t requiredSigners;
-    size_t totalSigners;
+public:
+    TEPrivateKey( const std::string& _keyStr );
 
- public:
-    TEPrivateKey(std::shared_ptr<std::string> _key_str_ptr, size_t _requiredSigners, size_t _totalSigners);
+    TEPrivateKey( libff::alt_bn128_Fr _skey );
 
-    TEPrivateKey(encryption::element_wrapper _skey, size_t _requiredSigners, size_t _totalSigners);
+    TEPrivateKey( const std::vector< uint8_t > _keyBytes );
 
-    std::string toString();
+    TEPrivateKey( const std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > _keyBytes );
 
-    encryption::element_wrapper getPrivateKey() const;
+    std::string toString() const;
+
+    libff::alt_bn128_Fr getPrivateKeyRaw() const;
+
+    std::vector< uint8_t > toBytesVec() const;
+
+    std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > toBytesArray() const;
 };
 
+}  // namespace libBLS
 
-#endif //LIBBLS_TEPRIVATEKEY_H
+#endif  // LIBBLS_TEPRIVATEKEY_H

@@ -21,37 +21,36 @@
   @date 2019
 */
 
-#include "DKGBLSSecret.h"
+#include <dkg/DKGBLSSecret.h>
 
 #include <dkg/dkg.h>
-#include <bls/BLSSignature.h>
+#include <tools/utils.h>
 
-DKGBLSSecret::DKGBLSSecret(size_t _requiredSigners, size_t _totalSigners) : requiredSigners(_requiredSigners),
-                                                                          totalSigners(_totalSigners) {
+DKGBLSSecret::DKGBLSSecret( size_t _requiredSigners, size_t _totalSigners )
+    : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
+    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-  BLSSignature::checkSigners(_requiredSigners, _totalSigners);
-
-  signatures::Dkg dkg(requiredSigners, totalSigners);
-  poly = dkg.GeneratePolynomial();
+    libBLS::Dkg dkg( requiredSigners, totalSigners );
+    poly = dkg.GeneratePolynomial();
 }
 
-void DKGBLSSecret::setPoly(std::vector <libff::alt_bn128_Fr> _poly){
-  if (_poly.size() != requiredSigners){
-    throw std::runtime_error("Wrong size of vector");
-  }
-  poly = _poly;
+void DKGBLSSecret::setPoly( std::vector< libff::alt_bn128_Fr > _poly ) {
+    if ( _poly.size() != requiredSigners ) {
+        throw libBLS::ThresholdUtils::IncorrectInput( "Wrong size of vector" );
+    }
+    poly = _poly;
 }
 
-std::vector <libff::alt_bn128_Fr> DKGBLSSecret::getDKGBLSSecretShares(){
-  signatures::Dkg dkg(requiredSigners, totalSigners);
-  return dkg.SecretKeyContribution(poly);
+std::vector< libff::alt_bn128_Fr > DKGBLSSecret::getDKGBLSSecretShares() {
+    libBLS::Dkg dkg( requiredSigners, totalSigners );
+    return dkg.SecretKeyContribution( poly );
 }
 
-std::vector < libff::alt_bn128_G2> DKGBLSSecret::getDKGBLSPublicShares(){
-  signatures::Dkg dkg(requiredSigners, totalSigners);
-  return dkg.VerificationVector(poly);
+std::vector< libff::alt_bn128_G2 > DKGBLSSecret::getDKGBLSPublicShares() {
+    libBLS::Dkg dkg( requiredSigners, totalSigners );
+    return dkg.VerificationVector( poly );
 }
 
-libff::alt_bn128_Fr DKGBLSSecret::getValueAt0(){
-  return poly.at(0);
+libff::alt_bn128_Fr DKGBLSSecret::getValueAt0() {
+    return poly.at( 0 );
 }

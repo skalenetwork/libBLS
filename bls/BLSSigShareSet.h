@@ -28,28 +28,25 @@
 class BLSSignature;
 
 class BLSSigShareSet {
- private:
-
+private:
     size_t requiredSigners;
     size_t totalSigners;
 
     bool was_merged;
 
-    std::map<size_t, std::shared_ptr< BLSSigShare > > sigShares;
+    std::map< size_t, std::shared_ptr< BLSSigShare > > sigShares;
 
 public:
-    BLSSigShareSet(size_t requiredSigners, size_t totalSigners);
+    BLSSigShareSet( size_t requiredSigners, size_t totalSigners );
 
     bool isEnough();
 
-    bool addSigShare(std::shared_ptr<BLSSigShare> _sigShare);
+    bool addSigShare( std::shared_ptr< BLSSigShare > _sigShare );
 
     unsigned long getTotalSigSharesCount();
-    std::shared_ptr<BLSSigShare> getSigShareByIndex(size_t _index);
-    std::shared_ptr<BLSSignature> merge();
-
+    std::shared_ptr< BLSSigShare > getSigShareByIndex( size_t _index );
+    std::shared_ptr< BLSSignature > merge();
 };
-
 
 
 #endif  // LIBBLS_BLSSIGSHARESET_H-

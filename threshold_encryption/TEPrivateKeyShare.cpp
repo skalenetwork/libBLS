@@ -14,105 +14,86 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 @file TEPrivateKeyShare.h
 @author Sveta Rogova
 @date 2019
 */
 
+#include <dkg/dkg.h>
 #include <threshold_encryption/TEPrivateKeyShare.h>
-#include <threshold_encryption/utils.h>
-#include <dkg/dkg_te.h>
+#include <tools/utils.h>
 
-TEPrivateKeyShare::TEPrivateKeyShare(std::shared_ptr<std::string> _key_str, size_t _signerIndex,  size_t  _requiredSigners, size_t _totalSigners)
-: signerIndex(_signerIndex), requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
+namespace libBLS {
 
-  TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
+TEPrivateKeyShare::TEPrivateKeyShare( const std::string& _hexaField, size_t _signerIndex,
+    size_t _requiredSigners, size_t _totalSigners )
+    : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
+    if ( _signerIndex > _totalSigners ) {
+        throw ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
+    }
 
-  if (!_key_str) {
-    throw std::runtime_error("private key share is null");
-  }
+    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > fieldBytes =
+        ThresholdUtils::hexCStringToBytesArray< MAX_FIELD_ELEMENT_SIZE_BYTES >(
+            _hexaField.c_str() );
+    privateKey = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( fieldBytes );
 
-  element_t pkey;
-  element_init_Zr(pkey, TEDataSingleton::getData().pairing_);
-  element_set_str(pkey, _key_str->c_str(), 10);
-  privateKey = encryption::element_wrapper(pkey);
-  element_clear(pkey);
-
-  if (element_is0(privateKey.el_)) {
-    throw std::runtime_error ("Zero private key share");
-  }
+    if ( privateKey.is_zero() ) {
+        throw ThresholdUtils::ZeroSecretKey( "Zero private key share" );
+    }
 }
 
-TEPrivateKeyShare::TEPrivateKeyShare(encryption::element_wrapper _skey_share, size_t _signerIndex, size_t  _requiredSigners, size_t _totalSigners)
-: privateKey(_skey_share), signerIndex(_signerIndex), requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
+TEPrivateKeyShare::TEPrivateKeyShare( libff::alt_bn128_Fr _skeyShare, size_t _signerIndex,
+    size_t _requiredSigners, size_t _totalSigners )
+    : TEBase( _requiredSigners, _totalSigners ),
+      privateKey( _skeyShare ),
+      signerIndex( _signerIndex ) {
+    if ( _signerIndex > _totalSigners ) {
+        throw ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
+    }
 
-  TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
-
- /* if (_signerIndex > _totalSigners) {
-    throw std::runtime_error ("Wrong _signerIndex");
-  }*/
-  if (element_is0(_skey_share.el_)) {
-    throw std::runtime_error ("Zero private key share");
-  }
+    if ( _skeyShare.is_zero() ) {
+        throw ThresholdUtils::ZeroSecretKey( "Zero private key share" );
+    }
 }
 
-encryption::element_wrapper TEPrivateKeyShare::decrypt(encryption::Ciphertext& cypher){
-  checkCypher(cypher);
+TEPrivateKeyShare::TEPrivateKeyShare( const std::vector< uint8_t >& _bytes, size_t _signerIndex,
+    size_t _requiredSigners, size_t _totalSigners )
+    : TEPrivateKeyShare(
+          libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( _bytes ),
+          _signerIndex, _requiredSigners, _totalSigners ) {}
 
-  encryption::TE te(requiredSigners, totalSigners);
+TEPrivateKeyShare::TEPrivateKeyShare(
+    const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& _bytes, size_t _signerIndex,
+    size_t _requiredSigners, size_t _totalSigners )
+    : TEPrivateKeyShare(
+          libBLS::ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( _bytes ),
+          _signerIndex, _requiredSigners, _totalSigners ) {}
 
-  element_t  decrypt;
-  element_init_G1(decrypt, TEDataSingleton::getData().pairing_);
 
-  te.Decrypt(decrypt, cypher, privateKey.el_);
-  encryption::element_wrapper decrypted (decrypt);
-
-  if (isG1Element0(decrypt)) {
-    std::runtime_error ("zero decrypt");
-  }
-  element_clear(decrypt);
-  return decrypted;
+std::string TEPrivateKeyShare::toString() const {
+    return ThresholdUtils::fieldElementToString( privateKey, BASE_DEC );
 }
 
-std::string TEPrivateKeyShare::toString() {
-  return ElementZrToString(privateKey.el_);
+std::string TEPrivateKeyShare::toStringHex() const {
+    return ThresholdUtils::fieldElementToString( privateKey, BASE_HEXA );
 }
 
 size_t TEPrivateKeyShare::getSignerIndex() const {
-  return signerIndex;
+    return signerIndex;
 }
 
-encryption::element_wrapper TEPrivateKeyShare::getPrivateKey() const {
-  return privateKey;
+libff::alt_bn128_Fr TEPrivateKeyShare::getPrivateKeyRaw() const {
+    return privateKey;
 }
 
-std::pair<std::shared_ptr<std::vector<std::shared_ptr<TEPrivateKeyShare>>>, std::shared_ptr<TEPublicKey> >
-TEPrivateKeyShare::generateSampleKeys(size_t _requiredSigners, size_t _totalSigners){
-  encryption::DkgTe dkg_te (_requiredSigners, _totalSigners);
-
-  std::vector<encryption::element_wrapper> poly = dkg_te.GeneratePolynomial();
-  element_t zero;
-  element_init_Zr(zero, TEDataSingleton::getData().pairing_);
-  element_set0(zero);
-  encryption::element_wrapper zero_el(zero);
-
-  element_clear(zero);
-
-  encryption::element_wrapper common_skey = dkg_te.ComputePolynomialValue(poly, zero_el);
-  TEPrivateKey common_private(common_skey, _requiredSigners, _totalSigners);
-  TEPublicKey common_public(common_private, _requiredSigners, _totalSigners);
-
-  std::vector<encryption::element_wrapper> skeys = dkg_te.CreateSecretKeyContribution(poly);
-
-  std::vector<std::shared_ptr<TEPrivateKeyShare>> skey_shares;
-
-  for ( size_t i = 0; i < _totalSigners; i++) {
-    TEPrivateKeyShare skey(skeys[i].el_, i + 1, _requiredSigners, _totalSigners);
-    skey_shares.emplace_back(std::make_shared<TEPrivateKeyShare>(skey));
-  }
-
-  std::pair keys = std::make_pair(std::make_shared<std::vector<std::shared_ptr<TEPrivateKeyShare>>> (skey_shares), std::make_shared<TEPublicKey>(common_public));
-  return keys;
+std::vector< uint8_t > TEPrivateKeyShare::toBytesVec() const {
+    return ThresholdUtils::fieldElementToBytes( privateKey );
 }
+
+std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > TEPrivateKeyShare::toBytesArray() const {
+    return ThresholdUtils::fieldElementToBytesArray( privateKey );
+}
+
+}  // namespace libBLS

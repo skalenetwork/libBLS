@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file bls.h
   @author Oleh Nikolaiev
@@ -26,61 +26,87 @@
 
 #include <third_party/cryptlite/sha256.h>
 
-#include <string>
-#include <vector>
-#include <utility>
-#include <memory>
 #include <iostream>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-
-static constexpr size_t BLS_MAX_COMPONENT_LEN = 80;
 
 static constexpr size_t BLS_MAX_SIG_LEN = 240;
 
 
-namespace signatures {
+namespace libBLS {
 
 class Bls {
- public:
-    Bls(const size_t t, const size_t n);
+public:
+    Bls( const size_t t, const size_t n );
 
-    std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> KeyGeneration();
+    static std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > KeyGeneration();
 
-    static libff::alt_bn128_G1 Hashing(const std::string& message,
-                                  std::string (*hash_func)(const std::string& str) =
-                                               cryptlite::sha256::hash_hex);
+    static libff::alt_bn128_G1 Hashing( const std::string& message,
+        std::string ( *hash_func )( const std::string& str ) = cryptlite::sha256::hash_hex );
 
-    static libff::alt_bn128_G1 HashBytes(const char* raw_bytes, size_t length,
-                                  std::string (*hash_func)(const std::string& str) =
-                                               cryptlite::sha256::hash_hex);
+    static libff::alt_bn128_G1 HashBytes( const char* raw_bytes, size_t length,
+        std::string ( *hash_func )( const std::string& str ) = cryptlite::sha256::hash_hex );
 
-    static libff::alt_bn128_G1 HashtoG1(std::shared_ptr< std::array< uint8_t, 32>>);
+    static std::pair< libff::alt_bn128_G1, std::string > HashtoG1withHint(
+        std::shared_ptr< std::array< uint8_t, 32 > > );
 
-    static std::pair<libff::alt_bn128_G1, std::string> HashtoG1withHint(std::shared_ptr< std::array< uint8_t, 32>>);
+    static libff::alt_bn128_G1 HashPublicKeyToG1( const libff::alt_bn128_G2& elem );
 
-    static libff::alt_bn128_G1 Signing(const libff::alt_bn128_G1 hash,
-                                  const libff::alt_bn128_Fr secret_key);
+    static std::pair< libff::alt_bn128_G1, std::string > HashPublicKeyToG1WithHint(
+        const libff::alt_bn128_G2& elem );
 
-    static bool Verification(const std::string& to_be_hashed, const libff::alt_bn128_G1 sign,
-                        const libff::alt_bn128_G2 public_key);
+    static libff::alt_bn128_G1 Signing(
+        const libff::alt_bn128_G1 hash, const libff::alt_bn128_Fr secret_key );
 
-    static bool Verification(std::shared_ptr<std::array< uint8_t, 32>>, const libff::alt_bn128_G1 sign,
-                      const libff::alt_bn128_G2 public_key);
+    static libff::alt_bn128_G1 CoreSignAggregated(
+        const std::string& message, const libff::alt_bn128_Fr secret_key );
 
-    std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> KeysRecover(
-                                                  const std::vector<libff::alt_bn128_Fr>& coeffs,
-                                                  const std::vector<libff::alt_bn128_Fr>& shares);
+    static libff::alt_bn128_G1 Aggregate( const std::vector< libff::alt_bn128_G1 >& signatures );
 
-    libff::alt_bn128_G1 SignatureRecover(const std::vector<libff::alt_bn128_G1>& shares,
-                                          const std::vector<libff::alt_bn128_Fr>& coeffs);
+    static bool CoreVerify( const libff::alt_bn128_G2& public_key, const std::string& message,
+        const libff::alt_bn128_G1& signature );
 
-    std::vector<libff::alt_bn128_Fr> LagrangeCoeffs(const std::vector<size_t>& idx);
+    static bool FastAggregateVerify( const std::vector< libff::alt_bn128_G2 >& public_keys,
+        const std::string& message, const libff::alt_bn128_G1& signature );
 
- private:
+    static bool Verification( const std::string& to_be_hashed, const libff::alt_bn128_G1 sign,
+        const libff::alt_bn128_G2 public_key );
+
+    static bool Verification( std::shared_ptr< std::array< uint8_t, 32 > >,
+        const libff::alt_bn128_G1 sign, const libff::alt_bn128_G2 public_key );
+
+    static bool AggregatedVerification(
+        std::vector< std::shared_ptr< std::array< uint8_t, 32 > > > hash_byte_arr,
+        const std::vector< libff::alt_bn128_G1 > sign, const libff::alt_bn128_G2 public_key );
+
+    std::pair< libff::alt_bn128_Fr, libff::alt_bn128_G2 > KeysRecover(
+        const std::vector< libff::alt_bn128_Fr >& coeffs,
+        const std::vector< libff::alt_bn128_Fr >& shares );
+
+    libff::alt_bn128_G1 SignatureRecover( const std::vector< libff::alt_bn128_G1 >& shares,
+        const std::vector< libff::alt_bn128_Fr >& coeffs );
+
+    static libff::alt_bn128_G1 PopProve( const libff::alt_bn128_Fr& secret_key );
+
+    static bool PopVerify(
+        const libff::alt_bn128_G2& public_key, const libff::alt_bn128_G1& prove );
+
+private:
     const size_t t_ = 0;
 
     const size_t n_ = 0;
 };
 
-}  // namespace signatures
+}  // namespace libBLS
+
+
+#define CHECK( _EXPRESSION_ )                                                                 \
+    if ( !( _EXPRESSION_ ) ) {                                                                \
+        auto __msg__ = std::string( "Check failed:" ) + #_EXPRESSION_ + "\n" + __FUNCTION__ + \
+                       +" " + std::string( __FILE__ ) + ":" + std::to_string( __LINE__ );     \
+        throw libBLS::ThresholdUtils::IncorrectInput( __msg__ );                              \
+    }

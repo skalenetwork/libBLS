@@ -14,49 +14,65 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 @file TEPublicKey.h
 @author Sveta Rogova
-@date 2019
+@date 2025
 */
 
 #include <threshold_encryption/TEPrivateKey.h>
-#include <threshold_encryption/utils.h>
+#include <tools/utils.h>
 
-TEPrivateKey::TEPrivateKey(std::shared_ptr<std::string> _key_str, size_t  _requiredSigners, size_t _totalSigners)
-: requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
+namespace libBLS {
 
-  TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
+TEPrivateKey::TEPrivateKey( const std::string& _keyStr ) {
+    // already validates the string
+    std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > privBytes =
+        ThresholdUtils::hexCStringToBytesArray< libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES >(
+            _keyStr.c_str() );
 
-  if (!_key_str) {
-    throw std::runtime_error("private key is null");
-  }
+    privateKey = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( privBytes );
 
-  element_t pkey;
-  element_init_Zr(pkey,  TEDataSingleton::getData().pairing_);
-  element_set_str(pkey, _key_str->c_str(), 10);
-  privateKey = encryption::element_wrapper(pkey);
-  element_clear(pkey);
-
-  if (element_is0(privateKey.el_)) {
-    throw std::runtime_error(" private key is zero");
-  }
+    if ( privateKey.is_zero() ) {
+        throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
+    }
 }
 
-TEPrivateKey::TEPrivateKey( encryption::element_wrapper _skey, size_t  _requiredSigners, size_t _totalSigners)
-: privateKey(_skey), requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
-
-  TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
-
-  if (element_is0(_skey.el_))
-    throw std::runtime_error(" private key is zero");
+TEPrivateKey::TEPrivateKey( libff::alt_bn128_Fr _skey ) : privateKey( _skey ) {
+    if ( _skey.is_zero() )
+        throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
 }
 
-std::string TEPrivateKey::toString() {
-  return ElementZrToString(privateKey.el_);
+TEPrivateKey::TEPrivateKey( const std::vector< uint8_t > _keyBytes ) {
+    privateKey = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( _keyBytes );
+    if ( privateKey.is_zero() ) {
+        throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
+    }
 }
 
-encryption::element_wrapper  TEPrivateKey::getPrivateKey() const {
-  return privateKey;
+TEPrivateKey::TEPrivateKey(
+    const std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > _keyBytes ) {
+    privateKey = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( _keyBytes );
+    if ( privateKey.is_zero() ) {
+        throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
+    }
 }
+
+std::vector< uint8_t > TEPrivateKey::toBytesVec() const {
+    return ThresholdUtils::fieldElementToBytes( privateKey );
+}
+
+std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > TEPrivateKey::toBytesArray() const {
+    return ThresholdUtils::fieldElementToBytesArray( privateKey );
+}
+
+std::string TEPrivateKey::toString() const {
+    return ThresholdUtils::fieldElementToString( privateKey, BASE_HEXA );
+}
+
+libff::alt_bn128_Fr TEPrivateKey::getPrivateKeyRaw() const {
+    return privateKey;
+}
+
+}  // namespace libBLS

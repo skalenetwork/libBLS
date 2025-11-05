@@ -14,7 +14,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 @file TEPublicKey.h
 @author Sveta Rogova
@@ -22,65 +22,47 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <threshold_encryption/TEPublicKeyShare.h>
-#include <TEDataSingleton.h>
-#include <threshold_encryption/utils.h>
+#include <tools/utils.h>
 
-TEPublicKeyShare::TEPublicKeyShare(std::shared_ptr<std::vector<std::string>> _key_str_ptr, size_t _signerIndex,
-  size_t _requiredSigners, size_t _totalSigners)
-  : signerIndex(_signerIndex), requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
-    TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
+namespace libBLS {
 
-    if (!_key_str_ptr) {
-      throw std::runtime_error("public key share is null");
-    }
+TEPublicKeyShare::TEPublicKeyShare( TEPrivateKeyShare _pKey )
+    : TEBase( _pKey.getRequiredSigners(), _pKey.getTotalSigners() ) {
+    _pKey.validate();
+    publicKey = _pKey.getPrivateKeyRaw() * libff::alt_bn128_G2::one();
+    signerIndex = _pKey.getSignerIndex();
+}
 
-    if (_key_str_ptr->size() != 2)
-      throw std::runtime_error("wrong number of components in public key share");
+TEPublicKeyShare::TEPublicKeyShare(
+    libff::alt_bn128_G2 _point, size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
+    : TEBase( _requiredSigners, _totalSigners ), publicKey( _point ), signerIndex( _signerIndex ) {
+    ThresholdUtils::validateG2( publicKey );
+}
 
-    if( !isStringNumber(_key_str_ptr->at(0)) || !isStringNumber(_key_str_ptr->at(1)))
-      throw std::runtime_error("non-digit symbol or first zero in non-zero public key share");
+TEPublicKeyShare::TEPublicKeyShare( const std::vector< uint8_t >& _bytes, size_t _signerIndex,
+    size_t _requiredSigners, size_t _totalSigners )
+    : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
+    publicKey = ThresholdUtils::bytesToG2( _bytes );
+    ThresholdUtils::validateG2( publicKey );
+}
 
-    std::string key_str = "[" + _key_str_ptr->at(0) + "," + _key_str_ptr->at(1) + "]";
+TEPublicKeyShare::TEPublicKeyShare( const std::array< uint8_t, libBLS::G2_SIZE_BYTES >& bytes,
+    size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
+    : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
+    publicKey = ThresholdUtils::bytesToG2( bytes );
+    ThresholdUtils::validateG2( publicKey );
+}
 
-    element_t pkey;
-    element_init_G1(pkey, TEDataSingleton::getData().pairing_);
-    element_set_str(pkey, key_str.c_str(), 10);
-    PublicKey = encryption::element_wrapper(pkey);
-    element_clear(pkey);
+std::vector< uint8_t > TEPublicKeyShare::toBytesVec() const {
+    return ThresholdUtils::G2ToBytes( publicKey );
+}
 
-    if ( isG1Element0(PublicKey.el_) ) {
-      throw std::runtime_error("corrupted string or zero public key share");
-    }
-  }
+std::array< uint8_t, libBLS::G2_SIZE_BYTES > TEPublicKeyShare::toBytesArray() const {
+    return ThresholdUtils::G2ToBytesArray( publicKey );
+}
 
-  TEPublicKeyShare::TEPublicKeyShare(TEPrivateKeyShare _p_key, size_t _requiredSigners, size_t _totalSigners)
-  : requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
-    TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
+libff::alt_bn128_G2 TEPublicKeyShare::getPublicKeyRaw() const {
+    return publicKey;
+}
 
-    element_t pkey;
-    element_init_G1(pkey, TEDataSingleton::getData().pairing_);
-    element_mul_zn(pkey, TEDataSingleton::getData().generator_, _p_key.getPrivateKey().el_);
-
-    PublicKey = pkey;
-    signerIndex = _p_key.getSignerIndex();
-    element_clear(pkey);
-  }
-
-  bool TEPublicKeyShare::Verify(const encryption::Ciphertext &cyphertext, const element_t &decrypted) {
-    checkCypher(cyphertext);
-    if ( isG1Element0(const_cast<element_t &>(decrypted)) ) {
-      throw std::runtime_error("zero decrypt");
-    }
-
-    encryption::TE te(requiredSigners, totalSigners);
-
-    return te.Verify(cyphertext, decrypted, PublicKey.el_);
-  }
-
-  std::shared_ptr<std::vector<std::string>> TEPublicKeyShare::toString() {
-    return ElementG1ToString(PublicKey.el_);
-  }
-
-  encryption::element_wrapper TEPublicKeyShare::getPublicKey() const {
-    return PublicKey;
-  }
+}  // namespace libBLS

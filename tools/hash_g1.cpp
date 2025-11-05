@@ -21,13 +21,13 @@
   @date 2019
 */
 
-#include <fstream>
-#include <boost/program_options.hpp>
-#include <libff/common/profiling.hpp>
-#include <bls/bls.h>
-#include <third_party/json.hpp>
-#include <bls/BLSutils.h>
 #include <bls/BLSPublicKey.h>
+#include <bls/bls.h>
+#include <tools/utils.h>
+#include <boost/program_options.hpp>
+#include <fstream>
+#include <libff/common/profiling.hpp>
+#include <third_party/json.hpp>
 
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
 #define __EXPAND_AS_STR__( x ) #x
@@ -36,36 +36,9 @@ static bool g_b_verbose_mode = false;
 
 static bool g_b_rehash = false;
 
-int char2int( char _input ) {
-    if ( _input >= '0' && _input <= '9' )
-        return _input - '0';
-    if ( _input >= 'A' && _input <= 'F' )
-        return _input - 'A' + 10;
-    if ( _input >= 'a' && _input <= 'f' )
-        return _input - 'a' + 10;
-    return -1;
-}
-
-bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin ) {
-    int len = strnlen( _hex, 2 * 1024 );
-
-    if ( len == 0 && len % 2 == 1 )
-        return false;
-    *_bin_len = len / 2;
-    for ( int i = 0; i < len / 2; i++ ) {
-        int high = char2int( ( char ) _hex[i * 2] );
-        int low = char2int( ( char ) _hex[i * 2 + 1] );
-        if ( high < 0 || low < 0 ) {
-            return false;
-        }
-        _bin[i] = ( unsigned char ) ( high * 16 + low );
-    }
-    return true;
-}
-
 void hash_g1( const size_t t, const size_t n ) {
     libff::inhibit_profiling_info = true;
-    signatures::Bls bls_instance = signatures::Bls( t, n );
+    libBLS::Bls bls_instance = libBLS::Bls( t, n );
 
     nlohmann::json hash_in;
 
@@ -82,8 +55,9 @@ void hash_g1( const size_t t, const size_t n ) {
         }
     } else {
         uint64_t bin_len;
-        if (!hex2carray( to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data() )){
-            throw std::runtime_error("Invalid hash");
+        if ( !libBLS::ThresholdUtils::hex2carray(
+                 to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+            throw std::runtime_error( "Invalid hash" );
         }
     }
 
@@ -93,8 +67,8 @@ void hash_g1( const size_t t, const size_t n ) {
     nlohmann::json joG1 = nlohmann::json::object();
     joG1["g1"] = nlohmann::json::object();
     joG1["g1"]["hashPoint"] = nlohmann::json::object();
-    joG1["g1"]["hashPoint"]["X"] = BLSutils::ConvertToString( p2vals.first.X );
-    joG1["g1"]["hashPoint"]["Y"] = BLSutils::ConvertToString( p2vals.first.Y );
+    joG1["g1"]["hashPoint"]["X"] = libBLS::ThresholdUtils::fieldElementToString( p2vals.first.X );
+    joG1["g1"]["hashPoint"]["Y"] = libBLS::ThresholdUtils::fieldElementToString( p2vals.first.Y );
     joG1["g1"]["hint"] = p2vals.second;
 
     std::ofstream g1_file( "g1.json" );
@@ -112,10 +86,10 @@ int main( int argc, const char* argv[] ) {
     try {
         boost::program_options::options_description desc( "Options" );
         desc.add_options()( "help", "Show this help screen" )( "version", "Show version number" )(
-            "t", boost::program_options::value< size_t >(), "Threshold" )(
-            "n", boost::program_options::value< size_t >(), "Number of participants" )(
-            "v", "Verbose mode (optional)" )( "rehash",
-            "if not specified, then do not hash input message" );
+            "t", boost::program_options::value< size_t >(), "Threshold" )( "n",
+            boost::program_options::value< size_t >(),
+            "Number of participants" )( "v", "Verbose mode (optional)" )(
+            "rehash", "if not specified, then do not hash input message" );
 
         boost::program_options::variables_map vm;
         boost::program_options::store(
