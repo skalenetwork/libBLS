@@ -693,7 +693,7 @@ then
 			if [ ! -f ""${GMP_NAME}".tar.xz" ];
 			then
 				echo -e "${COLOR_INFO}getting it from gmp website${COLOR_DOTS}...${COLOR_RESET}"
-				eval "$WGET" https://ftp.gnu.org/gnu/gmp/"${GMP_NAME}".tar.xz
+				eval "$WGET" https://gmplib.org/download/gmp/"${GMP_NAME}".tar.xz
 			fi
 			echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
 			eval tar -xf "${GMP_NAME}".tar.xz
