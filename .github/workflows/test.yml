@@ -163,6 +163,7 @@ jobs:
         run: |
           cp scripts/parameters.json build/
           cd build
+          ./backends/backend_unit_test
           ./bls_unit_test
           ./dkg_unit_test
           ./utils_unit_test
@@ -187,7 +188,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.info
   osx_build_and_test:
-    runs-on: macos-13
+    runs-on: macos-15-intel
     steps:
       - name: Extract repo name
         run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
@@ -229,6 +230,7 @@ jobs:
         run: |
           cp scripts/parameters.json build/
           cd build
+          ./backends/backend_unit_test
           ./bls_unit_test
           ./dkg_unit_test
           ./bls_test
@@ -299,7 +301,7 @@ jobs:
 
           cd build_em
 
-          export LIBRARIES_ROOT=../deps/deps_inst/x86_or_x64/lib
+          export LIBRARIES_ROOT=../deps/deps_inst/wasm32-emscripten/lib
 
           emcmake cmake -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a .. 
 

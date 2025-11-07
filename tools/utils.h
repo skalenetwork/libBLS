@@ -24,27 +24,40 @@
 #ifndef LIBBLS_UTILS_H
 #define LIBBLS_UTILS_H
 
-#include <gmpxx.h>
+#include <third_party/cryptlite/sha256.h>
 #include <array>
 #include <atomic>
+#include <functional>
+#include <iomanip>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-
 static constexpr size_t BLS_MAX_COMPONENT_LEN = 77;
+
+// forward declare to avoid including folly headers in this header
+namespace folly {
+class CPUThreadPoolExecutor;
+}
 
 namespace libBLS {
 
-constexpr size_t MAX_FIELD_ELEMENT_SIZE_BYTES = 32;
-// 4 x 32 bytes
-constexpr size_t G2_SIZE_BYTES = 128;
-// 2 x 32 bytes
-constexpr size_t G1_SIZE_BYTES = 64;
-
 constexpr size_t BASE_HEXA = 16;
 constexpr size_t BASE_DEC = 10;
+constexpr size_t HASH_SIZE = 32;
+
+#define REQUIRE_OR_THROW( cond, msg )                                                     \
+    do {                                                                                  \
+        if ( !( cond ) )                                                                  \
+            throw ThresholdUtils::IncorrectInput(                                         \
+                std::string( msg ) + " @ " + __FILE__ ":" + std::to_string( __LINE__ ) ); \
+    } while ( 0 )
+
+#define THROW( msg )                      \
+    throw ThresholdUtils::IncorrectInput( \
+        std::string( msg ) + " @ " + __FILE__ ":" + std::to_string( __LINE__ ) );
+
 
 class ThresholdUtils {
 private:
@@ -58,7 +71,17 @@ private:
         virtual const char* what() const noexcept override { return what_str.c_str(); }
     };
 
+    static constexpr size_t DEFAULT_NUM_THREADS = 0;
+
+    static void initThreadPool( size_t _numThreads );
+
 public:
+#ifndef EMSCRIPTEN
+    static std::unique_ptr< folly::CPUThreadPoolExecutor > thread_pool;
+#endif
+
+    static size_t numThreads;
+
     class IsNotWellFormed : public Exception {
     public:
         IsNotWellFormed( const std::string& err_str ) : Exception( err_str ) {
@@ -82,26 +105,15 @@ public:
 
     static std::atomic< bool > is_initialized;
 
+    static void init();
+
     static void initCurve();
 
     static void initRAND();
 
-    static void validateG1( const libff::alt_bn128_G1& point );
-
-    static void validateG2( const libff::alt_bn128_G2& point );
+    static void setNumThreads( size_t _numThreads );
 
     static void checkSigners( size_t _requiredSigners, size_t _totalSigners );
-
-    static std::vector< libff::alt_bn128_Fr > LagrangeCoeffs(
-        const std::vector< size_t >& idx, size_t t );
-
-    static libff::alt_bn128_Fq HashToFq(
-        std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
-
-    static libff::alt_bn128_G1 HashtoG1(
-        std::shared_ptr< std::array< uint8_t, 32 > > hash_byte_arr );
-
-    static libff::alt_bn128_G1 HashtoG1( const std::string& message );
 
     static bool isStringNumber( const std::string& str );
 
@@ -111,77 +123,79 @@ public:
 
     static bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin );
 
-    static std::pair< libff::alt_bn128_Fq, libff::alt_bn128_Fq > ParseHint(
-        const std::string& hint );
-
     static std::shared_ptr< std::vector< std::string > > SplitString(
-        const std::shared_ptr< std::string >, const std::string& delim );
-
-    template < class T >
-    static std::string fieldElementToString( const T& field_elem, int base = BASE_DEC );
-
-    template < class T >
-    static std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > fieldElementToBytesArray(
-        const T& field_elem );
-
-    template < class T >
-    static std::vector< uint8_t > fieldElementToBytes( const T& field_elem );
-
-    template < class T >
-    static T bytesToFieldElement(
-        const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& byte_array );
-
-    template < class T >
-    static T bytesToFieldElement( const std::vector< uint8_t >& byte_array );
-
-    static std::vector< std::string > G2ToString( libff::alt_bn128_G2 elem, int base = BASE_DEC );
-
-    static std::vector< uint8_t > G2ToBytes( libff::alt_bn128_G2 elem );
-
-    static std::array< uint8_t, G2_SIZE_BYTES > G2ToBytesArray( libff::alt_bn128_G2 elem );
-
-    static std::array< uint8_t, G1_SIZE_BYTES > G1ToBytes( libff::alt_bn128_G1 elem );
-
-    static libff::alt_bn128_G2 bytesToG2( std::array< uint8_t, G2_SIZE_BYTES > elem );
-
-    static libff::alt_bn128_G2 bytesToG2( std::vector< uint8_t > elem );
-
-    static libff::alt_bn128_G1 bytesToG1( std::array< uint8_t, G1_SIZE_BYTES > elem );
-
-    static libff::alt_bn128_G2 stringToG2( const std::string& str );
-
-    static libff::alt_bn128_G1 stringToG1( const std::string& str );
-
-    static std::string convertHexToDec( const std::string& hex_str );
-
-    static std::string convertDecToHex( std::string dec, int numBytes );
-
-    static bool checkHex( const std::string& hex );
+        const std::string& str, const std::string& delim );
 
     static std::string bytesToHexString( const std::vector< uint8_t >& bytes );
-    static std::string bytesToHexString(
-        const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& bytes );
 
     static std::vector< uint8_t > hexCStringToBytes( const char* hexStr );
 
     template < size_t N >
+    static std::string bytesToHexString( const std::array< uint8_t, N >& bytes );
+
+    template < size_t N >
     static std::array< uint8_t, N > hexCStringToBytesArray( const char* hexStr );
-
-
-    template < class T >
-    static bool ValidateKey( const T& point );
 
     template < class T >
     static void validatePointWithException( const T& point );
 
-private:
     /**
      * @brief Helper function that validates input char*
      * as a valid hex string, and returns its length.
      * @throw IncorrectInput if the input is not a valid hex string.
      */
     static size_t validateHexCString( const char* hexStr );
+
+    static size_t validateDecimalCString( const char* decStr );
+
+    /**
+     * @brief Computes SHA256 hash of input data
+     * @param data Input data to hash
+     * @param out Output buffer (32 bytes) to store the hash
+     * @note Uses OpenSSL EVP interface for hashing
+     * Reuses a thread-local EVP_MD_CTX to avoid repeated allocations
+     */
+    static inline std::string sha256( const std::string& data ) {
+        return cryptlite::sha256::hash_hex( data );
+    }
+
+    /**
+     * @brief Executes tasks in parallel, merging the results and preserving the order of
+     * `func` execution.
+     * @param totalSize Total number of items to process.
+     * @param func Function that processes a range [startIdx, endIdx) and returns a vector of
+     * results.
+     * @return A single vector containing all results from `func`, in the order of execution.
+     * @note Uses a thread pool internally to parallelize the work.
+     */
+    template < typename T >
+    static std::vector< T > executeInParallel( std::size_t totalSize,
+        const std::function< std::vector< T >( std::size_t, std::size_t ) >& func );
+
+private:
+    /**
+     * Schedules tasks that cover [0, totalSize) in contiguous ranges.
+     * For i-th task, it calls runTask(startIdx, endIdx, taskIndex).
+     * Blocks until all tasks finish.
+     * Implemented in .cpp file with Folly, hidden from headers.
+     * Used as an internal helper for executeInParallel.
+     */
+    static void parallel_for_ranges_blocking( std::size_t totalSize, std::size_t numThreads,
+        std::size_t sizePerThread,
+        const std::function< void( std::size_t, std::size_t, std::size_t ) >& runTask );
 };
+
+template < size_t N >
+std::string ThresholdUtils::bytesToHexString( const std::array< uint8_t, N >& bytes ) {
+    std::stringstream ss;
+    ss << std::hex << std::setfill( '0' );
+
+    for ( uint8_t byte : bytes ) {
+        ss << std::setw( 2 ) << static_cast< int >( byte );  // Format each byte as 2-char hex
+    }
+
+    return ss.str();
+}
 
 
 template < size_t N >
@@ -202,95 +216,45 @@ std::array< uint8_t, N > ThresholdUtils::hexCStringToBytesArray( const char* hex
 }
 
 
-template < class T >
-std::string ThresholdUtils::fieldElementToString( const T& field_elem, int base ) {
-    mpz_class t;
+template < typename T >
+std::vector< T > ThresholdUtils::executeInParallel( std::size_t totalSize,
+    const std::function< std::vector< T >( std::size_t, std::size_t ) >& func ) {
+#ifdef EMSCRIPTEN
+    // single-threaded
+    return func( 0, totalSize );
+#else
+    const std::size_t sizePerThread =
+        ( totalSize + numThreads - 1 ) / ( numThreads ? numThreads : 1 );
 
-    field_elem.as_bigint().to_mpz( t.get_mpz_t() );
+    // Determine number of tasks (same chunking as before)
+    const std::size_t tasks = ( totalSize == 0 || sizePerThread == 0 ) ?
+                                  0 :
+                                  ( ( totalSize + sizePerThread - 1 ) / sizePerThread );
 
-    std::string output = t.get_str( base );
+    std::vector< std::vector< T > > chunks;
+    chunks.resize( tasks );  // preserve submission order
 
-    if ( base == libBLS::BASE_HEXA ) {
-        const std::size_t width = 64;
-        if ( output.length() < width ) {
-            output.insert( 0, width - output.length(), '0' );
-        }
+    parallel_for_ranges_blocking( totalSize, numThreads, sizePerThread,
+        [&]( std::size_t startIdx, std::size_t endIdx, std::size_t taskIndex ) {
+            // Same per-chunk logic: compute chunk via func(start,end)
+            chunks[taskIndex] = func( startIdx, endIdx );
+        } );
+
+    // Flatten results in submission order (equivalent to collectAll order)
+    std::vector< T > finalResults;
+    // Reserve is optional since total element count may equal totalSize, as in your code
+    finalResults.reserve( totalSize );
+    for ( auto& v : chunks ) {
+        finalResults.insert( finalResults.end(), std::make_move_iterator( v.begin() ),
+            std::make_move_iterator( v.end() ) );
     }
-
-    return output;
+    return finalResults;
+#endif
 }
 
-template < class T >
-std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > ThresholdUtils::fieldElementToBytesArray(
-    const T& field_elem ) {
-    mpz_class t;
-    field_elem.as_bigint().to_mpz( t.get_mpz_t() );
-
-    // Compute byte count (at least 1 byte)
-    size_t bit_len = mpz_sizeinbase( t.get_mpz_t(), 2 );
-    size_t byte_count = std::max< size_t >( 1, ( bit_len + 7 ) / 8 );
-
-    // Prepare output array (zero-initialized)
-    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > byte_array = {};
-
-    // Export into the least-significant end of the buffer
-    mpz_export( byte_array.data() + ( MAX_FIELD_ELEMENT_SIZE_BYTES - byte_count ), nullptr, 1, 1, 0,
-        0, t.get_mpz_t() );
-
-    return byte_array;
-}
-
-template < class T >
-std::vector< uint8_t > ThresholdUtils::fieldElementToBytes( const T& field_elem ) {
-    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > bytes =
-        fieldElementToBytesArray( field_elem );
-    std::vector< uint8_t > bytesVec( bytes.begin(), bytes.end() );
-    return bytesVec;
-}
-
-// Convert a 32-byte array back to a libff::alt_bn128_Fq field element
-template < class T >
-T ThresholdUtils::bytesToFieldElement(
-    const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& byte_array ) {
-    mpz_class t;
-
-    // Import the byte array into the mpz_t (in little-endian order)
-    mpz_import( t.get_mpz_t(), byte_array.size(), 1, 1, 0, 0, byte_array.data() );
-
-    // Convert the mpz_t back to a libff::alt_bn128_Fq field element
-    T field_elem( t.get_mpz_t() );
-
-    return field_elem;
-}
-
-// Converts the first 32 bytes from the vector into a field element
-template < class T >
-T ThresholdUtils::bytesToFieldElement( const std::vector< uint8_t >& byte_array ) {
-    if ( byte_array.size() < MAX_FIELD_ELEMENT_SIZE_BYTES ) {
-        throw ThresholdUtils::IncorrectInput( "Incorrect number of bytes in vector" );
-    }
-
-    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > bytes;
-    std::copy( byte_array.begin(), byte_array.end(), bytes.begin() );
-    return bytesToFieldElement< T >( bytes );
-}
-
-template < class T >
-bool ThresholdUtils::ValidateKey( const T& point ) {
-    return point.is_well_formed() && T::order() * point == T::zero();
-}
-
-template < class T >
-void ThresholdUtils::validatePointWithException( const T& point ) {
-    if ( point.is_zero() ) {
-        throw IncorrectInput( "Point is zero" );
-    }
-    if ( !point.is_well_formed() ) {
-        throw IncorrectInput( "Point is not well formed" );
-    }
-    if ( T::order() * point != T::zero() ) {
-        throw IncorrectInput( "Point is not on the group" );
-    }
+// Expose init() to libBLS users
+inline void init() {
+    ThresholdUtils::init();
 }
 
 }  // namespace libBLS

@@ -88,15 +88,15 @@ void Sign( const size_t t, const size_t n, std::istream& data_file, std::ostream
         }
     }
 
-    libff::alt_bn128_G1 hash = libBLS::ThresholdUtils::HashtoG1( hash_bytes_arr );
+    libBLS::algebra::G1Point hash = libBLS::algebra::G1Point::fromHash( *hash_bytes_arr );
 
     nlohmann::json hash_json;
     hash_json["message"] = message;
 
-    libff::alt_bn128_G1 common_signature;
+    libBLS::algebra::G1Point common_signature;
 
     if ( sign_all ) {
-        std::vector< libff::alt_bn128_Fr > secret_key( n );
+        std::vector< libBLS::algebra::FrScalar > secret_key( n );
 
         for ( size_t i = 0; i < n; ++i ) {
             nlohmann::json secret_key_file;
@@ -104,11 +104,11 @@ void Sign( const size_t t, const size_t n, std::istream& data_file, std::ostream
             std::ifstream infile( key + std::to_string( i ) + ".json" );
             infile >> secret_key_file;
 
-            secret_key[i] = libff::alt_bn128_Fr(
-                secret_key_file["insecureBLSPrivateKey"].get< std::string >().c_str() );
+            secret_key[i] = libBLS::algebra::FrScalar::fromString(
+                secret_key_file["insecureBLSPrivateKey"].get< std::string >(), libBLS::Base::DEC );
         }
 
-        std::vector< libff::alt_bn128_G1 > signature_shares( n );
+        std::vector< libBLS::algebra::G1Point > signature_shares( n );
         for ( size_t i = 0; i < n; ++i ) {
             signature_shares[i] = bls_instance.Signing( hash, secret_key[i] );
         }
@@ -118,35 +118,34 @@ void Sign( const size_t t, const size_t n, std::istream& data_file, std::ostream
             idx[i] = i + 1;
         }
 
-        std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
-            libBLS::ThresholdUtils::LagrangeCoeffs( idx, t );
+        std::vector< libBLS::algebra::FrScalar > lagrange_coeffs =
+            libBLS::algebra::lagrangeCoeffs( idx, t );
 
         common_signature = bls_instance.SignatureRecover( signature_shares, lagrange_coeffs );
     } else {
-        libff::alt_bn128_Fr secret_key;
+        libBLS::algebra::FrScalar secret_key;
 
         nlohmann::json secret_key_file;
 
         std::ifstream infile( key + std::to_string( idx ) + ".json" );
         infile >> secret_key_file;
 
-        secret_key = libff::alt_bn128_Fr(
-            secret_key_file["insecureBLSPrivateKey"].get< std::string >().c_str() );
+        secret_key = libBLS::algebra::FrScalar::fromString(
+            secret_key_file["insecureBLSPrivateKey"].get< std::string >().c_str(),
+            libBLS::Base::DEC );
 
         common_signature = bls_instance.Signing( hash, secret_key );
     }
 
-    common_signature.to_affine_coordinates();
+    common_signature.toAffineCoordinates();
 
     nlohmann::json signature;
     if ( idx >= 0 ) {
         signature["index"] = std::to_string( idx );
     }
 
-    signature["signature"]["X"] =
-        libBLS::ThresholdUtils::fieldElementToString( common_signature.X );
-    signature["signature"]["Y"] =
-        libBLS::ThresholdUtils::fieldElementToString( common_signature.Y );
+    signature["signature"]["X"] = common_signature.getX().toString( libBLS::Base::DEC );
+    signature["signature"]["Y"] = common_signature.getY().toString( libBLS::Base::DEC );
 
     std::ofstream outfile_h( "hash.json" );
     outfile_h << hash_json.dump( 4 ) << "\n";
@@ -159,6 +158,7 @@ int main( int argc, const char* argv[] ) {
     std::ostream* p_out = &std::cout;
     int r = 1;
     try {
+        libBLS::init();
         boost::program_options::options_description desc( "Options" );
         desc.add_options()( "help", "Show this help screen" )( "version", "Show version number" )(
             "t", boost::program_options::value< size_t >(), "Threshold" )(

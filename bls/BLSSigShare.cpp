@@ -28,48 +28,44 @@
 #include <stdlib.h>
 #include <string>
 
-std::shared_ptr< libff::alt_bn128_G1 > BLSSigShare::getSigShare() const {
-    CHECK( sigShare );
+namespace libBLS {
+
+const algebra::G1Point& BLSSigShare::getSigShare() const {
     return sigShare;
 }
 size_t BLSSigShare::getSignerIndex() const {
     return signerIndex;
 }
 
-std::shared_ptr< std::string > BLSSigShare::toString() {
-    if ( !sigShare->is_special() )
-        sigShare->to_affine_coordinates();
+std::string BLSSigShare::toString() {
+    sigShare.toAffineCoordinates();
     std::string ret = "";
-    ret += libBLS::ThresholdUtils::fieldElementToString( sigShare->X ) + ':' +
-           libBLS::ThresholdUtils::fieldElementToString( sigShare->Y ) + ':' + hint;
-
-    return std::make_shared< std::string >( ret );
+    // TODO - need to refactor this - uses .value
+    ret += sigShare.getX().toString( Base::DEC ) + ':' + sigShare.getY().toString( Base::DEC ) +
+           ':' + hint;
+    return ret;
 }
 
-BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _signerIndex,
+BLSSigShare::BLSSigShare( const std::string& _sigShare, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
-    libBLS::ThresholdUtils::initCurve();
+
     if ( _signerIndex == 0 ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Zero signer index" );
     }
 
-    if ( !_sigShare ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Null _sigShare" );
+
+    if ( _sigShare.size() < 10 ) {
+        throw libBLS::ThresholdUtils::IsNotWellFormed(
+            "Signature too short:" + std::to_string( _sigShare.size() ) );
     }
 
-
-    if ( _sigShare->size() < 10 ) {
+    if ( _sigShare.size() > BLS_MAX_SIG_LEN ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed(
-            "Signature too short:" + std::to_string( _sigShare->size() ) );
-    }
-
-    if ( _sigShare->size() > BLS_MAX_SIG_LEN ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed(
-            "Signature too long:" + std::to_string( _sigShare->size() ) );
+            "Signature too long:" + std::to_string( _sigShare.size() ) );
     }
 
 
@@ -86,29 +82,25 @@ BLSSigShare::BLSSigShare( std::shared_ptr< std::string > _sigShare, size_t _sign
         }
     }
 
-    libff::alt_bn128_Fq X( result->at( 0 ).c_str() );
-    libff::alt_bn128_Fq Y( result->at( 1 ).c_str() );
+    sigShare = algebra::G1Point( algebra::FqElement::fromString( result->at( 0 ), Base::DEC ),
+        algebra::FqElement::fromString( result->at( 1 ), Base::DEC ) );
 
-    sigShare = std::make_shared< libff::alt_bn128_G1 >( X, Y, libff::alt_bn128_Fq::one() );
     hint = result->at( 2 ) + ":" + result->at( 3 );
 
-    if ( !sigShare->is_well_formed() )
+    if ( !sigShare.isWellFormed() )
         throw libBLS::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
 }
 
-BLSSigShare::BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& _sigShare,
-    std::string& _hint, size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
+BLSSigShare::BLSSigShare( const algebra::G1Point& _sigShare, std::string& _hint,
+    size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
     : sigShare( _sigShare ),
       hint( _hint ),
       signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
-    libBLS::ThresholdUtils::initCurve();
     libBLS::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
-    if ( !_sigShare ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Null _s" );
-    }
-    if ( _sigShare->is_zero() ) {
+
+    if ( _sigShare.isIdentity() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Zero signature" );
     }
     if ( _signerIndex == 0 ) {
@@ -118,9 +110,11 @@ BLSSigShare::BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& _sigShar
     if ( _hint.length() == 0 || _hint.length() > 2 * BLS_MAX_COMPONENT_LEN ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Wrong BLS hint" );
     }
-    libBLS::ThresholdUtils::ParseHint( _hint );
 
-    if ( !_sigShare->is_well_formed() ) {
+    // TODO unused return value
+    algebra::parseHint( _hint );
+
+    if ( !_sigShare.isWellFormed() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
     }
 }
@@ -135,3 +129,5 @@ size_t BLSSigShare::getRequiredSigners() const {
 std::string BLSSigShare::getHint() const {
     return hint;
 }
+
+}  // namespace libBLS

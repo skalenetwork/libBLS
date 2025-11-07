@@ -41,7 +41,7 @@ void RecoverSignature( const size_t t, const size_t n, const std::vector< std::s
     libBLS::Bls bls_instance = libBLS::Bls( t, n );
 
     std::vector< size_t > idx( t );
-    std::vector< libff::alt_bn128_G1 > signature_shares( t );
+    std::vector< libBLS::algebra::G1Point > signature_shares( t );
 
     for ( size_t i = 0; i < t; ++i ) {
         std::ifstream data( input[i] );
@@ -52,27 +52,26 @@ void RecoverSignature( const size_t t, const size_t n, const std::vector< std::s
 
         idx[i] = stoi( signature["index"].get< std::string >() ) + 1;
 
-        libff::alt_bn128_G1 signature_share;
-        signature_share.X =
-            libff::alt_bn128_Fq( signature["signature"]["X"].get< std::string >().c_str() );
-        signature_share.Y =
-            libff::alt_bn128_Fq( signature["signature"]["Y"].get< std::string >().c_str() );
-        signature_share.Z = libff::alt_bn128_Fq::one();
+        libBLS::algebra::G1Point signature_share(
+            libBLS::algebra::FqElement::fromString(
+                signature["signature"]["X"].get< std::string >(), libBLS::Base::DEC ),
+            libBLS::algebra::FqElement::fromString(
+                signature["signature"]["Y"].get< std::string >(), libBLS::Base::DEC ) );
 
         signature_shares[i] = signature_share;
     }
 
-    std::vector< libff::alt_bn128_Fr > lagrange_coeffs =
-        libBLS::ThresholdUtils::LagrangeCoeffs( idx, t );
+    std::vector< libBLS::algebra::FrScalar > lagrange_coeffs =
+        libBLS::algebra::lagrangeCoeffs( idx, t );
 
-    libff::alt_bn128_G1 common_signature =
+    libBLS::algebra::G1Point common_signature =
         bls_instance.SignatureRecover( signature_shares, lagrange_coeffs );
-    common_signature.to_affine_coordinates();
+    common_signature.toAffineCoordinates();
 
     nlohmann::json outdata;
 
-    outdata["signature"]["X"] = libBLS::ThresholdUtils::fieldElementToString( common_signature.X );
-    outdata["signature"]["Y"] = libBLS::ThresholdUtils::fieldElementToString( common_signature.Y );
+    outdata["signature"]["X"] = common_signature.getX().toString( libBLS::Base::DEC );
+    outdata["signature"]["Y"] = common_signature.getY().toString( libBLS::Base::DEC );
 
     outfile << outdata.dump( 4 ) << '\n';
 }
@@ -81,6 +80,8 @@ int main( int argc, const char* argv[] ) {
     std::ostream* p_out = &std::cout;
     int r = 1;
     try {
+        libBLS::init();
+
         boost::program_options::options_description desc( "Options" );
         desc.add_options()( "help", "Show this help screen" )( "version", "Show version number" )(
             "t", boost::program_options::value< size_t >(), "Threshold" )(

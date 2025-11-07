@@ -26,30 +26,34 @@
 
 #include <bls/bls.h>
 
+namespace libBLS {
+
 class BLSSigShare;
 
 class BLSPublicKeyShare {
 private:
-    std::shared_ptr< libff::alt_bn128_G2 > publicKey;
+    algebra::G2Point publicKey;
     size_t requiredSigners;
     size_t totalSigners;
 
 public:
-    BLSPublicKeyShare( const std::shared_ptr< std::vector< std::string > >, size_t _requiredSigners,
-        size_t _totalSigners );
+    BLSPublicKeyShare(
+        const std::vector< std::string >& vec, size_t _requiredSigners, size_t _totalSigners );
 
     BLSPublicKeyShare(
-        const libff::alt_bn128_Fr& skey, size_t _requiredSigners, size_t _totalSigners );
+        const algebra::FrScalar& skey, size_t _requiredSigners, size_t _totalSigners );
 
-    std::shared_ptr< libff::alt_bn128_G2 > getPublicKey() const;
+    const algebra::G2Point& getPublicKey() const;
 
-    bool VerifySig( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
-        std::shared_ptr< BLSSigShare > sign_ptr, size_t _requiredSigners, size_t _totalSigners );
+    bool VerifySig( const std::array< uint8_t, 32 >& hash_ptr, const BLSSigShare& sign_ptr,
+        size_t _requiredSigners, size_t _totalSigners );
 
-    bool VerifySigWithHelper( std::shared_ptr< std::array< uint8_t, 32 > > hash_ptr,
-        std::shared_ptr< BLSSigShare > sign_ptr, size_t _requiredSigners, size_t _totalSigners );
+    bool VerifySigWithHelper( const std::array< uint8_t, 32 >& hash_ptr,
+        const BLSSigShare& sign_ptr, size_t _requiredSigners, size_t _totalSigners );
 
-    std::shared_ptr< std::vector< std::string > > toString();
+    std::vector< std::string > toString();
 };
+
+}  // namespace libBLS
 
 #endif  // LIBBLS_BLSPUBLICKEYSHARE_H

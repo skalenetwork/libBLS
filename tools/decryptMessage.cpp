@@ -43,7 +43,7 @@ int main( int argc, char* argv[] ) {
     std::string expectedMessage = argv[3];
     size_t keyIndexToKeep = std::stoul( argv[4] );
 
-    libBLS::ThresholdUtils::initCurve();
+    libBLS::init();
 
     auto encryptedDataBytes = libBLS::ThresholdUtils::hexCStringToBytes( encryptedData.c_str() );
 
@@ -58,7 +58,8 @@ int main( int argc, char* argv[] ) {
 
     libBLS::ThresholdEncryption::validateEncryption( aesKeyEncrypted );
 
-    libBLS::TEPrivateKeyShare privateKeyShare( libff::alt_bn128_Fr( secretKey.c_str() ), 1, 1, 1 );
+    libBLS::TEPrivateKeyShare privateKeyShare(
+        libBLS::algebra::FrScalar::fromString( secretKey, libBLS::Base::DEC ), 1, 1, 1 );
     libBLS::TEPublicKeyShare publicKeyShare( privateKeyShare );
 
     libBLS::TEDecryptionShare decryptionShare =

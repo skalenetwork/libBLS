@@ -44,11 +44,6 @@ protected:
 
 public:
     /**
-     * Initializes libff if it has not been initialized yet.
-     */
-    static void initializeIfNecessary();
-
-    /**
      * @brief Constructor for TEBase
      * @param _requiredSigners Number of signers required to decrypt
      * @param _totalSigners Total number of signers

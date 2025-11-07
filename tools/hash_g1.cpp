@@ -26,7 +26,6 @@
 #include <tools/utils.h>
 #include <boost/program_options.hpp>
 #include <fstream>
-#include <libff/common/profiling.hpp>
 #include <third_party/json.hpp>
 
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
@@ -37,8 +36,7 @@ static bool g_b_verbose_mode = false;
 static bool g_b_rehash = false;
 
 void hash_g1( const size_t t, const size_t n ) {
-    libff::inhibit_profiling_info = true;
-    libBLS::Bls bls_instance = libBLS::Bls( t, n );
+    libBLS::init();
 
     nlohmann::json hash_in;
 
@@ -61,22 +59,22 @@ void hash_g1( const size_t t, const size_t n ) {
         }
     }
 
-    std::pair< libff::alt_bn128_G1, std::string > p2vals;
-    p2vals = bls_instance.HashtoG1withHint( hash_bytes_arr );  // original, what we really need
+    std::pair< libBLS::algebra::G1Point, std::string > p2vals;
+    p2vals = libBLS::algebra::hashToG1withHint( *hash_bytes_arr );  // original, what we really need
 
     nlohmann::json joG1 = nlohmann::json::object();
     joG1["g1"] = nlohmann::json::object();
     joG1["g1"]["hashPoint"] = nlohmann::json::object();
-    joG1["g1"]["hashPoint"]["X"] = libBLS::ThresholdUtils::fieldElementToString( p2vals.first.X );
-    joG1["g1"]["hashPoint"]["Y"] = libBLS::ThresholdUtils::fieldElementToString( p2vals.first.Y );
+    joG1["g1"]["hashPoint"]["X"] = p2vals.first.getX().toString( libBLS::Base::DEC );
+    joG1["g1"]["hashPoint"]["Y"] = p2vals.first.getY().toString( libBLS::Base::DEC );
     joG1["g1"]["hint"] = p2vals.second;
 
     std::ofstream g1_file( "g1.json" );
     g1_file << joG1.dump() << "\n";
 
     if ( g_b_verbose_mode ) {
-        std::cout << "G1.x " << p2vals.first.X << '\n';
-        std::cout << "G1.y " << p2vals.first.Y << '\n';
+        std::cout << "G1.x " << p2vals.first.getX().asBackendType() << '\n';
+        std::cout << "G1.y " << p2vals.first.getY().asBackendType() << '\n';
         std::cout << "hint " << p2vals.second << '\n';
     }
 }
