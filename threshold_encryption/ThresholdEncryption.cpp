@@ -436,7 +436,7 @@ std::vector< bool > ThresholdEncryption::validateCombinedDecryptionBatchParallel
 
 
 std::vector< uint8_t > ThresholdEncryption::decrypt( const Ciphertext& _ciphertext,
-    const AES256Key& _aesKey, const std::optional< std::vector< uint8_t > > _associatedData ) {
+    const AES256Key& _aesKey, const std::optional< std::vector< uint8_t > >& _associatedData ) {
     // decipher & validate plaintext
     std::vector< uint8_t > data = decipherAESAndValidate( _ciphertext, _aesKey, _associatedData );
 

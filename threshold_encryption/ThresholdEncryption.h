@@ -205,7 +205,7 @@ public:
      * @return std::vector<uint8_t> The decrypted message apart from the random secret
      */
     static std::vector< uint8_t > decrypt( const Ciphertext& _ciphertext, const AES256Key& _aesKey,
-        std::optional< std::vector< uint8_t > > _associatedData = std::nullopt );
+        const std::optional< std::vector< uint8_t > >& _associatedData = std::nullopt );
 
     /**
      * @brief Validates the cyphertext and decrypts the message
