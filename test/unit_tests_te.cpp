@@ -102,6 +102,117 @@ BOOST_AUTO_TEST_CASE( wrongKey ) {
     BOOST_REQUIRE_THROW( bad_cipher.decrypt( ciphertext ), std::runtime_error );
 }
 
+BOOST_AUTO_TEST_CASE( AESWithAAD ) {
+    libBLS::ThresholdUtils::initRAND();
+    libBLS::AES256Key random_aes_key;
+    RAND_bytes( random_aes_key.data(), random_aes_key.size() );
+
+    const std::string message = "Hello, this is a test message for AAD encryption!";
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
+
+    // Create AAD (additional authenticated data)
+    std::vector< uint8_t > aad = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+
+    libBLS::AesGcmCipher cipher{ random_aes_key };
+
+    // Encrypt with AAD
+    auto ciphertext = cipher.encrypt( message_bytes, aad );
+
+    // Decrypt with same AAD - should succeed
+    auto decrypted_text = cipher.decrypt( ciphertext, aad );
+    BOOST_REQUIRE( decrypted_text == message_bytes );
+}
+
+BOOST_AUTO_TEST_CASE( AESWithWrongAAD ) {
+    libBLS::ThresholdUtils::initRAND();
+    libBLS::AES256Key random_aes_key;
+    RAND_bytes( random_aes_key.data(), random_aes_key.size() );
+
+    const std::string message = "Hello, this is a test message for AAD encryption!";
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
+
+    // Create AAD
+    std::vector< uint8_t > aad = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+    // Different AAD
+    std::vector< uint8_t > wrong_aad = { 0xFF, 0xFE, 0xFD, 0xFC };
+
+    libBLS::AesGcmCipher cipher{ random_aes_key };
+
+    // Encrypt with AAD
+    auto ciphertext = cipher.encrypt( message_bytes, aad );
+
+    // Decrypt with different AAD - should fail (authentication error)
+    BOOST_REQUIRE_THROW( cipher.decrypt( ciphertext, wrong_aad ), std::runtime_error );
+}
+
+BOOST_AUTO_TEST_CASE( AESWithMissingAAD ) {
+    libBLS::ThresholdUtils::initRAND();
+    libBLS::AES256Key random_aes_key;
+    RAND_bytes( random_aes_key.data(), random_aes_key.size() );
+
+    const std::string message = "Hello, this is a test message for AAD encryption!";
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
+
+    // Create AAD
+    std::vector< uint8_t > aad = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+
+    libBLS::AesGcmCipher cipher{ random_aes_key };
+
+    // Encrypt with AAD
+    auto ciphertext = cipher.encrypt( message_bytes, aad );
+
+    // Decrypt without AAD (nullopt) - should fail (authentication error)
+    BOOST_REQUIRE_THROW( cipher.decrypt( ciphertext, std::nullopt ), std::runtime_error );
+}
+
+BOOST_AUTO_TEST_CASE( AESWithoutAAD_BackwardCompatibility ) {
+    libBLS::ThresholdUtils::initRAND();
+    libBLS::AES256Key random_aes_key;
+    RAND_bytes( random_aes_key.data(), random_aes_key.size() );
+
+    const std::string message = "Hello, this is a test message without AAD!";
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
+
+    libBLS::AesGcmCipher cipher{ random_aes_key };
+
+    // Encrypt without AAD (backward compatible)
+    auto ciphertext = cipher.encrypt( message_bytes );
+
+    // Decrypt without AAD - should succeed
+    auto decrypted_text = cipher.decrypt( ciphertext );
+    BOOST_REQUIRE( decrypted_text == message_bytes );
+
+    // Encrypt without AAD, try to decrypt with AAD - should fail
+    auto ciphertext2 = cipher.encrypt( message_bytes, std::nullopt );
+    std::vector< uint8_t > fake_aad = { 0x01, 0x02, 0x03 };
+    BOOST_REQUIRE_THROW( cipher.decrypt( ciphertext2, fake_aad ), std::runtime_error );
+}
+
+BOOST_AUTO_TEST_CASE( AESWithEmptyAAD ) {
+    libBLS::ThresholdUtils::initRAND();
+    libBLS::AES256Key random_aes_key;
+    RAND_bytes( random_aes_key.data(), random_aes_key.size() );
+
+    const std::string message = "Hello, this is a test message with empty AAD!";
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
+
+    // Empty AAD (different from nullopt)
+    std::vector< uint8_t > empty_aad = {};
+
+    libBLS::AesGcmCipher cipher{ random_aes_key };
+
+    // Encrypt with empty AAD
+    auto ciphertext = cipher.encrypt( message_bytes, empty_aad );
+
+    // Decrypt with empty AAD - should succeed
+    auto decrypted_text = cipher.decrypt( ciphertext, empty_aad );
+    BOOST_REQUIRE( decrypted_text == message_bytes );
+
+    // Empty AAD should behave the same as nullopt
+    auto decrypted_text2 = cipher.decrypt( ciphertext, std::nullopt );
+    BOOST_REQUIRE( decrypted_text2 == message_bytes );
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 
@@ -315,6 +426,86 @@ BOOST_AUTO_TEST_CASE( SimpleEncryptionWithAES ) {
         message_bytes.insert( message_bytes.end(), rand_secret.begin(), rand_secret.end() );
 
         BOOST_REQUIRE( plaintext == message_bytes );
+    }
+}
+
+BOOST_AUTO_TEST_CASE( EncryptionWithAES_AAD ) {
+    libBLS::TE te_instance = libBLS::TE( 1, 1 );
+
+    std::string message = "Hello, SKALE users! This is a test with AAD!";
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
+
+    // AAD that binds the ciphertext to a specific context (e.g., contract address)
+    std::vector< uint8_t > aad = { 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE };
+
+    libBLS::algebra::FrScalar secret_key = libBLS::algebra::FrScalar::random();
+    libBLS::algebra::G2Point public_key = secret_key * libBLS::algebra::G2Point::generator();
+
+    // Encrypt with AAD
+    libBLS::CipherResult ciphertext_with_aes =
+        te_instance.encryptWithAES( message_bytes, public_key, aad );
+
+    auto encrypted_message = ciphertext_with_aes.ciphertext->getData();
+
+    for ( const auto& cipheredKey : ciphertext_with_aes.ciphertext->getKeys() ) {
+        libBLS::algebra::G2Point decryption_share =
+            te_instance.getDecryptionShare( cipheredKey, secret_key );
+
+        BOOST_REQUIRE( te_instance.Verify( cipheredKey, decryption_share, public_key ) );
+
+        std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares;
+        shares.push_back( std::make_pair( decryption_share, size_t( 1 ) ) );
+
+        libBLS::AES256Key decrypted_aes_key = te_instance.CombineShares( cipheredKey, shares );
+
+        // Decrypt with the same AAD - should succeed
+        libBLS::AesGcmCipher aesGcmCipher{ decrypted_aes_key };
+        std::vector< uint8_t > plaintext = aesGcmCipher.decrypt( encrypted_message, aad );
+
+        // Append random secret to end of original message for comparison
+        libBLS::RandSecret rand_secret = ciphertext_with_aes.random_secret;
+        std::vector< uint8_t > expected_message = message_bytes;
+        expected_message.insert( expected_message.end(), rand_secret.begin(), rand_secret.end() );
+
+        BOOST_REQUIRE( plaintext == expected_message );
+    }
+}
+
+BOOST_AUTO_TEST_CASE( EncryptionWithAES_WrongAAD ) {
+    libBLS::TE te_instance = libBLS::TE( 1, 1 );
+
+    std::string message = "Hello, SKALE users! This is a test with AAD!";
+    std::vector< uint8_t > message_bytes( message.begin(), message.end() );
+
+    // AAD used for encryption
+    std::vector< uint8_t > aad = { 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE };
+    // Wrong AAD for decryption
+    std::vector< uint8_t > wrong_aad = { 0x01, 0x02, 0x03, 0x04 };
+
+    libBLS::algebra::FrScalar secret_key = libBLS::algebra::FrScalar::random();
+    libBLS::algebra::G2Point public_key = secret_key * libBLS::algebra::G2Point::generator();
+
+    // Encrypt with AAD
+    libBLS::CipherResult ciphertext_with_aes =
+        te_instance.encryptWithAES( message_bytes, public_key, aad );
+
+    auto encrypted_message = ciphertext_with_aes.ciphertext->getData();
+
+    for ( const auto& cipheredKey : ciphertext_with_aes.ciphertext->getKeys() ) {
+        libBLS::algebra::G2Point decryption_share =
+            te_instance.getDecryptionShare( cipheredKey, secret_key );
+
+        std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares;
+        shares.push_back( std::make_pair( decryption_share, size_t( 1 ) ) );
+
+        libBLS::AES256Key decrypted_aes_key = te_instance.CombineShares( cipheredKey, shares );
+
+        // Decrypt with wrong AAD - should fail
+        libBLS::AesGcmCipher aesGcmCipher{ decrypted_aes_key };
+        BOOST_REQUIRE_THROW( aesGcmCipher.decrypt( encrypted_message, wrong_aad ), std::runtime_error );
+
+        // Decrypt without AAD - should also fail
+        BOOST_REQUIRE_THROW( aesGcmCipher.decrypt( encrypted_message, std::nullopt ), std::runtime_error );
     }
 }
 

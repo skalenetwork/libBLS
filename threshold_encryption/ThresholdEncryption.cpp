@@ -103,13 +103,15 @@ std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
 
 
 Ciphertext ThresholdEncryption::encrypt(
-    const std::vector< uint8_t >& _message, const TEPublicKey& _commonPublic ) {
-    return encrypt( _message, std::vector< TEPublicKey >{ _commonPublic } );
+    const std::vector< uint8_t >& _message, const TEPublicKey& _commonPublic,
+    const std::optional< std::vector< uint8_t > >& _associatedData ) {
+    return encrypt( _message, std::vector< TEPublicKey >{ _commonPublic }, _associatedData );
 }
 
 
 Ciphertext ThresholdEncryption::encrypt(
-    const std::vector< uint8_t >& _message, const std::vector< TEPublicKey >& _commonPublic ) {
+    const std::vector< uint8_t >& _message, const std::vector< TEPublicKey >& _commonPublic,
+    const std::optional< std::vector< uint8_t > >& _associatedData ) {
     if ( _commonPublic.size() == 0 || _commonPublic.size() > 2 )
         throw ThresholdUtils::IncorrectInput(
             "Must provide exactly 1 or 2 public keys for encryption" );
@@ -120,7 +122,7 @@ Ciphertext ThresholdEncryption::encrypt(
         rawPublicKeys.push_back( publicKey.getPublicKeyRaw() );
     }
 
-    CipherResult cipher = TE::encryptWithAES( _message, rawPublicKeys );
+    CipherResult cipher = TE::encryptWithAES( _message, rawPublicKeys, _associatedData );
 
     if ( !cipher.ciphertext ) {
         throw ThresholdUtils::IsNotWellFormed( "ciphertext is null" );
@@ -434,9 +436,10 @@ std::vector< bool > ThresholdEncryption::validateCombinedDecryptionBatchParallel
 
 
 std::vector< uint8_t > ThresholdEncryption::decrypt(
-    const Ciphertext& _ciphertext, const AES256Key& _aesKey ) {
+    const Ciphertext& _ciphertext, const AES256Key& _aesKey,
+    const std::optional< std::vector< uint8_t > > _associatedData ) {
     // decipher & validate plaintext
-    std::vector< uint8_t > data = decipherAESAndValidate( _ciphertext, _aesKey );
+    std::vector< uint8_t > data = decipherAESAndValidate( _ciphertext, _aesKey, _associatedData );
 
     // safe - size of decipheredMessage was already validated
     data.resize( data.size() - RANDOM_SECRET_SIZE_BYTES );
@@ -491,9 +494,10 @@ void ThresholdEncryption::validateDecipheredMessage(
 }
 
 std::vector< uint8_t > ThresholdEncryption::decipherAESAndValidate(
-    const Ciphertext& _ciphertext, const AES256Key& key ) {
+    const Ciphertext& _ciphertext, const AES256Key& key,
+    const std::optional< std::vector< uint8_t > >& _associatedData ) {
     AesGcmCipher aesGcmCipher{ key };
-    std::vector< uint8_t > data = aesGcmCipher.decrypt( _ciphertext.getData() );
+    std::vector< uint8_t > data = aesGcmCipher.decrypt( _ciphertext.getData(), _associatedData );
 
     // validate output
     size_t cipherSize = _ciphertext.getData().size();

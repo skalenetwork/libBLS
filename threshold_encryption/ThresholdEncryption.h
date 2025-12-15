@@ -30,6 +30,7 @@
 #include "threshold_encryption.h"
 #include <tools/utils.h>
 #include <cstddef>
+#include <optional>
 
 namespace libBLS {
 
@@ -57,9 +58,11 @@ public:
      * @return Ciphertext - Struct containing TE(AESKey) and AESKey(message)
      */
     static Ciphertext encrypt(
-        const std::vector< uint8_t >& _message, const TEPublicKey& _commonPublic );
+        const std::vector< uint8_t >& _message, const TEPublicKey& _commonPublic,
+        const std::optional< std::vector< uint8_t > >& _associatedData = std::nullopt );
     static Ciphertext encrypt(
-        const std::vector< uint8_t >& _message, const std::vector< TEPublicKey >& _commonPublic );
+        const std::vector< uint8_t >& _message, const std::vector< TEPublicKey >& _commonPublic,
+        const std::optional< std::vector< uint8_t > >& _associatedData = std::nullopt );
 
     /**
      * @brief Validates the TE ciphered key. SIngle threaded.
@@ -198,10 +201,12 @@ public:
      *
      * @param cyphertext The encrypted message
      * @param aesKey The AES key
+     * @param associatedData The associated data used for encryption
      * @return std::vector<uint8_t> The decrypted message apart from the random secret
      */
     static std::vector< uint8_t > decrypt(
-        const Ciphertext& _ciphertext, const AES256Key& _aesKey );
+        const Ciphertext& _ciphertext, const AES256Key& _aesKey, 
+        std::optional<std::vector< uint8_t >> _associatedData = std::nullopt );
 
     /**
      * @brief Validates the cyphertext and decrypts the message
@@ -248,7 +253,8 @@ private:
      * Helper function
      */
     static std::vector< uint8_t > decipherAESAndValidate(
-        const Ciphertext& _ciphertext, const AES256Key& key );
+        const Ciphertext& _ciphertext, const AES256Key& key,
+        const std::optional< std::vector< uint8_t > >& _associatedData = std::nullopt );
 };
 
 }  // namespace libBLS
