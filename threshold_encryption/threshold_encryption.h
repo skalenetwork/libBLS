@@ -404,8 +404,8 @@ public:
     static CipheredKeyResult getCiphertext(
         const AES256Key& key, const std::vector< algebra::G2Point >& commonPublic );
 
-    static CipherResult encryptWithAES(
-        const std::vector< uint8_t >& message, const algebra::G2Point& commonPublic,
+    static CipherResult encryptWithAES( const std::vector< uint8_t >& message,
+        const algebra::G2Point& commonPublic,
         const std::optional< std::vector< uint8_t > >& associatedData = std::nullopt );
     static CipherResult encryptWithAES( const std::vector< uint8_t >& message,
         const std::vector< algebra::G2Point >& commonPublic,

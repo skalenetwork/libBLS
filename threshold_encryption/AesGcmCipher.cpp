@@ -27,8 +27,8 @@
 
 namespace libBLS {
 
-std::vector< uint8_t > AesGcmCipher::encrypt( const std::vector< uint8_t >& plaintext,
-    const std::optional< std::vector< uint8_t > >& aad ) {
+std::vector< uint8_t > AesGcmCipher::encrypt(
+    const std::vector< uint8_t >& plaintext, const std::optional< std::vector< uint8_t > >& aad ) {
     initAES();
 
     // Make sure there is enough space for: IV + plaintext + padding
@@ -65,8 +65,8 @@ std::vector< uint8_t > AesGcmCipher::encrypt( const std::vector< uint8_t >& plai
     // Process AAD if provided (authenticated but not encrypted)
     if ( aad.has_value() && !aad->empty() ) {
         int aad_len = 0;
-        check( EVP_EncryptUpdate( e_ctx.get(), nullptr, &aad_len,
-                   aad->data(), static_cast< int >( aad->size() ) ),
+        check( EVP_EncryptUpdate(
+                   e_ctx.get(), nullptr, &aad_len, aad->data(), static_cast< int >( aad->size() ) ),
             "Failed to process AAD" );
     }
 
@@ -94,8 +94,8 @@ std::vector< uint8_t > AesGcmCipher::encrypt( const std::vector< uint8_t >& plai
     return std::vector< uint8_t >( output );
 }
 
-std::vector< uint8_t > AesGcmCipher::decrypt( const std::vector< uint8_t >& ciphertext,
-    const std::optional< std::vector< uint8_t > >& aad ) {
+std::vector< uint8_t > AesGcmCipher::decrypt(
+    const std::vector< uint8_t >& ciphertext, const std::optional< std::vector< uint8_t > >& aad ) {
     initAES();
 
     constexpr size_t meta = AES_GCM_IV_SIZE + AES_GCM_TAG_SIZE;
@@ -133,8 +133,8 @@ std::vector< uint8_t > AesGcmCipher::decrypt( const std::vector< uint8_t >& ciph
     // Process AAD if provided (must match what was used during encryption)
     if ( aad.has_value() && !aad->empty() ) {
         int aad_len = 0;
-        check( EVP_DecryptUpdate( d_ctx.get(), nullptr, &aad_len,
-                   aad->data(), static_cast< int >( aad->size() ) ),
+        check( EVP_DecryptUpdate(
+                   d_ctx.get(), nullptr, &aad_len, aad->data(), static_cast< int >( aad->size() ) ),
             "Failed to process AAD" );
     }
 

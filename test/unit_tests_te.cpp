@@ -502,10 +502,12 @@ BOOST_AUTO_TEST_CASE( EncryptionWithAES_WrongAAD ) {
 
         // Decrypt with wrong AAD - should fail
         libBLS::AesGcmCipher aesGcmCipher{ decrypted_aes_key };
-        BOOST_REQUIRE_THROW( aesGcmCipher.decrypt( encrypted_message, wrong_aad ), std::runtime_error );
+        BOOST_REQUIRE_THROW(
+            aesGcmCipher.decrypt( encrypted_message, wrong_aad ), std::runtime_error );
 
         // Decrypt without AAD - should also fail
-        BOOST_REQUIRE_THROW( aesGcmCipher.decrypt( encrypted_message, std::nullopt ), std::runtime_error );
+        BOOST_REQUIRE_THROW(
+            aesGcmCipher.decrypt( encrypted_message, std::nullopt ), std::runtime_error );
     }
 }
 

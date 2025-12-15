@@ -144,14 +144,15 @@ CipheredKeyResult TE::getCiphertext(
  *
  * @note Initializes AES before encryption
  */
-CipherResult TE::encryptWithAES(
-    const std::vector< uint8_t >& message, const algebra::G2Point& commonPublic,
+CipherResult TE::encryptWithAES( const std::vector< uint8_t >& message,
+    const algebra::G2Point& commonPublic,
     const std::optional< std::vector< uint8_t > >& associatedData ) {
-    return encryptWithAES( message, std::vector< algebra::G2Point >{ commonPublic }, associatedData );
+    return encryptWithAES(
+        message, std::vector< algebra::G2Point >{ commonPublic }, associatedData );
 }
 
-CipherResult TE::encryptWithAES(
-    const std::vector< uint8_t >& message, const std::vector< algebra::G2Point >& commonPublic,
+CipherResult TE::encryptWithAES( const std::vector< uint8_t >& message,
+    const std::vector< algebra::G2Point >& commonPublic,
     const std::optional< std::vector< uint8_t > >& associatedData ) {
     // create random AES key
     AES256Key key;

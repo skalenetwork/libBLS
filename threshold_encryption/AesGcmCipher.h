@@ -77,7 +77,8 @@ public:
 
     /// @brief Decrypts the given ciphertext using AES-256-GCM
     /// @param ciphertext The data to decrypt
-    /// @param aad Optional additional authenticated data (must match what was used during encryption)
+    /// @param aad Optional additional authenticated data (must match what was used during
+    /// encryption)
     /// @return Decrypted message
     std::vector< uint8_t > decrypt( const std::vector< uint8_t >& ciphertext,
         const std::optional< std::vector< uint8_t > >& aad = std::nullopt );

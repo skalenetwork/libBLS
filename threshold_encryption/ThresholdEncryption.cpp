@@ -102,15 +102,15 @@ std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
 }
 
 
-Ciphertext ThresholdEncryption::encrypt(
-    const std::vector< uint8_t >& _message, const TEPublicKey& _commonPublic,
+Ciphertext ThresholdEncryption::encrypt( const std::vector< uint8_t >& _message,
+    const TEPublicKey& _commonPublic,
     const std::optional< std::vector< uint8_t > >& _associatedData ) {
     return encrypt( _message, std::vector< TEPublicKey >{ _commonPublic }, _associatedData );
 }
 
 
-Ciphertext ThresholdEncryption::encrypt(
-    const std::vector< uint8_t >& _message, const std::vector< TEPublicKey >& _commonPublic,
+Ciphertext ThresholdEncryption::encrypt( const std::vector< uint8_t >& _message,
+    const std::vector< TEPublicKey >& _commonPublic,
     const std::optional< std::vector< uint8_t > >& _associatedData ) {
     if ( _commonPublic.size() == 0 || _commonPublic.size() > 2 )
         throw ThresholdUtils::IncorrectInput(
@@ -435,9 +435,8 @@ std::vector< bool > ThresholdEncryption::validateCombinedDecryptionBatchParallel
 }
 
 
-std::vector< uint8_t > ThresholdEncryption::decrypt(
-    const Ciphertext& _ciphertext, const AES256Key& _aesKey,
-    const std::optional< std::vector< uint8_t > > _associatedData ) {
+std::vector< uint8_t > ThresholdEncryption::decrypt( const Ciphertext& _ciphertext,
+    const AES256Key& _aesKey, const std::optional< std::vector< uint8_t > > _associatedData ) {
     // decipher & validate plaintext
     std::vector< uint8_t > data = decipherAESAndValidate( _ciphertext, _aesKey, _associatedData );
 
@@ -493,9 +492,8 @@ void ThresholdEncryption::validateDecipheredMessage(
     }
 }
 
-std::vector< uint8_t > ThresholdEncryption::decipherAESAndValidate(
-    const Ciphertext& _ciphertext, const AES256Key& key,
-    const std::optional< std::vector< uint8_t > >& _associatedData ) {
+std::vector< uint8_t > ThresholdEncryption::decipherAESAndValidate( const Ciphertext& _ciphertext,
+    const AES256Key& key, const std::optional< std::vector< uint8_t > >& _associatedData ) {
     AesGcmCipher aesGcmCipher{ key };
     std::vector< uint8_t > data = aesGcmCipher.decrypt( _ciphertext.getData(), _associatedData );
 

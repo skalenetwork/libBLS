@@ -57,11 +57,11 @@ public:
      * Public key is validated on constructor. Thus it is assumed to be always valid.
      * @return Ciphertext - Struct containing TE(AESKey) and AESKey(message)
      */
-    static Ciphertext encrypt(
-        const std::vector< uint8_t >& _message, const TEPublicKey& _commonPublic,
+    static Ciphertext encrypt( const std::vector< uint8_t >& _message,
+        const TEPublicKey& _commonPublic,
         const std::optional< std::vector< uint8_t > >& _associatedData = std::nullopt );
-    static Ciphertext encrypt(
-        const std::vector< uint8_t >& _message, const std::vector< TEPublicKey >& _commonPublic,
+    static Ciphertext encrypt( const std::vector< uint8_t >& _message,
+        const std::vector< TEPublicKey >& _commonPublic,
         const std::optional< std::vector< uint8_t > >& _associatedData = std::nullopt );
 
     /**
@@ -204,9 +204,8 @@ public:
      * @param associatedData The associated data used for encryption
      * @return std::vector<uint8_t> The decrypted message apart from the random secret
      */
-    static std::vector< uint8_t > decrypt(
-        const Ciphertext& _ciphertext, const AES256Key& _aesKey, 
-        std::optional<std::vector< uint8_t >> _associatedData = std::nullopt );
+    static std::vector< uint8_t > decrypt( const Ciphertext& _ciphertext, const AES256Key& _aesKey,
+        std::optional< std::vector< uint8_t > > _associatedData = std::nullopt );
 
     /**
      * @brief Validates the cyphertext and decrypts the message
@@ -252,8 +251,8 @@ private:
      *
      * Helper function
      */
-    static std::vector< uint8_t > decipherAESAndValidate(
-        const Ciphertext& _ciphertext, const AES256Key& key,
+    static std::vector< uint8_t > decipherAESAndValidate( const Ciphertext& _ciphertext,
+        const AES256Key& key,
         const std::optional< std::vector< uint8_t > >& _associatedData = std::nullopt );
 };
 

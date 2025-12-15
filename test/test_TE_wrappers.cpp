@@ -90,7 +90,8 @@ BOOST_AUTO_TEST_CASE( TEEncryptDecryptWithAAD ) {
     std::vector< uint8_t > aad = { 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE };
 
     // Encrypt with AAD
-    libBLS::Ciphertext cypher = libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, aad );
+    libBLS::Ciphertext cypher =
+        libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, aad );
 
     std::vector< libBLS::TEPublicKeyShare > public_key_shares;
     for ( size_t i = 0; i < numAll; i++ ) {
@@ -134,7 +135,8 @@ BOOST_AUTO_TEST_CASE( TEEncryptDecryptWithWrongAAD ) {
     std::vector< uint8_t > wrong_aad = { 0x01, 0x02, 0x03, 0x04 };
 
     // Encrypt with AAD
-    libBLS::Ciphertext cypher = libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, aad );
+    libBLS::Ciphertext cypher =
+        libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, aad );
 
     std::vector< libBLS::TEPublicKeyShare > public_key_shares;
     for ( size_t i = 0; i < numAll; i++ ) {
