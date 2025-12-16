@@ -158,7 +158,16 @@ jobs:
         run: |
           export SGX_WALLET_TAG=develop-latest
           ./scripts/run_sgx_simulator.sh
-          sleep 60
+          echo "Waiting for SGX wallet to be ready..."
+          for i in {1..60}; do
+            if curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:1029 2>/dev/null | grep -q "405\|200"; then
+              echo "SGX wallet is ready after $((i*2)) seconds"
+              break
+            fi
+            echo "Attempt $i: SGX wallet not ready yet..."
+            sleep 2
+          done
+          docker logs sgx_simulator 2>&1 | tail -20 || true
       - name: Run tests
         run: |
           cp scripts/parameters.json build/
