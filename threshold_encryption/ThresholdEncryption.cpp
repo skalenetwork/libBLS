@@ -362,10 +362,12 @@ std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatc
     return result;
 }
 
-void ThresholdEncryption::validateCombinedDecryption(
-    const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
+void ThresholdEncryption::validateCombinedDecryption( const Ciphertext& _ciphertext,
+    const AES256Key& _aesKey, const TEPublicKey& _publicKey,
+    const std::optional< std::vector< uint8_t > >& _associatedData ) {
     // decipher & validate plaintext
-    std::vector< uint8_t > decipheredMessage = decipherAESAndValidate( _ciphertext, _aesKey );
+    std::vector< uint8_t > decipheredMessage =
+        decipherAESAndValidate( _ciphertext, _aesKey, _associatedData );
 
     validateDecipheredMessage( decipheredMessage, _ciphertext, _aesKey, _publicKey );
 }
@@ -445,10 +447,12 @@ std::vector< uint8_t > ThresholdEncryption::decrypt( const Ciphertext& _cipherte
     return data;
 }
 
-std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt(
-    const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey ) {
+std::vector< uint8_t > ThresholdEncryption::validateAndDecrypt( const Ciphertext& _ciphertext,
+    const AES256Key& _aesKey, const TEPublicKey& _publicKey,
+    const std::optional< std::vector< uint8_t > >& _associatedData ) {
     // decipher & validate plaintext
-    std::vector< uint8_t > decipheredMessage = decipherAESAndValidate( _ciphertext, _aesKey );
+    std::vector< uint8_t > decipheredMessage =
+        decipherAESAndValidate( _ciphertext, _aesKey, _associatedData );
 
     validateDecipheredMessage( decipheredMessage, _ciphertext, _aesKey, _publicKey );
 

@@ -180,8 +180,9 @@ public:
      * @throws runtime_exception If the decryption using the AES fails (should only happen if the
      * key is tampered)
      */
-    static void validateCombinedDecryption(
-        const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey );
+    static void validateCombinedDecryption( const Ciphertext& _ciphertext, const AES256Key& _aesKey,
+        const TEPublicKey& _publicKey,
+        const std::optional< std::vector< uint8_t > >& _associatedData = std::nullopt );
 
     static std::vector< bool > validateCombinedDecryptionBatch(
         const std::vector< Ciphertext >& _ciphertexts, const std::vector< AES256Key >& _aesKeys,
@@ -212,8 +213,9 @@ public:
      * Same as calling `validateCombinedDecryption` and `decrypt` in sequence,
      * but avoids deciphering twice - more performant alternative
      */
-    static std::vector< uint8_t > validateAndDecrypt(
-        const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey );
+    static std::vector< uint8_t > validateAndDecrypt( const Ciphertext& _ciphertext,
+        const AES256Key& _aesKey, const TEPublicKey& _publicKey,
+        const std::optional< std::vector< uint8_t > >& _associatedData = std::nullopt );
 
     /**
      * @brief validates _aesKey against the one stored in _cyphertext
