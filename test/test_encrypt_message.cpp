@@ -63,14 +63,19 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
         std::string str = libBLS::ThresholdUtils::bytesToHexString( data );
         const char* dataStr = str.c_str();
 
+        std::string additionalAuthenticatedDataStr = "additionalAuthenticatedData";
+        const char* additionalAuthenticatedDataStrC = additionalAuthenticatedDataStr.c_str();
+        std::vector< uint8_t > additionalAuthenticatedData =
+            libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataStrC );
+
         // call encrypt message
-        const char* cipheredMessage = encryptMessage( dataStr, pKeyStr.c_str() );
+        const char* cipheredMessage = encryptMessage( dataStr, pKeyStr.c_str(), additionalAuthenticatedDataStrC );
         std::vector< uint8_t > cipheredMessageBytesActual =
             libBLS::ThresholdUtils::hexCStringToBytes( cipheredMessage );
 
         // encrypt message using libBLS
         libBLS::TEPublicKey publicKey( pKeyStr, libBLS::Base::HEXA );
-        libBLS::Ciphertext ciphertext = libBLS::ThresholdEncryption::encrypt( data, publicKey );
+        libBLS::Ciphertext ciphertext = libBLS::ThresholdEncryption::encrypt( data, publicKey, additionalAuthenticatedData );
         std::vector< uint8_t > cipheredMessageBytesTarget = ciphertext.toBytes();
 
         // cannot compare their contents since each has a different random secret, which results
@@ -95,7 +100,7 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
             libBLS::ThresholdEncryption::validateCombinedDecryption(
                 cipheredMessageObj, key_deciphered, keys.commonPublic.getPublicKeyRaw() );
             std::vector< uint8_t > decipheredMsg =
-                libBLS::ThresholdEncryption::decrypt( cipheredMessageObj, key_deciphered );
+                libBLS::ThresholdEncryption::decrypt( cipheredMessageObj, key_deciphered, additionalAuthenticatedData );
 
             BOOST_REQUIRE( decipheredMsg == data );
         }
@@ -125,9 +130,14 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
             publicKeysStr[j] = pKeyStr;
         }
 
+        std::string additionalAuthenticatedDataStr = "additionalAuthenticatedData";
+        const char* additionalAuthenticatedDataStrC = additionalAuthenticatedDataStr.c_str();
+        std::vector< uint8_t > additionalAuthenticatedData =
+            libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataStrC );
+
         // call encrypt message
         const char* cipheredMessage =
-            encryptMessageDualKey( dataStr, publicKeysStr[0].c_str(), publicKeysStr[1].c_str() );
+            encryptMessageDualKey( dataStr, publicKeysStr[0].c_str(), publicKeysStr[1].c_str(), additionalAuthenticatedDataStrC );
         std::vector< uint8_t > cipheredMessageBytesActual =
             libBLS::ThresholdUtils::hexCStringToBytes( cipheredMessage );
 
@@ -137,7 +147,7 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
             commonPublicKeys.push_back( libBLS::TEPublicKey( publicKey, libBLS::Base::HEXA ) );
         }
         libBLS::Ciphertext ciphertext =
-            libBLS::ThresholdEncryption::encrypt( data, commonPublicKeys );
+            libBLS::ThresholdEncryption::encrypt( data, commonPublicKeys, additionalAuthenticatedData );
         std::vector< uint8_t > cipheredMessageBytesTarget = ciphertext.toBytes();
 
         // cannot compare their contents since each has a different random secret, which results
@@ -165,7 +175,7 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
             libBLS::ThresholdEncryption::validateCombinedDecryption(
                 tempCipheredMessage, key_deciphered, keys[k].commonPublic.getPublicKeyRaw() );
             std::vector< uint8_t > decipheredMsg =
-                libBLS::ThresholdEncryption::decrypt( tempCipheredMessage, key_deciphered );
+                libBLS::ThresholdEncryption::decrypt( tempCipheredMessage, key_deciphered, additionalAuthenticatedData );
 
             BOOST_REQUIRE( decipheredMsg == data );
 
