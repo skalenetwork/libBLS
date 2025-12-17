@@ -64,8 +64,8 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
         const char* dataStr = str.c_str();
 
         std::vector< uint8_t > additionalAuthenticatedData = { 'a', 'd', 'd', 'i', 't', 'i', 'o',
-            'n', 'a', 'l', 'A', 'u', 't', 'h', 'e', 'n', 't', 'i', 'c', 'a', 't', 'e', 'd', 'D', 'a',
-            't', 'a' };
+            'n', 'a', 'l', 'A', 'u', 't', 'h', 'e', 'n', 't', 'i', 'c', 'a', 't', 'e', 'd', 'D',
+            'a', 't', 'a' };
         std::string additionalAuthenticatedDataStr =
             libBLS::ThresholdUtils::bytesToHexString( additionalAuthenticatedData );
         const char* additionalAuthenticatedDataStrC = additionalAuthenticatedDataStr.c_str();
@@ -135,8 +135,8 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
         }
 
         std::vector< uint8_t > additionalAuthenticatedData = { 'a', 'd', 'd', 'i', 't', 'i', 'o',
-            'n', 'a', 'l', 'A', 'u', 't', 'h', 'e', 'n', 't', 'i', 'c', 'a', 't', 'e', 'd', 'D', 'a',
-            't', 'a' };
+            'n', 'a', 'l', 'A', 'u', 't', 'h', 'e', 'n', 't', 'i', 'c', 'a', 't', 'e', 'd', 'D',
+            'a', 't', 'a' };
         std::string additionalAuthenticatedDataStr =
             libBLS::ThresholdUtils::bytesToHexString( additionalAuthenticatedData );
         const char* additionalAuthenticatedDataStrC = additionalAuthenticatedDataStr.c_str();
@@ -179,7 +179,8 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
             libBLS::Ciphertext tempCipheredMessage(
                 cipheredMessageObj.getKeys()[k], cipheredMessageObj.getData() );
             libBLS::ThresholdEncryption::validateCombinedDecryption( tempCipheredMessage,
-                key_deciphered, keys[k].commonPublic.getPublicKeyRaw(), additionalAuthenticatedData );
+                key_deciphered, keys[k].commonPublic.getPublicKeyRaw(),
+                additionalAuthenticatedData );
             std::vector< uint8_t > decipheredMsg = libBLS::ThresholdEncryption::decrypt(
                 tempCipheredMessage, key_deciphered, additionalAuthenticatedData );
 
@@ -187,13 +188,13 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
 
             auto ciphertextCopy = cipheredMessageObj;
             BOOST_REQUIRE_THROW(
-                libBLS::ThresholdEncryption::validateAndDecrypt(
-                    ciphertextCopy, key_deciphered, keys[k].commonPublic, additionalAuthenticatedData ),
+                libBLS::ThresholdEncryption::validateAndDecrypt( ciphertextCopy, key_deciphered,
+                    keys[k].commonPublic, additionalAuthenticatedData ),
                 libBLS::ThresholdUtils::IncorrectInput );
             ciphertextCopy.keepKey( k );
-            BOOST_REQUIRE( libBLS::ThresholdEncryption::validateAndDecrypt( ciphertextCopy,
-                               key_deciphered, keys[k].commonPublic, additionalAuthenticatedData ) ==
-                           data );
+            BOOST_REQUIRE(
+                libBLS::ThresholdEncryption::validateAndDecrypt( ciphertextCopy, key_deciphered,
+                    keys[k].commonPublic, additionalAuthenticatedData ) == data );
         }
     }
 }
