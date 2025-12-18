@@ -84,15 +84,15 @@ public:
         std::array< uint8_t, CIPHERED_KEY_SIZE_BYTES > bytes;
         uint8_t* source = bytes.data();
         // set U component
-        auto u_bytes = U.toByteArray();
-        std::memcpy( source, u_bytes.data(), u_bytes.size() );
-        source += u_bytes.size();
+        auto uBytes = U.toByteArray();
+        std::memcpy( source, uBytes.data(), uBytes.size() );
+        source += uBytes.size();
         // set V commponent
         std::memcpy( source, V.data(), V.size() );
         source += V.size();
         // set W component
-        auto w_bytes = W.toByteArray();
-        std::memcpy( source, w_bytes.data(), w_bytes.size() );
+        auto wBytes = W.toByteArray();
+        std::memcpy( source, wBytes.data(), wBytes.size() );
 
         return bytes;
     }
@@ -101,27 +101,27 @@ public:
      * @brief Converts bytes to CipheredKey
      */
     static CipheredKey fromBytes(
-        std::array< uint8_t, CIPHERED_KEY_SIZE_BYTES > bytes, bool _validate = true ) {
-        std::array< uint8_t, G2_SIZE_BYTES > u_bytes;
-        std::array< uint8_t, AES_256_KEY_SIZE_BYTES > v_bytes;
-        std::array< uint8_t, G1_SIZE_BYTES > w_bytes;
+        std::array< uint8_t, CIPHERED_KEY_SIZE_BYTES > _bytes, bool _validate = true ) {
+        std::array< uint8_t, G2_SIZE_BYTES > uBytes;
+        std::array< uint8_t, AES_256_KEY_SIZE_BYTES > vBytes;
+        std::array< uint8_t, G1_SIZE_BYTES > wBytes;
 
-        uint8_t* offset = bytes.data();
+        uint8_t* offset = _bytes.data();
         // Get U bytes
-        std::memcpy( u_bytes.data(), offset, G2_SIZE_BYTES );
+        std::memcpy( uBytes.data(), offset, G2_SIZE_BYTES );
         offset += G2_SIZE_BYTES;
         // Get V bytes
-        std::memcpy( v_bytes.data(), offset, AES_256_KEY_SIZE_BYTES );
+        std::memcpy( vBytes.data(), offset, AES_256_KEY_SIZE_BYTES );
         offset += AES_256_KEY_SIZE_BYTES;
         // Get W bytes
-        std::memcpy( w_bytes.data(), offset, G1_SIZE_BYTES );
+        std::memcpy( wBytes.data(), offset, G1_SIZE_BYTES );
 
         // Convert to CipheredKey components
-        algebra::G2Point U = algebra::G2Point::fromBytes( u_bytes );
-        algebra::G1Point W = algebra::G1Point::fromBytes( w_bytes );
+        algebra::G2Point U = algebra::G2Point::fromBytes( uBytes );
+        algebra::G1Point W = algebra::G1Point::fromBytes( wBytes );
 
         // constructor performs validation
-        return CipheredKey( U, v_bytes, W, _validate );
+        return CipheredKey( U, vBytes, W, _validate );
     }
 
     /**
@@ -163,8 +163,8 @@ public:
         std::vector< std::string > res;
         res.reserve( keys.size() );
         for ( const auto& U : U_points ) {
-            auto u_splitted = U.toString( Base::HEXA );
-            res.push_back( u_splitted );
+            auto uSplitted = U.toString( Base::HEXA );
+            res.push_back( uSplitted );
         }
 
         return res;
@@ -362,16 +362,16 @@ public:
 /**
  * @brief The result of the encryption process
  * Only accessible by the party that cyphers the text.
- * `random_secret` should never be shared.
+ * `randomSecret` should never be shared.
  */
 struct CipherResult {
     std::shared_ptr< Ciphertext > ciphertext;
-    RandSecret random_secret;
+    RandSecret randomSecret;
 };
 
 struct CipheredKeyResult {
     std::vector< CipheredKey > ciphertext;
-    RandSecret random_secret;
+    RandSecret randomSecret;
 };
 
 class TE {
@@ -417,14 +417,14 @@ public:
         const std::vector< uint8_t >& message, const std::vector< std::string >& commonPublic );
 
     static algebra::G2Point getDecryptionShare(
-        const CipheredKey& ciphertext, const algebra::FrScalar& secret_key );
+        const CipheredKey& ciphertext, const algebra::FrScalar& secretKey );
 
     static algebra::G1Point HashToGroup( const algebra::G2Point& U, const AES256Key& V );
 
     static std::string Hash( const algebra::G2Point& Y );
 
     static bool Verify( const CipheredKey& ciphertext, const algebra::G2Point& decryptionShare,
-        const algebra::G2Point& public_key );
+        const algebra::G2Point& publicKey );
 
     static std::vector< bool > VerifyBatch( const std::vector< CipheredKey >& ciphertexts,
         const std::vector< algebra::G2Point >& decryptionShares,

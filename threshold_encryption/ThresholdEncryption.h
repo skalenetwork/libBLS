@@ -234,9 +234,9 @@ private:
 
     static inline RandSecret extractRandomSecretFromMessage(
         const std::vector< uint8_t >& _message ) {
-        size_t msg_length = _message.size();
+        size_t msgLength = _message.size();
 
-        if ( msg_length < RANDOM_SECRET_SIZE_BYTES ) {
+        if ( msgLength < RANDOM_SECRET_SIZE_BYTES ) {
             throw ThresholdUtils::IncorrectInput( "Message is too short" );
         }
 

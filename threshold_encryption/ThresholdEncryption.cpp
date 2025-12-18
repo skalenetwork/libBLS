@@ -46,15 +46,15 @@ std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
 
     std::copy( key.begin(), key.end(), mockupEncryptedKey.begin() );
 
-    RandSecret random_secret{};  // Zero-initialized
+    RandSecret randomSecret{};  // Zero-initialized
 
     // Append random secret to end of message
-    std::vector< uint8_t > message_to_cipher( _message );
-    message_to_cipher.insert( message_to_cipher.end(), random_secret.begin(), random_secret.end() );
+    std::vector< uint8_t > messageToCipher( _message );
+    messageToCipher.insert( messageToCipher.end(), randomSecret.begin(), randomSecret.end() );
 
     // Cipher message + random secret using AES key
     AesGcmCipher aesGcmCipher{ key };
-    auto encrypted_message = aesGcmCipher.encrypt( message_to_cipher );
+    auto encryptedMessage = aesGcmCipher.encrypt( messageToCipher );
 
     // 0x01 byte is needed for compatibility with real encryption
     // stands for the number of encrypted AES keys in the payload
@@ -63,7 +63,7 @@ std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
     result.insert( result.end(), mockupEncryptedKey.begin(), mockupEncryptedKey.end() );
 
 #pragma GCC diagnostic ignored "-Wstringop-overread"
-    result.insert( result.end(), encrypted_message.begin(), encrypted_message.end() );
+    result.insert( result.end(), encryptedMessage.begin(), encryptedMessage.end() );
 #pragma GCC diagnostic error "-Wstringop-overread"
 
     return result;
@@ -197,11 +197,11 @@ std::vector< bool > ThresholdEncryption::validateEncryptionBatchParallel(
 
 TEDecryptionShare ThresholdEncryption::partialDecrypt(
     const CipheredKey& _ciphertext, const TEPrivateKeyShare& _pkeyShare ) {
-    algebra::G2Point decryption_share = _pkeyShare.getPrivateKeyRaw() * _ciphertext.U;
+    algebra::G2Point decryptionShare = _pkeyShare.getPrivateKeyRaw() * _ciphertext.U;
     // no need to validate G2Point - if both inputs are already valid, multiplication
     // always produces a valid point
 
-    TEDecryptionShare share( decryption_share, _pkeyShare.getSignerIndex() );
+    TEDecryptionShare share( decryptionShare, _pkeyShare.getSignerIndex() );
 
     return share;
 }
@@ -497,8 +497,8 @@ void ThresholdEncryption::validateDecipheredMessage(
 }
 
 std::vector< uint8_t > ThresholdEncryption::decipherAESAndValidate( const Ciphertext& _ciphertext,
-    const AES256Key& key, const std::optional< std::vector< uint8_t > >& _associatedData ) {
-    AesGcmCipher aesGcmCipher{ key };
+    const AES256Key& _key, const std::optional< std::vector< uint8_t > >& _associatedData ) {
+    AesGcmCipher aesGcmCipher{ _key };
     std::vector< uint8_t > data = aesGcmCipher.decrypt( _ciphertext.getData(), _associatedData );
 
     // validate output
