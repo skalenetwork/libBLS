@@ -30,6 +30,7 @@
 #include <array>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
@@ -68,14 +69,19 @@ public:
     ~AesGcmCipher() = default;
 
     /// @brief Encrypts the given plaintext using AES-256-GCM
-    /// @param plaintext
+    /// @param plaintext The data to encrypt
+    /// @param aad Optional additional authenticated data (not encrypted, but authenticated)
     /// @return Encrypted message
-    std::vector< uint8_t > encrypt( const std::vector< uint8_t >& plaintext );
+    std::vector< uint8_t > encrypt( const std::vector< uint8_t >& plaintext,
+        const std::optional< std::vector< uint8_t > >& aad = std::nullopt );
 
     /// @brief Decrypts the given ciphertext using AES-256-GCM
-    /// @param ciphertext
+    /// @param ciphertext The data to decrypt
+    /// @param aad Optional additional authenticated data (must match what was used during
+    /// encryption)
     /// @return Decrypted message
-    std::vector< uint8_t > decrypt( const std::vector< uint8_t >& ciphertext );
+    std::vector< uint8_t > decrypt( const std::vector< uint8_t >& ciphertext,
+        const std::optional< std::vector< uint8_t > >& aad = std::nullopt );
 
 private:
     /// Helper function to check if the operation was successful
