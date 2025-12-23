@@ -19,6 +19,8 @@ set(SOURCES
     TEPublicKeyShare.cpp
     ThresholdEncryption.cpp
     AesGcmCipher.cpp
+    CipheredKey.cpp
+    Ciphertext.cpp
 )
 
 set(HEADERS
@@ -33,6 +35,8 @@ set(HEADERS
     TEPublicKeyShare.h
     ThresholdEncryption.h
     AesGcmCipher.h
+    CipheredKey.h
+    Ciphertext.h
 )
 
 set(PROJECT_VERSION 0.2.0)

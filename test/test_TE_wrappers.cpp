@@ -86,12 +86,16 @@ BOOST_AUTO_TEST_CASE( TEEncryptDecryptWithAAD ) {
 
     std::vector< uint8_t > message = randomByteVec( 100 );
 
-    // AAD that binds the ciphertext to a specific context (e.g., contract address)
-    std::vector< uint8_t > aad = { 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE };
+    // Separate AADs for AES and TE with different values
+    std::vector< uint8_t > aadAES = { 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE };
+    std::vector< uint8_t > aadTE = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
 
-    // Encrypt with AAD
+    // Encrypt with both AADs
+    libBLS::ThresholdEncryption::EncryptMetaData metaData;
+    metaData.associatedDataAesCbc = aadAES;
+    metaData.assocaitedDataTE = aadTE;
     libBLS::Ciphertext cypher =
-        libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, aad );
+        libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, metaData );
 
     std::vector< libBLS::TEPublicKeyShare > public_key_shares;
     for ( size_t i = 0; i < numAll; i++ ) {
@@ -99,23 +103,24 @@ BOOST_AUTO_TEST_CASE( TEEncryptDecryptWithAAD ) {
     }
 
     for ( const auto& cipheredKey : cypher.getKeys() ) {
-        libBLS::ThresholdEncryption::validateEncryption( cipheredKey );
+        // Validate with TE AAD
+        libBLS::ThresholdEncryption::validateEncryption( cipheredKey, &aadTE );
 
         libBLS::TEDecryptSet decrSet( numSigned, numAll );
         for ( size_t i = 0; i < numSigned; i++ ) {
             libBLS::TEDecryptionShare decr_share =
                 libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[i] );
             libBLS::ThresholdEncryption::validateDecryptionShare(
-                cipheredKey, decr_share, public_key_shares[i] );
+                cipheredKey, decr_share, public_key_shares[i], &aadTE );
             decrSet.addDecryptShare( decr_share );
         }
 
         libBLS::AES256Key key_decrypted =
             libBLS::ThresholdEncryption::combineShares( cipheredKey, decrSet );
 
-        // Decrypt WITH the same AAD - should succeed
+        // Decrypt WITH the same AES AAD - should succeed
         std::vector< uint8_t > decipheredMsg =
-            libBLS::ThresholdEncryption::decrypt( cypher, key_decrypted, aad );
+            libBLS::ThresholdEncryption::decrypt( cypher, key_decrypted, aadAES );
         BOOST_REQUIRE( decipheredMsg == message );
     }
 }
@@ -129,14 +134,19 @@ BOOST_AUTO_TEST_CASE( TEEncryptDecryptWithWrongAAD ) {
 
     std::vector< uint8_t > message = randomByteVec( 100 );
 
-    // AAD used for encryption
-    std::vector< uint8_t > aad = { 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE };
-    // Wrong AAD for decryption
-    std::vector< uint8_t > wrong_aad = { 0x01, 0x02, 0x03, 0x04 };
+    // AADs used for encryption
+    std::vector< uint8_t > aadAES = { 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE };
+    std::vector< uint8_t > aadTE = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
+    // Wrong AADs for decryption/validation
+    std::vector< uint8_t > wrong_aadAES = { 0x11, 0x22, 0x33, 0x44 };
+    std::vector< uint8_t > wrong_aadTE = { 0xAA, 0xBB, 0xCC, 0xDD };
 
-    // Encrypt with AAD
+    // Encrypt with both AADs
+    libBLS::ThresholdEncryption::EncryptMetaData metaData;
+    metaData.associatedDataAesCbc = aadAES;
+    metaData.assocaitedDataTE = aadTE;
     libBLS::Ciphertext cypher =
-        libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, aad );
+        libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, metaData );
 
     std::vector< libBLS::TEPublicKeyShare > public_key_shares;
     for ( size_t i = 0; i < numAll; i++ ) {
@@ -144,6 +154,14 @@ BOOST_AUTO_TEST_CASE( TEEncryptDecryptWithWrongAAD ) {
     }
 
     for ( const auto& cipheredKey : cypher.getKeys() ) {
+        // Validate with wrong TE AAD - should fail
+        BOOST_REQUIRE_THROW(
+            libBLS::ThresholdEncryption::validateEncryption( cipheredKey, &wrong_aadTE ),
+            libBLS::ThresholdUtils::IsNotWellFormed );
+
+        // Validate with correct TE AAD - should succeed
+        libBLS::ThresholdEncryption::validateEncryption( cipheredKey, &aadTE );
+
         libBLS::TEDecryptSet decrSet( numSigned, numAll );
         for ( size_t i = 0; i < numSigned; i++ ) {
             libBLS::TEDecryptionShare decr_share =
@@ -154,12 +172,12 @@ BOOST_AUTO_TEST_CASE( TEEncryptDecryptWithWrongAAD ) {
         libBLS::AES256Key key_decrypted =
             libBLS::ThresholdEncryption::combineShares( cipheredKey, decrSet );
 
-        // Decrypt with wrong AAD - should fail
+        // Decrypt with wrong AES AAD - should fail
         BOOST_REQUIRE_THROW(
-            libBLS::ThresholdEncryption::decrypt( cypher, key_decrypted, wrong_aad ),
+            libBLS::ThresholdEncryption::decrypt( cypher, key_decrypted, wrong_aadAES ),
             std::runtime_error );
 
-        // Decrypt without AAD - should also fail
+        // Decrypt without AES AAD - should also fail
         BOOST_REQUIRE_THROW(
             libBLS::ThresholdEncryption::decrypt( cypher, key_decrypted, std::nullopt ),
             std::runtime_error );

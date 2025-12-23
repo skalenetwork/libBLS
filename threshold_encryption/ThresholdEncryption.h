@@ -47,6 +47,19 @@ public:
     static std::vector< uint8_t > mockupEncrypt( const std::vector< uint8_t >& _message );
     static std::vector< uint8_t > mockupDecrypt( const std::vector< uint8_t >& _encryptedData );
 
+    struct EncryptMetaData {
+        // Optional associated data for AES CBC
+        // Is used at encryption and at decryption stages only. Does not obey to threshold
+        // guarantees since it is associated with symmetric encryption.
+        std::optional< std::vector< uint8_t > > associatedDataAesCbc;
+
+        // Optional associated data for TE
+        // Is used at encryption and validateEncryption stages only. Obeys to threshold guarantees
+        // as long as no party proceeds with the algorithm (partial decryption) in case
+        // validateEncryption fails with this associated data.
+        std::optional< std::vector< uint8_t > > assocaitedDataTE;
+    };
+
     /**
      * @brief Encrypts a message using threshold encryption.
      * This function generates a random AES key, and encrypts the message using this key.
@@ -58,39 +71,45 @@ public:
      * @return Ciphertext - Struct containing TE(AESKey) and AESKey(message)
      */
     static Ciphertext encrypt( const std::vector< uint8_t >& _message,
-        const TEPublicKey& _commonPublic,
-        const std::optional< std::vector< uint8_t > >& _associatedData = std::nullopt );
+        const TEPublicKey& _commonPublic, const EncryptMetaData& _metaData = EncryptMetaData() );
+
     static Ciphertext encrypt( const std::vector< uint8_t >& _message,
         const std::vector< TEPublicKey >& _commonPublic,
-        const std::optional< std::vector< uint8_t > >& _associatedData = std::nullopt );
+        const EncryptMetaData& _metaData = EncryptMetaData() );
 
     /**
-     * @brief Validates the TE ciphered key. SIngle threaded.
+     * @brief Validates the TE ciphered key. Single threaded.
      *
      * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
      * struct
+     * @param _associatedDataTE Optional associated data used during encryption
      * @throws Exceptions in case validation fails
      */
-    static void validateEncryption( const CipheredKey& _cipheredKey );
+    static void validateEncryption( const CipheredKey& _cipheredKey,
+        const std::vector< uint8_t >* _associatedDataTE = nullptr );
 
     /**
      * @brief Validates a batch of TE ciphered keys. Same as above, but more performant
      * @param _ciphertexts Vector of encrypted AESKeys used to encrypt the message held by
      * Ciphertext struct
+     * @param _associatedDataTE Optional vector of associated data - one AAD per ciphertext
      * @return Vec of bools, each idx specifying if it was successfully validated or not.
      * Each idx corresponds to the same idx on _ciphertexts.
      */
     static std::vector< bool > validateEncryptionBatch(
-        const std::vector< CipheredKey >& _ciphertexts );
+        const std::vector< CipheredKey >& _ciphertexts,
+        const std::vector< std::vector< uint8_t > >* _associatedDataTE = nullptr );
 
     /**
      * @brief Validates a batch of TE ciphered keys in parallel. Same as above, but multi-threaded
      * @param _ciphertexts Vector of encrypted AESKeys used to encrypt the message held by
      * Ciphertext struct
+     * @param _associatedDataTE Optional vector of associated data - one AAD per ciphertext
      * @return Vec of bools, each idx specifying if it was successfully validated or not
      */
     static std::vector< bool > validateEncryptionBatchParallel(
-        const std::vector< CipheredKey >& _ciphertexts );
+        const std::vector< CipheredKey >& _ciphertexts,
+        const std::vector< std::vector< uint8_t > >* _associatedDataTE = nullptr );
 
     /**
      * @brief Generates a decryption share for the given ciphered key
@@ -110,10 +129,12 @@ public:
      * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
      * struct
      * @param decryption_share The decryption share
+     * @param _associatedDataTE Optional TE AAD used during encryption
      * @throws Exception if the decryption share is not valid
      */
     static void validateDecryptionShare( const CipheredKey& _cipheredKey,
-        const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey );
+        const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey,
+        const std::vector< uint8_t >* _associatedDataTE = nullptr );
 
 
     /**
@@ -126,13 +147,15 @@ public:
      * `TEPublicKeyShare` each.
      * @param _decryptionShares Vector of decryption shares. Must be same size as _publicKeys.
      * @param _publicKeys Vector of public keys corresponding to the decryption shares.
+     * @param _associatedDataTE Optional vector of TE AAD - one per ciphertext
      * @return Vec of bools, each idx specifying if it was successfully validated or not.
      * Each idx corresponds to the same idx on _decryptionShares and _publicKeys.
      */
     static std::vector< bool > validateDecryptionSharesBatch(
         const std::vector< CipheredKey >& _cipheredKeys,
         const std::vector< TEDecryptionShare >& _decryptionShares,
-        const std::vector< TEPublicKeyShare >& _publicKeys );
+        const std::vector< TEPublicKeyShare >& _publicKeys,
+        const std::vector< std::vector< uint8_t > >* _associatedDataTE = nullptr );
 
     /**
      * @brief Validates a batch of decryption shares in parallel - same as above, but multi-threaded
@@ -140,7 +163,8 @@ public:
     static std::vector< bool > validateDecryptionSharesBatchParallel(
         const std::vector< CipheredKey >& _cipherTexts,
         const std::vector< TEDecryptionShare >& _decryptionShares,
-        const std::vector< TEPublicKeyShare >& _publicKeys );
+        const std::vector< TEPublicKeyShare >& _publicKeys,
+        const std::vector< std::vector< uint8_t > >* _associatedDataTE = nullptr );
 
     /**
      * @brief Combines decryption shares to reconstruct the original AES key.

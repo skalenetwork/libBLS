@@ -27,8 +27,8 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 extern "C" {
 
-const char* encryptMessage(
-    const char* data, const char* key, const char* additionalAuthenticatedData ) {
+const char* encryptMessage( const char* data, const char* key,
+    const char* additionalAuthenticatedDataAES, const char* additionalAuthenticatedDataTE ) {
     static std::string cipheredMessageStr;
 
     libBLS::init();
@@ -36,17 +36,29 @@ const char* encryptMessage(
     // convert from char into vec of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
 
-    // convert from char into vec of bytes
-    std::vector< uint8_t > additionalAuthenticatedDataBytes =
-        libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedData );
-
     // build public key
     std::string keyStr( key );
     libBLS::TEPublicKey commonPublic( keyStr, libBLS::Base::HEXA );
 
+    // build encrypt meta data
+    libBLS::ThresholdEncryption::EncryptMetaData metaData;
+
+    // set AAD AES if not empty
+    if ( additionalAuthenticatedDataAES != nullptr && additionalAuthenticatedDataAES[0] != '\0' ) {
+        metaData.associatedDataAesCbc =
+            libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
+    }
+
+    // set AAD TE if not empty
+    if ( additionalAuthenticatedDataTE != nullptr && additionalAuthenticatedDataTE[0] != '\0' ) {
+        metaData.assocaitedDataTE =
+            libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataTE );
+    }
+
     // encrypt message
-    libBLS::Ciphertext cipheredMessage = libBLS::ThresholdEncryption::encrypt(
-        messageBytes, commonPublic, additionalAuthenticatedDataBytes );
+    libBLS::Ciphertext cipheredMessage =
+        libBLS::ThresholdEncryption::encrypt( messageBytes, commonPublic, metaData );
+
     std::vector< uint8_t > cipheredMessageBytes = cipheredMessage.toBytes();
 
     cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessageBytes );
@@ -55,17 +67,13 @@ const char* encryptMessage(
 }
 
 const char* encryptMessageDualKey( const char* data, const char* firstKey, const char* secondKey,
-    const char* additionalAuthenticatedData ) {
+    const char* additionalAuthenticatedDataAES, const char* additionalAuthenticatedDataTE ) {
     static std::string cipheredMessageStr;
 
     libBLS::init();
 
     // convert from char into vec of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
-
-    // convert from char into vec of bytes
-    std::vector< uint8_t > additionalAuthenticatedDataBytes =
-        libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedData );
 
     std::vector< libBLS::TEPublicKey > commonPublicKeys;
     // build public keys
@@ -76,9 +84,24 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
     commonPublicKeys.push_back( firstCommonPublic );
     commonPublicKeys.push_back( secondCommonPublic );
 
-    // encrypt message
-    libBLS::Ciphertext cipheredMessage = libBLS::ThresholdEncryption::encrypt(
-        messageBytes, commonPublicKeys, additionalAuthenticatedDataBytes );
+    // Build meta data
+    libBLS::ThresholdEncryption::EncryptMetaData metaData;
+
+    // set AAD AES if not empty
+    if ( additionalAuthenticatedDataAES != nullptr && additionalAuthenticatedDataAES[0] != '\0' ) {
+        metaData.associatedDataAesCbc =
+            libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
+    }
+
+    // set AAD TE if not empty
+    if ( additionalAuthenticatedDataTE != nullptr && additionalAuthenticatedDataTE[0] != '\0' ) {
+        metaData.assocaitedDataTE =
+            libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataTE );
+    }
+
+
+    libBLS::Ciphertext cipheredMessage =
+        libBLS::ThresholdEncryption::encrypt( messageBytes, commonPublicKeys, metaData );
     std::vector< uint8_t > cipheredMessageBytes = cipheredMessage.toBytes();
 
     cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessageBytes );
