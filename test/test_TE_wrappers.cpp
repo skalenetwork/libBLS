@@ -214,15 +214,13 @@ BOOST_AUTO_TEST_CASE( TEValidateDecryptionShareWithWrongAAD ) {
             cipheredKey, decr_share, public_key_shares[0], &aadTE );
 
         // Validate with wrong TE AAD - should fail
-        BOOST_REQUIRE_THROW(
-            libBLS::ThresholdEncryption::validateDecryptionShare(
-                cipheredKey, decr_share, public_key_shares[0], &wrong_aadTE ),
+        BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateDecryptionShare(
+                                 cipheredKey, decr_share, public_key_shares[0], &wrong_aadTE ),
             libBLS::ThresholdUtils::IsNotWellFormed );
 
         // Validate with nullptr AAD on AAD-encrypted ciphertext - should fail
-        BOOST_REQUIRE_THROW(
-            libBLS::ThresholdEncryption::validateDecryptionShare(
-                cipheredKey, decr_share, public_key_shares[0], nullptr ),
+        BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateDecryptionShare(
+                                 cipheredKey, decr_share, public_key_shares[0], nullptr ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
 }
@@ -376,7 +374,8 @@ BOOST_AUTO_TEST_CASE( TEValidateWithoutAADOnAADEncrypted ) {
 
     for ( const auto& cipheredKey : cypher.getKeys() ) {
         // Validate without TE AAD (nullptr) - should fail
-        BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateEncryption( cipheredKey, nullptr ),
+        BOOST_REQUIRE_THROW(
+            libBLS::ThresholdEncryption::validateEncryption( cipheredKey, nullptr ),
             libBLS::ThresholdUtils::IsNotWellFormed );
 
         // Validate with correct TE AAD - should succeed
@@ -423,7 +422,8 @@ BOOST_AUTO_TEST_CASE( TEBatchValidationWithAAD ) {
     }
 
     // Batch validate with wrong AADs - all should fail
-    auto wrongResults = libBLS::ThresholdEncryption::validateEncryptionBatch( cipheredKeys, &wrongAadVec );
+    auto wrongResults =
+        libBLS::ThresholdEncryption::validateEncryptionBatch( cipheredKeys, &wrongAadVec );
     BOOST_REQUIRE( wrongResults.size() == batchSize );
     for ( size_t i = 0; i < batchSize; ++i ) {
         BOOST_REQUIRE( wrongResults[i] == false );
@@ -432,7 +432,6 @@ BOOST_AUTO_TEST_CASE( TEBatchValidationWithAAD ) {
 
 
 BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
-
     for ( size_t i = 0; i < 10; i++ ) {
         size_t numAll = rand_gen() % 16 + 1;
         size_t numSigned = rand_gen() % numAll + 1;
