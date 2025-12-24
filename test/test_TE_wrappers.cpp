@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE( TEEncryptDecryptWithAAD ) {
     // Encrypt with both AADs
     libBLS::ThresholdEncryption::EncryptMetaData metaData;
     metaData.associatedDataAesCbc = aadAES;
-    metaData.assocaitedDataTE = aadTE;
+    metaData.associatedDataTE = aadTE;
     libBLS::Ciphertext cypher =
         libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, metaData );
 
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE( TEEncryptDecryptWithWrongAAD ) {
     // Encrypt with both AADs
     libBLS::ThresholdEncryption::EncryptMetaData metaData;
     metaData.associatedDataAesCbc = aadAES;
-    metaData.assocaitedDataTE = aadTE;
+    metaData.associatedDataTE = aadTE;
     libBLS::Ciphertext cypher =
         libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, metaData );
 

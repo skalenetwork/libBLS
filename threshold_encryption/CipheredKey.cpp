@@ -1,9 +1,9 @@
 #include <array>
 #include <vector>
 
-#include "backends/algebra.hpp"
 #include "AesGcmCipher.h"
 #include "CipheredKey.h"
+#include "backends/algebra.hpp"
 
 namespace libBLS {
 
@@ -90,6 +90,4 @@ std::vector< std::string > CipheredKey::getDecryptionShareInputBatch(
 }
 
 
-
-
-}
+}  // namespace libBLS

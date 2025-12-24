@@ -3,8 +3,8 @@
 #include <array>
 #include <vector>
 
-#include "backends/algebra.hpp"
 #include "AesGcmCipher.h"
+#include "backends/algebra.hpp"
 
 namespace libBLS {
 
@@ -69,4 +69,4 @@ public:
     const algebra::G1Point& getW() const { return W; }
 };
 
-} // namespace libBLS
+}  // namespace libBLS

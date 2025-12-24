@@ -51,7 +51,7 @@ const char* encryptMessage( const char* data, const char* key,
 
     // set AAD TE if not empty
     if ( additionalAuthenticatedDataTE != nullptr && additionalAuthenticatedDataTE[0] != '\0' ) {
-        metaData.assocaitedDataTE =
+        metaData.associatedDataTE =
             libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataTE );
     }
 
@@ -95,7 +95,7 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
 
     // set AAD TE if not empty
     if ( additionalAuthenticatedDataTE != nullptr && additionalAuthenticatedDataTE[0] != '\0' ) {
-        metaData.assocaitedDataTE =
+        metaData.associatedDataTE =
             libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataTE );
     }
 

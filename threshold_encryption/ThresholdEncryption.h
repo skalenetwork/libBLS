@@ -57,7 +57,7 @@ public:
         // Is used at encryption and validateEncryption stages only. Obeys to threshold guarantees
         // as long as no party proceeds with the algorithm (partial decryption) in case
         // validateEncryption fails with this associated data.
-        std::optional< std::vector< uint8_t > > assocaitedDataTE;
+        std::optional< std::vector< uint8_t > > associatedDataTE;
     };
 
     /**

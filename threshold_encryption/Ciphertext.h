@@ -1,7 +1,7 @@
 #pragma once
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include <tools/utils.h>
 
@@ -93,4 +93,3 @@ public:
 };
 
 }  // namespace libBLS
-

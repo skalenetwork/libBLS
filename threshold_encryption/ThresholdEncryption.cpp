@@ -121,7 +121,7 @@ Ciphertext ThresholdEncryption::encrypt( const std::vector< uint8_t >& _message,
     }
 
     CipherResult cipher = TE::encryptWithAES(
-        _message, rawPublicKeys, _metaData.associatedDataAesCbc, _metaData.assocaitedDataTE );
+        _message, rawPublicKeys, _metaData.associatedDataAesCbc, _metaData.associatedDataTE );
 
     if ( !cipher.ciphertext ) {
         throw ThresholdUtils::IsNotWellFormed( "ciphertext is null" );

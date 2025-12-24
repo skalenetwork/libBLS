@@ -17,8 +17,8 @@ const std::vector< uint8_t > Ciphertext::toBytes() const {
 
     // Calculate total size needed
     size_t totalSize = sizeof( uint8_t ) +  // for number of keys
-                        ( keys.size() * CipheredKey::CIPHERED_KEY_SIZE_BYTES ) +  // for all keys
-                        data->size();                                             // for data
+                       ( keys.size() * CipheredKey::CIPHERED_KEY_SIZE_BYTES ) +  // for all keys
+                       data->size();                                             // for data
 
     std::vector< uint8_t > bytes;
     bytes.reserve( totalSize );
@@ -43,7 +43,7 @@ const std::vector< uint8_t > Ciphertext::toBytes() const {
 Ciphertext Ciphertext::fromBytes( std::vector< uint8_t >& bytes, bool _validate ) {
     // we require at least 1 byte for num_keys + one key + random secret + 1 byte for data
     if ( bytes.size() <=
-            sizeof( uint8_t ) + CipheredKey::CIPHERED_KEY_SIZE_BYTES + RANDOM_SECRET_SIZE_BYTES ) {
+         sizeof( uint8_t ) + CipheredKey::CIPHERED_KEY_SIZE_BYTES + RANDOM_SECRET_SIZE_BYTES ) {
         throw ThresholdUtils::IncorrectInput( "Cyphertext data is too short" );
     }
 
@@ -58,9 +58,9 @@ Ciphertext Ciphertext::fromBytes( std::vector< uint8_t >& bytes, bool _validate 
         throw ThresholdUtils::IncorrectInput( "Ciphertext must contain exactly 1 or 2 keys" );
 
     // Check that the input matches the number of keys
-    size_t expectedMinSize =
-        sizeof( uint8_t ) + ( numKeys * CipheredKey::CIPHERED_KEY_SIZE_BYTES ) +
-        RANDOM_SECRET_SIZE_BYTES + 1;  // +1 for at least 1 byte of actual data
+    size_t expectedMinSize = sizeof( uint8_t ) +
+                             ( numKeys * CipheredKey::CIPHERED_KEY_SIZE_BYTES ) +
+                             RANDOM_SECRET_SIZE_BYTES + 1;  // +1 for at least 1 byte of actual data
     if ( bytes.size() < expectedMinSize )
         throw ThresholdUtils::IncorrectInput(
             "Cyphertext data is too short for specified number of keys" );
@@ -71,8 +71,7 @@ Ciphertext Ciphertext::fromBytes( std::vector< uint8_t >& bytes, bool _validate 
 
     for ( size_t i = 0; i < numKeys; ++i ) {
         std::array< uint8_t, CipheredKey::CIPHERED_KEY_SIZE_BYTES > keyBytes;
-        std::memcpy(
-            keyBytes.data(), bytes.data() + offset, CipheredKey::CIPHERED_KEY_SIZE_BYTES );
+        std::memcpy( keyBytes.data(), bytes.data() + offset, CipheredKey::CIPHERED_KEY_SIZE_BYTES );
         offset += CipheredKey::CIPHERED_KEY_SIZE_BYTES;
 
         // do not validate CipheredKey here
@@ -106,7 +105,9 @@ void Ciphertext::validate() const {
     }
 }
 
-const std::vector< CipheredKey >& Ciphertext::getKeys() const { return keys; }
+const std::vector< CipheredKey >& Ciphertext::getKeys() const {
+    return keys;
+}
 
 void Ciphertext::keepKey( size_t _idx ) {
     if ( _idx >= keys.size() || keys.size() != 2 )
@@ -121,4 +122,4 @@ const CipheredKey& Ciphertext::getTargetKey() const {
     return keys.front();
 }
 
-}
+}  // namespace libBLS
