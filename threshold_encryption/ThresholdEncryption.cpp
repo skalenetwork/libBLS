@@ -103,15 +103,13 @@ std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
 
 
 Ciphertext ThresholdEncryption::encrypt( const std::vector< uint8_t >& _message,
-    const TEPublicKey& _commonPublic,
-    const std::optional< std::vector< uint8_t > >& _associatedData ) {
-    return encrypt( _message, std::vector< TEPublicKey >{ _commonPublic }, _associatedData );
+    const TEPublicKey& _commonPublic, const EncryptMetaData& _metaData ) {
+    return encrypt( _message, std::vector< TEPublicKey >{ _commonPublic }, _metaData );
 }
 
 
 Ciphertext ThresholdEncryption::encrypt( const std::vector< uint8_t >& _message,
-    const std::vector< TEPublicKey >& _commonPublic,
-    const std::optional< std::vector< uint8_t > >& _associatedData ) {
+    const std::vector< TEPublicKey >& _commonPublic, const EncryptMetaData& _metaData ) {
     if ( _commonPublic.size() == 0 || _commonPublic.size() > 2 )
         throw ThresholdUtils::IncorrectInput(
             "Must provide exactly 1 or 2 public keys for encryption" );
@@ -122,7 +120,8 @@ Ciphertext ThresholdEncryption::encrypt( const std::vector< uint8_t >& _message,
         rawPublicKeys.push_back( publicKey.getPublicKeyRaw() );
     }
 
-    CipherResult cipher = TE::encryptWithAES( _message, rawPublicKeys, _associatedData );
+    CipherResult cipher = TE::encryptWithAES(
+        _message, rawPublicKeys, _metaData.associatedDataAesCbc, _metaData.associatedDataTE );
 
     if ( !cipher.ciphertext ) {
         throw ThresholdUtils::IsNotWellFormed( "ciphertext is null" );
@@ -133,10 +132,11 @@ Ciphertext ThresholdEncryption::encrypt( const std::vector< uint8_t >& _message,
     return *cipher.ciphertext;
 }
 
-void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
+void ThresholdEncryption::validateEncryption(
+    const CipheredKey& _ciphertext, const std::vector< uint8_t >* _associatedDataTE ) {
     const auto& [U, V, W] = _ciphertext;
 
-    algebra::G1Point H = TE::HashToGroup( U, V );
+    algebra::G1Point H = TE::HashToGroup( U, V, _associatedDataTE );
 
     // pairing( W, P ) == pairing( H, U )
     bool validPairing = algebra::verifyPairingEq( W, algebra::G2Point::generator(), H, U );
@@ -147,9 +147,14 @@ void ThresholdEncryption::validateEncryption( const CipheredKey& _ciphertext ) {
 }
 
 std::vector< bool > ThresholdEncryption::validateEncryptionBatch(
-    const std::vector< CipheredKey >& _ciphertexts ) {
+    const std::vector< CipheredKey >& _ciphertexts,
+    const std::vector< std::vector< uint8_t > >* _associatedDataTE ) {
     if ( _ciphertexts.empty() ) {
         return {};
+    }
+
+    if ( _associatedDataTE && _associatedDataTE->size() != _ciphertexts.size() ) {
+        throw ThresholdUtils::IncorrectInput( "Associated data TE size does not match" );
     }
 
     // Store concrete values (no reference_wrapper)
@@ -167,7 +172,9 @@ std::vector< bool > ThresholdEncryption::validateEncryptionBatch(
 
     for ( size_t i = 0; i < size; ++i ) {
         const auto& [U, V, W] = _ciphertexts.at( i );
-        const algebra::G1Point H = TE::HashToGroup( U, V );
+        const std::vector< uint8_t >* aadPtr =
+            _associatedDataTE ? &_associatedDataTE->at( i ) : nullptr;
+        const algebra::G1Point H = TE::HashToGroup( U, V, aadPtr );
 
         g1P1s.at( i ) = W;
         g1P2s.at( i ) = H;
@@ -180,16 +187,29 @@ std::vector< bool > ThresholdEncryption::validateEncryptionBatch(
 }
 
 std::vector< bool > ThresholdEncryption::validateEncryptionBatchParallel(
-    const std::vector< CipheredKey >& _ciphertexts ) {
+    const std::vector< CipheredKey >& _ciphertexts,
+    const std::vector< std::vector< uint8_t > >* _associatedDataTE ) {
     if ( _ciphertexts.empty() ) {
         return {};
     }
 
+    if ( _associatedDataTE && _associatedDataTE->size() != _ciphertexts.size() ) {
+        throw ThresholdUtils::IncorrectInput( "Associated data TE size does not match" );
+    }
+
     auto result = ThresholdUtils::executeInParallel< bool >(
-        _ciphertexts.size(), [&_ciphertexts]( size_t startIdx, size_t endIdx ) {
+        _ciphertexts.size(), [&_ciphertexts, _associatedDataTE]( size_t startIdx, size_t endIdx ) {
             const std::vector< CipheredKey > subset(
                 _ciphertexts.begin() + startIdx, _ciphertexts.begin() + endIdx );
-            return ThresholdEncryption::validateEncryptionBatch( subset );
+            // Slice AAD vector for this subset
+            const std::vector< std::vector< uint8_t > >* aadSubset = nullptr;
+            std::vector< std::vector< uint8_t > > aadSubsetStorage;
+            if ( _associatedDataTE ) {
+                aadSubsetStorage.assign(
+                    _associatedDataTE->begin() + startIdx, _associatedDataTE->begin() + endIdx );
+                aadSubset = &aadSubsetStorage;
+            }
+            return ThresholdEncryption::validateEncryptionBatch( subset, aadSubset );
         } );
 
     return result;
@@ -207,9 +227,10 @@ TEDecryptionShare ThresholdEncryption::partialDecrypt(
 }
 
 void ThresholdEncryption::validateDecryptionShare( const CipheredKey& _cipherText,
-    const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey ) {
-    if ( !TE::Verify(
-             _cipherText, _decryptionShare.getShareRaw(), _publicKey.getPublicKeyRaw() ) ) {
+    const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey,
+    const std::vector< uint8_t >* _associatedDataTE ) {
+    if ( !TE::Verify( _cipherText, _decryptionShare.getShareRaw(), _publicKey.getPublicKeyRaw(),
+             _associatedDataTE ) ) {
         throw ThresholdUtils::IsNotWellFormed( "Invalid decryption share" );
     }
 }
@@ -217,7 +238,8 @@ void ThresholdEncryption::validateDecryptionShare( const CipheredKey& _cipherTex
 std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatch(
     const std::vector< CipheredKey >& _cipherTexts,
     const std::vector< TEDecryptionShare >& _decryptionShares,
-    const std::vector< TEPublicKeyShare >& _publicKeys ) {
+    const std::vector< TEPublicKeyShare >& _publicKeys,
+    const std::vector< std::vector< uint8_t > >* _associatedDataTE ) {
     if ( _cipherTexts.empty() ) {
         return {};
     }
@@ -233,13 +255,14 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatch(
         publicKeysRaw.push_back( key.getPublicKeyRaw() );
     }
 
-    return TE::VerifyBatch( _cipherTexts, decryptionSharesRaw, publicKeysRaw );
+    return TE::VerifyBatch( _cipherTexts, decryptionSharesRaw, publicKeysRaw, _associatedDataTE );
 }
 
 std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatchParallel(
     const std::vector< CipheredKey >& _cipherTexts,
     const std::vector< TEDecryptionShare >& _decryptionShares,
-    const std::vector< TEPublicKeyShare >& _publicKeys ) {
+    const std::vector< TEPublicKeyShare >& _publicKeys,
+    const std::vector< std::vector< uint8_t > >* _associatedDataTE ) {
     if ( _cipherTexts.empty() ) {
         return {};
     }
@@ -257,11 +280,16 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatchParallel(
             "Decryption shares size must be multiple of ciphertexts size" );
     }
 
+    if ( _associatedDataTE && _associatedDataTE->size() != _cipherTexts.size() ) {
+        throw ThresholdUtils::IncorrectInput(
+            "Associated data size must match number of ciphertexts" );
+    }
+
     size_t sharesPerCiphertext = _decryptionShares.size() / _cipherTexts.size();
 
-    auto result = libBLS::ThresholdUtils::executeInParallel< bool >(
-        _cipherTexts.size(), [sharesPerCiphertext, &_cipherTexts, &_decryptionShares, &_publicKeys](
-                                 size_t startIdx, size_t endIdx ) {
+    auto result = libBLS::ThresholdUtils::executeInParallel< bool >( _cipherTexts.size(),
+        [sharesPerCiphertext, &_cipherTexts, &_decryptionShares, &_publicKeys, _associatedDataTE](
+            size_t startIdx, size_t endIdx ) {
             const std::vector< CipheredKey > ciphertexts(
                 _cipherTexts.begin() + startIdx, _cipherTexts.begin() + endIdx );
             const std::vector< TEDecryptionShare > decryptionShares(
@@ -271,8 +299,17 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatchParallel(
                 _publicKeys.begin() + startIdx * sharesPerCiphertext,
                 _publicKeys.begin() + endIdx * sharesPerCiphertext );
 
+            // Slice AAD for this subset
+            const std::vector< std::vector< uint8_t > >* aadSubset = nullptr;
+            std::vector< std::vector< uint8_t > > aadSubsetStorage;
+            if ( _associatedDataTE ) {
+                aadSubsetStorage.assign(
+                    _associatedDataTE->begin() + startIdx, _associatedDataTE->begin() + endIdx );
+                aadSubset = &aadSubsetStorage;
+            }
+
             return ThresholdEncryption::validateDecryptionSharesBatch(
-                ciphertexts, decryptionShares, publicKeys );
+                ciphertexts, decryptionShares, publicKeys, aadSubset );
         } );
     return result;
 }
