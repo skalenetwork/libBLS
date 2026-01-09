@@ -195,31 +195,48 @@ G2Point G2Point::fromBytes( const std::vector< uint8_t >& bytes ) {
 }
 
 G2Point G2Point::fromString( const std::string& str, Base base ) {
-    if ( base != Base::HEXA ) {
-        throw ThresholdUtils::IncorrectInput(
-            "G2Point is currently only supported to be built from hexadecimal base string" );
-    }
-
-    const size_t elementStringSize = MAX_FIELD_ELEMENT_SIZE_BYTES * 2;
-
-    if ( str.size() != STRING_HEXA_CHARS ) {
-        throw ThresholdUtils::IncorrectInput( "Wrong string size to convert to G2" );
-    }
-
     algebra::G2Point ret;
-
     ret.value.z.clear();
     ret.value.z.a = FqBackendType::one();
 
     try {
-        trySettingFieldWithString(
-            ret.value.x.a, str.substr( 0 * elementStringSize, elementStringSize ), base );
-        trySettingFieldWithString(
-            ret.value.x.b, str.substr( 1 * elementStringSize, elementStringSize ), base );
-        trySettingFieldWithString(
-            ret.value.y.a, str.substr( 2 * elementStringSize, elementStringSize ), base );
-        trySettingFieldWithString(
-            ret.value.y.b, str.substr( 3 * elementStringSize, std::string::npos ), base );
+        if ( base == Base::HEXA ) {
+            // HEXA: fixed-width 64-char substrings (256 chars total)
+            const size_t elementStringSize = MAX_FIELD_ELEMENT_SIZE_BYTES * 2;
+
+            if ( str.size() != STRING_HEXA_CHARS ) {
+                throw ThresholdUtils::IncorrectInput( "Wrong string size to convert to G2" );
+            }
+
+            trySettingFieldWithString(
+                ret.value.x.a, str.substr( 0 * elementStringSize, elementStringSize ), base );
+            trySettingFieldWithString(
+                ret.value.x.b, str.substr( 1 * elementStringSize, elementStringSize ), base );
+            trySettingFieldWithString(
+                ret.value.y.a, str.substr( 2 * elementStringSize, elementStringSize ), base );
+            trySettingFieldWithString(
+                ret.value.y.b, str.substr( 3 * elementStringSize, std::string::npos ), base );
+        } else {
+            // DEC: colon-delimited variable-length decimal strings
+            std::vector< std::string > parts;
+            size_t start = 0;
+            size_t end = 0;
+            while ( ( end = str.find( ':', start ) ) != std::string::npos ) {
+                parts.push_back( str.substr( start, end - start ) );
+                start = end + 1;
+            }
+            parts.push_back( str.substr( start ) );
+
+            if ( parts.size() != G2_NUM_COMPONENTS_AFFINE ) {
+                throw ThresholdUtils::IncorrectInput(
+                    "Wrong number of colon-delimited components for G2Point DEC string" );
+            }
+
+            trySettingFieldWithString( ret.value.x.a, parts[0], base );
+            trySettingFieldWithString( ret.value.x.b, parts[1], base );
+            trySettingFieldWithString( ret.value.y.a, parts[2], base );
+            trySettingFieldWithString( ret.value.y.b, parts[3], base );
+        }
     } catch ( const std::exception& e ) {
         std::cout << "EXCEPTION: " << e.what() << std::endl;
         throw ThresholdUtils::IncorrectInput(
