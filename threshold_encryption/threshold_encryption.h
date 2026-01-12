@@ -114,8 +114,7 @@ public:
         const std::optional< std::array< uint8_t, AES_256_KEY_SIZE_BYTES > >& seed );
 
     static CipherResult encryptWithAES( const std::vector< uint8_t >& message,
-        const algebra::G2Point& commonPublic,
-        const EncryptMetaData& metaData = EncryptMetaData() );
+        const algebra::G2Point& commonPublic, const EncryptMetaData& metaData = EncryptMetaData() );
 
     static CipherResult encryptWithAES( const std::vector< uint8_t >& message,
         const std::vector< algebra::G2Point >& commonPublic,
