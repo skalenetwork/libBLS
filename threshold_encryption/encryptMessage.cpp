@@ -41,7 +41,7 @@ const char* encryptMessage( const char* data, const char* key,
     libBLS::TEPublicKey commonPublic( keyStr, libBLS::Base::HEXA );
 
     // build encrypt meta data
-    libBLS::ThresholdEncryption::EncryptMetaData metaData;
+    libBLS::EncryptMetaData metaData;
 
     // set AAD AES if not empty
     if ( additionalAuthenticatedDataAES != nullptr && additionalAuthenticatedDataAES[0] != '\0' ) {
@@ -85,7 +85,7 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
     commonPublicKeys.push_back( secondCommonPublic );
 
     // Build meta data
-    libBLS::ThresholdEncryption::EncryptMetaData metaData;
+    libBLS::EncryptMetaData metaData;
 
     // set AAD AES if not empty
     if ( additionalAuthenticatedDataAES != nullptr && additionalAuthenticatedDataAES[0] != '\0' ) {

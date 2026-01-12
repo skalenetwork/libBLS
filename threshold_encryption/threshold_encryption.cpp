@@ -64,6 +64,7 @@ algebra::G1Point TE::HashToGroup(
 
     // Build hash input: U coordinates + V + optional AAD
     std::string hashInput = uStr[0] + uStr[1] + uStr[2] + uStr[3] + vStr;
+
     if ( associatedData && !associatedData->empty() ) {
         std::string aadStr = ThresholdUtils::bytesToHexString( *associatedData );
         hashInput += aadStr;
@@ -85,24 +86,58 @@ algebra::G1Point TE::HashToGroup(
 
 
 CipheredKeyResult TE::getCiphertext( const AES256Key& key, const algebra::G2Point& commonPublic,
-    const std::vector< uint8_t >* associatedDataTE ) {
-    return getCiphertext( key, std::vector< algebra::G2Point >{ commonPublic }, associatedDataTE );
+    const std::optional< std::vector< uint8_t > >& associatedDataTE,
+    const std::optional< std::array< uint8_t, AES_256_KEY_SIZE_BYTES > >& seed ) {
+    return getCiphertext(
+        key, std::vector< algebra::G2Point >{ commonPublic }, associatedDataTE, seed );
 }
 
 
 CipheredKeyResult TE::getCiphertext( const AES256Key& key,
     const std::vector< algebra::G2Point >& commonPublicVector,
-    const std::vector< uint8_t >* associatedDataTE ) {
+    const std::optional< std::vector< uint8_t > >& associatedDataTE,
+    const std::optional< std::array< uint8_t, AES_256_KEY_SIZE_BYTES > >& seed ) {
     algebra::FrScalar r = algebra::FrScalar::random();
 
-    while ( r.isZero() ) {
+    // set first value for r scalar
+    if ( seed.has_value() && !seed->empty() ) {
+        // Derive scalar r using SHA256 with domain separation
+        // derivation: SHA256( seed || "Scalar" )
+        std::vector< uint8_t > input( seed->begin(), seed->end() );
+        const std::string domain = "Scalar";
+        input.insert( input.end(), domain.begin(), domain.end() );
+
+        std::string inputStr( input.begin(), input.end() );
+        std::string hashHex = ThresholdUtils::sha256( inputStr );
+        std::vector< uint8_t > derivedScalar = ThresholdUtils::hexCStringToBytes( hashHex.c_str() );
+
+        // This maps the 32-byte hash into the scalar field (handling modulo prime order etc)
+        r = algebra::FrScalar::fromHashBytes( derivedScalar.data(), derivedScalar.size() );
+    } else {
         r = algebra::FrScalar::random();
+    }
+
+    // make sure it is different from zero
+    while ( r.isZero() ) {
+        if ( seed.has_value() && !seed->empty() ) {
+            // Very unlikely case where the derived scalar is zero
+            // We can re-hash the derived scalar to get a new one
+            std::string hashHex = ThresholdUtils::sha256( r.toString( Base::HEXA ) );
+            std::vector< uint8_t > derivedScalar =
+                ThresholdUtils::hexCStringToBytes( hashHex.c_str() );
+            r = algebra::FrScalar::fromHashBytes( derivedScalar.data(), derivedScalar.size() );
+        } else {
+            r = algebra::FrScalar::random();
+        }
     }
 
     std::vector< CipheredKey > cipheredKeys;
     algebra::G2Point U = r * algebra::G2Point::generator();
     // convert to affine coordinate here to avoid doing it twice inside the loop
     U.toAffineCoordinates();
+
+    const auto aadPtr = associatedDataTE.has_value() ? &associatedDataTE.value() : nullptr;
+
     for ( const auto& commonPublic : commonPublicVector ) {
         algebra::G2Point Y;
         Y = r * commonPublic;
@@ -123,7 +158,7 @@ CipheredKeyResult TE::getCiphertext( const AES256Key& key,
 
         algebra::G1Point W, H;
 
-        H = HashToGroup( U, V, associatedDataTE );
+        H = HashToGroup( U, V, aadPtr );
         W = r * H;
 
         cipheredKeys.emplace_back( U, V, W );
@@ -154,26 +189,28 @@ CipheredKeyResult TE::getCiphertext( const AES256Key& key,
  * @note Initializes AES before encryption
  */
 CipherResult TE::encryptWithAES( const std::vector< uint8_t >& message,
-    const algebra::G2Point& commonPublic,
-    const std::optional< std::vector< uint8_t > >& associatedDataAES,
-    const std::optional< std::vector< uint8_t > >& associatedDataTE ) {
-    return encryptWithAES( message, std::vector< algebra::G2Point >{ commonPublic },
-        associatedDataAES, associatedDataTE );
+    const algebra::G2Point& commonPublic, const EncryptMetaData& metaData ) {
+    return encryptWithAES( message, std::vector< algebra::G2Point >{ commonPublic }, metaData );
 }
 
 CipherResult TE::encryptWithAES( const std::vector< uint8_t >& message,
-    const std::vector< algebra::G2Point >& commonPublic,
-    const std::optional< std::vector< uint8_t > >& associatedDataAES,
-    const std::optional< std::vector< uint8_t > >& associatedDataTE ) {
-    // create random AES key
-    AES256Key key;
-    if ( RAND_bytes( key.data(), key.size() ) != 1 ) {
-        throw ThresholdUtils::IsNotWellFormed( "Failed to generate random key" );
+    const std::vector< algebra::G2Point >& commonPublic, const EncryptMetaData& metaData ) {
+    // Create AesGcmCipher - delegates key generation/derivation to the class
+    // If seed is provided, key is derived deterministically; otherwise random
+    std::unique_ptr< AesGcmCipher > aesGcmCipher;
+    if ( metaData.seed.has_value() ) {
+        aesGcmCipher = std::make_unique< AesGcmCipher >( metaData.seed.value() );
+    } else {
+        aesGcmCipher = std::make_unique< AesGcmCipher >();
     }
+
+    // Get the key from cipher for threshold encryption
+    const AES256Key& key = aesGcmCipher->getKey();
+
     // cipher aes key (with optional TE AAD)
-    const std::vector< uint8_t >* aadPtr =
-        associatedDataTE.has_value() ? &*associatedDataTE : nullptr;
-    CipheredKeyResult result = getCiphertext( key, commonPublic, aadPtr );
+
+    CipheredKeyResult result =
+        getCiphertext( key, commonPublic, metaData.associatedDataTE, metaData.seed );
 
     // append random secret to end of message
     std::vector< uint8_t > messageToCipher( message );
@@ -181,8 +218,7 @@ CipherResult TE::encryptWithAES( const std::vector< uint8_t >& message,
         messageToCipher.end(), result.randomSecret.begin(), result.randomSecret.end() );
 
     // cipher message + random secret using AES key (with optional AES AAD)
-    AesGcmCipher aesGcmCipher{ key };
-    auto encryptedMessage = aesGcmCipher.encrypt( messageToCipher, associatedDataAES );
+    auto encryptedMessage = aesGcmCipher->encrypt( messageToCipher, metaData.associatedDataAesCbc );
 
     std::shared_ptr< Ciphertext > ciphertext =
         std::make_shared< Ciphertext >( result.ciphertext, encryptedMessage );

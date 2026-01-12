@@ -53,7 +53,7 @@ std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
     messageToCipher.insert( messageToCipher.end(), randomSecret.begin(), randomSecret.end() );
 
     // Cipher message + random secret using AES key
-    AesGcmCipher aesGcmCipher{ key };
+    AesGcmCipher aesGcmCipher{ key, KeyType::Raw };
     auto encryptedMessage = aesGcmCipher.encrypt( messageToCipher );
 
     // 0x01 byte is needed for compatibility with real encryption
@@ -88,7 +88,7 @@ std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
         _encryptedData.begin() + CipheredKey::CIPHERED_KEY_SIZE_BYTES + 1, _encryptedData.end() );
 
     // Decrypt the data
-    AesGcmCipher aesGcmCipher{ key };
+    AesGcmCipher aesGcmCipher{ key, KeyType::Raw };
     std::vector< uint8_t > decrypted = aesGcmCipher.decrypt( cipher_text );
 
     if ( decrypted.size() < RANDOM_SECRET_SIZE_BYTES ) {
@@ -120,8 +120,7 @@ Ciphertext ThresholdEncryption::encrypt( const std::vector< uint8_t >& _message,
         rawPublicKeys.push_back( publicKey.getPublicKeyRaw() );
     }
 
-    CipherResult cipher = TE::encryptWithAES(
-        _message, rawPublicKeys, _metaData.associatedDataAesCbc, _metaData.associatedDataTE );
+    CipherResult cipher = TE::encryptWithAES( _message, rawPublicKeys, _metaData );
 
     if ( !cipher.ciphertext ) {
         throw ThresholdUtils::IsNotWellFormed( "ciphertext is null" );
@@ -535,7 +534,7 @@ void ThresholdEncryption::validateDecipheredMessage(
 
 std::vector< uint8_t > ThresholdEncryption::decipherAESAndValidate( const Ciphertext& _ciphertext,
     const AES256Key& _key, const std::optional< std::vector< uint8_t > >& _associatedData ) {
-    AesGcmCipher aesGcmCipher{ _key };
+    AesGcmCipher aesGcmCipher{ _key, KeyType::Raw };
     std::vector< uint8_t > data = aesGcmCipher.decrypt( _ciphertext.getData(), _associatedData );
 
     // validate output
