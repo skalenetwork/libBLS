@@ -100,7 +100,7 @@ CipheredKeyResult TE::getCiphertext( const AES256Key& key,
     algebra::FrScalar r = algebra::FrScalar::random();
 
     // set first value for r scalar
-    if ( seed.has_value() && !seed->empty() ) {
+    if ( seed.has_value() ) {
         // Derive scalar r using SHA256 with domain separation
         // derivation: SHA256( seed || "Scalar" )
         std::vector< uint8_t > input( seed->begin(), seed->end() );
@@ -119,7 +119,7 @@ CipheredKeyResult TE::getCiphertext( const AES256Key& key,
 
     // make sure it is different from zero
     while ( r.isZero() ) {
-        if ( seed.has_value() && !seed->empty() ) {
+        if ( seed.has_value() ) {
             // Very unlikely case where the derived scalar is zero
             // We can re-hash the derived scalar to get a new one
             std::string hashHex = ThresholdUtils::sha256( r.toString( Base::HEXA ) );

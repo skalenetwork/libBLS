@@ -66,9 +66,10 @@ class AesGcmCipher {
 private:
     AES256Key key;
 
-    //
+    // Whether the cipher is deterministic (i.e. uses HKDF to derive key from seed)
     bool isDeterministic;
-    uint64_t encryptCounter;  // Counter for deterministic IV generation
+    // Counter for deterministic IV generation
+    uint64_t encryptCounter;
     std::array< uint8_t, AES_GCM_IV_SIZE > iv;
 
 public:

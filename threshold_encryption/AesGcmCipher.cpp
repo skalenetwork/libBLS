@@ -117,9 +117,11 @@ std::vector< uint8_t > AesGcmCipher::encrypt(
         unsigned int hmacLen = 0;
 
         // Create input: plaintext || counter (8 bytes, big-endian)
+        // Append counter as 8 bytes in big-endian order
         std::vector< uint8_t > hmacInput( plaintext.begin(), plaintext.end() );
-        for ( int i = 7; i >= 0; --i ) {
-            hmacInput.push_back( static_cast< uint8_t >( ( encryptCounter >> ( i * 8 ) ) & 0xFF ) );
+        for ( int byteIndex = 7; byteIndex >= 0; --byteIndex ) {
+            hmacInput.push_back(
+                static_cast< uint8_t >( ( encryptCounter >> ( byteIndex * 8 ) ) & 0xFF ) );
         }
 
         if ( !HMAC( EVP_sha256(), key.data(), key.size(), hmacInput.data(), hmacInput.size(),
