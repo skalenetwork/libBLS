@@ -39,7 +39,7 @@ AesGcmCipher::AesGcmCipher() : isDeterministic( false ), encryptCounter( 0 ) {
     iv.fill( 0 );
 }
 
-AesGcmCipher::AesGcmCipher( const AES256Key& rawKey, KeyType )
+AesGcmCipher::AesGcmCipher( const AES256Key& rawKey )
     : key( rawKey ), isDeterministic( false ), encryptCounter( 0 ) {
     initAES();
     // IV will be generated randomly on each encrypt() call (or extracted from ciphertext for
@@ -47,8 +47,7 @@ AesGcmCipher::AesGcmCipher( const AES256Key& rawKey, KeyType )
     iv.fill( 0 );
 }
 
-AesGcmCipher::AesGcmCipher( const std::array< uint8_t, AES_256_KEY_SIZE_BYTES >& seed )
-    : isDeterministic( true ), encryptCounter( 0 ) {
+AesGcmCipher::AesGcmCipher( const Seed256& seed ) : isDeterministic( true ), encryptCounter( 0 ) {
     initAES();
 
     // Use HKDF to derive key deterministically from seed
@@ -78,7 +77,7 @@ AesGcmCipher::AesGcmCipher( const std::array< uint8_t, AES_256_KEY_SIZE_BYTES >&
     if ( EVP_PKEY_CTX_set1_hkdf_salt( pctx, salt, sizeof( salt ) - 1 ) <= 0 ) {
         throw std::runtime_error( "Failed to set HKDF salt" );
     }
-    if ( EVP_PKEY_CTX_set1_hkdf_key( pctx, seed.data(), seed.size() ) <= 0 ) {
+    if ( EVP_PKEY_CTX_set1_hkdf_key( pctx, seed.data.data(), seed.data.size() ) <= 0 ) {
         throw std::runtime_error( "Failed to set HKDF key" );
     }
     // Info parameter for domain separation - only deriving the encryption key

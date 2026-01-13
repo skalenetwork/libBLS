@@ -76,7 +76,7 @@ struct EncryptMetaData {
 
     // Optional seed used to derive both the random scalar secret and the AES key.
     // Seed must have same size as AES_KEY in order to have the same entropy / security level.
-    std::optional< std::array< uint8_t, AES_256_KEY_SIZE_BYTES > > seed;
+    std::optional< Seed256 > seed;
 };
 
 class TE {
@@ -106,12 +106,12 @@ public:
     static CipheredKeyResult getCiphertext( const AES256Key& key,
         const algebra::G2Point& commonPublic,
         const std::optional< std::vector< uint8_t > >& associatedDataTE,
-        const std::optional< std::array< uint8_t, AES_256_KEY_SIZE_BYTES > >& seed );
+        const std::optional< Seed256 >& seed );
 
     static CipheredKeyResult getCiphertext( const AES256Key& key,
         const std::vector< algebra::G2Point >& commonPublic,
         const std::optional< std::vector< uint8_t > >& associatedDataTE,
-        const std::optional< std::array< uint8_t, AES_256_KEY_SIZE_BYTES > >& seed );
+        const std::optional< Seed256 >& seed );
 
     static CipherResult encryptWithAES( const std::vector< uint8_t >& message,
         const algebra::G2Point& commonPublic, const EncryptMetaData& metaData = EncryptMetaData() );

@@ -438,10 +438,10 @@ BOOST_AUTO_TEST_CASE( TEEncryptDeterministicSeededKeyAndScalar ) {
     keys keys = generateKeys( numSigned, numAll );
     std::vector< uint8_t > message = randomByteVec( 100 );
 
-    std::array< uint8_t, libBLS::AES_256_KEY_SIZE_BYTES > seedA{};
-    std::array< uint8_t, libBLS::AES_256_KEY_SIZE_BYTES > seedB{};
-    seedA.fill( 0x42 );
-    seedB.fill( 0x43 );
+    libBLS::Seed256 seedA{};
+    libBLS::Seed256 seedB{};
+    seedA.data.fill( 0x42 );
+    seedB.data.fill( 0x43 );
 
     std::vector< libBLS::algebra::G2Point > rawPublicKeys = { keys.commonPublic.getPublicKeyRaw() };
 
@@ -508,8 +508,8 @@ BOOST_AUTO_TEST_CASE( TESeededCrossNodeDeterminism ) {
     std::vector< uint8_t > message = randomByteVec( 100 );
 
     // Fixed seed that both "nodes" will use
-    std::array< uint8_t, libBLS::AES_256_KEY_SIZE_BYTES > sharedSeed{};
-    sharedSeed.fill( 0xAB );
+    libBLS::Seed256 sharedSeed{};
+    sharedSeed.data.fill( 0xAB );
 
     std::vector< libBLS::algebra::G2Point > rawPublicKeys = { keys.commonPublic.getPublicKeyRaw() };
 
@@ -545,8 +545,8 @@ BOOST_AUTO_TEST_CASE( TESeededMultipleMessageSequence ) {
     std::vector< uint8_t > msg2 = randomByteVec( 75 );
     std::vector< uint8_t > msg3 = randomByteVec( 100 );
 
-    std::array< uint8_t, libBLS::AES_256_KEY_SIZE_BYTES > seed{};
-    seed.fill( 0xCD );
+    libBLS::Seed256 seed{};
+    seed.data.fill( 0xCD );
 
     std::vector< libBLS::algebra::G2Point > rawPublicKeys = { keys.commonPublic.getPublicKeyRaw() };
 
@@ -591,8 +591,8 @@ BOOST_AUTO_TEST_CASE( TESeededEncryptionDecryptionFlow ) {
     keys keys = generateKeys( numSigned, numAll );
     std::vector< uint8_t > message = randomByteVec( 100 );
 
-    std::array< uint8_t, libBLS::AES_256_KEY_SIZE_BYTES > seed{};
-    seed.fill( 0xEF );
+    libBLS::Seed256 seed{};
+    seed.data.fill( 0xEF );
 
     // Encrypt with seed using high-level wrapper
     libBLS::EncryptMetaData metaData;

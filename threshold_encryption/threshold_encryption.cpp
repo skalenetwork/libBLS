@@ -87,7 +87,7 @@ algebra::G1Point TE::HashToGroup(
 
 CipheredKeyResult TE::getCiphertext( const AES256Key& key, const algebra::G2Point& commonPublic,
     const std::optional< std::vector< uint8_t > >& associatedDataTE,
-    const std::optional< std::array< uint8_t, AES_256_KEY_SIZE_BYTES > >& seed ) {
+    const std::optional< Seed256 >& seed ) {
     return getCiphertext(
         key, std::vector< algebra::G2Point >{ commonPublic }, associatedDataTE, seed );
 }
@@ -96,14 +96,14 @@ CipheredKeyResult TE::getCiphertext( const AES256Key& key, const algebra::G2Poin
 CipheredKeyResult TE::getCiphertext( const AES256Key& key,
     const std::vector< algebra::G2Point >& commonPublicVector,
     const std::optional< std::vector< uint8_t > >& associatedDataTE,
-    const std::optional< std::array< uint8_t, AES_256_KEY_SIZE_BYTES > >& seed ) {
+    const std::optional< Seed256 >& seed ) {
     algebra::FrScalar r = algebra::FrScalar::random();
 
     // set first value for r scalar
     if ( seed.has_value() ) {
         // Derive scalar r using SHA256 with domain separation
         // derivation: SHA256( seed || "Scalar" )
-        std::vector< uint8_t > input( seed->begin(), seed->end() );
+        std::vector< uint8_t > input( seed->data.begin(), seed->data.end() );
         const std::string domain = "Scalar";
         input.insert( input.end(), domain.begin(), domain.end() );
 
