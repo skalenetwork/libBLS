@@ -123,6 +123,7 @@ rm -rf ./jsoncpp
 rm -rf ./libcryptopp
 rm -rf ./gmp-6*
 rm -rf ./libff
+rm -rf ./mcl
 rm -rf ./emsdk
 rm -rf ./libjson-rpc-cpp*
 rm -rf ./zlib
@@ -130,6 +131,13 @@ rm -rf ./argtable2
 rm -rf ./curl
 rm -rf ./libmicrohttpd
 rm -rf ./boost
+rm -rf ./double-conversion
+rm -rf ./fast_float
+rm -rf ./folly
+rm -rf ./fmt
+rm -rf ./gflags-master
+rm -rf ./glog
+rm -rf ./libevent
 echo "Done (all clean)."
 
 #finish

@@ -27,7 +27,7 @@
 #include "TEDecryptSet.h"
 #include "TEPrivateKeyShare.h"
 #include "TEPublicKeyShare.h"
-#include <threshold_encryption/threshold_encryption.h>
+#include "threshold_encryption.h"
 #include <tools/utils.h>
 #include <cstddef>
 
@@ -62,7 +62,7 @@ public:
         const std::vector< uint8_t >& _message, const std::vector< TEPublicKey >& _commonPublic );
 
     /**
-     * @brief Validates the TE ciphered key
+     * @brief Validates the TE ciphered key. SIngle threaded.
      *
      * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
      * struct
@@ -71,8 +71,28 @@ public:
     static void validateEncryption( const CipheredKey& _cipheredKey );
 
     /**
+     * @brief Validates a batch of TE ciphered keys. Same as above, but more performant
+     * @param _ciphertexts Vector of encrypted AESKeys used to encrypt the message held by
+     * Ciphertext struct
+     * @return Vec of bools, each idx specifying if it was successfully validated or not.
+     * Each idx corresponds to the same idx on _ciphertexts.
+     */
+    static std::vector< bool > validateEncryptionBatch(
+        const std::vector< CipheredKey >& _ciphertexts );
+
+    /**
+     * @brief Validates a batch of TE ciphered keys in parallel. Same as above, but multi-threaded
+     * @param _ciphertexts Vector of encrypted AESKeys used to encrypt the message held by
+     * Ciphertext struct
+     * @return Vec of bools, each idx specifying if it was successfully validated or not
+     */
+    static std::vector< bool > validateEncryptionBatchParallel(
+        const std::vector< CipheredKey >& _ciphertexts );
+
+    /**
      * @brief Generates a decryption share for the given ciphered key
-     *
+     * @note Assumes ciphertext has already been validated via `validateEncryption` call, and that
+     * private key share is also valid.
      * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
      * struct
      * @param _pkeyShare The private key share
@@ -92,6 +112,33 @@ public:
     static void validateDecryptionShare( const CipheredKey& _cipheredKey,
         const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey );
 
+
+    /**
+     * @brief Validates a batch of decryption shares
+     *
+     * @param _cipheredKeys Vector of encrypted AESKeys used to encrypt the message held by
+     * Ciphertext struct. Assumed to have been already validated via `validateEncryption` call.
+     * There should be only 1 `CipheredKey` per each N `TEDecryptionShare` and `TEPublicKeyShare`.
+     * Meaning, if there are 5 `CipheredKeys`, there should be 5 * N `TEDecryptionShare` and
+     * `TEPublicKeyShare` each.
+     * @param _decryptionShares Vector of decryption shares. Must be same size as _publicKeys.
+     * @param _publicKeys Vector of public keys corresponding to the decryption shares.
+     * @return Vec of bools, each idx specifying if it was successfully validated or not.
+     * Each idx corresponds to the same idx on _decryptionShares and _publicKeys.
+     */
+    static std::vector< bool > validateDecryptionSharesBatch(
+        const std::vector< CipheredKey >& _cipheredKeys,
+        const std::vector< TEDecryptionShare >& _decryptionShares,
+        const std::vector< TEPublicKeyShare >& _publicKeys );
+
+    /**
+     * @brief Validates a batch of decryption shares in parallel - same as above, but multi-threaded
+     */
+    static std::vector< bool > validateDecryptionSharesBatchParallel(
+        const std::vector< CipheredKey >& _cipherTexts,
+        const std::vector< TEDecryptionShare >& _decryptionShares,
+        const std::vector< TEPublicKeyShare >& _publicKeys );
+
     /**
      * @brief Combines decryption shares to reconstruct the original AES key.
      * It combines all shares to derive the AES key.
@@ -105,6 +152,18 @@ public:
      * will not be the correct deciphered key, since one of the shares is corrupted.
      */
     static AES256Key combineShares( const CipheredKey& _cipheredKey, TEDecryptSet& _decryptionSet );
+
+    static std::vector< std::optional< AES256Key > > combineSharesBatch(
+        std::vector< CipheredKey >& _cipheredKeys, std::vector< TEDecryptSet >& _decryptionSets );
+
+    /**
+     * @brief Combines decryption shares to reconstruct the original AES keys for a batch of
+     * ciphered keys. Same as above, but runs in parallel for multiple ciphered keys.
+     * @return Vec of optional AES256Key, each idx specifying the reconstructed key. If the
+     * decryption set was not successfully merged due to some reason, the optional will be empty.
+     */
+    static std::vector< std::optional< AES256Key > > combineSharesBatchParallel(
+        std::vector< CipheredKey >& _cipheredKeys, std::vector< TEDecryptSet >& _decryptionSets );
 
     /**
      * @brief Validates if the generated AES key from merging the shares is correct against
@@ -120,6 +179,19 @@ public:
      */
     static void validateCombinedDecryption(
         const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey );
+
+    static std::vector< bool > validateCombinedDecryptionBatch(
+        const std::vector< Ciphertext >& _ciphertexts, const std::vector< AES256Key >& _aesKeys,
+        const TEPublicKey& _publicKey );
+
+    /**
+     * @brief Validates a batch of combined decryptions. Same as above, but uses multiple threads
+     * for better performance.
+     * @return Vec of bools, each idx specifying if it was successfully validated or not.
+     */
+    static std::vector< bool > validateCombinedDecryptionBatchParallel(
+        const std::vector< Ciphertext >& _ciphertexts, const std::vector< AES256Key >& _aesKeys,
+        const TEPublicKey& _publicKey );
 
     /**
      * @brief Decrypts a message using the AES key

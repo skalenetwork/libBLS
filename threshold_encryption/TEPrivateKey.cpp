@@ -26,52 +26,46 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
-TEPrivateKey::TEPrivateKey( const std::string& _keyStr ) {
-    // already validates the string
-    std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > privBytes =
-        ThresholdUtils::hexCStringToBytesArray< libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES >(
-            _keyStr.c_str() );
+TEPrivateKey::TEPrivateKey( const std::string& _keyStr, Base base ) {
+    privateKey = algebra::FrScalar::fromString( _keyStr, base );
 
-    privateKey = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( privBytes );
-
-    if ( privateKey.is_zero() ) {
+    if ( privateKey.isZero() ) {
         throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
     }
 }
 
-TEPrivateKey::TEPrivateKey( libff::alt_bn128_Fr _skey ) : privateKey( _skey ) {
-    if ( _skey.is_zero() )
+TEPrivateKey::TEPrivateKey( const algebra::FrScalar& _skey ) : privateKey( _skey ) {
+    if ( _skey.isZero() )
         throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
 }
 
 TEPrivateKey::TEPrivateKey( const std::vector< uint8_t > _keyBytes ) {
-    privateKey = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( _keyBytes );
-    if ( privateKey.is_zero() ) {
+    privateKey = algebra::FrScalar::fromBytes( _keyBytes );
+    if ( privateKey.isZero() ) {
         throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
     }
 }
 
-TEPrivateKey::TEPrivateKey(
-    const std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > _keyBytes ) {
-    privateKey = ThresholdUtils::bytesToFieldElement< libff::alt_bn128_Fr >( _keyBytes );
-    if ( privateKey.is_zero() ) {
+TEPrivateKey::TEPrivateKey( const std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > _keyBytes ) {
+    privateKey = algebra::FrScalar::fromBytes( _keyBytes );
+    if ( privateKey.isZero() ) {
         throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
     }
 }
 
 std::vector< uint8_t > TEPrivateKey::toBytesVec() const {
-    return ThresholdUtils::fieldElementToBytes( privateKey );
+    return privateKey.toByteVector();
 }
 
-std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > TEPrivateKey::toBytesArray() const {
-    return ThresholdUtils::fieldElementToBytesArray( privateKey );
+std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > TEPrivateKey::toBytesArray() const {
+    return privateKey.toByteArray();
 }
 
-std::string TEPrivateKey::toString() const {
-    return ThresholdUtils::fieldElementToString( privateKey, BASE_HEXA );
+std::string TEPrivateKey::toString( Base base ) const {
+    return privateKey.toString( base );
 }
 
-libff::alt_bn128_Fr TEPrivateKey::getPrivateKeyRaw() const {
+const algebra::FrScalar& TEPrivateKey::getPrivateKeyRaw() const {
     return privateKey;
 }
 

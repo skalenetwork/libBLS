@@ -27,7 +27,7 @@
 #include <bls/BLSPrivateKeyShare.h>
 #include <dkg/DKGBLSSecret.h>
 
-
+namespace libBLS {
 class DKGBLSWrapper {
 private:
     size_t requiredSigners;
@@ -38,24 +38,26 @@ private:
 public:
     DKGBLSWrapper( size_t _requiredSigners, size_t _totalSigners );
 
-    bool VerifyDKGShare( size_t signerIndex, const libff::alt_bn128_Fr& share,
-        std::shared_ptr< std::vector< libff::alt_bn128_G2 > > _verification_vector );
+    bool VerifyDKGShare( size_t signerIndex, const algebra::FrScalar& share,
+        std::shared_ptr< std::vector< algebra::G2Point > > _verification_vector );
 
-    void setDKGSecret( std::shared_ptr< std::vector< libff::alt_bn128_Fr > > _poly_ptr );
+    void setDKGSecret( std::shared_ptr< std::vector< algebra::FrScalar > > _poly_ptr );
 
-    std::shared_ptr< std::vector< libff::alt_bn128_Fr > > createDKGSecretShares();
+    std::shared_ptr< std::vector< algebra::FrScalar > > createDKGSecretShares();
 
-    std::shared_ptr< std::vector< libff::alt_bn128_G2 > > createDKGPublicShares();
+    std::shared_ptr< std::vector< algebra::G2Point > > createDKGPublicShares();
 
     BLSPrivateKeyShare CreateBLSPrivateKeyShare(
-        std::shared_ptr< std::vector< libff::alt_bn128_Fr > > secret_shares_ptr );
+        std::shared_ptr< std::vector< algebra::FrScalar > > secret_shares_ptr );
 
-    libff::alt_bn128_Fr getValueAt0();
+    algebra::FrScalar getValueAt0();
 
     static BLSPublicKey CreateTEPublicKey(
-        std::shared_ptr< std::vector< std::vector< libff::alt_bn128_G2 > > > public_shares_all,
+        std::shared_ptr< std::vector< std::vector< algebra::G2Point > > > public_shares_all,
         size_t _requiredSigners, size_t _totalSigners );
 };
+
+}  // namespace libBLS
 
 
 #endif  // LIBBLS_DKGBLSWRAPPER_H

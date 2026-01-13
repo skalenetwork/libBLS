@@ -32,45 +32,47 @@ namespace libBLS {
 
 class TEPublicKey {
 private:
-    libff::alt_bn128_G2 publicKey;
+    algebra::G2Point publicKey;
 
 public:
-    TEPublicKey( const libff::alt_bn128_G2& _pkey );
+    TEPublicKey( const algebra::G2Point& _pkey );
 
     /**
      * @brief Construct a public key from a vector of strings,
-     * each representing a coordinate of the public key in
-     * hexadecimal format.
+     * each representing a coordinate of the public key.
      */
-    TEPublicKey( const std::vector< std::string >& _keyStrPtr );
+    TEPublicKey( const std::vector< std::string >& _keyStrPtr, Base base );
 
     /**
      * @brief Construct a public key from a string containing
-     * the 4 components concatenated, and encoded in hexadecimal
-     * format.
+     * the 4 components concatenated
      */
-    TEPublicKey( const std::string& _keyStr );
+    TEPublicKey( const std::string& _keyStr, Base base );
 
     TEPublicKey( const TEPrivateKey& _comonPrivate );
 
-    TEPublicKey( const std::array< uint8_t, G2_SIZE_BYTES >& _keyBytes );
+    TEPublicKey( const std::array< uint8_t, algebra::G2Point::SIZE_BYTES >& _keyBytes );
 
     TEPublicKey( const std::vector< uint8_t >& _keyBytes );
 
     /**
      * @brief Returns the public key as a single string, with
-     * with all 4 components concatenated and encoded in hexadecimal.AES256Key
-     * String size is always 256 characters long.
+     * with all 4 components concatenated
      */
-    std::string toString() const;
+    std::string toString( Base base ) const;
 
-    inline void validate() const { ThresholdUtils::validateG2( publicKey ); }
+    inline void validate() const { publicKey.validate(); }
 
-    std::array< uint8_t, G2_SIZE_BYTES > toBytesArray() const;
+    std::array< uint8_t, algebra::G2Point::SIZE_BYTES > toBytesArray() const;
 
     std::vector< uint8_t > toBytesVec() const;
 
-    libff::alt_bn128_G2 getPublicKeyRaw() const;
+    const algebra::G2Point& getPublicKeyRaw() const;
+
+    /**
+     * @brief Generate a random TEPublicKey.
+     */
+    static TEPublicKey random();
 };
 
 }  // namespace libBLS

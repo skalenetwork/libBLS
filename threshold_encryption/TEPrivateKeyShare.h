@@ -33,42 +33,40 @@ namespace libBLS {
 
 class TEPrivateKeyShare : public TEBase {
 private:
-    libff::alt_bn128_Fr privateKey;
+    algebra::FrScalar privateKey;
 
     size_t signerIndex;
 
 public:
-    TEPrivateKeyShare( const std::string& _hexaField, size_t _signerIndex, size_t _requiredSigners,
-        size_t _totalSigners );
+    TEPrivateKeyShare( const std::string& _hexaField, Base base, size_t _signerIndex,
+        size_t _requiredSigners, size_t _totalSigners );
 
-    TEPrivateKeyShare( libff::alt_bn128_Fr _skeyShare, size_t _signerIndex, size_t _requiredSigners,
-        size_t _totalSigners );
+    TEPrivateKeyShare( const algebra::FrScalar& _skeyShare, size_t _signerIndex,
+        size_t _requiredSigners, size_t _totalSigners );
 
     TEPrivateKeyShare( const std::vector< uint8_t >& _bytes, size_t _signerIndex,
         size_t _requiredSigners, size_t _totalSigners );
 
-    TEPrivateKeyShare( const std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES >& bytes,
+    TEPrivateKeyShare( const std::array< uint8_t, algebra::FrScalar::SIZE_BYTES >& bytes,
         size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners );
 
 
     std::vector< uint8_t > toBytesVec() const;
 
-    std::array< uint8_t, MAX_FIELD_ELEMENT_SIZE_BYTES > toBytesArray() const;
+    std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > toBytesArray() const;
 
     inline void validate() const {
-        if ( privateKey.is_zero() ) {
+        if ( privateKey.isZero() ) {
             throw ThresholdUtils::IsNotWellFormed(
-                "Zero private key share, with signer index " + signerIndex );
+                "Zero private key share, with signer index " + std::to_string( signerIndex ) );
         }
     }
 
-    std::string toString() const;
-
-    std::string toStringHex() const;
+    std::string toString( Base base ) const;
 
     size_t getSignerIndex() const;
 
-    libff::alt_bn128_Fr getPrivateKeyRaw() const;
+    const algebra::FrScalar& getPrivateKeyRaw() const;
 };
 
 }  // namespace libBLS

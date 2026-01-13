@@ -24,25 +24,23 @@
 #include <stdint.h>
 #include <string>
 
-#include <bls/BLSSigShare.h>
-#include <bls/BLSSigShareSet.h>
-#include <bls/BLSSignature.h>
+#include "BLSSigShareSet.h"
 #include <tools/utils.h>
 
+namespace libBLS {
 
-bool BLSSigShareSet::addSigShare( std::shared_ptr< BLSSigShare > _sigShare ) {
-    CHECK( _sigShare );
-
+bool BLSSigShareSet::addSigShare( const BLSSigShare& _sigShare ) {
     if ( was_merged ) {
         throw libBLS::ThresholdUtils::IncorrectInput( "Invalid state:was already merged" );
     }
 
-    if ( sigShares.count( _sigShare->getSignerIndex() ) > 0 ) {
+    if ( sigShares.count( _sigShare.getSignerIndex() ) > 0 ) {
         throw libBLS::ThresholdUtils::IncorrectInput(
-            "Already have this index:" + std::to_string( _sigShare->getSignerIndex() ) );
+            "Already have this index:" + std::to_string( _sigShare.getSignerIndex() ) );
         return false;
     }
-    sigShares[_sigShare->getSignerIndex()] = _sigShare;
+
+    sigShares.insert_or_assign( _sigShare.getSignerIndex(), _sigShare );
 
     return true;
 }
@@ -50,14 +48,15 @@ bool BLSSigShareSet::addSigShare( std::shared_ptr< BLSSigShare > _sigShare ) {
 size_t BLSSigShareSet::getTotalSigSharesCount() {
     return sigShares.size();
 }
-std::shared_ptr< BLSSigShare > BLSSigShareSet::getSigShareByIndex( size_t _index ) {
+const BLSSigShare& BLSSigShareSet::getSigShareByIndex( size_t _index ) {
     if ( _index == 0 ) {
         throw libBLS::ThresholdUtils::IncorrectInput(
             "Index out of range:" + std::to_string( _index ) );
     }
 
     if ( sigShares.count( _index ) == 0 ) {
-        return nullptr;
+        throw libBLS::ThresholdUtils::IncorrectInput(
+            "No signature share found for index:" + std::to_string( _index ) );
     }
 
     return sigShares.at( _index );
@@ -65,15 +64,13 @@ std::shared_ptr< BLSSigShare > BLSSigShareSet::getSigShareByIndex( size_t _index
 BLSSigShareSet::BLSSigShareSet( size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ), was_merged( false ) {
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
-
-    libBLS::ThresholdUtils::initCurve();
 }
 
 bool BLSSigShareSet::isEnough() {
     return ( sigShares.size() >= requiredSigners );
 }
 
-std::shared_ptr< BLSSignature > BLSSigShareSet::merge() {
+BLSSignature BLSSigShareSet::merge() {
     if ( !isEnough() )
         throw libBLS::ThresholdUtils::IncorrectInput( "Not enough shares to create signature" );
 
@@ -81,21 +78,23 @@ std::shared_ptr< BLSSignature > BLSSigShareSet::merge() {
     libBLS::Bls obj = libBLS::Bls( requiredSigners, totalSigners );
 
     std::vector< size_t > participatingNodes;
-    std::vector< libff::alt_bn128_G1 > shares;
+    std::vector< algebra::G1Point > shares;
 
     for ( auto&& item : sigShares ) {
         participatingNodes.push_back( static_cast< uint64_t >( item.first ) );
-        shares.push_back( *item.second->getSigShare() );
+        shares.push_back( item.second.getSigShare() );
     }
 
-    std::vector< libff::alt_bn128_Fr > lagrangeCoeffs =
-        libBLS::ThresholdUtils::LagrangeCoeffs( participatingNodes, requiredSigners );
+    std::vector< algebra::FrScalar > lagrangeCoeffs =
+        algebra::lagrangeCoeffs( participatingNodes, requiredSigners );
 
-    libff::alt_bn128_G1 signature = obj.SignatureRecover( shares, lagrangeCoeffs );
+    algebra::G1Point signature = obj.SignatureRecover( shares, lagrangeCoeffs );
 
-    auto sigPtr = std::make_shared< libff::alt_bn128_G1 >( signature );
+    auto k = participatingNodes.at( 0 );
+    const auto& s = sigShares.at( k );
+    std::string hint = s.getHint();
 
-    std::string hint = sigShares[participatingNodes.at( 0 )]->getHint();
-
-    return std::make_shared< BLSSignature >( sigPtr, hint, requiredSigners, totalSigners );
+    return BLSSignature( signature, hint, requiredSigners, totalSigners );
 }
+
+}  // namespace libBLS

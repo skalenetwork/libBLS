@@ -24,9 +24,9 @@
 #ifndef LIBBLS_TEDECRYPTSET_H
 #define LIBBLS_TEDECRYPTSET_H
 
-#include <threshold_encryption/TEBase.h>
-#include <threshold_encryption/TEDecryptionShare.h>
-#include <threshold_encryption/threshold_encryption.h>
+#include "TEBase.h"
+#include "TEDecryptionShare.h"
+#include "threshold_encryption.h"
 #include <unordered_set>
 
 namespace libBLS {
@@ -68,7 +68,17 @@ public:
      * @note The share must be valid and correspond to the same ciphertext as other shares
      * in the set
      */
-    void addDecryptShare( const TEDecryptionShare& _share );
+    bool addDecryptShare( const TEDecryptionShare& _share );
+
+    /**
+     * @brief Removes a decryption share from the decryption set.
+     * @param _share The decryption share to be removed from the set
+     * @details This function removes a single decryption share from the collection of shares
+     * in the decryption set. This can be useful if a share is found to be invalid or if
+     * it needs to be replaced.
+     * @note If the share is not found in the set, no action is taken.
+     */
+    bool removeDecryptShare( const TEDecryptionShare& _share );
 
     size_t size() const;
 
@@ -82,7 +92,7 @@ public:
 
     MergeStatus getMergeStatus() const;
 
-    std::vector< std::pair< libff::alt_bn128_G2, size_t > > getSharesRaw() const;
+    std::vector< std::pair< algebra::G2Point, size_t > > getSharesRaw() const;
 };
 
 }  // namespace libBLS

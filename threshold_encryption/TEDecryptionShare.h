@@ -36,7 +36,7 @@ namespace libBLS {
 class TEDecryptionShare {
 private:
     size_t signerIndex;
-    libff::alt_bn128_G2 share;
+    algebra::G2Point share;
 
 public:
     /**
@@ -44,7 +44,7 @@ public:
      * @param _share Decryption share
      * @note Validates that the share is well formed and non-zero.
      */
-    TEDecryptionShare( libff::alt_bn128_G2 _share, size_t _signerIndex );
+    TEDecryptionShare( const algebra::G2Point& _share, size_t _signerIndex );
 
     /**
      * @param _signerIndex Index of the signer
@@ -56,7 +56,7 @@ public:
 
     size_t getSignerIndex() const;
 
-    libff::alt_bn128_G2 getShareRaw() const;
+    const algebra::G2Point& getShareRaw() const;
 
     /**
      * Basic validation on the share (G2 point)
@@ -66,7 +66,7 @@ public:
     /**
      * @brief Converts the decryption share to a pair
      */
-    operator std::pair< libff::alt_bn128_G2, size_t >() const;
+    operator std::pair< algebra::G2Point, size_t >() const;
 
     bool operator==( const TEDecryptionShare& _other ) const;
 
