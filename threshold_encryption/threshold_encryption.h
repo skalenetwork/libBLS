@@ -35,10 +35,6 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include "backends/algebra.hpp"
 #include <tools/utils.h>
 
-// TODO - remove this
-#include "benchmarks/ScopedTimer.hpp"
-#include <iostream>
-
 
 namespace libBLS {
 
