@@ -62,6 +62,8 @@ def encrypt_message(tx_data: str, public_key: str) -> str:
         None,
         None
     )
+    if result is None:
+        raise RuntimeError("Encryption failed. Check library logs for details.")
     return result.decode('utf-8')
 
 def encrypt_message_dual_key(tx_data: str, first_key: str, second_key: str) -> str:
@@ -75,6 +77,8 @@ def encrypt_message_dual_key(tx_data: str, first_key: str, second_key: str) -> s
         None,
         None
     )
+    if result is None:
+        raise RuntimeError("Dual key encryption failed. Check library logs for details.")
     return result.decode('utf-8')
 
 def encrypt_message_mockup(tx_data: str) -> str:
@@ -82,6 +86,8 @@ def encrypt_message_mockup(tx_data: str) -> str:
     Mockup encryption for testing purposes.
     """
     result = _lib.encryptMessageMockup(tx_data.encode('utf-8'))
+    if result is None:
+        raise RuntimeError("Mockup encryption failed. Check library logs for details.")
     return result.decode('utf-8')
 
 __all__ = ['encrypt_message', 'encrypt_message_dual_key', 'encrypt_message_mockup']

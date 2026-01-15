@@ -29,6 +29,13 @@ class CustomBuildPy(build_py):
             if os.path.exists(p):
                 found_lib = p
                 break
+        
+        if found_lib is None:
+            raise FileNotFoundError(
+                f"Could not find {BUILD_TARGET_NAME} in "
+                f"{', '.join(possible_build_dirs)}. "
+                "Please build the C++ library first."
+            )
 
         target_path = os.path.join(current_dir, PACKAGE_NAME, LIB_NAME)
 
