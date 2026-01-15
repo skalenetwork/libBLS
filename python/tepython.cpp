@@ -18,7 +18,7 @@ const char* encryptMessage( const char* data, const char* key,
     try {
         ensureInit();
 
-    // convert from char into vec of bytes
+    // convert from char into vector of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
 
     // build public key
@@ -66,7 +66,7 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
     try {
         ensureInit();
 
-    // convert from char into vec of bytes
+    // convert from char into vector of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
 
     std::vector< libBLS::TEPublicKey > commonPublicKeys;
@@ -117,7 +117,7 @@ const char* encryptMessageMockup( const char* data ) {
     try {
         ensureInit();
 
-    // convert from char into vec of bytes
+    // convert from char into vector of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
 
     // encrypt message

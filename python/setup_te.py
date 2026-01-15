@@ -29,7 +29,7 @@ class CustomBuildPy(build_py):
             if os.path.exists(p):
                 found_lib = p
                 break
-        
+
         if found_lib is None:
             raise FileNotFoundError(
                 f"Could not find {BUILD_TARGET_NAME} in "

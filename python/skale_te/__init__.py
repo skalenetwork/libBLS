@@ -68,8 +68,18 @@ def encrypt_message(tx_data: str, public_key: str) -> str:
 
 def encrypt_message_dual_key(tx_data: str, first_key: str, second_key: str) -> str:
     """
-    Encrypts a message using two BLS public keys (Dual Key encryption).
+    Encrypts a message using two BLS public keys (dual-key encryption).
+    Args:
+        tx_data (str): The transaction data hex string to be encrypted.
+        first_key (str): The first BLS public key hex string.
+        second_key (str): The second BLS public key hex string.
+    Returns:
+        str: The encrypted message as a hex string produced by dual-key encryption.
     """
+    if not tx_data or not first_key or not second_key:
+        raise ValueError("tx_data, first_key, and second_key must not be empty")
+
+
     result = _lib.encryptMessageDualKey(
         tx_data.encode('utf-8'),
         first_key.encode('utf-8'),
@@ -84,7 +94,14 @@ def encrypt_message_dual_key(tx_data: str, first_key: str, second_key: str) -> s
 def encrypt_message_mockup(tx_data: str) -> str:
     """
     Mockup encryption for testing purposes.
+    Args:
+        tx_data (str): The transaction data hex string.
+    Returns:
+        str: The mockup encrypted message as a hex string.
     """
+    if not tx_data:
+        raise ValueError("tx_data must not be empty")
+
     result = _lib.encryptMessageMockup(tx_data.encode('utf-8'))
     if result is None:
         raise RuntimeError("Mockup encryption failed. Check library logs for details.")
