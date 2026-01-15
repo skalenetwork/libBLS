@@ -318,3 +318,14 @@ endif()
 if (LIBBLS_BUILD_BENCHMARKS)
 	add_subdirectory(benchmarks)
 endif()
+
+# Build python threshold_encryption shared library
+add_library(skale_te_python SHARED python/tepython.cpp)
+target_include_directories(skale_te_python PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+# Link against te (Threshold Encryption), bls, common_utils and other dependencies
+# Use --whole-archive to ensure all symbols from static libs are included in the shared lib
+target_link_libraries(skale_te_python PRIVATE 
+    -Wl,--whole-archive te bls common_utils -Wl,--no-whole-archive 
+    backend ${FOLLY_STATIC_LIBS} ${CRYPTOPP_LIBRARY})
+
+
