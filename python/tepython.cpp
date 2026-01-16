@@ -78,7 +78,7 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
     commonPublicKeys.push_back( firstCommonPublic );
     commonPublicKeys.push_back( secondCommonPublic );
 
-    // Build meta data
+    // Build metadata
     libBLS::EncryptMetaData metaData;
 
     // set AAD AES if not empty
