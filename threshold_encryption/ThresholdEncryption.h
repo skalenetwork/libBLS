@@ -24,6 +24,7 @@
 #ifndef LIBBLS_THRESHOLDENCRYPTION_H
 #define LIBBLS_THRESHOLDENCRYPTION_H
 
+#include "AesGcmCipher.h"
 #include "TEDecryptSet.h"
 #include "TEPrivateKeyShare.h"
 #include "TEPublicKeyShare.h"
@@ -46,19 +47,6 @@ class ThresholdEncryption {
 public:
     static std::vector< uint8_t > mockupEncrypt( const std::vector< uint8_t >& _message );
     static std::vector< uint8_t > mockupDecrypt( const std::vector< uint8_t >& _encryptedData );
-
-    struct EncryptMetaData {
-        // Optional associated data for AES CBC
-        // Is used at encryption and at decryption stages only. Does not obey to threshold
-        // guarantees since it is associated with symmetric encryption.
-        std::optional< std::vector< uint8_t > > associatedDataAesCbc;
-
-        // Optional associated data for TE
-        // Is used at encryption and validateEncryption stages only. Obeys to threshold guarantees
-        // as long as no party proceeds with the algorithm (partial decryption) in case
-        // validateEncryption fails with this associated data.
-        std::optional< std::vector< uint8_t > > associatedDataTE;
-    };
 
     /**
      * @brief Encrypts a message using threshold encryption.

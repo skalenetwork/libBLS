@@ -58,6 +58,27 @@ struct CipheredKeyResult {
     RandSecret randomSecret;
 };
 
+
+/**
+ * @brief Metadata used during encryption
+ */
+struct EncryptMetaData {
+    // Optional associated data for AES CBC
+    // Is used at encryption and at decryption stages only. Does not obey to threshold
+    // guarantees since it is associated with symmetric encryption.
+    std::optional< std::vector< uint8_t > > associatedDataAesCbc;
+
+    // Optional associated data for TE
+    // Is used at encryption and validateEncryption stages only. Obeys to threshold guarantees
+    // as long as no party proceeds with the algorithm (partial decryption) in case
+    // validateEncryption fails with this associated data.
+    std::optional< std::vector< uint8_t > > associatedDataTE;
+
+    // Optional seed used to derive both the random scalar secret and the AES key.
+    // Seed must have same size as AES_KEY in order to have the same entropy / security level.
+    std::optional< Seed256 > seed;
+};
+
 class TE {
 public:
     TE( const TEBase& base );
@@ -65,7 +86,6 @@ public:
     TE( const size_t t, const size_t n );
 
     ~TE();
-
 
     /**
      * @brief Encrypts a message using threshold encryption scheme
@@ -85,21 +105,20 @@ public:
      */
     static CipheredKeyResult getCiphertext( const AES256Key& key,
         const algebra::G2Point& commonPublic,
-        const std::vector< uint8_t >* associatedDataTE = nullptr );
+        const std::optional< std::vector< uint8_t > >& associatedDataTE,
+        const std::optional< Seed256 >& seed );
 
     static CipheredKeyResult getCiphertext( const AES256Key& key,
         const std::vector< algebra::G2Point >& commonPublic,
-        const std::vector< uint8_t >* associatedDataTE = nullptr );
+        const std::optional< std::vector< uint8_t > >& associatedDataTE,
+        const std::optional< Seed256 >& seed );
 
     static CipherResult encryptWithAES( const std::vector< uint8_t >& message,
-        const algebra::G2Point& commonPublic,
-        const std::optional< std::vector< uint8_t > >& associatedDataAES = std::nullopt,
-        const std::optional< std::vector< uint8_t > >& associatedDataTE = std::nullopt );
+        const algebra::G2Point& commonPublic, const EncryptMetaData& metaData = EncryptMetaData() );
 
     static CipherResult encryptWithAES( const std::vector< uint8_t >& message,
         const std::vector< algebra::G2Point >& commonPublic,
-        const std::optional< std::vector< uint8_t > >& associatedDataAES = std::nullopt,
-        const std::optional< std::vector< uint8_t > >& associatedDataTE = std::nullopt );
+        const EncryptMetaData& metaData = EncryptMetaData() );
 
     static std::pair< std::string, RandSecret > encryptMessage(
         const std::vector< uint8_t >& message, const std::string& commonPublic );
