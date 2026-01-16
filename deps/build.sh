@@ -239,6 +239,11 @@ WITH_FF="yes"
 WITH_GMP="yes"
 WITH_MCL="yes"
 
+if [ -z "${WITH_SGX}" ];
+then
+	WITH_SGX="no"
+fi
+
 if [ -z "${PARALLEL_COUNT}" ];
 then
 	PARALLEL_COUNT=$NUMBER_OF_CPU_CORES
@@ -868,6 +873,42 @@ if [ "$WITH_MCL" = "yes" ]; then
     cd "$SOURCES_ROOT"
   else
     echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+  fi
+
+  # Build SGX MCL (no Xbyak, LLVM AOT)
+  if [ "$WITH_SGX" = "yes" ]; then
+    # Strict check for LLVM tools
+    if [ -z "$(which clang)" ] || [ -z "$(which llvm-as)" ]; then
+      echo -e "${COLOR_ERROR}Error: SGX build requires clang and llvm-as (LLVM toolchain).${COLOR_RESET}"
+      exit 1
+    fi
+
+    if [ ! -f "$INSTALL_ROOT/lib/libmcl_sgx.a" ]; then
+      echo -e "${COLOR_INFO}Building MCL for SGX...${COLOR_RESET}"
+      cd "$SOURCES_ROOT/mcl"
+      
+      # Clean previous build artifacts
+      "$MAKE" clean || true
+      
+      "$MAKE" \
+        DEBUG=0 \
+        ARCH=x86_64 \
+        MCL_USE_XBYAK=0 \
+        MCL_USE_LLVM=1 \
+        MCL_BINT_ASM=1 \
+        MCL_MSM=0 \
+        MCL_FP_BIT=256 \
+        MCL_FR_BIT=256 \
+        MCL_DONT_USE_OPENMP=1 \
+        CFLAGS_USER="-DMCL_DONT_USE_CSPRNG -DCYBOZU_DONT_USE_STRING -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_HOST_UNKNOWN=0 -DCYBOZU_HOST_INTEL=1 -DCYBOZU_HOST=0 -Wa,--noexecstack" \
+        ${PARALLEL_MAKE_OPTIONS} \
+        lib/libmcl.a
+      
+      cp lib/libmcl.a "$INSTALL_ROOT/lib/libmcl_sgx.a"
+      cd "$SOURCES_ROOT"
+    else
+      echo -e "${COLOR_SUCCESS}SGX MCL SKIPPED${COLOR_RESET}"
+    fi
   fi
 fi
 
