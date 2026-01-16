@@ -330,6 +330,8 @@ if(APPLE)
         -Wl,-force_load,$<TARGET_FILE:bls>
         -Wl,-force_load,$<TARGET_FILE:common_utils>
         backend ${FOLLY_STATIC_LIBS} ${CRYPTOPP_LIBRARY})
+    # Explicitly add dependencies for Apple builds because they are hidden inside linker flags
+    add_dependencies(skale_te_python te bls common_utils)
 else()
     target_link_libraries(skale_te_python PRIVATE 
         -Wl,--whole-archive te bls common_utils -Wl,--no-whole-archive 
