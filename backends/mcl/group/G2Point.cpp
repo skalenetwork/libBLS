@@ -238,7 +238,6 @@ G2Point G2Point::fromString( const std::string& str, Base base ) {
             trySettingFieldWithString( ret.value.y.b, parts[3], base );
         }
     } catch ( const std::exception& e ) {
-        std::cout << "EXCEPTION: " << e.what() << std::endl;
         throw ThresholdUtils::IncorrectInput(
             std::string( "Failed to set G2Point components from string: " ) + e.what() );
     }

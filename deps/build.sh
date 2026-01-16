@@ -900,9 +900,15 @@ if [ "$WITH_MCL" = "yes" ]; then
         MCL_FP_BIT=256 \
         MCL_FR_BIT=256 \
         MCL_DONT_USE_OPENMP=1 \
-        CFLAGS_USER="-DMCL_DONT_USE_CSPRNG -DCYBOZU_DONT_USE_STRING -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_HOST_UNKNOWN=0 -DCYBOZU_HOST_INTEL=1 -DCYBOZU_HOST=0 -Wa,--noexecstack" \
-        ${PARALLEL_MAKE_OPTIONS} \
-        lib/libmcl.a
+        CFLAGS_USER="-DMCL_DONT_USE_CSPRNG \
+			-DCYBOZU_DONT_USE_STRING \ 
+			-DCYBOZU_DONT_USE_EXCEPTION \ 
+			-DCYBOZU_HOST_UNKNOWN=0 \ 
+			-DCYBOZU_HOST_INTEL=1 \
+			-DCYBOZU_HOST=0 \ 
+			-Wa,--noexecstack" \
+			${PARALLEL_MAKE_OPTIONS} \
+			lib/libmcl.a
       
       cp lib/libmcl.a "$INSTALL_ROOT/lib/libmcl_sgx.a"
       cd "$SOURCES_ROOT"
