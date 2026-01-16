@@ -42,13 +42,19 @@ _lib.encryptMessageDualKey.argtypes = [c_char_p, c_char_p, c_char_p, c_char_p, c
 _lib.encryptMessageMockup.restype = c_char_p
 _lib.encryptMessageMockup.argtypes = [c_char_p]
 
-def encrypt_message(tx_data: str, public_key: str) -> str:
+def encrypt_message(
+        tx_data: str,
+        public_key: str,
+        additional_authenticated_data_aes: str = None,
+        additional_authenticated_data_te: str = None) -> str:
     """
     Encrypts a message using a single BLS public key.
 
     Args:
         tx_data (str): The transaction data hex string.
         public_key (str): The BLS public key hex string.
+        additional_authenticated_data_aes (str, optional): AES additional authenticated data.
+        additional_authenticated_data_te (str, optional): TE additional authenticated data.
 
     Returns:
         str: The encrypted message as a hex string.
@@ -56,36 +62,58 @@ def encrypt_message(tx_data: str, public_key: str) -> str:
     if not tx_data or not public_key:
         raise ValueError("tx_data and public_key must not be empty")
 
+    aad_aes = None
+    if additional_authenticated_data_aes:
+        aad_aes = additional_authenticated_data_aes.encode('utf-8')
+
+    aad_te = None
+    if additional_authenticated_data_te:
+        aad_te = additional_authenticated_data_te.encode('utf-8')
+
     result = _lib.encryptMessage(
         tx_data.encode('utf-8'),
         public_key.encode('utf-8'),
-        None,
-        None
+        aad_aes,
+        aad_te
     )
     if result is None:
         raise RuntimeError("Encryption failed. Check library logs for details.")
     return result.decode('utf-8')
 
-def encrypt_message_dual_key(tx_data: str, first_key: str, second_key: str) -> str:
+def encrypt_message_dual_key(
+        tx_data: str,
+        first_key: str,
+        second_key: str,
+        additional_authenticated_data_aes: str = None,
+        additional_authenticated_data_te: str = None) -> str:
     """
     Encrypts a message using two BLS public keys (dual-key encryption).
     Args:
         tx_data (str): The transaction data hex string to be encrypted.
         first_key (str): The first BLS public key hex string.
         second_key (str): The second BLS public key hex string.
+        additional_authenticated_data_aes (str, optional): AES additional authenticated data.
+        additional_authenticated_data_te (str, optional): TE additional authenticated data.
     Returns:
         str: The encrypted message as a hex string produced by dual-key encryption.
     """
     if not tx_data or not first_key or not second_key:
         raise ValueError("tx_data, first_key, and second_key must not be empty")
 
+    aad_aes = None
+    if additional_authenticated_data_aes:
+        aad_aes = additional_authenticated_data_aes.encode('utf-8')
+
+    aad_te = None
+    if additional_authenticated_data_te:
+        aad_te = additional_authenticated_data_te.encode('utf-8')
 
     result = _lib.encryptMessageDualKey(
         tx_data.encode('utf-8'),
         first_key.encode('utf-8'),
         second_key.encode('utf-8'),
-        None,
-        None
+        aad_aes,
+        aad_te
     )
     if result is None:
         raise RuntimeError("Dual key encryption failed. Check library logs for details.")

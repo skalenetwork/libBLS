@@ -24,16 +24,24 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include "ThresholdEncryption.h"
 #include <threshold_encryption.h>
 #include <tools/utils.h>
+#include <mutex>
+#include <iostream>
+
+static std::once_flag initFlag;
+static void ensureInit() {
+    std::call_once(initFlag, [](){ libBLS::init(); });
+}
 
 extern "C" {
 
 const char* encryptMessage( const char* data, const char* key,
     const char* additionalAuthenticatedDataAES, const char* additionalAuthenticatedDataTE ) {
-    static std::string cipheredMessageStr;
+    thread_local std::string cipheredMessageStr;
 
-    libBLS::init();
+    try {
+        ensureInit();
 
-    // convert from char into vec of bytes
+    // convert from char into vector of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
 
     // build public key
@@ -64,15 +72,24 @@ const char* encryptMessage( const char* data, const char* key,
     cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessageBytes );
 
     return cipheredMessageStr.c_str();
+
+    } catch ( const std::exception& e ) {
+        std::cerr << "C++ exception in encryptMessage: " << e.what() << std::endl;
+        return nullptr;
+    } catch ( ... ) {
+        std::cerr << "Unknown C++ exception in encryptMessage" << std::endl;
+        return nullptr;
+    }
 }
 
 const char* encryptMessageDualKey( const char* data, const char* firstKey, const char* secondKey,
     const char* additionalAuthenticatedDataAES, const char* additionalAuthenticatedDataTE ) {
-    static std::string cipheredMessageStr;
+    thread_local std::string cipheredMessageStr;
 
-    libBLS::init();
+    try {
+        ensureInit();
 
-    // convert from char into vec of bytes
+    // convert from char into vector of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
 
     std::vector< libBLS::TEPublicKey > commonPublicKeys;
@@ -84,7 +101,7 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
     commonPublicKeys.push_back( firstCommonPublic );
     commonPublicKeys.push_back( secondCommonPublic );
 
-    // Build meta data
+    // Build metadata
     libBLS::EncryptMetaData metaData;
 
     // set AAD AES if not empty
@@ -107,14 +124,23 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
     cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessageBytes );
 
     return cipheredMessageStr.c_str();
+
+    } catch ( const std::exception& e ) {
+        std::cerr << "C++ exception in encryptMessageDualKey: " << e.what() << std::endl;
+        return nullptr;
+    } catch ( ... ) {
+        std::cerr << "Unknown C++ exception in encryptMessageDualKey" << std::endl;
+        return nullptr;
+    }
 }
 
 const char* encryptMessageMockup( const char* data ) {
-    static std::string cipheredMessageStr;
+    thread_local std::string cipheredMessageStr;
 
-    libBLS::init();
+    try {
+        ensureInit();
 
-    // convert from char into vec of bytes
+    // convert from char into vector of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
 
     // encrypt message
@@ -124,5 +150,13 @@ const char* encryptMessageMockup( const char* data ) {
     cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessage );
 
     return cipheredMessageStr.c_str();
+
+    } catch ( const std::exception& e ) {
+        std::cerr << "C++ exception in encryptMessageMockup: " << e.what() << std::endl;
+        return nullptr;
+    } catch ( ... ) {
+        std::cerr << "Unknown C++ exception in encryptMessageMockup" << std::endl;
+        return nullptr;
+    }
 }
 }

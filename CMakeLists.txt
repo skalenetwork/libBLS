@@ -272,10 +272,10 @@ if(LIBBLS_BUILD_TESTS)
 			target_compile_options(${name} PRIVATE -Wno-format-overflow)
 		endif()
 
-		target_link_libraries(${name} PRIVATE 
-			bls 
-			${CRYPTOPP_LIBRARY} 
-			boost_program_options 
+		target_link_libraries(${name} PRIVATE
+			bls
+			${CRYPTOPP_LIBRARY}
+			boost_program_options
 			${extra_libs}
 			${FOLLY_STATIC_LIBS}
 		)
@@ -320,12 +320,10 @@ if (LIBBLS_BUILD_BENCHMARKS)
 endif()
 
 # Build python threshold_encryption shared library
-add_library(skale_te_python SHARED python/tepython.cpp)
-target_include_directories(skale_te_python PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-# Link against te (Threshold Encryption), bls, common_utils and other dependencies
-# Use --whole-archive to ensure all symbols from static libs are included in the shared lib
+add_library(skale_te_python SHARED threshold_encryption/encryptMessage.cpp)
+target_include_directories(skale_te_python PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/threshold_encryption)
 if(APPLE)
-    target_link_libraries(skale_te_python PRIVATE 
+    target_link_libraries(skale_te_python PRIVATE
         -Wl,-force_load,$<TARGET_FILE:te>
         -Wl,-force_load,$<TARGET_FILE:bls>
         -Wl,-force_load,$<TARGET_FILE:common_utils>
@@ -333,7 +331,7 @@ if(APPLE)
     # Explicitly add dependencies for Apple builds because they are hidden inside linker flags
     add_dependencies(skale_te_python te bls common_utils)
 else()
-    target_link_libraries(skale_te_python PRIVATE 
-        -Wl,--whole-archive te bls common_utils -Wl,--no-whole-archive 
+    target_link_libraries(skale_te_python PRIVATE
+        -Wl,--whole-archive te bls common_utils -Wl,--no-whole-archive
         backend ${FOLLY_STATIC_LIBS} ${CRYPTOPP_LIBRARY})
 endif()
