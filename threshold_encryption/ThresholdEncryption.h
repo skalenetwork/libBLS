@@ -80,7 +80,9 @@ public:
      * @brief Validates a batch of TE ciphered keys. Same as above, but more performant
      * @param _ciphertexts Vector of encrypted AESKeys used to encrypt the message held by
      * Ciphertext struct
-     * @param _associatedDataTE Optional vector of associated data - one AAD per ciphertext
+     * @param _associatedDataTE Optional vector of associated data. Supports partial AAD:
+     * if size < ciphertexts size, first N AADs apply to first N ciphertexts, remaining
+     * ciphertexts are validated without AAD. Empty AAD entries are treated as no AAD.
      * @return Vec of bools, each idx specifying if it was successfully validated or not.
      * Each idx corresponds to the same idx on _ciphertexts.
      */
@@ -92,7 +94,9 @@ public:
      * @brief Validates a batch of TE ciphered keys in parallel. Same as above, but multi-threaded
      * @param _ciphertexts Vector of encrypted AESKeys used to encrypt the message held by
      * Ciphertext struct
-     * @param _associatedDataTE Optional vector of associated data - one AAD per ciphertext
+     * @param _associatedDataTE Optional vector of associated data. Supports partial AAD:
+     * if size < ciphertexts size, first N AADs apply to first N ciphertexts, remaining
+     * ciphertexts are validated without AAD. Empty AAD entries are treated as no AAD.
      * @return Vec of bools, each idx specifying if it was successfully validated or not
      */
     static std::vector< bool > validateEncryptionBatchParallel(

@@ -152,8 +152,9 @@ std::vector< bool > ThresholdEncryption::validateEncryptionBatch(
         return {};
     }
 
-    if ( _associatedDataTE && _associatedDataTE->size() != _ciphertexts.size() ) {
-        throw ThresholdUtils::IncorrectInput( "Associated data TE size does not match" );
+    // Allow partial AAD: first N AADs apply to first N ciphertexts, rest have no AAD
+    if ( _associatedDataTE && _associatedDataTE->size() > _ciphertexts.size() ) {
+        throw ThresholdUtils::IncorrectInput( "Associated data TE size cannot exceed ciphertexts size" );
     }
 
     // Store concrete values (no reference_wrapper)
@@ -171,8 +172,9 @@ std::vector< bool > ThresholdEncryption::validateEncryptionBatch(
 
     for ( size_t i = 0; i < size; ++i ) {
         const auto& [U, V, W] = _ciphertexts.at( i );
+        // Apply AAD only if provided and within AAD vector bounds
         const std::vector< uint8_t >* aadPtr =
-            _associatedDataTE ? &_associatedDataTE->at( i ) : nullptr;
+            ( _associatedDataTE && i < _associatedDataTE->size() ) ? &_associatedDataTE->at( i ) : nullptr;
         const algebra::G1Point H = TE::HashToGroup( U, V, aadPtr );
 
         g1P1s.at( i ) = W;
@@ -192,21 +194,28 @@ std::vector< bool > ThresholdEncryption::validateEncryptionBatchParallel(
         return {};
     }
 
-    if ( _associatedDataTE && _associatedDataTE->size() != _ciphertexts.size() ) {
-        throw ThresholdUtils::IncorrectInput( "Associated data TE size does not match" );
+    // Allow partial AAD: first N AADs apply to first N ciphertexts, rest have no AAD
+    if ( _associatedDataTE && _associatedDataTE->size() > _ciphertexts.size() ) {
+        throw ThresholdUtils::IncorrectInput( "Associated data TE size cannot exceed ciphertexts size" );
     }
 
     auto result = ThresholdUtils::executeInParallel< bool >(
         _ciphertexts.size(), [&_ciphertexts, _associatedDataTE]( size_t startIdx, size_t endIdx ) {
             const std::vector< CipheredKey > subset(
                 _ciphertexts.begin() + startIdx, _ciphertexts.begin() + endIdx );
-            // Slice AAD vector for this subset
+            // Slice AAD vector for this subset - handle partial AAD
             const std::vector< std::vector< uint8_t > >* aadSubset = nullptr;
             std::vector< std::vector< uint8_t > > aadSubsetStorage;
             if ( _associatedDataTE ) {
-                aadSubsetStorage.assign(
-                    _associatedDataTE->begin() + startIdx, _associatedDataTE->begin() + endIdx );
-                aadSubset = &aadSubsetStorage;
+                // Only include AAD entries that are within bounds
+                size_t aadSize = _associatedDataTE->size();
+                size_t aadStart = std::min( startIdx, aadSize );
+                size_t aadEnd = std::min( endIdx, aadSize );
+                if ( aadStart < aadEnd ) {
+                    aadSubsetStorage.assign(
+                        _associatedDataTE->begin() + aadStart, _associatedDataTE->begin() + aadEnd );
+                    aadSubset = &aadSubsetStorage;
+                }
             }
             return ThresholdEncryption::validateEncryptionBatch( subset, aadSubset );
         } );
@@ -279,9 +288,10 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatchParallel(
             "Decryption shares size must be multiple of ciphertexts size" );
     }
 
-    if ( _associatedDataTE && _associatedDataTE->size() != _cipherTexts.size() ) {
+    // Allow partial AAD: first N AADs apply to first N ciphertexts, rest have no AAD
+    if ( _associatedDataTE && _associatedDataTE->size() > _cipherTexts.size() ) {
         throw ThresholdUtils::IncorrectInput(
-            "Associated data size must match number of ciphertexts" );
+            "Associated data size cannot exceed number of ciphertexts" );
     }
 
     size_t sharesPerCiphertext = _decryptionShares.size() / _cipherTexts.size();
@@ -298,13 +308,19 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatchParallel(
                 _publicKeys.begin() + startIdx * sharesPerCiphertext,
                 _publicKeys.begin() + endIdx * sharesPerCiphertext );
 
-            // Slice AAD for this subset
+            // Slice AAD for this subset - handle partial AAD
             const std::vector< std::vector< uint8_t > >* aadSubset = nullptr;
             std::vector< std::vector< uint8_t > > aadSubsetStorage;
             if ( _associatedDataTE ) {
-                aadSubsetStorage.assign(
-                    _associatedDataTE->begin() + startIdx, _associatedDataTE->begin() + endIdx );
-                aadSubset = &aadSubsetStorage;
+                // Only include AAD entries that are within bounds
+                size_t aadSize = _associatedDataTE->size();
+                size_t aadStart = std::min( startIdx, aadSize );
+                size_t aadEnd = std::min( endIdx, aadSize );
+                if ( aadStart < aadEnd ) {
+                    aadSubsetStorage.assign(
+                        _associatedDataTE->begin() + aadStart, _associatedDataTE->begin() + aadEnd );
+                    aadSubset = &aadSubsetStorage;
+                }
             }
 
             return ThresholdEncryption::validateDecryptionSharesBatch(
