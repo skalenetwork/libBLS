@@ -647,8 +647,8 @@ BOOST_AUTO_TEST_CASE( TEDecryptionSharesBatchValidationWithPartialAAD ) {
     }
 
     // Test with wrong AAD on first 2 - should fail, last 2 should still pass
-    std::vector< std::vector< uint8_t > > wrongAadVec = {
-        { 0xFF, 0xFF, 0x00 }, { 0xFF, 0xFF, 0x01 } };
+    std::vector< std::vector< uint8_t > > wrongAadVec = { { 0xFF, 0xFF, 0x00 },
+        { 0xFF, 0xFF, 0x01 } };
 
     auto wrongResults = libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
         cipheredKeys, shares, pubKeys, &wrongAadVec );
