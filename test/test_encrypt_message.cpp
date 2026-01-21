@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
 
         // encrypt message using libBLS
         libBLS::TEPublicKey publicKey( pKeyStr, libBLS::Base::HEXA );
-        libBLS::ThresholdEncryption::EncryptMetaData metaData;
+        libBLS::EncryptMetaData metaData;
         metaData.associatedDataAesCbc = additionalAuthenticatedData;
         metaData.associatedDataTE = additionalAuthenticatedDataTE;
 
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
         for ( const auto& publicKey : publicKeysStr ) {
             commonPublicKeys.push_back( libBLS::TEPublicKey( publicKey, libBLS::Base::HEXA ) );
         }
-        libBLS::ThresholdEncryption::EncryptMetaData metaData;
+        libBLS::EncryptMetaData metaData;
         metaData.associatedDataAesCbc = additionalAuthenticatedData;
         metaData.associatedDataTE = additionalAuthenticatedDataTE;
         libBLS::Ciphertext ciphertext =

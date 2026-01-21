@@ -120,8 +120,7 @@ Ciphertext ThresholdEncryption::encrypt( const std::vector< uint8_t >& _message,
         rawPublicKeys.push_back( publicKey.getPublicKeyRaw() );
     }
 
-    CipherResult cipher = TE::encryptWithAES(
-        _message, rawPublicKeys, _metaData.associatedDataAesCbc, _metaData.associatedDataTE );
+    CipherResult cipher = TE::encryptWithAES( _message, rawPublicKeys, _metaData );
 
     if ( !cipher.ciphertext ) {
         throw ThresholdUtils::IsNotWellFormed( "ciphertext is null" );
