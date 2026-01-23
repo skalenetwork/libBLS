@@ -430,6 +430,286 @@ BOOST_AUTO_TEST_CASE( TEBatchValidationWithAAD ) {
     }
 }
 
+BOOST_AUTO_TEST_CASE( TEBatchValidationWithPartialAAD ) {
+    // Test batch validation with partial AAD (fewer AADs than ciphertexts)
+    size_t numAll = 4;
+    size_t numSigned = 3;
+
+    keys keys = generateKeys( numSigned, numAll );
+    std::vector< uint8_t > message = randomByteVec( 100 );
+
+    // Create 5 ciphertexts: first 3 with AAD, last 2 without AAD
+    size_t batchSize = 5;
+    size_t aadCount = 3;
+    std::vector< libBLS::CipheredKey > cipheredKeys;
+    std::vector< std::vector< uint8_t > > aadVec;
+
+    // First 3 ciphertexts encrypted WITH AAD
+    for ( size_t i = 0; i < aadCount; ++i ) {
+        std::vector< uint8_t > aadTE = { 0x01, 0x02, 0x03, static_cast< uint8_t >( i ) };
+        aadVec.push_back( aadTE );
+
+        libBLS::EncryptMetaData metaData;
+        metaData.associatedDataTE = aadTE;
+
+        libBLS::Ciphertext cypher =
+            libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, metaData );
+        cipheredKeys.push_back( cypher.getKeys()[0] );
+    }
+
+    // Last 2 ciphertexts encrypted WITHOUT AAD
+    for ( size_t i = aadCount; i < batchSize; ++i ) {
+        libBLS::Ciphertext cypher =
+            libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
+        cipheredKeys.push_back( cypher.getKeys()[0] );
+    }
+
+    // Batch validate with partial AAD (3 AADs for 5 ciphertexts)
+    // First 3 should validate with their AAD, last 2 should validate without AAD
+    auto results = libBLS::ThresholdEncryption::validateEncryptionBatch( cipheredKeys, &aadVec );
+    BOOST_REQUIRE( results.size() == batchSize );
+    for ( size_t i = 0; i < batchSize; ++i ) {
+        BOOST_REQUIRE( results[i] == true );
+    }
+
+    // Test parallel version
+    auto resultsParallel =
+        libBLS::ThresholdEncryption::validateEncryptionBatchParallel( cipheredKeys, &aadVec );
+    BOOST_REQUIRE( resultsParallel.size() == batchSize );
+    for ( size_t i = 0; i < batchSize; ++i ) {
+        BOOST_REQUIRE( resultsParallel[i] == true );
+    }
+
+    // Verify that wrong AAD on first 3 fails, while last 2 still pass (no AAD)
+    std::vector< std::vector< uint8_t > > wrongAadVec;
+    for ( size_t i = 0; i < aadCount; ++i ) {
+        wrongAadVec.push_back( { 0xFF, 0xFE, 0xFD, static_cast< uint8_t >( i ) } );
+    }
+
+    auto wrongResults =
+        libBLS::ThresholdEncryption::validateEncryptionBatch( cipheredKeys, &wrongAadVec );
+    BOOST_REQUIRE( wrongResults.size() == batchSize );
+    // First 3 should fail (wrong AAD)
+    for ( size_t i = 0; i < aadCount; ++i ) {
+        BOOST_REQUIRE( wrongResults[i] == false );
+    }
+    // Last 2 should pass (no AAD required)
+    for ( size_t i = aadCount; i < batchSize; ++i ) {
+        BOOST_REQUIRE( wrongResults[i] == true );
+    }
+}
+
+BOOST_AUTO_TEST_CASE( TEBatchValidationWithEmptyAADEntries ) {
+    // Test batch validation where some AAD entries are empty vectors
+    size_t numAll = 4;
+    size_t numSigned = 3;
+
+    keys keys = generateKeys( numSigned, numAll );
+    std::vector< uint8_t > message = randomByteVec( 100 );
+
+    size_t batchSize = 4;
+    std::vector< libBLS::CipheredKey > cipheredKeys;
+    std::vector< std::vector< uint8_t > > aadVec;
+
+    // Create ciphertexts: 0->with AAD, 1->without AAD, 2->with AAD, 3->without AAD
+    for ( size_t i = 0; i < batchSize; ++i ) {
+        if ( i % 2 == 0 ) {
+            // Even indices: encrypt WITH AAD
+            std::vector< uint8_t > aadTE = { 0xAA, 0xBB, static_cast< uint8_t >( i ) };
+            aadVec.push_back( aadTE );
+
+            libBLS::EncryptMetaData metaData;
+            metaData.associatedDataTE = aadTE;
+
+            libBLS::Ciphertext cypher =
+                libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, metaData );
+            cipheredKeys.push_back( cypher.getKeys()[0] );
+        } else {
+            // Odd indices: encrypt WITHOUT AAD and push empty AAD vector
+            aadVec.push_back( {} );  // empty AAD
+
+            libBLS::Ciphertext cypher =
+                libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
+            cipheredKeys.push_back( cypher.getKeys()[0] );
+        }
+    }
+
+    // Batch validate - empty AAD should be treated as no AAD
+    auto results = libBLS::ThresholdEncryption::validateEncryptionBatch( cipheredKeys, &aadVec );
+    BOOST_REQUIRE( results.size() == batchSize );
+    for ( size_t i = 0; i < batchSize; ++i ) {
+        BOOST_REQUIRE( results[i] == true );
+    }
+
+    // Test parallel version
+    auto resultsParallel =
+        libBLS::ThresholdEncryption::validateEncryptionBatchParallel( cipheredKeys, &aadVec );
+    BOOST_REQUIRE( resultsParallel.size() == batchSize );
+    for ( size_t i = 0; i < batchSize; ++i ) {
+        BOOST_REQUIRE( resultsParallel[i] == true );
+    }
+}
+
+BOOST_AUTO_TEST_CASE( TEBatchValidationRejectsExcessiveAAD ) {
+    // Test that batch validation throws when AAD vector is larger than ciphertext vector
+    size_t numAll = 4;
+    size_t numSigned = 3;
+
+    keys keys = generateKeys( numSigned, numAll );
+    std::vector< uint8_t > message = randomByteVec( 100 );
+
+    size_t batchSize = 3;
+    std::vector< libBLS::CipheredKey > cipheredKeys;
+    std::vector< std::vector< uint8_t > > aadVec;
+
+    // Create 3 ciphertexts
+    for ( size_t i = 0; i < batchSize; ++i ) {
+        libBLS::Ciphertext cypher =
+            libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
+        cipheredKeys.push_back( cypher.getKeys()[0] );
+    }
+
+    // Create 5 AAD entries (more than ciphertexts)
+    for ( size_t i = 0; i < 5; ++i ) {
+        aadVec.push_back( { 0x01, 0x02, static_cast< uint8_t >( i ) } );
+    }
+
+    // Should throw: AAD size cannot exceed ciphertext size
+    BOOST_REQUIRE_THROW(
+        libBLS::ThresholdEncryption::validateEncryptionBatch( cipheredKeys, &aadVec ),
+        libBLS::ThresholdUtils::IncorrectInput );
+
+    BOOST_REQUIRE_THROW(
+        libBLS::ThresholdEncryption::validateEncryptionBatchParallel( cipheredKeys, &aadVec ),
+        libBLS::ThresholdUtils::IncorrectInput );
+}
+
+BOOST_AUTO_TEST_CASE( TEDecryptionSharesBatchValidationWithPartialAAD ) {
+    // Test batch validation of decryption shares with partial AAD
+    size_t numAll = 4;
+    size_t numSigned = 3;
+
+    keys keys = generateKeys( numSigned, numAll );
+    std::vector< uint8_t > message = randomByteVec( 100 );
+
+    // Create 4 ciphertexts: first 2 with AAD, last 2 without
+    size_t batchSize = 4;
+    size_t aadCount = 2;
+    std::vector< libBLS::CipheredKey > cipheredKeys;
+    std::vector< std::vector< uint8_t > > aadVec;
+
+    // First 2 with AAD
+    for ( size_t i = 0; i < aadCount; ++i ) {
+        std::vector< uint8_t > aadTE = { 0x10, 0x20, static_cast< uint8_t >( i ) };
+        aadVec.push_back( aadTE );
+
+        libBLS::EncryptMetaData metaData;
+        metaData.associatedDataTE = aadTE;
+
+        libBLS::Ciphertext cypher =
+            libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, metaData );
+        cipheredKeys.push_back( cypher.getKeys()[0] );
+    }
+
+    // Last 2 without AAD
+    for ( size_t i = aadCount; i < batchSize; ++i ) {
+        libBLS::Ciphertext cypher =
+            libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
+        cipheredKeys.push_back( cypher.getKeys()[0] );
+    }
+
+    // Generate decryption shares for all ciphertexts from all signers
+    std::vector< libBLS::TEDecryptionShare > shares;
+    std::vector< libBLS::TEPublicKeyShare > pubKeys;
+
+    for ( size_t i = 0; i < batchSize; ++i ) {
+        for ( size_t j = 0; j < numAll; ++j ) {
+            shares.push_back( libBLS::ThresholdEncryption::partialDecrypt(
+                cipheredKeys[i], keys.secretKeys[j] ) );
+            pubKeys.push_back( keys.publicKeys[j] );
+        }
+    }
+
+    // Validate with partial AAD (2 AADs for 4 ciphertexts)
+    auto results = libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
+        cipheredKeys, shares, pubKeys, &aadVec );
+    BOOST_REQUIRE( results.size() == batchSize * numAll );
+    for ( size_t i = 0; i < results.size(); ++i ) {
+        BOOST_REQUIRE( results[i] == true );
+    }
+
+    // Test parallel version
+    auto resultsParallel = libBLS::ThresholdEncryption::validateDecryptionSharesBatchParallel(
+        cipheredKeys, shares, pubKeys, &aadVec );
+    BOOST_REQUIRE( resultsParallel.size() == batchSize * numAll );
+    for ( size_t i = 0; i < resultsParallel.size(); ++i ) {
+        BOOST_REQUIRE( resultsParallel[i] == true );
+    }
+
+    // Test with wrong AAD on first 2 - should fail, last 2 should still pass
+    std::vector< std::vector< uint8_t > > wrongAadVec = { { 0xFF, 0xFF, 0x00 },
+        { 0xFF, 0xFF, 0x01 } };
+
+    auto wrongResults = libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
+        cipheredKeys, shares, pubKeys, &wrongAadVec );
+
+    for ( size_t i = 0; i < batchSize; ++i ) {
+        for ( size_t j = 0; j < numAll; ++j ) {
+            size_t idx = i * numAll + j;
+            if ( i < aadCount ) {
+                // First 2 ciphertexts: wrong AAD, should fail
+                BOOST_REQUIRE( wrongResults[idx] == false );
+            } else {
+                // Last 2 ciphertexts: no AAD, should pass
+                BOOST_REQUIRE( wrongResults[idx] == true );
+            }
+        }
+    }
+}
+
+BOOST_AUTO_TEST_CASE( TEDecryptionSharesBatchRejectsExcessiveAAD ) {
+    // Test that decryption share batch validation throws when AAD vector exceeds ciphertext count
+    size_t numAll = 4;
+    size_t numSigned = 3;
+
+    keys keys = generateKeys( numSigned, numAll );
+    std::vector< uint8_t > message = randomByteVec( 100 );
+
+    // Create 2 ciphertexts
+    std::vector< libBLS::CipheredKey > cipheredKeys;
+    for ( size_t i = 0; i < 2; ++i ) {
+        libBLS::Ciphertext cypher =
+            libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic );
+        cipheredKeys.push_back( cypher.getKeys()[0] );
+    }
+
+    // Generate decryption shares
+    std::vector< libBLS::TEDecryptionShare > shares;
+    std::vector< libBLS::TEPublicKeyShare > pubKeys;
+    for ( size_t i = 0; i < 2; ++i ) {
+        for ( size_t j = 0; j < numAll; ++j ) {
+            shares.push_back( libBLS::ThresholdEncryption::partialDecrypt(
+                cipheredKeys[i], keys.secretKeys[j] ) );
+            pubKeys.push_back( keys.publicKeys[j] );
+        }
+    }
+
+    // Create 4 AAD entries (more than 2 ciphertexts)
+    std::vector< std::vector< uint8_t > > aadVec;
+    for ( size_t i = 0; i < 4; ++i ) {
+        aadVec.push_back( { 0x01, static_cast< uint8_t >( i ) } );
+    }
+
+    // Should throw: AAD size cannot exceed ciphertext count
+    BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateDecryptionSharesBatch(
+                             cipheredKeys, shares, pubKeys, &aadVec ),
+        libBLS::ThresholdUtils::IncorrectInput );
+
+    BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateDecryptionSharesBatchParallel(
+                             cipheredKeys, shares, pubKeys, &aadVec ),
+        libBLS::ThresholdUtils::IncorrectInput );
+}
+
 
 BOOST_AUTO_TEST_CASE( TEEncryptDeterministicSeededKeyAndScalar ) {
     const size_t numAll = 4;

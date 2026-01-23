@@ -348,6 +348,141 @@ BOOST_AUTO_TEST_CASE( AESWithEmptyAAD ) {
     BOOST_REQUIRE( decryptedText2 == messageBytes );
 }
 
+BOOST_AUTO_TEST_CASE( AESWithTamperedCiphertext ) {
+    libBLS::ThresholdUtils::initRAND();
+    libBLS::AES256Key randomAesKey;
+    RAND_bytes( randomAesKey.data(), randomAesKey.size() );
+
+    const std::string message = "Test message for tampered ciphertext!";
+    std::vector< uint8_t > messageBytes( message.begin(), message.end() );
+    std::vector< uint8_t > aad = { 0x01, 0x02, 0x03, 0x04 };
+
+    libBLS::AesGcmCipher cipher{ randomAesKey };
+
+    // Encrypt with AAD
+    auto ciphertext = cipher.encrypt( messageBytes, aad );
+
+    // Tamper with the ciphertext data (not the IV or tag)
+    if ( ciphertext.size() > libBLS::AES_GCM_IV_SIZE + libBLS::AES_GCM_TAG_SIZE + 1 ) {
+        // ciphertext is between IV (start) and tag (end)
+        ciphertext[libBLS::AES_GCM_IV_SIZE + 5] ^= 0xFF;
+
+        // Decryption should fail due to authentication tag mismatch
+        BOOST_REQUIRE_THROW( cipher.decrypt( ciphertext, aad ), std::runtime_error );
+    }
+}
+
+BOOST_AUTO_TEST_CASE( AESWithTamperedTag ) {
+    libBLS::ThresholdUtils::initRAND();
+    libBLS::AES256Key randomAesKey;
+    RAND_bytes( randomAesKey.data(), randomAesKey.size() );
+
+    const std::string message = "Test message for tampered tag!";
+    std::vector< uint8_t > messageBytes( message.begin(), message.end() );
+    std::vector< uint8_t > aad = { 0xAA, 0xBB, 0xCC };
+
+    libBLS::AesGcmCipher cipher{ randomAesKey };
+
+    // Encrypt with AAD
+    auto ciphertext = cipher.encrypt( messageBytes, aad );
+
+    // Tamper with the authentication tag (last 16 bytes)
+    if ( ciphertext.size() >= libBLS::AES_GCM_TAG_SIZE ) {
+        // tag is at the end of the ciphertext
+        size_t tagStart = ciphertext.size() - libBLS::AES_GCM_TAG_SIZE;
+        ciphertext[tagStart] ^= 0x01;
+
+        // Decryption should fail due to tag mismatch
+        BOOST_REQUIRE_THROW( cipher.decrypt( ciphertext, aad ), std::runtime_error );
+    }
+}
+
+BOOST_AUTO_TEST_CASE( AESWithTamperedIV ) {
+    libBLS::ThresholdUtils::initRAND();
+    libBLS::AES256Key randomAesKey;
+    RAND_bytes( randomAesKey.data(), randomAesKey.size() );
+
+    const std::string message = "Test message for tampered IV!";
+    std::vector< uint8_t > messageBytes( message.begin(), message.end() );
+    std::vector< uint8_t > aad = { 0x11, 0x22, 0x33, 0x44 };
+
+    libBLS::AesGcmCipher cipher{ randomAesKey };
+
+    // Encrypt with AAD
+    auto ciphertext = cipher.encrypt( messageBytes, aad );
+
+    // Tamper with the IV (first 12 bytes)
+    if ( ciphertext.size() >= libBLS::AES_GCM_IV_SIZE ) {
+        // IV is at the start
+        ciphertext[5] ^= 0xAA;
+
+        // Decryption should fail - either due to wrong decryption or tag mismatch
+        BOOST_REQUIRE_THROW( cipher.decrypt( ciphertext, aad ), std::runtime_error );
+    }
+}
+
+BOOST_AUTO_TEST_CASE( AESAADLargePayload ) {
+    libBLS::ThresholdUtils::initRAND();
+    libBLS::AES256Key randomAesKey;
+    RAND_bytes( randomAesKey.data(), randomAesKey.size() );
+
+    // Large message (1 MB)
+    std::vector< uint8_t > largeMessage( 1024 * 1024 );
+    RAND_bytes( largeMessage.data(), largeMessage.size() );
+
+    // Large AAD (64 KB)
+    std::vector< uint8_t > largeAad( 64 * 1024 );
+    RAND_bytes( largeAad.data(), largeAad.size() );
+
+    libBLS::AesGcmCipher cipher{ randomAesKey };
+
+    // Encrypt with large AAD
+    auto ciphertext = cipher.encrypt( largeMessage, largeAad );
+
+    // Decrypt with same large AAD - should succeed
+    auto decrypted = cipher.decrypt( ciphertext, largeAad );
+    BOOST_REQUIRE( decrypted == largeMessage );
+
+    // Modify one byte in the large AAD - should fail
+    largeAad[1234] ^= 0x01;
+    BOOST_REQUIRE_THROW( cipher.decrypt( ciphertext, largeAad ), std::runtime_error );
+}
+
+BOOST_AUTO_TEST_CASE( AESMultipleEncryptionsWithDifferentAAD ) {
+    libBLS::ThresholdUtils::initRAND();
+    libBLS::AES256Key randomAesKey;
+    RAND_bytes( randomAesKey.data(), randomAesKey.size() );
+
+    libBLS::AesGcmCipher cipher{ randomAesKey };
+
+    const std::string msg1 = "First message";
+    const std::string msg2 = "Second message";
+    const std::string msg3 = "Third message";
+
+    std::vector< uint8_t > msg1Bytes( msg1.begin(), msg1.end() );
+    std::vector< uint8_t > msg2Bytes( msg2.begin(), msg2.end() );
+    std::vector< uint8_t > msg3Bytes( msg3.begin(), msg3.end() );
+
+    std::vector< uint8_t > aad1 = { 0x01 };
+    std::vector< uint8_t > aad2 = { 0x02 };
+    std::vector< uint8_t > aad3 = { 0x03 };
+
+    // Encrypt three messages with different AADs
+    auto ct1 = cipher.encrypt( msg1Bytes, aad1 );
+    auto ct2 = cipher.encrypt( msg2Bytes, aad2 );
+    auto ct3 = cipher.encrypt( msg3Bytes, aad3 );
+
+    // Decrypt each with correct AAD
+    BOOST_REQUIRE( cipher.decrypt( ct1, aad1 ) == msg1Bytes );
+    BOOST_REQUIRE( cipher.decrypt( ct2, aad2 ) == msg2Bytes );
+    BOOST_REQUIRE( cipher.decrypt( ct3, aad3 ) == msg3Bytes );
+
+    // Cross-decryption with wrong AAD should fail
+    BOOST_REQUIRE_THROW( cipher.decrypt( ct1, aad2 ), std::runtime_error );
+    BOOST_REQUIRE_THROW( cipher.decrypt( ct2, aad3 ), std::runtime_error );
+    BOOST_REQUIRE_THROW( cipher.decrypt( ct3, aad1 ), std::runtime_error );
+}
+
 BOOST_AUTO_TEST_SUITE_END()
 
 
