@@ -351,9 +351,10 @@ std::vector< bool > TE::VerifyBatch( const std::vector< CipheredKey >& ciphertex
             "decryption shares and public keys must have same size" );
     }
 
-    if ( associatedDataTE && associatedDataTE->size() != numberOfBatches ) {
+    // Allow partial AAD: first N AADs apply to first N ciphertexts, rest have no AAD
+    if ( associatedDataTE && associatedDataTE->size() > numberOfBatches ) {
         throw ThresholdUtils::IncorrectInput(
-            "associated data size must match number of ciphertexts" );
+            "associated data size cannot exceed number of ciphertexts" );
     }
 
     std::vector< algebra::G1Point > g1P1s;
@@ -363,8 +364,10 @@ std::vector< bool > TE::VerifyBatch( const std::vector< CipheredKey >& ciphertex
 
     for ( size_t i = 0; i < ciphertexts.size(); ++i ) {
         const auto& [U, V, W] = ciphertexts[i];
+        // Apply AAD only if provided and within AAD vector bounds
         const std::vector< uint8_t >* aadPtr =
-            associatedDataTE ? &associatedDataTE->at( i ) : nullptr;
+            ( associatedDataTE && i < associatedDataTE->size() ) ? &associatedDataTE->at( i ) :
+                                                                   nullptr;
 
         algebra::G1Point H = HashToGroup( U, V, aadPtr );
         // no need to validate H - assumes H has been validated already when performing the
