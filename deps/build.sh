@@ -923,7 +923,7 @@ if [ "$WITH_MCL" = "yes" ]; then
         ARCH=x86_64 \
         MCL_USE_XBYAK=0 \
         MCL_USE_LLVM=1 \
-        MCL_BINT_ASM=1 \
+        MCL_BINT_ASM=0 \
         MCL_MSM=0 \
         MCL_FP_BIT=256 \
         MCL_FR_BIT=256 \
@@ -1495,6 +1495,16 @@ then
 			cd build
 			$MAKE ${PARALLEL_MAKE_OPTIONS}
 			$MAKE ${PARALLEL_MAKE_OPTIONS} install
+
+			# Create jsoncpp symlink for jsonrpccpp compatibility
+			# jsonrpc looks for 'jsoncpp/json/json.h'
+			# but default install path is 'json/json.h'
+			# so we create jsoncpp/json -> json symlink
+			cd "$INSTALL_ROOT/include"
+			mkdir -p jsoncpp
+			cd jsoncpp
+			ln -sf ../json json
+
 			cd "$SOURCES_ROOT"
 		else
 			echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
