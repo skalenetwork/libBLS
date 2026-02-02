@@ -206,6 +206,9 @@ else
 	WITH_GTEST=1
 fi
 
+# Set C++ standard version used throughout the build
+CXX_STANDARD=20
+
 export CFLAGS="$CFLAGS -fPIC"
 export CXXFLAGS="$CXXFLAGS -fPIC"
 WITH_OPENSSL="yes"
@@ -675,13 +678,13 @@ then
 		else
 			if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
 			then
-				eval ./b2 cxxflags=-fPIC toolset=clang cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
+				eval ./b2 cxxflags=-fPIC toolset=clang cxxstd=${CXX_STANDARD} cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
 			else
 				if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 				then
-                                        eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=${variant} link=static install
+                                        eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=${CXX_STANDARD} cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=${variant} link=static install
 				else
-                                        eval ./b2 cxxflags=-fPIC cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
+                                        eval ./b2 cxxflags=-fPIC cxxstd=${CXX_STANDARD} cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
 				fi
 			fi
 		fi
@@ -1262,6 +1265,7 @@ if [[ "${WITH_EMSCRIPTEN}" -eq 0 ]]; then
 				eval mkdir -p build2
 							cd build2
 				eval "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" \
+					-DCMAKE_CXX_STANDARD=${CXX_STANDARD} \
 					-DBOOST_ROOT="$INSTALL_ROOT" -DBOOST_INCLUDEDIR="${INSTALL_ROOT}/include" -DBOOST_LIBRARYDIR="$INSTALL_ROOT/lib" \
 					-DBoost_NO_BOOST_CMAKE=ON -DBoost_NO_WARN_NEW_VERSIONS=1 -DBoost_DEBUG=ON \
 					-DBUILD_SHARED_LIBS=OFF \
