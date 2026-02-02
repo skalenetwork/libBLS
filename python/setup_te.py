@@ -11,31 +11,26 @@ PACKAGE_NAME = 'skale_te'
 LIB_NAME = 'libencrypt.so'
 BUILD_TARGET_NAME = 'libskale_te_python.so'
 
+
+def resolve_built_library_path() -> str:
+    override_path = os.environ.get('SKALE_TE_LIB_PATH')
+    if override_path:
+        if not os.path.exists(override_path):
+            raise FileNotFoundError(
+                f"SKALE_TE_LIB_PATH points to missing file: {override_path}"
+            )
+        return override_path
+    else:
+        raise RuntimeError(
+            "Environment variable SKALE_TE_LIB_PATH is not set. ")
+
 class CustomBuildPy(build_py):
     """
     Custom build command to copy the shared library into the package directory.
     """
     def run(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        possible_build_dirs = [
-            os.path.join(current_dir, '../../build'),
-            os.path.join(current_dir, '../../build/lib'),
-            os.path.join(current_dir, '../build'),
-        ]
-
-        found_lib = None
-        for build_dir in possible_build_dirs:
-            p = os.path.join(build_dir, BUILD_TARGET_NAME)
-            if os.path.exists(p):
-                found_lib = p
-                break
-
-        if found_lib is None:
-            raise FileNotFoundError(
-                f"Could not find {BUILD_TARGET_NAME} in "
-                f"{', '.join(possible_build_dirs)}. "
-                "Please build the C++ library first."
-            )
+        found_lib = resolve_built_library_path()
 
         target_path = os.path.join(current_dir, PACKAGE_NAME, LIB_NAME)
 
@@ -46,7 +41,7 @@ class CustomBuildPy(build_py):
 
 setup(
     name='skale-te',
-    version=os.environ.get('PACKAGE_VERSION', '0.0.1'),
+    version='0.0.1',
     description='Python bindings for SKALE Threshold Encryption',
     author='SKALE Network',
     packages=find_packages(),

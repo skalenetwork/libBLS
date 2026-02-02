@@ -34,7 +34,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "tools/utils.h"
+#include <tools/utils.h>
 
 namespace libBLS {
 

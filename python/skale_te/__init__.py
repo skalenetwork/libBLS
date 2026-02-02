@@ -15,9 +15,7 @@ if not os.path.exists(_lib_path):
     # Check if we can find it in common build locations relative to this file
     _current_dir = os.path.dirname(__file__)
     _possible_paths = [
-        os.path.abspath(os.path.join(_current_dir, '../../build/libskale_te_python.so')),
-        os.path.abspath(os.path.join(_current_dir, '../../../build/libskale_te_python.so')),
-        os.path.abspath(os.path.join(_current_dir, '../../build/lib/libskale_te_python.so')),
+        os.path.abspath(os.path.join(_current_dir, '../../build/threshold_encryption/libskale_te_python.so')),
     ]
     for path in _possible_paths:
         if os.path.exists(path):

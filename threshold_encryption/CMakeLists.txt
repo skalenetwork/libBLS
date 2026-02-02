@@ -123,6 +123,26 @@ if (LIBBLS_BUILD_TESTS)
     )
 endif()
 
+if (NOT EMSCRIPTEN)
+    # Build python threshold_encryption shared library
+    add_library(skale_te_python SHARED ../threshold_encryption/encryptMessage.cpp)
+    get_directory_property(PARENT_DIR PARENT_DIRECTORY)
+    target_include_directories(skale_te_python PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${PARENT_DIR})
+    if(APPLE)
+        target_link_libraries(skale_te_python PRIVATE
+            -Wl,-force_load,$<TARGET_FILE:te>
+            -Wl,-force_load,$<TARGET_FILE:bls>
+            -Wl,-force_load,$<TARGET_FILE:common_utils>
+            backend ${FOLLY_STATIC_LIBS} ${CRYPTOPP_LIBRARY})
+        # Explicitly add dependencies for Apple builds because they are hidden inside linker flags
+        add_dependencies(skale_te_python te bls common_utils)
+    else()
+        target_link_libraries(skale_te_python PRIVATE
+            -Wl,--whole-archive te bls common_utils -Wl,--no-whole-archive
+            backend ${FOLLY_STATIC_LIBS} ${CRYPTOPP_LIBRARY})
+    endif()
+endif()
+
 if (EMSCRIPTEN)
     add_executable(encrypt ../threshold_encryption/encryptMessage.cpp ../tools/utils.cpp)
     set_target_properties(encrypt PROPERTIES LINK_FLAGS "-s EXIT_RUNTIME=1 -s USE_PTHREADS=0 -s MODULARIZE -s ALLOW_MEMORY_GROWTH=1 -s NO_DISABLE_EXCEPTION_CATCHING=1 -s EXPORTED_RUNTIME_METHODS='[\"ccall\"]' -s EXPORTED_FUNCTIONS='[\"_encryptMessage\", \"_encryptMessageDualKey\",\"_encryptMessageMockup\"]' -s ENVIRONMENT='node,web' -s SINGLE_FILE=1")
