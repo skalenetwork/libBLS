@@ -854,6 +854,10 @@ fi
 
 if [ "$WITH_MCL" = "yes" ]; then
   echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}MCL${COLOR_SEPARATOR} ===========================================${COLOR_RESET}"
+  HOST_OBJ_DIR="obj_host"
+  HOST_LIB_DIR="lib_host"
+  SGX_OBJ_DIR="obj_sgx"
+  SGX_LIB_DIR="lib_sgx"
   if [ ! -f "$INSTALL_ROOT/lib/libmcl.a" ]; then
     env_restore
     cd "$SOURCES_ROOT"
@@ -866,6 +870,7 @@ if [ "$WITH_MCL" = "yes" ]; then
 	eval git fetch
 	eval git checkout e67f9e6eab43116a14751bf7166c59d98728297a # v3.03 released in 10/08/2025
     eval mkdir -p build
+	mkdir -p "${HOST_OBJ_DIR}" "${HOST_LIB_DIR}" "${SGX_OBJ_DIR}" "${SGX_LIB_DIR}" bin
 
     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
     if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]]; then
@@ -885,18 +890,25 @@ if [ "$WITH_MCL" = "yes" ]; then
 		eval emmake "$MAKE" install                              # install
 
     else
+		# Ensure we don't reuse objects from a prior SGX build (XBYAK off).
+		"$MAKE" clean || true
+		rm -rf "${HOST_OBJ_DIR}" "${HOST_LIB_DIR}"
+		mkdir -p "${HOST_OBJ_DIR}" "${HOST_LIB_DIR}"
 		"$MAKE" \
 			DEBUG=0 \
 			ARCH=x86_64 \
 			MCL_USE_XBYAK=1 \
-			MCL_BINT_ASM=0 \
+			MCL_BINT_ASM=1 \
 			MCL_MSM=0 \
 			MCL_FP_BIT=256 \
 			MCL_FR_BIT=256 \
+			OBJ_DIR="${HOST_OBJ_DIR}" \
+			LIB_DIR="${HOST_LIB_DIR}" \
+			CFLAGS_USER="-DMCL_BINT_ASM_X64=1" \
 			${PARALLEL_MAKE_OPTIONS}
 
-		cp lib/libmcl.a "$INSTALL_ROOT/lib/"
-		cp lib/lishe256.a "$INSTALL_ROOT/lib/"
+		cp "${HOST_LIB_DIR}/libmcl.a" "$INSTALL_ROOT/lib/"
+		cp "${HOST_LIB_DIR}/lishe256.a" "$INSTALL_ROOT/lib/"
 		cp -r include/mcl "$INSTALL_ROOT/include/"
 		cp -r include/cybozu "$INSTALL_ROOT/include/"
     fi
@@ -920,17 +932,22 @@ if [ "$WITH_MCL" = "yes" ]; then
       
       # Clean previous build artifacts
       "$MAKE" clean || true
+      rm -rf "${SGX_OBJ_DIR}" "${SGX_LIB_DIR}"
+      mkdir -p "${SGX_OBJ_DIR}" "${SGX_LIB_DIR}"
       
       "$MAKE" \
         DEBUG=0 \
         ARCH=x86_64 \
         MCL_USE_XBYAK=0 \
         MCL_USE_LLVM=1 \
-        MCL_BINT_ASM=0 \
+        MCL_BINT_ASM=1 \
+        MCL_BINT_ASM_X64=0 \
         MCL_MSM=0 \
         MCL_FP_BIT=256 \
         MCL_FR_BIT=256 \
         MCL_DONT_USE_OPENMP=1 \
+        OBJ_DIR="${SGX_OBJ_DIR}" \
+        LIB_DIR="${SGX_LIB_DIR}" \
         CFLAGS_USER="-DMCL_DONT_USE_CSPRNG \
 			-DCYBOZU_DONT_USE_STRING \
 			-DCYBOZU_DONT_USE_EXCEPTION \
@@ -938,10 +955,10 @@ if [ "$WITH_MCL" = "yes" ]; then
 			-DCYBOZU_HOST_INTEL=1 \
 			-DCYBOZU_HOST=0 \
 			-Wa,--noexecstack" \
-			${PARALLEL_MAKE_OPTIONS} \
-			lib/libmcl.a
+		${PARALLEL_MAKE_OPTIONS} \
+		"${SGX_LIB_DIR}/libmcl.a"
       
-      cp lib/libmcl.a "$INSTALL_ROOT/lib/libmcl_sgx.a"
+      cp "${SGX_LIB_DIR}/libmcl.a" "$INSTALL_ROOT/lib/libmcl_sgx.a"
       cd "$SOURCES_ROOT"
     else
       echo -e "${COLOR_SUCCESS}SGX MCL SKIPPED${COLOR_RESET}"
