@@ -41,12 +41,13 @@ for i in $(seq 1 $RUNS); do
         fi
         node test.js $PUBLIC_BLS_KEY $MESSAGE $AAD_AES $AAD_TE > encrypted_data.txt
         echo "  [Using AAD: AES=${#AAD_AES}/2 bytes, TE=${#AAD_TE}/2 bytes]"
+        ENCRYPTED_DATA=$(cat encrypted_data.txt)
+        ./decrypt_message "$ENCRYPTED_DATA" "$SECRET_KEY" "$MESSAGE" 0 "$AAD_AES" "$AAD_TE"
     else
         node test.js $PUBLIC_BLS_KEY $MESSAGE > encrypted_data.txt
+        ENCRYPTED_DATA=$(cat encrypted_data.txt)
+        ./decrypt_message "$ENCRYPTED_DATA" "$SECRET_KEY" "$MESSAGE" 0
     fi
-    
-    ENCRYPTED_DATA=$(cat encrypted_data.txt)
-    ./decrypt_message "$ENCRYPTED_DATA" "$SECRET_KEY" "$MESSAGE" 0
 
     # Clean up temp files generated in $ABS_BUILD_DIR/
     rm -f message.txt bls_public_key.txt encrypted_data.txt
@@ -58,6 +59,14 @@ for i in $(seq 1 $RUNS); do
     ./generate_bls_keys
     SECOND_PUBLIC_BLS_KEY=$(cat bls_public_key.txt)
     SECOND_SECRET_BLS_KEY=$(cat secret_key.txt)
+    
+    # Randomly pick index 0 or 1
+    RANDOM_INDEX=$((RANDOM % 2))
+    if [ $RANDOM_INDEX -eq 0 ]; then
+        SECRET_KEY_TO_USE=$FIRST_SECRET_BLS_KEY
+    else
+        SECRET_KEY_TO_USE=$SECOND_SECRET_BLS_KEY
+    fi
     
     # Occasionally pass AAD parameters (every 3rd run)
     if [ $((i % 3)) -eq 0 ]; then
@@ -74,19 +83,11 @@ for i in $(seq 1 $RUNS); do
         fi
         node test2Keys.js $FIRST_PUBLIC_BLS_KEY $SECOND_PUBLIC_BLS_KEY $MESSAGE $AAD_AES $AAD_TE > encrypted_data.txt
         echo "  [Dual Key - Using AAD: AES=${#AAD_AES}/2 bytes, TE=${#AAD_TE}/2 bytes]"
+        ENCRYPTED_DATA=$(cat encrypted_data.txt)
+        ./decrypt_message "$ENCRYPTED_DATA" "$SECRET_KEY_TO_USE" "$MESSAGE" "$RANDOM_INDEX" "$AAD_AES" "$AAD_TE"
     else
         node test2Keys.js $FIRST_PUBLIC_BLS_KEY $SECOND_PUBLIC_BLS_KEY $MESSAGE > encrypted_data.txt
+        ENCRYPTED_DATA=$(cat encrypted_data.txt)
+        ./decrypt_message "$ENCRYPTED_DATA" "$SECRET_KEY_TO_USE" "$MESSAGE" "$RANDOM_INDEX"
     fi
-    
-    ENCRYPTED_DATA=$(cat encrypted_data.txt)
-    
-    # Randomly pick index 1 or 2
-    RANDOM_INDEX=$((RANDOM % 2))
-    if [ $RANDOM_INDEX -eq 0 ]; then
-        SECRET_KEY_TO_USE=$FIRST_SECRET_BLS_KEY
-    else
-        SECRET_KEY_TO_USE=$SECOND_SECRET_BLS_KEY
-    fi
-    
-    ./decrypt_message "$ENCRYPTED_DATA" "$SECRET_KEY_TO_USE" "$MESSAGE" "$RANDOM_INDEX"
 done
