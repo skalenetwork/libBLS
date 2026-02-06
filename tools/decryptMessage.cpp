@@ -44,14 +44,14 @@ int main( int argc, char* argv[] ) {
     std::string secretKey = argv[2];
     std::string expectedMessage = argv[3];
     size_t keyIndexToKeep = std::stoul( argv[4] );
-    
+
     std::optional< std::vector< uint8_t > > aadAes;
     std::optional< std::vector< uint8_t > > aadTe;
-    
+
     if ( argc >= 6 && argv[5] != nullptr && argv[5][0] != '\0' ) {
         aadAes = libBLS::ThresholdUtils::hexCStringToBytes( argv[5] );
     }
-    
+
     if ( argc >= 7 && argv[6] != nullptr && argv[6][0] != '\0' ) {
         aadTe = libBLS::ThresholdUtils::hexCStringToBytes( argv[6] );
     }
@@ -69,7 +69,7 @@ int main( int argc, char* argv[] ) {
 
     auto encryptedMessage = ciphertext.getData();
 
-    libBLS::ThresholdEncryption::validateEncryption( 
+    libBLS::ThresholdEncryption::validateEncryption(
         aesKeyEncrypted, aadTe.has_value() ? &aadTe.value() : nullptr );
 
     libBLS::TEPrivateKeyShare privateKeyShare(
@@ -90,11 +90,11 @@ int main( int argc, char* argv[] ) {
 
     libBLS::TEPublicKey publicKey( publicKeyShare.getPublicKeyRaw() );
 
-    libBLS::ThresholdEncryption::validateCombinedDecryption( ciphertext, aesKeyDecrypted, publicKey,
-        aadAes );
+    libBLS::ThresholdEncryption::validateCombinedDecryption(
+        ciphertext, aesKeyDecrypted, publicKey, aadAes );
 
-    auto decryptedMessageBytes = libBLS::ThresholdEncryption::decrypt( 
-        ciphertext, aesKeyDecrypted, aadAes );
+    auto decryptedMessageBytes =
+        libBLS::ThresholdEncryption::decrypt( ciphertext, aesKeyDecrypted, aadAes );
 
     auto plaintext = libBLS::ThresholdUtils::bytesToHexString( decryptedMessageBytes );
 
