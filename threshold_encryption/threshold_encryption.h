@@ -63,7 +63,7 @@ struct CipheredKeyResult {
  * @brief Metadata used during encryption
  */
 struct EncryptMetaData {
-    // Optional associated data for AES CBC
+    // Optional associated data for AES GCM
     // Is used at encryption and at decryption stages only. Does not obey to threshold
     // guarantees since it is associated with symmetric encryption.
     std::optional< std::vector< uint8_t > > associatedDataAesGcm;
