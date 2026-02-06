@@ -25,7 +25,26 @@ for i in $(seq 1 $RUNS); do
     MESSAGE=$(cat message.txt)
     PUBLIC_BLS_KEY=$(cat bls_public_key.txt)
     SECRET_KEY=$(cat secret_key.txt)
-    node test.js $PUBLIC_BLS_KEY $MESSAGE > encrypted_data.txt
+    
+    # Occasionally pass AAD parameters (every 3rd run)
+    if [ $((i % 3)) -eq 0 ]; then
+        # Generate 20 or 32 byte hex strings for AAD
+        AAD_LENGTH=$((RANDOM % 2))
+        if [ $AAD_LENGTH -eq 0 ]; then
+            # 20 bytes
+            AAD_AES=$(openssl rand -hex 20)
+            AAD_TE=$(openssl rand -hex 20)
+        else
+            # 32 bytes
+            AAD_AES=$(openssl rand -hex 32)
+            AAD_TE=$(openssl rand -hex 32)
+        fi
+        node test.js $PUBLIC_BLS_KEY $MESSAGE $AAD_AES $AAD_TE > encrypted_data.txt
+        echo "  [Using AAD: AES=${#AAD_AES}/2 bytes, TE=${#AAD_TE}/2 bytes]"
+    else
+        node test.js $PUBLIC_BLS_KEY $MESSAGE > encrypted_data.txt
+    fi
+    
     ENCRYPTED_DATA=$(cat encrypted_data.txt)
     ./decrypt_message "$ENCRYPTED_DATA" "$SECRET_KEY" "$MESSAGE" 0
 
@@ -39,7 +58,26 @@ for i in $(seq 1 $RUNS); do
     ./generate_bls_keys
     SECOND_PUBLIC_BLS_KEY=$(cat bls_public_key.txt)
     SECOND_SECRET_BLS_KEY=$(cat secret_key.txt)
-    node test2Keys.js $FIRST_PUBLIC_BLS_KEY $SECOND_PUBLIC_BLS_KEY $MESSAGE > encrypted_data.txt
+    
+    # Occasionally pass AAD parameters (every 3rd run)
+    if [ $((i % 3)) -eq 0 ]; then
+        # Generate 20 or 32 byte hex strings for AAD
+        AAD_LENGTH=$((RANDOM % 2))
+        if [ $AAD_LENGTH -eq 0 ]; then
+            # 20 bytes
+            AAD_AES=$(openssl rand -hex 20)
+            AAD_TE=$(openssl rand -hex 20)
+        else
+            # 32 bytes
+            AAD_AES=$(openssl rand -hex 32)
+            AAD_TE=$(openssl rand -hex 32)
+        fi
+        node test2Keys.js $FIRST_PUBLIC_BLS_KEY $SECOND_PUBLIC_BLS_KEY $MESSAGE $AAD_AES $AAD_TE > encrypted_data.txt
+        echo "  [Dual Key - Using AAD: AES=${#AAD_AES}/2 bytes, TE=${#AAD_TE}/2 bytes]"
+    else
+        node test2Keys.js $FIRST_PUBLIC_BLS_KEY $SECOND_PUBLIC_BLS_KEY $MESSAGE > encrypted_data.txt
+    fi
+    
     ENCRYPTED_DATA=$(cat encrypted_data.txt)
     
     # Randomly pick index 1 or 2
