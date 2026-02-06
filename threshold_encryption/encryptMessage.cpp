@@ -45,7 +45,7 @@ const char* encryptMessage( const char* data, const char* key,
 
     // set AAD AES if not empty
     if ( additionalAuthenticatedDataAES != nullptr && additionalAuthenticatedDataAES[0] != '\0' ) {
-        metaData.associatedDataAesCbc =
+        metaData.associatedDataAesGcm =
             libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
     }
 
@@ -89,7 +89,7 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
 
     // set AAD AES if not empty
     if ( additionalAuthenticatedDataAES != nullptr && additionalAuthenticatedDataAES[0] != '\0' ) {
-        metaData.associatedDataAesCbc =
+        metaData.associatedDataAesGcm =
             libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
     }
 
