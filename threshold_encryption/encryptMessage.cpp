@@ -51,11 +51,12 @@ const char* encryptMessage( const char* data, const char* key,
         // build encrypt meta data
         libBLS::EncryptMetaData metaData;
 
-    // set AAD AES if not empty
-    if ( additionalAuthenticatedDataAES != nullptr && additionalAuthenticatedDataAES[0] != '\0' ) {
-        metaData.associatedDataAesGcm =
-            libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
-    }
+        // set AAD AES if not empty
+        if ( additionalAuthenticatedDataAES != nullptr &&
+             additionalAuthenticatedDataAES[0] != '\0' ) {
+            metaData.associatedDataAesGcm =
+                libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
+        }
 
         // set AAD TE if not empty
         if ( additionalAuthenticatedDataTE != nullptr &&
