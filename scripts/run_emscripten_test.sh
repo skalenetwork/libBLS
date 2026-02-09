@@ -39,7 +39,7 @@ for i in $(seq 1 $RUNS); do
             AAD_AES=$(openssl rand -hex 32)
             AAD_TE=$(openssl rand -hex 32)
         fi
-        node test.js $PUBLIC_BLS_KEY $MESSAGE $AAD_AES $AAD_TE > encrypted_data.txt
+        node test.js $PUBLIC_BLS_KEY $MESSAGE $AAD_TE $AAD_AES > encrypted_data.txt
         ENCRYPTED_DATA=$(cat encrypted_data.txt)
         ./decrypt_message "$ENCRYPTED_DATA" "$SECRET_KEY" "$MESSAGE" 0 "$AAD_AES" "$AAD_TE"
     else
@@ -80,7 +80,7 @@ for i in $(seq 1 $RUNS); do
             AAD_AES=$(openssl rand -hex 32)
             AAD_TE=$(openssl rand -hex 32)
         fi
-        node test2Keys.js $FIRST_PUBLIC_BLS_KEY $SECOND_PUBLIC_BLS_KEY $MESSAGE $AAD_AES $AAD_TE > encrypted_data.txt
+        node test2Keys.js $FIRST_PUBLIC_BLS_KEY $SECOND_PUBLIC_BLS_KEY $MESSAGE $AAD_TE $AAD_AES > encrypted_data.txt
         ENCRYPTED_DATA=$(cat encrypted_data.txt)
         ./decrypt_message "$ENCRYPTED_DATA" "$SECRET_KEY_TO_USE" "$MESSAGE" "$RANDOM_INDEX" "$AAD_AES" "$AAD_TE"
     else
