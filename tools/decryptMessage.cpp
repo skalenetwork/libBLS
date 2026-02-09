@@ -79,8 +79,8 @@ int main( int argc, char* argv[] ) {
     libBLS::TEDecryptionShare decryptionShare =
         libBLS::ThresholdEncryption::partialDecrypt( aesKeyEncrypted, privateKeyShare );
 
-    libBLS::ThresholdEncryption::validateDecryptionShare(
-        aesKeyEncrypted, decryptionShare, publicKeyShare );
+    libBLS::ThresholdEncryption::validateDecryptionShare( aesKeyEncrypted, decryptionShare,
+        publicKeyShare, aadTe.has_value() ? &aadTe.value() : nullptr );
 
     libBLS::TEDecryptSet decryptSet( 1, 1 );
     decryptSet.addDecryptShare( decryptionShare );
