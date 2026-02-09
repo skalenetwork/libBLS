@@ -218,7 +218,7 @@ CipherResult TE::encryptWithAES( const std::vector< uint8_t >& message,
         messageToCipher.end(), result.randomSecret.begin(), result.randomSecret.end() );
 
     // cipher message + random secret using AES key (with optional AES AAD)
-    auto encryptedMessage = aesGcmCipher->encrypt( messageToCipher, metaData.associatedDataAesCbc );
+    auto encryptedMessage = aesGcmCipher->encrypt( messageToCipher, metaData.associatedDataAesGcm );
 
     std::shared_ptr< Ciphertext > ciphertext =
         std::make_shared< Ciphertext >( result.ciphertext, encryptedMessage );

@@ -28,7 +28,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 extern "C" {
 
 const char* encryptMessage( const char* data, const char* key,
-    const char* additionalAuthenticatedDataAES, const char* additionalAuthenticatedDataTE ) {
+    const char* additionalAuthenticatedDataTE, const char* additionalAuthenticatedDataAES ) {
     static std::string cipheredMessageStr;
 
     libBLS::init();
@@ -45,7 +45,7 @@ const char* encryptMessage( const char* data, const char* key,
 
     // set AAD AES if not empty
     if ( additionalAuthenticatedDataAES != nullptr && additionalAuthenticatedDataAES[0] != '\0' ) {
-        metaData.associatedDataAesCbc =
+        metaData.associatedDataAesGcm =
             libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
     }
 
@@ -67,7 +67,7 @@ const char* encryptMessage( const char* data, const char* key,
 }
 
 const char* encryptMessageDualKey( const char* data, const char* firstKey, const char* secondKey,
-    const char* additionalAuthenticatedDataAES, const char* additionalAuthenticatedDataTE ) {
+    const char* additionalAuthenticatedDataTE, const char* additionalAuthenticatedDataAES ) {
     static std::string cipheredMessageStr;
 
     libBLS::init();
@@ -89,7 +89,7 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
 
     // set AAD AES if not empty
     if ( additionalAuthenticatedDataAES != nullptr && additionalAuthenticatedDataAES[0] != '\0' ) {
-        metaData.associatedDataAesCbc =
+        metaData.associatedDataAesGcm =
             libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
     }
 

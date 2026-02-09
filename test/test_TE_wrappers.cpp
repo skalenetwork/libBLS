@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE( TEEncryptDecryptWithAAD ) {
 
     // Encrypt with both AADs
     libBLS::EncryptMetaData metaData;
-    metaData.associatedDataAesCbc = aadAES;
+    metaData.associatedDataAesGcm = aadAES;
     metaData.associatedDataTE = aadTE;
     libBLS::Ciphertext cypher =
         libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, metaData );
@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE( TEEncryptDecryptWithWrongAAD ) {
 
     // Encrypt with both AADs
     libBLS::EncryptMetaData metaData;
-    metaData.associatedDataAesCbc = aadAES;
+    metaData.associatedDataAesGcm = aadAES;
     metaData.associatedDataTE = aadTE;
     libBLS::Ciphertext cypher =
         libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, metaData );
@@ -280,7 +280,7 @@ BOOST_AUTO_TEST_CASE( TEEncryptWithAESAADOnly ) {
     std::vector< uint8_t > aadAES = { 0xDE, 0xAD, 0xBE, 0xEF };
 
     libBLS::EncryptMetaData metaData;
-    metaData.associatedDataAesCbc = aadAES;  // Only AES AAD, no TE AAD
+    metaData.associatedDataAesGcm = aadAES;  // Only AES AAD, no TE AAD
 
     libBLS::Ciphertext cypher =
         libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, metaData );
@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE( TEEncryptWithEmptyAAD ) {
     std::vector< uint8_t > emptyAadTE = {};
 
     libBLS::EncryptMetaData metaData;
-    metaData.associatedDataAesCbc = emptyAadAES;
+    metaData.associatedDataAesGcm = emptyAadAES;
     metaData.associatedDataTE = emptyAadTE;
 
     libBLS::Ciphertext cypher =
