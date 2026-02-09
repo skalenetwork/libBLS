@@ -1,22 +1,23 @@
 const ModuleFactory = require('./encrypt.js');
 
-async function encryptMessage(txData, publicKey) {
+async function encryptMessage(txData, publicKey, aadTE = '', aadAES = '') {
     const Module = await ModuleFactory();
     return Module.ccall(
         'encryptMessage', // Name of the exported C++ function
         'string',         // Return type
-        ['string', 'string'], // Argument types
-        [txData, publicKey] // Arguments
+        ['string', 'string', 'string', 'string'], // Argument types
+        [txData, publicKey, aadTE, aadAES] // Arguments
     );
 }
 
-async function encryptMessageDualKey(txData, firstPublicKey, secondPublicKey) {
+async function encryptMessageDualKey(
+    txData, firstPublicKey, secondPublicKey, aadTE = '', aadAES = '') {
     const Module = await ModuleFactory();
     return Module.ccall(
         'encryptMessageDualKey', // Name of the exported C++ function
         'string',         // Return type
-        ['string', 'string', 'string'], // Argument types
-        [txData, firstPublicKey, secondPublicKey] // Arguments
+        ['string', 'string', 'string', 'string', 'string'], // Argument types
+        [txData, firstPublicKey, secondPublicKey, aadTE, aadAES] // Arguments
     );
 }
 
