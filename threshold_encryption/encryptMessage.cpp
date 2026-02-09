@@ -35,7 +35,7 @@ static void ensureInit() {
 extern "C" {
 
 const char* encryptMessage( const char* data, const char* key,
-    const char* additionalAuthenticatedDataAES, const char* additionalAuthenticatedDataTE ) {
+    const char* additionalAuthenticatedDataTE, const char* additionalAuthenticatedDataAES ) {
     thread_local std::string cipheredMessageStr;
 
     try {
@@ -51,12 +51,11 @@ const char* encryptMessage( const char* data, const char* key,
         // build encrypt meta data
         libBLS::EncryptMetaData metaData;
 
-        // set AAD AES if not empty
-        if ( additionalAuthenticatedDataAES != nullptr &&
-             additionalAuthenticatedDataAES[0] != '\0' ) {
-            metaData.associatedDataAesCbc =
-                libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
-        }
+    // set AAD AES if not empty
+    if ( additionalAuthenticatedDataAES != nullptr && additionalAuthenticatedDataAES[0] != '\0' ) {
+        metaData.associatedDataAesGcm =
+            libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
+    }
 
         // set AAD TE if not empty
         if ( additionalAuthenticatedDataTE != nullptr &&
@@ -85,56 +84,36 @@ const char* encryptMessage( const char* data, const char* key,
 }
 
 const char* encryptMessageDualKey( const char* data, const char* firstKey, const char* secondKey,
-    const char* additionalAuthenticatedDataAES, const char* additionalAuthenticatedDataTE ) {
+    const char* additionalAuthenticatedDataTE, const char* additionalAuthenticatedDataAES ) {
     thread_local std::string cipheredMessageStr;
 
-    try {
-        ensureInit();
+    libBLS::init();
 
-        // convert from char into vector of bytes
-        std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
+    // convert from char into vec of bytes
+    std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
 
-        std::vector< libBLS::TEPublicKey > commonPublicKeys;
-        // build public keys
-        std::string firstKeyStr( firstKey );
-        libBLS::TEPublicKey firstCommonPublic( firstKeyStr, libBLS::Base::HEXA );
-        std::string secondKeyStr( secondKey );
-        libBLS::TEPublicKey secondCommonPublic( secondKeyStr, libBLS::Base::HEXA );
-        commonPublicKeys.push_back( firstCommonPublic );
-        commonPublicKeys.push_back( secondCommonPublic );
+    std::vector< libBLS::TEPublicKey > commonPublicKeys;
+    // build public keys
+    std::string firstKeyStr( firstKey );
+    libBLS::TEPublicKey firstCommonPublic( firstKeyStr, libBLS::Base::HEXA );
+    std::string secondKeyStr( secondKey );
+    libBLS::TEPublicKey secondCommonPublic( secondKeyStr, libBLS::Base::HEXA );
+    commonPublicKeys.push_back( firstCommonPublic );
+    commonPublicKeys.push_back( secondCommonPublic );
 
-        // Build metadata
-        libBLS::EncryptMetaData metaData;
+    // Build meta data
+    libBLS::EncryptMetaData metaData;
 
-        // set AAD AES if not empty
-        if ( additionalAuthenticatedDataAES != nullptr &&
-             additionalAuthenticatedDataAES[0] != '\0' ) {
-            metaData.associatedDataAesCbc =
-                libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
-        }
+    // set AAD AES if not empty
+    if ( additionalAuthenticatedDataAES != nullptr && additionalAuthenticatedDataAES[0] != '\0' ) {
+        metaData.associatedDataAesGcm =
+            libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
+    }
 
-        // set AAD TE if not empty
-        if ( additionalAuthenticatedDataTE != nullptr &&
-             additionalAuthenticatedDataTE[0] != '\0' ) {
-            metaData.associatedDataTE =
-                libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataTE );
-        }
-
-
-        libBLS::Ciphertext cipheredMessage =
-            libBLS::ThresholdEncryption::encrypt( messageBytes, commonPublicKeys, metaData );
-        std::vector< uint8_t > cipheredMessageBytes = cipheredMessage.toBytes();
-
-        cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessageBytes );
-
-        return cipheredMessageStr.c_str();
-
-    } catch ( const std::exception& e ) {
-        std::cerr << "C++ exception in encryptMessageDualKey: " << e.what() << std::endl;
-        return nullptr;
-    } catch ( ... ) {
-        std::cerr << "Unknown C++ exception in encryptMessageDualKey" << std::endl;
-        return nullptr;
+    // set AAD TE if not empty
+    if ( additionalAuthenticatedDataTE != nullptr && additionalAuthenticatedDataTE[0] != '\0' ) {
+        metaData.associatedDataTE =
+            libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataTE );
     }
 }
 
