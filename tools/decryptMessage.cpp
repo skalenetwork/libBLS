@@ -35,7 +35,7 @@ int main( int argc, char* argv[] ) {
     if ( argc < 5 || argc > 7 ) {
         std::cerr << "Usage: " << argv[0]
                   << " <encrypted_data> <secret_key> <expected_message> <key_index_to_keep> "
-                     "[<aad_aes>] [<aad_te>]"
+                     "[<aad_aes> <aad_te>]"
                   << std::endl;
         return 1;
     }

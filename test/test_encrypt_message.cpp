@@ -63,11 +63,11 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
         std::string str = libBLS::ThresholdUtils::bytesToHexString( data );
         const char* dataStr = str.c_str();
 
-        std::vector< uint8_t > additionalAuthenticatedData = { 'A', 'E', 'S' };
+        std::vector< uint8_t > additionalAuthenticatedDataAES = { 'A', 'E', 'S' };
         std::vector< uint8_t > additionalAuthenticatedDataTE = { 'T', 'E' };
-        std::string additionalAuthenticatedDataStr =
-            libBLS::ThresholdUtils::bytesToHexString( additionalAuthenticatedData );
-        const char* additionalAuthenticatedDataStrC = additionalAuthenticatedDataStr.c_str();
+        std::string additionalAuthenticatedDataAESStr =
+            libBLS::ThresholdUtils::bytesToHexString( additionalAuthenticatedDataAES );
+        const char* additionalAuthenticatedDataAESStrC = additionalAuthenticatedDataAESStr.c_str();
 
         std::string additionalAuthenticatedDataTEStr =
             libBLS::ThresholdUtils::bytesToHexString( additionalAuthenticatedDataTE );
@@ -75,14 +75,14 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
 
         // call encrypt message
         const char* cipheredMessage = encryptMessage( dataStr, pKeyStr.c_str(),
-            additionalAuthenticatedDataStrC, additionalAuthenticatedDataTEStrC );
+            additionalAuthenticatedDataTEStrC, additionalAuthenticatedDataAESStrC );
         std::vector< uint8_t > cipheredMessageBytesActual =
             libBLS::ThresholdUtils::hexCStringToBytes( cipheredMessage );
 
         // encrypt message using libBLS
         libBLS::TEPublicKey publicKey( pKeyStr, libBLS::Base::HEXA );
         libBLS::EncryptMetaData metaData;
-        metaData.associatedDataAesGcm = additionalAuthenticatedData;
+        metaData.associatedDataAesGcm = additionalAuthenticatedDataAES;
         metaData.associatedDataTE = additionalAuthenticatedDataTE;
 
         libBLS::Ciphertext ciphertext =
@@ -112,9 +112,9 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
             libBLS::AES256Key key_deciphered =
                 libBLS::ThresholdEncryption::combineShares( cipheredKey, decr_set );
             libBLS::ThresholdEncryption::validateCombinedDecryption( cipheredMessageObj,
-                key_deciphered, keys.commonPublic.getPublicKeyRaw(), additionalAuthenticatedData );
+                key_deciphered, keys.commonPublic.getPublicKeyRaw(), additionalAuthenticatedDataAES );
             std::vector< uint8_t > decipheredMsg = libBLS::ThresholdEncryption::decrypt(
-                cipheredMessageObj, key_deciphered, additionalAuthenticatedData );
+                cipheredMessageObj, key_deciphered, additionalAuthenticatedDataAES );
 
             BOOST_REQUIRE( decipheredMsg == data );
         }
@@ -144,11 +144,11 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
             publicKeysStr[j] = pKeyStr;
         }
 
-        std::vector< uint8_t > additionalAuthenticatedData = { 'A', 'E', 'S' };
+        std::vector< uint8_t > additionalAuthenticatedDataAES = { 'A', 'E', 'S' };
         std::vector< uint8_t > additionalAuthenticatedDataTE = { 'T', 'E' };
-        std::string additionalAuthenticatedDataStr =
-            libBLS::ThresholdUtils::bytesToHexString( additionalAuthenticatedData );
-        const char* additionalAuthenticatedDataStrC = additionalAuthenticatedDataStr.c_str();
+        std::string additionalAuthenticatedDataAESStr =
+            libBLS::ThresholdUtils::bytesToHexString( additionalAuthenticatedDataAES );
+        const char* additionalAuthenticatedDataAESStrC = additionalAuthenticatedDataAESStr.c_str();
         std::string additionalAuthenticatedDataTEStr =
             libBLS::ThresholdUtils::bytesToHexString( additionalAuthenticatedDataTE );
         const char* additionalAuthenticatedDataTEStrC = additionalAuthenticatedDataTEStr.c_str();
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
         // call encrypt message
         const char* cipheredMessage =
             encryptMessageDualKey( dataStr, publicKeysStr[0].c_str(), publicKeysStr[1].c_str(),
-                additionalAuthenticatedDataStrC, additionalAuthenticatedDataTEStrC );
+                additionalAuthenticatedDataTEStrC, additionalAuthenticatedDataAESStrC );
         std::vector< uint8_t > cipheredMessageBytesActual =
             libBLS::ThresholdUtils::hexCStringToBytes( cipheredMessage );
 
@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
             commonPublicKeys.push_back( libBLS::TEPublicKey( publicKey, libBLS::Base::HEXA ) );
         }
         libBLS::EncryptMetaData metaData;
-        metaData.associatedDataAesGcm = additionalAuthenticatedData;
+        metaData.associatedDataAesGcm = additionalAuthenticatedDataAES;
         metaData.associatedDataTE = additionalAuthenticatedDataTE;
         libBLS::Ciphertext ciphertext =
             libBLS::ThresholdEncryption::encrypt( data, commonPublicKeys, metaData );
@@ -196,21 +196,21 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
                 cipheredMessageObj.getKeys()[k], cipheredMessageObj.getData() );
             libBLS::ThresholdEncryption::validateCombinedDecryption( tempCipheredMessage,
                 key_deciphered, keys[k].commonPublic.getPublicKeyRaw(),
-                additionalAuthenticatedData );
+                additionalAuthenticatedDataAES );
             std::vector< uint8_t > decipheredMsg = libBLS::ThresholdEncryption::decrypt(
-                tempCipheredMessage, key_deciphered, additionalAuthenticatedData );
+                tempCipheredMessage, key_deciphered, additionalAuthenticatedDataAES );
 
             BOOST_REQUIRE( decipheredMsg == data );
 
             auto ciphertextCopy = cipheredMessageObj;
             BOOST_REQUIRE_THROW(
                 libBLS::ThresholdEncryption::validateAndDecrypt( ciphertextCopy, key_deciphered,
-                    keys[k].commonPublic, additionalAuthenticatedData ),
+                    keys[k].commonPublic, additionalAuthenticatedDataAES ),
                 libBLS::ThresholdUtils::IncorrectInput );
             ciphertextCopy.keepKey( k );
             BOOST_REQUIRE(
                 libBLS::ThresholdEncryption::validateAndDecrypt( ciphertextCopy, key_deciphered,
-                    keys[k].commonPublic, additionalAuthenticatedData ) == data );
+                    keys[k].commonPublic, additionalAuthenticatedDataAES ) == data );
         }
     }
 }
