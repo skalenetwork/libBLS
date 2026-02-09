@@ -112,7 +112,8 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
             libBLS::AES256Key key_deciphered =
                 libBLS::ThresholdEncryption::combineShares( cipheredKey, decr_set );
             libBLS::ThresholdEncryption::validateCombinedDecryption( cipheredMessageObj,
-                key_deciphered, keys.commonPublic.getPublicKeyRaw(), additionalAuthenticatedDataAES );
+                key_deciphered, keys.commonPublic.getPublicKeyRaw(),
+                additionalAuthenticatedDataAES );
             std::vector< uint8_t > decipheredMsg = libBLS::ThresholdEncryption::decrypt(
                 cipheredMessageObj, key_deciphered, additionalAuthenticatedDataAES );
 
