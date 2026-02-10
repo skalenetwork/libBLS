@@ -51,15 +51,13 @@ const char* encryptMessage( const char* data, const char* key,
     libBLS::EncryptMetaData metaData;
 
     // set AAD AES if not empty
-    if ( additionalAuthenticatedDataAES != nullptr &&
-         additionalAuthenticatedDataAES[0] != '\0' ) {
+    if ( additionalAuthenticatedDataAES != nullptr && additionalAuthenticatedDataAES[0] != '\0' ) {
         metaData.associatedDataAesGcm =
             libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
     }
 
     // set AAD TE if not empty
-    if ( additionalAuthenticatedDataTE != nullptr &&
-         additionalAuthenticatedDataTE[0] != '\0' ) {
+    if ( additionalAuthenticatedDataTE != nullptr && additionalAuthenticatedDataTE[0] != '\0' ) {
         metaData.associatedDataTE =
             libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataTE );
     }
@@ -108,7 +106,7 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
     }
 
     libBLS::Ciphertext cipheredMessage =
-                libBLS::ThresholdEncryption::encrypt( messageBytes, commonPublicKeys, metaData );
+        libBLS::ThresholdEncryption::encrypt( messageBytes, commonPublicKeys, metaData );
 
     std::vector< uint8_t > cipheredMessageBytes = cipheredMessage.toBytes();
 
