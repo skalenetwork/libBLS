@@ -49,13 +49,19 @@ public:
     // ----------------------- String Serializations ----------------------- //
 
     std::string toString( Base base ) const {
-        if ( base != libBLS::Base::HEXA ) {
-            throw ThresholdUtils::IncorrectInput(
-                "Point serialization to string is only supported in HEXA base" );
-        }
-
         std::string out;
-        forEachAffineComponent( [&]( const FqElement& c, size_t ) { out += c.toString( base ); } );
+        if ( base == libBLS::Base::HEXA ) {
+            // HEXA: concatenate fixed-width (64 char) hex strings
+            forEachAffineComponent(
+                [&]( const FqElement& c, size_t ) { out += c.toString( base ); } );
+        } else {
+            // DEC: join with colon delimiter (variable length decimal strings)
+            forEachAffineComponent( [&]( const FqElement& c, size_t i ) {
+                if ( i > 0 )
+                    out += ":";
+                out += c.toString( base );
+            } );
+        }
         return out;
     }
 
