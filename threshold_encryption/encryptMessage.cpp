@@ -38,57 +38,47 @@ const char* encryptMessage( const char* data, const char* key,
     const char* additionalAuthenticatedDataTE, const char* additionalAuthenticatedDataAES ) {
     thread_local std::string cipheredMessageStr;
 
-    try {
-        ensureInit();
+    ensureInit();
 
-        // convert from char into vector of bytes
-        std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
+    // convert from char into vector of bytes
+    std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
 
-        // build public key
-        std::string keyStr( key );
-        libBLS::TEPublicKey commonPublic( keyStr, libBLS::Base::HEXA );
+    // build public key
+    std::string keyStr( key );
+    libBLS::TEPublicKey commonPublic( keyStr, libBLS::Base::HEXA );
 
-        // build encrypt meta data
-        libBLS::EncryptMetaData metaData;
+    // build encrypt meta data
+    libBLS::EncryptMetaData metaData;
 
-        // set AAD AES if not empty
-        if ( additionalAuthenticatedDataAES != nullptr &&
-             additionalAuthenticatedDataAES[0] != '\0' ) {
-            metaData.associatedDataAesGcm =
-                libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
-        }
-
-        // set AAD TE if not empty
-        if ( additionalAuthenticatedDataTE != nullptr &&
-             additionalAuthenticatedDataTE[0] != '\0' ) {
-            metaData.associatedDataTE =
-                libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataTE );
-        }
-
-        // encrypt message
-        libBLS::Ciphertext cipheredMessage =
-            libBLS::ThresholdEncryption::encrypt( messageBytes, commonPublic, metaData );
-
-        std::vector< uint8_t > cipheredMessageBytes = cipheredMessage.toBytes();
-
-        cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessageBytes );
-
-        return cipheredMessageStr.c_str();
-
-    } catch ( const std::exception& e ) {
-        std::cerr << "C++ exception in encryptMessage: " << e.what() << std::endl;
-        return nullptr;
-    } catch ( ... ) {
-        std::cerr << "Unknown C++ exception in encryptMessage" << std::endl;
-        return nullptr;
+    // set AAD AES if not empty
+    if ( additionalAuthenticatedDataAES != nullptr &&
+         additionalAuthenticatedDataAES[0] != '\0' ) {
+        metaData.associatedDataAesGcm =
+            libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
     }
+
+    // set AAD TE if not empty
+    if ( additionalAuthenticatedDataTE != nullptr &&
+         additionalAuthenticatedDataTE[0] != '\0' ) {
+        metaData.associatedDataTE =
+            libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataTE );
+    }
+
+    // encrypt message
+    libBLS::Ciphertext cipheredMessage =
+        libBLS::ThresholdEncryption::encrypt( messageBytes, commonPublic, metaData );
+
+    std::vector< uint8_t > cipheredMessageBytes = cipheredMessage.toBytes();
+
+    cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessageBytes );
+
+    return cipheredMessageStr.c_str();
 }
 
 const char* encryptMessageDualKey( const char* data, const char* firstKey, const char* secondKey,
     const char* additionalAuthenticatedDataTE, const char* additionalAuthenticatedDataAES ) {
     thread_local std::string cipheredMessageStr;
-
-    libBLS::init();
+    ensureInit();
 
     // convert from char into vec of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
@@ -116,31 +106,31 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
         metaData.associatedDataTE =
             libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataTE );
     }
+
+    libBLS::Ciphertext cipheredMessage =
+                libBLS::ThresholdEncryption::encrypt( messageBytes, commonPublicKeys, metaData );
+
+    std::vector< uint8_t > cipheredMessageBytes = cipheredMessage.toBytes();
+
+    cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessageBytes );
+
+    return cipheredMessageStr.c_str();
 }
 
 const char* encryptMessageMockup( const char* data ) {
     thread_local std::string cipheredMessageStr;
 
-    try {
-        ensureInit();
+    ensureInit();
 
-        // convert from char into vector of bytes
-        std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
+    // convert from char into vector of bytes
+    std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
 
-        // encrypt message
-        std::vector< uint8_t > cipheredMessage =
-            libBLS::ThresholdEncryption::mockupEncrypt( messageBytes );
+    // encrypt message
+    std::vector< uint8_t > cipheredMessage =
+        libBLS::ThresholdEncryption::mockupEncrypt( messageBytes );
 
-        cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessage );
+    cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessage );
 
-        return cipheredMessageStr.c_str();
-
-    } catch ( const std::exception& e ) {
-        std::cerr << "C++ exception in encryptMessageMockup: " << e.what() << std::endl;
-        return nullptr;
-    } catch ( ... ) {
-        std::cerr << "Unknown C++ exception in encryptMessageMockup" << std::endl;
-        return nullptr;
-    }
+    return cipheredMessageStr.c_str();
 }
 }
