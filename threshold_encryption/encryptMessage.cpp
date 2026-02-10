@@ -24,13 +24,6 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include "ThresholdEncryption.h"
 #include <threshold_encryption.h>
 #include <tools/utils.h>
-#include <iostream>
-#include <mutex>
-
-static std::once_flag initFlag;
-static void ensureInit() {
-    std::call_once( initFlag, []() { libBLS::init(); } );
-}
 
 extern "C" {
 
@@ -38,7 +31,7 @@ const char* encryptMessage( const char* data, const char* key,
     const char* additionalAuthenticatedDataTE, const char* additionalAuthenticatedDataAES ) {
     thread_local std::string cipheredMessageStr;
 
-    ensureInit();
+    libBLS::init();
 
     // convert from char into vector of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
@@ -76,7 +69,8 @@ const char* encryptMessage( const char* data, const char* key,
 const char* encryptMessageDualKey( const char* data, const char* firstKey, const char* secondKey,
     const char* additionalAuthenticatedDataTE, const char* additionalAuthenticatedDataAES ) {
     thread_local std::string cipheredMessageStr;
-    ensureInit();
+
+    libBLS::init();
 
     // convert from char into vec of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
@@ -118,7 +112,7 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
 const char* encryptMessageMockup( const char* data ) {
     thread_local std::string cipheredMessageStr;
 
-    ensureInit();
+    libBLS::init();
 
     // convert from char into vector of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
