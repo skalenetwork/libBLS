@@ -1,1 +1,1 @@
-recursive-include skale_te *.so
+recursive-include t_encrypt *.so

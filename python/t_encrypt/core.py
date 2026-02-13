@@ -17,7 +17,7 @@ def _load_library():
         # Check if we can find it in common build locations relative to this file
         current_dir = os.path.dirname(__file__)
         possible_paths = [
-            os.path.abspath(os.path.join(current_dir, '../../build/threshold_encryption/libskale_te_python.so')),
+            os.path.abspath(os.path.join(current_dir, '../../build/threshold_encryption/libt_encrypt_python.so')),
         ]
         for path in possible_paths:
             if os.path.exists(path):
