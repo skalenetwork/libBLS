@@ -7,22 +7,22 @@ from setuptools import setup, find_packages
 from setuptools.command.build_py import build_py
 
 # Configuration
-PACKAGE_NAME = 'skale_te'
+PACKAGE_NAME = 't_encrypt'
 LIB_NAME = 'libencrypt.so'
-BUILD_TARGET_NAME = 'libskale_te_python.so'
+BUILD_TARGET_NAME = 'libt_encrypt_python.so'
 
 
 def resolve_built_library_path() -> str:
-    override_path = os.environ.get('SKALE_TE_LIB_PATH')
+    override_path = os.environ.get('T_ENCRYPT_LIB_PATH')
     if override_path:
         if not os.path.exists(override_path):
             raise FileNotFoundError(
-                f"SKALE_TE_LIB_PATH points to missing file: {override_path}"
+                f"T_ENCRYPT_LIB_PATH points to missing file: {override_path}"
             )
         return override_path
     else:
         raise RuntimeError(
-            "Environment variable SKALE_TE_LIB_PATH is not set. ")
+            "Environment variable T_ENCRYPT_LIB_PATH is not set. ")
 
 class CustomBuildPy(build_py):
     """
@@ -40,14 +40,14 @@ class CustomBuildPy(build_py):
         super().run()
 
 setup(
-    name='skale-te',
+    name='t-encrypt',
     version='0.0.1',
     description='Python bindings for SKALE Threshold Encryption',
     author='SKALE Network',
     packages=find_packages(),
     include_package_data=True,
     package_data={
-        'skale_te': ['*.so'],
+        't_encrypt': ['*.so'],
     },
     cmdclass={
         'build_py': CustomBuildPy,
