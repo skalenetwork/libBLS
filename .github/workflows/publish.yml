@@ -93,7 +93,7 @@ jobs:
         cd ../..
         mkdir -p build_em && cd build_em
         export LIBRARIES_ROOT=../deps/deps_inst/wasm32-emscripten/lib
-        emcmake cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a ..
+        emcmake cmake -DCMAKE_BUILD_TYPE=MinSizeRel -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a ..
         emmake make -j$(nproc)
         cd ..
         cp build_em/threshold_encryption/encrypt.* node/
