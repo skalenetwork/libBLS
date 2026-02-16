@@ -78,6 +78,7 @@ jobs:
         export CC=gcc-11
         export CXX=g++-11
         export TARGET=all
+        export CMAKE_BUILD_TYPE=Release
         cd deps
         ./clean.sh
         ./build.sh WITH_EMSCRIPTEN=1
@@ -92,7 +93,7 @@ jobs:
         cd ../..
         mkdir -p build_em && cd build_em
         export LIBRARIES_ROOT=../deps/deps_inst/wasm32-emscripten/lib
-        emcmake cmake -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a ..
+        emcmake cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a ..
         emmake make -j$(nproc)
         cd ..
         cp build_em/threshold_encryption/encrypt.* node/
