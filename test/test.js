@@ -1,4 +1,4 @@
-const ModuleFactory = require("./encrypt.js");
+const ModuleFactory = require("./encrypt_node.js");
 
 const BLS_PUBLIC_KEY = process.argv[2];
 const TX_DATA = process.argv[3];

@@ -12,7 +12,7 @@ cp "$ROOT_DIR/tools/generate_bls_keys" "$ABS_BUILD_DIR/"
 cp "$ROOT_DIR/tools/decrypt_message" "$ABS_BUILD_DIR/"
 cp "$ROOT_DIR/test/test.js" "$ABS_BUILD_DIR/"
 cp "$ROOT_DIR/test/test2Keys.js" "$ABS_BUILD_DIR/"
-cp "$ABS_BUILD_DIR/threshold_encryption/encrypt."* "$ABS_BUILD_DIR/"
+cp "$ABS_BUILD_DIR/threshold_encryption/encrypt_node."* "$ABS_BUILD_DIR/"
 cd "$ABS_BUILD_DIR/"
 
 # Number of times to run the test block
