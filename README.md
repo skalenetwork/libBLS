@@ -1,4 +1,4 @@
-# libBLS: a C++ library for BLS Threshold Signatures
+#  libBLS: a C++ library for BLS Threshold Signatures
 
 [![Build and test libBLS](https://github.com/skalenetwork/libBLS/actions/workflows/test.yml/badge.svg)](https://github.com/skalenetwork/libBLS/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/skalenetwork/libBLS/branch/develop/graph/badge.svg)](https://codecov.io/gh/skalenetwork/libBLS)
