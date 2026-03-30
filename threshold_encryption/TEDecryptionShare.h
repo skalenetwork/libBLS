@@ -43,7 +43,8 @@ public:
      * @param _share Decryption share
      * @param _signerIndex Index of the signer
      * @param _validate Whether to validate the share or not (Optional, default: true)
-     * Note: Validation is a costly operation, so it can be skipped if the share is already known to be valid.
+     * Note: Validation is a costly operation, so it can be skipped if the share is already known to
+     * be valid.
      */
     TEDecryptionShare( const algebra::G2Point& _share, size_t _signerIndex, bool _validate = true );
 
@@ -51,7 +52,8 @@ public:
      * @param _hexaEncoded Hexa encoded string of the share
      * @param _signerIndex Index of the signer
      * @param _validate Whether to validate the share or not (Optional, default: true)
-     * Note: Validation is a costly operation, so it can be skipped if the share is already known to be valid.
+     * Note: Validation is a costly operation, so it can be skipped if the share is already known to
+     * be valid.
      */
     TEDecryptionShare(
         const std::string& _hexaEncoded, size_t _signerIndex, bool _validate = true );
