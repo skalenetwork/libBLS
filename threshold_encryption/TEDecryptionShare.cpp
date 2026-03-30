@@ -26,14 +26,16 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
-TEDecryptionShare::TEDecryptionShare( const algebra::G2Point& _share, size_t _signerIndex, bool _validate )
+TEDecryptionShare::TEDecryptionShare( 
+    const algebra::G2Point& _share, size_t _signerIndex, bool _validate )
     : signerIndex( _signerIndex ), share( _share ) {
     if ( _validate ) {
         share.validate();
     }
 }
 
-TEDecryptionShare::TEDecryptionShare( const std::string& _hexaEncoded, size_t _signerIndex, bool _validate )
+TEDecryptionShare::TEDecryptionShare( 
+    const std::string& _hexaEncoded, size_t _signerIndex, bool _validate )
     : signerIndex( _signerIndex ) {
     share = algebra::G2Point::fromString( _hexaEncoded, Base::HEXA );
     if ( _validate ) {
