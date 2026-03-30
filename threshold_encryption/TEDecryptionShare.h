@@ -40,16 +40,18 @@ private:
 
 public:
     /**
-     * @param _signerIndex Index of the signer
      * @param _share Decryption share
-     * @note Validates that the share is well formed and non-zero.
+     * @param _signerIndex Index of the signer
+     * @param _validate Whether to validate the share or not (Optional, default: true)
+     * Note: Validation is a costly operation, so it can be skipped if the share is already known to be valid.
      */
     TEDecryptionShare( const algebra::G2Point& _share, size_t _signerIndex, bool _validate = true );
 
     /**
-     * @param _signerIndex Index of the signer
      * @param _hexaEncoded Hexa encoded string of the share
-     * @note Used when building from serialized decription share
+     * @param _signerIndex Index of the signer
+     * @param _validate Whether to validate the share or not (Optional, default: true)
+     * Note: Validation is a costly operation, so it can be skipped if the share is already known to be valid.
      */
     TEDecryptionShare(
         const std::string& _hexaEncoded, size_t _signerIndex, bool _validate = true );
