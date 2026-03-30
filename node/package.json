@@ -1,6 +1,6 @@
 {
   "name": "@skalenetwork/t-encrypt",
-  "version": "0.6.0",
+  "version": "0.8.0",
 
   "keywords": [
     "SKALE",
@@ -29,8 +29,17 @@
   },
   "description": "A Node.js module to encrypt messages using WebAssembly",
   "main": "EncryptMessage.js",
+  "module": "EncryptMessage.mjs",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": "./EncryptMessage.mjs",
+      "require": "./EncryptMessage.js"
+    }
+  },
   "files": [
     "EncryptMessage.js",
+    "EncryptMessage.mjs",
     "encrypt.js",
     "encrypt.wasm"
   ]

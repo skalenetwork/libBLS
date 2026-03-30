@@ -20,7 +20,8 @@ dkgpython_module = Extension('dkgpython',
                              '../deps/deps_inst/x86_or_x64/include/libff'],
 
                              library_dirs=['../build', '../deps/deps_inst/x86_or_x64/lib',
-                             '../deps/deps_inst/x86_or_x64/lib/libff', '../deps/deps_inst/x86_or_x64/lib/libgmp',
+                             '../deps/deps_inst/x86_or_x64/lib/libff',
+                             '../deps/deps_inst/x86_or_x64/lib/libgmp',
                              '../deps/deps_inst/x86_or_x64/lib/libgmpxx'],
 
                              libraries=['bls', 'ff', 'gmpxx', 'gmp']

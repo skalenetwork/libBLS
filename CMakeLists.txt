@@ -272,10 +272,10 @@ if(LIBBLS_BUILD_TESTS)
 			target_compile_options(${name} PRIVATE -Wno-format-overflow)
 		endif()
 
-		target_link_libraries(${name} PRIVATE 
-			bls 
-			${CRYPTOPP_LIBRARY} 
-			boost_program_options 
+		target_link_libraries(${name} PRIVATE
+			bls
+			${CRYPTOPP_LIBRARY}
+			boost_program_options
 			${extra_libs}
 			${FOLLY_STATIC_LIBS}
 		)

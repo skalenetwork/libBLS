@@ -66,10 +66,10 @@ if (LIBBLS_BUILD_TESTS)
     # Helper function to add tests
     function(add_te_test name source)
         add_executable(${name} ${source} ../test/utils.cpp)  # Includes utils only for tests
-        target_include_directories(${name} SYSTEM PRIVATE 
-            ${THIRD_PARTY_DIR} 
+        target_include_directories(${name} SYSTEM PRIVATE
+            ${THIRD_PARTY_DIR}
             boost_program_options
-            ${CMAKE_CURRENT_SOURCE_DIR} 
+            ${CMAKE_CURRENT_SOURCE_DIR}
             ../test
         )
 
@@ -89,13 +89,13 @@ if (LIBBLS_BUILD_TESTS)
     add_test(NAME te_tests COMMAND te_unit_test)
 
     if(NOT EMSCRIPTEN AND NOT APPLE)
-        add_executable(te_sample_sgx ../test/te_sample_sgx.cpp ../test/utils.cpp) 
+        add_executable(te_sample_sgx ../test/te_sample_sgx.cpp ../test/utils.cpp)
         target_include_directories(te_sample_sgx SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR} ../test)
         target_link_libraries(te_sample_sgx PRIVATE te bls ${CRYPTOPP_LIBRARY} jsonrpccpp-client jsonrpccpp-server jsonrpccpp-common jsoncpp curl pthread ssl crypto z idn2)
     endif()
 
     if(NOT EMSCRIPTEN AND NOT APPLE)
-        add_executable(decrypt_message ../tools/decryptMessage.cpp) 
+        add_executable(decrypt_message ../tools/decryptMessage.cpp)
         target_include_directories(decrypt_message SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
         target_link_libraries(decrypt_message PRIVATE te bls ${CRYPTOPP_LIBRARY})
     endif()
@@ -121,6 +121,26 @@ if (LIBBLS_BUILD_TESTS)
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMENT "Run all TE tests"
     )
+endif()
+
+if (NOT EMSCRIPTEN)
+    # Build python threshold_encryption shared library
+    add_library(t_encrypt_python SHARED ../threshold_encryption/encryptMessage.cpp)
+    get_directory_property(PARENT_DIR PARENT_DIRECTORY)
+    target_include_directories(t_encrypt_python PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${PARENT_DIR})
+    if(APPLE)
+        target_link_libraries(t_encrypt_python PRIVATE
+            -Wl,-force_load,$<TARGET_FILE:te>
+            -Wl,-force_load,$<TARGET_FILE:bls>
+            -Wl,-force_load,$<TARGET_FILE:common_utils>
+            backend ${FOLLY_STATIC_LIBS} ${CRYPTOPP_LIBRARY})
+        # Explicitly add dependencies for Apple builds because they are hidden inside linker flags
+        add_dependencies(t_encrypt_python te bls common_utils)
+    else()
+        target_link_libraries(t_encrypt_python PRIVATE
+            -Wl,--whole-archive te bls common_utils -Wl,--no-whole-archive
+            backend ${FOLLY_STATIC_LIBS} ${CRYPTOPP_LIBRARY})
+    endif()
 endif()
 
 if (EMSCRIPTEN)

@@ -1,6 +1,6 @@
-const ModuleFactory = require('./encrypt.js');
+import ModuleFactory from './encrypt.js';
 
-async function encryptMessage(txData, publicKey, aadTE = '', aadAES = '') {
+export async function encryptMessage(txData, publicKey, aadTE = '', aadAES = '') {
     const Module = await ModuleFactory();
     return Module.ccall(
         'encryptMessage', // Name of the exported C++ function
@@ -10,7 +10,7 @@ async function encryptMessage(txData, publicKey, aadTE = '', aadAES = '') {
     );
 }
 
-async function encryptMessageDualKey(
+export async function encryptMessageDualKey(
     txData, firstPublicKey, secondPublicKey, aadTE = '', aadAES = '') {
     const Module = await ModuleFactory();
     return Module.ccall(
@@ -21,7 +21,7 @@ async function encryptMessageDualKey(
     );
 }
 
-async function encryptMessageMockup(txData) {
+export async function encryptMessageMockup(txData) {
     const Module = await ModuleFactory();
     return Module.ccall(
         'encryptMessageMockup', // Name of the exported C++ function
@@ -30,5 +30,3 @@ async function encryptMessageMockup(txData) {
         [txData] // Arguments
     );
 }
-
-module.exports = { encryptMessage, encryptMessageDualKey, encryptMessageMockup };

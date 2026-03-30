@@ -28,12 +28,12 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 extern "C" {
 
 const char* encryptMessage( const char* data, const char* key,
-    const char* additionalAuthenticatedDataAES, const char* additionalAuthenticatedDataTE ) {
-    static std::string cipheredMessageStr;
+    const char* additionalAuthenticatedDataTE, const char* additionalAuthenticatedDataAES ) {
+    thread_local std::string cipheredMessageStr;
 
     libBLS::init();
 
-    // convert from char into vec of bytes
+    // convert from char into vector of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
 
     // build public key
@@ -45,7 +45,7 @@ const char* encryptMessage( const char* data, const char* key,
 
     // set AAD AES if not empty
     if ( additionalAuthenticatedDataAES != nullptr && additionalAuthenticatedDataAES[0] != '\0' ) {
-        metaData.associatedDataAesCbc =
+        metaData.associatedDataAesGcm =
             libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
     }
 
@@ -67,8 +67,8 @@ const char* encryptMessage( const char* data, const char* key,
 }
 
 const char* encryptMessageDualKey( const char* data, const char* firstKey, const char* secondKey,
-    const char* additionalAuthenticatedDataAES, const char* additionalAuthenticatedDataTE ) {
-    static std::string cipheredMessageStr;
+    const char* additionalAuthenticatedDataTE, const char* additionalAuthenticatedDataAES ) {
+    thread_local std::string cipheredMessageStr;
 
     libBLS::init();
 
@@ -89,7 +89,7 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
 
     // set AAD AES if not empty
     if ( additionalAuthenticatedDataAES != nullptr && additionalAuthenticatedDataAES[0] != '\0' ) {
-        metaData.associatedDataAesCbc =
+        metaData.associatedDataAesGcm =
             libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataAES );
     }
 
@@ -99,9 +99,9 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
             libBLS::ThresholdUtils::hexCStringToBytes( additionalAuthenticatedDataTE );
     }
 
-
     libBLS::Ciphertext cipheredMessage =
         libBLS::ThresholdEncryption::encrypt( messageBytes, commonPublicKeys, metaData );
+
     std::vector< uint8_t > cipheredMessageBytes = cipheredMessage.toBytes();
 
     cipheredMessageStr = libBLS::ThresholdUtils::bytesToHexString( cipheredMessageBytes );
@@ -110,11 +110,11 @@ const char* encryptMessageDualKey( const char* data, const char* firstKey, const
 }
 
 const char* encryptMessageMockup( const char* data ) {
-    static std::string cipheredMessageStr;
+    thread_local std::string cipheredMessageStr;
 
     libBLS::init();
 
-    // convert from char into vec of bytes
+    // convert from char into vector of bytes
     std::vector< uint8_t > messageBytes = libBLS::ThresholdUtils::hexCStringToBytes( data );
 
     // encrypt message

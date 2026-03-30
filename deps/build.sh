@@ -206,6 +206,9 @@ else
 	WITH_GTEST=1
 fi
 
+# Set C++ standard version used throughout the build
+CXX_STANDARD=20
+
 export CFLAGS="$CFLAGS -fPIC"
 export CXXFLAGS="$CXXFLAGS -fPIC"
 WITH_OPENSSL="yes"
@@ -238,6 +241,11 @@ fi
 WITH_FF="yes"
 WITH_GMP="yes"
 WITH_MCL="yes"
+
+if [ -z "${WITH_SGX}" ];
+then
+	WITH_SGX="no"
+fi
 
 if [ -z "${PARALLEL_COUNT}" ];
 then
@@ -594,7 +602,32 @@ fi
 if [ "$WITH_BOOST" = "yes" ];
 then
 	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}BOOST${COLOR_SEPARATOR} ========================================${COLOR_RESET}"
-	if [ ! -f "$INSTALL_ROOT/lib/libboost_program_options.a" ];
+	
+	# Define Boost libraries based on build mode
+	BOOST_LIBS_EMSCRIPTEN="program_options"
+	BOOST_LIBS_NORMAL="system thread filesystem regex atomic context"
+	BOOST_LIBS_SKALED="iostreams fiber log chrono date_time"
+	
+	# Build the full library list based on mode
+	if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]]; then
+		BOOST_LIBS_TO_CHECK="$BOOST_LIBS_EMSCRIPTEN"
+	else
+		BOOST_LIBS_TO_CHECK="$BOOST_LIBS_EMSCRIPTEN $BOOST_LIBS_NORMAL"
+		if [ "$SKALED_DEPS_CHAIN" = "1" ]; then
+			BOOST_LIBS_TO_CHECK="$BOOST_LIBS_TO_CHECK $BOOST_LIBS_SKALED"
+		fi
+	fi
+	
+	# Check if all required Boost libraries exist before skipping
+	BOOST_CHECK_FAILED=0
+	for lib in $BOOST_LIBS_TO_CHECK; do
+		if [ ! -f "$INSTALL_ROOT/lib/libboost_${lib}.a" ]; then
+			BOOST_CHECK_FAILED=1
+			break
+		fi
+	done
+	
+	if [ "$BOOST_CHECK_FAILED" = "1" ];
 	then
 		env_restore
 		cd "$SOURCES_ROOT"
@@ -617,16 +650,19 @@ then
 		fi
 		cd ${BOOST_NAME}
 		echo -e "${COLOR_INFO}configuring and building it${COLOR_DOTS}...${COLOR_RESET}"
+		
+		# Build BOOST_LIBRARIES string with commas for bootstrap.sh
 		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 		then
-			BOOST_LIBRARIES="program_options"
+			BOOST_LIBRARIES="${BOOST_LIBS_EMSCRIPTEN// /,}"
 		else
-			BOOST_LIBRARIES="system,thread,filesystem,regex,atomic,program_options,context"
+			BOOST_LIBRARIES="${BOOST_LIBS_EMSCRIPTEN// /,},${BOOST_LIBS_NORMAL// /,}"
 			if [ "$SKALED_DEPS_CHAIN" = "1" ];
 			then
-                                BOOST_LIBRARIES="${BOOST_LIBRARIES},iostreams,fiber,log,chrono,date_time"
+				BOOST_LIBRARIES="${BOOST_LIBRARIES},${BOOST_LIBS_SKALED// /,}"
 			fi
 		fi
+		
 		eval ./bootstrap.sh --prefix="$INSTALL_ROOT" --with-libraries="$BOOST_LIBRARIES"
 
 		if [ "$DEBUG" = "1" ]; then
@@ -642,13 +678,13 @@ then
 		else
 			if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
 			then
-				eval ./b2 cxxflags=-fPIC toolset=clang cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
+				eval ./b2 cxxflags=-fPIC toolset=clang cxxstd=${CXX_STANDARD} cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
 			else
 				if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 				then
-                                        eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=${variant} link=static install
+                                        eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=${CXX_STANDARD} cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=${variant} link=static install
 				else
-                                        eval ./b2 cxxflags=-fPIC cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
+                                        eval ./b2 cxxflags=-fPIC cxxstd=${CXX_STANDARD} cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
 				fi
 			fi
 		fi
@@ -818,6 +854,10 @@ fi
 
 if [ "$WITH_MCL" = "yes" ]; then
   echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}MCL${COLOR_SEPARATOR} ===========================================${COLOR_RESET}"
+  HOST_OBJ_DIR="obj_host"
+  HOST_LIB_DIR="lib_host"
+  SGX_OBJ_DIR="obj_sgx"
+  SGX_LIB_DIR="lib_sgx"
   if [ ! -f "$INSTALL_ROOT/lib/libmcl.a" ]; then
     env_restore
     cd "$SOURCES_ROOT"
@@ -830,6 +870,7 @@ if [ "$WITH_MCL" = "yes" ]; then
 	eval git fetch
 	eval git checkout e67f9e6eab43116a14751bf7166c59d98728297a # v3.03 released in 10/08/2025
     eval mkdir -p build
+	mkdir -p "${HOST_OBJ_DIR}" "${HOST_LIB_DIR}" "${SGX_OBJ_DIR}" "${SGX_LIB_DIR}" bin
 
     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
     if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]]; then
@@ -849,18 +890,25 @@ if [ "$WITH_MCL" = "yes" ]; then
 		eval emmake "$MAKE" install                              # install
 
     else
+		# Ensure we don't reuse objects from a prior SGX build (XBYAK off).
+		"$MAKE" clean || true
+		rm -rf "${HOST_OBJ_DIR}" "${HOST_LIB_DIR}"
+		mkdir -p "${HOST_OBJ_DIR}" "${HOST_LIB_DIR}"
 		"$MAKE" \
 			DEBUG=0 \
 			ARCH=x86_64 \
 			MCL_USE_XBYAK=1 \
-			MCL_BINT_ASM=0 \
+			MCL_BINT_ASM=1 \
 			MCL_MSM=0 \
 			MCL_FP_BIT=256 \
 			MCL_FR_BIT=256 \
+			OBJ_DIR="${HOST_OBJ_DIR}" \
+			LIB_DIR="${HOST_LIB_DIR}" \
+			CFLAGS_USER="-DMCL_BINT_ASM_X64=1" \
 			${PARALLEL_MAKE_OPTIONS}
 
-		cp lib/libmcl.a "$INSTALL_ROOT/lib/"
-		cp lib/lishe256.a "$INSTALL_ROOT/lib/"
+		cp "${HOST_LIB_DIR}/libmcl.a" "$INSTALL_ROOT/lib/"
+		cp "${HOST_LIB_DIR}/lishe256.a" "$INSTALL_ROOT/lib/"
 		cp -r include/mcl "$INSTALL_ROOT/include/"
 		cp -r include/cybozu "$INSTALL_ROOT/include/"
     fi
@@ -868,6 +916,53 @@ if [ "$WITH_MCL" = "yes" ]; then
     cd "$SOURCES_ROOT"
   else
     echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+  fi
+
+  # Build SGX MCL (no Xbyak, LLVM AOT)
+  if [ "$WITH_SGX" = "yes" ]; then
+    # Strict check for LLVM tools
+    if [ -z "$(which clang)" ] || [ -z "$(which llvm-as)" ]; then
+      echo -e "${COLOR_ERROR}Error: SGX build requires clang and llvm-as (LLVM toolchain).${COLOR_RESET}"
+      exit 1
+    fi
+
+    if [ ! -f "$INSTALL_ROOT/lib/libmcl_sgx.a" ]; then
+      echo -e "${COLOR_INFO}Building MCL for SGX...${COLOR_RESET}"
+      cd "$SOURCES_ROOT/mcl"
+      
+      # Clean previous build artifacts
+      "$MAKE" clean || true
+      rm -rf "${SGX_OBJ_DIR}" "${SGX_LIB_DIR}"
+      mkdir -p "${SGX_OBJ_DIR}" "${SGX_LIB_DIR}"
+      
+      "$MAKE" \
+        DEBUG=0 \
+        ARCH=x86_64 \
+        MCL_USE_XBYAK=0 \
+        MCL_USE_LLVM=1 \
+        MCL_BINT_ASM=1 \
+        MCL_BINT_ASM_X64=0 \
+        MCL_MSM=0 \
+        MCL_FP_BIT=256 \
+        MCL_FR_BIT=256 \
+        MCL_DONT_USE_OPENMP=1 \
+        OBJ_DIR="${SGX_OBJ_DIR}" \
+        LIB_DIR="${SGX_LIB_DIR}" \
+        CFLAGS_USER="-DMCL_DONT_USE_CSPRNG \
+			-DCYBOZU_DONT_USE_STRING \
+			-DCYBOZU_DONT_USE_EXCEPTION \
+			-DCYBOZU_HOST_UNKNOWN=0 \
+			-DCYBOZU_HOST_INTEL=1 \
+			-DCYBOZU_HOST=0 \
+			-Wa,--noexecstack" \
+		${PARALLEL_MAKE_OPTIONS} \
+		"${SGX_LIB_DIR}/libmcl.a"
+      
+      cp "${SGX_LIB_DIR}/libmcl.a" "$INSTALL_ROOT/lib/libmcl_sgx.a"
+      cd "$SOURCES_ROOT"
+    else
+      echo -e "${COLOR_SUCCESS}SGX MCL SKIPPED${COLOR_RESET}"
+    fi
   fi
 fi
 
@@ -1187,6 +1282,7 @@ if [[ "${WITH_EMSCRIPTEN}" -eq 0 ]]; then
 				eval mkdir -p build2
 							cd build2
 				eval "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" \
+					-DCMAKE_CXX_STANDARD=${CXX_STANDARD} \
 					-DBOOST_ROOT="$INSTALL_ROOT" -DBOOST_INCLUDEDIR="${INSTALL_ROOT}/include" -DBOOST_LIBRARYDIR="$INSTALL_ROOT/lib" \
 					-DBoost_NO_BOOST_CMAKE=ON -DBoost_NO_WARN_NEW_VERSIONS=1 -DBoost_DEBUG=ON \
 					-DBUILD_SHARED_LIBS=OFF \
@@ -1420,6 +1516,16 @@ then
 			cd build
 			$MAKE ${PARALLEL_MAKE_OPTIONS}
 			$MAKE ${PARALLEL_MAKE_OPTIONS} install
+
+			# Create jsoncpp symlink for jsonrpccpp compatibility
+			# jsonrpc looks for 'jsoncpp/json/json.h'
+			# but default install path is 'json/json.h'
+			# so we create jsoncpp/json -> json symlink
+			cd "$INSTALL_ROOT/include"
+			mkdir -p jsoncpp
+			cd jsoncpp
+			ln -sf ../json json
+
 			cd "$SOURCES_ROOT"
 		else
 			echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
