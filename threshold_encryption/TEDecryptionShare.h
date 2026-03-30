@@ -51,7 +51,8 @@ public:
      * @param _hexaEncoded Hexa encoded string of the share
      * @note Used when building from serialized decription share
      */
-    TEDecryptionShare( const std::string& _hexaEncoded, size_t _signerIndex, bool _validate = true );
+    TEDecryptionShare(
+        const std::string& _hexaEncoded, size_t _signerIndex, bool _validate = true );
 
 
     size_t getSignerIndex() const;
