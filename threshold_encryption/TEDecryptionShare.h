@@ -44,14 +44,14 @@ public:
      * @param _share Decryption share
      * @note Validates that the share is well formed and non-zero.
      */
-    TEDecryptionShare( const algebra::G2Point& _share, size_t _signerIndex );
+    TEDecryptionShare( const algebra::G2Point& _share, size_t _signerIndex, bool _validate = true );
 
     /**
      * @param _signerIndex Index of the signer
      * @param _hexaEncoded Hexa encoded string of the share
      * @note Used when building from serialized decription share
      */
-    TEDecryptionShare( const std::string& _hexaEncoded, size_t _signerIndex );
+    TEDecryptionShare( const std::string& _hexaEncoded, size_t _signerIndex, bool _validate = true );
 
 
     size_t getSignerIndex() const;
