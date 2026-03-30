@@ -711,7 +711,7 @@ BOOST_AUTO_TEST_CASE( EncryptionWithAES_AAD ) {
     libBLS::algebra::G2Point publicKey = secretKey * libBLS::algebra::G2Point::generator();
 
     libBLS::EncryptMetaData encryptMeta;
-    encryptMeta.associatedDataAesCbc = aad;
+    encryptMeta.associatedDataAesGcm = aad;
 
     // Encrypt with AAD
     libBLS::CipherResult ciphertextWithAes =
@@ -758,7 +758,7 @@ BOOST_AUTO_TEST_CASE( EncryptionWithAES_WrongAAD ) {
     libBLS::algebra::G2Point publicKey = secretKey * libBLS::algebra::G2Point::generator();
 
     libBLS::EncryptMetaData encryptMeta;
-    encryptMeta.associatedDataAesCbc = aad;
+    encryptMeta.associatedDataAesGcm = aad;
 
     // Encrypt with AAD
     libBLS::CipherResult ciphertextWithAes =
