@@ -23,11 +23,80 @@
 
 #include "threshold_encryption/AesGcmCipher.h"
 #include "tools/utils.h"
+#include <openssl/hmac.h>
+#include <openssl/kdf.h>
 #include <mutex>
 
 namespace libBLS {
 
-std::vector< uint8_t > AesGcmCipher::encrypt( const std::vector< uint8_t >& plaintext ) {
+AesGcmCipher::AesGcmCipher() : isDeterministic( false ), encryptCounter( 0 ) {
+    initAES();
+    // Generate random key
+    if ( RAND_bytes( key.data(), key.size() ) != 1 ) {
+        throw std::runtime_error( "Failed to generate random key" );
+    }
+    // IV will be generated randomly on each encrypt() call
+    iv.fill( 0 );
+}
+
+AesGcmCipher::AesGcmCipher( const AES256Key& rawKey )
+    : key( rawKey ), isDeterministic( false ), encryptCounter( 0 ) {
+    initAES();
+    // IV will be generated randomly on each encrypt() call (or extracted from ciphertext for
+    // decrypt)
+    iv.fill( 0 );
+}
+
+AesGcmCipher::AesGcmCipher( const Seed256& seed ) : isDeterministic( true ), encryptCounter( 0 ) {
+    initAES();
+
+    // Use HKDF to derive key deterministically from seed
+    // IV will be derived per-encryption using Synthetic IV (HMAC of plaintext)
+    EVP_PKEY_CTX* pctx = EVP_PKEY_CTX_new_id( EVP_PKEY_HKDF, nullptr );
+    if ( !pctx ) {
+        throw std::runtime_error( "Failed to create HKDF context" );
+    }
+
+    // Using a scope guard pattern for cleanup
+    struct CtxGuard {
+        EVP_PKEY_CTX* ctx;
+        ~CtxGuard() {
+            if ( ctx )
+                EVP_PKEY_CTX_free( ctx );
+        }
+    } guard{ pctx };
+
+    if ( EVP_PKEY_derive_init( pctx ) <= 0 ) {
+        throw std::runtime_error( "Failed to initialize HKDF" );
+    }
+    if ( EVP_PKEY_CTX_set_hkdf_md( pctx, EVP_sha256() ) <= 0 ) {
+        throw std::runtime_error( "Failed to set HKDF hash" );
+    }
+    // Salt is optional but recommended - using a fixed salt for determinism
+    static const unsigned char salt[] = "AesGcmCipher-v1";
+    if ( EVP_PKEY_CTX_set1_hkdf_salt( pctx, salt, sizeof( salt ) - 1 ) <= 0 ) {
+        throw std::runtime_error( "Failed to set HKDF salt" );
+    }
+    if ( EVP_PKEY_CTX_set1_hkdf_key( pctx, seed.data.data(), seed.data.size() ) <= 0 ) {
+        throw std::runtime_error( "Failed to set HKDF key" );
+    }
+    // Info parameter for domain separation - only deriving the encryption key
+    static const unsigned char info[] = "encryption-key";
+    if ( EVP_PKEY_CTX_add1_hkdf_info( pctx, info, sizeof( info ) - 1 ) <= 0 ) {
+        throw std::runtime_error( "Failed to set HKDF info" );
+    }
+
+    size_t outlen = AES_256_KEY_SIZE_BYTES;
+    if ( EVP_PKEY_derive( pctx, key.data(), &outlen ) <= 0 || outlen != AES_256_KEY_SIZE_BYTES ) {
+        throw std::runtime_error( "Failed to derive key material" );
+    }
+
+    // IV is not stored - it will be derived per-encryption from plaintext
+    iv.fill( 0 );
+}
+
+std::vector< uint8_t > AesGcmCipher::encrypt(
+    const std::vector< uint8_t >& plaintext, const std::optional< std::vector< uint8_t > >& aad ) {
     initAES();
 
     // Make sure there is enough space for: IV + plaintext + padding
@@ -36,11 +105,35 @@ std::vector< uint8_t > AesGcmCipher::encrypt( const std::vector< uint8_t >& plai
     std::vector< unsigned char > output;
     output.resize( enc_length, '\0' );
 
-    // Initialize IV vector
-    unsigned char iv[AES_GCM_IV_SIZE];
-    RAND_bytes( iv, AES_GCM_IV_SIZE );
+    // Compute IV: Synthetic IV (HMAC of plaintext + counter) for deterministic mode, random
+    // otherwise
+    unsigned char localIv[AES_GCM_IV_SIZE];
+    if ( isDeterministic ) {
+        // Synthetic IV: HMAC-SHA256(key, plaintext || counter) truncated to 12 bytes
+        // Counter ensures same plaintext encrypted multiple times gets different IVs
+        // As long as encrypt() is called in the same order, they produce identical output
+        unsigned char hmacResult[32];
+        unsigned int hmacLen = 0;
+
+        // Create input: plaintext || counter (8 bytes, big-endian)
+        // Append counter as 8 bytes in big-endian order
+        std::vector< uint8_t > hmacInput( plaintext.begin(), plaintext.end() );
+        for ( int byteIndex = 7; byteIndex >= 0; --byteIndex ) {
+            hmacInput.push_back(
+                static_cast< uint8_t >( ( encryptCounter >> ( byteIndex * 8 ) ) & 0xFF ) );
+        }
+
+        if ( !HMAC( EVP_sha256(), key.data(), key.size(), hmacInput.data(), hmacInput.size(),
+                 hmacResult, &hmacLen ) ) {
+            throw std::runtime_error( "Failed to compute synthetic IV" );
+        }
+        std::copy( hmacResult, hmacResult + AES_GCM_IV_SIZE, localIv );
+        ++encryptCounter;
+    } else {
+        RAND_bytes( localIv, AES_GCM_IV_SIZE );
+    }
     // Place IV at start of output
-    std::copy( iv, iv + AES_GCM_IV_SIZE, output.begin() );
+    std::copy( localIv, localIv + AES_GCM_IV_SIZE, output.begin() );
 
     // Account offset for the IV already stored in output vec
     size_t offset = AES_GCM_IV_SIZE;
@@ -58,8 +151,17 @@ std::vector< uint8_t > AesGcmCipher::encrypt( const std::vector< uint8_t >& plai
     check( EVP_CIPHER_CTX_ctrl( e_ctx.get(), EVP_CTRL_GCM_SET_IVLEN, AES_GCM_IV_SIZE, nullptr ),
         "Failed to set IV length" );
     // now actually supply key & IV:
-    check( EVP_EncryptInit_ex( e_ctx.get(), nullptr, nullptr, key.data(), iv ),
+    check( EVP_EncryptInit_ex( e_ctx.get(), nullptr, nullptr, key.data(), localIv ),
         "Failed to set key/IV" );
+
+    // Process AAD if provided (authenticated but not encrypted)
+    if ( aad.has_value() && !aad->empty() ) {
+        int aad_len = 0;
+        check( EVP_EncryptUpdate(
+                   e_ctx.get(), nullptr, &aad_len, aad->data(), static_cast< int >( aad->size() ) ),
+            "Failed to process AAD" );
+    }
+
     // Cypher data and store in output
     check( EVP_EncryptUpdate( e_ctx.get(), &output[offset], &outlen,
                ( const unsigned char* ) plaintext.data(), plaintext.size() ),
@@ -84,7 +186,8 @@ std::vector< uint8_t > AesGcmCipher::encrypt( const std::vector< uint8_t >& plai
     return std::vector< uint8_t >( output );
 }
 
-std::vector< uint8_t > AesGcmCipher::decrypt( const std::vector< uint8_t >& ciphertext ) {
+std::vector< uint8_t > AesGcmCipher::decrypt(
+    const std::vector< uint8_t >& ciphertext, const std::optional< std::vector< uint8_t > >& aad ) {
     initAES();
 
     constexpr size_t meta = AES_GCM_IV_SIZE + AES_GCM_TAG_SIZE;
@@ -118,6 +221,15 @@ std::vector< uint8_t > AesGcmCipher::decrypt( const std::vector< uint8_t >& ciph
         "Failed to set IV length" );
     check( EVP_DecryptInit_ex( d_ctx.get(), nullptr, nullptr, key.data(), iv ),
         "Failed to set key/IV" );
+
+    // Process AAD if provided (must match what was used during encryption)
+    if ( aad.has_value() && !aad->empty() ) {
+        int aad_len = 0;
+        check( EVP_DecryptUpdate(
+                   d_ctx.get(), nullptr, &aad_len, aad->data(), static_cast< int >( aad->size() ) ),
+            "Failed to process AAD" );
+    }
+
     // Decrypt body
     check( EVP_DecryptUpdate( d_ctx.get(), plaintext.data(), &len, body_ptr, body_len ),
         "Failed to decrypt data" );

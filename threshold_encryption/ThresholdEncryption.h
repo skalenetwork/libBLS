@@ -24,12 +24,14 @@
 #ifndef LIBBLS_THRESHOLDENCRYPTION_H
 #define LIBBLS_THRESHOLDENCRYPTION_H
 
+#include "AesGcmCipher.h"
 #include "TEDecryptSet.h"
 #include "TEPrivateKeyShare.h"
 #include "TEPublicKeyShare.h"
 #include "threshold_encryption.h"
 #include <tools/utils.h>
 #include <cstddef>
+#include <optional>
 
 namespace libBLS {
 
@@ -56,38 +58,50 @@ public:
      * Public key is validated on constructor. Thus it is assumed to be always valid.
      * @return Ciphertext - Struct containing TE(AESKey) and AESKey(message)
      */
-    static Ciphertext encrypt(
-        const std::vector< uint8_t >& _message, const TEPublicKey& _commonPublic );
-    static Ciphertext encrypt(
-        const std::vector< uint8_t >& _message, const std::vector< TEPublicKey >& _commonPublic );
+    static Ciphertext encrypt( const std::vector< uint8_t >& _message,
+        const TEPublicKey& _commonPublic, const EncryptMetaData& _metaData = EncryptMetaData() );
+
+    static Ciphertext encrypt( const std::vector< uint8_t >& _message,
+        const std::vector< TEPublicKey >& _commonPublic,
+        const EncryptMetaData& _metaData = EncryptMetaData() );
 
     /**
-     * @brief Validates the TE ciphered key. SIngle threaded.
+     * @brief Validates the TE ciphered key. Single threaded.
      *
      * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
      * struct
+     * @param _associatedDataTE Optional associated data used during encryption
      * @throws Exceptions in case validation fails
      */
-    static void validateEncryption( const CipheredKey& _cipheredKey );
+    static void validateEncryption( const CipheredKey& _cipheredKey,
+        const std::vector< uint8_t >* _associatedDataTE = nullptr );
 
     /**
      * @brief Validates a batch of TE ciphered keys. Same as above, but more performant
      * @param _ciphertexts Vector of encrypted AESKeys used to encrypt the message held by
      * Ciphertext struct
+     * @param _associatedDataTE Optional vector of associated data. Supports partial AAD:
+     * if size < ciphertexts size, first N AADs apply to first N ciphertexts, remaining
+     * ciphertexts are validated without AAD. Empty AAD entries are treated as no AAD.
      * @return Vec of bools, each idx specifying if it was successfully validated or not.
      * Each idx corresponds to the same idx on _ciphertexts.
      */
     static std::vector< bool > validateEncryptionBatch(
-        const std::vector< CipheredKey >& _ciphertexts );
+        const std::vector< CipheredKey >& _ciphertexts,
+        const std::vector< std::vector< uint8_t > >* _associatedDataTE = nullptr );
 
     /**
      * @brief Validates a batch of TE ciphered keys in parallel. Same as above, but multi-threaded
      * @param _ciphertexts Vector of encrypted AESKeys used to encrypt the message held by
      * Ciphertext struct
+     * @param _associatedDataTE Optional vector of associated data. Supports partial AAD:
+     * if size < ciphertexts size, first N AADs apply to first N ciphertexts, remaining
+     * ciphertexts are validated without AAD. Empty AAD entries are treated as no AAD.
      * @return Vec of bools, each idx specifying if it was successfully validated or not
      */
     static std::vector< bool > validateEncryptionBatchParallel(
-        const std::vector< CipheredKey >& _ciphertexts );
+        const std::vector< CipheredKey >& _ciphertexts,
+        const std::vector< std::vector< uint8_t > >* _associatedDataTE = nullptr );
 
     /**
      * @brief Generates a decryption share for the given ciphered key
@@ -107,10 +121,12 @@ public:
      * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
      * struct
      * @param decryption_share The decryption share
+     * @param _associatedDataTE Optional TE AAD used during encryption
      * @throws Exception if the decryption share is not valid
      */
     static void validateDecryptionShare( const CipheredKey& _cipheredKey,
-        const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey );
+        const TEDecryptionShare& _decryptionShare, const TEPublicKeyShare& _publicKey,
+        const std::vector< uint8_t >* _associatedDataTE = nullptr );
 
 
     /**
@@ -123,13 +139,17 @@ public:
      * `TEPublicKeyShare` each.
      * @param _decryptionShares Vector of decryption shares. Must be same size as _publicKeys.
      * @param _publicKeys Vector of public keys corresponding to the decryption shares.
+     * @param _associatedDataTE Optional vector of associated data. Supports partial AAD:
+     * if size < ciphertexts size, first N AADs apply to first N ciphertexts, remaining
+     * ciphertexts are validated without AAD. Empty AAD entries are treated as no AAD.
      * @return Vec of bools, each idx specifying if it was successfully validated or not.
      * Each idx corresponds to the same idx on _decryptionShares and _publicKeys.
      */
     static std::vector< bool > validateDecryptionSharesBatch(
         const std::vector< CipheredKey >& _cipheredKeys,
         const std::vector< TEDecryptionShare >& _decryptionShares,
-        const std::vector< TEPublicKeyShare >& _publicKeys );
+        const std::vector< TEPublicKeyShare >& _publicKeys,
+        const std::vector< std::vector< uint8_t > >* _associatedDataTE = nullptr );
 
     /**
      * @brief Validates a batch of decryption shares in parallel - same as above, but multi-threaded
@@ -137,7 +157,8 @@ public:
     static std::vector< bool > validateDecryptionSharesBatchParallel(
         const std::vector< CipheredKey >& _cipherTexts,
         const std::vector< TEDecryptionShare >& _decryptionShares,
-        const std::vector< TEPublicKeyShare >& _publicKeys );
+        const std::vector< TEPublicKeyShare >& _publicKeys,
+        const std::vector< std::vector< uint8_t > >* _associatedDataTE = nullptr );
 
     /**
      * @brief Combines decryption shares to reconstruct the original AES key.
@@ -177,8 +198,9 @@ public:
      * @throws runtime_exception If the decryption using the AES fails (should only happen if the
      * key is tampered)
      */
-    static void validateCombinedDecryption(
-        const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey );
+    static void validateCombinedDecryption( const Ciphertext& _ciphertext, const AES256Key& _aesKey,
+        const TEPublicKey& _publicKey,
+        const std::optional< std::vector< uint8_t > >& _associatedData = std::nullopt );
 
     static std::vector< bool > validateCombinedDecryptionBatch(
         const std::vector< Ciphertext >& _ciphertexts, const std::vector< AES256Key >& _aesKeys,
@@ -198,18 +220,20 @@ public:
      *
      * @param cyphertext The encrypted message
      * @param aesKey The AES key
+     * @param associatedData The associated data used for encryption
      * @return std::vector<uint8_t> The decrypted message apart from the random secret
      */
-    static std::vector< uint8_t > decrypt(
-        const Ciphertext& _ciphertext, const AES256Key& _aesKey );
+    static std::vector< uint8_t > decrypt( const Ciphertext& _ciphertext, const AES256Key& _aesKey,
+        const std::optional< std::vector< uint8_t > >& _associatedData = std::nullopt );
 
     /**
      * @brief Validates the cyphertext and decrypts the message
      * Same as calling `validateCombinedDecryption` and `decrypt` in sequence,
      * but avoids deciphering twice - more performant alternative
      */
-    static std::vector< uint8_t > validateAndDecrypt(
-        const Ciphertext& _ciphertext, const AES256Key& _aesKey, const TEPublicKey& _publicKey );
+    static std::vector< uint8_t > validateAndDecrypt( const Ciphertext& _ciphertext,
+        const AES256Key& _aesKey, const TEPublicKey& _publicKey,
+        const std::optional< std::vector< uint8_t > >& _associatedData = std::nullopt );
 
     /**
      * @brief validates _aesKey against the one stored in _cyphertext
@@ -228,9 +252,9 @@ private:
 
     static inline RandSecret extractRandomSecretFromMessage(
         const std::vector< uint8_t >& _message ) {
-        size_t msg_length = _message.size();
+        size_t msgLength = _message.size();
 
-        if ( msg_length < RANDOM_SECRET_SIZE_BYTES ) {
+        if ( msgLength < RANDOM_SECRET_SIZE_BYTES ) {
             throw ThresholdUtils::IncorrectInput( "Message is too short" );
         }
 
@@ -247,8 +271,9 @@ private:
      *
      * Helper function
      */
-    static std::vector< uint8_t > decipherAESAndValidate(
-        const Ciphertext& _ciphertext, const AES256Key& key );
+    static std::vector< uint8_t > decipherAESAndValidate( const Ciphertext& _ciphertext,
+        const AES256Key& key,
+        const std::optional< std::vector< uint8_t > >& _associatedData = std::nullopt );
 };
 
 }  // namespace libBLS

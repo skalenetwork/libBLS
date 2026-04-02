@@ -22,6 +22,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
     - uses: actions/setup-node@v1
       with:
         node-version: '18.x'
@@ -42,7 +47,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y gawk sed shtool \
-          libffi-dev yasm texinfo libgnutls28-dev gcc-multilib
+          libffi-dev yasm texinfo libgnutls28-dev gcc-multilib jq
     - name: Build dependencies
       run: |
         export CC=gcc-11
@@ -59,7 +64,7 @@ jobs:
         export TARGET=all
         mkdir -p build && cd build
         cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
-    
+
     - name: Build
       run: |
         export CC=gcc-11
@@ -73,6 +78,7 @@ jobs:
         export CC=gcc-11
         export CXX=g++-11
         export TARGET=all
+        export CMAKE_BUILD_TYPE=Release
         cd deps
         ./clean.sh
         ./build.sh WITH_EMSCRIPTEN=1
@@ -87,11 +93,11 @@ jobs:
         cd ../..
         mkdir -p build_em && cd build_em
         export LIBRARIES_ROOT=../deps/deps_inst/wasm32-emscripten/lib
-        emcmake cmake -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a ..
+        emcmake cmake -DCMAKE_BUILD_TYPE=MinSizeRel -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a ..
         emmake make -j$(nproc)
         cd ..
         cp build_em/threshold_encryption/encrypt.* node/
-    
+
     - name: Calculate version
       run: |
         export BRANCH=${GITHUB_REF##*/}
@@ -106,12 +112,51 @@ jobs:
       env:
         ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 
+    - name: Resolve t-encrypt version and library path
+      run: |
+        lib_path="${PWD}/build/threshold_encryption/libt_encrypt_python.so"
+        echo "T_ENCRYPT_LIB_PATH=${lib_path}" >> "$GITHUB_ENV"
+
+        # Calculate Python package version
+        cd python
+        BASE_VERSION=$(python3 setup_t_encrypt.py --version)
+        cd ..
+
+        PACKAGE_NAME="t-encrypt"
+        VERSION=$(bash ./scripts/calculate_version_pypi.sh $PACKAGE_NAME $BASE_VERSION ${{ env.BRANCH }})
+
+        echo "PACKAGE_VERSION=${VERSION}" >> "$GITHUB_ENV"
+
+        echo "Using lib: ${lib_path}"
+        echo "Publishing t-encrypt version: ${VERSION}"
+
+    - name: Build t-encrypt Python distributions
+      working-directory: python
+      env:
+        PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
+        T_ENCRYPT_LIB_PATH: ${{ env.T_ENCRYPT_LIB_PATH }}
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade setuptools wheel twine
+        CURRENT_VERSION="$(python setup_t_encrypt.py --version)"
+        sed -i "s/${CURRENT_VERSION}/${PACKAGE_VERSION}/g" setup_t_encrypt.py
+        python setup_t_encrypt.py sdist bdist_wheel
+        python -m twine check dist/*
+
+    - name: Publish t-encrypt to PyPI
+      working-directory: python
+      env:
+        TWINE_USERNAME: ${{ secrets.PIP_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PIP_PASSWORD }}
+      run: |
+        python -m twine upload dist/*
+
     - name: Publish on npm
       if: github.ref != 'refs/heads/stable'
       run: |
         cd node
         export PACKAGE_NAME=$(jq -r '.name' package.json)
-        export JS_LIBRARY_BASE_VERSION="$(npm run --silent version)"    
+        export JS_LIBRARY_BASE_VERSION="$(npm run --silent version)"
         export JS_LIBRARY_VERSION=$(bash ./../scripts/calculate_version_npm.sh $PACKAGE_NAME $JS_LIBRARY_BASE_VERSION $BRANCH)
         npm version $JS_LIBRARY_VERSION --no-git-tag-version
         npm publish --access public --tag ${{ env.BRANCH }}
@@ -138,7 +183,7 @@ jobs:
 
     - name: Upload bls_glue to Release
       uses: actions/upload-release-asset@latest
-      env: 
+      env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
@@ -148,7 +193,7 @@ jobs:
 
     - name: Upload hash_g1 to Release
       uses: actions/upload-release-asset@latest
-      env: 
+      env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
@@ -158,7 +203,7 @@ jobs:
 
     - name: Upload verify_bls to Release
       uses: actions/upload-release-asset@latest
-      env: 
+      env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}

@@ -30,10 +30,11 @@
 #include <array>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <vector>
 
-#include "tools/utils.h"
+#include <tools/utils.h>
 
 namespace libBLS {
 
@@ -42,6 +43,12 @@ constexpr size_t AES_GCM_IV_SIZE = 12;
 constexpr size_t AES_GCM_TAG_SIZE = 16;
 
 using AES256Key = std::array< uint8_t, AES_256_KEY_SIZE_BYTES >;
+
+/// Strong type wrapper for 256-bit seed (used for deterministic key derivation)
+/// This seed is used to derive both the AES key (via HKDF) and the TE scalar secret.
+struct Seed256 {
+    std::array< uint8_t, AES_256_KEY_SIZE_BYTES > data;
+};
 
 
 /// -------------------------------
@@ -58,24 +65,48 @@ struct EvpContextDeleter {
 
 using UniqueCtx = std::unique_ptr< EVP_CIPHER_CTX, EvpContextDeleter >;
 
-
 class AesGcmCipher {
 private:
     AES256Key key;
 
+    // Whether the cipher is deterministic (i.e. uses HKDF to derive key from seed)
+    bool isDeterministic;
+    // Counter for deterministic IV generation
+    uint64_t encryptCounter;
+    std::array< uint8_t, AES_GCM_IV_SIZE > iv;
+
 public:
-    AesGcmCipher( const AES256Key& key ) : key( key ) {}
+    /// @brief Creates cipher with random key (for encryption)
+    AesGcmCipher();
+
+    /// @brief Creates cipher with key derived from seed (for deterministic encryption)
+    /// @param seed The Seed256 wrapper containing the seed to derive key from using HKDF
+    explicit AesGcmCipher( const Seed256& seed );
+
+    /// @brief Creates cipher with a known raw key (for decryption)
+    /// @param key The raw AES-256 key to use directly (no derivation)
+    explicit AesGcmCipher( const AES256Key& key );
+
     ~AesGcmCipher() = default;
 
     /// @brief Encrypts the given plaintext using AES-256-GCM
-    /// @param plaintext
+    /// @param plaintext The data to encrypt
+    /// @param aad Optional additional authenticated data (not encrypted, but authenticated)
     /// @return Encrypted message
-    std::vector< uint8_t > encrypt( const std::vector< uint8_t >& plaintext );
+    std::vector< uint8_t > encrypt( const std::vector< uint8_t >& plaintext,
+        const std::optional< std::vector< uint8_t > >& aad = std::nullopt );
 
     /// @brief Decrypts the given ciphertext using AES-256-GCM
-    /// @param ciphertext
+    /// @param ciphertext The data to decrypt
+    /// @param aad Optional additional authenticated data (must match what was used during
+    /// encryption)
     /// @return Decrypted message
-    std::vector< uint8_t > decrypt( const std::vector< uint8_t >& ciphertext );
+    std::vector< uint8_t > decrypt( const std::vector< uint8_t >& ciphertext,
+        const std::optional< std::vector< uint8_t > >& aad = std::nullopt );
+
+    /// @brief Returns the AES key (for use as plaintext in threshold encryption)
+    /// @return Reference to the 32-byte AES key
+    const AES256Key& getKey() const { return key; }
 
 private:
     /// Helper function to check if the operation was successful

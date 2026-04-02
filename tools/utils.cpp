@@ -191,7 +191,17 @@ std::string ThresholdUtils::bytesToHexString( const std::vector< uint8_t >& byte
 }
 
 std::vector< uint8_t > ThresholdUtils::hexCStringToBytes( const char* hexStr ) {
+    if ( hexStr == nullptr ) {
+        throw IncorrectInput( "Hex string is null." );
+    }
+
     size_t len = validateHexCString( hexStr );
+
+    // Limit to 2MB hex string (1MB of decoded data)
+    constexpr size_t MAX_HEX_STRING_LENGTH = 1024 * 1024 * 2;
+    if ( len > MAX_HEX_STRING_LENGTH ) {
+        throw IncorrectInput( "Hex string exceeds maximum allowed length." );
+    }
 
     std::vector< uint8_t > bytes( len / 2 );
 
