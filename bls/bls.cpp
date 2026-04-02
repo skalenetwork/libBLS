@@ -98,8 +98,6 @@ algebra::G1Point Bls::Signing( const algebra::G1Point& hash, const algebra::FrSc
 
     std::clock_t c_start = std::clock();  // hash
 
-    // TODO using .value here. this is impl. specific - this entire function should be inside
-    // backends/libff
     const algebra::G1Point sign = secret_key * hash;  // sign
 
     std::clock_t c_end = std::clock();
