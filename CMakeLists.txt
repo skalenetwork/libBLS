@@ -22,7 +22,12 @@ endif ()
 
 if( NOT DEFINED DEPS_INSTALL_ROOT )
     set( DEPS_SOURCES_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/deps")
-    set( DEPS_INSTALL_ROOT "${DEPS_SOURCES_ROOT}/deps_inst/x86_or_x64")
+	# Set DEPS_INSTALL_ROOT based on the platform
+	if (EMSCRIPTEN)
+		set( DEPS_INSTALL_ROOT "${DEPS_SOURCES_ROOT}/deps_inst/wasm32-emscripten")
+    else()
+        set( DEPS_INSTALL_ROOT "${DEPS_SOURCES_ROOT}/deps_inst/x86_or_x64")
+    endif()
 endif()
 message(INFO "---- DEPS_INSTALL_ROOT in BLS is: ${DEPS_INSTALL_ROOT}")
 
@@ -35,9 +40,16 @@ list( APPEND CMAKE_MODULE_PATH ${LIBBLS_CMAKE_DIR} )
 
 find_library( CRYPTOPP_LIBRARY NAMES "crypto" PATHS "${DEPS_INSTALL_ROOT}/lib" )
 
-option(BUILD_TESTS "Build tests" ON)
-option(BUILD_WITH_FPIC "Build with -fPIC" OFF)
-option(BUILD_UTILS "Build utils" ON)
+option(LIBBLS_BUILD_TESTS "Build tests" ON)
+option(LIBBLS_BUILD_WITH_FPIC "Build with -fPIC" OFF)
+option(LIBBLS_BUILD_UTILS "Build utils" ON)
+option(LIBBLS_BUILD_BENCHMARKS "Build benchmarks" ON)
+
+# No need to build tests and benchmarks with emscripten
+if (EMSCRIPTEN)
+  set(LIBBLS_BUILD_TESTS       OFF CACHE BOOL "Build tests"       FORCE)
+  set(LIBBLS_BUILD_BENCHMARKS  OFF CACHE BOOL "Build benchmarks"  FORCE)
+endif()
 
 option( BLS_PROFILING "Build for profiling" OFF )
 if( SKALED_PROFILING OR CONSENSUS_PROFILING )
@@ -66,7 +78,7 @@ else()
 	message( INFO "---- CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE} is not supported explicitly" )
 endif()
 
-if(BUILD_TESTS)
+if(LIBBLS_BUILD_TESTS)
 	enable_testing()
 endif()
 
@@ -164,17 +176,40 @@ else()
 	endif()
 endif()
 
-include_directories(${CMAKE_BINARY_DIR}/deps/include)
-link_directories(${CMAKE_BINARY_DIR}/deps/lib)
+set(DEPS_LIB_DIR "${DEPS_INSTALL_ROOT}/lib")
 
-add_subdirectory(backends)
+# Only set FOLLY_STATIC_LIBS if not building with emscripten
+if (EMSCRIPTEN)
+	set(FOLLY_STATIC_LIBS "")
+else()
+	set(FOLLY_STATIC_LIBS
+		"${DEPS_LIB_DIR}/libfolly.a"
+		"${DEPS_LIB_DIR}/libglog.a"
+		"${DEPS_LIB_DIR}/libgflags.a"
+		"${DEPS_LIB_DIR}/libfmt.a"
+		"${DEPS_LIB_DIR}/libdouble-conversion.a"
+		"${DEPS_LIB_DIR}/libevent.a"
+		"${DEPS_LIB_DIR}/libboost_context.a"
+	)
+endif()
+
+
+include_directories(${DEPS_INSTALL_ROOT}/include)
+link_directories(${DEPS_INSTALL_ROOT}/lib)
 
 # TMP fix for emscripten
 # Build utils exactly once
 add_library(common_utils STATIC tools/utils.cpp tools/utils.h)
-target_include_directories(common_utils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(common_utils PRIVATE ${CRYPTOPP_LIBRARY} backend)
+# SYSTEM - silence warnings from third-party code
+target_include_directories(common_utils SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(common_utils
+  PRIVATE
+    backend
+    ${CRYPTOPP_LIBRARY}
+    ${FOLLY_STATIC_LIBS}
+)
 
+add_subdirectory(backends)
 
 add_library(bls ${sourses_bls} ${headers_bls})
 
@@ -191,16 +226,17 @@ set(BLS_INCLUDE_DIRS
     PARENT_SCOPE
 )
 
-target_include_directories(bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+target_include_directories(bls SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(bls PUBLIC backend PRIVATE ${CRYPTOPP_LIBRARY} common_utils)
 
 add_subdirectory(threshold_encryption)
 
-if (BUILD_UTILS)
+if (LIBBLS_BUILD_UTILS)
 	# Helper function for utils setup
 	function(add_bls_tool name source)
 		add_executable(${name} ${source})
-		target_include_directories(${name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+		target_include_directories(${name} SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 		if (EMSCRIPTEN)
 			target_compile_options(${name} PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
@@ -221,13 +257,13 @@ if (BUILD_UTILS)
 
 endif()
 
-if(BUILD_TESTS)
+if(LIBBLS_BUILD_TESTS)
 	# Helper function to add tests
 	function(add_bls_test name source)
 		set(extra_libs ${ARGN})  # Capture any extra libraries passed as arguments
 
 		add_executable(${name} ${source})
-		target_include_directories(${name} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+		target_include_directories(${name} SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 		if (EMSCRIPTEN)
 			target_compile_options(${name} PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
@@ -236,7 +272,13 @@ if(BUILD_TESTS)
 			target_compile_options(${name} PRIVATE -Wno-format-overflow)
 		endif()
 
-		target_link_libraries(${name} PRIVATE bls ${CRYPTOPP_LIBRARY} boost_program_options ${extra_libs})
+		target_link_libraries(${name} PRIVATE
+			bls
+			${CRYPTOPP_LIBRARY}
+			boost_program_options
+			${extra_libs}
+			${FOLLY_STATIC_LIBS}
+		)
 		add_test(NAME ${name} COMMAND ${name})
 	endfunction()
 
@@ -249,7 +291,7 @@ if(BUILD_TESTS)
 
     # Special case for dkg_attack (no compile options)
     add_executable(dkg_attack test/dkg_attack.cpp)
-    target_include_directories(dkg_attack PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(dkg_attack SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     target_link_libraries(dkg_attack PRIVATE bls ${CRYPTOPP_LIBRARY} boost_program_options)
     add_test(NAME dkg_attack COMMAND dkg_attack)
 
@@ -273,5 +315,6 @@ if(NOT SKALE_SKIP_INSTALLING_DIRECTIVES)
 	install( TARGETS verify_bls DESTINATION bin )
 endif()
 
-## Benchmarks
-add_subdirectory(benchmarks)
+if (LIBBLS_BUILD_BENCHMARKS)
+	add_subdirectory(benchmarks)
+endif()

@@ -32,11 +32,38 @@
 
 #include "backends/algebra.hpp"
 
+#ifndef EMSCRIPTEN
+// error: comparison of integer expressions of different signedness: ‘const int’ and ‘const long
+// unsigned int’ [-Werror=sign-compare]
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-compare"
+#include <folly/executors/CPUThreadPoolExecutor.h>
+#include <folly/futures/Future.h>
+#pragma GCC diagnostic pop
+#endif
+
 namespace libBLS {
+
+size_t ThresholdUtils::numThreads = DEFAULT_NUM_THREADS;
+
+#ifndef EMSCRIPTEN
+std::unique_ptr< folly::CPUThreadPoolExecutor > ThresholdUtils::thread_pool = nullptr;
+#endif
 
 void ThresholdUtils::init() {
     initRAND();
     initCurve();
+
+#ifndef EMSCRIPTEN
+    // if numThreads was not set yet, try setting it to hardware concurrency
+    if ( numThreads == 0 ) {
+        numThreads = std::thread::hardware_concurrency();
+        if ( numThreads == 0 ) {
+            numThreads = 4;  // Fallback to 4 threads if hardware_concurrency cannot detect
+        }
+    }
+    initThreadPool( numThreads );
+#endif
 }
 
 void ThresholdUtils::initCurve() {
@@ -52,6 +79,19 @@ void ThresholdUtils::initRAND() {
             throw std::runtime_error( "Failed to initialize random number generator" );
         }
     } );
+}
+
+void ThresholdUtils::setNumThreads( size_t _numThreads ) {
+    numThreads = _numThreads > 64 ? 64 : _numThreads;
+}
+
+void ThresholdUtils::initThreadPool( size_t _numThreads ) {
+#ifndef EMSCRIPTEN
+    static std::once_flag initFlag;
+    std::call_once( initFlag, [_numThreads]() {
+        thread_pool = std::make_unique< folly::CPUThreadPoolExecutor >( _numThreads );
+    } );
+#endif
 }
 
 void ThresholdUtils::checkSigners( size_t _requiredSigners, size_t _totalSigners ) {
@@ -151,7 +191,17 @@ std::string ThresholdUtils::bytesToHexString( const std::vector< uint8_t >& byte
 }
 
 std::vector< uint8_t > ThresholdUtils::hexCStringToBytes( const char* hexStr ) {
+    if ( hexStr == nullptr ) {
+        throw IncorrectInput( "Hex string is null." );
+    }
+
     size_t len = validateHexCString( hexStr );
+
+    // Limit to 2MB hex string (1MB of decoded data)
+    constexpr size_t MAX_HEX_STRING_LENGTH = 1024 * 1024 * 2;
+    if ( len > MAX_HEX_STRING_LENGTH ) {
+        throw IncorrectInput( "Hex string exceeds maximum allowed length." );
+    }
 
     std::vector< uint8_t > bytes( len / 2 );
 
@@ -193,4 +243,40 @@ size_t ThresholdUtils::validateDecimalCString( const char* decStr ) {
     }
     return len;
 }
+
+
+void ThresholdUtils::parallel_for_ranges_blocking( std::size_t totalSize, std::size_t numThreads,
+    std::size_t sizePerThread,
+    const std::function< void( std::size_t, std::size_t, std::size_t ) >& runTask ) {
+    if ( totalSize == 0 )
+        return;
+
+#ifdef EMSCRIPTEN
+    // single task - single-threaded execution
+    runTask( 0, totalSize, 0 );
+#else
+
+    const std::size_t threads = std::max< std::size_t >( 1, numThreads );
+    const std::size_t sp = std::max< std::size_t >( 1, sizePerThread );
+    const std::size_t tasks = ( totalSize + sp - 1 ) / sp;
+
+    folly::CPUThreadPoolExecutor pool( threads );
+
+    std::vector< folly::Future< folly::Unit > > futures;
+    futures.reserve( tasks );
+
+    for ( std::size_t taskIndex = 0; taskIndex < tasks; ++taskIndex ) {
+        const std::size_t startIdx = taskIndex * sp;
+        const std::size_t endIdx = std::min( startIdx + sp, totalSize );
+
+        futures.push_back( folly::via( &pool, [startIdx, endIdx, taskIndex, &runTask]() {
+            runTask( startIdx, endIdx, taskIndex );
+            return folly::Unit{};
+        } ) );
+    }
+
+    folly::collectAll( futures ).get();  // block until all tasks complete
+#endif
+}
+
 }  // namespace libBLS

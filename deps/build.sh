@@ -147,23 +147,31 @@ echo -e "${COLOR_SEPARATOR}=====================================================
 echo -e "${COLOR_YELLOW}BLS dependencies build actions...${COLOR_RESET}"
 echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}PREPARE BUILD${COLOR_SEPARATOR} ================================${COLOR_RESET}"
 
-if [ -z "${ARCH}" ];
-then
-	# if we don't have explicit ARCH=something from command line arguments
-	ARCH="x86_or_x64"
+# If emscripten - force arch to wasm32-emscripten
+if [[ "${WITH_EMSCRIPTEN:-}" == "1" ]]; then
+	ARCH="wasm32-emscripten"
 else
-	if [ "$ARCH" = "arm" ];
+	if [ -z "${ARCH}" ];
 	then
-		ARCH="arm"
-	else
+		# if we don't have explicit ARCH=something from command line arguments
 		ARCH="x86_or_x64"
+	else
+		if [ "$ARCH" = "arm" ];
+		then
+			ARCH="arm"
+		else
+			ARCH="x86_or_x64"
+		fi
+	fi
+
+	if [ "$ARM" = "1" ];
+	then
+		# if we have explicit ARM=1 from command line arguments
+		ARCH="arm"
 	fi
 fi
-if [ "$ARM" = "1" ];
-then
-	# if we have explicit ARM=1 from command line arguments
-	ARCH="arm"
-fi
+
+echo "---- ARCH = ${ARCH}"
 #
 TOP_CMAKE_BUILD_TYPE="Release"
 if [ "$DEBUG" = "1" ];
@@ -198,6 +206,9 @@ else
 	WITH_GTEST=1
 fi
 
+# Set C++ standard version used throughout the build
+CXX_STANDARD=20
+
 export CFLAGS="$CFLAGS -fPIC"
 export CXXFLAGS="$CXXFLAGS -fPIC"
 WITH_OPENSSL="yes"
@@ -209,6 +220,13 @@ WITH_JSONRPC="yes"
 WITH_JSONRPCCPP="yes"
 WITH_CURL="yes"
 WITH_MICRO_HTTP_D="yes"
+WITH_FOLLY="yes"
+WITH_DOUBLE_CONVERSION="yes"
+WITH_FASTFLOAT="yes"
+WITH_GFLAGS="yes"
+WITH_GOOGLE_LOG="yes"
+WITH_FMT="yes"
+WITH_EVENT="yes"
 if [ "$SKALED_DEPS_CHAIN" = "1" ];
 then
 	WITH_JSONRPC="no"
@@ -223,6 +241,11 @@ fi
 WITH_FF="yes"
 WITH_GMP="yes"
 WITH_MCL="yes"
+
+if [ -z "${WITH_SGX}" ];
+then
+	WITH_SGX="no"
+fi
 
 if [ -z "${PARALLEL_COUNT}" ];
 then
@@ -274,9 +297,27 @@ then
     SET_CC=$CC
 fi
 
-if [ "$ARCH" = "x86_or_x64" ];
+if [[ "$ARCH" = "x86_or_x64" || "$ARCH" = "wasm32-emscripten" ]];
 then
 	export CMAKE_CROSSCOMPILING_OPTS="-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+
+	if [ "$ARCH" = "x86_or_x64" ];
+	then
+		# disable FMA, ADX, AVX512 for better compatibility - only for x86_or_x64
+		if [ -z "$ISA_CEILING" ];
+		then
+			ISA_CEILING="-march=x86-64 -mtune=generic"
+		fi
+
+		if [ -z "$ISA_NO" ];
+		then 
+			ISA_NO="-mno-avx512f -mno-adx -mno-fma"
+		fi
+	fi
+
+	export CFLAGS="$CFLAGS $ISA_CEILING $ISA_NO"
+	export CXXFLAGS="$CXXFLAGS $ISA_CEILING $ISA_NO"
+
 	export CONF_CROSSCOMPILING_OPTS_GENERIC=""
 	export CONF_CROSSCOMPILING_OPTS_GMP="--host=haswell-pc-linux-gnu"
 	export CONF_CROSSCOMPILING_OPTS_VORBIS=""
@@ -285,6 +326,7 @@ then
 	export CONF_CROSSCOMPILING_OPTS_VPX=""
 	export CONF_CROSSCOMPILING_OPTS_X264=""
 	export CONF_CROSSCOMPILING_OPTS_FFMPEG=""
+	
 	if [ "$USE_LLVM" = "1" ];
 	then
 		export CC=$(which clang)
@@ -510,6 +552,13 @@ echo -e "${COLOR_VAR_NAME}WITH_ARGTABLE2${COLOR_DOTS}.........${COLOR_VAR_DESC}l
 echo -e "${COLOR_VAR_NAME}WITH_GMP${COLOR_DOTS}...............${COLOR_VAR_DESC}LibGMP${COLOR_DOTS}.................................${COLOR_VAR_VAL}$WITH_GMP${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_FF${COLOR_DOTS}................${COLOR_VAR_DESC}LibFF${COLOR_DOTS}..................................${COLOR_VAR_VAL}$WITH_FF${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_MCL${COLOR_DOTS}...............${COLOR_VAR_DESC}MCL${COLOR_DOTS}....................................${COLOR_VAR_VAL}$WITH_MCL${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_FOLLY${COLOR_DOTS}.............${COLOR_VAR_DESC}FOLLY${COLOR_DOTS}...........................${COLOR_VAR_VAL}$WITH_FOLLY${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_DOUBLE_CONVERSION${COLOR_DOTS}..${COLOR_VAR_DESC}DoubleConversion${COLOR_DOTS}..................${COLOR_VAR_VAL}$WITH_DOUBLE_CONVERSION${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_FASTFLOAT${COLOR_DOTS}.........${COLOR_VAR_DESC}FastFloat${COLOR_DOTS}...........................${COLOR_VAR_VAL}$WITH_FASTFLOAT${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_GFLAGS${COLOR_DOTS}............${COLOR_VAR_DESC}LibGFlags${COLOR_DOTS}............................${COLOR_VAR_VAL}$WITH_GFLAGS${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_GOOGLE_LOG${COLOR_DOTS}........${COLOR_VAR_DESC}LibGoogleLog${COLOR_DOTS}..........................${COLOR_VAR_VAL}$WITH_GOOGLE_LOG${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_FMT${COLOR_DOTS}................${COLOR_VAR_DESC}LibFMT${COLOR_DOTS}..............................${COLOR_VAR_VAL}$WITH_FMT${COLOR_RESET}"
+echo -e "${COLOR_VAR_NAME}WITH_EVENT${COLOR_DOTS}..............${COLOR_VAR_DESC}LibEvent${COLOR_DOTS}............................${COLOR_VAR_VAL}$WITH_EVENT${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_JSONRPC${COLOR_DOTS}...........${COLOR_VAR_DESC}LibJsonC++${COLOR_DOTS}.............................${COLOR_VAR_VAL}$WITH_JSONRPC${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_JSONRPCCPP${COLOR_DOTS}........${COLOR_VAR_DESC}LibJsonRpcC++${COLOR_DOTS}..........................${COLOR_VAR_VAL}$WITH_JSONRPCCPP${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_ZLIB${COLOR_DOTS}..............${COLOR_VAR_DESC}Zlib${COLOR_DOTS}...................................${COLOR_VAR_VAL}$WITH_ZLIB${COLOR_RESET}"
@@ -549,10 +598,36 @@ then
 	cd ..	
 fi
 
+
 if [ "$WITH_BOOST" = "yes" ];
 then
 	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}BOOST${COLOR_SEPARATOR} ========================================${COLOR_RESET}"
-	if [ ! -f "$INSTALL_ROOT/lib/libboost_program_options.a" ];
+	
+	# Define Boost libraries based on build mode
+	BOOST_LIBS_EMSCRIPTEN="program_options"
+	BOOST_LIBS_NORMAL="system thread filesystem regex atomic context"
+	BOOST_LIBS_SKALED="iostreams fiber log chrono date_time"
+	
+	# Build the full library list based on mode
+	if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]]; then
+		BOOST_LIBS_TO_CHECK="$BOOST_LIBS_EMSCRIPTEN"
+	else
+		BOOST_LIBS_TO_CHECK="$BOOST_LIBS_EMSCRIPTEN $BOOST_LIBS_NORMAL"
+		if [ "$SKALED_DEPS_CHAIN" = "1" ]; then
+			BOOST_LIBS_TO_CHECK="$BOOST_LIBS_TO_CHECK $BOOST_LIBS_SKALED"
+		fi
+	fi
+	
+	# Check if all required Boost libraries exist before skipping
+	BOOST_CHECK_FAILED=0
+	for lib in $BOOST_LIBS_TO_CHECK; do
+		if [ ! -f "$INSTALL_ROOT/lib/libboost_${lib}.a" ]; then
+			BOOST_CHECK_FAILED=1
+			break
+		fi
+	done
+	
+	if [ "$BOOST_CHECK_FAILED" = "1" ];
 	then
 		env_restore
 		cd "$SOURCES_ROOT"
@@ -568,23 +643,26 @@ then
 			if [ ! -f "${BOOST_NAME}.tar.bz2" ];
 			then
 				eval echo -e "${COLOR_INFO}downloading it${COLOR_DOTS}...${COLOR_RESET}"
-				eval "$WGET" https://sourceforge.net/projects/boost/files/boost/${BOOST_VERSION}/${BOOST_NAME}.tar.bz2
+				eval "$WGET" https://archives.boost.io/release/${BOOST_VERSION}/source/${BOOST_NAME}.tar.bz2
 			fi
                         echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
                         tar -xf ${BOOST_NAME}.tar.bz2
 		fi
 		cd ${BOOST_NAME}
 		echo -e "${COLOR_INFO}configuring and building it${COLOR_DOTS}...${COLOR_RESET}"
+		
+		# Build BOOST_LIBRARIES string with commas for bootstrap.sh
 		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 		then
-			BOOST_LIBRARIES="program_options"
+			BOOST_LIBRARIES="${BOOST_LIBS_EMSCRIPTEN// /,}"
 		else
-			BOOST_LIBRARIES="system,thread,filesystem,regex,atomic,program_options"
+			BOOST_LIBRARIES="${BOOST_LIBS_EMSCRIPTEN// /,},${BOOST_LIBS_NORMAL// /,}"
 			if [ "$SKALED_DEPS_CHAIN" = "1" ];
 			then
-                                BOOST_LIBRARIES="${BOOST_LIBRARIES},context,iostreams,fiber,log,chrono,date_time"
+				BOOST_LIBRARIES="${BOOST_LIBRARIES},${BOOST_LIBS_SKALED// /,}"
 			fi
 		fi
+		
 		eval ./bootstrap.sh --prefix="$INSTALL_ROOT" --with-libraries="$BOOST_LIBRARIES"
 
 		if [ "$DEBUG" = "1" ]; then
@@ -600,13 +678,13 @@ then
 		else
 			if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
 			then
-				eval ./b2 cxxflags=-fPIC toolset=clang cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
+				eval ./b2 cxxflags=-fPIC toolset=clang cxxstd=${CXX_STANDARD} cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
 			else
 				if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 				then
-                                        eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=${variant} link=static install
+                                        eval ./b2 toolset=emscripten cxxflags=-fPIC cxxstd=${CXX_STANDARD} cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --disable-icu --layout=system variant=${variant} link=static install
 				else
-                                        eval ./b2 cxxflags=-fPIC cxxstd=20 cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
+                                        eval ./b2 cxxflags=-fPIC cxxstd=${CXX_STANDARD} cflags=-fPIC "${PARALLEL_MAKE_OPTIONS}" --prefix="$INSTALL_ROOT" --layout=system variant=${variant} link=static threading=multi install
 				fi
 			fi
 		fi
@@ -641,7 +719,7 @@ then
 			cd openssl
 			eval git fetch
 			eval git checkout OpenSSL_1_1_1n
-			if [ "$ARCH" = "x86_or_x64" ];
+			if [[ "$ARCH" = "x86_or_x64" || "$ARCH" = "wasm32-emscripten" ]];
 			then
 				if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
 				then
@@ -653,7 +731,8 @@ then
 						eval emconfigure ./config -fPIC -no-asm -no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT" # -no-threads
 						sed -i 's/CROSS_COMPILE=.*/CROSS_COMPILE=/' Makefile
 					else
-						eval ./config -fPIC --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+						env CFLAGS="$CFLAGS -O3" CXXFLAGS="$CXXFLAGS -O3" \
+						./Configure linux-x86_64 --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
 					fi
 				fi
 			else
@@ -699,7 +778,7 @@ then
 			if [ ! -f ""${GMP_NAME}".tar.xz" ];
 			then
 				echo -e "${COLOR_INFO}getting it from gmp website${COLOR_DOTS}...${COLOR_RESET}"
-				eval "$WGET" https://ftp.gnu.org/gnu/gmp/"${GMP_NAME}".tar.xz
+				eval "$WGET" https://mirrors.kernel.org/gnu/gmp/${GMP_NAME}.tar.xz
 			fi
 			echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
 			eval tar -xf "${GMP_NAME}".tar.xz
@@ -775,6 +854,10 @@ fi
 
 if [ "$WITH_MCL" = "yes" ]; then
   echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}MCL${COLOR_SEPARATOR} ===========================================${COLOR_RESET}"
+  HOST_OBJ_DIR="obj_host"
+  HOST_LIB_DIR="lib_host"
+  SGX_OBJ_DIR="obj_sgx"
+  SGX_LIB_DIR="lib_sgx"
   if [ ! -f "$INSTALL_ROOT/lib/libmcl.a" ]; then
     env_restore
     cd "$SOURCES_ROOT"
@@ -787,42 +870,449 @@ if [ "$WITH_MCL" = "yes" ]; then
 	eval git fetch
 	eval git checkout e67f9e6eab43116a14751bf7166c59d98728297a # v3.03 released in 10/08/2025
     eval mkdir -p build
-    cd build
-
-    # Build flags (tune as needed)
-    #  -DMCL_USE_XBYAK=ON enables JIT (fast on x86; disable if your env forbids JIT)
-    #  -DMCL_USE_GMP=OFF uses builtin bigint (set ON if you prefer GMP and have it installed)
-    #  -DBUILD_SHARED_LIBS=OFF to get static libmcl.a
-    MCL_CMAKE_OPTS="-DMCL_FP_BIT=256 -DMCL_FR_BIT=256 -DBUILD_SHARED_LIBS=OFF DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE"
+	mkdir -p "${HOST_OBJ_DIR}" "${HOST_LIB_DIR}" "${SGX_OBJ_DIR}" "${SGX_LIB_DIR}" bin
 
     echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
     if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]]; then
-      eval emcmake "$CMAKE" ${CMAKE_CROSSCOMPILING_OPTS} \
-		-DMCL_STATIC_LIB=ON \
-		-DMCL_USE_XBYAK=OFF \
-		-DMCL_BINT_ASM_X64=OFF \
-        -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" \
-		-DCMAKE_PREFIX_PATH="$INSTALL_ROOT" \
-		-DGMP_INCLUDE_DIR="$INSTALL_ROOT/include" \
-		-DGMP_GMPXX_INCLUDE_DIR="$INSTALL_ROOT/include" \
-		-DGMP_LIBRARY="$INSTALL_ROOT/lib/libgmp.a" \
-		-DGMP_GMPXX_LIBRARY="$INSTALL_ROOT/lib/libgmpxx.a" \
-        ${MCL_CMAKE_OPTS} ..
-      eval emmake "$MAKE" ${PARALLEL_MAKE_OPTIONS}
+	  	cd build
+		eval emcmake "$CMAKE" ${CMAKE_CROSSCOMPILING_OPTS} \
+			-DMCL_USE_XBYAK=OFF \
+			-DMCL_BINT_ASM_X64=OFF \
+			-DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" \
+			-DCMAKE_PREFIX_PATH="$INSTALL_ROOT" \
+			-DGMP_INCLUDE_DIR="$INSTALL_ROOT/include" \
+			-DGMP_GMPXX_INCLUDE_DIR="$INSTALL_ROOT/include" \
+			-DGMP_LIBRARY="$INSTALL_ROOT/lib/libgmp.a" \
+			-DGMP_GMPXX_LIBRARY="$INSTALL_ROOT/lib/libgmpxx.a" \
+			-DMCL_FP_BIT=256 -DMCL_FR_BIT=256 \
+			-DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=$TOP_CMAKE_BUILD_TYPE ..
+      	eval emmake "$MAKE" mcl ${PARALLEL_MAKE_OPTIONS}        # build only mcl
+		eval emmake "$MAKE" install                              # install
+
     else
-      eval "$CMAKE ${CMAKE_CROSSCOMPILING_OPTS} \
-        -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" \
-        ${MCL_CMAKE_OPTS} .."
-      eval "$MAKE" ${PARALLEL_MAKE_OPTIONS}
+		# Ensure we don't reuse objects from a prior SGX build (XBYAK off).
+		"$MAKE" clean || true
+		rm -rf "${HOST_OBJ_DIR}" "${HOST_LIB_DIR}"
+		mkdir -p "${HOST_OBJ_DIR}" "${HOST_LIB_DIR}"
+		"$MAKE" \
+			DEBUG=0 \
+			ARCH=x86_64 \
+			MCL_USE_XBYAK=1 \
+			MCL_BINT_ASM=1 \
+			MCL_MSM=0 \
+			MCL_FP_BIT=256 \
+			MCL_FR_BIT=256 \
+			OBJ_DIR="${HOST_OBJ_DIR}" \
+			LIB_DIR="${HOST_LIB_DIR}" \
+			CFLAGS_USER="-DMCL_BINT_ASM_X64=1" \
+			${PARALLEL_MAKE_OPTIONS}
+
+		cp "${HOST_LIB_DIR}/libmcl.a" "$INSTALL_ROOT/lib/"
+		cp "${HOST_LIB_DIR}/lishe256.a" "$INSTALL_ROOT/lib/"
+		cp -r include/mcl "$INSTALL_ROOT/include/"
+		cp -r include/cybozu "$INSTALL_ROOT/include/"
     fi
 
-    eval "$MAKE" ${PARALLEL_MAKE_OPTIONS} install
     cd "$SOURCES_ROOT"
   else
     echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
   fi
+
+  # Build SGX MCL (no Xbyak, LLVM AOT)
+  if [ "$WITH_SGX" = "yes" ]; then
+    # Strict check for LLVM tools
+    if [ -z "$(which clang)" ] || [ -z "$(which llvm-as)" ]; then
+      echo -e "${COLOR_ERROR}Error: SGX build requires clang and llvm-as (LLVM toolchain).${COLOR_RESET}"
+      exit 1
+    fi
+
+    if [ ! -f "$INSTALL_ROOT/lib/libmcl_sgx.a" ]; then
+      echo -e "${COLOR_INFO}Building MCL for SGX...${COLOR_RESET}"
+      cd "$SOURCES_ROOT/mcl"
+      
+      # Clean previous build artifacts
+      "$MAKE" clean || true
+      rm -rf "${SGX_OBJ_DIR}" "${SGX_LIB_DIR}"
+      mkdir -p "${SGX_OBJ_DIR}" "${SGX_LIB_DIR}"
+      
+      "$MAKE" \
+        DEBUG=0 \
+        ARCH=x86_64 \
+        MCL_USE_XBYAK=0 \
+        MCL_USE_LLVM=1 \
+        MCL_BINT_ASM=1 \
+        MCL_BINT_ASM_X64=0 \
+        MCL_MSM=0 \
+        MCL_FP_BIT=256 \
+        MCL_FR_BIT=256 \
+        MCL_DONT_USE_OPENMP=1 \
+        OBJ_DIR="${SGX_OBJ_DIR}" \
+        LIB_DIR="${SGX_LIB_DIR}" \
+        CFLAGS_USER="-DMCL_DONT_USE_CSPRNG \
+			-DCYBOZU_DONT_USE_STRING \
+			-DCYBOZU_DONT_USE_EXCEPTION \
+			-DCYBOZU_HOST_UNKNOWN=0 \
+			-DCYBOZU_HOST_INTEL=1 \
+			-DCYBOZU_HOST=0 \
+			-Wa,--noexecstack" \
+		${PARALLEL_MAKE_OPTIONS} \
+		"${SGX_LIB_DIR}/libmcl.a"
+      
+      cp "${SGX_LIB_DIR}/libmcl.a" "$INSTALL_ROOT/lib/libmcl_sgx.a"
+      cd "$SOURCES_ROOT"
+    else
+      echo -e "${COLOR_SUCCESS}SGX MCL SKIPPED${COLOR_RESET}"
+    fi
+  fi
 fi
 
+# -----------------------------------------------------------------------------
+# 								Folly
+# -----------------------------------------------------------------------------
+
+# Do not build multi-threading support for emscripten
+if [[ "${WITH_EMSCRIPTEN}" -eq 0 ]]; then
+
+	if [ "$WITH_EVENT" = "yes" ];
+	then
+		echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}libEvent${COLOR_SEPARATOR} =====================================${COLOR_RESET}"
+		if [ ! -f "$INSTALL_ROOT/lib/libevent.a" ];
+		then
+			env_restore
+			cd "$SOURCES_ROOT"
+			if [ ! -d "libevent" ];
+			then
+				if [ ! -f "libevent-from-git.tar.gz" ];
+				then
+					echo -e "${COLOR_INFO}downloading it${COLOR_DOTS}...${COLOR_RESET}"
+					git clone https://github.com/libevent/libevent.git
+					git -C libevent  checkout 112421c8fa4840acd73502f2ab6a674fc025de37
+					echo -e "${COLOR_INFO}archiving it${COLOR_DOTS}...${COLOR_RESET}"
+					tar -czf libevent-from-git.tar.gz ./libevent
+				else
+					echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
+					tar -xzf libevent-from-git.tar.gz
+				fi
+				echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+				cd libevent
+				mkdir -p build
+				cd build
+				OS_SPECIFIC_LIB_EVENT_FLAGS=""
+				if [ ${ARCH} = "arm" ]
+				then
+					OS_SPECIFIC_LIB_EVENT_FLAGS="-DEVENT__DISABLE_SAMPLES=ON -DEVENT__DISABLE_TESTS=ON -DEVENT__DISABLE_BENCHMARK=ON -DEVENT__DISABLE_REGRESS=ON"
+				fi
+				$CMAKE "${CMAKE_CROSSCOMPILING_OPTS}" "${OS_SPECIFIC_LIB_EVENT_FLAGS}" -DBUILD_SHARED_LIBS=OFF \
+					-DEVENT__DISABLE_OPENSSL=ON \
+					-DEVENT__DISABLE_TESTS=ON \
+					-DEVENT__DISABLE_SAMPLES=ON \
+					-DEVENT__DISABLE_BENCHMARK=ON \
+					-DEVENT__DISABLE_REGRESS=ON \
+					-DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" \
+					-DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" \
+					..
+				cd ../..
+			fi
+			cd libevent/build
+			$MAKE ${PARALLEL_MAKE_OPTIONS}
+			$MAKE ${PARALLEL_MAKE_OPTIONS} install
+			cd ../..
+			cd "$SOURCES_ROOT"
+			if [ "$DEBUG" = "1" ];
+		then
+			cp "$INSTALL_ROOT/lib/libeventd.a" "$INSTALL_ROOT/lib/libevent.a"
+		fi
+		else
+			echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+		fi
+	fi
+
+	#https://github.com/fmtlib/fmt
+	#git@github.com:fmtlib/fmt.git
+	#https://github.com/fmtlib/fmt.git
+	if [ "$WITH_FMT" = "yes" ];
+	then
+		echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}libFmt++${COLOR_SEPARATOR} =====================================${COLOR_RESET}"
+		if [ ! -f "$INSTALL_ROOT/lib/libfmt${DEBUG_D}.a" ];
+		then
+			env_restore
+			cd "$SOURCES_ROOT"
+			if [ ! -d "fmt" ];
+			then
+				if [ ! -f "fmt-from-git.tar.gz" ];
+				then
+					echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
+					eval git clone https://github.com/fmtlib/fmt.git --recursive
+					git -C fmt checkout 9158bea1e148c190aa3f9f084b82887ecb29d2f8
+					echo -e "${COLOR_INFO}archiving it${COLOR_DOTS}...${COLOR_RESET}"
+					eval tar -czf fmt-from-git.tar.gz ./fmt
+				else
+					echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
+					eval tar -xzf fmt-from-git.tar.gz
+				fi
+				echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+				cd fmt
+				eval mkdir -p build
+				cd build
+				eval "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" ..
+				cd ..
+			else
+				cd fmt
+			fi
+			echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+			cd build
+			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
+			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}" install
+			cd "$SOURCES_ROOT"
+		if [ "$DEBUG" = "1" ];
+		then
+		cp  "$INSTALL_ROOT/lib/libfmtd.a" "$INSTALL_ROOT/lib/libfmt.a"
+		fi
+		else
+			echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+		fi
+	fi
+
+	#https://github.com/gflags/gflags
+	#git@github.com:gflags/gflags.git
+	#https://github.com/gflags/gflags.git
+	# version 0.6.0
+	if [ "$WITH_GFLAGS" = "yes" ];
+	then
+		echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}libGFLAGS${COLOR_SEPARATOR} ====================================${COLOR_RESET}"
+	if [ ! -f "$INSTALL_ROOT/lib/libgflags${DEBUG__DEBUG}.a" ];
+		then
+			env_restore
+			cd "$SOURCES_ROOT"
+			if [ ! -d "gflags-master" ];
+			then
+				echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
+				eval unzip -o "$PREDOWNLOADED_ROOT/gflags-master.zip"
+				echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+				cd gflags-master
+				eval mkdir -p cmake-build
+				cd cmake-build
+				eval $CMAKE ${CMAKE_CROSSCOMPILING_OPTS} -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" \
+					-DBUILD_SHARED_LIBS=OFF \
+					..
+				cd ..
+			else
+				cd gflags-master
+			fi
+			echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+			cd cmake-build
+			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
+			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}" install
+			cd "$SOURCES_ROOT"
+			if [ "$DEBUG" = "1" ];
+			then
+				cp "$INSTALL_ROOT/lib/libgflags_debug.a" "$INSTALL_ROOT/lib/libgflags.a"
+			fi
+		else
+			echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+		fi
+	fi
+
+
+	#https://github.com/google/glog
+	#git@github.com:google/glog.git
+	if [ "$WITH_GOOGLE_LOG" = "yes" ];
+	then
+		echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}libGLOG${COLOR_SEPARATOR} ======================================${COLOR_RESET}"
+		if [ ! -f "$INSTALL_ROOT/lib/libglog${DEBUG_D}.a" ];
+		then
+			env_restore
+			cd "$SOURCES_ROOT"
+			if [ ! -d "glog" ];
+			then
+				if [ ! -f "glog-from-git.tar.gz" ];
+				then
+					echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
+					eval git clone https://github.com/google/glog.git --recursive
+									cd glog
+									eval git checkout ee6faf13b20de9536f456bd84584f4ab4db1ceb4
+									cd ..
+									echo -e "${COLOR_INFO}archiving it${COLOR_DOTS}...${COLOR_RESET}"
+					eval tar -czf glog-from-git.tar.gz ./glog
+				else
+					echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
+					eval tar -xzf glog-from-git.tar.gz
+				fi
+				echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+				cd glog
+				eval mkdir -p build
+				cd build
+				eval "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" \
+									-DBUILD_SHARED_LIBS=OFF -DWITH_UNWIND=OFF -DWITH_GTEST=OFF -DCMAKE_DEBUG_POSTFIX= \
+					..
+				cd ..
+			else
+				cd glog
+			fi
+			echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+			cd build
+			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
+			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}" install
+			cd "$SOURCES_ROOT"
+			if [ "$DEBUG" = "1" ];
+				then
+					cp "$INSTALL_ROOT/lib/libglogd.a" "$INSTALL_ROOT/lib/libglog.a"
+		fi
+		else
+			echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+		fi
+	fi
+
+	if [ "$WITH_FASTFLOAT" = "yes" ];
+	then
+			echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}libFastFloat${COLOR_SEPARATOR} =====================================${COLOR_RESET}"
+			if [ ! -f "$INSTALL_ROOT/include/fast_float/fast_float.h" ];
+			then
+					env_restore
+					cd "$SOURCES_ROOT"
+					if [ ! -d "fast_float" ];
+					then
+							if [ ! -f "fast_float.tar.gz" ];
+							then
+									echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
+									eval git clone https://github.com/fastfloat/fast_float.git --recursive
+									cd fast_float
+									eval git checkout b8085ba
+									cd ..
+									echo -e "${COLOR_INFO}archiving it${COLOR_DOTS}...${COLOR_RESET}"
+									eval tar -czf fast_float.tar.gz ./fast_float
+							else
+									echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
+									eval tar -xzf fast_float.tar.gz
+							fi
+							cd fast_float
+							eval mkdir -p build2
+							cd build2
+							eval "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" \
+									-DCMAKE_INCLUDE_PATH="${INSTALL_ROOT}/include" \
+									-DCMAKE_LIBRARY_PATH="${INSTALL_ROOT}/lib" \
+									-DCMAKE_PREFIX_PATH=${INSTALL_ROOT} \
+									..
+							cd ..
+					else
+							cd fast_float
+					fi
+					echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+					cd build2
+					eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
+					eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}" install
+					cd "$SOURCES_ROOT"
+			else
+					echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+			fi
+	fi
+
+	#https://github.com/google/double-conversion
+	#git@github.com:google/double-conversion.git
+	#https://github.com/google/double-conversion.git
+	if [ "$WITH_DOUBLE_CONVERSION" = "yes" ];
+	then
+		echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}libDoubleConversion${COLOR_SEPARATOR} ==========================${COLOR_RESET}"
+		if [ ! -f "$INSTALL_ROOT/lib/libdouble-conversion.a" ];
+		then
+			env_restore
+			cd "$SOURCES_ROOT"
+			if [ ! -d "double-conversion" ];
+			then
+				if [ ! -f "double-conversion-from-git.tar.gz" ];
+				then
+					echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
+					eval git clone https://github.com/google/double-conversion.git --recursive
+					git -C double-conversion checkout e2fd4e0accd436d920fb00beec084501d0ae0c4e
+					echo -e "${COLOR_INFO}archiving it${COLOR_DOTS}...${COLOR_RESET}"
+					eval tar -czf double-conversion-from-git.tar.gz ./double-conversion
+				else
+					echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
+					eval tar -xzf double-conversion-from-git.tar.gz
+				fi
+				echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+				cd double-conversion
+				eval mkdir -p build2
+				cd build2
+				eval "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" ..
+				cd ..
+			else
+				cd double-conversion
+			fi
+			echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+			cd build2
+			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
+			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}" install
+			cd "$SOURCES_ROOT"
+		else
+			echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+		fi
+	fi
+
+	#https://github.com/facebook/folly
+	#git@github.com:facebook/folly.git
+	#https://github.com/facebook/folly.git
+	if [ "$WITH_FOLLY" = "yes" ];
+	then
+		echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}libFolly${COLOR_SEPARATOR} =====================================${COLOR_RESET}"
+		if [ ! -f "$INSTALL_ROOT/lib/libfolly.a" ];
+		then
+			env_restore
+			cd "$SOURCES_ROOT"
+			if [ ! -d "folly" ];
+			then
+				if [ ! -f "folly-from-git.tar.gz" ];
+				then
+					echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
+					eval git clone https://github.com/facebook/folly.git --recursive
+									cd folly
+									eval git checkout 5d415b5
+									cd ..
+									echo -e "${COLOR_INFO}archiving it${COLOR_DOTS}...${COLOR_RESET}"
+									eval tar -czf folly-from-git.tar.gz ./folly
+				else
+					echo -e "${COLOR_INFO}unpacking it${COLOR_DOTS}...${COLOR_RESET}"
+					eval tar -xzf folly-from-git.tar.gz
+				fi
+				echo -e "${COLOR_INFO}fixing it${COLOR_DOTS}...${COLOR_RESET}"
+							sed -i 's/list(APPEND FOLLY_LINK_LIBRARIES ${LIBUNWIND_LIBRARIES})/list(APPEND FOLLY_LINK_LIBRARIES ${LIBUNWIND_LIBRARIES} lzma)/' ./folly/CMake/folly-deps.cmake
+				sed -i 's/google::InstallFailureFunction(abort);/google::InstallFailureFunction( reinterpret_cast < google::logging_fail_func_t > ( abort ) );/g' ./folly/folly/init/Init.cpp
+				echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
+				cd folly
+				eval mkdir -p build2
+							cd build2
+				eval "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" \
+					-DCMAKE_CXX_STANDARD=${CXX_STANDARD} \
+					-DBOOST_ROOT="$INSTALL_ROOT" -DBOOST_INCLUDEDIR="${INSTALL_ROOT}/include" -DBOOST_LIBRARYDIR="$INSTALL_ROOT/lib" \
+					-DBoost_NO_BOOST_CMAKE=ON -DBoost_NO_WARN_NEW_VERSIONS=1 -DBoost_DEBUG=ON \
+					-DBUILD_SHARED_LIBS=OFF \
+					-DBUILD_TESTS=OFF \
+					-DBUILD_BROKEN_TESTS=OFF \
+					-DBUILD_BENCHMARKS=OFF \
+					-DBUILD_HANGING_TESTS=OFF \
+					-DBUILD_SLOW_TESTS=OFF \
+					-DCMAKE_INCLUDE_PATH="${INSTALL_ROOT}/include" \
+					-DCMAKE_LIBRARY_PATH="${INSTALL_ROOT}/lib" \
+					-DCMAKE_PREFIX_PATH=${INSTALL_ROOT} \
+					-DOPENSSL_ROOT_DIR="$INSTALL_ROOT" -DOPENSSL_INCLUDE_DIR="$INSTALL_ROOT/include" \
+					..
+				cd ..
+			else
+				cd folly
+			fi
+			echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
+					cd build2
+			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
+			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}" install
+			if [ "$DEBUG" = "0" ]; then
+						eval strip --strip-debug "${INSTALL_ROOT}"/lib/libfolly*.a
+					fi
+			cd "$SOURCES_ROOT"
+		else
+			echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
+		fi
+	fi
+fi
 
 
 if [ "$WITH_ZLIB" = "yes" ];
@@ -933,7 +1423,7 @@ then
 				cd curl
 				mkdir -p build
 				cd build
-				cmake "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DOPENSSL_ROOT_DIR="$SOURCES_ROOT/openssl" -DBUILD_CURL_EXE=OFF -DBUILD_TESTING=OFF -DCURL_USE_LIBSSH2=OFF -DBUILD_SHARED_LIBS=OFF -DCURL_DISABLE_LDAP=ON -DCURL_STATICLIB=ON -DUSE_LIBPSL=OFF -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" ..
+				cmake "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DOPENSSL_ROOT_DIR="$SOURCES_ROOT/openssl" -DBUILD_CURL_EXE=OFF -DBUILD_TESTING=OFF -DCURL_USE_LIBSSH2=OFF -DBUILD_SHARED_LIBS=OFF -DCURL_DISABLE_LDAP=ON -DCURL_STATICLIB=ON -DCURL_USE_LIBPSL=OFF -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" ..
 				echo " " >> lib/curl_config.h
 				echo "#define HAVE_POSIX_STRERROR_R 1" >> lib/curl_config.h
 				echo " " >> lib/curl_config.h
@@ -1026,6 +1516,16 @@ then
 			cd build
 			$MAKE ${PARALLEL_MAKE_OPTIONS}
 			$MAKE ${PARALLEL_MAKE_OPTIONS} install
+
+			# Create jsoncpp symlink for jsonrpccpp compatibility
+			# jsonrpc looks for 'jsoncpp/json/json.h'
+			# but default install path is 'json/json.h'
+			# so we create jsoncpp/json -> json symlink
+			cd "$INSTALL_ROOT/include"
+			mkdir -p jsoncpp
+			cd jsoncpp
+			ln -sf ../json json
+
 			cd "$SOURCES_ROOT"
 		else
 			echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"

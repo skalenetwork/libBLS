@@ -1,17 +1,11 @@
 #!/usr/bin/env python3
 # encoding: utf-8
 
-import dkgpython
-from dkgpython import dkg
-
-import os
-import sys
 import binascii
-import json
-import logging
+
+from dkgpython import dkg
 import coincurve
 
-from time import sleep
 
 def bxor(b1, b2):
     parts = []

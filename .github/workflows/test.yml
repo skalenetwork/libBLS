@@ -158,7 +158,16 @@ jobs:
         run: |
           export SGX_WALLET_TAG=e548b375cae741af8fd11db54d6925c27a947af9
           ./scripts/run_sgx_simulator.sh
-          sleep 60
+          echo "Waiting for SGX wallet to be ready..."
+          for i in {1..60}; do
+            if curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:1029 2>/dev/null | grep -q "405\|200"; then
+              echo "SGX wallet is ready after $((i*2)) seconds"
+              break
+            fi
+            echo "Attempt $i: SGX wallet not ready yet..."
+            sleep 2
+          done
+          docker logs sgx_simulator 2>&1 | tail -20 || true
       - name: Run tests
         run: |
           cp scripts/parameters.json build/
@@ -188,7 +197,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.info
   osx_build_and_test:
-    runs-on: macos-13
+    runs-on: macos-15-intel
     steps:
       - name: Extract repo name
         run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
@@ -201,6 +210,19 @@ jobs:
       - name: Install packages
         run: |
           brew install yasm texinfo shtool libtool coreutils
+      - name: Install CMake 3.21.0
+        run: |
+          set -euo pipefail
+          CMAKE_VERSION=3.21.0
+          CMAKE_DIR="cmake-${CMAKE_VERSION}-macos-universal"
+          if [[ ! -d "${CMAKE_DIR}" ]]; then
+            echo "Downloading CMake ${CMAKE_VERSION}..."
+            curl -L "https://cmake.org/files/v3.21/${CMAKE_DIR}.tar.gz" -o cmake.tar.gz
+            tar -xzf cmake.tar.gz
+          fi
+          sudo ln -sf "$PWD/${CMAKE_DIR}/CMake.app/Contents/bin/"* /usr/local/bin
+          which cmake
+          cmake --version
       - name: Build dependencies
         run: |
           cd deps
@@ -288,7 +310,7 @@ jobs:
 
           cd build_em
 
-          export LIBRARIES_ROOT=../deps/deps_inst/x86_or_x64/lib
+          export LIBRARIES_ROOT=../deps/deps_inst/wasm32-emscripten/lib
 
           emcmake cmake -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a .. 
 

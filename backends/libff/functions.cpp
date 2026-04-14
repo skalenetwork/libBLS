@@ -71,6 +71,12 @@ G2Point lagrangeInterpolateAt0( const std::vector< size_t >& idx, size_t t,
     return sum;
 }
 
+void toAffineVec( std::vector< G2Point >& points ) {
+    for ( size_t i = 0; i < points.size(); ++i ) {
+        points[i].toAffineCoordinates();
+    }
+}
+
 }  // namespace libBLS::algebra
 
 #endif  // LIBFF

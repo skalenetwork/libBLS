@@ -18,7 +18,7 @@ function(add_bench name main_source)
 
   target_compile_features(${name} PRIVATE cxx_std_20)
 
-  target_include_directories(${name} PRIVATE
+  target_include_directories(${name} SYSTEM PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}           # for bench_util.hpp and local includes
     ${CMAKE_CURRENT_BINARY_DIR}           # for generated headers like backend_info.hpp
     ${CMAKE_SOURCE_DIR}/threshold_encryption

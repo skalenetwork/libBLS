@@ -25,7 +25,13 @@ if(USE_LIBFF)
   set(BACKEND_DEFINE LIBFF)
 elseif(USE_MCL)
   set(BACKEND_NAME mcl)
-  set(BACKEND_LIB mcl)
+  # emscripten build is done through cmake - only needs libmcl
+  if (EMSCRIPTEN)
+    set(BACKEND_LIB "${DEPS_INSTALL_ROOT}/lib/libmcl.a" )
+  # non-emscripten is built through Makefile - needs lishe256 + libmcl
+  else()
+    set(BACKEND_LIB "${DEPS_INSTALL_ROOT}/lib/lishe256.a" "${DEPS_INSTALL_ROOT}/lib/libmcl.a" )
+  endif()
   set(BACKEND_DEPS "")
   set(BACKEND_COMPILE_OPTIONS 
     MCL_FP_BIT=256
@@ -66,6 +72,7 @@ set(INTERFACE_DIRS
 set(BACKEND_SPECIFIC_SOURCES
     # field scalars
     "field/FqElement.cpp"
+    "field/Fq12Element.cpp"
     "field/Fq2Element.cpp"
     "field/FrScalar.cpp"
 
@@ -88,7 +95,6 @@ set(BACKEND_SPECIFIC_SOURCES
 set(BACKEND_SOURCES 
   "${BACKEND_BASE_DIR}/interface/functions.cpp"
   "${BACKEND_BASE_DIR}/interface/curve_contract_altbn128.cpp"
-  ${TOOLS_DIR}/utils.cpp
 ) 
 
 
@@ -97,10 +103,13 @@ foreach(file ${BACKEND_SPECIFIC_SOURCES})
     list(APPEND BACKEND_SOURCES "${BACKEND_SRC_DIR}/${file}")
 endforeach()
 
+
 add_library(backend STATIC ${BACKEND_SOURCES})
 
-target_include_directories(backend PUBLIC
+target_include_directories(backend 
+    SYSTEM PRIVATE
     "${BACKEND_BASE_DIR}/.."  # This allows "backends/interface/..." includes
+    PUBLIC
     "${BACKEND_BASE_DIR}/interface"
 )
 
@@ -114,12 +123,13 @@ target_link_libraries(backend PUBLIC
     ${BACKEND_LIB}
     ${BACKEND_DEPS}
     ${CRYPTOPP_LIBRARY} # only needed for tests because tests use utils.cpp. Need to refactor this
+    common_utils # add utils built from root CMakeLists.txt
 )
 
 
 ######### Backend Unit Tests #########
 
-if(BUILD_TESTS)
+if(LIBBLS_BUILD_TESTS)
 
   set(TEST_DIR ${CMAKE_CURRENT_LIST_DIR}/../test)
   set(TOOLS_DIR ${CMAKE_CURRENT_LIST_DIR}/../tools)
@@ -130,8 +140,10 @@ if(BUILD_TESTS)
       ${TOOLS_DIR}/utils.cpp
     )
 
-    target_include_directories(${name} PRIVATE
-      ${CMAKE_CURRENT_SOURCE_DIR}
+    message(STATUS "Adding backend test: ${BACKEND_BASE_DIR}")
+
+    target_include_directories(${name} SYSTEM PRIVATE
+      ${BACKEND_BASE_DIR}/.. # allow imports as "backends/..."
       ${THIRD_PARTY_DIR}
       ${TEST_DIR}
     )
@@ -140,7 +152,7 @@ if(BUILD_TESTS)
       $<$<CXX_COMPILER_ID:GNU,Clang>:-Wno-format-overflow>
     )
 
-    target_link_libraries(${name} PRIVATE backend)
+    target_link_libraries(${name} PRIVATE backend ${FOLLY_STATIC_LIBS})
 
     # Register test with the full path to the built binary (portable)
     add_test(NAME ${name} COMMAND $<TARGET_FILE:${name}>)
