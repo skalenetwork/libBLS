@@ -157,14 +157,14 @@ if (EMSCRIPTEN)
         LINK_FLAGS "${ENCRYPT_LINK_FLAGS} -s ENVIRONMENT='node'"
     )
 
-    # encrypt_web (for Browser/Webpack)
+    # encrypt_web (for Browser / Vite / Webpack 5 / native ESM consumers)
     add_executable(encrypt_web ${ENCRYPT_SOURCES})
     target_include_directories(encrypt_web SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
     target_compile_definitions(encrypt_web PRIVATE MCL=1)
     target_link_libraries(encrypt_web PRIVATE te)
     set_target_properties(encrypt_web PROPERTIES 
         OUTPUT_NAME "encrypt_web"
-        LINK_FLAGS "${ENCRYPT_LINK_FLAGS} -s ENVIRONMENT='web'"
+        LINK_FLAGS "${ENCRYPT_LINK_FLAGS} -s ENVIRONMENT='web' -s EXPORT_ES6=1"
     )
 
     add_custom_command(TARGET encrypt_node POST_BUILD
