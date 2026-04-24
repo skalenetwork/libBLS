@@ -1,4 +1,5 @@
 import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
 const require = createRequire(import.meta.url);
 const ModuleFactory = require('./encrypt_node.js');
 
@@ -8,11 +9,10 @@ function getModule() {
     if (!ModulePromise) {
         ModulePromise = ModuleFactory({
             locateFile: (filename) => {
-                 if (filename.endsWith('.wasm')) {
-                    const path = require('path');
-                    return path.join(path.dirname(new URL(import.meta.url).pathname), 'encrypt_node.wasm');
-                }
-                return filename;
+                const resolvedUrl = new URL(filename, import.meta.url);
+                return resolvedUrl.protocol === 'file:'
+                    ? fileURLToPath(resolvedUrl)
+                    : resolvedUrl.href;
             }
         });
     }
