@@ -2,17 +2,22 @@ import { createRequire } from 'module';
 import { fileURLToPath } from 'url';
 const require = createRequire(import.meta.url);
 const ModuleFactory = require('./encrypt_node.js');
-
 let ModulePromise = null;
-
+function resolveModuleAssetPath(filename) {
+    if (typeof filename !== 'string' || filename.length === 0) {
+        throw new TypeError('filename must be a non-empty string');
+    }
+    const resolvedPath = fileURLToPath(new URL(filename, import.meta.url));
+    if (typeof resolvedPath !== 'string' || resolvedPath.length === 0) {
+        throw new Error('Failed to resolve module asset path');
+    }
+    return resolvedPath;
+}
 function getModule() {
     if (!ModulePromise) {
         ModulePromise = ModuleFactory({
             locateFile: (filename) => {
-                const resolvedUrl = new URL(filename, import.meta.url);
-                return resolvedUrl.protocol === 'file:'
-                    ? fileURLToPath(resolvedUrl)
-                    : resolvedUrl.href;
+                return resolveModuleAssetPath(filename);
             }
         });
     }
