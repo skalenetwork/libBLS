@@ -273,9 +273,9 @@ e(W, P)\;\stackrel{?}{=}\;e(H(U,V), U).
 
 2) **Per-share correctness (same $s_i$, same $r$).**
 
-   ```math
-   e(W, Y_i)\;\stackrel{?}{=}\;e(H(U,V), D_i).
-   ```
+```math
+e(W, Y_i)\;\stackrel{?}{=}\;e(H(U,V), D_i).
+```
 
 **Why it works.**
 
