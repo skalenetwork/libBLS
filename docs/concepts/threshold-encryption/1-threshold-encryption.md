@@ -265,25 +265,27 @@ Let $e: G_1 \times G_2 \to G_T$ be a bilinear pairing.
 **Validation equations.**
 
 1) **Ciphertext integrity (same $r$ across `U` and `W`).**
-   ```math
-   e(W, P)\;\stackrel{?}{=}\;e(H(U,V), U).
-   ```
+
+```math
+e(W, P)\;\stackrel{?}{=}\;e(H(U,V), U).
+```
    If true, then $W = r H(U,V)$ and $U = rP$ share the same randomness $r$. (Smae as we did in 3.1)
 
 2) **Per-share correctness (same $s_i$, same $r$).**
+
    ```math
    e(W, Y_i)\;\stackrel{?}{=}\;e(H(U,V), D_i).
    ```
 
 **Why it works.**
 
-- For 1), we have already seen why it works from 3.1.
+For 1), we have already seen why it works from 3.1.
 
-- For 2), for a valid share with $Y_i=s_iP$ and $D_i=s_iU=s_i(rP)$:
-  ```math
-  e(W,Y_i)=e(rH, s_iP)=e(H,P)^{r s_i},\qquad
-  e(H,D_i)=e(H, s_i r P)=e(H,P)^{r s_i},
-  ```
+For 2), for a valid share with $Y_i=s_iP$ and $D_i=s_iU=s_i(rP)$:
+```math
+e(W,Y_i)=e(rH, s_iP)=e(H,P)^{r s_i},\qquad
+e(H,D_i)=e(H, s_i r P)=e(H,P)^{r s_i},
+```
   so the second equality holds **iff** $D_i$ was computed from the *same* $r$ (via $U$) and the *correct* secret share $s_i$ (via $Y_i$).
 
 
