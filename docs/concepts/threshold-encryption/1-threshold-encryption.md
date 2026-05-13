@@ -210,9 +210,10 @@ Below we describe the encryption-time validation in detail.
 1. Recompute the hash-to-curve point:  
    `H' = H(U, V) ∈ G1`.
 2. Check the pairing equation:
-$$
+
+```math
 e(W, P) \stackrel{?}{=} e(H', U)
-$$
+```
 
 **Why it works (bilinear proof).**  
 Assuming honest formation with the *same* scalar `r`:
@@ -246,41 +247,43 @@ Given a ciphertext `{U, V, W}` and a purported decryption share $D_i$ from node 
 **Setup.** 
 
 During encryption:
-$$
+```math
 U = rP \in G_2,\qquad
 W = r\,H(U,V) \in G_1,
-$$
+```
 where $H(U,V)\in G_1$ is a hash-to-curve of `(U,V)`.  
+
 For node $i$:
-$$
+```math
 Y_i = s_i P \in G_2,\qquad
 D_i = s_i U = s_i (rP) = (r s_i) P \in G_2.
-$$
+```
+
 Let $e: G_1 \times G_2 \to G_T$ be a bilinear pairing.
 
 
 **Validation equations.**
 
 1) **Ciphertext integrity (same $r$ across `U` and `W`).**
-   $$
+   ```math
    e(W, P)\;\stackrel{?}{=}\;e(H(U,V), U).
-   $$
+   ```
    If true, then $W = r H(U,V)$ and $U = rP$ share the same randomness $r$. (Smae as we did in 3.1)
 
 2) **Per-share correctness (same $s_i$, same $r$).**
-   $$
+   ```math
    e(W, Y_i)\;\stackrel{?}{=}\;e(H(U,V), D_i).
-   $$
+   ```
 
 **Why it works.**
 
 - For 1), we have already seen why it works from 3.1.
 
 - For 2), for a valid share with $Y_i=s_iP$ and $D_i=s_iU=s_i(rP)$:
-  $$
+  ```math
   e(W,Y_i)=e(rH, s_iP)=e(H,P)^{r s_i},\qquad
   e(H,D_i)=e(H, s_i r P)=e(H,P)^{r s_i},
-  $$
+  ```
   so the second equality holds **iff** $D_i$ was computed from the *same* $r$ (via $U$) and the *correct* secret share $s_i$ (via $Y_i$).
 
 
@@ -296,9 +299,9 @@ Verify that the decrypted message is mathematically consistent with the cipherte
 
 During encryption:
 
-$$
+```math
 U = rP, \quad V = G(rY) \oplus m
-$$
+```
 
 where  
 - $r \in \mathbb{F}_r$ is a random scalar,  
@@ -312,42 +315,42 @@ After decryption, the payload reveals a candidate scalar $r'$, which should equa
 
 Compute:
 
-$$
+```math
 Y' = r'Y
-$$
+```
 
 Derive:
 
-$$
+```math
 m' = V \oplus G(Y')
-$$
+```
 
 and verify:
 
-$$
+```math
 m' = m
-$$
+```
 
 **Why it works.** 
 
 If the combined decryption shares are correct, then $r' = r$.  
 Hence:
 
-$$
+```math
 Y' = r'Y = rY
-$$
+```
 
 and
 
-$$
+```math
 G(Y') = G(rY)
-$$
+```
 
 Substituting into the expression for $m'$ gives:
 
-$$
+```math
 m' = V \oplus G(rY) = (G(rY) \oplus m) \oplus G(rY) = m
-$$
+```
 
 The equality holds **if and only if** $r'$ matches the original randomness $r$ and the ciphertext `{U, V}` was not tampered with. Any alteration in $r'$, $V$, or $Y$ breaks the equality, making the decryption invalid.
 
@@ -360,9 +363,10 @@ Verify that the AES key recovered from the decrypted payload is consistent with 
 **Setup.** 
 
 During encryption:
-$$
+```math
 U = rP,\qquad V = G(rY)\oplus m,
-$$
+```
+
 where $r\in\mathbb{F}_r$ is random, $Y=sP$ is the public key, $G: G_2\to\{0,1\}^{32}$ is a KDF/hash-to-key, and $m$ is the AES-256 key.
 
 After decryption of the outer AES-GCM payload, we obtain a candidate scalar $r'$ (encoded in the plaintext). The ciphertext component $V$ is available from `{U,V,W}`.
@@ -371,25 +375,25 @@ After decryption of the outer AES-GCM payload, we obtain a candidate scalar $r'$
 **Validation Equation.** 
 
 Compute:
-$$
+```math
 Y' = r'Y,\qquad K' = G(Y'),\qquad m' = V \oplus K'.
-$$
+```
 Accept iff:
-$$
+```math
 m' = m.
-$$
+```
 
 
 **Why it works.** 
 
 If the decrypted payload is correct and the combine of shares was honest, then $r'=r$. Hence:
-$$
+```math
 Y' = r'Y = rY,\qquad K' = G(Y') = G(rY).
-$$
+```
 Substitute into $m'$:
-$$
+```math
 m' = V \oplus G(rY) = (G(rY)\oplus m)\oplus G(rY) = m.
-$$
+```
 Therefore the equality holds **iff** $r'$ matches the original randomness and $V$ was not altered.
 
 
