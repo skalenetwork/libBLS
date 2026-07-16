@@ -5,6 +5,7 @@ import os
 import shutil
 from setuptools import setup, find_packages
 from setuptools.command.build_py import build_py
+from setuptools.dist import Distribution
 
 # Configuration
 PACKAGE_NAME = 't_encrypt'
@@ -39,9 +40,14 @@ class CustomBuildPy(build_py):
 
         super().run()
 
+
+class BinaryDistribution(Distribution):
+    def has_ext_modules(self):
+        return True
+
 setup(
     name='t-encrypt',
-    version='0.0.1',
+    version='0.0.2',
     description='Python bindings for SKALE Threshold Encryption',
     author='SKALE Network',
     packages=find_packages(),
@@ -52,6 +58,7 @@ setup(
     cmdclass={
         'build_py': CustomBuildPy,
     },
+    distclass=BinaryDistribution,
     classifiers=[
         'Programming Language :: Python :: 3',
         'Operating System :: POSIX :: Linux',

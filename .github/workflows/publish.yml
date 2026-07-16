@@ -25,7 +25,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '3.13'
 
     - uses: actions/setup-node@v1
       with:
@@ -98,6 +98,23 @@ jobs:
         cd ..
         cp build_em/threshold_encryption/encrypt.* node/
 
+    - name: Build t-encrypt Python native library
+      env:
+        OPENSSL_GIT_REF: openssl-3.0.15
+      run: |
+        export CC=gcc-11
+        export CXX=g++-11
+        export TARGET=all
+        export CMAKE_BUILD_TYPE=Release
+        cd deps
+        ./clean.sh
+        ./build.sh
+        cd ..
+        mkdir -p build_t_encrypt_python
+        cd build_t_encrypt_python
+        cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
+        make -j$(nproc) t_encrypt_python
+
     - name: Calculate version
       run: |
         export BRANCH=${GITHUB_REF##*/}
@@ -114,7 +131,7 @@ jobs:
 
     - name: Resolve t-encrypt version and library path
       run: |
-        lib_path="${PWD}/build/threshold_encryption/libt_encrypt_python.so"
+        lib_path="${PWD}/build_t_encrypt_python/threshold_encryption/libt_encrypt_python.so"
         echo "T_ENCRYPT_LIB_PATH=${lib_path}" >> "$GITHUB_ENV"
 
         # Calculate Python package version
@@ -137,10 +154,19 @@ jobs:
         T_ENCRYPT_LIB_PATH: ${{ env.T_ENCRYPT_LIB_PATH }}
       run: |
         python -m pip install --upgrade pip
-        python -m pip install --upgrade setuptools wheel twine
+        python -m pip install --upgrade setuptools wheel twine auditwheel
         CURRENT_VERSION="$(python setup_t_encrypt.py --version)"
         sed -i "s/${CURRENT_VERSION}/${PACKAGE_VERSION}/g" setup_t_encrypt.py
         python setup_t_encrypt.py sdist bdist_wheel
+        wheel="$(ls -t dist/*.whl | head -n1)"
+        [[ "${wheel}" != *-py3-none-any.whl ]] || \
+          { echo "Wheel bundling libencrypt.so must be platform-tagged: ${wheel}" >&2; exit 1; }
+        auditwheel show "${wheel}"
+        python -m zipfile -e "${wheel}" wheel-check
+        shared_library="wheel-check/t_encrypt/libencrypt.so"
+        [[ -f "${shared_library}" ]] || { echo "libencrypt.so was not found in ${wheel}" >&2; exit 1; }
+        ! readelf -d "${shared_library}" | grep -Eq 'lib(ssl|crypto)\.so\.1\.1' || \
+          { echo "${shared_library} depends on OpenSSL 1.1" >&2; exit 1; }
         python -m twine check dist/*
 
     - name: Publish t-encrypt to PyPI

@@ -212,6 +212,7 @@ CXX_STANDARD=20
 export CFLAGS="$CFLAGS -fPIC"
 export CXXFLAGS="$CXXFLAGS -fPIC"
 WITH_OPENSSL="yes"
+OPENSSL_GIT_REF="${OPENSSL_GIT_REF:-OpenSSL_1_1_1n}"
 
 WITH_BOOST="yes"
 WITH_ZLIB="yes"
@@ -718,7 +719,7 @@ then
 			echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
 			cd openssl
 			eval git fetch
-			eval git checkout OpenSSL_1_1_1n
+			eval git checkout "$OPENSSL_GIT_REF"
 			if [[ "$ARCH" = "x86_or_x64" || "$ARCH" = "wasm32-emscripten" ]];
 			then
 				if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
