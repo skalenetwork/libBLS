@@ -719,7 +719,7 @@ then
 			echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
 			cd openssl
 			eval git fetch
-			git checkout --detach -- "$OPENSSL_GIT_REF"
+			git checkout --detach "$OPENSSL_GIT_REF"
 			if [[ "$ARCH" = "x86_or_x64" || "$ARCH" = "wasm32-emscripten" ]];
 			then
 				if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
