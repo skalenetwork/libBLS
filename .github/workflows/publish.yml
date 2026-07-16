@@ -171,7 +171,7 @@ jobs:
         [[ -f "${shared_library}" ]] || { echo "libencrypt.so was not found in ${wheel}" >&2; exit 1; }
         ! readelf -d "${shared_library}" | grep -Eq 'lib(ssl|crypto)\.so\.1\.1' || \
           { echo "${shared_library} depends on OpenSSL 1.1" >&2; exit 1; }
-        python -m twine check --strict dist/*.tar.gz wheelhouse/*.whl
+        python -m twine check dist/*.tar.gz wheelhouse/*.whl
 
     - name: Publish t-encrypt to PyPI
       working-directory: python

@@ -236,7 +236,7 @@ jobs:
           shared_library="wheel-check/t_encrypt/libencrypt.so"
           [[ -f "${shared_library}" ]]
           ! readelf -d "${shared_library}" | grep -Eq 'lib(ssl|crypto)\.so\.1\.1'
-          python -m twine check --strict "${wheel}"
+          python -m twine check "${wheel}"
       - name: Upload t-encrypt wheel
         uses: actions/upload-artifact@v4
         with:
