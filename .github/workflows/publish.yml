@@ -133,6 +133,7 @@ jobs:
       run: |
         lib_path="${PWD}/build_t_encrypt_python/threshold_encryption/libt_encrypt_python.so"
         echo "T_ENCRYPT_LIB_PATH=${lib_path}" >> "$GITHUB_ENV"
+        python3 -m pip install --upgrade pip setuptools
 
         # Calculate Python package version
         cd python
