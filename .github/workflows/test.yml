@@ -214,8 +214,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-11 g++-11 cmake gawk sed shtool \
-            libffi-dev yasm texinfo libgnutls28-dev gcc-multilib git
-          python -m pip install --upgrade pip setuptools wheel auditwheel
+            libffi-dev yasm texinfo libgnutls28-dev gcc-multilib git patchelf
+          python -m pip install --upgrade pip setuptools wheel auditwheel twine
           cd deps
           ./build.sh
           cd ..
@@ -226,18 +226,22 @@ jobs:
           cd ../python
           export T_ENCRYPT_LIB_PATH="${GITHUB_WORKSPACE}/build/threshold_encryption/libt_encrypt_python.so"
           python setup_t_encrypt.py bdist_wheel
-          wheel="$(ls -t dist/*.whl | head -n1)"
-          [[ "${wheel}" != *-py3-none-any.whl ]] || { echo "Wheel must be platform-tagged: ${wheel}" >&2; exit 1; }
-          auditwheel show "${wheel}"
+          raw_wheel="$(ls -t dist/*.whl | head -n1)"
+          [[ "${raw_wheel}" != *-py3-none-any.whl ]] || { echo "Wheel must be platform-tagged: ${raw_wheel}" >&2; exit 1; }
+          auditwheel show "${raw_wheel}"
+          auditwheel repair "${raw_wheel}" -w wheelhouse
+          wheel="$(ls -t wheelhouse/*.whl | head -n1)"
+          [[ "${wheel}" == *manylinux*.whl ]] || { echo "Repaired wheel must be manylinux-tagged: ${wheel}" >&2; exit 1; }
           python -m zipfile -e "${wheel}" wheel-check
           shared_library="wheel-check/t_encrypt/libencrypt.so"
           [[ -f "${shared_library}" ]]
           ! readelf -d "${shared_library}" | grep -Eq 'lib(ssl|crypto)\.so\.1\.1'
+          python -m twine check --strict "${wheel}"
       - name: Upload t-encrypt wheel
         uses: actions/upload-artifact@v4
         with:
           name: t-encrypt-wheel
-          path: python/dist/*.whl
+          path: python/wheelhouse/*.whl
   validate_t_encrypt_wheel:
     needs: build_t_encrypt_wheel
     runs-on: ${{ matrix.os }}
