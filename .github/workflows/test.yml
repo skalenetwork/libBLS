@@ -196,6 +196,69 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.info
+  build_t_encrypt_wheel:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Build and check t-encrypt wheel
+        env:
+          CC: gcc-11
+          CXX: g++-11
+          OPENSSL_GIT_REF: openssl-3.0.15
+          TARGET: all
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-11 g++-11 cmake gawk sed shtool \
+            libffi-dev yasm texinfo libgnutls28-dev gcc-multilib git
+          python -m pip install --upgrade pip setuptools wheel auditwheel
+          cd deps
+          ./build.sh
+          cd ..
+          mkdir -p build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          make -j$(nproc) t_encrypt_python
+          cd ../python
+          export T_ENCRYPT_LIB_PATH="${GITHUB_WORKSPACE}/build/threshold_encryption/libt_encrypt_python.so"
+          python setup_t_encrypt.py bdist_wheel
+          wheel="$(ls -t dist/*.whl | head -n1)"
+          [[ "${wheel}" != *-py3-none-any.whl ]] || { echo "Wheel must be platform-tagged: ${wheel}" >&2; exit 1; }
+          auditwheel show "${wheel}"
+          python -m zipfile -e "${wheel}" wheel-check
+          shared_library="wheel-check/t_encrypt/libencrypt.so"
+          [[ -f "${shared_library}" ]]
+          ! readelf -d "${shared_library}" | grep -Eq 'lib(ssl|crypto)\.so\.1\.1'
+      - name: Upload t-encrypt wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: t-encrypt-wheel
+          path: python/dist/*.whl
+  validate_t_encrypt_wheel:
+    needs: build_t_encrypt_wheel
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Download t-encrypt wheel
+        uses: actions/download-artifact@v4
+        with:
+          name: t-encrypt-wheel
+          path: dist
+      - name: Install and import t-encrypt wheel
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install dist/*.whl
+          python -c "import t_encrypt"
   osx_build_and_test:
     runs-on: macos-15-intel
     steps:
@@ -312,7 +375,7 @@ jobs:
 
           export LIBRARIES_ROOT=../deps/deps_inst/wasm32-emscripten/lib
 
-          emcmake cmake -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a .. 
+          emcmake cmake -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a ..
 
           emmake make -j$(nproc)
 
