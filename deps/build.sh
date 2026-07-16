@@ -311,7 +311,7 @@ then
 		fi
 
 		if [ -z "$ISA_NO" ];
-		then 
+		then
 			ISA_NO="-mno-avx512f -mno-adx -mno-fma"
 		fi
 	fi
@@ -327,7 +327,7 @@ then
 	export CONF_CROSSCOMPILING_OPTS_VPX=""
 	export CONF_CROSSCOMPILING_OPTS_X264=""
 	export CONF_CROSSCOMPILING_OPTS_FFMPEG=""
-	
+
 	if [ "$USE_LLVM" = "1" ];
 	then
 		export CC=$(which clang)
@@ -596,19 +596,19 @@ then
 	eval ./emsdk install latest
 	eval ./emsdk activate latest
 	source ./emsdk_env.sh
-	cd ..	
+	cd ..
 fi
 
 
 if [ "$WITH_BOOST" = "yes" ];
 then
 	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}BOOST${COLOR_SEPARATOR} ========================================${COLOR_RESET}"
-	
+
 	# Define Boost libraries based on build mode
 	BOOST_LIBS_EMSCRIPTEN="program_options"
 	BOOST_LIBS_NORMAL="system thread filesystem regex atomic context"
 	BOOST_LIBS_SKALED="iostreams fiber log chrono date_time"
-	
+
 	# Build the full library list based on mode
 	if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]]; then
 		BOOST_LIBS_TO_CHECK="$BOOST_LIBS_EMSCRIPTEN"
@@ -618,7 +618,7 @@ then
 			BOOST_LIBS_TO_CHECK="$BOOST_LIBS_TO_CHECK $BOOST_LIBS_SKALED"
 		fi
 	fi
-	
+
 	# Check if all required Boost libraries exist before skipping
 	BOOST_CHECK_FAILED=0
 	for lib in $BOOST_LIBS_TO_CHECK; do
@@ -627,7 +627,7 @@ then
 			break
 		fi
 	done
-	
+
 	if [ "$BOOST_CHECK_FAILED" = "1" ];
 	then
 		env_restore
@@ -651,7 +651,7 @@ then
 		fi
 		cd ${BOOST_NAME}
 		echo -e "${COLOR_INFO}configuring and building it${COLOR_DOTS}...${COLOR_RESET}"
-		
+
 		# Build BOOST_LIBRARIES string with commas for bootstrap.sh
 		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 		then
@@ -663,7 +663,7 @@ then
 				BOOST_LIBRARIES="${BOOST_LIBRARIES},${BOOST_LIBS_SKALED// /,}"
 			fi
 		fi
-		
+
 		eval ./bootstrap.sh --prefix="$INSTALL_ROOT" --with-libraries="$BOOST_LIBRARIES"
 
 		if [ "$DEBUG" = "1" ]; then
@@ -719,7 +719,7 @@ then
 			echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
 			cd openssl
 			eval git fetch
-			eval git checkout "$OPENSSL_GIT_REF"
+			git checkout --detach -- "$OPENSSL_GIT_REF"
 			if [[ "$ARCH" = "x86_or_x64" || "$ARCH" = "wasm32-emscripten" ]];
 			then
 				if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
@@ -930,12 +930,12 @@ if [ "$WITH_MCL" = "yes" ]; then
     if [ ! -f "$INSTALL_ROOT/lib/libmcl_sgx.a" ]; then
       echo -e "${COLOR_INFO}Building MCL for SGX...${COLOR_RESET}"
       cd "$SOURCES_ROOT/mcl"
-      
+
       # Clean previous build artifacts
       "$MAKE" clean || true
       rm -rf "${SGX_OBJ_DIR}" "${SGX_LIB_DIR}"
       mkdir -p "${SGX_OBJ_DIR}" "${SGX_LIB_DIR}"
-      
+
       "$MAKE" \
         DEBUG=0 \
         ARCH=x86_64 \
@@ -958,7 +958,7 @@ if [ "$WITH_MCL" = "yes" ]; then
 			-Wa,--noexecstack" \
 		${PARALLEL_MAKE_OPTIONS} \
 		"${SGX_LIB_DIR}/libmcl.a"
-      
+
       cp "${SGX_LIB_DIR}/libmcl.a" "$INSTALL_ROOT/lib/libmcl_sgx.a"
       cd "$SOURCES_ROOT"
     else
