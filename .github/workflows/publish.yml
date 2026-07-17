@@ -47,7 +47,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y gawk sed shtool \
-          libffi-dev yasm texinfo libgnutls28-dev gcc-multilib jq
+          libffi-dev yasm texinfo libgnutls28-dev gcc-multilib jq patchelf
     - name: Build dependencies
       run: |
         export CC=gcc-11
@@ -159,16 +159,19 @@ jobs:
         CURRENT_VERSION="$(python setup_t_encrypt.py --version)"
         sed -i "s/${CURRENT_VERSION}/${PACKAGE_VERSION}/g" setup_t_encrypt.py
         python setup_t_encrypt.py sdist bdist_wheel
-        wheel="$(ls -t dist/*.whl | head -n1)"
-        [[ "${wheel}" != *-py3-none-any.whl ]] || \
-          { echo "Wheel bundling libencrypt.so must be platform-tagged: ${wheel}" >&2; exit 1; }
-        auditwheel show "${wheel}"
+        raw_wheel="$(ls -t dist/*.whl | head -n1)"
+        [[ "${raw_wheel}" != *-py3-none-any.whl ]] || \
+          { echo "Wheel bundling libencrypt.so must be platform-tagged: ${raw_wheel}" >&2; exit 1; }
+        auditwheel show "${raw_wheel}"
+        auditwheel repair "${raw_wheel}" -w wheelhouse
+        wheel="$(ls -t wheelhouse/*.whl | head -n1)"
+        [[ "${wheel}" == *manylinux*.whl ]] || { echo "Repaired wheel must be manylinux-tagged: ${wheel}" >&2; exit 1; }
         python -m zipfile -e "${wheel}" wheel-check
         shared_library="wheel-check/t_encrypt/libencrypt.so"
         [[ -f "${shared_library}" ]] || { echo "libencrypt.so was not found in ${wheel}" >&2; exit 1; }
         ! readelf -d "${shared_library}" | grep -Eq 'lib(ssl|crypto)\.so\.1\.1' || \
           { echo "${shared_library} depends on OpenSSL 1.1" >&2; exit 1; }
-        python -m twine check dist/*
+        python -m twine check dist/*.tar.gz wheelhouse/*.whl
 
     - name: Publish t-encrypt to PyPI
       working-directory: python
@@ -176,7 +179,7 @@ jobs:
         TWINE_USERNAME: ${{ secrets.PIP_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PIP_PASSWORD }}
       run: |
-        python -m twine upload dist/*
+        python -m twine upload dist/*.tar.gz wheelhouse/*.whl
 
     - name: Publish on npm
       if: github.ref != 'refs/heads/stable'
