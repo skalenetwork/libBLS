@@ -58,7 +58,9 @@ void CipheredKey::validate() const {
 CipheredKey CipheredKey::random() {
     algebra::G2Point U = algebra::G2Point::random();
     AES256Key V;
-    RAND_bytes( V.data(), V.size() );
+    if (RAND_bytes( V.data(), V.size() ) != 1) {
+        throw std::runtime_error( "Failed to generate random AES key" );
+    }
     algebra::G1Point W = algebra::G1Point::random();
     return CipheredKey( U, V, W );
 }
