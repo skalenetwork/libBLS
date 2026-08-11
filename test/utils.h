@@ -40,7 +40,9 @@ std::string randomHexaString( size_t length );
 template < size_t N >
 std::array< uint8_t, N > randomByteArray() {
     std::array< uint8_t, N > bytes;
-    RAND_bytes( bytes.data(), N );
+    if ( RAND_bytes( bytes.data(), N ) != 1 ) {
+        throw std::runtime_error( "Failed to generate random bytes" );
+    }
     return bytes;
 }
 

@@ -130,7 +130,9 @@ std::vector< uint8_t > AesGcmCipher::encrypt(
         std::copy( hmacResult, hmacResult + AES_GCM_IV_SIZE, localIv );
         ++encryptCounter;
     } else {
-        RAND_bytes( localIv, AES_GCM_IV_SIZE );
+        if ( RAND_bytes( localIv, AES_GCM_IV_SIZE ) != 1) {
+            throw std::runtime_error( "Failed to generate random IV" );
+        }
     }
     // Place IV at start of output
     std::copy( localIv, localIv + AES_GCM_IV_SIZE, output.begin() );

@@ -144,21 +144,33 @@ int ThresholdUtils::char2int( char _input ) {
     return -1;
 }
 
-bool ThresholdUtils::hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin ) {
+bool ThresholdUtils::hex2carray( const char* _hex, uint64_t* _bin_written_len, uint8_t* _bin, uint64_t _bin_capacity ) {
+    if ( _hex == nullptr || _bin_written_len == nullptr || _bin == nullptr ) {
+        return false;
+    }
     int len = strnlen( _hex, 2 * 1024 );
 
     if ( len % 2 == 1 ) {
         return false;
     }
-    *_bin_len = len / 2;
-    for ( int i = 0; i < len / 2; i++ ) {
-        int high = char2int( ( char ) _hex[i * 2] );
-        int low = char2int( ( char ) _hex[i * 2 + 1] );
+
+    unsigned int byte_length = len / 2;
+
+    if ( byte_length != _bin_capacity ) {
+        return false;
+    }
+
+    *_bin_written_len = 0;
+
+    for ( unsigned int i = 0; i < byte_length; i++ ) {
+        int high = char2int( _hex[i * 2] );
+        int low = char2int( _hex[i * 2 + 1] );
         if ( high < 0 || low < 0 ) {
             return false;
         }
         _bin[i] = ( unsigned char ) ( high * 16 + low );
     }
+    *_bin_written_len = byte_length;
     return true;
 }
 

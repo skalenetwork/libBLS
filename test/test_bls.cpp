@@ -116,12 +116,14 @@ std::array< uint8_t, 32 > GenerateRandHash() {
     return hash_byte_arr;
 }
 
+// Generates a random hex string representing 32 bytes (HASH_SIZE), i.e. 64 hex characters -
+// hashToG1(const std::string&) requires an exact match against HASH_SIZE * 2.
 std::string rand32HexStr() {
     std::array< char, 16 > s = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c',
         'd', 'e', 'f' };
 
     std::string res = "";
-    for ( size_t i = 0; i < 32; ++i ) {
+    for ( size_t i = 0; i < 64; ++i ) {
         res.push_back( *( s.begin() + rand_gen() % 16 ) );
     }
 

@@ -62,7 +62,8 @@ algebra::G1Point Bls::HashPublicKeyToG1( const algebra::G2Point& elem ) {
     auto hash_bytes_arr = std::array< uint8_t, 32 >();
 
     uint64_t bin_len;
-    if ( !ThresholdUtils::hex2carray( hashed_pubkey.c_str(), &bin_len, hash_bytes_arr.data() ) ) {
+    if ( !ThresholdUtils::hex2carray(
+             hashed_pubkey.c_str(), &bin_len, hash_bytes_arr.data(), hash_bytes_arr.size() ) ) {
         throw std::runtime_error( "Invalid hash" );
     }
 
@@ -81,7 +82,8 @@ std::pair< algebra::G1Point, std::string > Bls::HashPublicKeyToG1WithHint(
     auto hash_bytes_arr = std::array< uint8_t, 32 >();
 
     uint64_t bin_len;
-    if ( !ThresholdUtils::hex2carray( hashed_pubkey.c_str(), &bin_len, hash_bytes_arr.data() ) ) {
+    if ( !ThresholdUtils::hex2carray(
+             hashed_pubkey.c_str(), &bin_len, hash_bytes_arr.data(), hash_bytes_arr.size() ) ) {
         throw std::runtime_error( "Invalid hash" );
     }
 

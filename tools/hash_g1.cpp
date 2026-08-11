@@ -54,7 +54,7 @@ void hash_g1( const size_t t, const size_t n ) {
     } else {
         uint64_t bin_len;
         if ( !libBLS::ThresholdUtils::hex2carray(
-                 to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data() ) ) {
+                 to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data(), hash_bytes_arr->size() ) ) {
             throw std::runtime_error( "Invalid hash" );
         }
     }
