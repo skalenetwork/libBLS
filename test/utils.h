@@ -2,11 +2,11 @@
 #define UTILS_H
 
 #include "backends/algebra.hpp"
+#include <openssl/rand.h>
 #include <threshold_encryption/TEPrivateKey.h>
 #include <threshold_encryption/TEPrivateKeyShare.h>
 #include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/TEPublicKeyShare.h>
-#include <openssl/rand.h>
 #include <array>
 #include <chrono>
 #include <stdexcept>
