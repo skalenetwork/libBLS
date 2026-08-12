@@ -144,7 +144,8 @@ int ThresholdUtils::char2int( char _input ) {
     return -1;
 }
 
-bool ThresholdUtils::hex2carray( const char* _hex, uint64_t* _bin_written_len, uint8_t* _bin, uint64_t _bin_capacity ) {
+bool ThresholdUtils::hex2carray(
+    const char* _hex, uint64_t* _bin_written_len, uint8_t* _bin, uint64_t _bin_capacity ) {
     if ( _hex == nullptr || _bin_written_len == nullptr || _bin == nullptr ) {
         return false;
     }

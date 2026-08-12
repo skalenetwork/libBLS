@@ -65,8 +65,8 @@ G1Point hashToG1( const std::string& message ) {
     auto hash_bytes_arr = std::array< uint8_t, HASH_SIZE >();
 
     uint64_t bin_len;
-    if ( !ThresholdUtils::hex2carray( message.c_str(), &bin_len, hash_bytes_arr.data(),
-             hash_bytes_arr.size() ) ) {
+    if ( !ThresholdUtils::hex2carray(
+             message.c_str(), &bin_len, hash_bytes_arr.data(), hash_bytes_arr.size() ) ) {
         throw std::runtime_error( "Invalid hash" );
     }
 

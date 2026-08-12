@@ -24,10 +24,10 @@
 
 #include <bls/BLSPublicKey.h>
 #include <bls/bls.h>
+#include <tools/utils.h>
 #include <boost/program_options.hpp>
 #include <fstream>
 #include <third_party/json.hpp>
-#include <tools/utils.h>
 
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
 #define __EXPAND_AS_STR__( x ) #x
