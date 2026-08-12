@@ -6,7 +6,10 @@
 #include <threshold_encryption/TEPrivateKeyShare.h>
 #include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/TEPublicKeyShare.h>
+#include <openssl/rand.h>
+#include <array>
 #include <chrono>
+#include <stdexcept>
 
 #define TIMER( variable, code_block )                                                   \
     auto start_##variable = std::chrono::high_resolution_clock::now();                  \
