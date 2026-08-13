@@ -2,11 +2,14 @@
 #define UTILS_H
 
 #include "backends/algebra.hpp"
+#include <openssl/rand.h>
 #include <threshold_encryption/TEPrivateKey.h>
 #include <threshold_encryption/TEPrivateKeyShare.h>
 #include <threshold_encryption/TEPublicKey.h>
 #include <threshold_encryption/TEPublicKeyShare.h>
+#include <array>
 #include <chrono>
+#include <stdexcept>
 
 #define TIMER( variable, code_block )                                                   \
     auto start_##variable = std::chrono::high_resolution_clock::now();                  \
@@ -40,7 +43,9 @@ std::string randomHexaString( size_t length );
 template < size_t N >
 std::array< uint8_t, N > randomByteArray() {
     std::array< uint8_t, N > bytes;
-    RAND_bytes( bytes.data(), N );
+    if ( RAND_bytes( bytes.data(), N ) != 1 ) {
+        throw std::runtime_error( "Failed to generate random bytes" );
+    }
     return bytes;
 }
 

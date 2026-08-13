@@ -44,7 +44,9 @@ std::string randomHexaString( size_t length ) {
 
 std::vector< uint8_t > randomByteVec( size_t length ) {
     std::vector< uint8_t > bytes( length );
-    RAND_bytes( bytes.data(), length );
+    if ( RAND_bytes( bytes.data(), length ) != 1 ) {
+        throw std::runtime_error( "Failed to generate random bytes" );
+    }
     return bytes;
 }
 
