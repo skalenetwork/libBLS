@@ -1,6 +1,6 @@
 {
   "name": "@skalenetwork/t-encrypt",
-  "version": "0.8.0",
+  "version": "0.9.0",
 
   "keywords": [
     "SKALE",
@@ -11,13 +11,6 @@
     "encryption",
     "wasm"
   ],
-  "browser": {
-    "fs": false,
-    "os": false,
-    "path": false,
-    "crypto": false,
-    "child_process": false
-  },
   "homepage": "https://github.com/skalenetwork/libBLS",
   "license": "AGPL-3.0",
   "author": "SKALE Labs and contributors",
@@ -33,14 +26,21 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "import": "./EncryptMessage.mjs",
-      "require": "./EncryptMessage.js"
+      "browser": "./EncryptMessage.mjs",
+      "node": {
+        "import": "./EncryptMessageNode.mjs",
+        "require": "./EncryptMessage.js"
+      },
+      "default": "./EncryptMessage.mjs"
     }
   },
   "files": [
     "EncryptMessage.js",
     "EncryptMessage.mjs",
-    "encrypt.js",
-    "encrypt.wasm"
+    "EncryptMessageNode.mjs",
+    "encrypt_node.js",
+    "encrypt_node.wasm",
+    "encrypt_web.js",
+    "encrypt_web.wasm"
   ]
 }

@@ -144,11 +144,39 @@ if (NOT EMSCRIPTEN)
 endif()
 
 if (EMSCRIPTEN)
-    add_executable(encrypt ../threshold_encryption/encryptMessage.cpp ../tools/utils.cpp)
-    set_target_properties(encrypt PROPERTIES LINK_FLAGS "-s EXIT_RUNTIME=1 -s USE_PTHREADS=0 -s MODULARIZE -s ALLOW_MEMORY_GROWTH=1 -s NO_DISABLE_EXCEPTION_CATCHING=1 -s EXPORTED_RUNTIME_METHODS='[\"ccall\"]' -s EXPORTED_FUNCTIONS='[\"_encryptMessage\", \"_encryptMessageDualKey\",\"_encryptMessageMockup\"]' -s ENVIRONMENT='node,web' -s SINGLE_FILE=1")
-    target_include_directories(encrypt SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
-    target_compile_definitions(encrypt PRIVATE MCL=1)
-    target_link_libraries(encrypt PRIVATE te)
+    set(ENCRYPT_SOURCES ../threshold_encryption/encryptMessage.cpp ../tools/utils.cpp)
+    set(ENCRYPT_LINK_FLAGS "-s EXIT_RUNTIME=1 -s USE_PTHREADS=0 -s MODULARIZE -s ALLOW_MEMORY_GROWTH=1 -s NO_DISABLE_EXCEPTION_CATCHING=1 -s EXPORTED_RUNTIME_METHODS='[\"ccall\"]' -s EXPORTED_FUNCTIONS='[\"_encryptMessage\", \"_encryptMessageDualKey\",\"_encryptMessageMockup\"]'")
+
+    # encrypt_node (for Node.js)
+    add_executable(encrypt_node ${ENCRYPT_SOURCES})
+    target_include_directories(encrypt_node SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
+    target_compile_definitions(encrypt_node PRIVATE MCL=1)
+    target_link_libraries(encrypt_node PRIVATE te)
+    set_target_properties(encrypt_node PROPERTIES 
+        OUTPUT_NAME "encrypt_node"
+        LINK_FLAGS "${ENCRYPT_LINK_FLAGS} -s ENVIRONMENT='node'"
+    )
+
+    # encrypt_web (for Browser / Vite / Webpack 5 / native ESM consumers)
+    add_executable(encrypt_web ${ENCRYPT_SOURCES})
+    target_include_directories(encrypt_web SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
+    target_compile_definitions(encrypt_web PRIVATE MCL=1)
+    target_link_libraries(encrypt_web PRIVATE te)
+    set_target_properties(encrypt_web PROPERTIES 
+        OUTPUT_NAME "encrypt_web"
+        LINK_FLAGS "${ENCRYPT_LINK_FLAGS} -s ENVIRONMENT='web' -s EXPORT_ES6=1"
+    )
+
+    add_custom_command(TARGET encrypt_node POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/encrypt_node.js ${CMAKE_SOURCE_DIR}/node/encrypt_node.js
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/encrypt_node.wasm ${CMAKE_SOURCE_DIR}/node/encrypt_node.wasm
+        COMMENT "Copying encrypt_node to node package folder"
+    )
+    add_custom_command(TARGET encrypt_web POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/encrypt_web.js ${CMAKE_SOURCE_DIR}/node/encrypt_web.js
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/encrypt_web.wasm ${CMAKE_SOURCE_DIR}/node/encrypt_web.wasm
+        COMMENT "Copying encrypt_web to node package folder"
+    )
 
     add_executable(encrypt_message ../test/encryptMessageJS.cpp ../tools/utils.cpp)
     target_include_directories(encrypt_message SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${THIRD_PARTY_DIR})
