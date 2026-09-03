@@ -230,10 +230,10 @@ jobs:
           python -m twine check "${wheel}"
       - name: Run t-encrypt functional test against the built wheel
         run: |
-          cd python
-          wheel="$(ls -t wheelhouse/*.whl | head -n1)"
+          wheel="$(ls -t python/wheelhouse/*.whl | head -n1)"
           python -m pip install --force-reinstall "${wheel}"
-          python -m t_encrypt.test_t_encrypt
+          tmpdir="$(mktemp -d)"
+          (cd "${tmpdir}" && python -m t_encrypt.test_t_encrypt)
       - name: Upload t-encrypt wheel
         uses: actions/upload-artifact@v4
         with:

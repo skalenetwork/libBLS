@@ -8,6 +8,7 @@ encrypt_message / encrypt_message_dual_key require a valid BLS common
 public key hex string.
 """
 
+from deps.boost_1_87_0.libs.json.src.boost_json_gdb_printers import value
 from t_encrypt import encrypt_message, encrypt_message_dual_key, encrypt_message_mockup
 
 SAMPLE_TX_HEX = "deadbeef"
@@ -25,13 +26,7 @@ DEFAULT_PUBLIC_KEY = (
 
 
 def is_hex(value: str) -> bool:
-    if not value:
-        return False
-    try:
-        int(value, 16)
-        return True
-    except ValueError:
-        return False
+    return bool(value) and all(c in "0123456789abcdefABCDEF" for c in value)
 
 
 def test_encrypt_message_mockup():
