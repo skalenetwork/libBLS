@@ -728,7 +728,7 @@ then
 				else
 					if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 					then
-						eval emconfigure ./config -fPIC -no-asm -no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT" # -no-threads
+						eval emconfigure ./config -fPIC -no-asm -no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT" --libdir=lib # -no-threads
 						sed -i 's/CROSS_COMPILE=.*/CROSS_COMPILE=/' Makefile
 					else
 						env CFLAGS="$CFLAGS -O3" CXXFLAGS="$CXXFLAGS -O3" \
