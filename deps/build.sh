@@ -212,7 +212,6 @@ CXX_STANDARD=20
 export CFLAGS="$CFLAGS -fPIC"
 export CXXFLAGS="$CXXFLAGS -fPIC"
 WITH_OPENSSL="yes"
-OPENSSL_GIT_REF="${OPENSSL_GIT_REF:-OpenSSL_1_1_1n}"
 
 WITH_BOOST="yes"
 WITH_ZLIB="yes"
@@ -719,7 +718,7 @@ then
 			echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
 			cd openssl
 			eval git fetch
-			git checkout --detach "$OPENSSL_GIT_REF"
+			git checkout --detach openssl-3.0.22
 			if [[ "$ARCH" = "x86_or_x64" || "$ARCH" = "wasm32-emscripten" ]];
 			then
 				if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
@@ -729,7 +728,7 @@ then
 				else
 					if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 					then
-						eval emconfigure ./config -fPIC -no-asm -no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT" # -no-threads
+						eval emconfigure ./config -fPIC -no-asm -no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT" --libdir=lib # -no-threads
 						sed -i 's/CROSS_COMPILE=.*/CROSS_COMPILE=/' Makefile
 					else
 						env CFLAGS="$CFLAGS -O3" CXXFLAGS="$CXXFLAGS -O3" \

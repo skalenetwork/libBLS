@@ -12,16 +12,10 @@ defaults:
     shell: bash
 jobs:
   linux_build_and_test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-      - name: Extract repo name
-        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
-          '{print $2}')
-        shell: bash
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: update apt
         run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test; sudo apt-get update
       - name: install packages
@@ -78,14 +72,12 @@ jobs:
           sudo apt-get update
 
           sudo apt-get install -y gawk sed shtool \
-            libffi-dev yasm texinfo libgnutls28-dev python3 gcc-multilib git
+            libffi-dev yasm texinfo libgnutls28-dev liblzma-dev python3 gcc-multilib git
           sudo apt-get update -qq
 
           sudo apt-get install -y python3-pip
 
-          pip3 install --upgrade pip
-
-          sudo python3 -m pip install --upgrade pip
+          sudo python3 -m pip install --ignore-installed --upgrade pip
 
           sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
 
@@ -197,10 +189,10 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.info
   build_t_encrypt_wheel:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -209,12 +201,11 @@ jobs:
         env:
           CC: gcc-11
           CXX: g++-11
-          OPENSSL_GIT_REF: openssl-3.0.15
           TARGET: all
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-11 g++-11 cmake gawk sed shtool \
-            libffi-dev yasm texinfo libgnutls28-dev gcc-multilib git patchelf
+            libffi-dev yasm texinfo libgnutls28-dev liblzma-dev gcc-multilib git patchelf
           python -m pip install --upgrade pip setuptools wheel auditwheel twine
           cd deps
           ./build.sh
@@ -237,6 +228,12 @@ jobs:
           [[ -f "${shared_library}" ]]
           ! readelf -d "${shared_library}" | grep -Eq 'lib(ssl|crypto)\.so\.1\.1'
           python -m twine check "${wheel}"
+      - name: Run t-encrypt functional test against the built wheel
+        run: |
+          wheel="$(ls -t python/wheelhouse/*.whl | head -n1)"
+          python -m pip install --force-reinstall "${wheel}"
+          tmpdir="$(mktemp -d)"
+          (cd "${tmpdir}" && python -m t_encrypt.test_t_encrypt)
       - name: Upload t-encrypt wheel
         uses: actions/upload-artifact@v4
         with:
@@ -244,10 +241,7 @@ jobs:
           path: python/wheelhouse/*.whl
   validate_t_encrypt_wheel:
     needs: build_t_encrypt_wheel
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
+    runs-on: ubuntu-24.04
     steps:
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -258,22 +252,16 @@ jobs:
         with:
           name: t-encrypt-wheel
           path: dist
-      - name: Install and import t-encrypt wheel
+      - name: Install t-encrypt wheel and run functional test
         run: |
           python -m pip install --upgrade pip
           python -m pip install dist/*.whl
-          python -c "import t_encrypt"
+          python -m t_encrypt.test_t_encrypt
   osx_build_and_test:
     runs-on: macos-15-intel
     steps:
-      - name: Extract repo name
-        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
-          '{print $2}')
-        shell: bash
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Install packages
         run: |
           brew install yasm texinfo shtool libtool coreutils
@@ -315,34 +303,28 @@ jobs:
           ./threshold_encryption/te_encrypt_message
           ./dkg_attack
   linux_build_with_emscripten:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         node-version:
           - 18.x
     steps:
-      - name: Extract repo name
-        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
-          '{print $2}')
-        shell: bash
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Update apt
         run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
       - name: Install packages
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-11 g++-11 gawk sed shtool libffi-dev yasm texinfo python3 gcc-multilib
+          sudo apt-get install -y gcc-11 g++-11 gawk sed shtool libffi-dev yasm texinfo \
+            libgnutls28-dev liblzma-dev python3 gcc-multilib
           sudo apt-get update -qq
           sudo apt-get install -y python3-pip
-          pip3 install --upgrade pip
-          sudo python3 -m pip install --upgrade pip
+          sudo python3 -m pip install --ignore-installed --upgrade pip
           sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
           sudo python3 -m pip install requests[security]
       - name: Install NODE JS
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
       - name: install cmake
@@ -384,6 +366,22 @@ jobs:
           emmake make -j$(nproc)
 
           cd ..
+      - name: Build native dependencies (for CLI tools)
+        run: |
+          export CC=gcc-11
+          export CXX=g++-11
+          export TARGET=all
+          cd deps
+          ./build.sh
+          cd ..
+      - name: Build native CLI tools
+        run: |
+          export CC=gcc-11
+          export CXX=g++-11
+          mkdir -p build_native_tools && cd build_native_tools
+          cmake ..
+          make -j$(nproc) generate_bls_keys decrypt_message
+          cd ..
       - name: Run tests
         run: |
-          bash scripts/run_emscripten_test.sh
+          bash scripts/run_emscripten_test.sh build_em build_native_tools

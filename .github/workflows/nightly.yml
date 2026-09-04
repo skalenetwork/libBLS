@@ -8,18 +8,13 @@ on:
 
 jobs:
   main_job:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     env:
       NIGHTLY_BUILD_FLAGS: "valgrind --leak-check=yes"
 
     steps:
-    - name: Extract repo name
-      run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
-      shell: bash
-      env:
-        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Update apt
       run: |
         sudo add-apt-repository ppa:ubuntu-toolchain-r/test
@@ -35,7 +30,7 @@ jobs:
     - name: Install more packages
       run: |
         sudo apt-get install -y gawk sed shtool \
-          libffi-dev yasm texinfo libgnutls28-dev libc6-dbg gcc-multilib
+          libffi-dev yasm texinfo libgnutls28-dev liblzma-dev libc6-dbg gcc-multilib
         sudo snap install valgrind --classic
         python -m pip install --upgrade pip
         pip install coincurve
@@ -92,36 +87,30 @@ jobs:
         ./scripts/run_tools_test.sh
   
   linux_build_with_emscripten:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     strategy:
       matrix:
         node-version: [18.x]
 
     steps:
-    - name: Extract repo name
-      run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $2}')
-      shell: bash
-      env:
-        ACTIONS_ALLOW_UNSECURE_COMMANDS: true
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Update apt
       run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
     - name: Install packages
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc-11 g++-11 gawk sed shtool \
-          libffi-dev yasm texinfo python3.6 lcov gcc-multilib
+          libffi-dev yasm texinfo libgnutls28-dev liblzma-dev python3 lcov gcc-multilib
         sudo apt-get update -qq
         sudo apt-get install -y python3-pip
-        pip3 install --upgrade pip
-        sudo python3 -m pip install --upgrade pip
+        sudo python3 -m pip install --ignore-installed --upgrade pip
         sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
         sudo python3 -m pip install requests[security]
 
     - name: Install NODE JS
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
   
@@ -157,6 +146,24 @@ jobs:
         emmake make -j$(nproc)
         cd ..
 
+    - name: Build native dependencies (for CLI tools)
+      run: |
+        export CC=gcc-11
+        export CXX=g++-11
+        export TARGET=all
+        cd deps
+        ./build.sh
+        cd ..
+
+    - name: Build native CLI tools
+      run: |
+        export CC=gcc-11
+        export CXX=g++-11
+        mkdir -p build_native_tools && cd build_native_tools
+        cmake ..
+        make -j$(nproc) generate_bls_keys decrypt_message
+        cd ..
+
     - name: Run tests
       run: |
-        bash scripts/run_emscripten_test.sh
+        bash scripts/run_emscripten_test.sh build_em build_native_tools
