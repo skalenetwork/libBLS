@@ -241,10 +241,7 @@ jobs:
           path: python/wheelhouse/*.whl
   validate_t_encrypt_wheel:
     needs: build_t_encrypt_wheel
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
+    runs-on: ubuntu-24.04
     steps:
       - name: Set up Python
         uses: actions/setup-python@v5
