@@ -15,3 +15,5 @@ test/dkgpython.so
 test/test_sgx.py
 qt_build/
 node/node_modules
+tools/generate_bls_keys
+tools/decrypt_message
