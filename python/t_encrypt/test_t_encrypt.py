@@ -8,7 +8,6 @@ encrypt_message / encrypt_message_dual_key require a valid BLS common
 public key hex string.
 """
 
-from deps.boost_1_87_0.libs.json.src.boost_json_gdb_printers import value
 from t_encrypt import encrypt_message, encrypt_message_dual_key, encrypt_message_mockup
 
 SAMPLE_TX_HEX = "deadbeef"
