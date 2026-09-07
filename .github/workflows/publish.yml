@@ -258,8 +258,6 @@ jobs:
           name: wasm-build-${{ needs.resolve_release_metadata.outputs.version }}
           path: |
             build_em/threshold_encryption/encrypt.js
-            build_em/threshold_encryption/encrypt.wasm
-            build_em/threshold_encryption/encrypt.worker.js
 
   package_npm:
     needs:
@@ -286,8 +284,6 @@ jobs:
         run: |
           mkdir -p node
           cp -f wasm-artifacts/encrypt.js node/
-          cp -f wasm-artifacts/encrypt.wasm node/
-          cp -f wasm-artifacts/encrypt.worker.js node/
           npm --prefix node version ${{ needs.resolve_release_metadata.outputs.npm_version }} --no-git-tag-version
           npm --prefix node pack
 
