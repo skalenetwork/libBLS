@@ -47,8 +47,9 @@ fi
 # If bump is required (e.g. for stable), check that tag does not already exist
 if [ "${REQUIRE_BUMP}" = "true" ] || [ "${REQUIRE_BUMP}" = "1" ]; then
     git fetch --tags
-    if git rev-parse "${TARGET_VERSION}" >/dev/null 2>&1 || git rev-parse "v${TARGET_VERSION}" >/dev/null 2>&1; then
-        echo "::error::Tag ${TARGET_VERSION} already exists in repository tags! Please use a new version."
+    if git show-ref --tags --quiet --verify "refs/tags/${TARGET_VERSION}" \
+        || git show-ref --tags --quiet --verify "refs/tags/v${TARGET_VERSION}"; then
+        echo "::error::Tag ${TARGET_VERSION} (or v${TARGET_VERSION}) already exists in repository tags! Please use a new version."
         exit 1
     fi
 fi

@@ -285,9 +285,9 @@ jobs:
       - name: Assemble npm package
         run: |
           mkdir -p node
-          cp -f wasm-artifacts/encrypt.js node/
-          cp -f wasm-artifacts/encrypt.wasm node/
-          cp -f wasm-artifacts/encrypt.worker.js node/
+          cp -f wasm-artifacts/build_em/threshold_encryption/encrypt.js node/
+          cp -f wasm-artifacts/build_em/threshold_encryption/encrypt.wasm node/
+          cp -f wasm-artifacts/build_em/threshold_encryption/encrypt.worker.js node/
           npm --prefix node version ${{ needs.resolve_release_metadata.outputs.npm_version }} --no-git-tag-version
           npm --prefix node pack
 
