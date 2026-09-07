@@ -281,11 +281,11 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Assemble npm package
+        working-directory: node
         run: |
-          mkdir -p node
-          cp -f wasm-artifacts/encrypt.js node/
-          npm --prefix node version ${{ needs.resolve_release_metadata.outputs.npm_version }} --no-git-tag-version
-          npm --prefix node pack
+          cp -f ../wasm-artifacts/encrypt.js ./
+          npm version ${{ needs.resolve_release_metadata.outputs.npm_version }} --no-git-tag-version
+          npm pack
 
       - name: Upload npm tarball artifact
         uses: actions/upload-artifact@v4
