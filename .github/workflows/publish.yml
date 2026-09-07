@@ -6,6 +6,12 @@ on:
       - beta
       - stable
   workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to PyPI, npm, and GitHub Releases (leave false to only build/test)'
+        required: true
+        default: false
+        type: boolean
 
 concurrency:
   group: publish-${{ github.repository }}
@@ -272,6 +278,7 @@ jobs:
       - resolve_release_metadata
       - ready_to_publish
       - build_python
+    if: github.event_name == 'push' || inputs.publish == true
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -306,6 +313,7 @@ jobs:
       - resolve_release_metadata
       - ready_to_publish
       - package_npm
+    if: github.event_name == 'push' || inputs.publish == true
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -348,7 +356,12 @@ jobs:
       - publish_pypi
       - publish_npm
       - build_native
-    if: needs.resolve_release_metadata.outputs.branch == 'stable'
+    if: >-
+      always() &&
+      needs.resolve_release_metadata.outputs.branch == 'stable' &&
+      (github.event_name == 'push' || inputs.publish == true) &&
+      needs.publish_pypi.result == 'success' &&
+      needs.publish_npm.result == 'success'
     permissions:
       contents: write
     runs-on: ubuntu-24.04

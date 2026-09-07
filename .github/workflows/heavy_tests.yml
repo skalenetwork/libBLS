@@ -26,6 +26,12 @@ on:
   schedule:
     - cron: '0 0 * * *'
   workflow_dispatch:
+    inputs:
+      run_valgrind:
+        description: 'Wrap unit tests with Valgrind (leave false for a fast native-only smoke run)'
+        required: true
+        default: true
+        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -35,7 +41,9 @@ jobs:
   main_job:
     runs-on: ubuntu-24.04
     env:
-      NIGHTLY_BUILD_FLAGS: "valgrind --leak-check=yes"
+      NIGHTLY_BUILD_FLAGS: >-
+        ${{ (github.event_name != 'workflow_dispatch' || inputs.run_valgrind == true)
+            && 'valgrind --leak-check=yes' || '' }}
 
     steps:
     - name: Checkout
