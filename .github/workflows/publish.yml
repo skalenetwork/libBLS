@@ -5,18 +5,19 @@ on:
     branches:
       - beta
       - stable
+  pull_request:
+    branches:
+      - develop
+      - beta
+      - stable
   workflow_dispatch:
-    inputs:
-      publish:
-        description: 'Publish to PyPI, npm, and GitHub Releases (leave false to only build/test)'
-        required: true
-        default: false
-        type: boolean
 
 concurrency:
-  group: publish-${{ github.repository }}
-  queue: max
-  cancel-in-progress: false
+  group: >-
+    ${{ github.event_name == 'pull_request'
+        && format('publish-pr-{0}', github.event.pull_request.number)
+        || format('publish-{0}', github.repository) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -42,8 +43,16 @@ jobs:
 
       - name: Resolve release metadata
         id: meta
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          BRANCH="${GITHUB_REF##*/}"
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            BRANCH="$BASE_REF"
+          else
+            BRANCH="${GITHUB_REF##*/}"
+          fi
           BASE_VERSION="$(cat VERSION.txt)"
           if [[ "$BRANCH" == "stable" ]]; then
             PRERELEASE=false
@@ -52,14 +61,39 @@ jobs:
           fi
 
           NPM_PACKAGE_NAME="$(jq -r '.name' node/package.json)"
-          NPM_VERSION="$(bash ./scripts/ci/calculate_version_npm.sh "$NPM_PACKAGE_NAME" "$BASE_VERSION" "$BRANCH")"
-          PYPI_VERSION="$(bash ./scripts/ci/calculate_version_pypi.sh t-encrypt "$BASE_VERSION" "$BRANCH")"
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            # Validation-only build: never publishes, so skip the live npm/PyPI
+            # registry lookups and synthesize a deterministic, ecosystem-valid
+            # version scoped to this PR instead.
+            case "$BRANCH" in
+              stable)
+                NPM_VERSION="$BASE_VERSION"
+                PYPI_VERSION="$BASE_VERSION"
+                ;;
+              beta)
+                NPM_VERSION="${BASE_VERSION}-beta.pr${PR_NUMBER}"
+                PYPI_VERSION="${BASE_VERSION}rc${PR_NUMBER}"
+                ;;
+              *)
+                NPM_VERSION="${BASE_VERSION}-develop.pr${PR_NUMBER}"
+                PYPI_VERSION="${BASE_VERSION}.dev${PR_NUMBER}"
+                ;;
+            esac
+          else
+            NPM_VERSION="$(bash ./scripts/ci/calculate_version_npm.sh "$NPM_PACKAGE_NAME" "$BASE_VERSION" "$BRANCH")"
+            PYPI_VERSION="$(bash ./scripts/ci/calculate_version_pypi.sh t-encrypt "$BASE_VERSION" "$BRANCH")"
+          fi
 
           echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
           echo "version=${BASE_VERSION}" >> "$GITHUB_OUTPUT"
           echo "prerelease=${PRERELEASE}" >> "$GITHUB_OUTPUT"
           echo "npm_version=${NPM_VERSION}" >> "$GITHUB_OUTPUT"
           echo "pypi_version=${PYPI_VERSION}" >> "$GITHUB_OUTPUT"
+
+          PUBLISHABLE=false
+          if [[ "$EVENT_NAME" == "push" ]]; then
+            PUBLISHABLE=true
+          fi
 
           cat > release-manifest.json <<EOF
           {
@@ -68,7 +102,8 @@ jobs:
             "version": "${BASE_VERSION}",
             "npm_version": "${NPM_VERSION}",
             "pypi_version": "${PYPI_VERSION}",
-            "prerelease": ${PRERELEASE}
+            "prerelease": ${PRERELEASE},
+            "publishable": ${PUBLISHABLE}
           }
           EOF
 
@@ -278,7 +313,7 @@ jobs:
       - resolve_release_metadata
       - ready_to_publish
       - build_python
-    if: github.event_name == 'push' || inputs.publish == true
+    if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -296,10 +331,23 @@ jobs:
           python-version: '3.13'
 
       - name: Check existing PyPI release
+        id: check_pypi
         run: |
-          python3 ./scripts/ci/check_pypi_release.py t-encrypt "${{ needs.resolve_release_metadata.outputs.pypi_version }}" "$PWD/python-artifacts"
+          set +e
+          OUTPUT="$(python3 ./scripts/ci/check_pypi_release.py t-encrypt "${{ needs.resolve_release_metadata.outputs.pypi_version }}" "$PWD/python-artifacts")"
+          CHECK_STATUS=$?
+          echo "$OUTPUT"
+          if [[ $CHECK_STATUS -ne 0 ]]; then
+            exit $CHECK_STATUS
+          fi
+          if [[ "$OUTPUT" == MATCH:* ]]; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Publish to PyPI
+        if: steps.check_pypi.outputs.already_published != 'true'
         working-directory: python-artifacts
         env:
           TWINE_USERNAME: ${{ secrets.PIP_USERNAME }}
@@ -313,7 +361,7 @@ jobs:
       - resolve_release_metadata
       - ready_to_publish
       - package_npm
-    if: github.event_name == 'push' || inputs.publish == true
+    if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -332,14 +380,27 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Check existing npm release
+        id: check_npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          set +e
           TARBALL="$(ls -1 npm-artifacts/*.tgz | head -n 1)"
           PACKAGE_NAME="$(jq -r '.name' node/package.json)"
-          bash ./scripts/ci/check_npm_release.sh "$PACKAGE_NAME" "${{ needs.resolve_release_metadata.outputs.npm_version }}" "$TARBALL"
+          OUTPUT="$(bash ./scripts/ci/check_npm_release.sh "$PACKAGE_NAME" "${{ needs.resolve_release_metadata.outputs.npm_version }}" "$TARBALL")"
+          CHECK_STATUS=$?
+          echo "$OUTPUT"
+          if [[ $CHECK_STATUS -ne 0 ]]; then
+            exit $CHECK_STATUS
+          fi
+          if [[ "$OUTPUT" == MATCH:* ]]; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Publish to npm
+        if: steps.check_npm.outputs.already_published != 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
@@ -359,7 +420,7 @@ jobs:
     if: >-
       always() &&
       needs.resolve_release_metadata.outputs.branch == 'stable' &&
-      (github.event_name == 'push' || inputs.publish == true) &&
+      github.event_name == 'push' &&
       needs.publish_pypi.result == 'success' &&
       needs.publish_npm.result == 'success'
     permissions:
