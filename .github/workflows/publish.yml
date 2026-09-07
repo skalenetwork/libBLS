@@ -1,233 +1,393 @@
 name: Build and publish libBLS
+
 on:
   push:
     branches:
-      - master
-      - develop
       - beta
       - stable
+  workflow_dispatch:
+
+concurrency:
+  group: publish-${{ github.repository }}
+  queue: max
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 defaults:
   run:
     shell: bash
+
 jobs:
-  build:
+  resolve_release_metadata:
     runs-on: ubuntu-24.04
-
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      branch: ${{ steps.meta.outputs.branch }}
+      prerelease: ${{ steps.meta.outputs.prerelease }}
+      npm_version: ${{ steps.meta.outputs.npm_version }}
+      pypi_version: ${{ steps.meta.outputs.pypi_version }}
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
+      - name: Resolve release metadata
+        id: meta
+        run: |
+          BRANCH="${GITHUB_REF##*/}"
+          BASE_VERSION="$(cat VERSION.txt)"
+          if [[ "$BRANCH" == "stable" ]]; then
+            PRERELEASE=false
+          else
+            PRERELEASE=true
+          fi
 
-    - uses: actions/setup-node@v4
-      with:
-        node-version: '18.x'
-        registry-url: 'https://registry.npmjs.org'
+          NPM_PACKAGE_NAME="$(jq -r '.name' node/package.json)"
+          NPM_VERSION="$(bash ./scripts/ci/calculate_version_npm.sh "$NPM_PACKAGE_NAME" "$BASE_VERSION" "$BRANCH")"
+          PYPI_VERSION="$(bash ./scripts/ci/calculate_version_pypi.sh t-encrypt "$BASE_VERSION" "$BRANCH")"
 
-    - name: Update apt
-      run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test; sudo apt-get update
-    - name: Install packages
-      run: |
-        sudo apt-get install -y software-properties-common
-        sudo apt-get install -y gcc-11 g++-11
-    - name: use g++-11 by default
-      run: |
-        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 11
-        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 11
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "version=${BASE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "prerelease=${PRERELEASE}" >> "$GITHUB_OUTPUT"
+          echo "npm_version=${NPM_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "pypi_version=${PYPI_VERSION}" >> "$GITHUB_OUTPUT"
 
-    - name: Install more packages
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gawk sed shtool \
-          libffi-dev yasm texinfo libgnutls28-dev liblzma-dev gcc-multilib jq patchelf
-    - name: Build dependencies
-      run: |
-        export CC=gcc-11
-        export CXX=g++-11
-        export TARGET=all
-        export CMAKE_BUILD_TYPE=Release
-        cd deps
-        ./build.sh
+          cat > release-manifest.json <<EOF
+          {
+            "source_sha": "${GITHUB_SHA}",
+            "branch": "${BRANCH}",
+            "version": "${BASE_VERSION}",
+            "npm_version": "${NPM_VERSION}",
+            "pypi_version": "${PYPI_VERSION}",
+            "prerelease": ${PRERELEASE}
+          }
+          EOF
 
-    - name: Configure
-      run: |
-        export CC=gcc-11
-        export CXX=g++-11
-        export TARGET=all
-        mkdir -p build && cd build
-        cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
+      - name: Upload release manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-manifest
+          path: release-manifest.json
 
-    - name: Build
-      run: |
-        export CC=gcc-11
-        export CXX=g++-11
-        export TARGET=all
-        cd build
-        make -j$(nproc)
+  build_native:
+    needs: resolve_release_metadata
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Build dependencies wasm
-      run: |
-        export CC=gcc-11
-        export CXX=g++-11
-        export TARGET=all
-        export CMAKE_BUILD_TYPE=Release
-        cd deps
-        ./clean.sh
-        ./build.sh WITH_EMSCRIPTEN=1
-        cd ..
+      - name: Setup Linux & Dependencies
+        uses: ./.github/actions/setup-linux-env
+        with:
+          extra-apt-packages: 'jq patchelf'
 
-    - name: Build wasm
-      run: |
-        cd deps/emsdk
-        ./emsdk install latest
-        ./emsdk activate latest
-        source ./emsdk_env.sh
-        cd ../..
-        mkdir -p build_em && cd build_em
-        export LIBRARIES_ROOT=../deps/deps_inst/wasm32-emscripten/lib
-        emcmake cmake -DCMAKE_BUILD_TYPE=MinSizeRel -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a ..
-        emmake make -j$(nproc)
-        cd ..
-        cp build_em/threshold_encryption/encrypt.* node/
+      - name: Configure native build
+        run: |
+          export CC=gcc-11
+          export CXX=g++-11
+          export TARGET=all
+          mkdir -p build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
-    - name: Build t-encrypt Python native library
-      run: |
-        export CC=gcc-11
-        export CXX=g++-11
-        export TARGET=all
-        export CMAKE_BUILD_TYPE=Release
-        cd deps
-        ./clean.sh
-        ./build.sh
-        cd ..
-        mkdir -p build_t_encrypt_python
-        cd build_t_encrypt_python
-        cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
-        make -j$(nproc) t_encrypt_python
+      - name: Build native binaries
+        run: |
+          export CC=gcc-11
+          export CXX=g++-11
+          export TARGET=all
+          cd build
+          make -j$(nproc)
 
-    - name: Calculate version
-      run: |
-        export BRANCH=${GITHUB_REF##*/}
-        echo "Branch $BRANCH"
-        echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
-        export VERSION=$(cat VERSION.txt)
-        export VERSION=$(bash ./scripts/calculate_version.sh $BRANCH $VERSION)
-        echo "VERSION=$VERSION" >> "$GITHUB_ENV"
-        echo "Version $VERSION"
-        export RELEASE=true
-        echo "RELEASE=$RELEASE" >> "$GITHUB_ENV"
+      - name: Upload native release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-release-${{ needs.resolve_release_metadata.outputs.version }}
+          path: |
+            build/bls_glue
+            build/hash_g1
+            build/verify_bls
 
-    - name: Resolve t-encrypt version and library path
-      run: |
-        lib_path="${PWD}/build_t_encrypt_python/threshold_encryption/libt_encrypt_python.so"
-        echo "T_ENCRYPT_LIB_PATH=${lib_path}" >> "$GITHUB_ENV"
-        python3 -m pip install --upgrade pip setuptools
+  build_python:
+    needs: resolve_release_metadata
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-        # Calculate Python package version
-        cd python
-        BASE_VERSION=$(python3 setup_t_encrypt.py --version)
-        cd ..
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
 
-        PACKAGE_NAME="t-encrypt"
-        VERSION=$(bash ./scripts/calculate_version_pypi.sh $PACKAGE_NAME $BASE_VERSION ${{ env.BRANCH }})
+      - name: Setup Linux & Dependencies
+        uses: ./.github/actions/setup-linux-env
+        with:
+          extra-apt-packages: 'jq patchelf'
 
-        echo "PACKAGE_VERSION=${VERSION}" >> "$GITHUB_ENV"
+      - name: Configure t-encrypt Python native library build
+        run: |
+          export CC=gcc-11
+          export CXX=g++-11
+          export TARGET=all
+          export CMAKE_BUILD_TYPE=Release
+          mkdir -p build_t_encrypt_python
+          cd build_t_encrypt_python
+          cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
-        echo "Using lib: ${lib_path}"
-        echo "Publishing t-encrypt version: ${VERSION}"
+      - name: Build t-encrypt Python native library
+        run: |
+          export CC=gcc-11
+          export CXX=g++-11
+          export TARGET=all
+          cd build_t_encrypt_python
+          make -j$(nproc) t_encrypt_python
 
-    - name: Build t-encrypt Python distributions
-      working-directory: python
-      env:
-        PACKAGE_VERSION: ${{ env.PACKAGE_VERSION }}
-        T_ENCRYPT_LIB_PATH: ${{ env.T_ENCRYPT_LIB_PATH }}
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade setuptools wheel twine auditwheel
-        CURRENT_VERSION="$(python setup_t_encrypt.py --version)"
-        sed -i "s/${CURRENT_VERSION}/${PACKAGE_VERSION}/g" setup_t_encrypt.py
-        python setup_t_encrypt.py sdist bdist_wheel
-        raw_wheel="$(ls -t dist/*.whl | head -n1)"
-        [[ "${raw_wheel}" != *-py3-none-any.whl ]] || \
-          { echo "Wheel bundling libencrypt.so must be platform-tagged: ${raw_wheel}" >&2; exit 1; }
-        auditwheel show "${raw_wheel}"
-        auditwheel repair "${raw_wheel}" -w wheelhouse
-        wheel="$(ls -t wheelhouse/*.whl | head -n1)"
-        [[ "${wheel}" == *manylinux*.whl ]] || { echo "Repaired wheel must be manylinux-tagged: ${wheel}" >&2; exit 1; }
-        python -m zipfile -e "${wheel}" wheel-check
-        shared_library="wheel-check/t_encrypt/libencrypt.so"
-        [[ -f "${shared_library}" ]] || { echo "libencrypt.so was not found in ${wheel}" >&2; exit 1; }
-        ! readelf -d "${shared_library}" | grep -Eq 'lib(ssl|crypto)\.so\.1\.1' || \
-          { echo "${shared_library} depends on OpenSSL 1.1" >&2; exit 1; }
-        python -m twine check dist/*.tar.gz wheelhouse/*.whl
+      - name: Build t-encrypt Python distributions
+        working-directory: python
+        env:
+          PACKAGE_VERSION: ${{ needs.resolve_release_metadata.outputs.pypi_version }}
+          T_ENCRYPT_LIB_PATH: ${{ github.workspace }}/build_t_encrypt_python/threshold_encryption/libt_encrypt_python.so
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade setuptools wheel twine auditwheel
+          CURRENT_VERSION="$(python setup_t_encrypt.py --version)"
+          sed -i "s/${CURRENT_VERSION}/${PACKAGE_VERSION}/g" setup_t_encrypt.py
+          python setup_t_encrypt.py sdist bdist_wheel
+          raw_wheel="$(ls -t dist/*.whl | head -n1)"
+          [[ "${raw_wheel}" != *-py3-none-any.whl ]] || \
+            { echo "Wheel bundling libencrypt.so must be platform-tagged: ${raw_wheel}" >&2; exit 1; }
+          auditwheel show "${raw_wheel}"
+          auditwheel repair "${raw_wheel}" -w wheelhouse
+          wheel="$(ls -t wheelhouse/*.whl | head -n1)"
+          [[ "${wheel}" == *manylinux*.whl ]] || { echo "Repaired wheel must be manylinux-tagged: ${wheel}" >&2; exit 1; }
+          python -m zipfile -e "${wheel}" wheel-check
+          shared_library="wheel-check/t_encrypt/libencrypt.so"
+          [[ -f "${shared_library}" ]] || { echo "libencrypt.so was not found in ${wheel}" >&2; exit 1; }
+          ! readelf -d "${shared_library}" | grep -Eq 'lib(ssl|crypto)\.so\.1\.1' || \
+            { echo "${shared_library} depends on OpenSSL 1.1" >&2; exit 1; }
+          python -m twine check dist/*.tar.gz wheelhouse/*.whl
 
-    - name: Publish t-encrypt to PyPI
-      working-directory: python
-      env:
-        TWINE_USERNAME: ${{ secrets.PIP_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PIP_PASSWORD }}
-      run: |
-        python -m twine upload dist/*.tar.gz wheelhouse/*.whl
+      - name: Upload Python release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-release-${{ needs.resolve_release_metadata.outputs.pypi_version }}
+          path: |
+            python/dist/*.tar.gz
+            python/wheelhouse/*.whl
 
-    - name: Publish on npm
-      if: github.ref != 'refs/heads/stable'
-      run: |
-        cd node
-        export PACKAGE_NAME=$(jq -r '.name' package.json)
-        export JS_LIBRARY_BASE_VERSION="$(npm run --silent version)"
-        export JS_LIBRARY_VERSION=$(bash ./../scripts/calculate_version_npm.sh $PACKAGE_NAME $JS_LIBRARY_BASE_VERSION $BRANCH)
-        npm version $JS_LIBRARY_VERSION --no-git-tag-version
-        npm publish --access public --tag ${{ env.BRANCH }}
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-    - name: Publish on npm (stable)
-      if: github.ref == 'refs/heads/stable'
-      run: |
-        cd node
-        npm publish --access public
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+  build_wasm:
+    needs: resolve_release_metadata
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@latest
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
-      with:
-        tag_name: ${{ env.VERSION }}
-        release_name: ${{ env.VERSION }}
-        draft: false
-        prerelease: true
+      - name: Setup Linux & Dependencies
+        uses: ./.github/actions/setup-linux-env
+        with:
+          extra-apt-packages: 'jq patchelf'
+          with-emscripten: 'true'
 
-    - name: Upload bls_glue to Release
-      uses: actions/upload-release-asset@latest
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/bls_glue
-        asset_name: bls_glue
-        asset_content_type: application/octet-stream
+      - name: Configure wasm build
+        run: |
+          source deps/emsdk/emsdk_env.sh
+          mkdir -p build_em
+          cd build_em
+          export LIBRARIES_ROOT=../deps/deps_inst/wasm32-emscripten/lib
+          emcmake cmake .. \
+            -DCMAKE_BUILD_TYPE=MinSizeRel \
+            -DEMSCRIPTEN=ON \
+            -DBUILD_TESTS=OFF \
+            -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a \
+            -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a \
+            -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a
 
-    - name: Upload hash_g1 to Release
-      uses: actions/upload-release-asset@latest
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/hash_g1
-        asset_name: hash_g1
-        asset_content_type: application/octet-stream
+      - name: Build wasm binaries
+        run: |
+          source deps/emsdk/emsdk_env.sh
+          cd build_em
+          emmake make -j$(nproc)
 
-    - name: Upload verify_bls to Release
-      uses: actions/upload-release-asset@latest
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/verify_bls
-        asset_name: verify_bls
-        asset_content_type: application/octet-stream
+      - name: Upload wasm build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-build-${{ needs.resolve_release_metadata.outputs.version }}
+          path: |
+            build_em/threshold_encryption/encrypt.js
+            build_em/threshold_encryption/encrypt.wasm
+            build_em/threshold_encryption/encrypt.worker.js
+
+  package_npm:
+    needs:
+      - resolve_release_metadata
+      - build_wasm
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download wasm build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: wasm-build-${{ needs.resolve_release_metadata.outputs.version }}
+          path: wasm-artifacts
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Assemble npm package
+        run: |
+          mkdir -p node
+          cp -f wasm-artifacts/encrypt.js node/
+          cp -f wasm-artifacts/encrypt.wasm node/
+          cp -f wasm-artifacts/encrypt.worker.js node/
+          npm --prefix node version ${{ needs.resolve_release_metadata.outputs.npm_version }} --no-git-tag-version
+          npm --prefix node pack
+
+      - name: Upload npm tarball artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-release-${{ needs.resolve_release_metadata.outputs.npm_version }}
+          path: node/*.tgz
+
+  ready_to_publish:
+    needs:
+      - resolve_release_metadata
+      - build_native
+      - build_python
+      - package_npm
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Gate publication
+        run: echo "All build jobs succeeded; publication can proceed."
+
+  publish_pypi:
+    needs:
+      - resolve_release_metadata
+      - ready_to_publish
+      - build_python
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Python artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: python-release-${{ needs.resolve_release_metadata.outputs.pypi_version }}
+          path: python-artifacts
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Check existing PyPI release
+        run: |
+          python3 ./scripts/ci/check_pypi_release.py t-encrypt "${{ needs.resolve_release_metadata.outputs.pypi_version }}" "$PWD/python-artifacts"
+
+      - name: Publish to PyPI
+        working-directory: python-artifacts
+        env:
+          TWINE_USERNAME: ${{ secrets.PIP_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PIP_PASSWORD }}
+        run: |
+          python -m pip install --upgrade pip twine
+          python -m twine upload dist/*.tar.gz wheelhouse/*.whl
+
+  publish_npm:
+    needs:
+      - resolve_release_metadata
+      - ready_to_publish
+      - package_npm
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download npm tarball
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-release-${{ needs.resolve_release_metadata.outputs.npm_version }}
+          path: npm-artifacts
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Check existing npm release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          TARBALL="$(ls -1 npm-artifacts/*.tgz | head -n 1)"
+          PACKAGE_NAME="$(jq -r '.name' node/package.json)"
+          bash ./scripts/ci/check_npm_release.sh "$PACKAGE_NAME" "${{ needs.resolve_release_metadata.outputs.npm_version }}" "$TARBALL"
+
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          TARBALL="$(ls -1 npm-artifacts/*.tgz | head -n 1)"
+          if [[ "${{ needs.resolve_release_metadata.outputs.branch }}" == "beta" ]]; then
+            npm publish "$TARBALL" --access public --tag beta
+          else
+            npm publish "$TARBALL" --access public
+          fi
+
+  publish_github_release:
+    needs:
+      - resolve_release_metadata
+      - publish_pypi
+      - publish_npm
+      - build_native
+    if: needs.resolve_release_metadata.outputs.branch == 'stable'
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download native artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: native-release-${{ needs.resolve_release_metadata.outputs.version }}
+          path: native-artifacts
+
+      - name: Validate release tag state
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ needs.resolve_release_metadata.outputs.version }}"
+          HEAD_SHA="${{ github.sha }}"
+          EXISTING="$(git ls-remote --tags origin "refs/tags/${TAG}" | awk '{print $1}')"
+          if [[ -n "$EXISTING" && "$EXISTING" != "$HEAD_SHA" ]]; then
+            echo "Tag ${TAG} already exists and points to a different commit; refusing to move it." >&2
+            exit 1
+          fi
+          if [[ -z "$EXISTING" ]]; then
+            git tag "$TAG" "$HEAD_SHA"
+            git push origin "refs/tags/${TAG}"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.resolve_release_metadata.outputs.version }}
+          name: ${{ needs.resolve_release_metadata.outputs.version }}
+          draft: false
+          prerelease: false
+          files: |
+            native-artifacts/bls_glue
+            native-artifacts/hash_g1
+            native-artifacts/verify_bls
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
