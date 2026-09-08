@@ -326,7 +326,7 @@ BOOST_AUTO_TEST_CASE( libffObjsToString ) {
             std::vector< std::string > pkey_str_vect = pkey_share.toString();
             BLSPublicKeyShare pkey_from_str( pkey_str_vect, num_signed, num_all );
             BOOST_REQUIRE( pkey_share.getPublicKey() == pkey_from_str.getPublicKey() );
-            BOOST_REQUIRE( pkey_share.VerifySigWithHelper( hash_ptr,
+            BOOST_REQUIRE( pkey_share.VerifySig( hash_ptr,
                 sigSet.getSigShareByIndex( participants.at( i ) ), num_signed, num_all ) );
         }
 
@@ -348,7 +348,7 @@ BOOST_AUTO_TEST_CASE( libffObjsToString ) {
         std::vector< std::string > common_pkey_str_vect = common_pkey.toString();
         BLSPublicKey common_pkey_from_str( common_pkey_str_vect );
         BOOST_REQUIRE( common_pkey.getPublicKey() == common_pkey_from_str.getPublicKey() );
-        BOOST_REQUIRE( common_pkey.VerifySigWithHelper( hash_ptr, common_sig_ptr ) );
+        BOOST_REQUIRE( common_pkey.VerifySig( hash_ptr, common_sig_ptr ) );
 
         std::map< size_t, BLSPublicKeyShare > pkeys_map;
         for ( size_t i = 0; i < num_signed; ++i ) {

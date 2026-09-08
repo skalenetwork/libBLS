@@ -8,9 +8,9 @@
 
 **BLSPrivateKey** - class for common private key
 
-**BLSPublicKeyShare** - class for public key for each participant. Has methods _VerifySig_ and _VerifySigWithHelper_ to Verify a piece of signature.
+**BLSPublicKeyShare** - class for public key for each participant. Has method _VerifySig_ to Verify a piece of signature.
 
-**BLSPublicKey** - class for common public key. Has method _VerifySig_ and _VerifySigWithHelper_ for verifying common signature.
+**BLSPublicKey** - class for common public key. Has method _VerifySig_ for verifying common signature.
 
 **BLSSigShare** - class for a piece of common signature.
 
@@ -74,16 +74,8 @@ std::shared_ptr<BLSSignature> signature_ptr = SigSet.merge();
 
 6.  Verify common signature with common public key
 
-If you need to be compatible with Ethereum
-
 ```cpp
-assert( publicKey.VerifySigWithHelper(hash_ptr, signature_ptr, t, n);
-```
-
-If you need not to be compatible with Ethereum
-
-```cpp
-assert( publicKey.VerifySig(hash_ptr, signature_ptr, t, n );
+assert( publicKey.VerifySig(hash_ptr, signature_ptr, t, n) );
 ```
 
 Here is an example of BLS threshold signatures algorithm with t = 3, n = 4.

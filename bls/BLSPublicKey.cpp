@@ -64,32 +64,6 @@ bool BLSPublicKey::VerifySig( const std::array< uint8_t, 32 >& hash, const BLSSi
     return res;
 }
 
-bool BLSPublicKey::VerifySigWithHelper(
-    const std::array< uint8_t, 32 >& hash, const BLSSignature& sign ) {
-    if ( !sign.getSig().isValid() ) {
-        throw libBLS::ThresholdUtils::IncorrectInput( "Sig share is not valid" );
-    }
-
-    std::string hint = sign.getHint();
-
-    std::pair< algebra::FqElement, algebra::FqElement > y_shift_x = algebra::parseHint( hint );
-
-    algebra::FqElement x = algebra::hashToFq( hash );
-    x = x + y_shift_x.second;
-
-    algebra::FqElement y_sqr = y_shift_x.first ^ 2;
-    algebra::FqElement x3B = x ^ 3;
-    x3B = x3B + algebra::AltBn128Contract::coeffB();
-
-    if ( y_sqr != x3B )
-        return false;
-
-    algebra::G1Point hashG1( x, y_shift_x.first, algebra::FqElement::one() );
-
-    return algebra::verifyPairingEq(
-        sign.getSig(), algebra::G2Point::generator(), hashG1, publicKey );
-}
-
 bool BLSPublicKey::AggregatedVerifySig( std::vector< std::array< uint8_t, 32 > >& hash_ptr_vec,
     std::vector< BLSSignature >& sign_ptr_vec ) {
     if ( hash_ptr_vec.size() != sign_ptr_vec.size() ) {
