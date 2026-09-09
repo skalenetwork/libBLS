@@ -45,9 +45,11 @@ class BinaryDistribution(Distribution):
     def has_ext_modules(self):
         return True
 
+# Note: The version below is a placeholder. CI release workflows dynamically stamp
+# the version using VERSION.txt as the single source of truth.
 setup(
     name='t-encrypt',
-    version='0.0.2',
+    version='0.0.0',
     description='Python bindings for SKALE Threshold Encryption',
     author='SKALE Network',
     packages=find_packages(),

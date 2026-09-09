@@ -1,7 +1,7 @@
 {
   "name": "@skalenetwork/t-encrypt",
-  "version": "0.8.0",
-
+  "version": "0.0.0",
+  "//": "Note: version is a placeholder; CI dynamically stamps this from VERSION.txt during release",
   "keywords": [
     "SKALE",
     "blockchain",
@@ -40,7 +40,6 @@
   "files": [
     "EncryptMessage.js",
     "EncryptMessage.mjs",
-    "encrypt.js",
-    "encrypt.wasm"
+    "encrypt.js"
   ]
 }

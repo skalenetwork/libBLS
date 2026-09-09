@@ -1,0 +1,26 @@
+name: Check Version Constraints
+
+on:
+  pull_request:
+    branches:
+      - beta
+      - stable
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check_version_bump:
+    name: Check Version Constraints
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify Version Bump
+        uses: ./.github/actions/check-version-bump
+        with:
+          base-ref: ${{ github.base_ref }}
+          require-bump: ${{ github.base_ref == 'stable' && 'true' || 'false' }}

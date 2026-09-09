@@ -1,12 +1,20 @@
 ---
 name: Build and test libBLS
 on:
+  pull_request:
+    branches:
+      - develop
+      - beta
+      - stable
   push:
-    branches-ignore:
+    branches:
       - develop
       - master
       - beta
       - stable
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 defaults:
   run:
     shell: bash
@@ -16,82 +24,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: update apt
-        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test; sudo apt-get update
-      - name: install packages
+      - name: Setup Linux & Dependencies
+        uses: ./.github/actions/setup-linux-env
+        with:
+          extra-apt-packages: 'python3 python3-pip'
+      - name: Install Python packages
         run: |
-          sudo apt-get install -y software-properties-common
-          sudo apt-get install -y gcc-11 g++-11
-      - name: Use g++-11 and gcov-11 by default
-        run: >
-          echo "Updating all needed alternatives"
-
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 11
-
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 11
-
-          sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-11 11
-
-          sudo update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-11 11
-
-          sudo update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-11 11
-
-          echo "Checking alternative for gcc"
-
-          which gcc
-
-          gcc --version
-
-          echo "Checking alternative for g++"
-
-          which g++
-
-          g++ --version
-
-          echo "Checking alternative for gcov"
-
-          which gcov
-
-          gcov --version
-
-          echo "Checking alternative for gcov-dump"
-
-          which gcov-dump
-
-          gcov-dump --version
-
-          echo "Checking alternative for gcov-tool"
-
-          which gcov-tool
-
-          gcov-tool --version
-      - name: Update apt
-        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
-      - name: Install packages
-        run: >
-          sudo apt-get update
-
-          sudo apt-get install -y gawk sed shtool \
-            libffi-dev yasm texinfo libgnutls28-dev liblzma-dev python3 gcc-multilib git
-          sudo apt-get update -qq
-
-          sudo apt-get install -y python3-pip
-
           sudo python3 -m pip install --ignore-installed --upgrade pip
-
-          sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
-
-          sudo python3 -m pip install requests[security]
-
-      - name: install cmake
-        run: |
-          wget --no-check-certificate https://cmake.org/files/v3.21/cmake-3.21.0-linux-x86_64.sh && \
-          chmod +x cmake-3.21.0-linux-x86_64.sh && \
-          ./cmake-3.21.0-linux-x86_64.sh --skip-license --include-subdir && \
-          sudo ln -sf `pwd`/cmake-3.21.0-linux-x86_64/bin/* /usr/local/bin
-
-          cmake --version
-
+          sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1 "requests[security]"
       - name: Get newest lcov
         run: >
           echo "Removing previous lcov version..."
@@ -123,13 +63,6 @@ jobs:
           which lcov
 
           lcov --version
-      - name: Build dependencies
-        run: |
-          export CC=gcc-11
-          export CXX=g++-11
-          export TARGET=all
-          cd deps
-          ./build.sh
       - name: Configure all
         run: |
           export CC=gcc-11
@@ -197,19 +130,17 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+      - name: Setup Linux & Dependencies
+        uses: ./.github/actions/setup-linux-env
+        with:
+          extra-apt-packages: 'patchelf'
       - name: Build and check t-encrypt wheel
         env:
           CC: gcc-11
           CXX: g++-11
           TARGET: all
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-11 g++-11 cmake gawk sed shtool \
-            libffi-dev yasm texinfo libgnutls28-dev liblzma-dev gcc-multilib git patchelf
           python -m pip install --upgrade pip setuptools wheel auditwheel twine
-          cd deps
-          ./build.sh
-          cd ..
           mkdir -p build
           cd build
           cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
@@ -311,38 +242,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Update apt
-        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
-      - name: Install packages
+      - name: Setup Linux & Emscripten Dependencies
+        uses: ./.github/actions/setup-linux-env
+        with:
+          extra-apt-packages: 'python3 python3-pip'
+          with-emscripten: 'true'
+      - name: Install Python packages
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-11 g++-11 gawk sed shtool libffi-dev yasm texinfo \
-            libgnutls28-dev liblzma-dev python3 gcc-multilib
-          sudo apt-get update -qq
-          sudo apt-get install -y python3-pip
           sudo python3 -m pip install --ignore-installed --upgrade pip
-          sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
-          sudo python3 -m pip install requests[security]
+          sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1 "requests[security]"
       - name: Install NODE JS
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - name: install cmake
-        run: |
-          wget --no-check-certificate https://cmake.org/files/v3.21/cmake-3.21.0-linux-x86_64.sh && \
-          chmod +x cmake-3.21.0-linux-x86_64.sh && \
-          ./cmake-3.21.0-linux-x86_64.sh --skip-license --include-subdir && \
-          sudo ln -sf `pwd`/cmake-3.21.0-linux-x86_64/bin/* /usr/local/bin
-
-          cmake --version
-      - name: Build dependencies
-        run: |
-          export CC=gcc-11
-          export CXX=g++-11
-          export TARGET=all
-          cd deps
-          ./build.sh WITH_EMSCRIPTEN=1
-          cd ..
       - name: Build all
         run: >
           cd deps/emsdk
