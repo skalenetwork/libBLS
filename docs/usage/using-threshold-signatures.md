@@ -4,21 +4,21 @@
 
 ## Classes for BLS threshold signatures
 
-**BLSPrivateKeyShare** - class for private key for each participant. Has methods _sign_ and _signWithHelper_ to sign hashed message.
+**BLSPrivateKeyShare** - class for private key for each participant. Has methods `sign` and `signWithHelper` to sign a hashed message.
 
 **BLSPrivateKey** - class for common private key
 
-**BLSPublicKeyShare** - class for public key for each participant. Has method _VerifySig_ to Verify a piece of signature.
+**BLSPublicKeyShare** - class for public key for each participant. Has method `VerifySig` to verify a piece of signature.
 
-**BLSPublicKey** - class for common public key. Has method _VerifySig_ for verifying common signature.
+**BLSPublicKey** - class for common public key. Has method `VerifySig` for verifying a common signature.
 
 **BLSSigShare** - class for a piece of common signature.
 
-**BLSSigShareSet** - class for a set of pieces of signature. Has methods _Add_ (to add a piece of signature) and _merge_ ( to get common signature, if enough pieces of signature added)
+**BLSSigShareSet** - class for a set of pieces of signature. Has methods `addSigShare` (to add a piece of signature) and `merge` (to get a common signature if enough pieces of signature are added).
 
 **BLSSignature** - class for common signature.
 
-All these classes (except BLSSigShareSet) can be created from shared_ptr to string(or to vector of strings)  and converted to shared_ptr to string(or to vector of strings) with the method \_toString()_.
+All these classes (except BLSSigShareSet) can be created from shared_ptr to string (or to vector of strings) and converted to shared_ptr to string (or to vector of strings) with the method `toString`.
 
 ## How to use BLS threshold signatures
 
@@ -75,7 +75,7 @@ std::shared_ptr<BLSSignature> signature_ptr = SigSet.merge();
 6.  Verify common signature with common public key
 
 ```cpp
-assert( publicKey.VerifySig(hash_ptr, signature_ptr, t, n) );
+assert( publicKey->VerifySig(*hash_ptr, *signature_ptr) );
 ```
 
 Here is an example of BLS threshold signatures algorithm with t = 3, n = 4.
@@ -120,6 +120,6 @@ BLSPrivateKey common_skey
 BLSPublicKey common_pkey(*(common_skey.getPrivateKey()), num_signed, num_all);
 
   // verify common signature with common public key
-assert(common_pkey.VerifySig(hash_ptr, common_sig_ptr, num_signed, num_all));
+assert(common_pkey.VerifySig(*hash_ptr, *common_sig_ptr));
 
 ```
