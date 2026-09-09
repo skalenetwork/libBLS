@@ -29,15 +29,11 @@
 namespace libBLS {
 
 BLSPublicKey::BLSPublicKey( const std::vector< std::string >& pkey_str_vect ) {
-    // TODO get rid of unnecessary shared_ptr
     publicKey = algebra::G2Point::fromString( pkey_str_vect, Base::DEC );
     publicKey.validate();
 }
 
 BLSPublicKey::BLSPublicKey( const algebra::G2Point& pkey, size_t t, size_t n ) : t( t ), n( n ) {
-    // TODO - should this be commented?
-    // libBLS::ThresholdUtils::checkSigners( t, n );
-
     publicKey = pkey;
 
     if ( !publicKey.isValid() ) {
@@ -46,9 +42,6 @@ BLSPublicKey::BLSPublicKey( const algebra::G2Point& pkey, size_t t, size_t n ) :
 }
 
 BLSPublicKey::BLSPublicKey( const algebra::FrScalar& skey, size_t t, size_t n ) : t( t ), n( n ) {
-    // TODO
-    // libBLS::ThresholdUtils::checkSigners( t, n );
-
     publicKey = skey * algebra::G2Point::generator();
     if ( !publicKey.isValid() ) {
         throw libBLS::ThresholdUtils::IsNotWellFormed( "Public Key is not valid" );
