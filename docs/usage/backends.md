@@ -72,10 +72,10 @@ flowchart TB
 
 * **Backend selection**
 
-  * Chosen at compile time:
-
-    * `-DUSE_MCL` (default)
-  * A new backend only needs its own folder mirroring the structure above.
+  * The current build supports MCL and selects it with `-DUSE_MCL=ON` (the
+    default). The build fails when another backend is requested.
+  * A future backend should preserve the interface contract and mirror the
+    structure above.
 
 ---
 
@@ -193,7 +193,9 @@ Two textual encodings are supported: **hexadecimal** and **decimal**. No whitesp
 
 ## 5. Adding a New Backend
 
-1. **Add** the new backend into `deps/build.sh`, with commands to build it. It should allow **two builds - normal and emscripten**. When building for Emscripten/WASM, pass all flags needed to disable native CPU features and assembly paths so libraries use portable C/C++ backends only. This ensures no x86-only or JIT code is compiled and the build remains architecture-independent.
+1. **Add** the backend dependency to `deps/build.sh`, with commands for both
+  native and Emscripten builds. For Emscripten/WASM, disable native CPU
+  features and assembly paths so the build remains portable.
 
 2. **Create a folder** under `backends/` (for example `newlib/`).
 3. **Implement field wrappers** in `field/`:
@@ -209,16 +211,8 @@ Two textual encodings are supported: **hexadecimal** and **decimal**. No whitesp
    * Pairing, exponentiation, Lagrange interpolation, and other shared helpers.
 6. **Initialize the curve** in `init.cpp`.
 7. **Expose concrete types** by aliasing them in `interface/init.hpp`.
-8. **Wire up CMake** from `backends/` to select your backend with a flag (for example `-DUSE_NEWLIB`), right below these lines:
-    ```Cmake
-    if(USE_MCL)
-        message("Using mcl backend")
-        set(BACKEND_NAME "mcl")
-        set(BACKEND_LIB "mcl")
-        set(BACKEND_COMPILE_OPTIONS "MCL_USE_GMP=1")
-        set(BACKEND_DEPS ${GMPXX_LIBRARY} ${GMP_LIBRARY})
-        set(BACKEND_DEFINE MCL)
-        # add more backends below if needed
-    endif()
-    ```
+8. **Wire up CMake** in `backends/CMakeLists.txt`. Add your backend to the
+   selection block, set its backend library list and compile definitions, and
+   keep the source layout consumed by `BACKEND_SPECIFIC_SOURCES` consistent
+   with the existing MCL backend.
 9. **Run the backend test** (`test/unit_tests_backend.cpp`) to ensure the new backend complies with the correct serialization / deserialization format. Run also all other unit tests to test end-to-end.

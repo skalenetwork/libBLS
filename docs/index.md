@@ -32,4 +32,10 @@ Refer to this section if you want to understand the system at a conceptual or ar
 
 ---
 
-For detailed information, explore the folders above.
+## [`./ci-release-architecture.md`](./ci-release-architecture.md)
+
+This document describes the **CI/CD pipelines, release management, and versioning rules** used across the repository.
+
+---
+
+For detailed information, explore the sections above.

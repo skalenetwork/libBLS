@@ -7,7 +7,9 @@
 
 A mathematical library written in C++ that supports BLS threshold signatures, Distributed Key Generation (DKG) and Threshold Encryption (TE).
 
-This libBLS library is developed by SKALE Labs and uses SCIPR-LAB's libff (see Libraries below).
+This library is developed by SKALE Labs. Its current algebra backend is
+[MCL](https://github.com/herumi/mcl), with GMP used for arbitrary-precision
+integer support.
 
 ## An important note about production readiness
 
@@ -43,7 +45,9 @@ libBLS allows to sign about 3000 messages per second on a single thread (Intel®
 
 ## Installation Requirements
 
-libBLS has been built and tested on Ubuntu and Mac.
+libBLS has been built and tested on Ubuntu and macOS. The supported toolchains
+are GCC/G++ 11 or newer on Linux and Apple Clang on macOS. CMake and the
+platform packages listed below are also required.
 
 GitHub is used to maintain this source code. Clone this repository by:
 
@@ -69,7 +73,7 @@ cd ..
 ```shell
 brew install libtool automake cmake pkg-config yasm
 # Configure the project and create a build directory.
-cmake -H. -Bbuild
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
 # Build all default targets using all cores.
 cmake --build build -- -j$(sysctl -n hw.ncpu)
@@ -89,10 +93,27 @@ Configure the project build with the following commands.
 
 ```shell
 # Configure the project and create a build directory.
-cmake -H. -Bbuild
+cmake -S . -B build
 
 # Build all default targets using all cores.
-cmake --build build -- -j$(nproc)
+cmake --build build --parallel $(nproc)
+```
+
+### Run the tests
+
+```shell
+ctest --test-dir build --output-on-failure
+```
+
+For more details on running individual test binaries, benchmarks, and AddressSanitizer (ASan) builds, see [Running Tests, Benchmarks & ASan](docs/usage/testing.md).
+
+To build without optional tests and benchmarks:
+
+```shell
+cmake -S . -B build \
+    -DLIBBLS_BUILD_TESTS=OFF \
+    -DLIBBLS_BUILD_BENCHMARKS=OFF
+cmake --build build --parallel
 ```
 
 ### Include the library
@@ -103,11 +124,16 @@ cmake --build build -- -j$(nproc)
 
 ### Documentation
 
-See [docs](docs) for libBLS documentation.
+See the [documentation index](docs/index.md) for an overview, or jump directly
+to the [usage guide](docs/usage/usage-index.md),
+[threshold signatures](docs/usage/using-threshold-signatures.md),
+[distributed key generation](docs/usage/using-distributed-key-generation.md),
+or [threshold encryption](docs/usage/using-threshold-encryption.md).
 
 ## Libraries
 
 -   [MCL by herumi](https://github.com/herumi/mcl)
+-   [GMP](https://gmplib.org/)
 
 ## Contributing
 
