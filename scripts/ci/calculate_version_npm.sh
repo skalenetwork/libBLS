@@ -21,7 +21,7 @@ fi
 
 if [ "$BRANCH" = "stable" ]
 then
-    echo "$VERSION"
+    echo "$BASE_VERSION"
     exit 0
 fi
 

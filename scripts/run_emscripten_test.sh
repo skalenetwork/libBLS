@@ -2,14 +2,18 @@
 
 set -e  # Exit immediately if a command exits with a non-zero status
 
-# Usage: ./run_emscripten_test.sh <build_dir>
+# Usage: ./run_emscripten_test.sh <build_dir> <native_tools_build_dir>
 BUILD_DIR=${1:-build_em}  # Default to build_em if not provided
+# Directory containing freshly built native (non-Emscripten) generate_bls_keys
+# and decrypt_message executables.
+NATIVE_TOOLS_DIR=${2:-build}
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 ABS_BUILD_DIR="$ROOT_DIR/$BUILD_DIR"
+ABS_NATIVE_TOOLS_DIR="$ROOT_DIR/$NATIVE_TOOLS_DIR"
 
 # Prepare the build directory
-cp "$ROOT_DIR/tools/generate_bls_keys" "$ABS_BUILD_DIR/"
-cp "$ROOT_DIR/tools/decrypt_message" "$ABS_BUILD_DIR/"
+cp "$ABS_NATIVE_TOOLS_DIR/threshold_encryption/generate_bls_keys" "$ABS_BUILD_DIR/"
+cp "$ABS_NATIVE_TOOLS_DIR/threshold_encryption/decrypt_message" "$ABS_BUILD_DIR/"
 cp "$ROOT_DIR/test/test.js" "$ABS_BUILD_DIR/"
 cp "$ROOT_DIR/test/test2Keys.js" "$ABS_BUILD_DIR/"
 cp "$ABS_BUILD_DIR/threshold_encryption/encrypt."* "$ABS_BUILD_DIR/"

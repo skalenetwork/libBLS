@@ -1,0 +1,152 @@
+name: libBLS Heavy & QA Tests
+
+on:
+  pull_request:
+    branches:
+      - beta
+      - stable
+    paths:
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+      - 'bls/**'
+      - 'dkg/**'
+      - 'backends/**'
+      - 'threshold_encryption/**'
+      - 'tools/**'
+      - 'test/**'
+      - 'deps/**'
+      - 'node/**'
+      - 'scripts/**'
+      - '.github/workflows/**'
+      - '.github/actions/**'
+  push:
+    branches:
+      - beta
+      - stable
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      run_valgrind:
+        description: 'Wrap unit tests with Valgrind (leave false for a fast native-only smoke run)'
+        required: true
+        default: true
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  main_job:
+    runs-on: ubuntu-24.04
+    env:
+      NIGHTLY_BUILD_FLAGS: >-
+        ${{ (github.event_name != 'workflow_dispatch' || inputs.run_valgrind == true)
+            && 'valgrind --leak-check=yes' || '' }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Setup Linux & Dependencies
+      uses: ./.github/actions/setup-linux-env
+      with:
+        extra-apt-packages: 'libc6-dbg'
+    - name: Install Valgrind & Python tools
+      run: |
+        sudo snap install valgrind --classic
+        python3 -m pip install --upgrade pip
+        pip install coincurve
+
+    - name: Configure all
+      run: |
+        export CC=gcc-11
+        export CXX=g++-11
+        export TARGET=all
+        mkdir -p build && cd build
+        cmake ..
+    
+    - name: Build all
+      run: |
+        export CC=gcc-11
+        export CXX=g++-11
+        export TARGET=all
+        cd build
+        make -j$(nproc)
+
+    - name: Run tests
+      run: |
+        cp scripts/parameters.json build/
+        cd build
+        $NIGHTLY_BUILD_FLAGS ./backends/backend_unit_test
+        $NIGHTLY_BUILD_FLAGS ./bls_unit_test
+        $NIGHTLY_BUILD_FLAGS ./dkg_unit_test
+        $NIGHTLY_BUILD_FLAGS ./utils_unit_test
+        $NIGHTLY_BUILD_FLAGS ./bls_test
+        $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_unit_test
+        $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_test
+        $NIGHTLY_BUILD_FLAGS ./threshold_encryption/te_encrypt_message
+        $NIGHTLY_BUILD_FLAGS ./dkg_attack
+
+    - name: Run tools tests
+      run: |
+        ./scripts/run_tools_test.sh
+  
+  linux_build_with_emscripten:
+    runs-on: ubuntu-24.04
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Setup Linux & Emscripten Dependencies
+      uses: ./.github/actions/setup-linux-env
+      with:
+        extra-apt-packages: 'python3 python3-pip lcov'
+        with-emscripten: 'true'
+    - name: Install Python packages
+      run: |
+        sudo python3 -m pip install --ignore-installed --upgrade pip
+        sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1 "requests[security]"
+    - name: Install NODE JS
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Build all
+      run: |
+        cd deps/emsdk
+        ./emsdk install latest
+        ./emsdk activate latest
+        source ./emsdk_env.sh
+        cd ../..
+        mkdir -p build_em
+        cd build_em
+        export LIBRARIES_ROOT=../deps/deps_inst/wasm32-emscripten/lib
+        emcmake cmake -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a .. 
+        emmake make -j$(nproc)
+        cd ..
+
+    - name: Build native dependencies (for CLI tools)
+      run: |
+        export CC=gcc-11
+        export CXX=g++-11
+        export TARGET=all
+        cd deps
+        ./build.sh
+        cd ..
+
+    - name: Build native CLI tools
+      run: |
+        export CC=gcc-11
+        export CXX=g++-11
+        mkdir -p build_native_tools && cd build_native_tools
+        cmake ..
+        make -j$(nproc) generate_bls_keys decrypt_message
+        cd ..
+
+    - name: Run tests
+      run: |
+        bash scripts/run_emscripten_test.sh build_em build_native_tools

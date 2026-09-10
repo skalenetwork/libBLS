@@ -1,105 +1,37 @@
 ---
 name: Build and test libBLS
 on:
+  pull_request:
+    branches:
+      - develop
+      - beta
+      - stable
   push:
-    branches-ignore:
+    branches:
       - develop
       - master
       - beta
       - stable
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 defaults:
   run:
     shell: bash
 jobs:
   linux_build_and_test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-      - name: Extract repo name
-        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
-          '{print $2}')
-        shell: bash
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: update apt
-        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test; sudo apt-get update
-      - name: install packages
+        uses: actions/checkout@v4
+      - name: Setup Linux & Dependencies
+        uses: ./.github/actions/setup-linux-env
+        with:
+          extra-apt-packages: 'python3 python3-pip'
+      - name: Install Python packages
         run: |
-          sudo apt-get install -y software-properties-common
-          sudo apt-get install -y gcc-11 g++-11
-      - name: Use g++-11 and gcov-11 by default
-        run: >
-          echo "Updating all needed alternatives"
-
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 11
-
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 11
-
-          sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-11 11
-
-          sudo update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-11 11
-
-          sudo update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-11 11
-
-          echo "Checking alternative for gcc"
-
-          which gcc
-
-          gcc --version
-
-          echo "Checking alternative for g++"
-
-          which g++
-
-          g++ --version
-
-          echo "Checking alternative for gcov"
-
-          which gcov
-
-          gcov --version
-
-          echo "Checking alternative for gcov-dump"
-
-          which gcov-dump
-
-          gcov-dump --version
-
-          echo "Checking alternative for gcov-tool"
-
-          which gcov-tool
-
-          gcov-tool --version
-      - name: Update apt
-        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
-      - name: Install packages
-        run: >
-          sudo apt-get update
-
-          sudo apt-get install -y gawk sed shtool \
-            libffi-dev yasm texinfo libgnutls28-dev python3 gcc-multilib git
-          sudo apt-get update -qq
-
-          sudo apt-get install -y python3-pip
-
-          pip3 install --upgrade pip
-
-          sudo python3 -m pip install --upgrade pip
-
-          sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
-
-          sudo python3 -m pip install requests[security]
-
-      - name: install cmake
-        run: |
-          wget --no-check-certificate https://cmake.org/files/v3.21/cmake-3.21.0-linux-x86_64.sh && \
-          chmod +x cmake-3.21.0-linux-x86_64.sh && \
-          ./cmake-3.21.0-linux-x86_64.sh --skip-license --include-subdir && \
-          sudo ln -sf `pwd`/cmake-3.21.0-linux-x86_64/bin/* /usr/local/bin
-
-          cmake --version
-
+          sudo python3 -m pip install --ignore-installed --upgrade pip
+          sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1 "requests[security]"
       - name: Get newest lcov
         run: >
           echo "Removing previous lcov version..."
@@ -131,13 +63,6 @@ jobs:
           which lcov
 
           lcov --version
-      - name: Build dependencies
-        run: |
-          export CC=gcc-11
-          export CXX=g++-11
-          export TARGET=all
-          cd deps
-          ./build.sh
       - name: Configure all
         run: |
           export CC=gcc-11
@@ -196,17 +121,78 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.info
+  build_t_encrypt_wheel:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Setup Linux & Dependencies
+        uses: ./.github/actions/setup-linux-env
+        with:
+          extra-apt-packages: 'patchelf'
+      - name: Build and check t-encrypt wheel
+        env:
+          CC: gcc-11
+          CXX: g++-11
+          TARGET: all
+        run: |
+          python -m pip install --upgrade pip setuptools wheel auditwheel twine
+          mkdir -p build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          make -j$(nproc) t_encrypt_python
+          cd ../python
+          export T_ENCRYPT_LIB_PATH="${GITHUB_WORKSPACE}/build/threshold_encryption/libt_encrypt_python.so"
+          python setup_t_encrypt.py bdist_wheel
+          raw_wheel="$(ls -t dist/*.whl | head -n1)"
+          [[ "${raw_wheel}" != *-py3-none-any.whl ]] || { echo "Wheel must be platform-tagged: ${raw_wheel}" >&2; exit 1; }
+          auditwheel show "${raw_wheel}"
+          auditwheel repair "${raw_wheel}" -w wheelhouse
+          wheel="$(ls -t wheelhouse/*.whl | head -n1)"
+          [[ "${wheel}" == *manylinux*.whl ]] || { echo "Repaired wheel must be manylinux-tagged: ${wheel}" >&2; exit 1; }
+          python -m zipfile -e "${wheel}" wheel-check
+          shared_library="wheel-check/t_encrypt/libencrypt.so"
+          [[ -f "${shared_library}" ]]
+          ! readelf -d "${shared_library}" | grep -Eq 'lib(ssl|crypto)\.so\.1\.1'
+          python -m twine check "${wheel}"
+      - name: Run t-encrypt functional test against the built wheel
+        run: |
+          wheel="$(ls -t python/wheelhouse/*.whl | head -n1)"
+          python -m pip install --force-reinstall "${wheel}"
+          tmpdir="$(mktemp -d)"
+          (cd "${tmpdir}" && python -m t_encrypt.test_t_encrypt)
+      - name: Upload t-encrypt wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: t-encrypt-wheel
+          path: python/wheelhouse/*.whl
+  validate_t_encrypt_wheel:
+    needs: build_t_encrypt_wheel
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Download t-encrypt wheel
+        uses: actions/download-artifact@v4
+        with:
+          name: t-encrypt-wheel
+          path: dist
+      - name: Install t-encrypt wheel and run functional test
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install dist/*.whl
+          python -m t_encrypt.test_t_encrypt
   osx_build_and_test:
     runs-on: macos-15-intel
     steps:
-      - name: Extract repo name
-        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
-          '{print $2}')
-        shell: bash
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Install packages
         run: |
           brew install yasm texinfo shtool libtool coreutils
@@ -248,52 +234,27 @@ jobs:
           ./threshold_encryption/te_encrypt_message
           ./dkg_attack
   linux_build_with_emscripten:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         node-version:
           - 18.x
     steps:
-      - name: Extract repo name
-        run: echo ::set-env name=REPOSITORY_NAME::$(echo "$GITHUB_REPOSITORY" | awk -F /
-          '{print $2}')
-        shell: bash
-        env:
-          ACTIONS_ALLOW_UNSECURE_COMMANDS: true
       - name: Checkout
-        uses: actions/checkout@v2
-      - name: Update apt
-        run: sudo add-apt-repository ppa:ubuntu-toolchain-r/test;
-      - name: Install packages
+        uses: actions/checkout@v4
+      - name: Setup Linux & Emscripten Dependencies
+        uses: ./.github/actions/setup-linux-env
+        with:
+          extra-apt-packages: 'python3 python3-pip'
+          with-emscripten: 'true'
+      - name: Install Python packages
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc-11 g++-11 gawk sed shtool libffi-dev yasm texinfo python3 gcc-multilib
-          sudo apt-get update -qq
-          sudo apt-get install -y python3-pip
-          pip3 install --upgrade pip
-          sudo python3 -m pip install --upgrade pip
-          sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1
-          sudo python3 -m pip install requests[security]
+          sudo python3 -m pip install --ignore-installed --upgrade pip
+          sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1 "requests[security]"
       - name: Install NODE JS
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-      - name: install cmake
-        run: |
-          wget --no-check-certificate https://cmake.org/files/v3.21/cmake-3.21.0-linux-x86_64.sh && \
-          chmod +x cmake-3.21.0-linux-x86_64.sh && \
-          ./cmake-3.21.0-linux-x86_64.sh --skip-license --include-subdir && \
-          sudo ln -sf `pwd`/cmake-3.21.0-linux-x86_64/bin/* /usr/local/bin
-
-          cmake --version
-      - name: Build dependencies
-        run: |
-          export CC=gcc-11
-          export CXX=g++-11
-          export TARGET=all
-          cd deps
-          ./build.sh WITH_EMSCRIPTEN=1
-          cd ..
       - name: Build all
         run: >
           cd deps/emsdk
@@ -312,11 +273,27 @@ jobs:
 
           export LIBRARIES_ROOT=../deps/deps_inst/wasm32-emscripten/lib
 
-          emcmake cmake -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a .. 
+          emcmake cmake -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a ..
 
           emmake make -j$(nproc)
 
           cd ..
+      - name: Build native dependencies (for CLI tools)
+        run: |
+          export CC=gcc-11
+          export CXX=g++-11
+          export TARGET=all
+          cd deps
+          ./build.sh
+          cd ..
+      - name: Build native CLI tools
+        run: |
+          export CC=gcc-11
+          export CXX=g++-11
+          mkdir -p build_native_tools && cd build_native_tools
+          cmake ..
+          make -j$(nproc) generate_bls_keys decrypt_message
+          cd ..
       - name: Run tests
         run: |
-          bash scripts/run_emscripten_test.sh
+          bash scripts/run_emscripten_test.sh build_em build_native_tools

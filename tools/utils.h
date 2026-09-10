@@ -121,7 +121,8 @@ public:
 
     static std::string carray2Hex( const unsigned char* d, uint64_t len );
 
-    static bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin );
+    static bool hex2carray(
+        const char* _hex, uint64_t* _bin_written_len, uint8_t* _bin, uint64_t _bin_capacity );
 
     static std::shared_ptr< std::vector< std::string > > SplitString(
         const std::string& str, const std::string& delim );

@@ -1,11 +1,27 @@
 name: clang-format Check
-on: [push]
+on:
+  pull_request:
+    branches:
+      - develop
+      - beta
+      - stable
+  push:
+    branches:
+      - develop
+      - master
+      - beta
+      - stable
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   formatting-check:
     name: Formatting Check
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: DoozyX/clang-format-lint-action@v0.14
       with:
         source: '.'

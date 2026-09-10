@@ -10,7 +10,7 @@ cd "$WORK_DIR"
 
 DATA_FILE=data.txt
 SIGNATURE_FILE=signature.txt
-RANDOM_HASH_STR="9ebe2b024baa072bb02f1df851a88900"
+RANDOM_HASH_STR="9ebe2b024baa072bb02f1df851a889009ebe2b024baa072bb02f1df851a88900"
 
 calculate_hash() {
     HASH_FILE=hash.json

@@ -58,14 +58,15 @@ G1Point hashToG1( const std::array< uint8_t, HASH_SIZE >& hash_byte_arr ) {
 }
 
 G1Point hashToG1( const std::string& message ) {
-    auto hash_bytes_arr = std::array< uint8_t, HASH_SIZE >();
-
-    if ( message.length() > HASH_SIZE * 2 ) {
-        throw std::runtime_error( "Hash string too long" );
+    if ( message.length() != HASH_SIZE * 2 ) {
+        throw std::runtime_error( "Hash string has incorrect length" );
     }
 
+    auto hash_bytes_arr = std::array< uint8_t, HASH_SIZE >();
+
     uint64_t bin_len;
-    if ( !ThresholdUtils::hex2carray( message.c_str(), &bin_len, hash_bytes_arr.data() ) ) {
+    if ( !ThresholdUtils::hex2carray(
+             message.c_str(), &bin_len, hash_bytes_arr.data(), hash_bytes_arr.size() ) ) {
         throw std::runtime_error( "Invalid hash" );
     }
 
