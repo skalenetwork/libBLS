@@ -1,4 +1,4 @@
 #pragma once
 
-/// Will be replaced by CMake to contain the correct backend (mcl or libff)
+/// Will be replaced by CMake to contain the active backend.
 #define LIBBLS_BACKEND_NAME "@BACKEND_DEFINE@"

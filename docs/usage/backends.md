@@ -1,6 +1,6 @@
 # libBLS Algebra Backends
 
-This document explains how the algebra layer in **libBLS** is organized, the **interface that backends must comply with** and **how to add a new backend**. The goal is to keep higher‑level modules (BLS, DKG, Threshold Encryption) **backend‑agnostic** while allowing a concrete library (mcl, libff, or others) to provide the actual elliptic curve math.
+This document explains how the algebra layer in **libBLS** is organized, the **interface that backends must comply with** and **how to add a new backend**. The goal is to keep higher‑level modules (BLS, DKG, Threshold Encryption) **backend‑agnostic** while allowing a concrete library to provide the actual elliptic curve math.
 
 ---
 
@@ -64,7 +64,7 @@ flowchart TB
   * Provide common operations, serialization, and `validate()` (on‑curve and subgroup checks).
   * `PointSerializer` ensures deterministic point traversal and encoding.
 
-* **Concrete backends (`mcl/`, `libff/`, …)**
+* **Concrete backend (`mcl/`)**
 
   * Implement the wrapper interfaces for a specific library.
   * Provide optimized pairing and interpolation in `Functions.cpp`.
@@ -75,7 +75,6 @@ flowchart TB
   * Chosen at compile time:
 
     * `-DUSE_MCL` (default)
-    * `-DUSE_LIBFF`
   * A new backend only needs its own folder mirroring the structure above.
 
 ---
@@ -170,7 +169,7 @@ Two textual encodings are supported: **hexadecimal** and **decimal**. No whitesp
 
 ### 3.4 Serialization Requirements
 
-* **No GMP/mpz by default.** Implement serde directly using backend primitives (e.g., `mcl::Vint`, libff bigints, etc.). If the backend uses GMP, it must link it.
+* **No GMP/mpz by default.** Implement serde directly using backend primitives such as `mcl::Vint`. If a backend uses GMP, it must link it.
 * **Big-endian conversion:** When exporting either to bytes or string, produce fixed-width big-endian per component with **left-zero padding** to 32 bytes. When importing, accept only 32-byte components.
 * **Normalization:** For points, **normalize to affine** before serialization; for fields, reduce modulo `p` internally as needed.
 * **Determinism:** Given the same element/point, serialization MUST be deterministic.
@@ -194,7 +193,7 @@ Two textual encodings are supported: **hexadecimal** and **decimal**. No whitesp
 
 ## 5. Adding a New Backend
 
-1. **Add** the new backend into `deps/build.sh`, with commands to build it. It should allow **two builds - normal and emscripten**. See `libff` or `mcl` as examples. When building for Emscripten/WASM, pass all flags needed to disable native CPU features and assembly paths (e.g., `-DUSE_ASM=OFF`, `-DMCL_USE_XBYAK=OFF`, `-DMCL_USE_LLVM=0`) so libraries use portable C/C++ backends only. This ensures no x86-only or JIT code is compiled and the build remains architecture-independent.
+1. **Add** the new backend into `deps/build.sh`, with commands to build it. It should allow **two builds - normal and emscripten**. When building for Emscripten/WASM, pass all flags needed to disable native CPU features and assembly paths so libraries use portable C/C++ backends only. This ensures no x86-only or JIT code is compiled and the build remains architecture-independent.
 
 2. **Create a folder** under `backends/` (for example `newlib/`).
 3. **Implement field wrappers** in `field/`:
@@ -212,14 +211,7 @@ Two textual encodings are supported: **hexadecimal** and **decimal**. No whitesp
 7. **Expose concrete types** by aliasing them in `interface/init.hpp`.
 8. **Wire up CMake** from `backends/` to select your backend with a flag (for example `-DUSE_NEWLIB`), right below these lines:
     ```Cmake
-    if(USE_LIBFF)
-        message("Using libff backend")
-        set(BACKEND_NAME "libff")                           # used as the directory name
-        set(BACKEND_LIB "ff")                               # used as the library name when linking
-        set(BACKEND_COMPILE_OPTIONS "")
-        set(BACKEND_DEPS ${GMPXX_LIBRARY} ${GMP_LIBRARY})   # extra dependencies that may be used by the backend
-        set(BACKEND_DEFINE LIBFF)
-    elseif(USE_MCL)
+    if(USE_MCL)
         message("Using mcl backend")
         set(BACKEND_NAME "mcl")
         set(BACKEND_LIB "mcl")

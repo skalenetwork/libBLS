@@ -33,21 +33,21 @@ namespace libBLS {
  * Base class for threshold encryption
  * Keeps track of the number of required signers and total signers.
  *
- * Ensures libff is initialized for any subclass.
+ * Ensures the algebra backend is initialized for any subclass.
  */
 class TEBase {
 protected:
     size_t requiredSigners;
     size_t totalSigners;
 
-    static std::atomic< bool > isLibffInitialized;
+    static std::atomic< bool > isBackendInitialized;
 
 public:
     /**
      * @brief Constructor for TEBase
      * @param _requiredSigners Number of signers required to decrypt
      * @param _totalSigners Total number of signers
-     * @note Invokes the method `initializeIfNecessary` to ensure libff is initialized
+    * @note Invokes the method `initializeIfNecessary` to ensure the backend is initialized
      */
     TEBase( size_t _requiredSigners, size_t _totalSigners );
 

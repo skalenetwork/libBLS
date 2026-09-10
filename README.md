@@ -7,7 +7,7 @@
 
 A mathematical library written in C++ that supports BLS threshold signatures, Distributed Key Generation (DKG) and Threshold Encryption (TE).
 
-This libBLS library is developed by SKALE Labs and uses SCIPR-LAB's libff (see Libraries below).
+This libBLS library is developed by SKALE Labs and uses the MCL algebra backend.
 
 ## An important note about production readiness
 
@@ -107,7 +107,6 @@ See [docs](docs) for libBLS documentation.
 
 ## Libraries
 
--   [libff by SCIPR-LAB](http://www.scipr-lab.org/)
 
 ## Contributing
 

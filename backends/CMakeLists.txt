@@ -3,27 +3,11 @@
 ################# May Change to add new backends #################
 
 # Backend selection via cache so parent can override
-option(USE_LIBFF "Use libff backend" OFF)
-option(USE_MCL "Use mcl backend" OFF)
+option(USE_MCL "Use mcl backend" ON)
 
-if(USE_LIBFF AND USE_MCL)
-  message(FATAL_ERROR "Cannot enable both USE_LIBFF and USE_MCL. Choose only one.")
-endif()
-
-if(NOT USE_LIBFF AND NOT USE_MCL)
-  message(STATUS "No backend selected, defaulting to mcl")
-  set(USE_MCL ON)
-endif()
-
-if(USE_LIBFF)
-  find_library( GMP_LIBRARY NAMES "gmp" PATHS "${DEPS_INSTALL_ROOT}/lib" )
-  find_library( GMPXX_LIBRARY NAMES "gmpxx" PATHS "${DEPS_INSTALL_ROOT}/lib" )
-  set(BACKEND_NAME libff)                           # used as the directory name
-  set(BACKEND_LIB ff)                               # used as the library name when linking
-  set(BACKEND_COMPILE_OPTIONS "")
-  set(BACKEND_DEPS ${GMPXX_LIBRARY} ${GMP_LIBRARY})
-  set(BACKEND_DEFINE LIBFF)
-elseif(USE_MCL)
+if(NOT USE_MCL)
+  message(FATAL_ERROR "Only the mcl backend is supported.")
+else()
   set(BACKEND_NAME mcl)
   # emscripten build is done through cmake - only needs libmcl
   if (EMSCRIPTEN)
