@@ -402,9 +402,9 @@ jobs:
         run: |
           TARBALL="$(ls -1 npm-artifacts/*.tgz | head -n 1)"
           if [[ "${{ needs.resolve_release_metadata.outputs.branch }}" == "beta" ]]; then
-            npm publish "$TARBALL" --access public --tag beta
+            npm publish "./${TARBALL}" --access public --tag beta
           else
-            npm publish "$TARBALL" --access public
+            npm publish "./${TARBALL}" --access public
           fi
 
   publish_github_release:
