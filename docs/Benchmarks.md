@@ -26,7 +26,7 @@
 
 #### Results
 
-| Result Metric                            | Legacy backend (ms) | MCL (ms) | MCL - batches (ms)      |
+| Result Metric                            | Libff (ms) | MCL (ms) | MCL - batches (ms)      | 
 | ---------------------------------------- | --------- | --------- | ----------------------- |
 | Average encryption time                  | 13.82     | 3.08      | 2.3                     |
 | Avg. validation encryption time          | 13.92     | 1.95      | 1.03                    |
