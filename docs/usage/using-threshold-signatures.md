@@ -89,7 +89,7 @@ std::vector<size_t> participants(num_all);
 for (size_t i = 0; i < num_signed; ++i) participants.at(i) = i + 1; //set participants indices 1,2,3
 
 std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>> Skeys =
-                                    LSPrivateKeyShare::generateSampleKeys(num_signed, num_all)->first;
+                                    BLSPrivateKeyShare::generateSampleKeys(num_signed, num_all)->first;
 
 std::default_random_engine rand_gen((unsigned int) time(0));
 std::array<uint8_t, 32> hash_byte_arr;

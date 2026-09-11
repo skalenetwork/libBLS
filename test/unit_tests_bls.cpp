@@ -432,8 +432,8 @@ BOOST_AUTO_TEST_CASE(differentMessages) {
 
     for (size_t j = 0; j < 11; ++j) {
       secret_keys[i] = secret_keys[i] + coeffs[j] *
-                              libff::power(libBLS::algebra::FrScalar(std::to_string(i + 1).c_str()),
-j);
+                              libBLS::algebra::power(
+                                  libBLS::algebra::FrScalar(std::to_string(i + 1).c_str()), j);
     }
   }
 

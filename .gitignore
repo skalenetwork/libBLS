@@ -1,5 +1,4 @@
 build
-libff
 cmake-build-debug
 gmp-6.1.2
 *.gcov
@@ -11,7 +10,6 @@ deps/*
 !deps/build.sh
 !deps/pre_downloaded
 saved_environment_on_startup.txt
-test/dkgpython.so
 test/test_sgx.py
 qt_build/
 node/node_modules
