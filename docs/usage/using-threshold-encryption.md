@@ -29,7 +29,7 @@ Some also allow convertion from/to byte representation.
 1.2.  Generate private key for each participant. Create a common private key, and a common public key from the common private key. You may use DKG. 
 
 ```cpp
-// common_skey is a raw libff::alt_bn128_Fr
+// common_skey is a libBLS::algebra::FrScalar
 libBLS::TEPrivateKey commonPrivate( common_skey );
 libBLS::TEPublicKey commonPublic( commonPrivate );
 ```
@@ -39,7 +39,7 @@ libBLS::TEPublicKey commonPublic( commonPrivate );
 ```cpp
 (...)
 for ( size_t i = 0; i < n; i++ ) {
-    // skeys is a vector of raw libff::alt_bn128_Fr types
+    // skeys is a vector of libBLS::algebra::FrScalar values
     secretKeys.emplace_back( libBLS::TEPrivateKeyShare( skeys[i], i + 1, t, n ) );
     publicKeys.emplace_back( libBLS::TEPublicKeyShare( secretKeys[i] ) );
 }
