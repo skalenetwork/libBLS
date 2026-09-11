@@ -2,10 +2,6 @@
 name: Build and test libBLS
 on:
   pull_request:
-    branches:
-      - develop
-      - beta
-      - stable
   push:
     branches:
       - develop
