@@ -71,18 +71,18 @@ bool BLSPublicKey::AggregatedVerifySig( std::vector< std::array< uint8_t, 32 > >
             "Number of signatures and hashes do not match" );
     }
 
-    std::vector< algebra::G1Point > libff_sig_vec;
-    libff_sig_vec.reserve( sign_ptr_vec.size() );
+    std::vector< algebra::G1Point > signature_points;
+    signature_points.reserve( sign_ptr_vec.size() );
 
     for ( auto& sign_ptr : sign_ptr_vec ) {
         if ( !sign_ptr.getSig().isValid() ) {
             throw libBLS::ThresholdUtils::IsNotWellFormed( "Sig share is not valid" );
         }
 
-        libff_sig_vec.push_back( sign_ptr.getSig() );
+        signature_points.push_back( sign_ptr.getSig() );
     }
 
-    bool res = libBLS::Bls::AggregateVerify( hash_ptr_vec, libff_sig_vec, publicKey );
+    bool res = libBLS::Bls::AggregateVerify( hash_ptr_vec, signature_points, publicKey );
     return res;
 }
 

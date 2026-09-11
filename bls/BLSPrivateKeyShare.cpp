@@ -45,11 +45,11 @@ BLSPrivateKeyShare::BLSPrivateKeyShare(
 }
 
 BLSPrivateKeyShare::BLSPrivateKeyShare(
-    const algebra::FrScalar& libff_skey, size_t _requiredSigners, size_t _totalSigners )
+    const algebra::FrScalar& private_key, size_t _requiredSigners, size_t _totalSigners )
     : requiredSigners( _requiredSigners ), totalSigners( _totalSigners ) {
     libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
 
-    privateKey = libff_skey;
+    privateKey = private_key;
 
     if ( privateKey.isZero() ) {
         throw libBLS::ThresholdUtils::ZeroSecretKey( "BLS Secret key share is equal to zero" );

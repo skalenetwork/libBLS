@@ -1,5 +1,16 @@
 name: clang-format Check
-on: [push, pull_request]
+on:
+  pull_request:
+    branches:
+      - develop
+      - beta
+      - stable
+  push:
+    branches:
+      - develop
+      - master
+      - beta
+      - stable
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
