@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file TEPrivateKeyShare.h
   @author Sveta Rogova
@@ -27,17 +27,21 @@
 
 #include <threshold_encryption/threshold_encryption.h>
 
+namespace libBLS {
+
 class DKGTESecret {
- private:
+private:
     size_t requiredSigners;
     size_t totalSigners;
-    std::vector<encryption::element_wrapper> poly;
- public:
-    DKGTESecret(size_t _requiredSigners, size_t _totalSigners);
-    void setPoly(std::vector <encryption::element_wrapper>& _poly);
-    std::vector <encryption::element_wrapper> getDKGTESecretShares();
-    std::vector <encryption::element_wrapper> getDKGTEPublicShares();
+    std::vector< algebra::FrScalar > poly;
+
+public:
+    DKGTESecret( size_t _requiredSigners, size_t _totalSigners );
+    void setPoly( std::vector< algebra::FrScalar >& _poly );
+    std::vector< algebra::FrScalar > getDKGTESecretShares();
+    std::vector< algebra::G2Point > getDKGTEPublicShares();
 };
 
+}  // namespace libBLS
 
-#endif //LIBBLS_DKGTESECRET_H
+#endif  // LIBBLS_DKGTESECRET_H

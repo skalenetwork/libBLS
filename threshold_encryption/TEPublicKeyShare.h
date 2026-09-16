@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file TEPublicKey.h
   @author Sveta Rogova
@@ -24,30 +24,41 @@
 #ifndef LIBBLS_TEPUBLICKEYSHARE_H
 #define LIBBLS_TEPUBLICKEYSHARE_H
 
-#include <threshold_encryption/threshold_encryption.h>
+#include <threshold_encryption/TEBase.h>
 #include <threshold_encryption/TEPrivateKeyShare.h>
+#include <threshold_encryption/threshold_encryption.h>
 
-class TEPublicKeyShare {
- private:
-    encryption::element_wrapper PublicKey;
+namespace libBLS {
+
+class TEPublicKeyShare : TEBase {
+private:
+    algebra::G2Point publicKey;
 
     size_t signerIndex;
-    size_t requiredSigners;
-    size_t totalSigners;
 
+public:
+    TEPublicKeyShare( const TEPrivateKeyShare& _pKey );
 
+    TEPublicKeyShare( const algebra::G2Point& _point, size_t _signerIndex, size_t _requiredSigners,
+        size_t _totalSigners );
 
- public:
-    TEPublicKeyShare(std::shared_ptr<std::vector<std::string>> _key_str_ptr, size_t signerIndex, size_t  _requiredSigners, size_t _totalSigners);
+    TEPublicKeyShare( const std::vector< uint8_t >& _bytes, size_t signerIndex,
+        size_t _requiredSigners, size_t _totalSigners );
 
-    TEPublicKeyShare(TEPrivateKeyShare _p_key, size_t  _requiredSigners, size_t _totalSigners);
+    TEPublicKeyShare( const std::array< uint8_t, algebra::G2Point::SIZE_BYTES >& bytes,
+        size_t signerIndex, size_t _requiredSigners, size_t _totalSigners );
 
-    bool Verify(const encryption::Ciphertext& ciphertext, const element_t& decrypted);
+    inline void validate() const { publicKey.validate(); }
 
-    std::shared_ptr<std::vector<std::string>> toString();
+    // std::string toString() const;
 
-    encryption::element_wrapper getPublicKey() const;
+    std::vector< uint8_t > toBytesVec() const;
+
+    std::array< uint8_t, algebra::G2Point::SIZE_BYTES > toBytesArray() const;
+
+    const algebra::G2Point& getPublicKeyRaw() const;
 };
 
+}  // namespace libBLS
 
-#endif //LIBBLS_TEPUBLICKEYSHARE_H
+#endif  // LIBBLS_TEPUBLICKEYSHARE_H

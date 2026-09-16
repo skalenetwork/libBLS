@@ -1,22 +1,33 @@
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.5)
+
+set( CMAKE_CXX_STANDARD 20 )
 
 project(libBLS)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-		if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.0)
-    		message(FATAL_ERROR "Require at least gcc-7.0")
-		endif()
+	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 11.0)
+		message(FATAL_ERROR "libBLS requires GCC 11.0 or newer for C++20 support")
+    endif()
 endif()
 
 if (CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(STATUS "*** Have SIZEOF void * = 8, so 64-bit")
 else ()
-    message(FATAL_ERROR "*** SIZEOF void * != 8, so not 64-bit - libBLS supports only 64-bit")
+	if (EMSCRIPTEN)
+		message(STATUS "*** SIZEOF void * = 4, while building with emscripten ")
+	else()
+		message(FATAL_ERROR "*** SIZEOF void * != 8, so not 64-bit - libBLS supports only 64-bit")
+	endif()
 endif ()
 
 if( NOT DEFINED DEPS_INSTALL_ROOT )
     set( DEPS_SOURCES_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/deps")
-    set( DEPS_INSTALL_ROOT "${DEPS_SOURCES_ROOT}/deps_inst/x86_or_x64")
+	# Set DEPS_INSTALL_ROOT based on the platform
+	if (EMSCRIPTEN)
+		set( DEPS_INSTALL_ROOT "${DEPS_SOURCES_ROOT}/deps_inst/wasm32-emscripten")
+    else()
+        set( DEPS_INSTALL_ROOT "${DEPS_SOURCES_ROOT}/deps_inst/x86_or_x64")
+    endif()
 endif()
 message(INFO "---- DEPS_INSTALL_ROOT in BLS is: ${DEPS_INSTALL_ROOT}")
 
@@ -24,15 +35,50 @@ include_directories( "${DEPS_INSTALL_ROOT}/include" ${CMAKE_BINARY_DIR}/deps/inc
 link_directories( "${DEPS_INSTALL_ROOT}/lib" )
 set( CMAKE_PREFIX_PATH "${DEPS_INSTALL_ROOT}" )
 
-find_library( GMP_LIBRARY NAMES "gmp" PATHS "${DEPS_INSTALL_ROOT}/lib" )
-find_library( GMPXX_LIBRARY NAMES "gmpxx" PATHS "${DEPS_INSTALL_ROOT}/lib" )
+set( LIBBLS_CMAKE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake" CACHE PATH "The path to the cmake directory" )
+list( APPEND CMAKE_MODULE_PATH ${LIBBLS_CMAKE_DIR} )
 
-set( HUNTER_ENABLED OFF )
+find_library( CRYPTOPP_LIBRARY NAMES "crypto" PATHS "${DEPS_INSTALL_ROOT}/lib" )
 
-option(BUILD_TESTS "Build tests" ON)
-option(BUILD_WITH_FPIC "Build with -fPIC" OFF)
+option(LIBBLS_BUILD_TESTS "Build tests" ON)
+option(LIBBLS_BUILD_WITH_FPIC "Build with -fPIC" OFF)
+option(LIBBLS_BUILD_UTILS "Build utils" ON)
+option(LIBBLS_BUILD_BENCHMARKS "Build benchmarks" ON)
 
-if(BUILD_TESTS)
+# No need to build tests and benchmarks with emscripten
+if (EMSCRIPTEN)
+  set(LIBBLS_BUILD_TESTS       OFF CACHE BOOL "Build tests"       FORCE)
+  set(LIBBLS_BUILD_BENCHMARKS  OFF CACHE BOOL "Build benchmarks"  FORCE)
+endif()
+
+option( BLS_PROFILING "Build for profiling" OFF )
+if( SKALED_PROFILING OR CONSENSUS_PROFILING )
+    set( BLS_PROFILING ON )
+endif()
+if( BLS_PROFILING )
+    set( CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -pg" )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg" )
+    set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg" )
+    set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -pg" )
+endif()
+
+if( CMAKE_BUILD_TYPE STREQUAL "Release" )
+    set( CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -O3" )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3" )
+elseif( CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo" )
+    set( CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -O3" )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3" )
+elseif( CMAKE_BUILD_TYPE STREQUAL "MinSizeRel" )
+    set( CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -Os" )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Os" )
+elseif( CMAKE_BUILD_TYPE STREQUAL "Debug" )
+    set( CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -O0" )
+    set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0" )
+else()
+	message( INFO "---- CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE} is not supported explicitly" )
+endif()
+
+if(LIBBLS_BUILD_TESTS)
 	enable_testing()
 endif()
 
@@ -51,131 +97,213 @@ if(COVERAGE)
 endif()
 
 
+#######################################
+# Sanitizers
+#######################################
+
+option(ENABLE_SANITIZERS "Enable ASan + LSan" OFF)
+if (ENABLE_SANITIZERS)
+	message(STATUS "**********************")
+	message(STATUS "*** ENABLE_SANITIZERS is ON ***")
+	message(STATUS "**********************")
+	set(CMAKE_CXX_FLAGS "-fsanitize=address -fsanitize=leak -fno-omit-frame-pointer -g ${CMAKE_CXX_FLAGS}")
+	set(CMAKE_EXE_LINKER_FLAGS "-fsanitize=address -fsanitize=leak ${CMAKE_EXE_LINKER_FLAGS}")
+endif()
+
+
+set( CLANG_FORMAT_EXCLUDE_PATTERNS
+    ${CMAKE_BINARY_DIR}
+    ${DEPS_SOURCES_ROOT}
+)
+include( BlsFindClangFormat )
+
+set( TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test/")
+set( TOOLS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tools/")
+set( DKG_DIR "${CMAKE_CURRENT_SOURCE_DIR}/dkg/")
+
 set(sourses_bls
-		bls/bls.cpp
-		bls/BLSPrivateKeyShare.cpp
-		bls/BLSPrivateKey.cpp
-		bls/BLSPublicKeyShare.cpp
-		bls/BLSPublicKey.cpp
-		bls/BLSSignature.cpp
-		bls/BLSSigShare.cpp
-		bls/BLSSigShareSet.cpp
-		bls/BLSutils.cpp
-		dkg/dkg.cpp
-		dkg/DKGBLSWrapper.cpp
-		dkg/DKGBLSSecret.cpp
-		third_party/cryptlite/base64.cpp
-		)
+	bls/bls.cpp
+	bls/BLSPrivateKeyShare.cpp
+	bls/BLSPrivateKey.cpp
+	bls/BLSPublicKeyShare.cpp
+	bls/BLSPublicKey.cpp
+	bls/BLSSignature.cpp
+	bls/BLSSigShare.cpp
+	bls/BLSSigShareSet.cpp
+	dkg/dkg.cpp
+	dkg/DKGBLSWrapper.cpp
+	dkg/DKGBLSSecret.cpp
+	dkg/DKGTEWrapper.cpp
+	dkg/DKGTESecret.cpp
+	third_party/cryptlite/base64.cpp
+)
 
 set(headers_bls
-		libBLS.h
-		bls/bls.h
-		bls/BLSPrivateKeyShare.h
-		bls/BLSPrivateKey.h
-		bls/BLSPublicKeyShare.h
-		bls/BLSPublicKey.h
-		bls/BLSSignature.h
-		bls/BLSSigShare.h
-		bls/BLSSigShareSet.h
-		bls/BLSutils.h
-		dkg/dkg.h
-		dkg/DKGBLSWrapper.h
-		dkg/DKGBLSSecret.h
-		third_party/json.hpp
-		third_party/cryptlite/sha256.h
-		third_party/cryptlite/sha1.h
-		third_party/cryptlite/hmac.h
-		third_party/cryptlite/base64.h
-		)
+	libBLS.h
+	bls/bls.h
+	bls/BLSPrivateKeyShare.h
+	bls/BLSPrivateKey.h
+	bls/BLSPublicKeyShare.h
+	bls/BLSPublicKey.h
+	bls/BLSSignature.h
+	bls/BLSSigShare.h
+	bls/BLSSigShareSet.h
+	dkg/dkg.h
+	dkg/DKGBLSWrapper.h
+	dkg/DKGBLSSecret.h
+	third_party/json.hpp
+	third_party/cryptlite/sha256.h
+	third_party/cryptlite/sha1.h
+	third_party/cryptlite/hmac.h
+	third_party/cryptlite/base64.h
+	tools/utils.h
+)
 
-set(PROJECT_VERSION 0.4.0)
+set(PROJECT_VERSION 0.2.0)
 add_definitions(-DBLS_VERSION=${PROJECT_VERSION})
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -fPIC -std=c++17 -Wno-error=parentheses -Wno-error=char-subscripts -Wno-error=unused-variable -Wno-error=unused-parameter -Wno-error=int-in-bool-context")
+if ( APPLE )
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wparentheses -Wunused -Wno-error=deprecated-copy -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=maybe-uninitialized -Wunreachable-code -Wextra -fPIC -std=c++20")
+else()
+	if (EMSCRIPTEN)
+                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++20")
+	else()
+                set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wunreachable-code -Wextra -Wno-error=deprecated-copy -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=maybe-uninitialized -Wno-error=int-in-bool-context -fPIC -std=c++20")
+		if( CMAKE_BUILD_TYPE STREQUAL "Debug" )
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wparentheses -Wunused -Wno-error=deprecated-copy -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=maybe-uninitialized" )
+		else()
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=deprecated-copy -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=maybe-uninitialized" )
+		endif()
+	endif()
+endif()
 
-include_directories(${CMAKE_BINARY_DIR}/deps/include)
-link_directories(${CMAKE_BINARY_DIR}/deps/lib)
+set(DEPS_LIB_DIR "${DEPS_INSTALL_ROOT}/lib")
+
+# Only set FOLLY_STATIC_LIBS if not building with emscripten
+if (EMSCRIPTEN)
+	set(FOLLY_STATIC_LIBS "")
+else()
+	set(FOLLY_STATIC_LIBS
+		"${DEPS_LIB_DIR}/libfolly.a"
+		"${DEPS_LIB_DIR}/libglog.a"
+		"${DEPS_LIB_DIR}/libgflags.a"
+		"${DEPS_LIB_DIR}/libfmt.a"
+		"${DEPS_LIB_DIR}/libdouble-conversion.a"
+		"${DEPS_LIB_DIR}/libevent.a"
+		"${DEPS_LIB_DIR}/libboost_context.a"
+	)
+endif()
+
+
+include_directories(${DEPS_INSTALL_ROOT}/include)
+link_directories(${DEPS_INSTALL_ROOT}/lib)
+
+# TMP fix for emscripten
+# Build utils exactly once
+add_library(common_utils STATIC tools/utils.cpp tools/utils.h)
+# SYSTEM - silence warnings from third-party code
+target_include_directories(common_utils SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(common_utils
+  PRIVATE
+    backend
+    ${CRYPTOPP_LIBRARY}
+    ${FOLLY_STATIC_LIBS}
+)
+
+add_subdirectory(backends)
 
 add_library(bls ${sourses_bls} ${headers_bls})
-target_compile_options(bls PUBLIC -Wno-error=sign-compare -Wno-error=reorder -Wno-error=unused-but-set-variable)
 
 include_directories(${Boost_INCLUDE_DIRS})
-
-
-if( SKALE_HAVE_BOOST_FROM_HUNTER )
-  set( BOOST_LIBS_4_BLS Boost::program_options )
-else()
-  set( BOOST_LIBS_4_BLS boost_program_options )
-endif()
 
 set (WITH_PROCPS OFF)
 
 set(BLS_INCLUDE_DIRS
-		${CMAKE_CURRENT_SOURCE_DIR}
-		${CMAKE_CURRENT_SOURCE_DIR}/bls
-		${DEPS_SOURCES_ROOT}
-		${DEPS_INSTALL_ROOT}
-		${CMAKE_CURRENT_SOURCE_DIR}/deps/include
-		PARENT_SCOPE
-		)
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/bls
+    ${DEPS_SOURCES_ROOT}
+    ${DEPS_INSTALL_ROOT}
+    ${CMAKE_CURRENT_SOURCE_DIR}/deps/include
+    PARENT_SCOPE
+)
 
-target_include_directories(bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(bls PRIVATE ff ${GMPXX_LIBRARY} ${GMP_LIBRARY})
+
+target_include_directories(bls SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(bls PUBLIC backend PRIVATE ${CRYPTOPP_LIBRARY} common_utils)
 
 add_subdirectory(threshold_encryption)
 
-add_executable(dkg_keygen tools/dkg_key_gen.cpp)
-target_include_directories(dkg_keygen PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+if (LIBBLS_BUILD_UTILS)
+	# Helper function for utils setup
+	function(add_bls_tool name source)
+		add_executable(${name} ${source})
+		target_include_directories(${name} SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_link_libraries(dkg_keygen PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} ${BOOST_LIBS_4_BLS})
+		if (EMSCRIPTEN)
+			target_compile_options(${name} PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
+			set_target_properties(${name} PROPERTIES LINK_FLAGS "-s -fwasm-exceptions")
+		endif()
 
-add_executable(dkg_glue tools/dkg_glue.cpp)
-target_include_directories(dkg_glue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(dkg_glue PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} ${BOOST_LIBS_4_BLS})
+		target_link_libraries(${name} PRIVATE bls ${CRYPTOPP_LIBRARY} boost_program_options)
+	endfunction()
 
-add_executable(sign_bls tools/sign_bls.cpp)
-target_include_directories(sign_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(sign_bls PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} ${BOOST_LIBS_4_BLS})
+	# Add all tools using the function
+	add_bls_tool(dkg_keygen tools/dkg_key_gen.cpp)
+	add_bls_tool(dkg_glue tools/dkg_glue.cpp)
+	add_bls_tool(sign_bls tools/sign_bls.cpp)
+	add_bls_tool(hash_g1 tools/hash_g1.cpp)
+	add_bls_tool(bls_glue tools/bls_glue.cpp)
+	add_bls_tool(verify_bls tools/verify_bls.cpp)
+	add_bls_tool(generate_key_system tools/generate_key_system.cpp)
 
-add_executable(hash_g1 tools/hash_g1.cpp)
-target_include_directories(hash_g1 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(hash_g1 PRIVATE bls ff ${GMPXX_LIBRARY} ${GMP_LIBRARY} ${BOOST_LIBS_4_BLS})
+endif()
 
-add_executable(bls_glue tools/bls_glue.cpp)
-target_include_directories(bls_glue PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(bls_glue PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} ${BOOST_LIBS_4_BLS})
+if(LIBBLS_BUILD_TESTS)
+	# Helper function to add tests
+	function(add_bls_test name source)
+		set(extra_libs ${ARGN})  # Capture any extra libraries passed as arguments
 
-add_executable(verify_bls tools/verify_bls.cpp)
-target_include_directories(verify_bls PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(verify_bls PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} ${BOOST_LIBS_4_BLS})
+		add_executable(${name} ${source})
+		target_include_directories(${name} SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
+		if (EMSCRIPTEN)
+			target_compile_options(${name} PRIVATE -s DISABLE_EXCEPTION_CATCHING=1)
+			set_target_properties(${name} PROPERTIES LINK_FLAGS "-s -fwasm-exceptions")
+		else()
+			target_compile_options(${name} PRIVATE -Wno-format-overflow)
+		endif()
 
-if(BUILD_TESTS)
-	add_executable(bls_unit_test test/unit_tests_bls.cpp)
-	target_include_directories(bls_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-	target_link_libraries(bls_unit_test PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} ${BOOST_LIBS_4_BLS})
+		target_link_libraries(${name} PRIVATE
+			bls
+			${CRYPTOPP_LIBRARY}
+			boost_program_options
+			${extra_libs}
+			${FOLLY_STATIC_LIBS}
+		)
+		add_test(NAME ${name} COMMAND ${name})
+	endfunction()
 
-	add_test(NAME bls_tests COMMAND bls_unit_test)
+    add_bls_test(bls_unit_test test/unit_tests_bls.cpp)
+    add_bls_test(dkg_unit_test test/unit_tests_dkg.cpp)
+    add_bls_test(bls_test test/test_bls.cpp)
 
-	add_executable(dkg_unit_test test/unit_tests_dkg.cpp)
-	target_include_directories(dkg_unit_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-	target_link_libraries(dkg_unit_test PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} ${BOOST_LIBS_4_BLS})
-  
-	add_test(NAME dkg_tests COMMAND dkg_unit_test)
+    # utils_unit_test requires an extra library 'te'
+    add_bls_test(utils_unit_test test/unit_tests_utils.cpp te)
 
-	add_executable(bls_test test/test_bls.cpp)
-	target_include_directories(bls_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-	target_link_libraries(bls_test PRIVATE bls ff ${GMP_LIBRARY} ${GMPXX_LIBRARY} ${BOOST_LIBS_4_BLS})
-  
-	add_test(NAME bls_test COMMAND bls_test)
+    # Special case for dkg_attack (no compile options)
+    add_executable(dkg_attack test/dkg_attack.cpp)
+    target_include_directories(dkg_attack SYSTEM PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(dkg_attack PRIVATE bls ${CRYPTOPP_LIBRARY} boost_program_options)
+    add_test(NAME dkg_attack COMMAND dkg_attack)
 
 	add_custom_target(all_bls_tests
-			COMMAND ./bls_unit_test
-			COMMAND ./dkg_unit_test
-			COMMAND ./bls_test
-			DEPENDS bls_unit_test dkg_unit_test
-			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-			COMMENT "Run all BLS and DKG tests"
-			)
+		COMMAND ./bls_unit_test
+		COMMAND ./dkg_unit_test
+		COMMAND ./bls_test
+		COMMAND ./utils_unit_test
+		DEPENDS bls_unit_test dkg_unit_test
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		COMMENT "Run all BLS and DKG tests"
+	)
 endif()
 
 if(NOT SKALE_SKIP_INSTALLING_DIRECTIVES)
@@ -185,4 +313,8 @@ if(NOT SKALE_SKIP_INSTALLING_DIRECTIVES)
 	install( TARGETS sign_bls DESTINATION bin )
 	install( TARGETS bls_glue DESTINATION bin )
 	install( TARGETS verify_bls DESTINATION bin )
+endif()
+
+if (LIBBLS_BUILD_BENCHMARKS)
+	add_subdirectory(benchmarks)
 endif()

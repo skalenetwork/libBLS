@@ -1,0 +1,299 @@
+---
+name: Build and test libBLS
+on:
+  pull_request:
+    branches:
+      - develop
+      - beta
+      - stable
+  push:
+    branches:
+      - develop
+      - master
+      - beta
+      - stable
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
+jobs:
+  linux_build_and_test:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Linux & Dependencies
+        uses: ./.github/actions/setup-linux-env
+        with:
+          extra-apt-packages: 'python3 python3-pip'
+      - name: Install Python packages
+        run: |
+          sudo python3 -m pip install --ignore-installed --upgrade pip
+          sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1 "requests[security]"
+      - name: Get newest lcov
+        run: >
+          echo "Removing previous lcov version..."
+
+          sudo apt-get remove lcov || true
+
+          echo "Installing newest lcov version..."
+
+          rm -rf newer_lcov || true
+
+          mkdir newer_lcov
+
+          cd newer_lcov
+
+          git clone https://github.com/linux-test-project/lcov --recursive --recurse-submodules
+
+          cd lcov
+
+          git checkout 92e2121
+
+          sudo make install
+
+          cd ..
+
+          cd ..
+
+          echo "Checking installed lcov version..."
+
+          which lcov
+
+          lcov --version
+      - name: Configure all
+        run: |
+          export CC=gcc-11
+          export CXX=g++-11
+          export TARGET=all
+          CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+          mkdir -p build && cd build
+          cmake $CMAKE_BUILD_FLAGS ..
+      - name: Build all
+        run: |
+          export CC=gcc-11
+          export CXX=g++-11
+          export TARGET=all
+          CMAKE_BUILD_FLAGS="-DCOVERAGE=ON"
+          cd build
+          make -j$(nproc)
+      - name: Run sgxwallet container
+        run: |
+          export SGX_WALLET_TAG=e548b375cae741af8fd11db54d6925c27a947af9
+          ./scripts/run_sgx_simulator.sh
+          echo "Waiting for SGX wallet to be ready..."
+          for i in {1..60}; do
+            if curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:1029 2>/dev/null | grep -q "405\|200"; then
+              echo "SGX wallet is ready after $((i*2)) seconds"
+              break
+            fi
+            echo "Attempt $i: SGX wallet not ready yet..."
+            sleep 2
+          done
+          docker logs sgx_simulator 2>&1 | tail -20 || true
+      - name: Run tests
+        run: |
+          cp scripts/parameters.json build/
+          cd build
+          ./backends/backend_unit_test
+          ./bls_unit_test
+          ./dkg_unit_test
+          ./utils_unit_test
+          ./bls_test
+          ./threshold_encryption/te_unit_test
+          ./threshold_encryption/te_test
+          ./threshold_encryption/te_encrypt_message
+          ./dkg_attack
+          ./threshold_encryption/te_sample_sgx
+      - name: Create lcov report
+        run: >
+          cd build
+
+          lcov --capture --directory . --output-file coverage.info
+
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info # filter system-files
+
+          lcov --remove coverage.info 'deps/*' --output-file coverage.info # filter dependency files
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.info
+  build_t_encrypt_wheel:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Setup Linux & Dependencies
+        uses: ./.github/actions/setup-linux-env
+        with:
+          extra-apt-packages: 'patchelf'
+      - name: Build and check t-encrypt wheel
+        env:
+          CC: gcc-11
+          CXX: g++-11
+          TARGET: all
+        run: |
+          python -m pip install --upgrade pip setuptools wheel auditwheel twine
+          mkdir -p build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          make -j$(nproc) t_encrypt_python
+          cd ../python
+          export T_ENCRYPT_LIB_PATH="${GITHUB_WORKSPACE}/build/threshold_encryption/libt_encrypt_python.so"
+          python setup_t_encrypt.py bdist_wheel
+          raw_wheel="$(ls -t dist/*.whl | head -n1)"
+          [[ "${raw_wheel}" != *-py3-none-any.whl ]] || { echo "Wheel must be platform-tagged: ${raw_wheel}" >&2; exit 1; }
+          auditwheel show "${raw_wheel}"
+          auditwheel repair "${raw_wheel}" -w wheelhouse
+          wheel="$(ls -t wheelhouse/*.whl | head -n1)"
+          [[ "${wheel}" == *manylinux*.whl ]] || { echo "Repaired wheel must be manylinux-tagged: ${wheel}" >&2; exit 1; }
+          python -m zipfile -e "${wheel}" wheel-check
+          shared_library="wheel-check/t_encrypt/libencrypt.so"
+          [[ -f "${shared_library}" ]]
+          ! readelf -d "${shared_library}" | grep -Eq 'lib(ssl|crypto)\.so\.1\.1'
+          python -m twine check "${wheel}"
+      - name: Run t-encrypt functional test against the built wheel
+        run: |
+          wheel="$(ls -t python/wheelhouse/*.whl | head -n1)"
+          python -m pip install --force-reinstall "${wheel}"
+          tmpdir="$(mktemp -d)"
+          (cd "${tmpdir}" && python -m t_encrypt.test_t_encrypt)
+      - name: Upload t-encrypt wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: t-encrypt-wheel
+          path: python/wheelhouse/*.whl
+  validate_t_encrypt_wheel:
+    needs: build_t_encrypt_wheel
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Download t-encrypt wheel
+        uses: actions/download-artifact@v4
+        with:
+          name: t-encrypt-wheel
+          path: dist
+      - name: Install t-encrypt wheel and run functional test
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install dist/*.whl
+          python -m t_encrypt.test_t_encrypt
+  osx_build_and_test:
+    runs-on: macos-15-intel
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install packages
+        run: |
+          brew install yasm texinfo shtool libtool coreutils
+      - name: Install CMake 3.21.0
+        run: |
+          set -euo pipefail
+          CMAKE_VERSION=3.21.0
+          CMAKE_DIR="cmake-${CMAKE_VERSION}-macos-universal"
+          if [[ ! -d "${CMAKE_DIR}" ]]; then
+            echo "Downloading CMake ${CMAKE_VERSION}..."
+            curl -L "https://cmake.org/files/v3.21/${CMAKE_DIR}.tar.gz" -o cmake.tar.gz
+            tar -xzf cmake.tar.gz
+          fi
+          sudo ln -sf "$PWD/${CMAKE_DIR}/CMake.app/Contents/bin/"* /usr/local/bin
+          which cmake
+          cmake --version
+      - name: Build dependencies
+        run: |
+          cd deps
+          ./build.sh
+      - name: Configure all
+        run: |
+          mkdir -p build && cd build
+          cmake ..
+      - name: Build all
+        run: |
+          cd build
+          make -j$(sysctl -n hw.ncpu)
+      - name: Run tests
+        run: |
+          cp scripts/parameters.json build/
+          cd build
+          ./backends/backend_unit_test
+          ./bls_unit_test
+          ./dkg_unit_test
+          ./bls_test
+          ./threshold_encryption/te_unit_test
+          ./threshold_encryption/te_test
+          ./threshold_encryption/te_encrypt_message
+          ./dkg_attack
+  linux_build_with_emscripten:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        node-version:
+          - 18.x
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Linux & Emscripten Dependencies
+        uses: ./.github/actions/setup-linux-env
+        with:
+          extra-apt-packages: 'python3 python3-pip'
+          with-emscripten: 'true'
+      - name: Install Python packages
+        run: |
+          sudo python3 -m pip install --ignore-installed --upgrade pip
+          sudo python3 -m pip install pyopenssl ndg-httpsclient pyasn1 "requests[security]"
+      - name: Install NODE JS
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Build all
+        run: >
+          cd deps/emsdk
+
+          ./emsdk install latest
+
+          ./emsdk activate latest
+
+          source ./emsdk_env.sh
+
+          cd ../..
+
+          mkdir -p build_em
+
+          cd build_em
+
+          export LIBRARIES_ROOT=../deps/deps_inst/wasm32-emscripten/lib
+
+          emcmake cmake -DEMSCRIPTEN=ON -DBUILD_TESTS=OFF -DGMP_LIBRARY="$LIBRARIES_ROOT"/libgmp.a -DCRYPTOPP_LIBRARY="$LIBRARIES_ROOT"/libcrypto.a -DGMPXX_LIBRARY="$LIBRARIES_ROOT"/libgmpxx.a ..
+
+          emmake make -j$(nproc)
+
+          cd ..
+      - name: Build native dependencies (for CLI tools)
+        run: |
+          export CC=gcc-11
+          export CXX=g++-11
+          export TARGET=all
+          cd deps
+          ./build.sh
+          cd ..
+      - name: Build native CLI tools
+        run: |
+          export CC=gcc-11
+          export CXX=g++-11
+          mkdir -p build_native_tools && cd build_native_tools
+          cmake ..
+          make -j$(nproc) generate_bls_keys decrypt_message
+          cd ..
+      - name: Run tests
+        run: |
+          bash scripts/run_emscripten_test.sh build_em build_native_tools

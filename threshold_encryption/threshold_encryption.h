@@ -14,7 +14,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 @file threshold_encryption.h
 @author Oleh Nikolaiev
@@ -23,100 +23,135 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include <openssl/rand.h>
+#include <array>
+#include <optional>
 #include <string>
-#include <tuple>
-#include <vector>
 #include <utility>
+#include <vector>
 
-#include <third_party/cryptlite/sha256.h>
+#include "TEBase.h"
+#include "backends/algebra.hpp"
+#include <tools/utils.h>
 
-#include <pbc/pbc.h>
-#include <threshold_encryption/TEDataSingleton.h>
+#include "CipheredKey.h"
+#include "Ciphertext.h"
 
-namespace encryption{
 
-class element_wrapper {
- public:
-    element_t el_ = {0, 0};
+namespace libBLS {
 
-    void clear() {
-      if (el_[0].data) {
-        element_clear(el_);
-      }
-    }
+constexpr size_t CYPHERTEXT_LENGTH = 64;
+using RandSecret = std::array< uint8_t, RANDOM_SECRET_SIZE_BYTES >;
 
-    void assign(const element_t& e) {
-      if (((void*)(&el_)) == ((void*)(&e))) {
-        return;
-      }
+/**
+ * @brief The result of the encryption process
+ * Only accessible by the party that cyphers the text.
+ * `randomSecret` should never be shared.
+ */
+struct CipherResult {
+    std::shared_ptr< Ciphertext > ciphertext;
+    RandSecret randomSecret;
+};
 
-      clear();
-      element_init_same_as(el_, const_cast<element_t&>(e));
-      element_set(el_, const_cast<element_t&>(e));
-    }
+struct CipheredKeyResult {
+    std::vector< CipheredKey > ciphertext;
+    RandSecret randomSecret;
+};
 
-    void assign(const element_wrapper& other) {
-      if (((void*)this) == ((void*)(&other))) {
-        return;
-      }
 
-      assign(other.el_);
-    }
+/**
+ * @brief Metadata used during encryption
+ */
+struct EncryptMetaData {
+    // Optional associated data for AES GCM
+    // Is used at encryption and at decryption stages only. Does not obey to threshold
+    // guarantees since it is associated with symmetric encryption.
+    std::optional< std::vector< uint8_t > > associatedDataAesGcm;
 
-    element_wrapper() {}
+    // Optional associated data for TE
+    // Is used at encryption and validateEncryption stages only. Obeys to threshold guarantees
+    // as long as no party proceeds with the algorithm (partial decryption) in case
+    // validateEncryption fails with this associated data.
+    std::optional< std::vector< uint8_t > > associatedDataTE;
 
-    element_wrapper(const element_wrapper& other) {
-      assign(other);
-    }
+    // Optional seed used to derive both the random scalar secret and the AES key.
+    // Seed must have same size as AES_KEY in order to have the same entropy / security level.
+    std::optional< Seed256 > seed;
+};
 
-    element_wrapper(const element_t& e) {
-      assign(e);
-    }
+class TE {
+public:
+    TE( const TEBase& base );
 
-    ~element_wrapper() {
-      clear();
-    }
-
-    element_wrapper& operator=(const element_wrapper& other) {
-      assign(other);
-      return (*this);
-    }
-
-    element_wrapper& operator=(const element_t& e) {
-      assign(e);
-      return (*this);
-    }
-  };
-
-  typedef std::tuple<element_wrapper, std::string, element_wrapper> Ciphertext;
-
-  class TE {
-   public:
-    TE(const size_t t, const size_t n);
+    TE( const size_t t, const size_t n );
 
     ~TE();
 
-    Ciphertext Encrypt(const std::string& message, const element_t& common_public);
+    /**
+     * @brief Encrypts a message using threshold encryption scheme
+     *
+     * Slow in comparison to encryptWithAES - Use only to cipher
+     * AES key. Not the message itself
+     *
+     * @param message The message to encrypt
+     * @param common_public The public key in G2 group
+     * @return CipheredKey Triple (U,V,W) where:
+     *         U is element of G2
+     *         V is the encrypted message
+     *         W is element of G1
+     * @return string - random secret used for encryption. Mostly used for testing.
+     *
+     * @note This is an auxiliar function, used within `encryptWithAES`
+     */
+    static CipheredKeyResult getCiphertext( const AES256Key& key,
+        const algebra::G2Point& commonPublic,
+        const std::optional< std::vector< uint8_t > >& associatedDataTE,
+        const std::optional< Seed256 >& seed );
 
-    void Decrypt(element_t ret_val, const Ciphertext& ciphertext, const element_t& secret_key);
+    static CipheredKeyResult getCiphertext( const AES256Key& key,
+        const std::vector< algebra::G2Point >& commonPublic,
+        const std::optional< std::vector< uint8_t > >& associatedDataTE,
+        const std::optional< Seed256 >& seed );
 
-    void HashToGroup(element_t ret_val, const element_t& U, const std::string& V,
-                    std::string (*hash_func)(const std::string& str) = cryptlite::sha256::hash_hex);
+    static CipherResult encryptWithAES( const std::vector< uint8_t >& message,
+        const algebra::G2Point& commonPublic, const EncryptMetaData& metaData = EncryptMetaData() );
 
-    std::string Hash(const element_t& Y, std::string (*hash_func)(const std::string& str) =
-    cryptlite::sha256::hash_hex);
+    static CipherResult encryptWithAES( const std::vector< uint8_t >& message,
+        const std::vector< algebra::G2Point >& commonPublic,
+        const EncryptMetaData& metaData = EncryptMetaData() );
 
-    bool Verify(const Ciphertext& ciphertext, const element_t& decrypted, const element_t& public_key);
+    static std::pair< std::string, RandSecret > encryptMessage(
+        const std::vector< uint8_t >& message, const std::string& commonPublic );
+    static std::pair< std::string, RandSecret > encryptMessage(
+        const std::vector< uint8_t >& message, const std::vector< std::string >& commonPublic );
 
-    std::string CombineShares(const Ciphertext& ciphertext,
-                                  const std::vector<std::pair<element_wrapper, size_t>>& decrypted);
+    static algebra::G2Point getDecryptionShare(
+        const CipheredKey& ciphertext, const algebra::FrScalar& secretKey );
 
-    std::vector<element_wrapper> LagrangeCoeffs(const std::vector<int>& idx);
+    static algebra::G1Point HashToGroup( const algebra::G2Point& U, const AES256Key& V,
+        const std::vector< uint8_t >* associatedData = nullptr );
 
- private:
+    static std::string Hash( const algebra::G2Point& Y );
+
+    static bool Verify( const CipheredKey& ciphertext, const algebra::G2Point& decryptionShare,
+        const algebra::G2Point& publicKey,
+        const std::vector< uint8_t >* associatedDataTE = nullptr );
+
+    static std::vector< bool > VerifyBatch( const std::vector< CipheredKey >& ciphertexts,
+        const std::vector< algebra::G2Point >& decryptionShares,
+        const std::vector< algebra::G2Point >& publicKeys,
+        const std::vector< std::vector< uint8_t > >* associatedDataTE = nullptr );
+
+    AES256Key CombineShares( const CipheredKey& ciphertext,
+        const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShare );
+
+    AES256Key CombineSharesIntoAESKey(
+        const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShare );
+
+private:
     const size_t t_ = 0;
 
     const size_t n_ = 0;
 };
 
-}  // namespace encryption
+}  // namespace libBLS

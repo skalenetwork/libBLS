@@ -14,7 +14,7 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file bls.h
   @author Oleh Nikolaiev
@@ -26,61 +26,73 @@
 
 #include <third_party/cryptlite/sha256.h>
 
-#include <string>
-#include <vector>
-#include <utility>
-#include <memory>
 #include <iostream>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-
-static constexpr size_t BLS_MAX_COMPONENT_LEN = 80;
+#include "backends/algebra.hpp"
 
 static constexpr size_t BLS_MAX_SIG_LEN = 240;
 
 
-namespace signatures {
+namespace libBLS {
 
 class Bls {
- public:
-    Bls(const size_t t, const size_t n);
+public:
+    Bls( const size_t t, const size_t n );
 
-    std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> KeyGeneration();
+    static std::pair< algebra::FrScalar, algebra::G2Point > KeyGeneration();
 
-    libff::alt_bn128_G1 Hashing(const std::string& message,
-                                  std::string (*hash_func)(const std::string& str) =
-                                               cryptlite::sha256::hash_hex);
+    static algebra::G1Point HashPublicKeyToG1( const algebra::G2Point& elem );
 
-    libff::alt_bn128_G1 HashBytes(const char* raw_bytes, size_t length,
-                                  std::string (*hash_func)(const std::string& str) =
-                                               cryptlite::sha256::hash_hex);
+    static std::pair< algebra::G1Point, std::string > HashPublicKeyToG1WithHint(
+        const algebra::G2Point& elem );
 
-    libff::alt_bn128_G1 HashtoG1(std::shared_ptr< std::array< uint8_t, 32>>);
+    static algebra::G1Point Signing(
+        const algebra::G1Point& hash, const algebra::FrScalar& secret_key );
 
-    std::pair<libff::alt_bn128_G1, std::string> HashtoG1withHint(std::shared_ptr< std::array< uint8_t, 32>>);
+    static algebra::G1Point CoreSignAggregated(
+        const std::string& message, const algebra::FrScalar& secret_key );
 
-    libff::alt_bn128_G1 Signing(const libff::alt_bn128_G1 hash,
-                                  const libff::alt_bn128_Fr secret_key);
+    static algebra::G1Point Aggregate( const std::vector< algebra::G1Point >& signatures );
 
-    bool Verification(const std::string& to_be_hashed, const libff::alt_bn128_G1 sign,
-                        const libff::alt_bn128_G2 public_key);
+    static bool CoreVerify( const algebra::G2Point& public_key, const std::string& message,
+        const algebra::G1Point& signature );
 
-    bool Verification(std::shared_ptr<std::array< uint8_t, 32>>, const libff::alt_bn128_G1 sign,
-                      const libff::alt_bn128_G2 public_key);
+    static bool FastAggregateVerify( const std::vector< algebra::G2Point >& public_keys,
+        const std::string& message, const algebra::G1Point& signature );
 
-    std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> KeysRecover(
-                                                  const std::vector<libff::alt_bn128_Fr>& coeffs,
-                                                  const std::vector<libff::alt_bn128_Fr>& shares);
+    static bool Verify( const std::array< uint8_t, 32 >& hash_byte_arr,
+        const algebra::G1Point& sign, const algebra::G2Point& public_key );
 
-    libff::alt_bn128_G1 SignatureRecover(const std::vector<libff::alt_bn128_G1>& shares,
-                                          const std::vector<libff::alt_bn128_Fr>& coeffs);
+    static bool AggregateVerify( const std::vector< std::array< uint8_t, 32 > >& hash_byte_arr,
+        const std::vector< algebra::G1Point >& sign, const algebra::G2Point& public_key );
 
-    std::vector<libff::alt_bn128_Fr> LagrangeCoeffs(const std::vector<size_t>& idx);
+    std::pair< algebra::FrScalar, algebra::G2Point > KeysRecover(
+        const std::vector< algebra::FrScalar >& coeffs,
+        const std::vector< algebra::FrScalar >& shares );
 
- private:
+    algebra::G1Point SignatureRecover( const std::vector< algebra::G1Point >& shares,
+        const std::vector< algebra::FrScalar >& coeffs );
+
+    static algebra::G1Point PopProve( const algebra::FrScalar& secret_key );
+
+    static bool PopVerify( const algebra::G2Point& public_key, const algebra::G1Point& prove );
+
+private:
     const size_t t_ = 0;
 
     const size_t n_ = 0;
 };
 
-}  // namespace signatures
+}  // namespace libBLS
+
+
+#define BLS_CHECK( _EXPRESSION_ )                                                             \
+    if ( !( _EXPRESSION_ ) ) {                                                                \
+        auto __msg__ = std::string( "Check failed:" ) + #_EXPRESSION_ + "\n" + __FUNCTION__ + \
+                       +" " + std::string( __FILE__ ) + ":" + std::to_string( __LINE__ );     \
+        throw libBLS::ThresholdUtils::IncorrectInput( __msg__ );                              \
+    }

@@ -1,0 +1,62 @@
+name: 'Setup Linux Build Environment'
+description: 'Installs GCC toolchain, system build tools, and optionally builds libBLS dependencies'
+
+inputs:
+  gcc-version:
+    description: 'GCC version to configure'
+    default: '11'
+    required: false
+  extra-apt-packages:
+    description: 'Additional apt packages to install'
+    default: ''
+    required: false
+  build-deps:
+    description: 'Whether to execute deps/build.sh'
+    default: 'true'
+    required: false
+  with-emscripten:
+    description: 'Pass WITH_EMSCRIPTEN=1 to deps/build.sh'
+    default: 'false'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Configure Toolchain and Packages
+      shell: bash
+      run: |
+        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+        sudo apt-get update
+        sudo apt-get install -y \
+          software-properties-common \
+          gcc-${{ inputs.gcc-version }} \
+          g++-${{ inputs.gcc-version }} \
+          gawk sed shtool libffi-dev yasm texinfo \
+          libgnutls28-dev liblzma-dev gcc-multilib git \
+          ${{ inputs.extra-apt-packages }}
+
+        sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${{ inputs.gcc-version }} 11
+        sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${{ inputs.gcc-version }} 11
+        if command -v gcov-${{ inputs.gcc-version }} &>/dev/null; then
+          sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-${{ inputs.gcc-version }} 11
+        fi
+        if command -v gcov-dump-${{ inputs.gcc-version }} &>/dev/null; then
+          sudo update-alternatives --install /usr/bin/gcov-dump gcov-dump /usr/bin/gcov-dump-${{ inputs.gcc-version }} 11
+        fi
+        if command -v gcov-tool-${{ inputs.gcc-version }} &>/dev/null; then
+          sudo update-alternatives --install /usr/bin/gcov-tool gcov-tool /usr/bin/gcov-tool-${{ inputs.gcc-version }} 11
+        fi
+
+    - name: Build dependencies
+      if: inputs.build-deps == 'true'
+      shell: bash
+      run: |
+        export CC=gcc-${{ inputs.gcc-version }}
+        export CXX=g++-${{ inputs.gcc-version }}
+        export TARGET=all
+        cd deps
+        if [ "${{ inputs.with-emscripten }}" = "true" ] || [ "${{ inputs.with-emscripten }}" = "1" ]; then
+          ./build.sh WITH_EMSCRIPTEN=1
+        else
+          ./build.sh
+        fi

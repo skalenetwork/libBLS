@@ -14,49 +14,59 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 @file TEPublicKey.h
 @author Sveta Rogova
-@date 2019
+@date 2025
 */
 
 #include <threshold_encryption/TEPrivateKey.h>
-#include <threshold_encryption/utils.h>
+#include <tools/utils.h>
 
-TEPrivateKey::TEPrivateKey(std::shared_ptr<std::string> _key_str, size_t  _requiredSigners, size_t _totalSigners)
-: requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
+namespace libBLS {
 
-  TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
+TEPrivateKey::TEPrivateKey( const std::string& _keyStr, Base base ) {
+    privateKey = algebra::FrScalar::fromString( _keyStr, base );
 
-  if (!_key_str) {
-    throw std::runtime_error("private key is null");
-  }
-
-  element_t pkey;
-  element_init_Zr(pkey,  TEDataSingleton::getData().pairing_);
-  element_set_str(pkey, _key_str->c_str(), 10);
-  privateKey = encryption::element_wrapper(pkey);
-  element_clear(pkey);
-
-  if (element_is0(privateKey.el_)) {
-    throw std::runtime_error(" private key is zero");
-  }
+    if ( privateKey.isZero() ) {
+        throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
+    }
 }
 
-TEPrivateKey::TEPrivateKey( encryption::element_wrapper _skey, size_t  _requiredSigners, size_t _totalSigners)
-: privateKey(_skey), requiredSigners(_requiredSigners), totalSigners(_totalSigners) {
-
-  TEDataSingleton::checkSigners(_requiredSigners, _totalSigners);
-
-  if (element_is0(_skey.el_))
-    throw std::runtime_error(" private key is zero");
+TEPrivateKey::TEPrivateKey( const algebra::FrScalar& _skey ) : privateKey( _skey ) {
+    if ( _skey.isZero() )
+        throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
 }
 
-std::string TEPrivateKey::toString() {
-  return ElementZrToString(privateKey.el_);
+TEPrivateKey::TEPrivateKey( const std::vector< uint8_t > _keyBytes ) {
+    privateKey = algebra::FrScalar::fromBytes( _keyBytes );
+    if ( privateKey.isZero() ) {
+        throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
+    }
 }
 
-encryption::element_wrapper  TEPrivateKey::getPrivateKey() const {
-  return privateKey;
+TEPrivateKey::TEPrivateKey( const std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > _keyBytes ) {
+    privateKey = algebra::FrScalar::fromBytes( _keyBytes );
+    if ( privateKey.isZero() ) {
+        throw ThresholdUtils::ZeroSecretKey( "private key is zero" );
+    }
 }
+
+std::vector< uint8_t > TEPrivateKey::toBytesVec() const {
+    return privateKey.toByteVector();
+}
+
+std::array< uint8_t, algebra::FrScalar::SIZE_BYTES > TEPrivateKey::toBytesArray() const {
+    return privateKey.toByteArray();
+}
+
+std::string TEPrivateKey::toString( Base base ) const {
+    return privateKey.toString( base );
+}
+
+const algebra::FrScalar& TEPrivateKey::getPrivateKeyRaw() const {
+    return privateKey;
+}
+
+}  // namespace libBLS

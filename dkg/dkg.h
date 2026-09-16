@@ -26,44 +26,41 @@
 
 #include <vector>
 
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pp.hpp>
-#include <libff/algebra/fields/fp.hpp>
+#include "backends/algebra.hpp"
 
-namespace signatures {
+namespace libBLS {
 
 class Dkg {
- public:
-    Dkg(const size_t t, const size_t n);
+public:
+    Dkg( const size_t t, const size_t n );
 
-    std::vector<libff::alt_bn128_Fr> GeneratePolynomial();
+    std::vector< algebra::FrScalar > GeneratePolynomial();
 
-    std::vector<libff::alt_bn128_G2> VerificationVector(
-                                              const std::vector<libff::alt_bn128_Fr>& polynomial);
+    std::vector< algebra::G2Point > VerificationVector(
+        const std::vector< algebra::FrScalar >& polynomial );
 
-    libff::alt_bn128_Fr PolynomialValue(const std::vector<libff::alt_bn128_Fr>& pol,
-                                                                        libff::alt_bn128_Fr point);
+    algebra::FrScalar PolynomialValue(
+        const std::vector< algebra::FrScalar >& pol, algebra::FrScalar point );
 
-    std::vector<libff::alt_bn128_Fr> SecretKeyContribution(
-                                              const std::vector<libff::alt_bn128_Fr>& polynomial);
+    std::vector< algebra::FrScalar > SecretKeyContribution(
+        const std::vector< algebra::FrScalar >& polynomial );
 
-    libff::alt_bn128_Fr SecretKeyShareCreate(
-                                  const std::vector<libff::alt_bn128_Fr>& secret_key_contribution);
+    algebra::FrScalar SecretKeyShareCreate(
+        const std::vector< algebra::FrScalar >& secret_key_contribution );
 
-    bool Verification(size_t idx, libff::alt_bn128_Fr share,
-                        const std::vector<libff::alt_bn128_G2>& verification_vector);
+    bool Verification( size_t idx, algebra::FrScalar share,
+        const std::vector< algebra::G2Point >& verification_vector );
 
-    libff::alt_bn128_G2 GetPublicKeyFromSecretKey(const libff::alt_bn128_Fr& secret_key);
-
-    libff::alt_bn128_G2 ComputeVerificationValue(const libff::alt_bn128_Fr& share);
+    algebra::G2Point GetPublicKeyFromSecretKey( const algebra::FrScalar& secret_key );
 
     size_t GetT() const;
 
     size_t GetN() const;
 
- private:
+private:
     const size_t t_ = 0;
 
     const size_t n_ = 0;
 };
 
-}  // namespace signatures
+}  // namespace libBLS

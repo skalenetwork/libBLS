@@ -105,3 +105,9 @@ For all tools, add the flag `--help` to view input parameters and `--v` to view 
     <span style="color:blue">**Example**</span>
 
         ./verify_bls --t 2 --n 3 --input /path/to/signature/signature.json
+
+5. Generate all private and public keys as well as common public key: `./generate_key_system --t <threshold> --n <num_participants>`. Flag `--output` is optional.
+
+    <span style="color:blue">**Example**</span>
+
+        ./generate_key_system --t 3 --n 4 --output /path/to/file/output.json

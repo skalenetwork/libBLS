@@ -23,286 +23,231 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 
 
 #include <bls/bls.h>
+#include <tools/utils.h>
 
 #include <chrono>
 #include <ctime>
 #include <stdexcept>
 #include <thread>
-#include <bitset>
 
 #include <boost/multiprecision/cpp_int.hpp>
-#include <libff/algebra/curves/alt_bn128/alt_bn128_pairing.hpp>
-#include <libff/algebra/exponentiation/exponentiation.hpp>
 
-#include <bls/BLSutils.h>
+namespace libBLS {
 
-namespace signatures {
+Bls::Bls( const size_t t, const size_t n ) : t_( t ), n_( n ) {}
 
-  Bls::Bls(const size_t t, const size_t n) : t_(t), n_(n) {
-    libff::init_alt_bn128_params();  // init all parameters for math operations
-  }
+std::pair< algebra::FrScalar, algebra::G2Point > Bls::KeyGeneration() {
+    // generate sample secret and public keys
+    algebra::FrScalar secret_key = algebra::FrScalar::random();  // secret key generation
 
-  std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> Bls::KeyGeneration() {
-    // generate secret and public KeysRecover
-    libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::random_element();  // secret key generation
-
-    while (secret_key == libff::alt_bn128_Fr::zero()) {
-      secret_key = libff::alt_bn128_Fr::random_element();
+    while ( secret_key.isZero() ) {
+        secret_key = algebra::FrScalar::random();
     }
 
-    const libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();  // public key generation
+    const algebra::G2Point public_key =
+        secret_key * algebra::G2Point::generator();  // public key generation
 
-    return std::make_pair(secret_key, public_key);
-  }
+    return std::make_pair( secret_key, public_key );
+}
 
-  libff::alt_bn128_G1 Bls::Hashing(const std::string &message,
-   std::string (*hash_func)(const std::string &str)) {
-    std::string sha256hex = hash_func(message);
+algebra::G1Point Bls::HashPublicKeyToG1( const algebra::G2Point& elem ) {
+    auto serialized_elem_vector = elem.toStringArray( Base::HEXA );
 
-    boost::multiprecision::uint256_t num = 0;
-    boost::multiprecision::uint256_t pow = 1;
-    for (auto sym : sha256hex) {
-      // converting from hex to bigint
-      num += ((sym >= 'a') * 10 + static_cast<int>((sym - 'a'))) * pow;
-      pow *= 16;
+    std::string serialized_elem = std::accumulate(
+        serialized_elem_vector.begin(), serialized_elem_vector.end(), std::string( "" ) );
+
+    std::string hashed_pubkey = cryptlite::sha256::hash_hex( serialized_elem );
+
+    auto hash_bytes_arr = std::array< uint8_t, 32 >();
+
+    uint64_t bin_len;
+    if ( !ThresholdUtils::hex2carray(
+             hashed_pubkey.c_str(), &bin_len, hash_bytes_arr.data(), hash_bytes_arr.size() ) ) {
+        throw std::runtime_error( "Invalid hash" );
     }
 
-    std::string s = num.convert_to<std::string>();
+    return algebra::G1Point::fromHash( hash_bytes_arr );
+}
 
-    const libff::alt_bn128_G1 hash = libff::alt_bn128_Fr(s.c_str()) * libff::alt_bn128_G1::one();
+std::pair< algebra::G1Point, std::string > Bls::HashPublicKeyToG1WithHint(
+    const algebra::G2Point& elem ) {
+    auto serialized_elem_vector = elem.toStringArray( Base::HEXA );
 
-    return hash;
-  }
+    std::string serialized_elem = std::accumulate(
+        serialized_elem_vector.begin(), serialized_elem_vector.end(), std::string( "" ) );
 
-  libff::alt_bn128_G1 Bls::HashtoG1(std::shared_ptr<std::array< uint8_t, 32>> hash_byte_arr) {
-    libff::alt_bn128_Fq x1 (BLSutils::HashToFq(hash_byte_arr));
+    std::string hashed_pubkey = cryptlite::sha256::hash_hex( serialized_elem );
 
-    libff::alt_bn128_G1 result;
+    auto hash_bytes_arr = std::array< uint8_t, 32 >();
 
-    while (true) {
-      libff::alt_bn128_Fq y1_sqr = x1 ^ 3;
-      y1_sqr = y1_sqr + libff::alt_bn128_coeff_b;
-
-      libff::alt_bn128_Fq euler = y1_sqr ^ libff::alt_bn128_Fq::euler;
-
-      if (euler == libff::alt_bn128_Fq::one() || euler == libff::alt_bn128_Fq::zero()) {  // if y1_sqr is a square
-        result.X = x1;
-        libff::alt_bn128_Fq temp_y = y1_sqr.sqrt();
-
-        mpz_t pos_y;
-        mpz_init(pos_y);
-
-        temp_y.as_bigint().to_mpz(pos_y);
-
-        mpz_t neg_y;
-        mpz_init(neg_y);
-
-        (-temp_y).as_bigint().to_mpz(neg_y);
-
-        if (mpz_cmp(pos_y, neg_y) < 0) {
-          temp_y = -temp_y;
-        }
-
-        mpz_clear(pos_y);
-        mpz_clear(neg_y);
-
-        result.Y = temp_y;
-        break;
-      } else {
-        x1 = x1 + 1;
-      }
+    uint64_t bin_len;
+    if ( !ThresholdUtils::hex2carray(
+             hashed_pubkey.c_str(), &bin_len, hash_bytes_arr.data(), hash_bytes_arr.size() ) ) {
+        throw std::runtime_error( "Invalid hash" );
     }
-    result.Z = libff::alt_bn128_Fq::one();
 
-    return result;
-  }
+    return algebra::hashToG1withHint( hash_bytes_arr );
+}
 
-  std::pair<libff::alt_bn128_G1, std::string> Bls::HashtoG1withHint(std::shared_ptr< std::array< uint8_t, 32>> hash_byte_arr) {
-    libff::alt_bn128_G1 point;
-    libff::alt_bn128_Fq counter = libff::alt_bn128_Fq::zero();
+algebra::G1Point Bls::Signing( const algebra::G1Point& hash, const algebra::FrScalar& secret_key ) {
+    // sign a message with its hash and secret key
+    // implemented constant time signing
 
-    libff::alt_bn128_Fq x1(BLSutils::HashToFq(hash_byte_arr));
-    while (true) {
-      libff::alt_bn128_Fq y1_sqr = x1^3;
-      y1_sqr = y1_sqr + libff::alt_bn128_coeff_b;
-
-      libff::alt_bn128_Fq euler = y1_sqr ^ libff::alt_bn128_Fq::euler;
-
-      if (euler == libff::alt_bn128_Fq::one() || euler == libff::alt_bn128_Fq::zero()) {  // if y1_sqr is a square
-        point.X = x1;
-        libff::alt_bn128_Fq temp_y = y1_sqr.sqrt();
-
-        mpz_t pos_y;
-        mpz_init(pos_y);
-
-        temp_y.as_bigint().to_mpz(pos_y);
-
-        mpz_t neg_y;
-        mpz_init(neg_y);
-
-        (-temp_y).as_bigint().to_mpz(neg_y);
-
-        if (mpz_cmp(pos_y, neg_y) < 0) {
-          temp_y = -temp_y;
-        }
-
-        mpz_clear(pos_y);
-        mpz_clear(neg_y);
-
-        point.Y = temp_y;
-        break;
-      } else {
-        counter = counter + libff::alt_bn128_Fq::one();
-        x1 = x1 + libff::alt_bn128_Fq::one();
-      }
-    }
-    point.Z = libff::alt_bn128_Fq::one();
-
-    return std::make_pair(point, BLSutils::ConvertToString(counter) );
-  }
-
-  libff::alt_bn128_G1 Bls::HashBytes(const char *raw_bytes, size_t length,
-   std::string (*hash_func)(const std::string &str)) {
-    std::string from_bytes(raw_bytes, length);
-
-    std::cout << from_bytes << '\n';
-
-    libff::alt_bn128_G1 hash = this->Hashing(from_bytes, *hash_func);
-
-    return hash;
-  }
-
-  libff::alt_bn128_G1 Bls::Signing(const libff::alt_bn128_G1 hash,
-   const libff::alt_bn128_Fr secret_key) {
-        // sign a message with its hash and secret key
-        // implemented constant time signing
-
-    if (secret_key == libff::alt_bn128_Fr::zero()) {
-      throw std::runtime_error("Error, secret key share is equal to zero");
+    if ( secret_key.isZero() ) {
+        throw ThresholdUtils::ZeroSecretKey( "failed to sign a message hash" );
     }
 
     std::clock_t c_start = std::clock();  // hash
 
-    const libff::alt_bn128_G1 sign = secret_key.as_bigint() * hash;  // sign
+    const algebra::G1Point sign = secret_key * hash;  // sign
 
     std::clock_t c_end = std::clock();
 
-    std::this_thread::sleep_for(std::chrono::microseconds(10000 -
-      1000000 * (c_end - c_start) / CLOCKS_PER_SEC));
+    std::this_thread::sleep_for(
+        std::chrono::microseconds( 10000 - 1000000 * ( c_end - c_start ) / CLOCKS_PER_SEC ) );
 
     return sign;
-  }
+}
 
-  bool Bls::Verification(const std::string &to_be_hashed, const libff::alt_bn128_G1 sign,
-   const libff::alt_bn128_G2 public_key) {
-        // verifies that a given signature corresponds to given public key
+algebra::G1Point Bls::CoreSignAggregated(
+    const std::string& message, const algebra::FrScalar& secret_key ) {
+    return secret_key * algebra::G1Point::fromHash( message );
+}
 
-    if (!sign.is_well_formed() || !public_key.is_well_formed()) {
-      throw std::runtime_error("Error, incorrect input data to verify signature");
-    }
+algebra::G1Point Bls::Aggregate( const std::vector< algebra::G1Point >& signatures ) {
+    algebra::G1Point res = algebra::G1Point::identity();
 
-    if (libff::alt_bn128_modulus_r * sign != libff::alt_bn128_G1::zero()) {
-      throw std::runtime_error("Error, signature is invalid");
-    }
-
-    libff::alt_bn128_G1 hash = this->Hashing(to_be_hashed);
-
-    return (libff::alt_bn128_ate_reduced_pairing(sign, libff::alt_bn128_G2::one()) ==
-      libff::alt_bn128_ate_reduced_pairing(hash, public_key));
-        // there are several types of pairing, it does not matter which one is chosen for verification
-  }
-
-  bool Bls::Verification(std::shared_ptr< std::array< uint8_t, 32>> hash_byte_arr, const libff::alt_bn128_G1 sign,
-   const libff::alt_bn128_G2 public_key) {
-        // verifies that a given signature corresponds to given public key
-
-    if (!sign.is_well_formed() || !public_key.is_well_formed()) {
-      throw std::runtime_error("Error, incorrect input data to verify signature");
-    }
-
-    if (libff::alt_bn128_modulus_r * sign != libff::alt_bn128_G1::zero()) {
-      throw std::runtime_error("Error, signature is invalid");
-    }
-
-    libff::alt_bn128_G1 hash = this->HashtoG1(hash_byte_arr);
-
-    return (libff::alt_bn128_ate_reduced_pairing(sign, libff::alt_bn128_G2::one()) ==
-      libff::alt_bn128_ate_reduced_pairing(hash, public_key));
-        // there are several types of pairing, it does not matter which one is chosen for verification
-  }
-
-  std::pair<libff::alt_bn128_Fr, libff::alt_bn128_G2> Bls::KeysRecover(
-    const std::vector<libff::alt_bn128_Fr> &coeffs,
-    const std::vector<libff::alt_bn128_Fr> &shares) {
-    if (shares.size() < this->t_ || coeffs.size() < this->t_) {
-      throw std::runtime_error("Error, not enough participants in the threshold group");
-    }
-
-    libff::alt_bn128_Fr secret_key = libff::alt_bn128_Fr::zero();
-
-    for (size_t i = 0; i < this->t_; ++i) {
-      if (shares[i] == libff::alt_bn128_Fr::zero()) {
-        throw std::runtime_error("Error, at least one secret key share is equal to zero");
-      }
-      secret_key += coeffs[i] * shares[i];  // secret key recovering using Lagrange Interpolation
-    }
-
-    const libff::alt_bn128_G2 public_key = secret_key * libff::alt_bn128_G2::one();  // public key recovering
-
-    return std::make_pair(secret_key, public_key);
-  }
-
-  libff::alt_bn128_G1 Bls::SignatureRecover(const std::vector<libff::alt_bn128_G1> &shares,
-    const std::vector<libff::alt_bn128_Fr> &coeffs) {
-    if (shares.size() < this->t_ || coeffs.size() < this->t_) {
-      throw std::runtime_error("Error, not enough participants in the threshold group");
-    }
-
-    libff::alt_bn128_G1 sign = libff::alt_bn128_G1::zero();
-
-    for (size_t i = 0; i < this->t_; ++i) {
-      if (!shares[i].is_well_formed()) {
-        throw std::runtime_error("Error, incorrect input data to recover signature");
-      }
-      sign = sign + coeffs[i] * shares[i];  // signature recovering using Lagrange Coefficients
-    }
-
-    return sign;  // first element is hash of a receiving message
-  }
-
-  std::vector<libff::alt_bn128_Fr> Bls::LagrangeCoeffs(const std::vector<size_t> &idx) {
-    if (idx.size() < this->t_) {
-      throw std::runtime_error("Error, not enough participants in the threshold group");
-    }
-
-    std::vector<libff::alt_bn128_Fr> res(this->t_);
-
-    libff::alt_bn128_Fr w = libff::alt_bn128_Fr::one();
-
-    for (size_t i = 0; i < this->t_; ++i) {
-      w *= libff::alt_bn128_Fr(idx[i]);
-    }
-
-    for (size_t i = 0; i < this->t_; ++i) {
-      libff::alt_bn128_Fr v = libff::alt_bn128_Fr(idx[i]);
-
-      for (size_t j = 0; j < this->t_; ++j) {
-        if (j != i) {
-          if (libff::alt_bn128_Fr(idx[i]) ==
-            libff::alt_bn128_Fr(idx[j])) {
-            throw std::runtime_error(
-              "Error during the interpolation, have same indexes in list of indexes");
-          }
-
-          v *= (libff::alt_bn128_Fr(idx[j]) -
-                          libff::alt_bn128_Fr(idx[i]));  // calculating Lagrange coefficients
-        }
-      }
-
-      res[i] = w * v.invert();
+    for ( const auto& signature : signatures ) {
+        signature.validate();
+        res = res + signature;
     }
 
     return res;
-  }
+}
 
-}  // namespace signatures
+bool Bls::CoreVerify( const algebra::G2Point& public_key, const std::string& message,
+    const algebra::G1Point& signature ) {
+    if ( !public_key.isValid() || !signature.isValid() ) {
+        throw ThresholdUtils::IsNotWellFormed( "Either signature or public key is malicious" );
+    }
+
+    algebra::G1Point hash = algebra::G1Point::fromHash( message );
+
+    return algebra::pairing( hash, public_key ) ==
+           algebra::pairing( signature, algebra::G2Point::generator() );
+}
+
+bool Bls::FastAggregateVerify( const std::vector< algebra::G2Point >& public_keys,
+    const std::string& message, const algebra::G1Point& signature ) {
+    algebra::G2Point sum =
+        std::accumulate( public_keys.begin(), public_keys.end(), algebra::G2Point::identity() );
+
+    return CoreVerify( sum, message, signature );
+}
+
+bool Bls::Verify( const std::array< uint8_t, 32 >& hash_byte_arr, const algebra::G1Point& sign,
+    const algebra::G2Point& public_key ) {
+    // verifies that a given signature corresponds to given public key
+
+    sign.validate();
+    public_key.validate();
+
+    algebra::G1Point hash = algebra::G1Point::fromHash( hash_byte_arr );
+
+    return ( algebra::pairing( sign, algebra::G2Point::generator() ) ==
+             algebra::pairing( hash, public_key ) );
+    // there are several types of pairing, it does not matter which one is chosen for verification
+}
+
+bool Bls::AggregateVerify( const std::vector< std::array< uint8_t, 32 > >& hash_byte_arr,
+    const std::vector< algebra::G1Point >& sign, const algebra::G2Point& public_key ) {
+    for ( auto& sig : sign ) {
+        sig.validate();
+    }
+
+    public_key.validate();
+
+    algebra::G1Point aggregated_hash = algebra::G1Point::identity();
+    for ( const std::array< uint8_t, 32 >& hash : hash_byte_arr ) {
+        aggregated_hash = aggregated_hash + algebra::G1Point::fromHash( hash );
+    }
+
+    algebra::G1Point aggregated_sig = algebra::G1Point::identity();
+    for ( const algebra::G1Point& sig : sign ) {
+        aggregated_sig = aggregated_sig + sig;
+    }
+
+    return ( algebra::pairing( aggregated_sig, algebra::G2Point::generator() ) ==
+             algebra::pairing( aggregated_hash, public_key ) );
+}
+
+std::pair< algebra::FrScalar, algebra::G2Point > Bls::KeysRecover(
+    const std::vector< algebra::FrScalar >& coeffs,
+    const std::vector< algebra::FrScalar >& shares ) {
+    if ( shares.size() < this->t_ || coeffs.size() < this->t_ ) {
+        throw ThresholdUtils::IncorrectInput( "not enough participants in the threshold group" );
+    }
+
+    if ( shares.size() > this->n_ || coeffs.size() > this->n_ ) {
+        throw ThresholdUtils::IncorrectInput( "too many participants in the threshold group" );
+    }
+
+    algebra::FrScalar secret_key = algebra::FrScalar::zero();
+
+    for ( size_t i = 0; i < this->t_; ++i ) {
+        if ( shares[i].isZero() ) {
+            throw ThresholdUtils::ZeroSecretKey(
+                "at least one secret key share is equal to zero in KeysRecover group" );
+        }
+        secret_key += coeffs[i] * shares[i];  // secret key recovering using Lagrange Interpolation
+    }
+
+    const algebra::G2Point public_key =
+        secret_key * algebra::G2Point::generator();  // public key recovering
+
+    return std::make_pair( secret_key, public_key );
+}
+
+algebra::G1Point Bls::SignatureRecover( const std::vector< algebra::G1Point >& shares,
+    const std::vector< algebra::FrScalar >& coeffs ) {
+    if ( shares.size() < this->t_ || coeffs.size() < this->t_ ) {
+        throw ThresholdUtils::IncorrectInput( "not enough participants in the threshold group" );
+    }
+
+    if ( shares.size() > this->n_ || coeffs.size() > this->n_ ) {
+        throw ThresholdUtils::IncorrectInput( "too many participants in the threshold group" );
+    }
+
+    algebra::G1Point sign = algebra::G1Point::identity();
+
+    for ( size_t i = 0; i < this->t_; ++i ) {
+        if ( !shares[i].isWellFormed() ) {
+            throw ThresholdUtils::IsNotWellFormed( "incorrect input data to recover signature" );
+        }
+        sign = sign + coeffs[i] * shares[i];  // signature recovering using Lagrange Coefficients
+    }
+
+    return sign;  // first element is hash of a receiving message
+}
+
+algebra::G1Point Bls::PopProve( const algebra::FrScalar& secret_key ) {
+    algebra::G2Point public_key = secret_key * algebra::G2Point::generator();
+
+    algebra::G1Point hash = HashPublicKeyToG1( public_key );
+
+    algebra::G1Point ret = secret_key * hash;
+
+    return ret;
+}
+
+bool Bls::PopVerify( const algebra::G2Point& public_key, const algebra::G1Point& prove ) {
+    prove.validate();
+    public_key.validate();
+
+    algebra::G1Point hash = HashPublicKeyToG1( public_key );
+
+    return algebra::pairing( hash, public_key ) ==
+           algebra::pairing( prove, algebra::G2Point::generator() );
+}
+
+}  // namespace libBLS

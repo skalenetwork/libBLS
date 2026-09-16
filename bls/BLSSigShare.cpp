@@ -14,117 +14,120 @@
   GNU Affero General Public License for more details.
 
   You should have received a copy of the GNU Affero General Public License
-  along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
+  along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
   @file BLSSigShare.cpp
   @author Stan Kladko, Sveta Rogova
   @date 2019
 */
 
-#include <bls/BLSutils.h>
 #include <bls/BLSSigShare.h>
 #include <bls/BLSSignature.h>
+#include <tools/utils.h>
 
 #include <stdlib.h>
 #include <string>
 
-std::shared_ptr<libff::alt_bn128_G1> BLSSigShare::getSigShare() const {
-  return sigShare;
+namespace libBLS {
+
+const algebra::G1Point& BLSSigShare::getSigShare() const {
+    return sigShare;
 }
 size_t BLSSigShare::getSignerIndex() const {
-  return signerIndex;
+    return signerIndex;
 }
 
-std::shared_ptr<std::string> BLSSigShare::toString() {
-  char str[512];
-
-  sigShare->to_affine_coordinates();
-
-  gmp_sprintf(str, "%Nd:%Nd:%s", sigShare->X.as_bigint().data, libff::alt_bn128_Fq::num_limbs,
-      sigShare->Y.as_bigint().data, libff::alt_bn128_Fq::num_limbs, hint.c_str());
-
-  return std::make_shared<std::string>(str);
+std::string BLSSigShare::toString() {
+    sigShare.toAffineCoordinates();
+    std::string ret = "";
+    // TODO - need to refactor this - uses .value
+    ret += sigShare.getX().toString( Base::DEC ) + ':' + sigShare.getY().toString( Base::DEC ) +
+           ':' + hint;
+    return ret;
 }
 
-BLSSigShare::BLSSigShare(std::shared_ptr<std::string> _sigShare, size_t _signerIndex, size_t _requiredSigners,
-        size_t _totalSigners)
-    : signerIndex(_signerIndex),
-      totalSigners(_totalSigners),
-      requiredSigners(_requiredSigners) {
-  BLSSignature::checkSigners(requiredSigners, totalSigners);
-  BLSutils::initBLS();
-  if (signerIndex == 0) {
-    BOOST_THROW_EXCEPTION(std::runtime_error("Zero signer index"));
-  }
+BLSSigShare::BLSSigShare( const std::string& _sigShare, size_t _signerIndex,
+    size_t _requiredSigners, size_t _totalSigners )
+    : signerIndex( _signerIndex ),
+      requiredSigners( _requiredSigners ),
+      totalSigners( _totalSigners ) {
+    libBLS::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
 
-  if (!_sigShare) {
-    BOOST_THROW_EXCEPTION(std::runtime_error("Null _sigShare"));
-  }
+    if ( _signerIndex == 0 ) {
+        throw libBLS::ThresholdUtils::IncorrectInput( "Zero signer index" );
+    }
 
 
-  if (_sigShare->size() < 10) {
-    BOOST_THROW_EXCEPTION(
-          std::runtime_error("Signature too short:" + std::to_string(_sigShare->size())));
-  }
+    if ( _sigShare.size() < 10 ) {
+        throw libBLS::ThresholdUtils::IsNotWellFormed(
+            "Signature too short:" + std::to_string( _sigShare.size() ) );
+    }
 
-  if ( _sigShare->size() > BLS_MAX_SIG_LEN ) {
-    BOOST_THROW_EXCEPTION(std::runtime_error( "Signature too long:" + std::to_string( _sigShare->size() ) ) );
-  }
+    if ( _sigShare.size() > BLS_MAX_SIG_LEN ) {
+        throw libBLS::ThresholdUtils::IsNotWellFormed(
+            "Signature too long:" + std::to_string( _sigShare.size() ) );
+    }
 
 
-  std::shared_ptr<std::vector<std::string>> result = BLSutils::SplitString( _sigShare, ":");
-  if ( result->size() != 4 )
-      BOOST_THROW_EXCEPTION(std::runtime_error("Misformatted signature"));
-  for ( auto && str : *result){
-      for ( char& c : str ) {
-          if ( !( c >= '0' && c <= '9' ) ) {
-              BOOST_THROW_EXCEPTION(std::runtime_error(
-                                             "Misformatted char:" + std::to_string( ( int ) c ) + " in component " +  str ) );
-          }
-      }
-  }
+    std::shared_ptr< std::vector< std::string > > result =
+        libBLS::ThresholdUtils::SplitString( _sigShare, ":" );
+    if ( result->size() != 4 )
+        throw libBLS::ThresholdUtils::IncorrectInput( "Misformatted signature" );
+    for ( auto&& str : *result ) {
+        for ( char& c : str ) {
+            if ( !( c >= '0' && c <= '9' ) ) {
+                throw libBLS::ThresholdUtils::IncorrectInput(
+                    "Misformatted char:" + std::to_string( ( int ) c ) + " in component " + str );
+            }
+        }
+    }
 
-    libff::alt_bn128_Fq X(result->at(0).c_str());
-    libff::alt_bn128_Fq Y(result->at(1).c_str());
+    sigShare = algebra::G1Point( algebra::FqElement::fromString( result->at( 0 ), Base::DEC ),
+        algebra::FqElement::fromString( result->at( 1 ), Base::DEC ) );
 
-    sigShare = std::make_shared< libff::alt_bn128_G1 >( X, Y,libff::alt_bn128_Fq::one());
-    hint = result->at(2) + ":" + result->at(3);
+    hint = result->at( 2 ) + ":" + result->at( 3 );
 
-    if ( !(*sigShare).is_well_formed() )
-      BOOST_THROW_EXCEPTION(std::runtime_error("signature is not from G1"));
+    if ( !sigShare.isWellFormed() )
+        throw libBLS::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
 }
 
-BLSSigShare::BLSSigShare( const std::shared_ptr< libff::alt_bn128_G1 >& _sigShare, std::string & _hint,  size_t _signerIndex,
-                          size_t _requiredSigners, size_t _totalSigners )
+BLSSigShare::BLSSigShare( const algebra::G1Point& _sigShare, std::string& _hint,
+    size_t _signerIndex, size_t _requiredSigners, size_t _totalSigners )
     : sigShare( _sigShare ),
-      hint (_hint),
+      hint( _hint ),
       signerIndex( _signerIndex ),
       requiredSigners( _requiredSigners ),
       totalSigners( _totalSigners ) {
+    libBLS::ThresholdUtils::checkSigners( requiredSigners, totalSigners );
 
-    BLSSignature::checkSigners( requiredSigners, totalSigners );
-    if (  _sigShare->is_zero() ) {
-        BOOST_THROW_EXCEPTION(std::runtime_error( "Zero signature" ) );
+    if ( _sigShare.isIdentity() ) {
+        throw libBLS::ThresholdUtils::IsNotWellFormed( "Zero signature" );
     }
     if ( _signerIndex == 0 ) {
-      BOOST_THROW_EXCEPTION(std::runtime_error( "Zero signer index" ) );
+        throw libBLS::ThresholdUtils::IncorrectInput( "Zero signer index" );
     }
 
-    if ( !_sigShare ) {
-        BOOST_THROW_EXCEPTION(std::runtime_error( "Null _s" ) );
+    if ( _hint.length() == 0 || _hint.length() > 2 * BLS_MAX_COMPONENT_LEN ) {
+        throw libBLS::ThresholdUtils::IncorrectInput( "Wrong BLS hint" );
     }
-    if ( hint.length() == 0 ) {
-      BOOST_THROW_EXCEPTION(std::runtime_error( "Empty or misformatted hint" ) );
+
+    // TODO unused return value
+    algebra::parseHint( _hint );
+
+    if ( !_sigShare.isWellFormed() ) {
+        throw libBLS::ThresholdUtils::IsNotWellFormed( "signature is not from G1" );
     }
 }
 
 size_t BLSSigShare::getTotalSigners() const {
-  return totalSigners;
+    return totalSigners;
 }
 size_t BLSSigShare::getRequiredSigners() const {
-  return requiredSigners;
+    return requiredSigners;
 }
 
 std::string BLSSigShare::getHint() const {
-  return hint;
+    return hint;
 }
+
+}  // namespace libBLS

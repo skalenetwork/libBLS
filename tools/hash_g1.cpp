@@ -21,13 +21,12 @@
   @date 2019
 */
 
-#include <fstream>
-#include <boost/program_options.hpp>
-#include <libff/common/profiling.hpp>
-#include <bls/bls.h>
-#include <third_party/json.hpp>
-#include <bls/BLSutils.h>
 #include <bls/BLSPublicKey.h>
+#include <bls/bls.h>
+#include <tools/utils.h>
+#include <boost/program_options.hpp>
+#include <fstream>
+#include <third_party/json.hpp>
 
 #define EXPAND_AS_STR( x ) __EXPAND_AS_STR__( x )
 #define __EXPAND_AS_STR__( x ) #x
@@ -36,36 +35,8 @@ static bool g_b_verbose_mode = false;
 
 static bool g_b_rehash = false;
 
-int char2int( char _input ) {
-    if ( _input >= '0' && _input <= '9' )
-        return _input - '0';
-    if ( _input >= 'A' && _input <= 'F' )
-        return _input - 'A' + 10;
-    if ( _input >= 'a' && _input <= 'f' )
-        return _input - 'a' + 10;
-    return -1;
-}
-
-bool hex2carray( const char* _hex, uint64_t* _bin_len, uint8_t* _bin ) {
-    int len = strnlen( _hex, 2 * 1024 );
-
-    if ( len == 0 && len % 2 == 1 )
-        return false;
-    *_bin_len = len / 2;
-    for ( int i = 0; i < len / 2; i++ ) {
-        int high = char2int( ( char ) _hex[i * 2] );
-        int low = char2int( ( char ) _hex[i * 2 + 1] );
-        if ( high < 0 || low < 0 ) {
-            return false;
-        }
-        _bin[i] = ( unsigned char ) ( high * 16 + low );
-    }
-    return true;
-}
-
 void hash_g1( const size_t t, const size_t n ) {
-    libff::inhibit_profiling_info = true;
-    signatures::Bls bls_instance = signatures::Bls( t, n );
+    libBLS::init();
 
     nlohmann::json hash_in;
 
@@ -82,25 +53,28 @@ void hash_g1( const size_t t, const size_t n ) {
         }
     } else {
         uint64_t bin_len;
-        hex2carray( to_be_hashed.c_str(), &bin_len, hash_bytes_arr->data() );
+        if ( !libBLS::ThresholdUtils::hex2carray( to_be_hashed.c_str(), &bin_len,
+                 hash_bytes_arr->data(), hash_bytes_arr->size() ) ) {
+            throw std::runtime_error( "Invalid hash" );
+        }
     }
 
-    std::pair< libff::alt_bn128_G1, std::string > p2vals;
-    p2vals = bls_instance.HashtoG1withHint( hash_bytes_arr );  // original, what we really need
+    std::pair< libBLS::algebra::G1Point, std::string > p2vals;
+    p2vals = libBLS::algebra::hashToG1withHint( *hash_bytes_arr );  // original, what we really need
 
     nlohmann::json joG1 = nlohmann::json::object();
     joG1["g1"] = nlohmann::json::object();
     joG1["g1"]["hashPoint"] = nlohmann::json::object();
-    joG1["g1"]["hashPoint"]["X"] = BLSutils::ConvertToString( p2vals.first.X );
-    joG1["g1"]["hashPoint"]["Y"] = BLSutils::ConvertToString( p2vals.first.Y );
+    joG1["g1"]["hashPoint"]["X"] = p2vals.first.getX().toString( libBLS::Base::DEC );
+    joG1["g1"]["hashPoint"]["Y"] = p2vals.first.getY().toString( libBLS::Base::DEC );
     joG1["g1"]["hint"] = p2vals.second;
 
     std::ofstream g1_file( "g1.json" );
     g1_file << joG1.dump() << "\n";
 
     if ( g_b_verbose_mode ) {
-        std::cout << "G1.x " << p2vals.first.X << '\n';
-        std::cout << "G1.y " << p2vals.first.Y << '\n';
+        std::cout << "G1.x " << p2vals.first.getX().asBackendType() << '\n';
+        std::cout << "G1.y " << p2vals.first.getY().asBackendType() << '\n';
         std::cout << "hint " << p2vals.second << '\n';
     }
 }
@@ -110,10 +84,10 @@ int main( int argc, const char* argv[] ) {
     try {
         boost::program_options::options_description desc( "Options" );
         desc.add_options()( "help", "Show this help screen" )( "version", "Show version number" )(
-            "t", boost::program_options::value< size_t >(), "Threshold" )(
-            "n", boost::program_options::value< size_t >(), "Number of participants" )(
-            "v", "Verbose mode (optional)" )( "rehash", boost::program_options::value< bool >(),
-            "if not specified, then do not hash input message" );
+            "t", boost::program_options::value< size_t >(), "Threshold" )( "n",
+            boost::program_options::value< size_t >(),
+            "Number of participants" )( "v", "Verbose mode (optional)" )(
+            "rehash", "if not specified, then do not hash input message" );
 
         boost::program_options::variables_map vm;
         boost::program_options::store(
@@ -147,7 +121,7 @@ int main( int argc, const char* argv[] ) {
         }
 
         if ( vm.count( "rehash" ) ) {
-            g_b_verbose_mode = true;
+            g_b_rehash = true;
         }
 
         size_t t = vm["t"].as< size_t >();

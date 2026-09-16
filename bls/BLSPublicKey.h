@@ -25,43 +25,46 @@
 #define LIBBLS_BLSPUBLICKEY_H
 
 
-#include <bls/bls.h>
 #include <bls/BLSSignature.h>
+#include <bls/bls.h>
+#include <map>
+
+namespace libBLS {
 
 class BLSPublicKeyShare;
 
 class BLSPublicKey {
- private:
-    std::shared_ptr<libff::alt_bn128_G2> libffPublicKey;
+private:
+    algebra::G2Point publicKey;
+    size_t t;
+    size_t n;
 
-    size_t requiredSigners;
-    size_t totalSigners;
+public:
+    BLSPublicKey( const std::vector< std::string >& pkey_str_vect );
+    // default value set to 0 for compatibility
+    BLSPublicKey( const algebra::FrScalar& skey, size_t t = 0, size_t n = 0 );
+    // default value set to 0 for compatibility
+    BLSPublicKey( const algebra::G2Point& skey, size_t t = 0, size_t n = 0 );
 
- public:
+    BLSPublicKey( const std::map< size_t, BLSPublicKeyShare >& map_pkeys_koefs,
+        size_t _requiredSigners, size_t _totalSigners );
 
-    BLSPublicKey(const std::shared_ptr< std::vector<std::string>>,
-                  size_t _requiredSigners, size_t _totalSigners);
-    BLSPublicKey(const libff::alt_bn128_Fr& skey,
-                   size_t _requiredSigners, size_t _totalSigners);
-    BLSPublicKey(const libff::alt_bn128_G2 & skey,
-                   size_t _requiredSigners, size_t _totalSigners);
+    bool VerifySig( const std::array< uint8_t, 32 >& hash, const BLSSignature& sign );
 
-    BLSPublicKey (std::shared_ptr<std::map<size_t, std::shared_ptr<BLSPublicKeyShare>>> map_pkeys_koefs,
-                    size_t _requiredSigners, size_t _totalSigners);
+    bool VerifySigWithHelper( const std::array< uint8_t, 32 >& hash, const BLSSignature& sign );
 
-    size_t getTotalSigners() const;
-    size_t getRequiredSigners() const;
+    bool AggregatedVerifySig( std::vector< std::array< uint8_t, 32 > >& hash_ptr_vec,
+        std::vector< BLSSignature >& sign_ptr_vec );
 
-    bool VerifySig(std::shared_ptr<std::array<uint8_t, 32>> hash_ptr, std::shared_ptr<BLSSignature> sign_ptr,
-                                 size_t _requiredSigners, size_t _totalSigners);
+    std::vector< std::string > toString();
 
-    bool VerifySigWithHelper(std::shared_ptr<std::array<uint8_t, 32> > hash_ptr, std::shared_ptr<BLSSignature> sign_ptr,
-                             size_t _requiredSigners, size_t _totalSigners);
+    const algebra::G2Point& getPublicKey() const;
 
-    std::shared_ptr<std::vector<std::string>> toString();
+    size_t getRequiredSigners() const { return t; }
 
-    std::shared_ptr<libff::alt_bn128_G2> getPublicKey() const;
+    size_t getTotalSigners() const { return n; }
 };
 
+}  // namespace libBLS
 
 #endif  // LIBBLS_BLSPUBLICKEY_H

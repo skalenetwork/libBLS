@@ -1,0 +1,20 @@
+name: 'Verify Version Bump'
+description: 'Validates SemVer format in VERSION.txt and verifies version constraints against the base branch'
+
+inputs:
+  base-ref:
+    description: 'The base branch to compare against (e.g. stable, beta)'
+    required: true
+    default: 'stable'
+  require-bump:
+    description: 'Whether the version MUST be strictly greater than base-ref (true for stable, false for beta)'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run version validation script
+      shell: bash
+      run: |
+        ./scripts/ci/check_version.sh "${{ inputs.base-ref }}" "${{ inputs.require-bump }}"
