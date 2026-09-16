@@ -25,7 +25,6 @@ along with libBLS.  If not, see <https://www.gnu.org/licenses/>.
 #include <bls/bls.h>
 #include <tools/utils.h>
 
-#include <bitset>
 #include <chrono>
 #include <ctime>
 #include <stdexcept>

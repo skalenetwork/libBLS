@@ -24,14 +24,15 @@ When created dkg_obj generates secret polynomial, but if you want you can set yo
 For BLS
 
 ```cpp
-std::shared_ptr < std::vector <libff::alt_bn128_G2>>  public_shares = dkg_obj.createDKGPublicShares();
+std::shared_ptr < std::vector <libBLS::algebra::G2Point>> public_shares =
+  dkg_obj.createDKGPublicShares();
 ```
 
 For TE
 
 ```cpp
-std::shared_ptr <std::vector <libff::libff_alt_bn128_G2 >>  public_shares =
-                                                                      dkg_obj.createDKGPublicShares();
+std::shared_ptr <std::vector <libBLS::algebra::G2Point>> public_shares =
+  dkg_obj.createDKGPublicShares();
 ```
 
 4.  Each participant generates vector of secret shares coefficients. And sends to j-th participant j-th component of secret shares coefficients vector. ( j = 1 .. n and not equal to current participant index).
@@ -39,14 +40,15 @@ std::shared_ptr <std::vector <libff::libff_alt_bn128_G2 >>  public_shares =
 For BLS
 
 ```cpp
-std::shared_ptr <std::vector <libff::alt_bn128_Fr>>  private_shares = dkg_obj.createDKGSecretShares();
+std::shared_ptr <std::vector <libBLS::algebra::FrScalar>> private_shares =
+  dkg_obj.createDKGSecretShares();
 ```
 
 For TE
 
 ```cpp
-std::shared_ptr < std::vector < libff::alt_bn128_Fr >>  private_shares =
-                                                                       dkg_obj.createDKGSecretShares();
+std::shared_ptr < std::vector < libBLS::algebra::FrScalar >> private_shares =
+  dkg_obj.createDKGSecretShares();
 ```
 
 5.  Each participant verifies that for data received other participants  secret share matches vector of public shares
@@ -77,15 +79,16 @@ Also in DKGTEWrapper there is a static function that creates common public key
 TEPublicKey publicKey = DKGTEWrapper::CreateTEPublicKey( public_shares_all, t, n);
 ```
 
-where public_shares_all is shared_ptr to matrix of all public shares ( its type is std::shared_ptr&lt;std::vector&lt;std::vector&lt;libff::alt_bn128_G2>>>).
+where public_shares_all is a shared pointer to a matrix of public shares. Its type is
+`std::shared_ptr<std::vector<std::vector<libBLS::algebra::G2Point>>>`.
 
 Here is an example of Threshold Encryption algorithm with DKG simulation for t = 3, n = 4.
 
 ```cpp
 size_t num_signed = 3;
 size_t num_all = 4;
-std::vector<std::vector<libff::alt_bn128_Fr>> secret_shares_all; // matrix of all secret shares
-std::vector<std::vector<libff::alt_bn128_G2>> public_shares_all; //// matrix of all public shares
+std::vector<std::vector<libBLS::algebra::FrScalar>> secret_shares_all;
+std::vector<std::vector<libBLS::algebra::G2Point>> public_shares_all;
 std::vector<DKGTEWrapper> dkgs; // instances of DKGTEWrapper for each participant
 std::vector<TEPrivateKeyShare> skeys; // private keys of participants
 std::vector<TEPublicKeyShare> pkeys;  // public keys of participants
@@ -95,12 +98,12 @@ for (size_t i = 0; i < num_all; i++) {
   dkgs.push_back(dkg_wrap);
 
   // create secret shares for each participant
-  std::shared_ptr<std::vector<libff::alt_bn128_Fr>> secret_shares_ptr =
-                                                                      dkg_wrap.createDKGSecretShares();
+  std::shared_ptr<std::vector<libBLS::algebra::FrScalar>> secret_shares_ptr =
+      dkg_wrap.createDKGSecretShares();
 
  // create public shares for each participant
- std::shared_ptr<std::vector<libff::alt_bn128_Fr>> public_shares_ptr =
-                                                                      dkg_wrap.createDKGPublicShares();
+  std::shared_ptr<std::vector<libBLS::algebra::G2Point>> public_shares_ptr =
+      dkg_wrap.createDKGPublicShares();
 
  secret_shares_all.push_back(*secret_shares_ptr);
  public_shares_all.push_back(*public_shares_ptr);
@@ -109,12 +112,13 @@ for (size_t i = 0; i < num_all; i++) {
 for (size_t i = 0; i < num_all; i++)      // Verifying shares for each participant
  for (size_t j = 0; j < num_all; j++) {
    assert(dkgs.at(j).VerifyDKGShare(j, secret_shares_all.at(i).at(j),
-                    std::make_shared<std::vector<libff::alt_bn128_G2>>(public_shares_all.at(i))));
+                    std::make_shared<std::vector<libBLS::algebra::G2Point>>(
+                      public_shares_all.at(i))));
  }
- std::vector<std::vector<libff::alt_bn128_Fr>> secret_key_shares;
+ std::vector<std::vector<libBLS::algebra::FrScalar>> secret_key_shares;
 
  for (size_t i = 0; i < num_all; i++) {          // collect got secret shares in a vector
-   std::vector<libff::alt_bn128_Fr> secret_key_contribution;
+   std::vector<libBLS::algebra::FrScalar> secret_key_contribution;
    for (size_t j = 0; j < num_all; j++) {
      secret_key_contribution.push_back(secret_shares_all.at(j).at(i));
    }
@@ -124,14 +128,15 @@ for (size_t i = 0; i < num_all; i++)      // Verifying shares for each participa
  for (size_t i = 0; i < num_all; i++) {
    TEPrivateKeyShare pkey_share = dkgs.at(i).CreateTEPrivateKeyShare(
                                              i + 1,
-                                             std::make_shared<std::vector<libff::alt_bn128_Fr>>(
-                                                                              secret_key_shares.at(i)));
+                                             std::make_shared<std::vector<libBLS::algebra::FrScalar>>(
+                                                 secret_key_shares.at(i)));
    skeys.push_back(pkey_share);
    pkeys.push_back(TEPublicKeyShare(pkey_share, num_signed, num_all));
  }
 
  TEPublicKey common_public = DKGTEWrapper::CreateTEPublicKey(
-             std::make_shared< std::vector<std::vector<libff::alt_bn128_G2>>>(public_shares_all),
+             std::make_shared<
+               std::vector<std::vector<libBLS::algebra::G2Point>>>(public_shares_all),
              num_signed,
              num_all);
 
@@ -155,10 +160,9 @@ for (size_t i = 0; i < num_all; i++)      // Verifying shares for each participa
 
  TEDecryptSet decr_set(num_signed, num_all);
  for (size_t i = 0; i < num_signed; i++) {
-   libff::alt_bn128_G2 decrypt = skeys.at(i).decrypt(cypher);
-   assert(pkeys.at(i).Verify(cypher, decrypt.el_));
-   std::shared_ptr decr_ptr = std::make_shared<libff::alt_bn128_G2>(decrypt);
-   decr_set.addDecrypt(skeys.at(i).getSignerIndex(), decr_ptr);
+     libBLS::TEDecryptionShare decrypt =
+       libBLS::ThresholdEncryption::partialDecrypt(cypher, skeys.at(i));
+     decr_set.addDecryptShare(decrypt);
  }
 
  std::string message_decrypted = decr_set.merge(cypher);

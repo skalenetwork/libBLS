@@ -5,8 +5,8 @@ set( CMAKE_CXX_STANDARD 20 )
 project(libBLS)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.0)
-        message(FATAL_ERROR "Require at least gcc-7.0")
+	if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 11.0)
+		message(FATAL_ERROR "libBLS requires GCC 11.0 or newer for C++20 support")
     endif()
 endif()
 

@@ -122,7 +122,6 @@ rm -rf ./libmicrohttpd
 rm -rf ./jsoncpp
 rm -rf ./libcryptopp
 rm -rf ./gmp-6*
-rm -rf ./libff
 rm -rf ./mcl
 rm -rf ./emsdk
 rm -rf ./libjson-rpc-cpp*

@@ -281,7 +281,7 @@ BOOST_AUTO_TEST_CASE( libBlsAPI ) {
     std::cerr << "BLS API TEST END" << std::endl;
 }
 
-BOOST_AUTO_TEST_CASE( libffObjsToString ) {
+BOOST_AUTO_TEST_CASE( algebraObjectsToString ) {
     for ( size_t i = 0; i < 100; ++i ) {
         size_t num_all = rand_gen() % 16 + 1;
         size_t num_signed = rand_gen() % num_all + 1;
@@ -365,7 +365,7 @@ BOOST_AUTO_TEST_CASE( libffObjsToString ) {
         BOOST_REQUIRE( common_pkey1.getPublicKey() == common_pkey_from_str1.getPublicKey() );
         BOOST_REQUIRE( common_pkey1.getPublicKey() == common_pkey.getPublicKey() );
     }
-    std::cerr << "BLS libffObjsToString TEST END" << std::endl;
+    std::cerr << "BLS algebraObjectsToString TEST END" << std::endl;
 }
 
 std::shared_ptr< std::vector< size_t > > choose_rand_signers( size_t num_signed, size_t num_all ) {

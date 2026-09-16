@@ -77,13 +77,13 @@ std::shared_ptr<BLSSignature> signature_ptr = SigSet.merge();
 If you need to be compatible with Ethereum
 
 ```cpp
-assert( publicKey.VerifySigWithHelper(hash_ptr, signature_ptr, t, n);
+assert( publicKey.VerifySigWithHelper(hash_ptr, signature_ptr, t, n) );
 ```
 
 If you need not to be compatible with Ethereum
 
 ```cpp
-assert( publicKey.VerifySig(hash_ptr, signature_ptr, t, n );
+assert( publicKey.VerifySig(hash_ptr, signature_ptr, t, n) );
 ```
 
 Here is an example of BLS threshold signatures algorithm with t = 3, n = 4.
@@ -97,7 +97,7 @@ std::vector<size_t> participants(num_all);
 for (size_t i = 0; i < num_signed; ++i) participants.at(i) = i + 1; //set participants indices 1,2,3
 
 std::shared_ptr<std::vector<std::shared_ptr<BLSPrivateKeyShare>>> Skeys =
-                                    LSPrivateKeyShare::generateSampleKeys(num_signed, num_all)->first;
+                                    BLSPrivateKeyShare::generateSampleKeys(num_signed, num_all)->first;
 
 std::default_random_engine rand_gen((unsigned int) time(0));
 std::array<uint8_t, 32> hash_byte_arr;
