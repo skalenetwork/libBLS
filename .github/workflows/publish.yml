@@ -31,6 +31,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.meta.outputs.version }}
+      tag_name: ${{ steps.meta.outputs.tag_name }}
       branch: ${{ steps.meta.outputs.branch }}
       prerelease: ${{ steps.meta.outputs.prerelease }}
       npm_version: ${{ steps.meta.outputs.npm_version }}
@@ -67,25 +68,30 @@ jobs:
             # version scoped to this PR instead.
             case "$BRANCH" in
               stable)
+                TAG_NAME="$BASE_VERSION"
                 NPM_VERSION="$BASE_VERSION"
                 PYPI_VERSION="$BASE_VERSION"
                 ;;
               beta)
+                TAG_NAME="${BASE_VERSION}-beta.pr${PR_NUMBER}"
                 NPM_VERSION="${BASE_VERSION}-beta.pr${PR_NUMBER}"
                 PYPI_VERSION="${BASE_VERSION}rc${PR_NUMBER}"
                 ;;
               *)
+                TAG_NAME="${BASE_VERSION}-develop.pr${PR_NUMBER}"
                 NPM_VERSION="${BASE_VERSION}-develop.pr${PR_NUMBER}"
                 PYPI_VERSION="${BASE_VERSION}.dev${PR_NUMBER}"
                 ;;
             esac
           else
+            TAG_NAME="$(bash ./scripts/ci/calculate_version.sh "$BRANCH" "$BASE_VERSION")"
             NPM_VERSION="$(bash ./scripts/ci/calculate_version_npm.sh "$NPM_PACKAGE_NAME" "$BASE_VERSION" "$BRANCH")"
             PYPI_VERSION="$(bash ./scripts/ci/calculate_version_pypi.sh t-encrypt "$BASE_VERSION" "$BRANCH")"
           fi
 
           echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
           echo "version=${BASE_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag_name=${TAG_NAME}" >> "$GITHUB_OUTPUT"
           echo "prerelease=${PRERELEASE}" >> "$GITHUB_OUTPUT"
           echo "npm_version=${NPM_VERSION}" >> "$GITHUB_OUTPUT"
           echo "pypi_version=${PYPI_VERSION}" >> "$GITHUB_OUTPUT"
@@ -100,6 +106,7 @@ jobs:
             "source_sha": "${GITHUB_SHA}",
             "branch": "${BRANCH}",
             "version": "${BASE_VERSION}",
+            "tag_name": "${TAG_NAME}",
             "npm_version": "${NPM_VERSION}",
             "pypi_version": "${PYPI_VERSION}",
             "prerelease": ${PRERELEASE},
@@ -415,7 +422,7 @@ jobs:
       - build_native
     if: >-
       always() &&
-      needs.resolve_release_metadata.outputs.branch == 'stable' &&
+      (needs.resolve_release_metadata.outputs.branch == 'stable' || needs.resolve_release_metadata.outputs.branch == 'beta') &&
       github.event_name == 'push' &&
       needs.publish_pypi.result == 'success' &&
       needs.publish_npm.result == 'success'
@@ -436,7 +443,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${{ needs.resolve_release_metadata.outputs.version }}"
+          TAG="${{ needs.resolve_release_metadata.outputs.tag_name }}"
           HEAD_SHA="${{ github.sha }}"
           EXISTING="$(git ls-remote --tags origin "refs/tags/${TAG}" | awk '{print $1}')"
           if [[ -n "$EXISTING" && "$EXISTING" != "$HEAD_SHA" ]]; then
@@ -451,10 +458,10 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.resolve_release_metadata.outputs.version }}
-          name: ${{ needs.resolve_release_metadata.outputs.version }}
+          tag_name: ${{ needs.resolve_release_metadata.outputs.tag_name }}
+          name: ${{ needs.resolve_release_metadata.outputs.tag_name }}
           draft: false
-          prerelease: false
+          prerelease: ${{ needs.resolve_release_metadata.outputs.prerelease }}
           files: |
             native-artifacts/bls_glue
             native-artifacts/hash_g1
