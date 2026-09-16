@@ -1,6 +1,15 @@
 # Tests
 
+### Running all tests via CTest
+
 ```bash
+ctest --test-dir build --output-on-failure
+```
+
+### Running individual test binaries
+
+```bash
+./build/backends/backend_unit_test              # run backend unit tests
 ./build/dkg_unit_test                           # run all dkg unit tests
 ./build/bls_test                                # run all bls tests
 ./build/bls_unit_test                           # run all bls unit tests
@@ -44,7 +53,7 @@ You can previous benchmark result [here](./benchmarks/main.md)
 
 The project is also configured to allow running with address sanitizer to check for memory leaks:
 ```bash
-cmake -H. -Bbuild -DENABLE_SANITIZERS=ON -DCMAKE_BUILD_TYPE=Debug
+cmake -S . -B build -DENABLE_SANITIZERS=ON -DCMAKE_BUILD_TYPE=Debug
 
 cmake --build build -- -j$(nproc)
 ```

@@ -307,9 +307,8 @@ BOOST_AUTO_TEST_CASE( FqElement_To_Ulong ) {
         "4694625540791604852420020651969226497284382434318473048459679808020802528590", Base::DEC );
     uint64_t ul2 = fq2.toUlong();
     BOOST_REQUIRE_EQUAL( ul2, fq2.toUlong() );
-    BOOST_REQUIRE_EQUAL( ul2, ( uint64_t ) 13508474536318821710ULL );  // actual sum from libff
+    BOOST_REQUIRE_EQUAL( ul2, ( uint64_t ) 13508474536318821710ULL );
 
-    // points used on libff
     FqElement fq3 = FqElement::fromString(
         "3304936327297184941808578954020427106578801991031799403748685827818019345413", Base::DEC );
     FqElement fq4 = FqElement::fromString(
@@ -317,7 +316,7 @@ BOOST_AUTO_TEST_CASE( FqElement_To_Ulong ) {
     uint64_t sum = fq3.toUlong() + fq4.toUlong();
 
     BOOST_REQUIRE_EQUAL( sum, ( fq3 + fq4 ).toUlong() );
-    BOOST_REQUIRE_EQUAL( sum, ( uint64_t ) 542074693502250562ULL );  // actual sum from libff
+    BOOST_REQUIRE_EQUAL( sum, ( uint64_t ) 542074693502250562ULL );
 }
 
 // ==================== Fq2Element Tests ====================

@@ -11,15 +11,14 @@ class FqElement;
  * the generator points, and the field characteristics.
  * It is used to ensure compatibility with the alt_bn128 curve implementation
  * across different elliptic curve libraries.
- * @note The values used here are based on the libff library's alt_bn128 implementation.
- *        Any other backend library used, other than libff, must adhere to these values.
+ * @note These are the canonical alt_bn128 curve values used by the algebra backend.
  */
 struct AltBn128Contract {
     // Base curve: y^2 = x^3 + 3 over Fp
     static constexpr std::string_view coeff_a_dec = "0";
     static constexpr std::string_view coeff_b_dec = "3";
 
-    // Moduli (decimal strings, from libff alt_bn128_init.cpp)
+    // Moduli as decimal strings.
     static constexpr std::string_view p_dec =
         "21888242871839275222246405745257275088696311157297823662689037894645226208583";
     static constexpr std::string_view r_dec =

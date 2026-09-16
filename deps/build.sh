@@ -237,8 +237,7 @@ then
 	WITH_ARGTABLE2="no"
 fi
 
-# Install all backends
-WITH_FF="yes"
+# Install the selected backend
 WITH_GMP="yes"
 WITH_MCL="yes"
 
@@ -264,7 +263,8 @@ mkdir -p "$INSTALL_ROOT_RELATIVE"
 export INSTALL_ROOT=$("$READLINK" -f "$INSTALL_ROOT_RELATIVE")
 export SOURCES_ROOT=$("$READLINK" -f "$CUSTOM_BUILD_ROOT")
 export PREDOWNLOADED_ROOT=$("$READLINK" -f "$CUSTOM_BUILD_ROOT/pre_downloaded")
-export LIBRARIES_ROOT="$INSTALL_ROOT/lib"
+export LIB_DIR_NAME="lib"
+export LIBRARIES_ROOT="$INSTALL_ROOT/$LIB_DIR_NAME"
 export INCLUDE_ROOT="$INSTALL_ROOT/include"
 mkdir -p "$SOURCES_ROOT"
 mkdir -p "$INSTALL_ROOT"
@@ -282,8 +282,8 @@ export ARM_GCC_VER=7.2.0
 
 export ARM_TOOLCHAIN_PATH=$TOOLCHAINS_PATH/$ARM_TOOLCHAIN_NAME
 
-export ADDITIONAL_INCLUDES="-I$INSTALL_ROOT/include"
-export ADDITIONAL_LIBRARIES="-L$INSTALL_ROOT/lib"
+export ADDITIONAL_INCLUDES="-I$INCLUDE_ROOT"
+export ADDITIONAL_LIBRARIES="-L$LIBRARIES_ROOT"
 export TOOLCHAIN=no
 
 export CFLAGS=" -fPIC ${CFLAGS}"
@@ -550,7 +550,6 @@ echo -e "${COLOR_VAR_NAME}WITH_CURL${COLOR_DOTS}..............${COLOR_VAR_DESC}C
 echo -e "${COLOR_VAR_NAME}WITH_BOOST${COLOR_DOTS}.............${COLOR_VAR_DESC}libBoostC++${COLOR_DOTS}............................${COLOR_VAR_VAL}$WITH_BOOST${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_ARGTABLE2${COLOR_DOTS}.........${COLOR_VAR_DESC}libArgTable${COLOR_DOTS}............................${COLOR_VAR_VAL}$WITH_ARGTABLE2${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_GMP${COLOR_DOTS}...............${COLOR_VAR_DESC}LibGMP${COLOR_DOTS}.................................${COLOR_VAR_VAL}$WITH_GMP${COLOR_RESET}"
-echo -e "${COLOR_VAR_NAME}WITH_FF${COLOR_DOTS}................${COLOR_VAR_DESC}LibFF${COLOR_DOTS}..................................${COLOR_VAR_VAL}$WITH_FF${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_MCL${COLOR_DOTS}...............${COLOR_VAR_DESC}MCL${COLOR_DOTS}....................................${COLOR_VAR_VAL}$WITH_MCL${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_FOLLY${COLOR_DOTS}.............${COLOR_VAR_DESC}FOLLY${COLOR_DOTS}...........................${COLOR_VAR_VAL}$WITH_FOLLY${COLOR_RESET}"
 echo -e "${COLOR_VAR_NAME}WITH_DOUBLE_CONVERSION${COLOR_DOTS}..${COLOR_VAR_DESC}DoubleConversion${COLOR_DOTS}..................${COLOR_VAR_VAL}$WITH_DOUBLE_CONVERSION${COLOR_RESET}"
@@ -700,7 +699,6 @@ then
 	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}Open SSL${COLOR_SEPARATOR} =====================================${COLOR_RESET}"
 	if [ ! -f "$INSTALL_ROOT/lib/libssl.a" ];
 	then
-		## (required for libff)
 		env_restore
 		cd "$SOURCES_ROOT"
 		if [ ! -d "openssl" ];
@@ -724,15 +722,15 @@ then
 				if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
 				then
 					export KERNEL_BITS=64
-					./Configure darwin64-x86_64-cc -fPIC no-shared --prefix="$INSTALL_ROOT"
+					./Configure darwin64-x86_64-cc -fPIC no-shared --prefix="$INSTALL_ROOT" --libdir="$LIB_DIR_NAME"
 				else
 					if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 					then
-						eval emconfigure ./config -fPIC -no-asm -no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT" --libdir=lib # -no-threads
+						eval emconfigure ./config -fPIC -no-asm -no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT" --libdir="$LIB_DIR_NAME" # -no-threads
 						sed -i 's/CROSS_COMPILE=.*/CROSS_COMPILE=/' Makefile
 					else
 						env CFLAGS="$CFLAGS -O3" CXXFLAGS="$CXXFLAGS -O3" \
-						./Configure linux-x86_64 --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+						./Configure linux-x86_64 --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT" --libdir="$LIB_DIR_NAME"
 					fi
 				fi
 			else
@@ -765,7 +763,6 @@ then
 	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}GMP${COLOR_SEPARATOR} ==========================================${COLOR_RESET}"
 	if [ ! -f "$INSTALL_ROOT/lib/libgmp.a" ] || [ ! -f "$INSTALL_ROOT/lib/libgmpxx.a" ] || [ ! -f "$INSTALL_ROOT/lib/libgmp.la" ] || [ ! -f "$INSTALL_ROOT/lib/libgmpxx.la" ];
 	then
-		# requiired for libff
 		env_restore
 		cd "$SOURCES_ROOT"
 		GMP_NAME="gmp-6.1.2"
@@ -805,43 +802,6 @@ then
 		fi
 		eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}" install
 		cd ..
-		cd "$SOURCES_ROOT"
-	else
-		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
-	fi
-fi
-
-# -----------------------------------------------------------------------------
-# 									libff
-# -----------------------------------------------------------------------------
-if [ "$WITH_FF" = "yes" ];
-then
-	echo -e "${COLOR_SEPARATOR}==================== ${COLOR_PROJECT_NAME}FF${COLOR_SEPARATOR} ===========================================${COLOR_RESET}"
-	if [ ! -f "$INSTALL_ROOT/lib/libff.a" ];
-	then
-		env_restore
-		cd "$SOURCES_ROOT"
-		if [ ! -d "libff" ];
-		then
-			echo -e "${COLOR_INFO}getting it from git${COLOR_DOTS}...${COLOR_RESET}"
-			eval git clone https://github.com/scipr-lab/libff.git --recursive # libff
-		fi
-		cd libff
-		echo -e "${COLOR_INFO}configuring it${COLOR_DOTS}...${COLOR_RESET}"
-		eval git fetch
-		eval git checkout 03b719a7c81757071f99fc60be1f7f7694e51390
-		eval mkdir -p build
-		cd build
-		echo -e "${COLOR_INFO}building it${COLOR_DOTS}...${COLOR_RESET}"
-		if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
-		then
-			eval emcmake "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" -DGMP_INCLUDE_DIR="$INCLUDE_ROOT" -DGMP_LIBRARY="$LIBRARIES_ROOT" -DWITH_PROCPS=OFF -DCURVE=ALT_BN128 -DUSE_ASM=OFF ..
-			eval emmake "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
-		else
-			eval "$CMAKE" "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" .. -DWITH_PROCPS=OFF
-			eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}"
-		fi
-		eval "$MAKE" "${PARALLEL_MAKE_OPTIONS}" install
 		cd "$SOURCES_ROOT"
 	else
 		echo -e "${COLOR_SUCCESS}SKIPPED${COLOR_RESET}"
@@ -1291,6 +1251,8 @@ if [[ "${WITH_EMSCRIPTEN}" -eq 0 ]]; then
 					-DBUILD_BENCHMARKS=OFF \
 					-DBUILD_HANGING_TESTS=OFF \
 					-DBUILD_SLOW_TESTS=OFF \
+					-DCMAKE_DISABLE_FIND_PACKAGE_LZ4=ON \
+					-DCMAKE_DISABLE_FIND_PACKAGE_BZip2=ON \
 					-DCMAKE_INCLUDE_PATH="${INSTALL_ROOT}/include" \
 					-DCMAKE_LIBRARY_PATH="${INSTALL_ROOT}/lib" \
 					-DCMAKE_PREFIX_PATH=${INSTALL_ROOT} \
@@ -1423,7 +1385,18 @@ then
 				cd curl
 				mkdir -p build
 				cd build
-				cmake "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DOPENSSL_ROOT_DIR="$SOURCES_ROOT/openssl" -DBUILD_CURL_EXE=OFF -DBUILD_TESTING=OFF -DCURL_USE_LIBSSH2=OFF -DBUILD_SHARED_LIBS=OFF -DCURL_DISABLE_LDAP=ON -DCURL_STATICLIB=ON -DCURL_USE_LIBPSL=OFF -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" ..
+				cmake "${CMAKE_CROSSCOMPILING_OPTS}" \
+					-DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" \
+					-DOPENSSL_ROOT_DIR="$SOURCES_ROOT/openssl" \
+					-DBUILD_CURL_EXE=OFF \
+					-DBUILD_TESTING=OFF \
+					-DCURL_USE_LIBSSH2=OFF \
+					-DBUILD_SHARED_LIBS=OFF \
+					-DCURL_DISABLE_LDAP=ON \
+					-DCURL_STATICLIB=ON \
+					-DCURL_USE_LIBPSL=OFF \
+					-DCMAKE_DISABLE_FIND_PACKAGE_LibPSL=ON \
+					-DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" ..
 				echo " " >> lib/curl_config.h
 				echo "#define HAVE_POSIX_STRERROR_R 1" >> lib/curl_config.h
 				echo " " >> lib/curl_config.h
