@@ -66,6 +66,23 @@ public:
         const EncryptMetaData& _metaData = EncryptMetaData() );
 
     /**
+     * @brief Encrypts a message deterministically using threshold encryption.
+     * The supplied seed deterministically derives the AES key, threshold scalar, and ciphertext.
+     *
+     * @param _message The message to be encrypted
+     * @param _commonPublic The common public key used for encryption.
+     * @param _seed The seed used for deterministic key and scalar derivation.
+     * @return Ciphertext - Struct containing TE(AESKey) and AESKey(message)
+     */
+    static Ciphertext encryptDeterministic( const std::vector< uint8_t >& _message,
+        const TEPublicKey& _commonPublic, const Seed256& _seed,
+        const EncryptMetaData& _metaData = EncryptMetaData() );
+
+    static Ciphertext encryptDeterministic( const std::vector< uint8_t >& _message,
+        const std::vector< TEPublicKey >& _commonPublic, const Seed256& _seed,
+        const EncryptMetaData& _metaData = EncryptMetaData() );
+
+    /**
      * @brief Validates the TE ciphered key. Single threaded.
      *
      * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext

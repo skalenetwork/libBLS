@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE( RandomKeyConstructor ) {
     std::vector< uint8_t > messageBytes( message.begin(), message.end() );
 
     // Create cipher with random key
-    libBLS::AesGcmCipher cipher;
+    libBLS::AesGcmCipher cipher{ libBLS::AesGcmVersion::V2 };
 
     // Encrypt and decrypt
     auto ciphertext = cipher.encrypt( messageBytes );
@@ -69,8 +69,8 @@ BOOST_AUTO_TEST_CASE( RandomKeyConstructor ) {
 BOOST_AUTO_TEST_CASE( RandomKeyUniqueness ) {
     libBLS::ThresholdUtils::initRAND();
 
-    libBLS::AesGcmCipher cipher1;
-    libBLS::AesGcmCipher cipher2;
+    libBLS::AesGcmCipher cipher1{ libBLS::AesGcmVersion::V2 };
+    libBLS::AesGcmCipher cipher2{ libBLS::AesGcmVersion::V2 };
 
     // Two separate random ciphers should have different keys
     BOOST_REQUIRE( cipher1.getKey() != cipher2.getKey() );
@@ -85,8 +85,8 @@ BOOST_AUTO_TEST_CASE( SeededKeyDeterminism ) {
     RAND_bytes( seed.data.data(), seed.data.size() );
 
     // Create two ciphers with the same seed
-    libBLS::AesGcmCipher cipher1{ seed };
-    libBLS::AesGcmCipher cipher2{ seed };
+    libBLS::AesGcmCipher cipher1{ seed, libBLS::AesGcmVersion::V2 };
+    libBLS::AesGcmCipher cipher2{ seed, libBLS::AesGcmVersion::V2 };
 
     // Both should produce the same key
     BOOST_REQUIRE( cipher1.getKey() == cipher2.getKey() );
@@ -106,8 +106,8 @@ BOOST_AUTO_TEST_CASE( SeededEncryptionDeterminism ) {
     std::vector< uint8_t > msg2Bytes( message2.begin(), message2.end() );
 
     // Simulate two nodes with same seed
-    libBLS::AesGcmCipher node1Cipher{ seed };
-    libBLS::AesGcmCipher node2Cipher{ seed };
+    libBLS::AesGcmCipher node1Cipher{ seed, libBLS::AesGcmVersion::V2 };
+    libBLS::AesGcmCipher node2Cipher{ seed, libBLS::AesGcmVersion::V2 };
 
     // Encrypt same messages in same order
     auto ct1_node1 = node1Cipher.encrypt( msg1Bytes );
@@ -134,8 +134,8 @@ BOOST_AUTO_TEST_CASE( DifferentSeedsDifferentKeys ) {
     RAND_bytes( seed1.data.data(), seed1.data.size() );
     RAND_bytes( seed2.data.data(), seed2.data.size() );
 
-    libBLS::AesGcmCipher cipher1{ seed1 };
-    libBLS::AesGcmCipher cipher2{ seed2 };
+    libBLS::AesGcmCipher cipher1{ seed1, libBLS::AesGcmVersion::V2 };
+    libBLS::AesGcmCipher cipher2{ seed2, libBLS::AesGcmVersion::V2 };
 
     BOOST_REQUIRE( cipher1.getKey() != cipher2.getKey() );
 }
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE( RawKeyConstructor ) {
     RAND_bytes( rawKey.data(), rawKey.size() );
 
     // Create cipher with raw key
-    libBLS::AesGcmCipher cipher{ rawKey };
+    libBLS::AesGcmCipher cipher{ rawKey, libBLS::AesGcmVersion::V2 };
 
     // Verify getKey() returns the same key
     BOOST_REQUIRE( cipher.getKey() == rawKey );
@@ -166,11 +166,11 @@ BOOST_AUTO_TEST_CASE( RawKeyRoundTrip ) {
     std::vector< uint8_t > messageBytes( message.begin(), message.end() );
 
     // Encrypt with one instance
-    libBLS::AesGcmCipher encryptor{ rawKey };
+    libBLS::AesGcmCipher encryptor{ rawKey, libBLS::AesGcmVersion::V2 };
     auto ciphertext = encryptor.encrypt( messageBytes );
 
     // Decrypt with a new instance using same key
-    libBLS::AesGcmCipher decryptor{ rawKey };
+    libBLS::AesGcmCipher decryptor{ rawKey, libBLS::AesGcmVersion::V2 };
     auto decrypted = decryptor.decrypt( ciphertext );
 
     BOOST_REQUIRE( decrypted == messageBytes );
@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE( SimpleAES ) {
     const std::string message = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     std::vector< uint8_t > messageBytes( message.begin(), message.end() );
 
-    libBLS::AesGcmCipher cipher{ randomAesKey };
+    libBLS::AesGcmCipher cipher{ randomAesKey, libBLS::AesGcmVersion::V2 };
     auto ciphertext = cipher.encrypt( messageBytes );
     auto decryptedText = cipher.decrypt( ciphertext );
 
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE( wrongCiphertext ) {
         "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
     std::vector< uint8_t > badMessageBytes( badMessage.begin(), badMessage.end() );
 
-    libBLS::AesGcmCipher cipher{ randomAesKey };
+    libBLS::AesGcmCipher cipher{ randomAesKey, libBLS::AesGcmVersion::V2 };
     auto bad_ciphertext = cipher.encrypt( badMessageBytes );
 
     auto decryptedText = cipher.decrypt( bad_ciphertext );
@@ -224,7 +224,7 @@ BOOST_AUTO_TEST_CASE( wrongKey ) {
     const std::string message = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     std::vector< uint8_t > messageBytes( message.begin(), message.end() );
 
-    libBLS::AesGcmCipher cipher{ randomAesKey };
+    libBLS::AesGcmCipher cipher{ randomAesKey, libBLS::AesGcmVersion::V2 };
     auto ciphertext = cipher.encrypt( messageBytes );
 
     unsigned char bad_keyBytes[32];
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE( wrongKey ) {
     std::copy(
         bad_keyBytes, bad_keyBytes + libBLS::AES_256_KEY_SIZE_BYTES, randomBadAesKey.begin() );
 
-    libBLS::AesGcmCipher bad_cipher{ randomBadAesKey };
+    libBLS::AesGcmCipher bad_cipher{ randomBadAesKey, libBLS::AesGcmVersion::V2 };
     BOOST_REQUIRE_THROW( bad_cipher.decrypt( ciphertext ), std::runtime_error );
 }
 
@@ -248,7 +248,7 @@ BOOST_AUTO_TEST_CASE( AESWithAAD ) {
     // Create AAD (additional authenticated data)
     std::vector< uint8_t > aad = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
 
-    libBLS::AesGcmCipher cipher{ randomAesKey };
+    libBLS::AesGcmCipher cipher{ randomAesKey, libBLS::AesGcmVersion::V2 };
 
     // Encrypt with AAD
     auto ciphertext = cipher.encrypt( messageBytes, aad );
@@ -271,7 +271,7 @@ BOOST_AUTO_TEST_CASE( AESWithWrongAAD ) {
     // Different AAD
     std::vector< uint8_t > wrong_aad = { 0xFF, 0xFE, 0xFD, 0xFC };
 
-    libBLS::AesGcmCipher cipher{ randomAesKey };
+    libBLS::AesGcmCipher cipher{ randomAesKey, libBLS::AesGcmVersion::V2 };
 
     // Encrypt with AAD
     auto ciphertext = cipher.encrypt( messageBytes, aad );
@@ -291,7 +291,7 @@ BOOST_AUTO_TEST_CASE( AESWithMissingAAD ) {
     // Create AAD
     std::vector< uint8_t > aad = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08 };
 
-    libBLS::AesGcmCipher cipher{ randomAesKey };
+    libBLS::AesGcmCipher cipher{ randomAesKey, libBLS::AesGcmVersion::V2 };
 
     // Encrypt with AAD
     auto ciphertext = cipher.encrypt( messageBytes, aad );
@@ -308,7 +308,7 @@ BOOST_AUTO_TEST_CASE( AESWithoutAAD_BackwardCompatibility ) {
     const std::string message = "Hello, this is a test message without AAD!";
     std::vector< uint8_t > messageBytes( message.begin(), message.end() );
 
-    libBLS::AesGcmCipher cipher{ randomAesKey };
+    libBLS::AesGcmCipher cipher{ randomAesKey, libBLS::AesGcmVersion::V2 };
 
     // Encrypt without AAD (backward compatible)
     auto ciphertext = cipher.encrypt( messageBytes );
@@ -334,7 +334,7 @@ BOOST_AUTO_TEST_CASE( AESWithEmptyAAD ) {
     // Empty AAD (different from nullopt)
     std::vector< uint8_t > empty_aad = {};
 
-    libBLS::AesGcmCipher cipher{ randomAesKey };
+    libBLS::AesGcmCipher cipher{ randomAesKey, libBLS::AesGcmVersion::V2 };
 
     // Encrypt with empty AAD
     auto ciphertext = cipher.encrypt( messageBytes, empty_aad );
@@ -357,7 +357,7 @@ BOOST_AUTO_TEST_CASE( AESWithTamperedCiphertext ) {
     std::vector< uint8_t > messageBytes( message.begin(), message.end() );
     std::vector< uint8_t > aad = { 0x01, 0x02, 0x03, 0x04 };
 
-    libBLS::AesGcmCipher cipher{ randomAesKey };
+    libBLS::AesGcmCipher cipher{ randomAesKey, libBLS::AesGcmVersion::V2 };
 
     // Encrypt with AAD
     auto ciphertext = cipher.encrypt( messageBytes, aad );
@@ -381,7 +381,7 @@ BOOST_AUTO_TEST_CASE( AESWithTamperedTag ) {
     std::vector< uint8_t > messageBytes( message.begin(), message.end() );
     std::vector< uint8_t > aad = { 0xAA, 0xBB, 0xCC };
 
-    libBLS::AesGcmCipher cipher{ randomAesKey };
+    libBLS::AesGcmCipher cipher{ randomAesKey, libBLS::AesGcmVersion::V2 };
 
     // Encrypt with AAD
     auto ciphertext = cipher.encrypt( messageBytes, aad );
@@ -406,7 +406,7 @@ BOOST_AUTO_TEST_CASE( AESWithTamperedIV ) {
     std::vector< uint8_t > messageBytes( message.begin(), message.end() );
     std::vector< uint8_t > aad = { 0x11, 0x22, 0x33, 0x44 };
 
-    libBLS::AesGcmCipher cipher{ randomAesKey };
+    libBLS::AesGcmCipher cipher{ randomAesKey, libBLS::AesGcmVersion::V2 };
 
     // Encrypt with AAD
     auto ciphertext = cipher.encrypt( messageBytes, aad );
@@ -434,7 +434,7 @@ BOOST_AUTO_TEST_CASE( AESAADLargePayload ) {
     std::vector< uint8_t > largeAad( 64 * 1024 );
     RAND_bytes( largeAad.data(), largeAad.size() );
 
-    libBLS::AesGcmCipher cipher{ randomAesKey };
+    libBLS::AesGcmCipher cipher{ randomAesKey, libBLS::AesGcmVersion::V2 };
 
     // Encrypt with large AAD
     auto ciphertext = cipher.encrypt( largeMessage, largeAad );
@@ -453,7 +453,7 @@ BOOST_AUTO_TEST_CASE( AESMultipleEncryptionsWithDifferentAAD ) {
     libBLS::AES256Key randomAesKey;
     RAND_bytes( randomAesKey.data(), randomAesKey.size() );
 
-    libBLS::AesGcmCipher cipher{ randomAesKey };
+    libBLS::AesGcmCipher cipher{ randomAesKey, libBLS::AesGcmVersion::V2 };
 
     const std::string msg1 = "First message";
     const std::string msg2 = "Second message";
@@ -481,6 +481,71 @@ BOOST_AUTO_TEST_CASE( AESMultipleEncryptionsWithDifferentAAD ) {
     BOOST_REQUIRE_THROW( cipher.decrypt( ct1, aad2 ), std::runtime_error );
     BOOST_REQUIRE_THROW( cipher.decrypt( ct2, aad3 ), std::runtime_error );
     BOOST_REQUIRE_THROW( cipher.decrypt( ct3, aad1 ), std::runtime_error );
+}
+
+BOOST_AUTO_TEST_CASE( AesGcmVersionDeterministicIvAadBinding ) {
+    libBLS::ThresholdUtils::initRAND();
+
+    libBLS::Seed256 seed;
+    RAND_bytes( seed.data.data(), seed.data.size() );
+
+    const std::string msg = "Identical message across different AAD contexts";
+    std::vector< uint8_t > msgBytes( msg.begin(), msg.end() );
+
+    std::vector< uint8_t > aad1 = { 0xAA, 0xBB, 0xCC };
+    std::vector< uint8_t > aad2 = { 0xDD, 0xEE, 0xFF };
+
+    // Under V1: same seed, same counter (0), same plaintext -> IV is identical despite different AAD
+    libBLS::AesGcmCipher cipherV1_1{ seed, libBLS::AesGcmVersion::V1 };
+    libBLS::AesGcmCipher cipherV1_2{ seed, libBLS::AesGcmVersion::V1 };
+
+    auto ctV1_1 = cipherV1_1.encrypt( msgBytes, aad1 );
+    auto ctV1_2 = cipherV1_2.encrypt( msgBytes, aad2 );
+
+    // Extract IVs (first 12 bytes), ciphertext bodies, and authentication tags (last 16 bytes)
+    std::vector< uint8_t > ivV1_1( ctV1_1.begin(), ctV1_1.begin() + libBLS::AES_GCM_IV_SIZE );
+    std::vector< uint8_t > ivV1_2( ctV1_2.begin(), ctV1_2.begin() + libBLS::AES_GCM_IV_SIZE );
+
+    std::vector< uint8_t > bodyV1_1( ctV1_1.begin() + libBLS::AES_GCM_IV_SIZE,
+        ctV1_1.end() - libBLS::AES_GCM_TAG_SIZE );
+    std::vector< uint8_t > bodyV1_2( ctV1_2.begin() + libBLS::AES_GCM_IV_SIZE,
+        ctV1_2.end() - libBLS::AES_GCM_TAG_SIZE );
+
+    std::vector< uint8_t > tagV1_1( ctV1_1.end() - libBLS::AES_GCM_TAG_SIZE, ctV1_1.end() );
+    std::vector< uint8_t > tagV1_2( ctV1_2.end() - libBLS::AES_GCM_TAG_SIZE, ctV1_2.end() );
+
+    // Demonstrates legacy V1 vulnerability:
+    // 1) Same IV is reused across different AAD contexts
+    // 2) Ciphertext body is identical (same CTR keystream used on same plaintext)
+    // 3) Authentication tags differ (tag includes AAD in GHASH)
+    BOOST_REQUIRE( ivV1_1 == ivV1_2 );
+    BOOST_REQUIRE( bodyV1_1 == bodyV1_2 );
+    BOOST_REQUIRE( tagV1_1 != tagV1_2 );
+
+    // Under V2: AAD is bound into IV derivation -> different AAD produces different IVs
+    libBLS::AesGcmCipher cipherV2_1{ seed, libBLS::AesGcmVersion::V2 };
+    libBLS::AesGcmCipher cipherV2_2{ seed, libBLS::AesGcmVersion::V2 };
+
+    auto ctV2_1 = cipherV2_1.encrypt( msgBytes, aad1 );
+    auto ctV2_2 = cipherV2_2.encrypt( msgBytes, aad2 );
+
+    std::vector< uint8_t > ivV2_1( ctV2_1.begin(), ctV2_1.begin() + libBLS::AES_GCM_IV_SIZE );
+    std::vector< uint8_t > ivV2_2( ctV2_2.begin(), ctV2_2.begin() + libBLS::AES_GCM_IV_SIZE );
+
+    std::vector< uint8_t > bodyV2_1( ctV2_1.begin() + libBLS::AES_GCM_IV_SIZE,
+        ctV2_1.end() - libBLS::AES_GCM_TAG_SIZE );
+    std::vector< uint8_t > bodyV2_2( ctV2_2.begin() + libBLS::AES_GCM_IV_SIZE,
+        ctV2_2.end() - libBLS::AES_GCM_TAG_SIZE );
+
+    // In V2, both IVs and ciphertext bodies must be distinct (fresh keystream per AAD)
+    BOOST_REQUIRE( ivV2_1 != ivV2_2 );
+    BOOST_REQUIRE( bodyV2_1 != bodyV2_2 );
+
+    // Verify round-trip decryption for both V1 and V2
+    BOOST_REQUIRE( cipherV1_1.decrypt( ctV1_1, aad1 ) == msgBytes );
+    BOOST_REQUIRE( cipherV1_2.decrypt( ctV1_2, aad2 ) == msgBytes );
+    BOOST_REQUIRE( cipherV2_1.decrypt( ctV2_1, aad1 ) == msgBytes );
+    BOOST_REQUIRE( cipherV2_2.decrypt( ctV2_2, aad2 ) == msgBytes );
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -633,10 +698,10 @@ BOOST_AUTO_TEST_CASE( SimpleEncryption ) {
 
     libBLS::algebra::G2Point publicKey = secretKey * libBLS::algebra::G2Point::generator();
 
-    auto result = te_instance.getCiphertext( randomAesKey, publicKey, std::nullopt, std::nullopt );
+    auto result = te_instance.cipherAesKey( randomAesKey, publicKey, std::nullopt, std::nullopt );
 
     // one decrypt share at a time
-    for ( const auto& cipheredKey : result.ciphertext ) {
+    for ( const auto& cipheredKey : result.cipheredKeys ) {
         std::vector< libBLS::algebra::G2Point > shares1;
 
         libBLS::algebra::G2Point decryptionShare =
@@ -687,7 +752,7 @@ BOOST_AUTO_TEST_CASE( SimpleEncryptionWithAES ) {
 
         libBLS::AES256Key decryptedAesKey = te_instance.CombineShares( cipheredKey, shares );
 
-        libBLS::AesGcmCipher aesGcmCipher{ decryptedAesKey };
+        libBLS::AesGcmCipher aesGcmCipher{ decryptedAesKey, libBLS::AesGcmVersion::V2 };
         std::vector< uint8_t > plaintext = aesGcmCipher.decrypt( encryptedMessage );
 
         // append random secret to end of original message
@@ -731,7 +796,7 @@ BOOST_AUTO_TEST_CASE( EncryptionWithAES_AAD ) {
         libBLS::AES256Key decryptedAesKey = te_instance.CombineShares( cipheredKey, shares );
 
         // Decrypt with the same AAD - should succeed
-        libBLS::AesGcmCipher aesGcmCipher{ decryptedAesKey };
+        libBLS::AesGcmCipher aesGcmCipher{ decryptedAesKey, libBLS::AesGcmVersion::V2 };
         std::vector< uint8_t > plaintext = aesGcmCipher.decrypt( encryptedMessage, aad );
 
         // Append random secret to end of original message for comparison
@@ -776,7 +841,7 @@ BOOST_AUTO_TEST_CASE( EncryptionWithAES_WrongAAD ) {
         libBLS::AES256Key decryptedAesKey = te_instance.CombineShares( cipheredKey, shares );
 
         // Decrypt with wrong AAD - should fail
-        libBLS::AesGcmCipher aesGcmCipher{ decryptedAesKey };
+        libBLS::AesGcmCipher aesGcmCipher{ decryptedAesKey, libBLS::AesGcmVersion::V2 };
         BOOST_REQUIRE_THROW(
             aesGcmCipher.decrypt( encryptedMessage, wrong_aad ), std::runtime_error );
 
@@ -812,7 +877,7 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongKey ) {
         RAND_bytes( randomAesKey.data(), randomAesKey.size() );
 
 
-        libBLS::AesGcmCipher cipher{ randomAesKey };
+        libBLS::AesGcmCipher cipher{ randomAesKey, libBLS::AesGcmVersion::V2 };
         BOOST_REQUIRE_THROW( cipher.decrypt( encryptedMessage ), std::runtime_error );
     }
 }
@@ -844,7 +909,7 @@ BOOST_AUTO_TEST_CASE( encryptionWithAESWrongCiphertext ) {
         auto bad_encryptedMessage =
             te_instance.encryptWithAES( badMessageBytes, publicKey ).ciphertext->getData();
 
-        libBLS::AesGcmCipher cipher{ decryptedAesKey };
+        libBLS::AesGcmCipher cipher{ decryptedAesKey, libBLS::AesGcmVersion::V2 };
         BOOST_REQUIRE_THROW( cipher.decrypt( bad_encryptedMessage ), std::runtime_error );
     }
 }
@@ -880,7 +945,7 @@ BOOST_AUTO_TEST_CASE( EncryptionCipherToBytes ) {
 
         libBLS::AES256Key decryptedAesKey = te_instance.CombineShares( cipheredkey, shares );
 
-        libBLS::AesGcmCipher cipher{ decryptedAesKey };
+        libBLS::AesGcmCipher cipher{ decryptedAesKey, libBLS::AesGcmVersion::V2 };
         std::vector< uint8_t > plaintext = cipher.decrypt( encryptedMessage );
 
         // append random secret to the message
@@ -928,9 +993,9 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionReal ) {
     libBLS::AES256Key key;
     RAND_bytes( key.data(), key.size() );
 
-    auto result = obj.getCiphertext( key, commonPublic, std::nullopt, std::nullopt );
+    auto result = obj.cipherAesKey( key, commonPublic, std::nullopt, std::nullopt );
 
-    for ( const auto& cipheredKey : result.ciphertext ) {
+    for ( const auto& cipheredKey : result.cipheredKeys ) {
         std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares( t );
         std::vector< libBLS::algebra::G2Point > decryptedShares( t );
         std::vector< libBLS::algebra::G2Point > pubKeys( t );
@@ -1008,12 +1073,12 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomPK ) {
     libBLS::AES256Key key;
     RAND_bytes( key.data(), key.size() );
 
-    auto result = obj.getCiphertext( key, commonPublic, std::nullopt, std::nullopt );
+    auto result = obj.cipherAesKey( key, commonPublic, std::nullopt, std::nullopt );
 
     std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares( 11 );
 
 
-    for ( const auto& cipheredKey : result.ciphertext ) {
+    for ( const auto& cipheredKey : result.cipheredKeys ) {
         for ( size_t i = 0; i < 11; ++i ) {
             libBLS::algebra::G2Point decrypted =
                 obj.getDecryptionShare( cipheredKey, secretKeys[i] );
@@ -1074,9 +1139,9 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionRandomSK ) {
     libBLS::AES256Key key;
     RAND_bytes( key.data(), key.size() );
 
-    auto result = obj.getCiphertext( key, commonPublic, std::nullopt, std::nullopt );
+    auto result = obj.cipherAesKey( key, commonPublic, std::nullopt, std::nullopt );
 
-    for ( const auto& cipheredKey : result.ciphertext ) {
+    for ( const auto& cipheredKey : result.cipheredKeys ) {
         std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares( 11 );
 
         for ( size_t i = 0; i < 11; ++i ) {
@@ -1134,11 +1199,11 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionCorruptedCiphertext ) {
     libBLS::AES256Key key;
     RAND_bytes( key.data(), key.size() );
 
-    auto result = obj.getCiphertext( key, commonPublic, std::nullopt, std::nullopt );
+    auto result = obj.cipherAesKey( key, commonPublic, std::nullopt, std::nullopt );
 
     libBLS::algebra::G1Point rand = libBLS::algebra::G1Point::random();
 
-    libBLS::CipheredKey cipheredKeyToCorrupt = result.ciphertext[0];
+    libBLS::CipheredKey cipheredKeyToCorrupt = result.cipheredKeys[0];
     libBLS::CipheredKey corruptedCipheredKey = { cipheredKeyToCorrupt.U, cipheredKeyToCorrupt.V,
         rand };
 

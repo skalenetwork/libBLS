@@ -726,10 +726,11 @@ BOOST_AUTO_TEST_CASE( TEEncryptDeterministicSeededKeyAndScalar ) {
     std::vector< libBLS::algebra::G2Point > rawPublicKeys = { keys.commonPublic.getPublicKeyRaw() };
 
     libBLS::EncryptMetaData metaDataA;
-    metaDataA.seed = seedA;
 
-    libBLS::CipherResult cipher1 = libBLS::TE::encryptWithAES( message, rawPublicKeys, metaDataA );
-    libBLS::CipherResult cipher2 = libBLS::TE::encryptWithAES( message, rawPublicKeys, metaDataA );
+    libBLS::CipherResult cipher1 = libBLS::TE::encryptWithAESDeterministic(
+        message, rawPublicKeys, seedA, metaDataA );
+    libBLS::CipherResult cipher2 = libBLS::TE::encryptWithAESDeterministic(
+        message, rawPublicKeys, seedA, metaDataA );
 
     BOOST_REQUIRE( cipher1.ciphertext );
     BOOST_REQUIRE( cipher2.ciphertext );
@@ -738,17 +739,15 @@ BOOST_AUTO_TEST_CASE( TEEncryptDeterministicSeededKeyAndScalar ) {
     BOOST_CHECK( cipher1.ciphertext->toBytes() == cipher2.ciphertext->toBytes() );
 
     libBLS::EncryptMetaData metaDataB;
-    metaDataB.seed = seedB;
-    libBLS::CipherResult cipher3 = libBLS::TE::encryptWithAES( message, rawPublicKeys, metaDataB );
+    libBLS::CipherResult cipher3 = libBLS::TE::encryptWithAESDeterministic(
+        message, rawPublicKeys, seedB, metaDataB );
 
     BOOST_REQUIRE( cipher3.ciphertext );
     BOOST_CHECK( cipher1.randomSecret != cipher3.randomSecret );
     BOOST_CHECK( cipher1.ciphertext->getKeys() != cipher3.ciphertext->getKeys() );
     BOOST_CHECK( cipher1.ciphertext->toBytes() != cipher3.ciphertext->toBytes() );
 
-    libBLS::EncryptMetaData metaDataNoSeed;
-    libBLS::CipherResult cipher4 =
-        libBLS::TE::encryptWithAES( message, rawPublicKeys, metaDataNoSeed );
+    libBLS::CipherResult cipher4 = libBLS::TE::encryptWithAES( message, rawPublicKeys );
 
     BOOST_REQUIRE( cipher4.ciphertext );
     BOOST_CHECK( cipher1.ciphertext->getKeys() != cipher4.ciphertext->getKeys() );
@@ -795,15 +794,13 @@ BOOST_AUTO_TEST_CASE( TESeededCrossNodeDeterminism ) {
 
     // Simulate Node A encryption
     libBLS::EncryptMetaData metaDataNodeA;
-    metaDataNodeA.seed = sharedSeed;
-    libBLS::CipherResult cipherNodeA =
-        libBLS::TE::encryptWithAES( message, rawPublicKeys, metaDataNodeA );
+    libBLS::CipherResult cipherNodeA = libBLS::TE::encryptWithAESDeterministic(
+        message, rawPublicKeys, sharedSeed, metaDataNodeA );
 
     // Simulate Node B encryption (independent, same seed)
     libBLS::EncryptMetaData metaDataNodeB;
-    metaDataNodeB.seed = sharedSeed;
-    libBLS::CipherResult cipherNodeB =
-        libBLS::TE::encryptWithAES( message, rawPublicKeys, metaDataNodeB );
+    libBLS::CipherResult cipherNodeB = libBLS::TE::encryptWithAESDeterministic(
+        message, rawPublicKeys, sharedSeed, metaDataNodeB );
 
     // Both nodes must produce identical ciphertexts
     BOOST_REQUIRE( cipherNodeA.ciphertext );
@@ -832,21 +829,21 @@ BOOST_AUTO_TEST_CASE( TESeededMultipleMessageSequence ) {
 
     // Node A encrypts 3 messages in sequence
     libBLS::EncryptMetaData metaA1, metaA2, metaA3;
-    metaA1.seed = seed;
-    metaA2.seed = seed;
-    metaA3.seed = seed;
-    auto cipherA1 = libBLS::TE::encryptWithAES( msg1, rawPublicKeys, metaA1 );
-    auto cipherA2 = libBLS::TE::encryptWithAES( msg2, rawPublicKeys, metaA2 );
-    auto cipherA3 = libBLS::TE::encryptWithAES( msg3, rawPublicKeys, metaA3 );
+    auto cipherA1 = libBLS::TE::encryptWithAESDeterministic(
+        msg1, rawPublicKeys, seed, metaA1 );
+    auto cipherA2 = libBLS::TE::encryptWithAESDeterministic(
+        msg2, rawPublicKeys, seed, metaA2 );
+    auto cipherA3 = libBLS::TE::encryptWithAESDeterministic(
+        msg3, rawPublicKeys, seed, metaA3 );
 
     // Node B encrypts same 3 messages in same sequence
     libBLS::EncryptMetaData metaB1, metaB2, metaB3;
-    metaB1.seed = seed;
-    metaB2.seed = seed;
-    metaB3.seed = seed;
-    auto cipherB1 = libBLS::TE::encryptWithAES( msg1, rawPublicKeys, metaB1 );
-    auto cipherB2 = libBLS::TE::encryptWithAES( msg2, rawPublicKeys, metaB2 );
-    auto cipherB3 = libBLS::TE::encryptWithAES( msg3, rawPublicKeys, metaB3 );
+    auto cipherB1 = libBLS::TE::encryptWithAESDeterministic(
+        msg1, rawPublicKeys, seed, metaB1 );
+    auto cipherB2 = libBLS::TE::encryptWithAESDeterministic(
+        msg2, rawPublicKeys, seed, metaB2 );
+    auto cipherB3 = libBLS::TE::encryptWithAESDeterministic(
+        msg3, rawPublicKeys, seed, metaB3 );
 
     // All corresponding ciphertexts must match between nodes
     BOOST_CHECK( cipherA1.ciphertext->toBytes() == cipherB1.ciphertext->toBytes() );
@@ -876,9 +873,8 @@ BOOST_AUTO_TEST_CASE( TESeededEncryptionDecryptionFlow ) {
 
     // Encrypt with seed using high-level wrapper
     libBLS::EncryptMetaData metaData;
-    metaData.seed = seed;
-    libBLS::Ciphertext ciphertext =
-        libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, metaData );
+    libBLS::Ciphertext ciphertext = libBLS::ThresholdEncryption::encryptDeterministic(
+        message, keys.commonPublic, seed, metaData );
 
     // Prepare public key shares for validation
     std::vector< libBLS::TEPublicKeyShare > publicKeyShares;
