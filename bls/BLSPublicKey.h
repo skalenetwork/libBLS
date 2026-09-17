@@ -51,8 +51,6 @@ public:
 
     bool VerifySig( const std::array< uint8_t, 32 >& hash, const BLSSignature& sign );
 
-    bool VerifySigWithHelper( const std::array< uint8_t, 32 >& hash, const BLSSignature& sign );
-
     bool AggregatedVerifySig( std::vector< std::array< uint8_t, 32 > >& hash_ptr_vec,
         std::vector< BLSSignature >& sign_ptr_vec );
 

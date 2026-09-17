@@ -75,36 +75,4 @@ bool BLSPublicKeyShare::VerifySig( const std::array< uint8_t, 32 >& hash_ptr,
     return res;
 }
 
-// TODO - this function is replicated in BLSPublicKey - refactor it
-bool BLSPublicKeyShare::VerifySigWithHelper( const std::array< uint8_t, 32 >& hash_ptr,
-    const BLSSigShare& sign_ptr, size_t _requiredSigners, size_t _totalSigners ) {
-    std::shared_ptr< libBLS::Bls > obj;
-    libBLS::ThresholdUtils::checkSigners( _requiredSigners, _totalSigners );
-
-    if ( sign_ptr.getSigShare().isIdentity() ) {
-        throw libBLS::ThresholdUtils::IsNotWellFormed( "Sig share is equal to zero" );
-    }
-
-    std::string hint = sign_ptr.getHint();
-
-    std::pair< algebra::FqElement, algebra::FqElement > y_shift_x = algebra::parseHint( hint );
-
-    algebra::FqElement x = algebra::hashToFq( hash_ptr );
-
-    x = x + y_shift_x.second;
-
-    algebra::FqElement y_sqr = y_shift_x.first ^ 2;
-    algebra::FqElement x3B = x ^ 3;
-    x3B = x3B + algebra::AltBn128Contract::coeffB();
-
-    if ( y_sqr != x3B ) {
-        return false;
-    }
-
-    algebra::G1Point hash( x, y_shift_x.first, algebra::FqElement::one() );
-
-    return algebra::verifyPairingEq(
-        sign_ptr.getSigShare(), algebra::G2Point::generator(), hash, publicKey );
-}
-
 }  // namespace libBLS
