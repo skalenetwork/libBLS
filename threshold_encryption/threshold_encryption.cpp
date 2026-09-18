@@ -35,6 +35,45 @@
 
 namespace libBLS {
 
+namespace {
+
+/**
+ * @brief Encrypts a message using AES and threshold encryption
+ *
+ * @param message The plaintext message to be encrypted
+ * @param commonPublic The common public key(s) used for threshold encryption
+ * @param metaData Encryption metadata (AES-GCM version, optional AES/TE AAD)
+ * @param seed Optional 256-bit seed for deterministic encryption; if omitted, generates random key/scalar
+ *
+ * @return CipherResult containing:
+ *         - ciphertext: Shared pointer to Ciphertext (threshold-encrypted AES key(s) and AES-encrypted message)
+ *         - randomSecret: The random secret (scalar) used during encryption
+ */
+CipherResult encryptWithAESInternal( const std::vector< uint8_t >& message,
+    const std::vector< algebra::G2Point >& commonPublic, const EncryptMetaData& metaData,
+    const std::optional< Seed256 >& seed = std::nullopt ) {
+    AesGcmCipher aesGcmCipher = seed.has_value() ?
+        AesGcmCipher( *seed, metaData.aesGcmVersion ) :
+        AesGcmCipher( metaData.aesGcmVersion );
+    const AES256Key& key = aesGcmCipher.getKey();
+
+    CipheredKeyResult cipheredKeyResult =
+        TE::cipherAesKey( key, commonPublic, metaData.associatedDataTE, seed );
+
+    std::vector< uint8_t > messageToCipher( message );
+    messageToCipher.insert(
+        messageToCipher.end(), cipheredKeyResult.randomSecret.begin(),
+        cipheredKeyResult.randomSecret.end() );
+
+    auto encryptedMessage = aesGcmCipher.encrypt( messageToCipher, metaData.associatedDataAesGcm );
+    std::shared_ptr< Ciphertext > ciphertext =
+        std::make_shared< Ciphertext >( cipheredKeyResult.cipheredKeys, encryptedMessage );
+
+    return { ciphertext, cipheredKeyResult.randomSecret };
+}
+
+}  // namespace
+
 TE::TE( const TEBase& base ) : t_( base.getRequiredSigners() ), n_( base.getTotalSigners() ) {}
 
 TE::TE( const size_t t, const size_t n ) : t_( t ), n_( n ) {}
@@ -85,15 +124,15 @@ algebra::G1Point TE::HashToGroup(
 }
 
 
-CipheredKeyResult TE::getCiphertext( const AES256Key& key, const algebra::G2Point& commonPublic,
+CipheredKeyResult TE::cipherAesKey( const AES256Key& key, const algebra::G2Point& commonPublic,
     const std::optional< std::vector< uint8_t > >& associatedDataTE,
     const std::optional< Seed256 >& seed ) {
-    return getCiphertext(
+    return cipherAesKey(
         key, std::vector< algebra::G2Point >{ commonPublic }, associatedDataTE, seed );
 }
 
 
-CipheredKeyResult TE::getCiphertext( const AES256Key& key,
+CipheredKeyResult TE::cipherAesKey( const AES256Key& key,
     const std::vector< algebra::G2Point >& commonPublicVector,
     const std::optional< std::vector< uint8_t > >& associatedDataTE,
     const std::optional< Seed256 >& seed ) {
@@ -169,25 +208,6 @@ CipheredKeyResult TE::getCiphertext( const AES256Key& key,
     return { cipheredKeys, std::move( randomSecret ) };
 }
 
-/**
- * @brief Encrypts a message using AES with a randomly generated key and threshold encryption
- *
- * @param message The plaintext message to be encrypted
- * @param commonPublic The common public key used for threshold encryption (G2 group element)
- *
- * @return A pair containing:
- *         - First: CipheredKey struct with (U,V,W) components of the threshold encryption ->
- * Ciphered AES key
- *         - Second: The AES-encrypted message as a byte vector
- *
- * @details The function:
- * 1. Generates a random 32-byte AES key
- * 2. Encrypts the input message with AES using the random key
- * 3. Threshold-encrypts the random AES key using the common public key
- * 4. Returns both the threshold-encrypted key and AES-encrypted message
- *
- * @note Initializes AES before encryption
- */
 CipherResult TE::encryptWithAES( const std::vector< uint8_t >& message,
     const algebra::G2Point& commonPublic, const EncryptMetaData& metaData ) {
     return encryptWithAES( message, std::vector< algebra::G2Point >{ commonPublic }, metaData );
@@ -195,35 +215,19 @@ CipherResult TE::encryptWithAES( const std::vector< uint8_t >& message,
 
 CipherResult TE::encryptWithAES( const std::vector< uint8_t >& message,
     const std::vector< algebra::G2Point >& commonPublic, const EncryptMetaData& metaData ) {
-    // Create AesGcmCipher - delegates key generation/derivation to the class
-    // If seed is provided, key is derived deterministically; otherwise random
-    std::unique_ptr< AesGcmCipher > aesGcmCipher;
-    if ( metaData.seed.has_value() ) {
-        aesGcmCipher = std::make_unique< AesGcmCipher >( metaData.seed.value() );
-    } else {
-        aesGcmCipher = std::make_unique< AesGcmCipher >();
-    }
+    return encryptWithAESInternal( message, commonPublic, metaData );
+}
 
-    // Get the key from cipher for threshold encryption
-    const AES256Key& key = aesGcmCipher->getKey();
+CipherResult TE::encryptWithAESDeterministic( const std::vector< uint8_t >& message,
+    const algebra::G2Point& commonPublic, const Seed256& seed, const EncryptMetaData& metaData ) {
+    return encryptWithAESDeterministic(
+        message, std::vector< algebra::G2Point >{ commonPublic }, seed, metaData );
+}
 
-    // cipher aes key (with optional TE AAD)
-
-    CipheredKeyResult result =
-        getCiphertext( key, commonPublic, metaData.associatedDataTE, metaData.seed );
-
-    // append random secret to end of message
-    std::vector< uint8_t > messageToCipher( message );
-    messageToCipher.insert(
-        messageToCipher.end(), result.randomSecret.begin(), result.randomSecret.end() );
-
-    // cipher message + random secret using AES key (with optional AES AAD)
-    auto encryptedMessage = aesGcmCipher->encrypt( messageToCipher, metaData.associatedDataAesGcm );
-
-    std::shared_ptr< Ciphertext > ciphertext =
-        std::make_shared< Ciphertext >( result.ciphertext, encryptedMessage );
-
-    return { ciphertext, result.randomSecret };
+CipherResult TE::encryptWithAESDeterministic( const std::vector< uint8_t >& message,
+    const std::vector< algebra::G2Point >& commonPublic, const Seed256& seed,
+    const EncryptMetaData& metaData ) {
+    return encryptWithAESInternal( message, commonPublic, metaData, seed );
 }
 
 

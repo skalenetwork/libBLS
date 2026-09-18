@@ -54,7 +54,7 @@ struct CipherResult {
 };
 
 struct CipheredKeyResult {
-    std::vector< CipheredKey > ciphertext;
+    std::vector< CipheredKey > cipheredKeys;
     RandSecret randomSecret;
 };
 
@@ -74,9 +74,8 @@ struct EncryptMetaData {
     // validateEncryption fails with this associated data.
     std::optional< std::vector< uint8_t > > associatedDataTE;
 
-    // Optional seed used to derive both the random scalar secret and the AES key.
-    // Seed must have same size as AES_KEY in order to have the same entropy / security level.
-    std::optional< Seed256 > seed;
+    // Version of deterministic AES-GCM IV derivation.
+    AesGcmVersion aesGcmVersion = AesGcmVersion::V2;
 };
 
 class TE {
@@ -101,14 +100,14 @@ public:
      *         W is element of G1
      * @return string - random secret used for encryption. Mostly used for testing.
      *
-     * @note This is an auxiliar function, used within `encryptWithAES`
+     * @note This is an auxiliary function, used within `encryptWithAES`
      */
-    static CipheredKeyResult getCiphertext( const AES256Key& key,
+    static CipheredKeyResult cipherAesKey( const AES256Key& key,
         const algebra::G2Point& commonPublic,
         const std::optional< std::vector< uint8_t > >& associatedDataTE,
         const std::optional< Seed256 >& seed );
 
-    static CipheredKeyResult getCiphertext( const AES256Key& key,
+    static CipheredKeyResult cipherAesKey( const AES256Key& key,
         const std::vector< algebra::G2Point >& commonPublic,
         const std::optional< std::vector< uint8_t > >& associatedDataTE,
         const std::optional< Seed256 >& seed );
@@ -118,6 +117,14 @@ public:
 
     static CipherResult encryptWithAES( const std::vector< uint8_t >& message,
         const std::vector< algebra::G2Point >& commonPublic,
+        const EncryptMetaData& metaData = EncryptMetaData() );
+
+    static CipherResult encryptWithAESDeterministic( const std::vector< uint8_t >& message,
+        const algebra::G2Point& commonPublic, const Seed256& seed,
+        const EncryptMetaData& metaData = EncryptMetaData() );
+
+    static CipherResult encryptWithAESDeterministic( const std::vector< uint8_t >& message,
+        const std::vector< algebra::G2Point >& commonPublic, const Seed256& seed,
         const EncryptMetaData& metaData = EncryptMetaData() );
 
     static std::pair< std::string, RandSecret > encryptMessage(
