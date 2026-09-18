@@ -29,6 +29,37 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
+namespace {
+
+Ciphertext encryptInternal( const std::vector< uint8_t >& _message,
+    const std::vector< TEPublicKey >& _commonPublic, const EncryptMetaData& _metaData,
+    const std::optional< Seed256 >& _seed = std::nullopt ) {
+    if ( _commonPublic.empty() || _commonPublic.size() > 2 ) {
+        throw ThresholdUtils::IncorrectInput(
+            "Must provide exactly 1 or 2 public keys for encryption" );
+    }
+
+    std::vector< algebra::G2Point > rawPublicKeys;
+    rawPublicKeys.reserve( _commonPublic.size() );
+    for ( const auto& publicKey : _commonPublic ) {
+        publicKey.validate();
+        rawPublicKeys.push_back( publicKey.getPublicKeyRaw() );
+    }
+
+    CipherResult cipher = _seed ?
+        TE::encryptWithAESDeterministic( _message, rawPublicKeys, *_seed, _metaData ) :
+        TE::encryptWithAES( _message, rawPublicKeys, _metaData );
+
+    if ( !cipher.ciphertext ) {
+        throw ThresholdUtils::IsNotWellFormed( "ciphertext is null" );
+    }
+
+    cipher.ciphertext->validate();
+    return *cipher.ciphertext;
+}
+
+}  // namespace
+
 std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
     const std::vector< uint8_t >& _message ) {
     if ( _message.empty() ) {
@@ -53,7 +84,7 @@ std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
     messageToCipher.insert( messageToCipher.end(), randomSecret.begin(), randomSecret.end() );
 
     // Cipher message + random secret using AES key
-    AesGcmCipher aesGcmCipher{ key };
+    AesGcmCipher aesGcmCipher{ key, AesGcmVersion::V2 };
     auto encryptedMessage = aesGcmCipher.encrypt( messageToCipher );
 
     // 0x01 byte is needed for compatibility with real encryption
@@ -88,7 +119,7 @@ std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
         _encryptedData.begin() + CipheredKey::CIPHERED_KEY_SIZE_BYTES + 1, _encryptedData.end() );
 
     // Decrypt the data
-    AesGcmCipher aesGcmCipher{ key };
+    AesGcmCipher aesGcmCipher{ key, AesGcmVersion::V2 };
     std::vector< uint8_t > decrypted = aesGcmCipher.decrypt( cipher_text );
 
     if ( decrypted.size() < RANDOM_SECRET_SIZE_BYTES ) {
@@ -110,25 +141,20 @@ Ciphertext ThresholdEncryption::encrypt( const std::vector< uint8_t >& _message,
 
 Ciphertext ThresholdEncryption::encrypt( const std::vector< uint8_t >& _message,
     const std::vector< TEPublicKey >& _commonPublic, const EncryptMetaData& _metaData ) {
-    if ( _commonPublic.size() == 0 || _commonPublic.size() > 2 )
-        throw ThresholdUtils::IncorrectInput(
-            "Must provide exactly 1 or 2 public keys for encryption" );
+    return encryptInternal( _message, _commonPublic, _metaData );
+}
 
-    std::vector< algebra::G2Point > rawPublicKeys;
-    for ( const auto& publicKey : _commonPublic ) {
-        publicKey.validate();
-        rawPublicKeys.push_back( publicKey.getPublicKeyRaw() );
-    }
+Ciphertext ThresholdEncryption::encryptDeterministic( const std::vector< uint8_t >& _message,
+    const TEPublicKey& _commonPublic, const Seed256& _seed,
+    const EncryptMetaData& _metaData ) {
+    return encryptDeterministic(
+        _message, std::vector< TEPublicKey >{ _commonPublic }, _seed, _metaData );
+}
 
-    CipherResult cipher = TE::encryptWithAES( _message, rawPublicKeys, _metaData );
-
-    if ( !cipher.ciphertext ) {
-        throw ThresholdUtils::IsNotWellFormed( "ciphertext is null" );
-    }
-
-    cipher.ciphertext->validate();
-
-    return *cipher.ciphertext;
+Ciphertext ThresholdEncryption::encryptDeterministic(
+    const std::vector< uint8_t >& _message, const std::vector< TEPublicKey >& _commonPublic,
+    const Seed256& _seed, const EncryptMetaData& _metaData ) {
+    return encryptInternal( _message, _commonPublic, _metaData, _seed );
 }
 
 void ThresholdEncryption::validateEncryption(
@@ -553,7 +579,7 @@ void ThresholdEncryption::validateDecipheredMessage(
 
 std::vector< uint8_t > ThresholdEncryption::decipherAESAndValidate( const Ciphertext& _ciphertext,
     const AES256Key& _key, const std::optional< std::vector< uint8_t > >& _associatedData ) {
-    AesGcmCipher aesGcmCipher{ _key };
+    AesGcmCipher aesGcmCipher{ _key, AesGcmVersion::V2 };
     std::vector< uint8_t > data = aesGcmCipher.decrypt( _ciphertext.getData(), _associatedData );
 
     // validate output
