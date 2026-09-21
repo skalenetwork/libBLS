@@ -112,15 +112,15 @@ std::vector< uint8_t > AesGcmCipher::encrypt(
     unsigned char localIv[AES_GCM_IV_SIZE];
     if ( isDeterministic ) {
         // Synthetic IV:
-        // V1: HMAC-SHA256(key, plaintext || counter) truncated to 12 bytes
-        // V2: HMAC-SHA256(key, len(aad) [8 bytes BE] || aad || plaintext || counter [8 bytes BE])
+        // V0: HMAC-SHA256(key, plaintext || counter) truncated to 12 bytes
+        // V1: HMAC-SHA256(key, len(aad) [8 bytes BE] || aad || plaintext || counter [8 bytes BE])
         // Counter ensures same plaintext encrypted multiple times gets different IVs
         // As long as encrypt() is called in the same order, they produce identical output
         unsigned char hmacResult[32];
         unsigned int hmacLen = 0;
 
         std::vector< uint8_t > hmacInput;
-        if ( version == AesGcmVersion::V2 ) {
+        if ( version == AesGcmVersion::V1 ) {
             uint64_t aadSize = ( aad.has_value() ) ? static_cast< uint64_t >( aad->size() ) : 0;
             for ( int byteIndex = 7; byteIndex >= 0; --byteIndex ) {
                 hmacInput.push_back(

@@ -75,7 +75,7 @@ struct EncryptMetaData {
     std::optional< std::vector< uint8_t > > associatedDataTE;
 
     // Version of deterministic AES-GCM IV derivation.
-    AesGcmVersion aesGcmVersion = AesGcmVersion::V2;
+    AesGcmVersion aesGcmVersion = AesGcmVersion::V1;
 };
 
 class TE {
@@ -140,6 +140,9 @@ public:
 
     static std::string Hash( const algebra::G2Point& Y );
 
+    static AES256Key deriveMaskFromHash(
+        const std::string& hashHex, TEVersion version = LATEST_TE_VERSION );
+
     static bool Verify( const CipheredKey& ciphertext, const algebra::G2Point& decryptionShare,
         const algebra::G2Point& publicKey,
         const std::vector< uint8_t >* associatedDataTE = nullptr );
@@ -153,7 +156,8 @@ public:
         const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShare );
 
     AES256Key CombineSharesIntoAESKey(
-        const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShare );
+        const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShare,
+        TEVersion version = LATEST_TE_VERSION );
 
 private:
     const size_t t_ = 0;

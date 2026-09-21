@@ -1321,6 +1321,89 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
     }
 }
 
+BOOST_AUTO_TEST_CASE( ThresholdEncryptionV0LegacyImportAndDecapsulationWrapper ) {
+    // End-to-end wrapper verification that legacy V0 serialized ciphertext
+    // can be imported via Ciphertext::fromBytes and processed through
+    // ThresholdEncryption high-level wrappers (partialDecrypt, combineShares, decrypt, validateDecipheredMessage)
+    size_t numAll = 4;
+    size_t numSigned = 3;
+
+    keys keys = generateKeys( numSigned, numAll );
+    std::vector< uint8_t > message = randomByteVec( 80 );
+
+    libBLS::AES256Key originalKey;
+    RAND_bytes( originalKey.data(), originalKey.size() );
+
+    // Build V0 CipheredKey manually using legacy ASCII hex masking
+    libBLS::algebra::FrScalar r = libBLS::algebra::FrScalar::random();
+    libBLS::algebra::G2Point U = r * libBLS::algebra::G2Point::generator();
+    U.toAffineCoordinates();
+    libBLS::algebra::G2Point Y = r * keys.commonPublic.getPublicKeyRaw();
+    std::string hashHex = libBLS::TE::Hash( Y );
+    libBLS::AES256Key v0Mask =
+        libBLS::TE::deriveMaskFromHash( hashHex, libBLS::TEVersion::V0 );
+
+    libBLS::AES256Key V_v0;
+    for ( size_t i = 0; i < libBLS::AES_256_KEY_SIZE_BYTES; ++i ) {
+        V_v0[i] = originalKey[i] ^ v0Mask[i];
+    }
+    libBLS::algebra::G1Point H = libBLS::TE::HashToGroup( U, V_v0, nullptr );
+    libBLS::algebra::G1Point W = r * H;
+    libBLS::CipheredKey cipheredKeyV0( U, V_v0, W, true, libBLS::TEVersion::V0 );
+
+    // Encrypt payload with AES-GCM (legacy V0 AES structure with rand secret appended)
+    libBLS::algebra::FrScalar randSecretScalar = r;
+    std::vector< uint8_t > randSecretBytes = randSecretScalar.toByteVector();
+    std::vector< uint8_t > payloadWithSecret = message;
+    payloadWithSecret.insert(
+        payloadWithSecret.end(), randSecretBytes.begin(), randSecretBytes.end() );
+
+    libBLS::AesGcmCipher aesGcm( originalKey, libBLS::AesGcmVersion::V0 );
+    std::vector< uint8_t > encryptedData = aesGcm.encrypt( payloadWithSecret );
+
+    // Assemble legacy V0 wire bytes: [0x01 (1 key)][CipheredKey bytes][encryptedData]
+    std::vector< uint8_t > v0WireBytes;
+    v0WireBytes.push_back( 0x01 );
+    auto ckV0Bytes = cipheredKeyV0.toBytes();
+    v0WireBytes.insert( v0WireBytes.end(), ckV0Bytes.begin(), ckV0Bytes.end() );
+    v0WireBytes.insert( v0WireBytes.end(), encryptedData.begin(), encryptedData.end() );
+
+    // 1. Import via Ciphertext::fromBytes
+    libBLS::Ciphertext importedCiphertext = libBLS::Ciphertext::fromBytes( v0WireBytes );
+    BOOST_REQUIRE( importedCiphertext.getVersion() == libBLS::TEVersion::V0 );
+    BOOST_REQUIRE_EQUAL( importedCiphertext.getKeys().size(), size_t{ 1 } );
+    BOOST_REQUIRE( importedCiphertext.getKeys()[0].getVersion() == libBLS::TEVersion::V0 );
+
+    // 2. Validate encryption
+    libBLS::ThresholdEncryption::validateEncryption( importedCiphertext.getKeys()[0] );
+
+    // 3. Partial decrypt with shares
+    libBLS::TEDecryptSet decrSet( numSigned, numAll );
+    std::vector< libBLS::TEPublicKeyShare > pubKeyShares;
+    for ( size_t i = 0; i < numSigned; ++i ) {
+        pubKeyShares.emplace_back( libBLS::TEPublicKeyShare( keys.secretKeys[i] ) );
+        libBLS::TEDecryptionShare share = libBLS::ThresholdEncryption::partialDecrypt(
+            importedCiphertext.getKeys()[0], keys.secretKeys[i] );
+        libBLS::ThresholdEncryption::validateDecryptionShare(
+            importedCiphertext.getKeys()[0], share, pubKeyShares.back() );
+        decrSet.addDecryptShare( share );
+    }
+
+    // 4. Combine shares -> recovers original AES key
+    libBLS::AES256Key recoveredKey =
+        libBLS::ThresholdEncryption::combineShares( importedCiphertext.getKeys()[0], decrSet );
+    BOOST_REQUIRE( recoveredKey == originalKey );
+
+    // 5. Decrypt payload
+    std::vector< uint8_t > decryptedWithSecret =
+        libBLS::ThresholdEncryption::decrypt( importedCiphertext, recoveredKey );
+    BOOST_REQUIRE( decryptedWithSecret == payloadWithSecret );
+
+    // 6. Validate deciphered message
+    BOOST_CHECK_NO_THROW( libBLS::ThresholdEncryption::validateDecipheredMessage(
+        decryptedWithSecret, importedCiphertext, recoveredKey, keys.commonPublic ) );
+}
+
 BOOST_AUTO_TEST_CASE( CheckSigners ) {
     size_t numAll = rand_gen() % 15 + 2;
 

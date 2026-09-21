@@ -84,7 +84,7 @@ std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
     messageToCipher.insert( messageToCipher.end(), randomSecret.begin(), randomSecret.end() );
 
     // Cipher message + random secret using AES key
-    AesGcmCipher aesGcmCipher{ key, AesGcmVersion::V2 };
+    AesGcmCipher aesGcmCipher{ key };
     auto encryptedMessage = aesGcmCipher.encrypt( messageToCipher );
 
     // 0x01 byte is needed for compatibility with real encryption
@@ -119,7 +119,7 @@ std::vector< uint8_t > ThresholdEncryption::mockupDecrypt(
         _encryptedData.begin() + CipheredKey::CIPHERED_KEY_SIZE_BYTES + 1, _encryptedData.end() );
 
     // Decrypt the data
-    AesGcmCipher aesGcmCipher{ key, AesGcmVersion::V2 };
+    AesGcmCipher aesGcmCipher{ key };
     std::vector< uint8_t > decrypted = aesGcmCipher.decrypt( cipher_text );
 
     if ( decrypted.size() < RANDOM_SECRET_SIZE_BYTES ) {
@@ -159,7 +159,9 @@ Ciphertext ThresholdEncryption::encryptDeterministic(
 
 void ThresholdEncryption::validateEncryption(
     const CipheredKey& _ciphertext, const std::vector< uint8_t >* _associatedDataTE ) {
-    const auto& [U, V, W] = _ciphertext;
+    const auto& U = _ciphertext.U;
+    const auto& V = _ciphertext.V;
+    const auto& W = _ciphertext.W;
 
     algebra::G1Point H = TE::HashToGroup( U, V, _associatedDataTE );
 
@@ -198,7 +200,9 @@ std::vector< bool > ThresholdEncryption::validateEncryptionBatch(
     }
 
     for ( size_t i = 0; i < size; ++i ) {
-        const auto& [U, V, W] = _ciphertexts.at( i );
+        const auto& U = _ciphertexts.at( i ).U;
+        const auto& V = _ciphertexts.at( i ).V;
+        const auto& W = _ciphertexts.at( i ).W;
         // Apply AAD only if provided and within AAD vector bounds
         const std::vector< uint8_t >* aadPtr =
             ( _associatedDataTE && i < _associatedDataTE->size() ) ? &_associatedDataTE->at( i ) :
@@ -374,7 +378,8 @@ AES256Key ThresholdEncryption::combineShares(
 
     TE te( _decryptionSet );
 
-    auto secret = te.CombineSharesIntoAESKey( _decryptionSet.getSharesRaw() );
+    auto secret = te.CombineSharesIntoAESKey(
+        _decryptionSet.getSharesRaw(), _cipheredKey.getVersion() );
 
     AES256Key aesKey;
 
@@ -560,15 +565,12 @@ void ThresholdEncryption::validateDecipheredMessage(
     algebra::FrScalar r = algebra::FrScalar::fromBytes( secret );
     algebra::G2Point Y = r * _publicKey.getPublicKeyRaw();
     std::string hash = TE::Hash( Y );
-
-    if ( hash.size() < AES_256_KEY_SIZE_BYTES ) {
-        throw ThresholdUtils::IsNotWellFormed( "Hash output size is less than AES key size" );
-    }
+    AES256Key mask = TE::deriveMaskFromHash( hash, _ciphertext.getVersion() );
 
     // Compute V xor G(r'Y) to get M (AES key)
     AES256Key decipheredAesKey;
     for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
-        decipheredAesKey[i] = cipheredAesKey[i] ^ static_cast< uint8_t >( hash[i] );
+        decipheredAesKey[i] = cipheredAesKey[i] ^ mask[i];
     }
 
     // compare the aes keys
@@ -579,7 +581,7 @@ void ThresholdEncryption::validateDecipheredMessage(
 
 std::vector< uint8_t > ThresholdEncryption::decipherAESAndValidate( const Ciphertext& _ciphertext,
     const AES256Key& _key, const std::optional< std::vector< uint8_t > >& _associatedData ) {
-    AesGcmCipher aesGcmCipher{ _key, AesGcmVersion::V2 };
+    AesGcmCipher aesGcmCipher{ _key };
     std::vector< uint8_t > data = aesGcmCipher.decrypt( _ciphertext.getData(), _associatedData );
 
     // validate output

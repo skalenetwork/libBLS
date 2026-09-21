@@ -94,6 +94,21 @@ std::string TE::Hash( const algebra::G2Point& Y ) {
     return sha256hex;
 }
 
+AES256Key TE::deriveMaskFromHash( const std::string& hashHex, TEVersion version ) {
+    AES256Key mask;
+    if ( version == TEVersion::V0 ) {
+        if ( hashHex.size() < AES_256_KEY_SIZE_BYTES ) {
+            throw ThresholdUtils::IsNotWellFormed( "Hash cannot be less than key size" );
+        }
+        for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
+            mask[i] = static_cast< uint8_t >( hashHex[i] );
+        }
+    } else {
+        mask = ThresholdUtils::hexCStringToBytesArray< AES_256_KEY_SIZE_BYTES >( hashHex.c_str() );
+    }
+    return mask;
+}
+
 algebra::G1Point TE::HashToGroup(
     const algebra::G2Point& U, const AES256Key& V, const std::vector< uint8_t >* associatedData ) {
     // assumed that U lies in G2
@@ -182,15 +197,12 @@ CipheredKeyResult TE::cipherAesKey( const AES256Key& key,
         Y = r * commonPublic;
 
         std::string hash = Hash( Y );
-
-        if ( hash.size() < AES_256_KEY_SIZE_BYTES ) {
-            throw ThresholdUtils::IsNotWellFormed( "Hash cannot be less than key size" );
-        }
+        AES256Key mask = deriveMaskFromHash( hash, LATEST_TE_VERSION );
 
         AES256Key V;
 
         for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
-            V[i] = key[i] ^ static_cast< uint8_t >( hash[i] );
+            V[i] = key[i] ^ mask[i];
         }
 
         std::string vStr = ThresholdUtils::bytesToHexString( V );
@@ -200,7 +212,7 @@ CipheredKeyResult TE::cipherAesKey( const AES256Key& key,
         H = HashToGroup( U, V, aadPtr );
         W = r * H;
 
-        cipheredKeys.emplace_back( U, V, W );
+        cipheredKeys.emplace_back( U, V, W, true, LATEST_TE_VERSION );
     }
 
     RandSecret randomSecret = r.toByteArray();
@@ -305,7 +317,9 @@ algebra::G2Point TE::getDecryptionShare(
  */
 bool TE::Verify( const CipheredKey& ciphertext, const algebra::G2Point& decryptionShare,
     const algebra::G2Point& publicKey, const std::vector< uint8_t >* associatedDataTE ) {
-    auto [U, V, W] = ciphertext;
+    const auto& U = ciphertext.U;
+    const auto& V = ciphertext.V;
+    const auto& W = ciphertext.W;
 
     algebra::G1Point H = HashToGroup( U, V, associatedDataTE );
     // no need to validate ciphertext's pairing - assumed to be validated already via
@@ -367,7 +381,9 @@ std::vector< bool > TE::VerifyBatch( const std::vector< CipheredKey >& ciphertex
     g1P2s.reserve( ciphertexts.size() );
 
     for ( size_t i = 0; i < ciphertexts.size(); ++i ) {
-        const auto& [U, V, W] = ciphertexts[i];
+        const auto& U = ciphertexts[i].U;
+        const auto& V = ciphertexts[i].V;
+        const auto& W = ciphertexts[i].W;
         // Apply AAD only if provided and within AAD vector bounds
         const std::vector< uint8_t >* aadPtr =
             ( associatedDataTE && i < associatedDataTE->size() ) ? &associatedDataTE->at( i ) :
@@ -408,7 +424,7 @@ std::vector< bool > TE::VerifyBatch( const std::vector< CipheredKey >& ciphertex
  */
 AES256Key TE::CombineShares( const CipheredKey& ciphertext,
     const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShares ) {
-    auto secret = CombineSharesIntoAESKey( decryptionShares );
+    auto secret = CombineSharesIntoAESKey( decryptionShares, ciphertext.getVersion() );
 
     AES256Key aesKey;
 
@@ -437,7 +453,8 @@ AES256Key TE::CombineShares( const CipheredKey& ciphertext,
  * message
  */
 AES256Key TE::CombineSharesIntoAESKey(
-    const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShares ) {
+    const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShares,
+    TEVersion version ) {
     if ( decryptionShares.size() < t_ )
         throw ThresholdUtils::IncorrectInput( "Expect at least t shares to be provided" );
     std::vector< size_t > idx( this->t_ );
@@ -453,16 +470,7 @@ AES256Key TE::CombineSharesIntoAESKey(
 
     std::string hash = this->Hash( rebuiltG2 );
 
-    if ( hash.size() < AES_256_KEY_SIZE_BYTES ) {
-        throw ThresholdUtils::IsNotWellFormed( "Hash cannot be less than key size" );
-    }
-
-    AES256Key ret;
-    for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
-        ret[i] = static_cast< uint8_t >( hash[i] );
-    }
-
-    return ret;
+    return deriveMaskFromHash( hash, version );
 }
 
 }  // namespace libBLS
