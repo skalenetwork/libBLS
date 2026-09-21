@@ -1305,6 +1305,27 @@ BOOST_AUTO_TEST_CASE( CiphertextHeaderAndVersioning ) {
         libBLS::Ciphertext::fromBytes( v1Bytes ), libBLS::ThresholdUtils::IncorrectInput );
 }
 
+BOOST_AUTO_TEST_CASE( CiphertextRejectsMismatchedKeyVersions ) {
+    std::vector< uint8_t > payload( libBLS::RANDOM_SECRET_SIZE_BYTES + 10, 0xAA );
+    auto v0Key = libBLS::CipheredKey::random( libBLS::TEVersion::V0 );
+    auto v1Key = libBLS::CipheredKey::random( libBLS::TEVersion::V1 );
+
+    // A V0 key must not be serialized under a V1 ciphertext header.
+    BOOST_REQUIRE_THROW(
+        libBLS::Ciphertext( v0Key, payload, true, libBLS::TEVersion::V1 ),
+        libBLS::ThresholdUtils::IsNotWellFormed );
+
+    // The inverse mismatch must also be rejected.
+    BOOST_REQUIRE_THROW(
+        libBLS::Ciphertext( v1Key, payload, true, libBLS::TEVersion::V0 ),
+        libBLS::ThresholdUtils::IsNotWellFormed );
+
+    // Validation can be disabled for construction, but serialization must still
+    // refuse to emit a wire header that disagrees with the embedded key.
+    libBLS::Ciphertext unchecked( v0Key, payload, false, libBLS::TEVersion::V1 );
+    BOOST_REQUIRE_THROW( unchecked.toBytes(), libBLS::ThresholdUtils::IsNotWellFormed );
+}
+
 BOOST_AUTO_TEST_CASE( LegacyV0MaskingDecapsulationCompatibility ) {
     // End-to-end verification that V0 (ASCII hex masking) and V1 (raw SHA256 byte masking)
     // both decapsulate and decrypt correctly with their respective rules.

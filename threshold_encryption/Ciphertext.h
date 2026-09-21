@@ -127,6 +127,8 @@ private:
 
     static uint8_t buildHeader( TEVersion version, KeyCount keyCount );
     static std::pair< TEVersion, KeyCount > parseHeader( uint8_t header );
+
+    void validateVersionConsistency() const;
 };
 
 }  // namespace libBLS

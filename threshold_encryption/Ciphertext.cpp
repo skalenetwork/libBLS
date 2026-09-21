@@ -15,6 +15,8 @@ const std::vector< uint8_t > Ciphertext::toBytes() const {
         throw ThresholdUtils::IncorrectInput( "Cyphertext data is not initialized" );
     }
 
+    validateVersionConsistency();
+
     // Calculate total size needed
     size_t totalSize = HEADER_SIZE +  // for header
                        ( keys.size() * CipheredKey::CIPHERED_KEY_SIZE_BYTES ) +  // for all keys
@@ -92,6 +94,8 @@ void Ciphertext::validate() const {
     if ( keys.empty() || keys.size() > 2 )
         throw ThresholdUtils::IsNotWellFormed( "Ciphertext must contain exactly 1 or 2 keys" );
 
+    validateVersionConsistency();
+
     for ( const auto& key : keys ) {
         key.validate();
     }
@@ -104,6 +108,15 @@ void Ciphertext::validate() const {
     if ( data->size() <= RANDOM_SECRET_SIZE_BYTES ) {
         throw ThresholdUtils::IsNotWellFormed(
             "Cyphertext data is too short to hold random secret and at least 1 byte of data." );
+    }
+}
+
+void Ciphertext::validateVersionConsistency() const {
+    for ( const auto& key : keys ) {
+        if ( key.getVersion() != version ) {
+            throw ThresholdUtils::IsNotWellFormed(
+                "Ciphertext version must match every embedded CipheredKey version" );
+        }
     }
 }
 
