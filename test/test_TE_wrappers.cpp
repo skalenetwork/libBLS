@@ -1394,14 +1394,17 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionV0LegacyImportAndDecapsulationWrapper )
         libBLS::ThresholdEncryption::combineShares( importedCiphertext.getKeys()[0], decrSet );
     BOOST_REQUIRE( recoveredKey == originalKey );
 
-    // 5. Decrypt payload
-    std::vector< uint8_t > decryptedWithSecret =
+    // 5. Decrypt payload. The public decrypt API validates the AES ciphertext and
+    // removes the internal random secret before returning the original message.
+    std::vector< uint8_t > decryptedMessage =
         libBLS::ThresholdEncryption::decrypt( importedCiphertext, recoveredKey );
-    BOOST_REQUIRE( decryptedWithSecret == payloadWithSecret );
+    BOOST_REQUIRE( decryptedMessage == message );
 
-    // 6. Validate deciphered message
-    BOOST_CHECK_NO_THROW( libBLS::ThresholdEncryption::validateDecipheredMessage(
-        decryptedWithSecret, importedCiphertext, recoveredKey, keys.commonPublic ) );
+    // 6. Validate the recovered AES key against the original public key. The
+    // validation API checks the internal random secret before returning the message.
+    std::vector< uint8_t > validatedMessage = libBLS::ThresholdEncryption::validateAndDecrypt(
+        importedCiphertext, recoveredKey, keys.commonPublic );
+    BOOST_REQUIRE( validatedMessage == message );
 }
 
 BOOST_AUTO_TEST_CASE( CheckSigners ) {
