@@ -1335,7 +1335,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionV1WireRoundTrip ) {
     libBLS::EncryptMetaData metaData;
     metaData.associatedDataAesGcm = aesAad;
     metaData.associatedDataTE = teAad;
-    metaData.aesGcmVersion = libBLS::AesGcmVersion::V1;
+    metaData.encryptionVersion = libBLS::EncryptionVersion::V1;
 
     auto decryptSerializedV1 = [&]( const libBLS::Ciphertext& encrypted ) {
         BOOST_REQUIRE( encrypted.getVersion() == libBLS::TEVersion::V1 );
@@ -1472,6 +1472,59 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionV0SyntheticWrapperRoundTrip ) {
     std::vector< uint8_t > validatedMessage = libBLS::ThresholdEncryption::validateAndDecrypt(
         importedCiphertext, recoveredKey, keys.commonPublic );
     BOOST_REQUIRE( validatedMessage == message );
+}
+
+BOOST_AUTO_TEST_CASE( ThresholdEncryptionDeterministicEncryptionVersionProfiles ) {
+    const size_t numAll = 4;
+    const size_t numSigned = 3;
+    keys keys = generateKeys( numSigned, numAll );
+    const std::vector< uint8_t > message = {
+        'p', 'r', 'o', 'f', 'i', 'l', 'e', '-', 'v', 'e', 'r', 's', 'i', 'o', 'n' };
+
+    libBLS::Seed256 seed{};
+    seed.data.fill( 0x37 );
+
+    libBLS::EncryptMetaData v0MetaData;
+    v0MetaData.encryptionVersion = libBLS::EncryptionVersion::V0;
+    const libBLS::Ciphertext v0Ciphertext = libBLS::ThresholdEncryption::encryptDeterministic(
+        message, keys.commonPublic, seed, v0MetaData );
+    const libBLS::Ciphertext v0CiphertextAgain =
+        libBLS::ThresholdEncryption::encryptDeterministic(
+            message, keys.commonPublic, seed, v0MetaData );
+
+    BOOST_REQUIRE( v0Ciphertext.getVersion() == libBLS::TEVersion::V0 );
+    BOOST_REQUIRE( v0Ciphertext.getKeys()[0].getVersion() == libBLS::TEVersion::V0 );
+    BOOST_REQUIRE( v0Ciphertext.toBytes() == v0CiphertextAgain.toBytes() );
+
+    // The same profile can be selected for ordinary encryption when a caller
+    // deliberately needs to produce a legacy V0 wire ciphertext for an old
+    // reader. The AES IV version has no effect on this randomized path, but
+    // the TE masking and wire version do.
+    const libBLS::Ciphertext v0RandomCiphertext =
+        libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, v0MetaData );
+    BOOST_REQUIRE( v0RandomCiphertext.getVersion() == libBLS::TEVersion::V0 );
+    BOOST_REQUIRE( v0RandomCiphertext.getKeys()[0].getVersion() == libBLS::TEVersion::V0 );
+
+    libBLS::EncryptMetaData v1MetaData;
+    v1MetaData.encryptionVersion = libBLS::EncryptionVersion::V1;
+    const libBLS::Ciphertext v1Ciphertext = libBLS::ThresholdEncryption::encryptDeterministic(
+        message, keys.commonPublic, seed, v1MetaData );
+    BOOST_REQUIRE( v1Ciphertext.getVersion() == libBLS::TEVersion::V1 );
+    BOOST_REQUIRE( v1Ciphertext.getKeys()[0].getVersion() == libBLS::TEVersion::V1 );
+    BOOST_REQUIRE( v0Ciphertext.toBytes() != v1Ciphertext.toBytes() );
+
+    const libBLS::Ciphertext restoredV0 = libBLS::Ciphertext::fromBytes( v0Ciphertext.toBytes() );
+    const auto& cipheredKey = restoredV0.getKeys().front();
+    libBLS::TEDecryptSet decryptSet( numSigned, numAll );
+    for ( size_t i = 0; i < numSigned; ++i ) {
+        const auto share = libBLS::ThresholdEncryption::partialDecrypt(
+            cipheredKey, keys.secretKeys[i] );
+        decryptSet.addDecryptShare( share );
+    }
+    const libBLS::AES256Key recoveredKey =
+        libBLS::ThresholdEncryption::combineShares( cipheredKey, decryptSet );
+    BOOST_REQUIRE( libBLS::ThresholdEncryption::validateAndDecrypt(
+                       restoredV0, recoveredKey, keys.commonPublic ) == message );
 }
 
 BOOST_AUTO_TEST_CASE( HistoricV0WireFixtures ) {

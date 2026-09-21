@@ -37,12 +37,27 @@ namespace libBLS {
 
 namespace {
 
+struct EncryptionProfile {
+    TEVersion teVersion;
+    AesGcmVersion aesGcmVersion;
+};
+
+EncryptionProfile resolveEncryptionProfile( EncryptionVersion version ) {
+    switch ( version ) {
+    case EncryptionVersion::V0:
+        return { TEVersion::V0, AesGcmVersion::V0 };
+    case EncryptionVersion::V1:
+        return { TEVersion::V1, AesGcmVersion::V1 };
+    }
+    throw ThresholdUtils::IncorrectInput( "Unsupported encryption version" );
+}
+
 /**
  * @brief Encrypts a message using AES and threshold encryption
  *
  * @param message The plaintext message to be encrypted
  * @param commonPublic The common public key(s) used for threshold encryption
- * @param metaData Encryption metadata (AES-GCM version, optional AES/TE AAD)
+ * @param metaData Encryption metadata (encryption profile, optional AES/TE AAD)
  * @param seed Optional 256-bit seed for deterministic encryption; if omitted, generates random key/scalar
  *
  * @return CipherResult containing:
@@ -52,13 +67,14 @@ namespace {
 CipherResult encryptWithAESInternal( const std::vector< uint8_t >& message,
     const std::vector< algebra::G2Point >& commonPublic, const EncryptMetaData& metaData,
     const std::optional< Seed256 >& seed = std::nullopt ) {
+    const EncryptionProfile profile = resolveEncryptionProfile( metaData.encryptionVersion );
     AesGcmCipher aesGcmCipher = seed.has_value() ?
-        AesGcmCipher( *seed, metaData.aesGcmVersion ) :
-        AesGcmCipher( metaData.aesGcmVersion );
+        AesGcmCipher( *seed, profile.aesGcmVersion ) :
+        AesGcmCipher( profile.aesGcmVersion );
     const AES256Key& key = aesGcmCipher.getKey();
 
     CipheredKeyResult cipheredKeyResult =
-        TE::cipherAesKey( key, commonPublic, metaData.associatedDataTE, seed );
+        TE::cipherAesKey( key, commonPublic, metaData.associatedDataTE, seed, profile.teVersion );
 
     std::vector< uint8_t > messageToCipher( message );
     messageToCipher.insert(
@@ -67,7 +83,8 @@ CipherResult encryptWithAESInternal( const std::vector< uint8_t >& message,
 
     auto encryptedMessage = aesGcmCipher.encrypt( messageToCipher, metaData.associatedDataAesGcm );
     std::shared_ptr< Ciphertext > ciphertext =
-        std::make_shared< Ciphertext >( cipheredKeyResult.cipheredKeys, encryptedMessage );
+        std::make_shared< Ciphertext >(
+            cipheredKeyResult.cipheredKeys, encryptedMessage, true, profile.teVersion );
 
     return { ciphertext, cipheredKeyResult.randomSecret };
 }
@@ -141,16 +158,16 @@ algebra::G1Point TE::HashToGroup(
 
 CipheredKeyResult TE::cipherAesKey( const AES256Key& key, const algebra::G2Point& commonPublic,
     const std::optional< std::vector< uint8_t > >& associatedDataTE,
-    const std::optional< Seed256 >& seed ) {
+    const std::optional< Seed256 >& seed, TEVersion version ) {
     return cipherAesKey(
-        key, std::vector< algebra::G2Point >{ commonPublic }, associatedDataTE, seed );
+        key, std::vector< algebra::G2Point >{ commonPublic }, associatedDataTE, seed, version );
 }
 
 
 CipheredKeyResult TE::cipherAesKey( const AES256Key& key,
     const std::vector< algebra::G2Point >& commonPublicVector,
     const std::optional< std::vector< uint8_t > >& associatedDataTE,
-    const std::optional< Seed256 >& seed ) {
+    const std::optional< Seed256 >& seed, TEVersion version ) {
     algebra::FrScalar r = algebra::FrScalar::random();
 
     // set first value for r scalar
@@ -197,7 +214,7 @@ CipheredKeyResult TE::cipherAesKey( const AES256Key& key,
         Y = r * commonPublic;
 
         std::string hash = Hash( Y );
-        AES256Key mask = deriveMaskFromHash( hash, LATEST_TE_VERSION );
+        AES256Key mask = deriveMaskFromHash( hash, version );
 
         AES256Key V;
 
@@ -212,7 +229,7 @@ CipheredKeyResult TE::cipherAesKey( const AES256Key& key,
         H = HashToGroup( U, V, aadPtr );
         W = r * H;
 
-        cipheredKeys.emplace_back( U, V, W, true, LATEST_TE_VERSION );
+        cipheredKeys.emplace_back( U, V, W, true, version );
     }
 
     RandSecret randomSecret = r.toByteArray();

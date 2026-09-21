@@ -34,6 +34,7 @@ set(HEADERS
     TEPublicKey.h
     TEPublicKeyShare.h
     ThresholdEncryption.h
+    EncryptionVersion.h
     TEVersion.h
     AesGcmCipher.h
     CipheredKey.h
