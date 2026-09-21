@@ -43,6 +43,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <openssl/rand.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "legacy_v0_fixtures.h"
 #include <test/utils.h>
 #include <random>
 
@@ -1321,10 +1322,74 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
     }
 }
 
-BOOST_AUTO_TEST_CASE( ThresholdEncryptionV0LegacyImportAndDecapsulationWrapper ) {
-    // End-to-end wrapper verification that legacy V0 serialized ciphertext
-    // can be imported via Ciphertext::fromBytes and processed through
-    // ThresholdEncryption high-level wrappers (partialDecrypt, combineShares, decrypt, validateDecipheredMessage)
+BOOST_AUTO_TEST_CASE( ThresholdEncryptionV1WireRoundTrip ) {
+    const size_t numAll = 4;
+    const size_t numSigned = 3;
+    keys keys = generateKeys( numSigned, numAll );
+
+    const std::vector< uint8_t > message = {
+        'v', '1', '-', 'w', 'i', 'r', 'e', '-', 'r', 'o', 'u', 'n', 'd', 't', 'r', 'i', 'p' };
+    const std::vector< uint8_t > aesAad = { 0xDE, 0xAD, 0xBE, 0xEF };
+    const std::vector< uint8_t > teAad = { 0x01, 0x02, 0x03, 0x04 };
+
+    libBLS::EncryptMetaData metaData;
+    metaData.associatedDataAesGcm = aesAad;
+    metaData.associatedDataTE = teAad;
+    metaData.aesGcmVersion = libBLS::AesGcmVersion::V1;
+
+    auto decryptSerializedV1 = [&]( const libBLS::Ciphertext& encrypted ) {
+        BOOST_REQUIRE( encrypted.getVersion() == libBLS::TEVersion::V1 );
+        for ( const auto& cipheredKey : encrypted.getKeys() ) {
+            BOOST_REQUIRE( cipheredKey.getVersion() == libBLS::TEVersion::V1 );
+        }
+
+        const std::vector< uint8_t > wireBytes = encrypted.toBytes();
+        const libBLS::Ciphertext restored = libBLS::Ciphertext::fromBytes( wireBytes );
+        BOOST_REQUIRE( restored.getVersion() == libBLS::TEVersion::V1 );
+        BOOST_REQUIRE( restored.getKeys().size() == size_t{ 1 } );
+        BOOST_REQUIRE( restored.getKeys()[0].getVersion() == libBLS::TEVersion::V1 );
+
+        const auto& cipheredKey = restored.getKeys()[0];
+        libBLS::ThresholdEncryption::validateEncryption( cipheredKey, &teAad );
+
+        libBLS::TEDecryptSet decryptSet( numSigned, numAll );
+        for ( size_t i = 0; i < numSigned; ++i ) {
+            libBLS::TEDecryptionShare share = libBLS::ThresholdEncryption::partialDecrypt(
+                cipheredKey, keys.secretKeys[i] );
+            libBLS::ThresholdEncryption::validateDecryptionShare(
+                cipheredKey, share, keys.publicKeys[i], &teAad );
+            decryptSet.addDecryptShare( share );
+        }
+
+        const libBLS::AES256Key recoveredKey =
+            libBLS::ThresholdEncryption::combineShares( cipheredKey, decryptSet );
+        BOOST_REQUIRE( libBLS::ThresholdEncryption::validateAndDecrypt(
+                           restored, recoveredKey, keys.commonPublic, aesAad ) == message );
+    };
+
+    // Ordinary encryption emits the current V1 threshold-encryption format.
+    const libBLS::Ciphertext randomized =
+        libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, metaData );
+    decryptSerializedV1( randomized );
+
+    // Deterministic encryption also emits V1 and remains deterministic across calls.
+    libBLS::Seed256 seed{};
+    seed.data.fill( 0x5A );
+    const libBLS::Ciphertext deterministic1 =
+        libBLS::ThresholdEncryption::encryptDeterministic(
+            message, keys.commonPublic, seed, metaData );
+    const libBLS::Ciphertext deterministic2 =
+        libBLS::ThresholdEncryption::encryptDeterministic(
+            message, keys.commonPublic, seed, metaData );
+    BOOST_REQUIRE( deterministic1.toBytes() == deterministic2.toBytes() );
+    decryptSerializedV1( deterministic1 );
+}
+
+BOOST_AUTO_TEST_CASE( ThresholdEncryptionV0SyntheticWrapperRoundTrip ) {
+    // End-to-end wrapper verification using a synthetic V0 wire ciphertext.
+    // This complements HistoricV0WireFixtures, which uses frozen bytes from
+    // the pre-versioning implementation. Exercise the high-level wrappers
+    // (partialDecrypt, combineShares, decrypt, validateAndDecrypt).
     size_t numAll = 4;
     size_t numSigned = 3;
 
@@ -1340,13 +1405,15 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionV0LegacyImportAndDecapsulationWrapper )
     U.toAffineCoordinates();
     libBLS::algebra::G2Point Y = r * keys.commonPublic.getPublicKeyRaw();
     std::string hashHex = libBLS::TE::Hash( Y );
+
+    // build key using hexadecimal chars instead of bytes (V0)
     libBLS::AES256Key v0Mask =
         libBLS::TE::deriveMaskFromHash( hashHex, libBLS::TEVersion::V0 );
-
     libBLS::AES256Key V_v0;
     for ( size_t i = 0; i < libBLS::AES_256_KEY_SIZE_BYTES; ++i ) {
         V_v0[i] = originalKey[i] ^ v0Mask[i];
     }
+
     libBLS::algebra::G1Point H = libBLS::TE::HashToGroup( U, V_v0, nullptr );
     libBLS::algebra::G1Point W = r * H;
     libBLS::CipheredKey cipheredKeyV0( U, V_v0, W, true, libBLS::TEVersion::V0 );
@@ -1405,6 +1472,106 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionV0LegacyImportAndDecapsulationWrapper )
     std::vector< uint8_t > validatedMessage = libBLS::ThresholdEncryption::validateAndDecrypt(
         importedCiphertext, recoveredKey, keys.commonPublic );
     BOOST_REQUIRE( validatedMessage == message );
+}
+
+BOOST_AUTO_TEST_CASE( HistoricV0WireFixtures ) {
+    const auto privateKey1 = libBLS::TEPrivateKey(
+        libBLS::ThresholdUtils::hexCStringToBytes( legacy_v0_fixtures::PRIVATE_KEY_1 ) );
+    const auto privateKey2 = libBLS::TEPrivateKey(
+        libBLS::ThresholdUtils::hexCStringToBytes( legacy_v0_fixtures::PRIVATE_KEY_2 ) );
+    const libBLS::TEPublicKey publicKey1( privateKey1 );
+    const libBLS::TEPublicKey publicKey2( privateKey2 );
+
+    const std::vector< uint8_t > aesAad = libBLS::ThresholdUtils::hexCStringToBytes(
+        legacy_v0_fixtures::AES_AAD );
+    const std::vector< uint8_t > teAad = libBLS::ThresholdUtils::hexCStringToBytes(
+        legacy_v0_fixtures::TE_AAD );
+    const std::vector< uint8_t > wrongAesAad = { 0x10, 0x20, 0x30, 0x40 };
+    const std::vector< uint8_t > wrongTeAad = { 0xAA, 0xBB, 0xCC, 0xDD };
+
+    auto recoverKey = []( const libBLS::CipheredKey& cipheredKey,
+                           const libBLS::TEPrivateKey& privateKey,
+                           const std::vector< uint8_t >* associatedDataTE ) {
+        libBLS::ThresholdEncryption::validateEncryption( cipheredKey, associatedDataTE );
+
+        libBLS::TEPrivateKeyShare privateShare(
+            privateKey.getPrivateKeyRaw(), 1, 1, 1 );
+        libBLS::TEPublicKeyShare publicShare( privateShare );
+        libBLS::TEDecryptionShare decryptionShare =
+            libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, privateShare );
+        libBLS::ThresholdEncryption::validateDecryptionShare(
+            cipheredKey, decryptionShare, publicShare, associatedDataTE );
+
+        libBLS::TEDecryptSet decryptionSet( 1, 1 );
+        decryptionSet.addDecryptShare( decryptionShare );
+        return libBLS::ThresholdEncryption::combineShares( cipheredKey, decryptionSet );
+    };
+
+    // Frozen one-key V0 bytes generated by the pre-versioning implementation.
+    const std::vector< uint8_t > oneKeyNoAadBytes =
+        libBLS::ThresholdUtils::hexCStringToBytes( legacy_v0_fixtures::ONE_KEY_NO_AAD );
+    const libBLS::Ciphertext oneKeyNoAad =
+        libBLS::Ciphertext::fromBytes( oneKeyNoAadBytes );
+    BOOST_REQUIRE( oneKeyNoAad.getVersion() == libBLS::TEVersion::V0 );
+    BOOST_REQUIRE_EQUAL( oneKeyNoAad.getKeys().size(), size_t{ 1 } );
+
+    const auto oneKeyNoAadRecovered =
+        recoverKey( oneKeyNoAad.getKeys()[0], privateKey1, nullptr );
+    const std::string oneKeyNoAadMessageString = legacy_v0_fixtures::ONE_KEY_NO_AAD_MESSAGE;
+    const std::vector< uint8_t > oneKeyNoAadMessage(
+        oneKeyNoAadMessageString.begin(), oneKeyNoAadMessageString.end() );
+    BOOST_REQUIRE( libBLS::ThresholdEncryption::validateAndDecrypt(
+                       oneKeyNoAad, oneKeyNoAadRecovered, publicKey1 ) == oneKeyNoAadMessage );
+
+    // Frozen one-key V0 bytes with both AES-GCM and TE associated data.
+    const std::vector< uint8_t > oneKeyAadBytes =
+        libBLS::ThresholdUtils::hexCStringToBytes( legacy_v0_fixtures::ONE_KEY_AAD );
+    const libBLS::Ciphertext oneKeyAad = libBLS::Ciphertext::fromBytes( oneKeyAadBytes );
+    BOOST_REQUIRE( oneKeyAad.getVersion() == libBLS::TEVersion::V0 );
+    BOOST_REQUIRE_EQUAL( oneKeyAad.getKeys().size(), size_t{ 1 } );
+
+    const auto oneKeyAadRecovered =
+        recoverKey( oneKeyAad.getKeys()[0], privateKey1, &teAad );
+    const std::string oneKeyAadMessageString = legacy_v0_fixtures::ONE_KEY_AAD_MESSAGE;
+    const std::vector< uint8_t > oneKeyAadMessage(
+        oneKeyAadMessageString.begin(), oneKeyAadMessageString.end() );
+    BOOST_REQUIRE( libBLS::ThresholdEncryption::validateAndDecrypt(
+                       oneKeyAad, oneKeyAadRecovered, publicKey1, aesAad ) == oneKeyAadMessage );
+    BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateEncryption(
+                             oneKeyAad.getKeys()[0], &wrongTeAad ),
+        libBLS::ThresholdUtils::IsNotWellFormed );
+    BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateAndDecrypt(
+                             oneKeyAad, oneKeyAadRecovered, publicKey1, wrongAesAad ),
+        std::runtime_error );
+    BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateAndDecrypt(
+                             oneKeyAad, oneKeyAadRecovered, publicKey1 ),
+        std::runtime_error );
+
+    // Frozen two-key V0 bytes with both AES-GCM and TE associated data. Each
+    // embedded key is recovered with its corresponding legacy private key.
+    const std::vector< uint8_t > twoKeyAadBytes =
+        libBLS::ThresholdUtils::hexCStringToBytes( legacy_v0_fixtures::TWO_KEY_AAD );
+    const libBLS::Ciphertext twoKeyAad = libBLS::Ciphertext::fromBytes( twoKeyAadBytes );
+    BOOST_REQUIRE( twoKeyAad.getVersion() == libBLS::TEVersion::V0 );
+    BOOST_REQUIRE_EQUAL( twoKeyAad.getKeys().size(), size_t{ 2 } );
+
+    const std::array< const libBLS::TEPrivateKey*, 2 > privateKeys = {
+        &privateKey1, &privateKey2 };
+    const std::array< const libBLS::TEPublicKey*, 2 > publicKeys = {
+        &publicKey1, &publicKey2 };
+    const std::string twoKeyAadMessageString = legacy_v0_fixtures::TWO_KEY_AAD_MESSAGE;
+    const std::vector< uint8_t > twoKeyAadMessage(
+        twoKeyAadMessageString.begin(), twoKeyAadMessageString.end() );
+
+    for ( size_t keyIndex = 0; keyIndex < twoKeyAad.getKeys().size(); ++keyIndex ) {
+        const auto recoveredKey =
+            recoverKey( twoKeyAad.getKeys()[keyIndex], *privateKeys[keyIndex], &teAad );
+        libBLS::Ciphertext singleKeyCiphertext = twoKeyAad;
+        singleKeyCiphertext.keepKey( keyIndex );
+        BOOST_REQUIRE( libBLS::ThresholdEncryption::validateAndDecrypt(
+                           singleKeyCiphertext, recoveredKey, *publicKeys[keyIndex], aesAad ) ==
+            twoKeyAadMessage );
+    }
 }
 
 BOOST_AUTO_TEST_CASE( CheckSigners ) {
