@@ -36,12 +36,22 @@ TEPublicKeyShare::TEPublicKeyShare( const TEPrivateKeyShare& _pKey )
 TEPublicKeyShare::TEPublicKeyShare( const algebra::G2Point& _point, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), publicKey( _point ), signerIndex( _signerIndex ) {
+    if ( _signerIndex == 0 || _signerIndex > _totalSigners ) {
+        throw ThresholdUtils::IncorrectInput( "Invalid signer index " +
+            std::to_string( _signerIndex ) + ": must be between 1 and total signers" );
+    }
+
     publicKey.validate();
 }
 
 TEPublicKeyShare::TEPublicKeyShare( const std::vector< uint8_t >& _bytes, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
+    if ( _signerIndex == 0 || _signerIndex > _totalSigners ) {
+        throw ThresholdUtils::IncorrectInput( "Invalid signer index " +
+            std::to_string( _signerIndex ) + ": must be between 1 and total signers" );
+    }
+
     publicKey = algebra::G2Point::fromBytes( _bytes );
     publicKey.validate();
 }
@@ -50,6 +60,11 @@ TEPublicKeyShare::TEPublicKeyShare(
     const std::array< uint8_t, algebra::G2Point::SIZE_BYTES >& bytes, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
+    if ( _signerIndex == 0 || _signerIndex > _totalSigners ) {
+        throw ThresholdUtils::IncorrectInput( "Invalid signer index " +
+            std::to_string( _signerIndex ) + ": must be between 1 and total signers" );
+    }
+
     publicKey = algebra::G2Point::fromBytes( bytes );
     publicKey.validate();
 }

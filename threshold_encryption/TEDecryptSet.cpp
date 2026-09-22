@@ -37,8 +37,10 @@ bool TEDecryptSet::addDecryptShare( const TEDecryptionShare& _share ) {
         throw ThresholdUtils::IncorrectInput( "Already Merged" );
     }
 
-    if ( _share.getSignerIndex() > totalSigners ) {
-        throw ThresholdUtils::IncorrectInput( "Signer index is greater than total signers" );
+    const size_t signerIndex = _share.getSignerIndex();
+    if ( signerIndex == 0 || signerIndex > totalSigners ) {
+        throw ThresholdUtils::IncorrectInput(
+            "Signer index must be between 1 and total signers" );
     }
 
     if ( decrypts.size() == totalSigners ) {
