@@ -31,6 +31,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <vector>
 
 #include "TEBase.h"
+#include "EncryptionVersion.h"
 #include "backends/algebra.hpp"
 #include <tools/utils.h>
 
@@ -74,8 +75,10 @@ struct EncryptMetaData {
     // validateEncryption fails with this associated data.
     std::optional< std::vector< uint8_t > > associatedDataTE;
 
-    // Version of deterministic AES-GCM IV derivation.
-    AesGcmVersion aesGcmVersion = AesGcmVersion::V2;
+    // Complete encryption profile. V1 is the current default. This controls
+    // the TE wire/masking version for all encryption and the deterministic
+    // AES-GCM IV derivation version when a seed is supplied.
+    EncryptionVersion encryptionVersion = LATEST_ENCRYPTION_VERSION;
 };
 
 class TE {
@@ -105,12 +108,14 @@ public:
     static CipheredKeyResult cipherAesKey( const AES256Key& key,
         const algebra::G2Point& commonPublic,
         const std::optional< std::vector< uint8_t > >& associatedDataTE,
-        const std::optional< Seed256 >& seed );
+        const std::optional< Seed256 >& seed,
+        TEVersion version = LATEST_TE_VERSION );
 
     static CipheredKeyResult cipherAesKey( const AES256Key& key,
         const std::vector< algebra::G2Point >& commonPublic,
         const std::optional< std::vector< uint8_t > >& associatedDataTE,
-        const std::optional< Seed256 >& seed );
+        const std::optional< Seed256 >& seed,
+        TEVersion version = LATEST_TE_VERSION );
 
     static CipherResult encryptWithAES( const std::vector< uint8_t >& message,
         const algebra::G2Point& commonPublic, const EncryptMetaData& metaData = EncryptMetaData() );
@@ -140,6 +145,9 @@ public:
 
     static std::string Hash( const algebra::G2Point& Y );
 
+    static AES256Key deriveMaskFromHash(
+        const std::string& hashHex, TEVersion version = LATEST_TE_VERSION );
+
     static bool Verify( const CipheredKey& ciphertext, const algebra::G2Point& decryptionShare,
         const algebra::G2Point& publicKey,
         const std::vector< uint8_t >* associatedDataTE = nullptr );
@@ -153,7 +161,8 @@ public:
         const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShare );
 
     AES256Key CombineSharesIntoAESKey(
-        const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShare );
+        const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShare,
+        TEVersion version = LATEST_TE_VERSION );
 
 private:
     const size_t t_ = 0;

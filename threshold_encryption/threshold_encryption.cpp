@@ -37,12 +37,27 @@ namespace libBLS {
 
 namespace {
 
+struct EncryptionProfile {
+    TEVersion teVersion;
+    AesGcmVersion aesGcmVersion;
+};
+
+EncryptionProfile resolveEncryptionProfile( EncryptionVersion version ) {
+    switch ( version ) {
+    case EncryptionVersion::V0:
+        return { TEVersion::V0, AesGcmVersion::V0 };
+    case EncryptionVersion::V1:
+        return { TEVersion::V1, AesGcmVersion::V1 };
+    }
+    throw ThresholdUtils::IncorrectInput( "Unsupported encryption version" );
+}
+
 /**
  * @brief Encrypts a message using AES and threshold encryption
  *
  * @param message The plaintext message to be encrypted
  * @param commonPublic The common public key(s) used for threshold encryption
- * @param metaData Encryption metadata (AES-GCM version, optional AES/TE AAD)
+ * @param metaData Encryption metadata (encryption profile, optional AES/TE AAD)
  * @param seed Optional 256-bit seed for deterministic encryption; if omitted, generates random key/scalar
  *
  * @return CipherResult containing:
@@ -52,13 +67,14 @@ namespace {
 CipherResult encryptWithAESInternal( const std::vector< uint8_t >& message,
     const std::vector< algebra::G2Point >& commonPublic, const EncryptMetaData& metaData,
     const std::optional< Seed256 >& seed = std::nullopt ) {
+    const EncryptionProfile profile = resolveEncryptionProfile( metaData.encryptionVersion );
     AesGcmCipher aesGcmCipher = seed.has_value() ?
-        AesGcmCipher( *seed, metaData.aesGcmVersion ) :
-        AesGcmCipher( metaData.aesGcmVersion );
+        AesGcmCipher( *seed, profile.aesGcmVersion ) :
+        AesGcmCipher( profile.aesGcmVersion );
     const AES256Key& key = aesGcmCipher.getKey();
 
     CipheredKeyResult cipheredKeyResult =
-        TE::cipherAesKey( key, commonPublic, metaData.associatedDataTE, seed );
+        TE::cipherAesKey( key, commonPublic, metaData.associatedDataTE, seed, profile.teVersion );
 
     std::vector< uint8_t > messageToCipher( message );
     messageToCipher.insert(
@@ -67,7 +83,8 @@ CipherResult encryptWithAESInternal( const std::vector< uint8_t >& message,
 
     auto encryptedMessage = aesGcmCipher.encrypt( messageToCipher, metaData.associatedDataAesGcm );
     std::shared_ptr< Ciphertext > ciphertext =
-        std::make_shared< Ciphertext >( cipheredKeyResult.cipheredKeys, encryptedMessage );
+        std::make_shared< Ciphertext >(
+            cipheredKeyResult.cipheredKeys, encryptedMessage, true, profile.teVersion );
 
     return { ciphertext, cipheredKeyResult.randomSecret };
 }
@@ -92,6 +109,21 @@ std::string TE::Hash( const algebra::G2Point& Y ) {
     const std::string sha256hex = ThresholdUtils::sha256( tmp );
 
     return sha256hex;
+}
+
+AES256Key TE::deriveMaskFromHash( const std::string& hashHex, TEVersion version ) {
+    AES256Key mask;
+    if ( version == TEVersion::V0 ) {
+        if ( hashHex.size() < AES_256_KEY_SIZE_BYTES ) {
+            throw ThresholdUtils::IsNotWellFormed( "Hash cannot be less than key size" );
+        }
+        for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
+            mask[i] = static_cast< uint8_t >( hashHex[i] );
+        }
+    } else {
+        mask = ThresholdUtils::hexCStringToBytesArray< AES_256_KEY_SIZE_BYTES >( hashHex.c_str() );
+    }
+    return mask;
 }
 
 algebra::G1Point TE::HashToGroup(
@@ -126,16 +158,16 @@ algebra::G1Point TE::HashToGroup(
 
 CipheredKeyResult TE::cipherAesKey( const AES256Key& key, const algebra::G2Point& commonPublic,
     const std::optional< std::vector< uint8_t > >& associatedDataTE,
-    const std::optional< Seed256 >& seed ) {
+    const std::optional< Seed256 >& seed, TEVersion version ) {
     return cipherAesKey(
-        key, std::vector< algebra::G2Point >{ commonPublic }, associatedDataTE, seed );
+        key, std::vector< algebra::G2Point >{ commonPublic }, associatedDataTE, seed, version );
 }
 
 
 CipheredKeyResult TE::cipherAesKey( const AES256Key& key,
     const std::vector< algebra::G2Point >& commonPublicVector,
     const std::optional< std::vector< uint8_t > >& associatedDataTE,
-    const std::optional< Seed256 >& seed ) {
+    const std::optional< Seed256 >& seed, TEVersion version ) {
     algebra::FrScalar r = algebra::FrScalar::random();
 
     // set first value for r scalar
@@ -182,15 +214,12 @@ CipheredKeyResult TE::cipherAesKey( const AES256Key& key,
         Y = r * commonPublic;
 
         std::string hash = Hash( Y );
-
-        if ( hash.size() < AES_256_KEY_SIZE_BYTES ) {
-            throw ThresholdUtils::IsNotWellFormed( "Hash cannot be less than key size" );
-        }
+        AES256Key mask = deriveMaskFromHash( hash, version );
 
         AES256Key V;
 
         for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
-            V[i] = key[i] ^ static_cast< uint8_t >( hash[i] );
+            V[i] = key[i] ^ mask[i];
         }
 
         std::string vStr = ThresholdUtils::bytesToHexString( V );
@@ -200,7 +229,7 @@ CipheredKeyResult TE::cipherAesKey( const AES256Key& key,
         H = HashToGroup( U, V, aadPtr );
         W = r * H;
 
-        cipheredKeys.emplace_back( U, V, W );
+        cipheredKeys.emplace_back( U, V, W, true, version );
     }
 
     RandSecret randomSecret = r.toByteArray();
@@ -305,7 +334,9 @@ algebra::G2Point TE::getDecryptionShare(
  */
 bool TE::Verify( const CipheredKey& ciphertext, const algebra::G2Point& decryptionShare,
     const algebra::G2Point& publicKey, const std::vector< uint8_t >* associatedDataTE ) {
-    auto [U, V, W] = ciphertext;
+    const auto& U = ciphertext.U;
+    const auto& V = ciphertext.V;
+    const auto& W = ciphertext.W;
 
     algebra::G1Point H = HashToGroup( U, V, associatedDataTE );
     // no need to validate ciphertext's pairing - assumed to be validated already via
@@ -367,7 +398,9 @@ std::vector< bool > TE::VerifyBatch( const std::vector< CipheredKey >& ciphertex
     g1P2s.reserve( ciphertexts.size() );
 
     for ( size_t i = 0; i < ciphertexts.size(); ++i ) {
-        const auto& [U, V, W] = ciphertexts[i];
+        const auto& U = ciphertexts[i].U;
+        const auto& V = ciphertexts[i].V;
+        const auto& W = ciphertexts[i].W;
         // Apply AAD only if provided and within AAD vector bounds
         const std::vector< uint8_t >* aadPtr =
             ( associatedDataTE && i < associatedDataTE->size() ) ? &associatedDataTE->at( i ) :
@@ -408,7 +441,7 @@ std::vector< bool > TE::VerifyBatch( const std::vector< CipheredKey >& ciphertex
  */
 AES256Key TE::CombineShares( const CipheredKey& ciphertext,
     const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShares ) {
-    auto secret = CombineSharesIntoAESKey( decryptionShares );
+    auto secret = CombineSharesIntoAESKey( decryptionShares, ciphertext.getVersion() );
 
     AES256Key aesKey;
 
@@ -437,7 +470,8 @@ AES256Key TE::CombineShares( const CipheredKey& ciphertext,
  * message
  */
 AES256Key TE::CombineSharesIntoAESKey(
-    const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShares ) {
+    const std::vector< std::pair< algebra::G2Point, size_t > >& decryptionShares,
+    TEVersion version ) {
     if ( decryptionShares.size() < t_ )
         throw ThresholdUtils::IncorrectInput( "Expect at least t shares to be provided" );
     std::vector< size_t > idx( this->t_ );
@@ -453,16 +487,7 @@ AES256Key TE::CombineSharesIntoAESKey(
 
     std::string hash = this->Hash( rebuiltG2 );
 
-    if ( hash.size() < AES_256_KEY_SIZE_BYTES ) {
-        throw ThresholdUtils::IsNotWellFormed( "Hash cannot be less than key size" );
-    }
-
-    AES256Key ret;
-    for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
-        ret[i] = static_cast< uint8_t >( hash[i] );
-    }
-
-    return ret;
+    return deriveMaskFromHash( hash, version );
 }
 
 }  // namespace libBLS
