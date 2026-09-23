@@ -73,13 +73,18 @@ struct EvpContextDeleter {
 
 using UniqueCtx = std::unique_ptr< EVP_CIPHER_CTX, EvpContextDeleter >;
 
+/// @brief AES-256-GCM cipher supporting random and deterministic (seed-derived) modes.
+/// @note Instances of this class are not thread-safe. A single instance must not be
+///       used concurrently across multiple threads. In deterministic mode, encryptCounter
+///       is incremented across calls without internal synchronization. Callers must either
+///       provide external synchronization or construct a separate instance per thread.
 class AesGcmCipher {
 private:
     AES256Key key;
 
     // Whether the cipher is deterministic (i.e. uses HKDF to derive key from seed)
     bool isDeterministic;
-    // Counter for deterministic IV generation
+    // Counter for deterministic IV generation (not thread-safe; see class doc)
     uint64_t encryptCounter;
     // Version of deterministic IV derivation
     AesGcmVersion version;

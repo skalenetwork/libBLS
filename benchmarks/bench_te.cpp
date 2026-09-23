@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
                 throw libBLS::ThresholdUtils::IncorrectInput( "not validated" );
             }
 
-            decryptSets[i].addDecryptShare( decryptionShares[idx] );
+            decryptSets[i].addValidatedDecryptShare( decryptionShares[idx] );
         }
         print_progress( i, args.numTxs );
     }
@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWrappers ) {
     // combine shares
     std::vector< std::optional< libBLS::AES256Key > > keys_deciphered = [&]() {
         ScopedTimer timer( combine_shares_total_ms );
-        return libBLS::ThresholdEncryption::combineSharesBatchParallel( cipheredKeys, decryptSets );
+        return libBLS::ThresholdEncryption::combineValidatedSharesBatchParallel( cipheredKeys, decryptSets );
     }();
 
     std::vector< libBLS::AES256Key > combinedSharesValidation;

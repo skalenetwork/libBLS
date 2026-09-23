@@ -186,12 +186,15 @@ public:
      * @param _decryptionSet The decryption set containing the decryption shares
      * @return The deciphered AES key in byte array
      * @throws In case ciphertext is corrupted, or decription set is not ready to be merged
-     * @note Does not throw error in case there is a corrupted share. But the output
-     * will not be the correct deciphered key, since one of the shares is corrupted.
+     * @note Shares must be validated before insertion into the set. This method
+     * intentionally does not perform per-share pairing checks; callers collecting
+     * multiple shares should use validateDecryptionSharesBatch(Parallel) and add
+     * only entries whose corresponding result is true. A corrupted share is not
+     * rejected here and produces an incorrect key.
      */
-    static AES256Key combineShares( const CipheredKey& _cipheredKey, TEDecryptSet& _decryptionSet );
+    static AES256Key combineValidatedShares( const CipheredKey& _cipheredKey, TEDecryptSet& _decryptionSet );
 
-    static std::vector< std::optional< AES256Key > > combineSharesBatch(
+    static std::vector< std::optional< AES256Key > > combineValidatedSharesBatch(
         std::vector< CipheredKey >& _cipheredKeys, std::vector< TEDecryptSet >& _decryptionSets );
 
     /**
@@ -200,7 +203,7 @@ public:
      * @return Vec of optional AES256Key, each idx specifying the reconstructed key. If the
      * decryption set was not successfully merged due to some reason, the optional will be empty.
      */
-    static std::vector< std::optional< AES256Key > > combineSharesBatchParallel(
+    static std::vector< std::optional< AES256Key > > combineValidatedSharesBatchParallel(
         std::vector< CipheredKey >& _cipheredKeys, std::vector< TEDecryptSet >& _decryptionSets );
 
     /**

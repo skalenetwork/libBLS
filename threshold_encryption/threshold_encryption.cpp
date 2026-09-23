@@ -466,7 +466,8 @@ AES256Key TE::CombineShares( const CipheredKey& ciphertext,
  * @return std::vector<uint8_t> The resulting AES key as a byte vector
  *
  * @note The number of decryption shares must be equal to the threshold (t_)
- * @note This is an auxiliar function used by `combineShares` to combine shares & get original
+ * @note This is an auxiliar function used by `combineValidatedShares` to combine shares & get
+ * original
  * message
  */
 AES256Key TE::CombineSharesIntoAESKey(

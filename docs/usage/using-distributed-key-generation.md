@@ -17,7 +17,7 @@ For TE
 DKGTEWrapper dkg_obj(t, n);
 ```
 
-When created dkg_obj generates secret polynomial, but if you want you can set your own one with the method \_setDKGSecret_
+When created, `dkg_obj` generates a random secret polynomial. To supply a polynomial instead, use `setDKGSecret`.
 
 3.  Each participant generates a vector of public shares coefficients and broadcasts it.
 
@@ -54,33 +54,57 @@ std::shared_ptr < std::vector < libBLS::algebra::FrScalar >> private_shares =
 5.  Each participant verifies that for data received other participants  secret share matches vector of public shares
 
 ```cpp
-assert(dkg_obj. VerifyDKGShare( signerIndex, secret_share, public_shares_vector));
+bool valid = dkg_obj.VerifyDKGShare(
+    participant_index, secret_share, public_shares_vector);
 ```
 
-where public_shares_vector is shared_ptr to vector of public shares, signerIndex is the index of participants receiving the secret and public shares from all other participants.
+`public_shares_vector` is this dealer's public verification vector. `participant_index` is
+zero-based (`0` through `n - 1`) and identifies the recipient of `secret_share`.
 
-6.  If verification passed each participant may create private key from secret shares that it received
+6. If every received contribution verifies, each participant can create its private key share
+from those `n` contributions. Wrap the verified contributions received by one participant in a
+shared pointer before calling the wrapper:
 
 For BLS
 
 ```cpp
-BLSPrivateKeyShare privateKeyShare = dkg_obj.CreateBLSPrivateKeyShare(secret_shares_vector);
+auto received_contributions = std::make_shared<
+    std::vector<libBLS::algebra::FrScalar>>(secret_shares_vector);
+libBLS::BLSPrivateKeyShare privateKeyShare =
+    dkg_obj.CreateBLSPrivateKeyShare(received_contributions);
 ```
 
-For TE
+For TE, `signerIndex` is the participant's one-based index (`1` through `n`):
 
 ```cpp
-TEPrivateKeyShare privateKeyShare = dkg_obj.CreateTEPrivateKeyShare(secret_shares_vector);
+auto received_contributions = std::make_shared<
+    std::vector<libBLS::algebra::FrScalar>>(secret_shares_vector);
+libBLS::TEPrivateKeyShare privateKeyShare =
+    dkg_obj.CreateTEPrivateKeyShare(signerIndex, received_contributions);
 ```
 
-Also in DKGTEWrapper there is a static function that creates common public key
+Each participant derives its public key share from its private key share. The common public key
+is derived from the matrix of public verification vectors; no common private key needs to be
+reconstructed.
+
+For TE:
 
 ```cpp
-TEPublicKey publicKey = DKGTEWrapper::CreateTEPublicKey( public_shares_all, t, n);
+auto public_shares_ptr = std::make_shared<
+    std::vector<std::vector<libBLS::algebra::G2Point>>>(public_shares_all);
+libBLS::TEPublicKey common_te_public =
+    libBLS::DKGTEWrapper::CreateTEPublicKey(public_shares_ptr, t, n);
 ```
 
-where public_shares_all is a shared pointer to a matrix of public shares. Its type is
-`std::shared_ptr<std::vector<std::vector<libBLS::algebra::G2Point>>>`.
+For BLS, sum the constant commitments (element zero) from each participant's verification vector:
+
+```cpp
+libBLS::algebra::G2Point common_bls_point = libBLS::algebra::G2Point::identity();
+for (const auto& verification_vector : public_shares_all) {
+    common_bls_point = common_bls_point + verification_vector.at(0);
+}
+libBLS::BLSPublicKey common_bls_public(common_bls_point, t, n);
+```
 
 Here is an example of Threshold Encryption algorithm with DKG simulation for t = 3, n = 4.
 
@@ -131,7 +155,7 @@ for (size_t i = 0; i < num_all; i++)      // Verifying shares for each participa
                                              std::make_shared<std::vector<libBLS::algebra::FrScalar>>(
                                                  secret_key_shares.at(i)));
    skeys.push_back(pkey_share);
-   pkeys.push_back(TEPublicKeyShare(pkey_share, num_signed, num_all));
+   pkeys.push_back(TEPublicKeyShare(pkey_share));
  }
 
  TEPublicKey common_public = DKGTEWrapper::CreateTEPublicKey(
@@ -140,31 +164,27 @@ for (size_t i = 0; i < num_all; i++)      // Verifying shares for each participa
              num_signed,
              num_all);
 
- std::string message;    // Generating random message
- size_t msg_length = 64;
- for (size_t length = 0; length < msg_length; ++length) {
-   message += char(rand_gen() % 128);
- }
+ std::vector<uint8_t> message_bytes = {'h', 'e', 'l', 'l', 'o'};
+ libBLS::Ciphertext ciphertext =
+     libBLS::ThresholdEncryption::encrypt(message_bytes, common_public);
+ const libBLS::CipheredKey& ciphered_key = ciphertext.keys.at(0);
+ libBLS::ThresholdEncryption::validateEncryption(ciphered_key);
 
- std::shared_ptr msg_ptr = std::make_shared<std::string>(message);
- libBLS::Ciphertext cypher = common_public.encrypt(msg_ptr);
-
-// removing 1 random participant ( because only 3 of 4 will participate)
- size_t ind4del = rand_gen() % secret_shares_all.size();
- auto pos4del = secret_shares_all.begin();
- advance(pos4del, ind4del);
- secret_shares_all.erase(pos4del);
- auto pos2 = public_shares_all.begin();
- advance(pos2, ind4del);
- public_shares_all.erase(pos2);
-
- TEDecryptSet decr_set(num_signed, num_all);
+ // Any threshold-sized set of participants can decrypt. This example uses the first t.
+ libBLS::TEDecryptSet decr_set(num_signed, num_all);
  for (size_t i = 0; i < num_signed; i++) {
-     libBLS::TEDecryptionShare decrypt =
-       libBLS::ThresholdEncryption::partialDecrypt(cypher, skeys.at(i));
-     decr_set.addDecryptShare(decrypt);
+     libBLS::TEDecryptionShare share =
+         libBLS::ThresholdEncryption::partialDecrypt(ciphered_key, skeys.at(i));
+     libBLS::ThresholdEncryption::validateDecryptionShare(
+         ciphered_key, share, pkeys.at(i));
+     decr_set.addValidatedDecryptShare(share);
  }
 
- std::string message_decrypted = decr_set.merge(cypher);
+ libBLS::AES256Key aes_key =
+     libBLS::ThresholdEncryption::combineValidatedShares(ciphered_key, decr_set);
+ libBLS::ThresholdEncryption::validateCombinedDecryption(
+     ciphertext, aes_key, common_public);
+ std::vector<uint8_t> message_decrypted =
+     libBLS::ThresholdEncryption::decrypt(ciphertext, aes_key);
 }
 ```
