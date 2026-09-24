@@ -263,7 +263,8 @@ mkdir -p "$INSTALL_ROOT_RELATIVE"
 export INSTALL_ROOT=$("$READLINK" -f "$INSTALL_ROOT_RELATIVE")
 export SOURCES_ROOT=$("$READLINK" -f "$CUSTOM_BUILD_ROOT")
 export PREDOWNLOADED_ROOT=$("$READLINK" -f "$CUSTOM_BUILD_ROOT/pre_downloaded")
-export LIBRARIES_ROOT="$INSTALL_ROOT/lib"
+export LIB_DIR_NAME="lib"
+export LIBRARIES_ROOT="$INSTALL_ROOT/$LIB_DIR_NAME"
 export INCLUDE_ROOT="$INSTALL_ROOT/include"
 mkdir -p "$SOURCES_ROOT"
 mkdir -p "$INSTALL_ROOT"
@@ -281,8 +282,8 @@ export ARM_GCC_VER=7.2.0
 
 export ARM_TOOLCHAIN_PATH=$TOOLCHAINS_PATH/$ARM_TOOLCHAIN_NAME
 
-export ADDITIONAL_INCLUDES="-I$INSTALL_ROOT/include"
-export ADDITIONAL_LIBRARIES="-L$INSTALL_ROOT/lib"
+export ADDITIONAL_INCLUDES="-I$INCLUDE_ROOT"
+export ADDITIONAL_LIBRARIES="-L$LIBRARIES_ROOT"
 export TOOLCHAIN=no
 
 export CFLAGS=" -fPIC ${CFLAGS}"
@@ -721,15 +722,15 @@ then
 				if [ "$UNIX_SYSTEM_NAME" = "Darwin" ];
 				then
 					export KERNEL_BITS=64
-					./Configure darwin64-x86_64-cc -fPIC no-shared --prefix="$INSTALL_ROOT"
+					./Configure darwin64-x86_64-cc -fPIC no-shared --prefix="$INSTALL_ROOT" --libdir="$LIB_DIR_NAME"
 				else
 					if [[ "${WITH_EMSCRIPTEN}" -eq 1 ]];
 					then
-						eval emconfigure ./config -fPIC -no-asm -no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT" --libdir=lib # -no-threads
+						eval emconfigure ./config -fPIC -no-asm -no-shared --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT" --libdir="$LIB_DIR_NAME" # -no-threads
 						sed -i 's/CROSS_COMPILE=.*/CROSS_COMPILE=/' Makefile
 					else
 						env CFLAGS="$CFLAGS -O3" CXXFLAGS="$CXXFLAGS -O3" \
-						./Configure linux-x86_64 --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT"
+						./Configure linux-x86_64 --prefix="$INSTALL_ROOT" --openssldir="$INSTALL_ROOT" --libdir="$LIB_DIR_NAME"
 					fi
 				fi
 			else
@@ -1250,6 +1251,8 @@ if [[ "${WITH_EMSCRIPTEN}" -eq 0 ]]; then
 					-DBUILD_BENCHMARKS=OFF \
 					-DBUILD_HANGING_TESTS=OFF \
 					-DBUILD_SLOW_TESTS=OFF \
+					-DCMAKE_DISABLE_FIND_PACKAGE_LZ4=ON \
+					-DCMAKE_DISABLE_FIND_PACKAGE_BZip2=ON \
 					-DCMAKE_INCLUDE_PATH="${INSTALL_ROOT}/include" \
 					-DCMAKE_LIBRARY_PATH="${INSTALL_ROOT}/lib" \
 					-DCMAKE_PREFIX_PATH=${INSTALL_ROOT} \
@@ -1382,7 +1385,18 @@ then
 				cd curl
 				mkdir -p build
 				cd build
-				cmake "${CMAKE_CROSSCOMPILING_OPTS}" -DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" -DOPENSSL_ROOT_DIR="$SOURCES_ROOT/openssl" -DBUILD_CURL_EXE=OFF -DBUILD_TESTING=OFF -DCURL_USE_LIBSSH2=OFF -DBUILD_SHARED_LIBS=OFF -DCURL_DISABLE_LDAP=ON -DCURL_STATICLIB=ON -DCURL_USE_LIBPSL=OFF -DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" ..
+				cmake "${CMAKE_CROSSCOMPILING_OPTS}" \
+					-DCMAKE_INSTALL_PREFIX="$INSTALL_ROOT" \
+					-DOPENSSL_ROOT_DIR="$SOURCES_ROOT/openssl" \
+					-DBUILD_CURL_EXE=OFF \
+					-DBUILD_TESTING=OFF \
+					-DCURL_USE_LIBSSH2=OFF \
+					-DBUILD_SHARED_LIBS=OFF \
+					-DCURL_DISABLE_LDAP=ON \
+					-DCURL_STATICLIB=ON \
+					-DCURL_USE_LIBPSL=OFF \
+					-DCMAKE_DISABLE_FIND_PACKAGE_LibPSL=ON \
+					-DCMAKE_BUILD_TYPE="$TOP_CMAKE_BUILD_TYPE" ..
 				echo " " >> lib/curl_config.h
 				echo "#define HAVE_POSIX_STRERROR_R 1" >> lib/curl_config.h
 				echo " " >> lib/curl_config.h

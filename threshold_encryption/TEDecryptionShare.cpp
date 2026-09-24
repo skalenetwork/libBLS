@@ -29,6 +29,10 @@ namespace libBLS {
 TEDecryptionShare::TEDecryptionShare(
     const algebra::G2Point& _share, size_t _signerIndex, bool _validate )
     : signerIndex( _signerIndex ), share( _share ) {
+    if ( _signerIndex == 0 ) {
+        throw ThresholdUtils::IncorrectInput( "TEDecryptionShare: signer index must be greater than 0" );
+    }
+
     if ( _validate ) {
         share.validate();
     }
@@ -37,6 +41,10 @@ TEDecryptionShare::TEDecryptionShare(
 TEDecryptionShare::TEDecryptionShare(
     const std::string& _hexaEncoded, size_t _signerIndex, bool _validate )
     : signerIndex( _signerIndex ) {
+    if ( _signerIndex == 0 ) {
+        throw ThresholdUtils::IncorrectInput( "TEDecryptionShare: signer index must be greater than 0" );
+    }
+
     share = algebra::G2Point::fromString( _hexaEncoded, Base::HEXA );
     if ( _validate ) {
         share.validate();
