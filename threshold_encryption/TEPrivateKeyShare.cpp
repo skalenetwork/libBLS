@@ -30,8 +30,9 @@ namespace libBLS {
 TEPrivateKeyShare::TEPrivateKeyShare( const std::string& _fieldStr, Base _base, size_t _signerIndex,
     size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), signerIndex( _signerIndex ) {
-    if ( _signerIndex > _totalSigners ) {
-        throw ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
+    if ( _signerIndex == 0 || _signerIndex > _totalSigners ) {
+        throw ThresholdUtils::IncorrectInput( "Invalid signer index " +
+            std::to_string( _signerIndex ) + ": must be between 1 and total signers" );
     }
 
     privateKey = algebra::FrScalar::fromString( _fieldStr, _base );
@@ -46,8 +47,9 @@ TEPrivateKeyShare::TEPrivateKeyShare( const algebra::FrScalar& _skeyShare, size_
     : TEBase( _requiredSigners, _totalSigners ),
       privateKey( _skeyShare ),
       signerIndex( _signerIndex ) {
-    if ( _signerIndex > _totalSigners ) {
-        throw ThresholdUtils::IncorrectInput( "Wrong _signerIndex" );
+    if ( _signerIndex == 0 || _signerIndex > _totalSigners ) {
+        throw ThresholdUtils::IncorrectInput( "Invalid signer index " +
+            std::to_string( _signerIndex ) + ": must be between 1 and total signers" );
     }
 
     if ( _skeyShare.isZero() ) {

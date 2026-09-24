@@ -1208,7 +1208,7 @@ BOOST_AUTO_TEST_CASE( WrappersFromString ) {
         libBLS::TEPrivateKey private_key( test );
 
         libBLS::algebra::FrScalar test2 = libBLS::algebra::FrScalar::random();
-        size_t signer = rand_gen() % numAll;
+        size_t signer = rand_gen() % numAll + 1;
         libBLS::TEPrivateKeyShare pr_key_share( test2, signer, numSigned, numAll );
 
         std::string a( pr_key_share.toString( libBLS::Base::HEXA ) );
@@ -1871,6 +1871,23 @@ BOOST_AUTO_TEST_CASE( TEPublicKeyShare ) {
 
     // Exceptions
 
+    // zero signer index
+    {
+        libBLS::algebra::FrScalar priv = libBLS::algebra::FrScalar::random();
+        libBLS::algebra::G2Point pub = priv * libBLS::algebra::G2Point::generator();
+        std::array< uint8_t, libBLS::G2_SIZE_BYTES > pubKeyBytes = pub.toByteArray();
+        std::vector< uint8_t > pubKeyBytesVec( pubKeyBytes.begin(), pubKeyBytes.end() );
+
+        BOOST_REQUIRE_THROW( libBLS::TEPublicKeyShare pkey( pub, 0, numSigned, numAll ),
+            libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPublicKeyShare pkey( pubKeyBytes, 0, numSigned, numAll ),
+            libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPublicKeyShare pkey( pubKeyBytesVec, 0, numSigned, numAll ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+
     // From G2
     {
         // zero public key
@@ -2010,6 +2027,24 @@ BOOST_AUTO_TEST_CASE( TEPrivateKeyShare ) {
 
     // Exceptions
 
+    // zero signer index
+    {
+        libBLS::algebra::FrScalar priv = libBLS::algebra::FrScalar::random();
+        std::string stringField = priv.toString( libBLS::Base::HEXA );
+        std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > privBytes = priv.toByteArray();
+        std::vector< uint8_t > privBytesVec( privBytes.begin(), privBytes.end() );
+
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( priv, 0, 10, 15 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPrivateKeyShare share( stringField, libBLS::Base::HEXA, 0, 10, 15 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( privBytes, 0, 10, 15 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( privBytesVec, 0, 10, 15 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+
     // From field element
     {
         // zero private key
@@ -2138,6 +2173,18 @@ BOOST_AUTO_TEST_CASE( TEDecryptionShare ) {
         BOOST_REQUIRE_THROW( libBLS::TEDecryptionShare share( str2, signer ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
+    {
+        // zero signer index
+        libBLS::algebra::G2Point el = libBLS::algebra::G2Point::random();
+        BOOST_REQUIRE_THROW( libBLS::TEDecryptionShare share( el, 0 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( libBLS::TEDecryptionShare share( el, 0, false ),
+            libBLS::ThresholdUtils::IncorrectInput );
+
+        std::string str = el.toString( libBLS::Base::HEXA );
+        BOOST_REQUIRE_THROW( libBLS::TEDecryptionShare share( str, 0 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
 }
 
 BOOST_AUTO_TEST_CASE( TEDecryptSet ) {
@@ -2155,7 +2202,7 @@ BOOST_AUTO_TEST_CASE( TEDecryptSet ) {
 
 
         std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares;
-        for ( size_t i = 0; i < numSigned; ++i ) {
+        for ( size_t i = 1; i < numSigned + 1; ++i ) {
             libBLS::algebra::G2Point group = libBLS::algebra::G2Point::random();
             libBLS::TEDecryptionShare share( group, i );
             BOOST_REQUIRE( decrSet.addDecryptShare( share ) );
@@ -2178,7 +2225,7 @@ BOOST_AUTO_TEST_CASE( TEDecryptSet ) {
     // removing
     {
         libBLS::TEDecryptSet decrSet( 1, 1 );
-        libBLS::TEDecryptionShare decr_share( libBLS::algebra::G2Point::random(), 0 );
+        libBLS::TEDecryptionShare decr_share( libBLS::algebra::G2Point::random(), 1 );
         decrSet.addDecryptShare( decr_share );
         BOOST_REQUIRE( decrSet.size() == 1 );
         decrSet.removeDecryptShare( decr_share );
@@ -2208,7 +2255,7 @@ BOOST_AUTO_TEST_CASE( TEDecryptSet ) {
     {
         // set is full
         libBLS::TEDecryptSet decrSet( 1, 1 );
-        libBLS::TEDecryptionShare decr_share( libBLS::algebra::G2Point::random(), 0 );
+        libBLS::TEDecryptionShare decr_share( libBLS::algebra::G2Point::random(), 1 );
         decrSet.addDecryptShare( decr_share );
         libBLS::TEDecryptionShare decr_share2( libBLS::algebra::G2Point::random(), 1 );
         BOOST_REQUIRE_THROW(
@@ -2481,7 +2528,8 @@ randomTamperDecryptionShares( size_t totalSigners, libBLS::CipheredKey cipheredK
             const auto rnd = rand_gen() % 10;
             if ( rnd < 3 ) {
                 // tamper decryption share
-                decrShare = libBLS::TEDecryptionShare( libBLS::algebra::G2Point::random(), j );
+                decrShare =
+                    libBLS::TEDecryptionShare( libBLS::algebra::G2Point::random(), j + 1 );
                 tampered[j] = true;
             }
         }
