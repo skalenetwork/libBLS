@@ -44,6 +44,14 @@ constexpr size_t AES_GCM_TAG_SIZE = 16;
 
 using AES256Key = std::array< uint8_t, AES_256_KEY_SIZE_BYTES >;
 
+/// Version of deterministic AES-GCM IV derivation
+enum class AesGcmVersion : uint8_t {
+    /// V0: Legacy deterministic IV derived as HMAC(key, plaintext || counter)
+    V0 = 0,
+    /// V1: Binds AAD into deterministic IV as HMAC(key, len(aad) || aad || plaintext || counter)
+    V1 = 1
+};
+
 /// Strong type wrapper for 256-bit seed (used for deterministic key derivation)
 /// This seed is used to derive both the AES key (via HKDF) and the TE scalar secret.
 struct Seed256 {
@@ -65,27 +73,37 @@ struct EvpContextDeleter {
 
 using UniqueCtx = std::unique_ptr< EVP_CIPHER_CTX, EvpContextDeleter >;
 
+/// @brief AES-256-GCM cipher supporting random and deterministic (seed-derived) modes.
+/// @note Instances of this class are not thread-safe. A single instance must not be
+///       used concurrently across multiple threads. In deterministic mode, encryptCounter
+///       is incremented across calls without internal synchronization. Callers must either
+///       provide external synchronization or construct a separate instance per thread.
 class AesGcmCipher {
 private:
     AES256Key key;
 
     // Whether the cipher is deterministic (i.e. uses HKDF to derive key from seed)
     bool isDeterministic;
-    // Counter for deterministic IV generation
+    // Counter for deterministic IV generation (not thread-safe; see class doc)
     uint64_t encryptCounter;
+    // Version of deterministic IV derivation
+    AesGcmVersion version;
     std::array< uint8_t, AES_GCM_IV_SIZE > iv;
 
 public:
     /// @brief Creates cipher with random key (for encryption)
-    AesGcmCipher();
+    /// @param version AES-GCM version (for deterministic IV generation if applicable)
+    explicit AesGcmCipher( AesGcmVersion version = AesGcmVersion::V1 );
 
     /// @brief Creates cipher with key derived from seed (for deterministic encryption)
     /// @param seed The Seed256 wrapper containing the seed to derive key from using HKDF
-    explicit AesGcmCipher( const Seed256& seed );
+    /// @param version Deterministic IV generation version
+    explicit AesGcmCipher( const Seed256& seed, AesGcmVersion version = AesGcmVersion::V1 );
 
     /// @brief Creates cipher with a known raw key (for decryption)
     /// @param key The raw AES-256 key to use directly (no derivation)
-    explicit AesGcmCipher( const AES256Key& key );
+    /// @param version AES-GCM version (for deterministic IV generation if applicable)
+    explicit AesGcmCipher( const AES256Key& key, AesGcmVersion version = AesGcmVersion::V1 );
 
     ~AesGcmCipher() = default;
 

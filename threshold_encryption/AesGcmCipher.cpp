@@ -29,7 +29,8 @@
 
 namespace libBLS {
 
-AesGcmCipher::AesGcmCipher() : isDeterministic( false ), encryptCounter( 0 ) {
+AesGcmCipher::AesGcmCipher( AesGcmVersion version )
+    : isDeterministic( false ), encryptCounter( 0 ), version( version ) {
     initAES();
     // Generate random key
     if ( RAND_bytes( key.data(), key.size() ) != 1 ) {
@@ -39,15 +40,16 @@ AesGcmCipher::AesGcmCipher() : isDeterministic( false ), encryptCounter( 0 ) {
     iv.fill( 0 );
 }
 
-AesGcmCipher::AesGcmCipher( const AES256Key& rawKey )
-    : key( rawKey ), isDeterministic( false ), encryptCounter( 0 ) {
+AesGcmCipher::AesGcmCipher( const AES256Key& rawKey, AesGcmVersion version )
+    : key( rawKey ), isDeterministic( false ), encryptCounter( 0 ), version( version ) {
     initAES();
     // IV will be generated randomly on each encrypt() call (or extracted from ciphertext for
     // decrypt)
     iv.fill( 0 );
 }
 
-AesGcmCipher::AesGcmCipher( const Seed256& seed ) : isDeterministic( true ), encryptCounter( 0 ) {
+AesGcmCipher::AesGcmCipher( const Seed256& seed, AesGcmVersion version )
+    : isDeterministic( true ), encryptCounter( 0 ), version( version ) {
     initAES();
 
     // Use HKDF to derive key deterministically from seed
@@ -109,15 +111,29 @@ std::vector< uint8_t > AesGcmCipher::encrypt(
     // otherwise
     unsigned char localIv[AES_GCM_IV_SIZE];
     if ( isDeterministic ) {
-        // Synthetic IV: HMAC-SHA256(key, plaintext || counter) truncated to 12 bytes
+        // Synthetic IV:
+        // V0: HMAC-SHA256(key, plaintext || counter) truncated to 12 bytes
+        // V1: HMAC-SHA256(key, len(aad) [8 bytes BE] || aad || plaintext || counter [8 bytes BE])
         // Counter ensures same plaintext encrypted multiple times gets different IVs
         // As long as encrypt() is called in the same order, they produce identical output
         unsigned char hmacResult[32];
         unsigned int hmacLen = 0;
 
-        // Create input: plaintext || counter (8 bytes, big-endian)
+        std::vector< uint8_t > hmacInput;
+        if ( version == AesGcmVersion::V1 ) {
+            uint64_t aadSize = ( aad.has_value() ) ? static_cast< uint64_t >( aad->size() ) : 0;
+            for ( int byteIndex = 7; byteIndex >= 0; --byteIndex ) {
+                hmacInput.push_back(
+                    static_cast< uint8_t >( ( aadSize >> ( byteIndex * 8 ) ) & 0xFF ) );
+            }
+            if ( aad.has_value() && !aad->empty() ) {
+                hmacInput.insert( hmacInput.end(), aad->begin(), aad->end() );
+            }
+        }
+
+        hmacInput.insert( hmacInput.end(), plaintext.begin(), plaintext.end() );
+
         // Append counter as 8 bytes in big-endian order
-        std::vector< uint8_t > hmacInput( plaintext.begin(), plaintext.end() );
         for ( int byteIndex = 7; byteIndex >= 0; --byteIndex ) {
             hmacInput.push_back(
                 static_cast< uint8_t >( ( encryptCounter >> ( byteIndex * 8 ) ) & 0xFF ) );

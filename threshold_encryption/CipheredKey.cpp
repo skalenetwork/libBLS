@@ -27,7 +27,7 @@ std::array< uint8_t, CipheredKey::CIPHERED_KEY_SIZE_BYTES > CipheredKey::toBytes
 
 
 CipheredKey CipheredKey::fromBytes(
-    std::array< uint8_t, CIPHERED_KEY_SIZE_BYTES > _bytes, bool _validate ) {
+    std::array< uint8_t, CIPHERED_KEY_SIZE_BYTES > _bytes, bool _validate, TEVersion _version ) {
     std::array< uint8_t, G2_SIZE_BYTES > uBytes;
     std::array< uint8_t, AES_256_KEY_SIZE_BYTES > vBytes;
     std::array< uint8_t, G1_SIZE_BYTES > wBytes;
@@ -47,7 +47,7 @@ CipheredKey CipheredKey::fromBytes(
     algebra::G1Point W = algebra::G1Point::fromBytes( wBytes );
 
     // constructor performs validation
-    return CipheredKey( U, vBytes, W, _validate );
+    return CipheredKey( U, vBytes, W, _validate, _version );
 }
 
 void CipheredKey::validate() const {
@@ -55,14 +55,14 @@ void CipheredKey::validate() const {
     U.validate();
 }
 
-CipheredKey CipheredKey::random() {
+CipheredKey CipheredKey::random( TEVersion _version ) {
     algebra::G2Point U = algebra::G2Point::random();
     AES256Key V;
     if ( RAND_bytes( V.data(), V.size() ) != 1 ) {
         throw std::runtime_error( "Failed to generate random AES key" );
     }
     algebra::G1Point W = algebra::G1Point::random();
-    return CipheredKey( U, V, W );
+    return CipheredKey( U, V, W, true, _version );
 }
 
 std::string CipheredKey::getDecryptionShareInput() {

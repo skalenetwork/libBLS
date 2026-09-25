@@ -34,6 +34,8 @@ set(HEADERS
     TEPublicKey.h
     TEPublicKeyShare.h
     ThresholdEncryption.h
+    EncryptionVersion.h
+    TEVersion.h
     AesGcmCipher.h
     CipheredKey.h
     Ciphertext.h
@@ -112,12 +114,12 @@ if (LIBBLS_BUILD_TESTS)
         target_link_libraries(encrypt_message PRIVATE te bls ${CRYPTOPP_LIBRARY})
     endif()
 
-    add_test(NAME te_wrap_tests COMMAND te_unit_test)
+    add_test(NAME te_wrap_tests COMMAND te_test)
 
     add_custom_target(all_te_tests
         COMMAND ./te_unit_test
         COMMAND ./te_test
-        DEPENDS te_unit_test
+        DEPENDS te_unit_test te_test
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         COMMENT "Run all TE tests"
     )

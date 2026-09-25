@@ -66,6 +66,23 @@ public:
         const EncryptMetaData& _metaData = EncryptMetaData() );
 
     /**
+     * @brief Encrypts a message deterministically using threshold encryption.
+     * The supplied seed deterministically derives the AES key, threshold scalar, and ciphertext.
+     *
+     * @param _message The message to be encrypted
+     * @param _commonPublic The common public key used for encryption.
+     * @param _seed The seed used for deterministic key and scalar derivation.
+     * @return Ciphertext - Struct containing TE(AESKey) and AESKey(message)
+     */
+    static Ciphertext encryptDeterministic( const std::vector< uint8_t >& _message,
+        const TEPublicKey& _commonPublic, const Seed256& _seed,
+        const EncryptMetaData& _metaData = EncryptMetaData() );
+
+    static Ciphertext encryptDeterministic( const std::vector< uint8_t >& _message,
+        const std::vector< TEPublicKey >& _commonPublic, const Seed256& _seed,
+        const EncryptMetaData& _metaData = EncryptMetaData() );
+
+    /**
      * @brief Validates the TE ciphered key. Single threaded.
      *
      * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
@@ -161,20 +178,22 @@ public:
         const std::vector< std::vector< uint8_t > >* _associatedDataTE = nullptr );
 
     /**
-     * @brief Combines decryption shares to reconstruct the original AES key.
-     * It combines all shares to derive the AES key.
+     * @brief Combines a threshold-sized subset of decryption shares to reconstruct the original AES key.
      *
      * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
      * struct
      * @param _decryptionSet The decryption set containing the decryption shares
      * @return The deciphered AES key in byte array
      * @throws In case ciphertext is corrupted, or decription set is not ready to be merged
-     * @note Does not throw error in case there is a corrupted share. But the output
-     * will not be the correct deciphered key, since one of the shares is corrupted.
+     * @note Shares must be validated before insertion into the set. This method
+     * intentionally does not perform per-share pairing checks; callers collecting
+     * multiple shares should use validateDecryptionSharesBatch(Parallel) and add
+     * only entries whose corresponding result is true. A corrupted share is not
+     * rejected here and produces an incorrect key.
      */
-    static AES256Key combineShares( const CipheredKey& _cipheredKey, TEDecryptSet& _decryptionSet );
+    static AES256Key combineValidatedShares( const CipheredKey& _cipheredKey, TEDecryptSet& _decryptionSet );
 
-    static std::vector< std::optional< AES256Key > > combineSharesBatch(
+    static std::vector< std::optional< AES256Key > > combineValidatedSharesBatch(
         std::vector< CipheredKey >& _cipheredKeys, std::vector< TEDecryptSet >& _decryptionSets );
 
     /**
@@ -183,7 +202,7 @@ public:
      * @return Vec of optional AES256Key, each idx specifying the reconstructed key. If the
      * decryption set was not successfully merged due to some reason, the optional will be empty.
      */
-    static std::vector< std::optional< AES256Key > > combineSharesBatchParallel(
+    static std::vector< std::optional< AES256Key > > combineValidatedSharesBatchParallel(
         std::vector< CipheredKey >& _cipheredKeys, std::vector< TEDecryptSet >& _decryptionSets );
 
     /**

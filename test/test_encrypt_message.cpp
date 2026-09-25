@@ -106,11 +106,11 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
             for ( size_t j = 0; j < required; ++j ) {
                 libBLS::TEDecryptionShare share =
                     libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[j] );
-                decr_set.addDecryptShare( share );
+                decr_set.addValidatedDecryptShare( share );
             }
 
             libBLS::AES256Key key_deciphered =
-                libBLS::ThresholdEncryption::combineShares( cipheredKey, decr_set );
+                libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, decr_set );
             libBLS::ThresholdEncryption::validateCombinedDecryption( cipheredMessageObj,
                 key_deciphered, keys.commonPublic.getPublicKeyRaw(),
                 additionalAuthenticatedDataAES );
@@ -188,11 +188,11 @@ BOOST_AUTO_TEST_CASE( EncryptMessage ) {
             for ( size_t j = 0; j < required; ++j ) {
                 libBLS::TEDecryptionShare share = libBLS::ThresholdEncryption::partialDecrypt(
                     cipheredKeys[k], keys[k].secretKeys[j] );
-                decr_set.addDecryptShare( share );
+                decr_set.addValidatedDecryptShare( share );
             }
 
             libBLS::AES256Key key_deciphered =
-                libBLS::ThresholdEncryption::combineShares( cipheredKeys[k], decr_set );
+                libBLS::ThresholdEncryption::combineValidatedShares( cipheredKeys[k], decr_set );
             libBLS::Ciphertext tempCipheredMessage(
                 cipheredMessageObj.getKeys()[k], cipheredMessageObj.getData() );
             libBLS::ThresholdEncryption::validateCombinedDecryption( tempCipheredMessage,
