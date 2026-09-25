@@ -363,7 +363,7 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatchParallel(
 }
 
 
-AES256Key ThresholdEncryption::combineShares(
+AES256Key ThresholdEncryption::combineValidatedShares(
     const CipheredKey& _cipheredKey, TEDecryptSet& _decryptionSet ) {
     switch ( _decryptionSet.getMergeStatus() ) {
     case TEDecryptSet::MergeStatus::READY_TO_MERGE:
@@ -379,7 +379,7 @@ AES256Key ThresholdEncryption::combineShares(
     TE te( _decryptionSet );
 
     auto secret = te.CombineSharesIntoAESKey(
-        _decryptionSet.getSharesRaw(), _cipheredKey.getVersion() );
+        _decryptionSet.getThresholdSharesRaw(), _cipheredKey.getVersion() );
 
     AES256Key aesKey;
 
@@ -392,7 +392,7 @@ AES256Key ThresholdEncryption::combineShares(
     return aesKey;
 }
 
-std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatch(
+std::vector< std::optional< AES256Key > > ThresholdEncryption::combineValidatedSharesBatch(
     std::vector< CipheredKey >& _cipheredKeys, std::vector< TEDecryptSet >& _decryptionSets ) {
     if ( _cipheredKeys.empty() ) {
         return {};
@@ -408,7 +408,7 @@ std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatc
     for ( size_t i = 0; i < _cipheredKeys.size(); ++i ) {
         try {
             results.push_back(
-                ThresholdEncryption::combineShares( _cipheredKeys[i], _decryptionSets[i] ) );
+                ThresholdEncryption::combineValidatedShares( _cipheredKeys[i], _decryptionSets[i] ) );
         } catch ( const std::exception& e ) {
             std::cerr << "Error combining shares for ciphertext " << i << ": " << e.what() << "\n";
             results.push_back( std::nullopt );
@@ -418,7 +418,7 @@ std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatc
     return results;
 }
 
-std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatchParallel(
+std::vector< std::optional< AES256Key > > ThresholdEncryption::combineValidatedSharesBatchParallel(
     std::vector< CipheredKey >& _cipheredKeys, std::vector< TEDecryptSet >& _decryptionSets ) {
     if ( _cipheredKeys.empty() ) {
         return {};
@@ -434,7 +434,7 @@ std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatc
             subset.reserve( endIdx - startIdx );
             for ( size_t j = startIdx; j < endIdx; ++j ) {
                 try {
-                    subset.push_back( ThresholdEncryption::combineShares(
+                    subset.push_back( ThresholdEncryption::combineValidatedShares(
                         _cipheredKeys[j], _decryptionSets[j] ) );
                 } catch ( const std::exception& e ) {
                     std::cerr << "Error combining shares for ciphertext " << j << ": " << e.what()
