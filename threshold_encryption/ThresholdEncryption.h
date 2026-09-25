@@ -178,8 +178,7 @@ public:
         const std::vector< std::vector< uint8_t > >* _associatedDataTE = nullptr );
 
     /**
-     * @brief Combines decryption shares to reconstruct the original AES key.
-     * It combines all shares to derive the AES key.
+     * @brief Combines a threshold-sized subset of decryption shares to reconstruct the original AES key.
      *
      * @param _cipheredKey The encrypted AESKey used to encrypt the message held by Ciphertext
      * struct

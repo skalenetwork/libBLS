@@ -2250,7 +2250,7 @@ BOOST_AUTO_TEST_CASE( TEDecryptSet ) {
     {
         libBLS::TEDecryptSet decrSet( 1, 1 );
         libBLS::TEDecryptionShare decr_share( libBLS::algebra::G2Point::random(), 1 );
-        decrSet.addDecryptShare( decr_share );
+        decrSet.addValidatedDecryptShare( decr_share );
         BOOST_REQUIRE( decrSet.size() == 1 );
         decrSet.removeDecryptShare( decr_share );
         BOOST_REQUIRE( decrSet.size() == 0 );
@@ -2280,7 +2280,7 @@ BOOST_AUTO_TEST_CASE( TEDecryptSet ) {
         // set is full
         libBLS::TEDecryptSet decrSet( 1, 1 );
         libBLS::TEDecryptionShare decr_share( libBLS::algebra::G2Point::random(), 1 );
-        decrSet.addDecryptShare( decr_share );
+        decrSet.addValidatedDecryptShare( decr_share );
         libBLS::TEDecryptionShare decr_share2( libBLS::algebra::G2Point::random(), 1 );
         BOOST_REQUIRE_THROW(
             decrSet.addValidatedDecryptShare( decr_share2 ), libBLS::ThresholdUtils::IncorrectInput );
