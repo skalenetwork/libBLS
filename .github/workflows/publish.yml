@@ -284,7 +284,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Assemble npm package
@@ -366,6 +366,9 @@ jobs:
       - package_npm
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -379,13 +382,14 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '18.x'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Set up npm for trusted publishing
+        run: npm install --global npm@11.5.1
 
       - name: Check existing npm release
         id: check_npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           set +e
           TARBALL="$(ls -1 npm-artifacts/*.tgz | head -n 1)"
@@ -404,8 +408,6 @@ jobs:
 
       - name: Publish to npm
         if: steps.check_npm.outputs.already_published != 'true'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           TARBALL="$(ls -1 npm-artifacts/*.tgz | head -n 1)"
           if [[ "${{ needs.resolve_release_metadata.outputs.branch }}" == "beta" ]]; then
