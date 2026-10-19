@@ -19,6 +19,10 @@
     "child_process": false
   },
   "homepage": "https://github.com/skalenetwork/libBLS",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skalenetwork/libBLS.git"
+  },
   "license": "AGPL-3.0",
   "author": "SKALE Labs and contributors",
   "publishConfig": {
