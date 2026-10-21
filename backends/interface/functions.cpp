@@ -78,6 +78,13 @@ std::vector< FrScalar > lagrangeCoeffs( const std::vector< size_t >& idx, size_t
         throw ThresholdUtils::IncorrectInput( "not enough participants in the threshold group" );
     }
 
+    for ( size_t i = 0; i < t; ++i ) {
+        if ( idx.at( i ) == 0 ) {
+            throw ThresholdUtils::IncorrectInput( "Invalid signer index " +
+                std::to_string( idx.at( i ) ) + ": signer index must be greater than 0" );
+        }
+    }
+
     std::vector< FrScalar > res( t );
 
     FrScalar w = FrScalar::one();

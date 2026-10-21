@@ -48,9 +48,6 @@ public:
     bool VerifySig( const std::array< uint8_t, 32 >& hash_ptr, const BLSSigShare& sign_ptr,
         size_t _requiredSigners, size_t _totalSigners );
 
-    bool VerifySigWithHelper( const std::array< uint8_t, 32 >& hash_ptr,
-        const BLSSigShare& sign_ptr, size_t _requiredSigners, size_t _totalSigners );
-
     std::vector< std::string > toString();
 };
 

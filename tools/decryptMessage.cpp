@@ -83,10 +83,10 @@ int main( int argc, char* argv[] ) {
         publicKeyShare, aadTe.has_value() ? &aadTe.value() : nullptr );
 
     libBLS::TEDecryptSet decryptSet( 1, 1 );
-    decryptSet.addDecryptShare( decryptionShare );
+    decryptSet.addValidatedDecryptShare( decryptionShare );
 
     auto aesKeyDecrypted =
-        libBLS::ThresholdEncryption::combineShares( aesKeyEncrypted, decryptSet );
+        libBLS::ThresholdEncryption::combineValidatedShares( aesKeyEncrypted, decryptSet );
 
     libBLS::TEPublicKey publicKey( publicKeyShare.getPublicKeyRaw() );
 

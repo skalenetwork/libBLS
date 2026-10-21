@@ -65,10 +65,11 @@ public:
      * @details This function adds a single decryption share to the collection of shares
      * that will be used in the threshold decryption process. Each share represents
      * a partial decryption from a participant in the threshold encryption scheme.
-     * @note The share must be valid and correspond to the same ciphertext as other shares
-     * in the set
+     * @note The share must have been cryptographically validated against the
+     * corresponding ciphertext, public-key share, and TE AAD by the caller before
+     * insertion. Use the batch validation APIs when collecting many shares.
      */
-    bool addDecryptShare( const TEDecryptionShare& _share );
+    bool addValidatedDecryptShare( const TEDecryptionShare& _share );
 
     /**
      * @brief Removes a decryption share from the decryption set.
@@ -92,7 +93,13 @@ public:
 
     MergeStatus getMergeStatus() const;
 
-    std::vector< std::pair< algebra::G2Point, size_t > > getSharesRaw() const;
+    /**
+     * @return Up to `requiredSigners` shares.
+     *
+     * Only a threshold-sized subset is exported. Any subset of distinct,
+     * validated shares reconstructs the same secret.
+     */
+    std::vector< std::pair< algebra::G2Point, size_t > > getThresholdSharesRaw() const;
 };
 
 }  // namespace libBLS

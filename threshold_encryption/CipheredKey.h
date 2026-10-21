@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "AesGcmCipher.h"
+#include "TEVersion.h"
 #include "backends/algebra.hpp"
 
 namespace libBLS {
@@ -19,17 +20,20 @@ struct CipheredKey {
     algebra::G2Point U;
     AES256Key V;
     algebra::G1Point W;
+    TEVersion version = LATEST_TE_VERSION;
 
 public:
     CipheredKey() = default;
-    CipheredKey( algebra::G2Point _U, AES256Key _V, algebra::G1Point _W, bool _validate = true )
-        : U( _U ), V( std::move( _V ) ), W( _W ) {
+    CipheredKey( algebra::G2Point _U, AES256Key _V, algebra::G1Point _W, bool _validate = true,
+        TEVersion _version = LATEST_TE_VERSION )
+        : U( _U ), V( std::move( _V ) ), W( _W ), version( _version ) {
         if ( _validate )
             validate();
     }
 
     bool operator==( const CipheredKey& other ) const {
-        return ( U == other.U ) && ( V == other.V ) && ( W == other.W );
+        return ( version == other.version ) && ( U == other.U ) && ( V == other.V ) &&
+               ( W == other.W );
     }
 
     /**
@@ -45,8 +49,8 @@ public:
     /**
      * @brief Converts bytes to CipheredKey
      */
-    static CipheredKey fromBytes(
-        std::array< uint8_t, CIPHERED_KEY_SIZE_BYTES > _bytes, bool _validate = true );
+    static CipheredKey fromBytes( std::array< uint8_t, CIPHERED_KEY_SIZE_BYTES > _bytes,
+        bool _validate = true, TEVersion _version = LATEST_TE_VERSION );
 
     /**
      * @brief Validates the CipheredKey
@@ -54,7 +58,7 @@ public:
      */
     void validate() const;
 
-    static CipheredKey random();
+    static CipheredKey random( TEVersion _version = LATEST_TE_VERSION );
 
     /**
      * Converts U component of the key to string
@@ -67,6 +71,8 @@ public:
     const algebra::G2Point& getU() const { return U; }
     const AES256Key& getV() const { return V; }
     const algebra::G1Point& getW() const { return W; }
+    TEVersion getVersion() const { return version; }
+    void setVersion( TEVersion _version ) { version = _version; }
 };
 
 }  // namespace libBLS

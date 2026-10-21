@@ -124,7 +124,7 @@ int main() {
                         cipheredkey, batchedDecryptionShares[msg], keys.publicKeys[nodeId] );
                 }
 
-                decription_sets[msg].addDecryptShare( batchedDecryptionShares[msg] );
+                decription_sets[msg].addValidatedDecryptShare( batchedDecryptionShares[msg] );
             }
         }
 
@@ -132,7 +132,7 @@ int main() {
         for ( size_t msg = 0; msg < nMessagesBatch; ++msg ) {
             for ( const auto& cipheredkey : ciphertexts[msg]->getKeys() ) {
                 libBLS::AES256Key decipheredKey =
-                    libBLS::ThresholdEncryption::combineShares( cipheredkey, decription_sets[msg] );
+                    libBLS::ThresholdEncryption::combineValidatedShares( cipheredkey, decription_sets[msg] );
                 libBLS::ThresholdEncryption::validateCombinedDecryption(
                     *ciphertexts[msg], decipheredKey, keys.commonPublic );
                 std::vector< uint8_t > decipheredMsg =

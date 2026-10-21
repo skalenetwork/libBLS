@@ -43,6 +43,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 #include <openssl/rand.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "legacy_v0_fixtures.h"
 #include <test/utils.h>
 #include <random>
 
@@ -112,11 +113,11 @@ BOOST_AUTO_TEST_CASE( TEEncryptDecryptWithAAD ) {
                 libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[i] );
             libBLS::ThresholdEncryption::validateDecryptionShare(
                 cipheredKey, decr_share, public_key_shares[i], &aadTE );
-            decrSet.addDecryptShare( decr_share );
+            decrSet.addValidatedDecryptShare( decr_share );
         }
 
         libBLS::AES256Key key_decrypted =
-            libBLS::ThresholdEncryption::combineShares( cipheredKey, decrSet );
+            libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, decrSet );
 
         // Decrypt WITH the same AES AAD - should succeed
         std::vector< uint8_t > decipheredMsg =
@@ -166,11 +167,11 @@ BOOST_AUTO_TEST_CASE( TEEncryptDecryptWithWrongAAD ) {
         for ( size_t i = 0; i < numSigned; i++ ) {
             libBLS::TEDecryptionShare decr_share =
                 libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[i] );
-            decrSet.addDecryptShare( decr_share );
+            decrSet.addValidatedDecryptShare( decr_share );
         }
 
         libBLS::AES256Key key_decrypted =
-            libBLS::ThresholdEncryption::combineShares( cipheredKey, decrSet );
+            libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, decrSet );
 
         // Decrypt with wrong AES AAD - should fail
         BOOST_REQUIRE_THROW(
@@ -256,11 +257,11 @@ BOOST_AUTO_TEST_CASE( TEEncryptWithTEAADOnly ) {
                 libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[i] );
             libBLS::ThresholdEncryption::validateDecryptionShare(
                 cipheredKey, decr_share, public_key_shares[i], &aadTE );
-            decrSet.addDecryptShare( decr_share );
+            decrSet.addValidatedDecryptShare( decr_share );
         }
 
         libBLS::AES256Key key_decrypted =
-            libBLS::ThresholdEncryption::combineShares( cipheredKey, decrSet );
+            libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, decrSet );
 
         // Decrypt without AES AAD - should succeed since no AES AAD was used
         std::vector< uint8_t > decipheredMsg =
@@ -300,11 +301,11 @@ BOOST_AUTO_TEST_CASE( TEEncryptWithAESAADOnly ) {
                 libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[i] );
             libBLS::ThresholdEncryption::validateDecryptionShare(
                 cipheredKey, decr_share, public_key_shares[i], nullptr );
-            decrSet.addDecryptShare( decr_share );
+            decrSet.addValidatedDecryptShare( decr_share );
         }
 
         libBLS::AES256Key key_decrypted =
-            libBLS::ThresholdEncryption::combineShares( cipheredKey, decrSet );
+            libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, decrSet );
 
         // Decrypt with AES AAD - should succeed
         std::vector< uint8_t > decipheredMsg =
@@ -344,11 +345,11 @@ BOOST_AUTO_TEST_CASE( TEEncryptWithEmptyAAD ) {
         for ( size_t i = 0; i < numSigned; i++ ) {
             libBLS::TEDecryptionShare decr_share =
                 libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[i] );
-            decrSet.addDecryptShare( decr_share );
+            decrSet.addValidatedDecryptShare( decr_share );
         }
 
         libBLS::AES256Key key_decrypted =
-            libBLS::ThresholdEncryption::combineShares( cipheredKey, decrSet );
+            libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, decrSet );
 
         // Decrypt with empty AES AAD
         std::vector< uint8_t > decipheredMsg =
@@ -726,10 +727,11 @@ BOOST_AUTO_TEST_CASE( TEEncryptDeterministicSeededKeyAndScalar ) {
     std::vector< libBLS::algebra::G2Point > rawPublicKeys = { keys.commonPublic.getPublicKeyRaw() };
 
     libBLS::EncryptMetaData metaDataA;
-    metaDataA.seed = seedA;
 
-    libBLS::CipherResult cipher1 = libBLS::TE::encryptWithAES( message, rawPublicKeys, metaDataA );
-    libBLS::CipherResult cipher2 = libBLS::TE::encryptWithAES( message, rawPublicKeys, metaDataA );
+    libBLS::CipherResult cipher1 = libBLS::TE::encryptWithAESDeterministic(
+        message, rawPublicKeys, seedA, metaDataA );
+    libBLS::CipherResult cipher2 = libBLS::TE::encryptWithAESDeterministic(
+        message, rawPublicKeys, seedA, metaDataA );
 
     BOOST_REQUIRE( cipher1.ciphertext );
     BOOST_REQUIRE( cipher2.ciphertext );
@@ -738,17 +740,15 @@ BOOST_AUTO_TEST_CASE( TEEncryptDeterministicSeededKeyAndScalar ) {
     BOOST_CHECK( cipher1.ciphertext->toBytes() == cipher2.ciphertext->toBytes() );
 
     libBLS::EncryptMetaData metaDataB;
-    metaDataB.seed = seedB;
-    libBLS::CipherResult cipher3 = libBLS::TE::encryptWithAES( message, rawPublicKeys, metaDataB );
+    libBLS::CipherResult cipher3 = libBLS::TE::encryptWithAESDeterministic(
+        message, rawPublicKeys, seedB, metaDataB );
 
     BOOST_REQUIRE( cipher3.ciphertext );
     BOOST_CHECK( cipher1.randomSecret != cipher3.randomSecret );
     BOOST_CHECK( cipher1.ciphertext->getKeys() != cipher3.ciphertext->getKeys() );
     BOOST_CHECK( cipher1.ciphertext->toBytes() != cipher3.ciphertext->toBytes() );
 
-    libBLS::EncryptMetaData metaDataNoSeed;
-    libBLS::CipherResult cipher4 =
-        libBLS::TE::encryptWithAES( message, rawPublicKeys, metaDataNoSeed );
+    libBLS::CipherResult cipher4 = libBLS::TE::encryptWithAES( message, rawPublicKeys );
 
     BOOST_REQUIRE( cipher4.ciphertext );
     BOOST_CHECK( cipher1.ciphertext->getKeys() != cipher4.ciphertext->getKeys() );
@@ -769,11 +769,11 @@ BOOST_AUTO_TEST_CASE( TEEncryptDeterministicSeededKeyAndScalar ) {
             libBLS::ThresholdEncryption::partialDecrypt( cipheredKey1, keys.secretKeys[i] );
         libBLS::ThresholdEncryption::validateDecryptionShare(
             cipheredKey1, decrShare, publicKeyShares[i], nullptr );
-        decryptSet1.addDecryptShare( decrShare );
+        decryptSet1.addValidatedDecryptShare( decrShare );
     }
 
     libBLS::AES256Key keyDecrypted1 =
-        libBLS::ThresholdEncryption::combineShares( cipheredKey1, decryptSet1 );
+        libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey1, decryptSet1 );
     std::vector< uint8_t > decryptedMsg1 =
         libBLS::ThresholdEncryption::decrypt( *cipher1.ciphertext, keyDecrypted1, std::nullopt );
     BOOST_REQUIRE( decryptedMsg1 == message );
@@ -795,15 +795,13 @@ BOOST_AUTO_TEST_CASE( TESeededCrossNodeDeterminism ) {
 
     // Simulate Node A encryption
     libBLS::EncryptMetaData metaDataNodeA;
-    metaDataNodeA.seed = sharedSeed;
-    libBLS::CipherResult cipherNodeA =
-        libBLS::TE::encryptWithAES( message, rawPublicKeys, metaDataNodeA );
+    libBLS::CipherResult cipherNodeA = libBLS::TE::encryptWithAESDeterministic(
+        message, rawPublicKeys, sharedSeed, metaDataNodeA );
 
     // Simulate Node B encryption (independent, same seed)
     libBLS::EncryptMetaData metaDataNodeB;
-    metaDataNodeB.seed = sharedSeed;
-    libBLS::CipherResult cipherNodeB =
-        libBLS::TE::encryptWithAES( message, rawPublicKeys, metaDataNodeB );
+    libBLS::CipherResult cipherNodeB = libBLS::TE::encryptWithAESDeterministic(
+        message, rawPublicKeys, sharedSeed, metaDataNodeB );
 
     // Both nodes must produce identical ciphertexts
     BOOST_REQUIRE( cipherNodeA.ciphertext );
@@ -832,21 +830,21 @@ BOOST_AUTO_TEST_CASE( TESeededMultipleMessageSequence ) {
 
     // Node A encrypts 3 messages in sequence
     libBLS::EncryptMetaData metaA1, metaA2, metaA3;
-    metaA1.seed = seed;
-    metaA2.seed = seed;
-    metaA3.seed = seed;
-    auto cipherA1 = libBLS::TE::encryptWithAES( msg1, rawPublicKeys, metaA1 );
-    auto cipherA2 = libBLS::TE::encryptWithAES( msg2, rawPublicKeys, metaA2 );
-    auto cipherA3 = libBLS::TE::encryptWithAES( msg3, rawPublicKeys, metaA3 );
+    auto cipherA1 = libBLS::TE::encryptWithAESDeterministic(
+        msg1, rawPublicKeys, seed, metaA1 );
+    auto cipherA2 = libBLS::TE::encryptWithAESDeterministic(
+        msg2, rawPublicKeys, seed, metaA2 );
+    auto cipherA3 = libBLS::TE::encryptWithAESDeterministic(
+        msg3, rawPublicKeys, seed, metaA3 );
 
     // Node B encrypts same 3 messages in same sequence
     libBLS::EncryptMetaData metaB1, metaB2, metaB3;
-    metaB1.seed = seed;
-    metaB2.seed = seed;
-    metaB3.seed = seed;
-    auto cipherB1 = libBLS::TE::encryptWithAES( msg1, rawPublicKeys, metaB1 );
-    auto cipherB2 = libBLS::TE::encryptWithAES( msg2, rawPublicKeys, metaB2 );
-    auto cipherB3 = libBLS::TE::encryptWithAES( msg3, rawPublicKeys, metaB3 );
+    auto cipherB1 = libBLS::TE::encryptWithAESDeterministic(
+        msg1, rawPublicKeys, seed, metaB1 );
+    auto cipherB2 = libBLS::TE::encryptWithAESDeterministic(
+        msg2, rawPublicKeys, seed, metaB2 );
+    auto cipherB3 = libBLS::TE::encryptWithAESDeterministic(
+        msg3, rawPublicKeys, seed, metaB3 );
 
     // All corresponding ciphertexts must match between nodes
     BOOST_CHECK( cipherA1.ciphertext->toBytes() == cipherB1.ciphertext->toBytes() );
@@ -876,9 +874,8 @@ BOOST_AUTO_TEST_CASE( TESeededEncryptionDecryptionFlow ) {
 
     // Encrypt with seed using high-level wrapper
     libBLS::EncryptMetaData metaData;
-    metaData.seed = seed;
-    libBLS::Ciphertext ciphertext =
-        libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, metaData );
+    libBLS::Ciphertext ciphertext = libBLS::ThresholdEncryption::encryptDeterministic(
+        message, keys.commonPublic, seed, metaData );
 
     // Prepare public key shares for validation
     std::vector< libBLS::TEPublicKeyShare > publicKeyShares;
@@ -897,12 +894,12 @@ BOOST_AUTO_TEST_CASE( TESeededEncryptionDecryptionFlow ) {
                 libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[i] );
             libBLS::ThresholdEncryption::validateDecryptionShare(
                 cipheredKey, decrShare, publicKeyShares[i], nullptr );
-            decryptSet.addDecryptShare( decrShare );
+            decryptSet.addValidatedDecryptShare( decrShare );
         }
 
         // Combine shares and decrypt
         libBLS::AES256Key aesKey =
-            libBLS::ThresholdEncryption::combineShares( cipheredKey, decryptSet );
+            libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, decryptSet );
 
         // Validate combined decryption
         libBLS::ThresholdEncryption::validateCombinedDecryption(
@@ -966,7 +963,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
                     libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, skey_shares[i] );
                 libBLS::ThresholdEncryption::validateDecryptionShare(
                     cipheredKey, share, public_key_shares[i] );
-                decrSet.addDecryptShare( share );
+                decrSet.addValidatedDecryptShare( share );
             }
             // each can only combine the shares once - thus several copies
             libBLS::TEDecryptSet decr_set2 = decrSet;
@@ -976,7 +973,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
 
             // 1) Merge the set normally
             libBLS::AES256Key key =
-                libBLS::ThresholdEncryption::combineShares( cipheredKey, decrSet );
+                libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, decrSet );
 
             libBLS::ThresholdEncryption::validateCombinedDecryption( cypher, key, common_public );
 
@@ -985,7 +982,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
             BOOST_REQUIRE( decipheredMsg == message );
 
             // 2) cannot add after merge
-            BOOST_REQUIRE_THROW( decrSet.addDecryptShare( libBLS::TEDecryptionShare(
+            BOOST_REQUIRE_THROW( decrSet.addValidatedDecryptShare( libBLS::TEDecryptionShare(
                                      libBLS::algebra::G2Point::random(), 1 ) ),
                 libBLS::ThresholdUtils::IncorrectInput );
 
@@ -1000,7 +997,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
 
             // corrupting V field changes the key - and decryption throws
             libBLS::AES256Key corruptedKey =
-                libBLS::ThresholdEncryption::combineShares( bad_cyphered_key, decr_set2 );
+                libBLS::ThresholdEncryption::combineValidatedShares( bad_cyphered_key, decr_set2 );
             BOOST_REQUIRE( key != corruptedKey );
             BOOST_REQUIRE_THROW(
                 libBLS::ThresholdEncryption::decrypt( cypher, corruptedKey ), std::runtime_error );
@@ -1014,7 +1011,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
             cipherWithBadKey.keys[0] = bad_cyphered_key;
             // the deciphered key will still be correct, but the final decryption will not
             corruptedKey =
-                libBLS::ThresholdEncryption::combineShares( bad_cyphered_key, decr_set3 );
+                libBLS::ThresholdEncryption::combineValidatedShares( bad_cyphered_key, decr_set3 );
             decipheredMsg = libBLS::ThresholdEncryption::decrypt( cypher, corruptedKey );
 
             try {
@@ -1036,7 +1033,7 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
             bad_cyphered_key.W = rand_el2;
             // the deciphered key will still be correct, but the final decryption will not
             corruptedKey =
-                libBLS::ThresholdEncryption::combineShares( bad_cyphered_key, decr_set4 );
+                libBLS::ThresholdEncryption::combineValidatedShares( bad_cyphered_key, decr_set4 );
             decipheredMsg = libBLS::ThresholdEncryption::decrypt( cypher, corruptedKey );
 
             try {
@@ -1069,11 +1066,11 @@ BOOST_AUTO_TEST_CASE( TEProcessWithWrappers ) {
                     BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateDecryptionShare(
                                              cipheredKey, decr_share, public_key_shares[i] ),
                         libBLS::ThresholdUtils::IsNotWellFormed );
-                bad_decr_set.addDecryptShare( decr_share );
+                bad_decr_set.addValidatedDecryptShare( decr_share );
             }
 
             libBLS::AES256Key bad_key_decrypted =
-                libBLS::ThresholdEncryption::combineShares( cipheredKey, bad_decr_set );
+                libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, bad_decr_set );
             BOOST_REQUIRE( key != bad_key_decrypted );
         }
     }
@@ -1115,11 +1112,11 @@ BOOST_AUTO_TEST_CASE( ShortTEProcessWithWrappers ) {
                     libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[i] );
                 libBLS::ThresholdEncryption::validateDecryptionShare(
                     cipheredKey, decr_share, public_key_shares.at( i ) );
-                decrSet.addDecryptShare( decr_share );
+                decrSet.addValidatedDecryptShare( decr_share );
             }
 
             libBLS::AES256Key key_decrypted =
-                libBLS::ThresholdEncryption::combineShares( cipheredKey, decrSet );
+                libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, decrSet );
 
             libBLS::ThresholdEncryption::validateCombinedDecryption(
                 cypher, key_decrypted, keys.commonPublic );
@@ -1175,10 +1172,10 @@ BOOST_AUTO_TEST_CASE( TEFailingValidation ) {
                 libBLS::ThresholdEncryption::validateDecryptionShare(
                     cipheredKey, decr_share, public_key_shares.at( i ) );
 
-                decrSet.addDecryptShare( decr_share );
+                decrSet.addValidatedDecryptShare( decr_share );
             }
             libBLS::AES256Key key_decrypted =
-                libBLS::ThresholdEncryption::combineShares( cipheredKey, decrSet );
+                libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, decrSet );
 
             // change some bytes from key_decrypted
             libBLS::AES256Key copy = key_decrypted;
@@ -1211,7 +1208,7 @@ BOOST_AUTO_TEST_CASE( WrappersFromString ) {
         libBLS::TEPrivateKey private_key( test );
 
         libBLS::algebra::FrScalar test2 = libBLS::algebra::FrScalar::random();
-        size_t signer = rand_gen() % numAll;
+        size_t signer = rand_gen() % numAll + 1;
         libBLS::TEPrivateKeyShare pr_key_share( test2, signer, numSigned, numAll );
 
         std::string a( pr_key_share.toString( libBLS::Base::HEXA ) );
@@ -1309,11 +1306,11 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
                 libBLS::ThresholdEncryption::validateDecryptionShare(
                     cipheredKey, decr_share, pkeys[i] );
 
-                decrSet.addDecryptShare( decr_share );
+                decrSet.addValidatedDecryptShare( decr_share );
             }
 
             libBLS::AES256Key key_deciphered =
-                libBLS::ThresholdEncryption::combineShares( cipheredKey, decrSet );
+                libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, decrSet );
 
             libBLS::ThresholdEncryption::validateCombinedDecryption(
                 cypher, key_deciphered, common_public );
@@ -1322,6 +1319,311 @@ BOOST_AUTO_TEST_CASE( ThresholdEncryptionWithDKG ) {
                 libBLS::ThresholdEncryption::decrypt( cypher, key_deciphered );
             BOOST_REQUIRE( decipheredMsg == message );
         }
+    }
+}
+
+BOOST_AUTO_TEST_CASE( ThresholdEncryptionV1WireRoundTrip ) {
+    const size_t numAll = 4;
+    const size_t numSigned = 3;
+    keys keys = generateKeys( numSigned, numAll );
+
+    const std::vector< uint8_t > message = {
+        'v', '1', '-', 'w', 'i', 'r', 'e', '-', 'r', 'o', 'u', 'n', 'd', 't', 'r', 'i', 'p' };
+    const std::vector< uint8_t > aesAad = { 0xDE, 0xAD, 0xBE, 0xEF };
+    const std::vector< uint8_t > teAad = { 0x01, 0x02, 0x03, 0x04 };
+
+    libBLS::EncryptMetaData metaData;
+    metaData.associatedDataAesGcm = aesAad;
+    metaData.associatedDataTE = teAad;
+    metaData.encryptionVersion = libBLS::EncryptionVersion::V1;
+
+    auto decryptSerializedV1 = [&]( const libBLS::Ciphertext& encrypted ) {
+        BOOST_REQUIRE( encrypted.getVersion() == libBLS::TEVersion::V1 );
+        for ( const auto& cipheredKey : encrypted.getKeys() ) {
+            BOOST_REQUIRE( cipheredKey.getVersion() == libBLS::TEVersion::V1 );
+        }
+
+        const std::vector< uint8_t > wireBytes = encrypted.toBytes();
+        const libBLS::Ciphertext restored = libBLS::Ciphertext::fromBytes( wireBytes );
+        BOOST_REQUIRE( restored.getVersion() == libBLS::TEVersion::V1 );
+        BOOST_REQUIRE( restored.getKeys().size() == size_t{ 1 } );
+        BOOST_REQUIRE( restored.getKeys()[0].getVersion() == libBLS::TEVersion::V1 );
+
+        const auto& cipheredKey = restored.getKeys()[0];
+        libBLS::ThresholdEncryption::validateEncryption( cipheredKey, &teAad );
+
+        libBLS::TEDecryptSet decryptSet( numSigned, numAll );
+        for ( size_t i = 0; i < numSigned; ++i ) {
+            libBLS::TEDecryptionShare share = libBLS::ThresholdEncryption::partialDecrypt(
+                cipheredKey, keys.secretKeys[i] );
+            libBLS::ThresholdEncryption::validateDecryptionShare(
+                cipheredKey, share, keys.publicKeys[i], &teAad );
+            decryptSet.addValidatedDecryptShare( share );
+        }
+
+        const libBLS::AES256Key recoveredKey =
+            libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, decryptSet );
+        BOOST_REQUIRE( libBLS::ThresholdEncryption::validateAndDecrypt(
+                           restored, recoveredKey, keys.commonPublic, aesAad ) == message );
+    };
+
+    // Ordinary encryption emits the current V1 threshold-encryption format.
+    const libBLS::Ciphertext randomized =
+        libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, metaData );
+    decryptSerializedV1( randomized );
+
+    // Deterministic encryption also emits V1 and remains deterministic across calls.
+    libBLS::Seed256 seed{};
+    seed.data.fill( 0x5A );
+    const libBLS::Ciphertext deterministic1 =
+        libBLS::ThresholdEncryption::encryptDeterministic(
+            message, keys.commonPublic, seed, metaData );
+    const libBLS::Ciphertext deterministic2 =
+        libBLS::ThresholdEncryption::encryptDeterministic(
+            message, keys.commonPublic, seed, metaData );
+    BOOST_REQUIRE( deterministic1.toBytes() == deterministic2.toBytes() );
+    decryptSerializedV1( deterministic1 );
+}
+
+BOOST_AUTO_TEST_CASE( ThresholdEncryptionV0SyntheticWrapperRoundTrip ) {
+    // End-to-end wrapper verification using a synthetic V0 wire ciphertext.
+    // This complements HistoricV0WireFixtures, which uses frozen bytes from
+    // the pre-versioning implementation. Exercise the high-level wrappers
+    // (partialDecrypt, combineValidatedShares, decrypt, validateAndDecrypt).
+    size_t numAll = 4;
+    size_t numSigned = 3;
+
+    keys keys = generateKeys( numSigned, numAll );
+    std::vector< uint8_t > message = randomByteVec( 80 );
+
+    libBLS::AES256Key originalKey;
+    RAND_bytes( originalKey.data(), originalKey.size() );
+
+    // Build V0 CipheredKey manually using legacy ASCII hex masking
+    libBLS::algebra::FrScalar r = libBLS::algebra::FrScalar::random();
+    libBLS::algebra::G2Point U = r * libBLS::algebra::G2Point::generator();
+    U.toAffineCoordinates();
+    libBLS::algebra::G2Point Y = r * keys.commonPublic.getPublicKeyRaw();
+    std::string hashHex = libBLS::TE::Hash( Y );
+
+    // build key using hexadecimal chars instead of bytes (V0)
+    libBLS::AES256Key v0Mask =
+        libBLS::TE::deriveMaskFromHash( hashHex, libBLS::TEVersion::V0 );
+    libBLS::AES256Key V_v0;
+    for ( size_t i = 0; i < libBLS::AES_256_KEY_SIZE_BYTES; ++i ) {
+        V_v0[i] = originalKey[i] ^ v0Mask[i];
+    }
+
+    libBLS::algebra::G1Point H = libBLS::TE::HashToGroup( U, V_v0, nullptr );
+    libBLS::algebra::G1Point W = r * H;
+    libBLS::CipheredKey cipheredKeyV0( U, V_v0, W, true, libBLS::TEVersion::V0 );
+
+    // Encrypt payload with AES-GCM (legacy V0 AES structure with rand secret appended)
+    libBLS::algebra::FrScalar randSecretScalar = r;
+    std::vector< uint8_t > randSecretBytes = randSecretScalar.toByteVector();
+    std::vector< uint8_t > payloadWithSecret = message;
+    payloadWithSecret.insert(
+        payloadWithSecret.end(), randSecretBytes.begin(), randSecretBytes.end() );
+
+    libBLS::AesGcmCipher aesGcm( originalKey, libBLS::AesGcmVersion::V0 );
+    std::vector< uint8_t > encryptedData = aesGcm.encrypt( payloadWithSecret );
+
+    // Assemble legacy V0 wire bytes: [0x01 (1 key)][CipheredKey bytes][encryptedData]
+    std::vector< uint8_t > v0WireBytes;
+    v0WireBytes.push_back( 0x01 );
+    auto ckV0Bytes = cipheredKeyV0.toBytes();
+    v0WireBytes.insert( v0WireBytes.end(), ckV0Bytes.begin(), ckV0Bytes.end() );
+    v0WireBytes.insert( v0WireBytes.end(), encryptedData.begin(), encryptedData.end() );
+
+    // 1. Import via Ciphertext::fromBytes
+    libBLS::Ciphertext importedCiphertext = libBLS::Ciphertext::fromBytes( v0WireBytes );
+    BOOST_REQUIRE( importedCiphertext.getVersion() == libBLS::TEVersion::V0 );
+    BOOST_REQUIRE_EQUAL( importedCiphertext.getKeys().size(), size_t{ 1 } );
+    BOOST_REQUIRE( importedCiphertext.getKeys()[0].getVersion() == libBLS::TEVersion::V0 );
+
+    // 2. Validate encryption
+    libBLS::ThresholdEncryption::validateEncryption( importedCiphertext.getKeys()[0] );
+
+    // 3. Partial decrypt with shares
+    libBLS::TEDecryptSet decrSet( numSigned, numAll );
+    std::vector< libBLS::TEPublicKeyShare > pubKeyShares;
+    for ( size_t i = 0; i < numSigned; ++i ) {
+        pubKeyShares.emplace_back( libBLS::TEPublicKeyShare( keys.secretKeys[i] ) );
+        libBLS::TEDecryptionShare share = libBLS::ThresholdEncryption::partialDecrypt(
+            importedCiphertext.getKeys()[0], keys.secretKeys[i] );
+        libBLS::ThresholdEncryption::validateDecryptionShare(
+            importedCiphertext.getKeys()[0], share, pubKeyShares.back() );
+        decrSet.addValidatedDecryptShare( share );
+    }
+
+    // 4. Combine shares -> recovers original AES key
+    libBLS::AES256Key recoveredKey =
+        libBLS::ThresholdEncryption::combineValidatedShares( importedCiphertext.getKeys()[0], decrSet );
+    BOOST_REQUIRE( recoveredKey == originalKey );
+
+    // 5. Decrypt payload. The public decrypt API validates the AES ciphertext and
+    // removes the internal random secret before returning the original message.
+    std::vector< uint8_t > decryptedMessage =
+        libBLS::ThresholdEncryption::decrypt( importedCiphertext, recoveredKey );
+    BOOST_REQUIRE( decryptedMessage == message );
+
+    // 6. Validate the recovered AES key against the original public key. The
+    // validation API checks the internal random secret before returning the message.
+    std::vector< uint8_t > validatedMessage = libBLS::ThresholdEncryption::validateAndDecrypt(
+        importedCiphertext, recoveredKey, keys.commonPublic );
+    BOOST_REQUIRE( validatedMessage == message );
+}
+
+BOOST_AUTO_TEST_CASE( ThresholdEncryptionDeterministicEncryptionVersionProfiles ) {
+    const size_t numAll = 4;
+    const size_t numSigned = 3;
+    keys keys = generateKeys( numSigned, numAll );
+    const std::vector< uint8_t > message = {
+        'p', 'r', 'o', 'f', 'i', 'l', 'e', '-', 'v', 'e', 'r', 's', 'i', 'o', 'n' };
+
+    libBLS::Seed256 seed{};
+    seed.data.fill( 0x37 );
+
+    libBLS::EncryptMetaData v0MetaData;
+    v0MetaData.encryptionVersion = libBLS::EncryptionVersion::V0;
+    const libBLS::Ciphertext v0Ciphertext = libBLS::ThresholdEncryption::encryptDeterministic(
+        message, keys.commonPublic, seed, v0MetaData );
+    const libBLS::Ciphertext v0CiphertextAgain =
+        libBLS::ThresholdEncryption::encryptDeterministic(
+            message, keys.commonPublic, seed, v0MetaData );
+
+    BOOST_REQUIRE( v0Ciphertext.getVersion() == libBLS::TEVersion::V0 );
+    BOOST_REQUIRE( v0Ciphertext.getKeys()[0].getVersion() == libBLS::TEVersion::V0 );
+    BOOST_REQUIRE( v0Ciphertext.toBytes() == v0CiphertextAgain.toBytes() );
+
+    // The same profile can be selected for ordinary encryption when a caller
+    // deliberately needs to produce a legacy V0 wire ciphertext for an old
+    // reader. The AES IV version has no effect on this randomized path, but
+    // the TE masking and wire version do.
+    const libBLS::Ciphertext v0RandomCiphertext =
+        libBLS::ThresholdEncryption::encrypt( message, keys.commonPublic, v0MetaData );
+    BOOST_REQUIRE( v0RandomCiphertext.getVersion() == libBLS::TEVersion::V0 );
+    BOOST_REQUIRE( v0RandomCiphertext.getKeys()[0].getVersion() == libBLS::TEVersion::V0 );
+
+    libBLS::EncryptMetaData v1MetaData;
+    v1MetaData.encryptionVersion = libBLS::EncryptionVersion::V1;
+    const libBLS::Ciphertext v1Ciphertext = libBLS::ThresholdEncryption::encryptDeterministic(
+        message, keys.commonPublic, seed, v1MetaData );
+    BOOST_REQUIRE( v1Ciphertext.getVersion() == libBLS::TEVersion::V1 );
+    BOOST_REQUIRE( v1Ciphertext.getKeys()[0].getVersion() == libBLS::TEVersion::V1 );
+    BOOST_REQUIRE( v0Ciphertext.toBytes() != v1Ciphertext.toBytes() );
+
+    const libBLS::Ciphertext restoredV0 = libBLS::Ciphertext::fromBytes( v0Ciphertext.toBytes() );
+    const auto& cipheredKey = restoredV0.getKeys().front();
+    libBLS::TEDecryptSet decryptSet( numSigned, numAll );
+    for ( size_t i = 0; i < numSigned; ++i ) {
+        const auto share = libBLS::ThresholdEncryption::partialDecrypt(
+            cipheredKey, keys.secretKeys[i] );
+        decryptSet.addValidatedDecryptShare( share );
+    }
+    const libBLS::AES256Key recoveredKey =
+        libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, decryptSet );
+    BOOST_REQUIRE( libBLS::ThresholdEncryption::validateAndDecrypt(
+                       restoredV0, recoveredKey, keys.commonPublic ) == message );
+}
+
+BOOST_AUTO_TEST_CASE( HistoricV0WireFixtures ) {
+    const auto privateKey1 = libBLS::TEPrivateKey(
+        libBLS::ThresholdUtils::hexCStringToBytes( legacy_v0_fixtures::PRIVATE_KEY_1 ) );
+    const auto privateKey2 = libBLS::TEPrivateKey(
+        libBLS::ThresholdUtils::hexCStringToBytes( legacy_v0_fixtures::PRIVATE_KEY_2 ) );
+    const libBLS::TEPublicKey publicKey1( privateKey1 );
+    const libBLS::TEPublicKey publicKey2( privateKey2 );
+
+    const std::vector< uint8_t > aesAad = libBLS::ThresholdUtils::hexCStringToBytes(
+        legacy_v0_fixtures::AES_AAD );
+    const std::vector< uint8_t > teAad = libBLS::ThresholdUtils::hexCStringToBytes(
+        legacy_v0_fixtures::TE_AAD );
+    const std::vector< uint8_t > wrongAesAad = { 0x10, 0x20, 0x30, 0x40 };
+    const std::vector< uint8_t > wrongTeAad = { 0xAA, 0xBB, 0xCC, 0xDD };
+
+    auto recoverKey = []( const libBLS::CipheredKey& cipheredKey,
+                           const libBLS::TEPrivateKey& privateKey,
+                           const std::vector< uint8_t >* associatedDataTE ) {
+        libBLS::ThresholdEncryption::validateEncryption( cipheredKey, associatedDataTE );
+
+        libBLS::TEPrivateKeyShare privateShare(
+            privateKey.getPrivateKeyRaw(), 1, 1, 1 );
+        libBLS::TEPublicKeyShare publicShare( privateShare );
+        libBLS::TEDecryptionShare decryptionShare =
+            libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, privateShare );
+        libBLS::ThresholdEncryption::validateDecryptionShare(
+            cipheredKey, decryptionShare, publicShare, associatedDataTE );
+
+        libBLS::TEDecryptSet decryptionSet( 1, 1 );
+        decryptionSet.addValidatedDecryptShare( decryptionShare );
+        return libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, decryptionSet );
+    };
+
+    // Frozen one-key V0 bytes generated by the pre-versioning implementation.
+    const std::vector< uint8_t > oneKeyNoAadBytes =
+        libBLS::ThresholdUtils::hexCStringToBytes( legacy_v0_fixtures::ONE_KEY_NO_AAD );
+    const libBLS::Ciphertext oneKeyNoAad =
+        libBLS::Ciphertext::fromBytes( oneKeyNoAadBytes );
+    BOOST_REQUIRE( oneKeyNoAad.getVersion() == libBLS::TEVersion::V0 );
+    BOOST_REQUIRE_EQUAL( oneKeyNoAad.getKeys().size(), size_t{ 1 } );
+
+    const auto oneKeyNoAadRecovered =
+        recoverKey( oneKeyNoAad.getKeys()[0], privateKey1, nullptr );
+    const std::string oneKeyNoAadMessageString = legacy_v0_fixtures::ONE_KEY_NO_AAD_MESSAGE;
+    const std::vector< uint8_t > oneKeyNoAadMessage(
+        oneKeyNoAadMessageString.begin(), oneKeyNoAadMessageString.end() );
+    BOOST_REQUIRE( libBLS::ThresholdEncryption::validateAndDecrypt(
+                       oneKeyNoAad, oneKeyNoAadRecovered, publicKey1 ) == oneKeyNoAadMessage );
+
+    // Frozen one-key V0 bytes with both AES-GCM and TE associated data.
+    const std::vector< uint8_t > oneKeyAadBytes =
+        libBLS::ThresholdUtils::hexCStringToBytes( legacy_v0_fixtures::ONE_KEY_AAD );
+    const libBLS::Ciphertext oneKeyAad = libBLS::Ciphertext::fromBytes( oneKeyAadBytes );
+    BOOST_REQUIRE( oneKeyAad.getVersion() == libBLS::TEVersion::V0 );
+    BOOST_REQUIRE_EQUAL( oneKeyAad.getKeys().size(), size_t{ 1 } );
+
+    const auto oneKeyAadRecovered =
+        recoverKey( oneKeyAad.getKeys()[0], privateKey1, &teAad );
+    const std::string oneKeyAadMessageString = legacy_v0_fixtures::ONE_KEY_AAD_MESSAGE;
+    const std::vector< uint8_t > oneKeyAadMessage(
+        oneKeyAadMessageString.begin(), oneKeyAadMessageString.end() );
+    BOOST_REQUIRE( libBLS::ThresholdEncryption::validateAndDecrypt(
+                       oneKeyAad, oneKeyAadRecovered, publicKey1, aesAad ) == oneKeyAadMessage );
+    BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateEncryption(
+                             oneKeyAad.getKeys()[0], &wrongTeAad ),
+        libBLS::ThresholdUtils::IsNotWellFormed );
+    BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateAndDecrypt(
+                             oneKeyAad, oneKeyAadRecovered, publicKey1, wrongAesAad ),
+        std::runtime_error );
+    BOOST_REQUIRE_THROW( libBLS::ThresholdEncryption::validateAndDecrypt(
+                             oneKeyAad, oneKeyAadRecovered, publicKey1 ),
+        std::runtime_error );
+
+    // Frozen two-key V0 bytes with both AES-GCM and TE associated data. Each
+    // embedded key is recovered with its corresponding legacy private key.
+    const std::vector< uint8_t > twoKeyAadBytes =
+        libBLS::ThresholdUtils::hexCStringToBytes( legacy_v0_fixtures::TWO_KEY_AAD );
+    const libBLS::Ciphertext twoKeyAad = libBLS::Ciphertext::fromBytes( twoKeyAadBytes );
+    BOOST_REQUIRE( twoKeyAad.getVersion() == libBLS::TEVersion::V0 );
+    BOOST_REQUIRE_EQUAL( twoKeyAad.getKeys().size(), size_t{ 2 } );
+
+    const std::array< const libBLS::TEPrivateKey*, 2 > privateKeys = {
+        &privateKey1, &privateKey2 };
+    const std::array< const libBLS::TEPublicKey*, 2 > publicKeys = {
+        &publicKey1, &publicKey2 };
+    const std::string twoKeyAadMessageString = legacy_v0_fixtures::TWO_KEY_AAD_MESSAGE;
+    const std::vector< uint8_t > twoKeyAadMessage(
+        twoKeyAadMessageString.begin(), twoKeyAadMessageString.end() );
+
+    for ( size_t keyIndex = 0; keyIndex < twoKeyAad.getKeys().size(); ++keyIndex ) {
+        const auto recoveredKey =
+            recoverKey( twoKeyAad.getKeys()[keyIndex], *privateKeys[keyIndex], &teAad );
+        libBLS::Ciphertext singleKeyCiphertext = twoKeyAad;
+        singleKeyCiphertext.keepKey( keyIndex );
+        BOOST_REQUIRE( libBLS::ThresholdEncryption::validateAndDecrypt(
+                           singleKeyCiphertext, recoveredKey, *publicKeys[keyIndex], aesAad ) ==
+            twoKeyAadMessage );
     }
 }
 
@@ -1569,6 +1871,23 @@ BOOST_AUTO_TEST_CASE( TEPublicKeyShare ) {
 
     // Exceptions
 
+    // zero signer index
+    {
+        libBLS::algebra::FrScalar priv = libBLS::algebra::FrScalar::random();
+        libBLS::algebra::G2Point pub = priv * libBLS::algebra::G2Point::generator();
+        std::array< uint8_t, libBLS::G2_SIZE_BYTES > pubKeyBytes = pub.toByteArray();
+        std::vector< uint8_t > pubKeyBytesVec( pubKeyBytes.begin(), pubKeyBytes.end() );
+
+        BOOST_REQUIRE_THROW( libBLS::TEPublicKeyShare pkey( pub, 0, numSigned, numAll ),
+            libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPublicKeyShare pkey( pubKeyBytes, 0, numSigned, numAll ),
+            libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPublicKeyShare pkey( pubKeyBytesVec, 0, numSigned, numAll ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+
     // From G2
     {
         // zero public key
@@ -1708,6 +2027,24 @@ BOOST_AUTO_TEST_CASE( TEPrivateKeyShare ) {
 
     // Exceptions
 
+    // zero signer index
+    {
+        libBLS::algebra::FrScalar priv = libBLS::algebra::FrScalar::random();
+        std::string stringField = priv.toString( libBLS::Base::HEXA );
+        std::array< uint8_t, libBLS::MAX_FIELD_ELEMENT_SIZE_BYTES > privBytes = priv.toByteArray();
+        std::vector< uint8_t > privBytesVec( privBytes.begin(), privBytes.end() );
+
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( priv, 0, 10, 15 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW(
+            libBLS::TEPrivateKeyShare share( stringField, libBLS::Base::HEXA, 0, 10, 15 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( privBytes, 0, 10, 15 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( libBLS::TEPrivateKeyShare share( privBytesVec, 0, 10, 15 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
+
     // From field element
     {
         // zero private key
@@ -1836,6 +2173,18 @@ BOOST_AUTO_TEST_CASE( TEDecryptionShare ) {
         BOOST_REQUIRE_THROW( libBLS::TEDecryptionShare share( str2, signer ),
             libBLS::ThresholdUtils::IsNotWellFormed );
     }
+    {
+        // zero signer index
+        libBLS::algebra::G2Point el = libBLS::algebra::G2Point::random();
+        BOOST_REQUIRE_THROW( libBLS::TEDecryptionShare share( el, 0 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+        BOOST_REQUIRE_THROW( libBLS::TEDecryptionShare share( el, 0, false ),
+            libBLS::ThresholdUtils::IncorrectInput );
+
+        std::string str = el.toString( libBLS::Base::HEXA );
+        BOOST_REQUIRE_THROW( libBLS::TEDecryptionShare share( str, 0 ),
+            libBLS::ThresholdUtils::IncorrectInput );
+    }
 }
 
 BOOST_AUTO_TEST_CASE( TEDecryptSet ) {
@@ -1853,10 +2202,10 @@ BOOST_AUTO_TEST_CASE( TEDecryptSet ) {
 
 
         std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares;
-        for ( size_t i = 0; i < numSigned; ++i ) {
+        for ( size_t i = 1; i < numSigned + 1; ++i ) {
             libBLS::algebra::G2Point group = libBLS::algebra::G2Point::random();
             libBLS::TEDecryptionShare share( group, i );
-            BOOST_REQUIRE( decrSet.addDecryptShare( share ) );
+            BOOST_REQUIRE( decrSet.addValidatedDecryptShare( share ) );
             shares.push_back( std::make_pair( group, i ) );
         }
 
@@ -1867,17 +2216,41 @@ BOOST_AUTO_TEST_CASE( TEDecryptSet ) {
         BOOST_REQUIRE( decrSet.canMerge() == false );
 
         std::vector< std::pair< libBLS::algebra::G2Point, size_t > > shares2 =
-            decrSet.getSharesRaw();
+            decrSet.getThresholdSharesRaw();
         for ( size_t i = 0; i < shares2.size(); ++i ) {
             BOOST_REQUIRE( std::find( shares.begin(), shares.end(), shares2[i] ) != shares.end() );
+        }
+    }
+
+    // The interpolation input is bounded to the threshold, even when more
+    // shares have been collected.
+    {
+        const size_t requiredSigners = 2;
+        const size_t totalSigners = 4;
+        libBLS::TEDecryptSet decrSet( requiredSigners, totalSigners );
+
+        decrSet.addValidatedDecryptShare(
+            libBLS::TEDecryptionShare( libBLS::algebra::G2Point::random(), 4 ) );
+        decrSet.addValidatedDecryptShare(
+            libBLS::TEDecryptionShare( libBLS::algebra::G2Point::random(), 2 ) );
+        decrSet.addValidatedDecryptShare(
+            libBLS::TEDecryptionShare( libBLS::algebra::G2Point::random(), 3 ) );
+        decrSet.addValidatedDecryptShare(
+            libBLS::TEDecryptionShare( libBLS::algebra::G2Point::random(), 1 ) );
+
+        const auto rawShares = decrSet.getThresholdSharesRaw();
+        BOOST_REQUIRE_EQUAL( rawShares.size(), requiredSigners );
+        for ( const auto& rawShare : rawShares ) {
+            BOOST_REQUIRE( rawShare.second >= size_t{ 1 } );
+            BOOST_REQUIRE( rawShare.second <= totalSigners );
         }
     }
 
     // removing
     {
         libBLS::TEDecryptSet decrSet( 1, 1 );
-        libBLS::TEDecryptionShare decr_share( libBLS::algebra::G2Point::random(), 0 );
-        decrSet.addDecryptShare( decr_share );
+        libBLS::TEDecryptionShare decr_share( libBLS::algebra::G2Point::random(), 1 );
+        decrSet.addValidatedDecryptShare( decr_share );
         BOOST_REQUIRE( decrSet.size() == 1 );
         decrSet.removeDecryptShare( decr_share );
         BOOST_REQUIRE( decrSet.size() == 0 );
@@ -1887,7 +2260,7 @@ BOOST_AUTO_TEST_CASE( TEDecryptSet ) {
     // Exceptions
     {
         // already merged
-        BOOST_REQUIRE_THROW( decrSet.addDecryptShare( libBLS::TEDecryptionShare(
+        BOOST_REQUIRE_THROW( decrSet.addValidatedDecryptShare( libBLS::TEDecryptionShare(
                                  libBLS::algebra::G2Point::random(), 1 ) ),
             libBLS::ThresholdUtils::IncorrectInput );
     }
@@ -1901,16 +2274,16 @@ BOOST_AUTO_TEST_CASE( TEDecryptSet ) {
         libBLS::TEDecryptSet decrSet( 1, 1 );
         libBLS::TEDecryptionShare decr_share( libBLS::algebra::G2Point::random(), 2 );
         BOOST_REQUIRE_THROW(
-            decrSet.addDecryptShare( decr_share ), libBLS::ThresholdUtils::IncorrectInput );
+            decrSet.addValidatedDecryptShare( decr_share ), libBLS::ThresholdUtils::IncorrectInput );
     }
     {
         // set is full
         libBLS::TEDecryptSet decrSet( 1, 1 );
-        libBLS::TEDecryptionShare decr_share( libBLS::algebra::G2Point::random(), 0 );
-        decrSet.addDecryptShare( decr_share );
+        libBLS::TEDecryptionShare decr_share( libBLS::algebra::G2Point::random(), 1 );
+        decrSet.addValidatedDecryptShare( decr_share );
         libBLS::TEDecryptionShare decr_share2( libBLS::algebra::G2Point::random(), 1 );
         BOOST_REQUIRE_THROW(
-            decrSet.addDecryptShare( decr_share2 ), libBLS::ThresholdUtils::IncorrectInput );
+            decrSet.addValidatedDecryptShare( decr_share2 ), libBLS::ThresholdUtils::IncorrectInput );
     }
 }
 
@@ -2179,7 +2552,8 @@ randomTamperDecryptionShares( size_t totalSigners, libBLS::CipheredKey cipheredK
             const auto rnd = rand_gen() % 10;
             if ( rnd < 3 ) {
                 // tamper decryption share
-                decrShare = libBLS::TEDecryptionShare( libBLS::algebra::G2Point::random(), j );
+                decrShare =
+                    libBLS::TEDecryptionShare( libBLS::algebra::G2Point::random(), j + 1 );
                 tampered[j] = true;
             }
         }
@@ -2341,19 +2715,19 @@ BOOST_AUTO_TEST_CASE( CombineShares ) {
                     libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[j] );
                 libBLS::ThresholdEncryption::validateDecryptionShare(
                     cipheredKey, decrShare, keys.publicKeys[j] );
-                alreadyMerged.addDecryptShare( decrShare );
+                alreadyMerged.addValidatedDecryptShare( decrShare );
 
                 // only add the shares. Do not merge them - used for exception checking below
-                readyToMerge.addDecryptShare( decrShare );
+                readyToMerge.addValidatedDecryptShare( decrShare );
 
                 // only add one share to notEnoughShares  - used for exception checking below
                 if ( notEnoughShares.size() < requiredSigners - 1 ) {
-                    notEnoughShares.addDecryptShare( decrShare );
+                    notEnoughShares.addValidatedDecryptShare( decrShare );
                 }
             }
 
             libBLS::AES256Key key_deciphered =
-                libBLS::ThresholdEncryption::combineShares( cipheredKey, alreadyMerged );
+                libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, alreadyMerged );
             libBLS::ThresholdEncryption::validateCombinedDecryption(
                 cipher, key_deciphered, keys.commonPublic );
             std::vector< uint8_t > decryptedData =
@@ -2370,14 +2744,14 @@ BOOST_AUTO_TEST_CASE( CombineShares ) {
         for ( const auto& cipheredKey : cipher.getKeys() )
             // already merged set
             BOOST_REQUIRE_THROW(
-                libBLS::ThresholdEncryption::combineShares( cipheredKey, alreadyMerged ),
+                libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, alreadyMerged ),
                 libBLS::ThresholdUtils::IsNotWellFormed );
     }
     {
         for ( const auto& cipheredKey : cipher.getKeys() )
             // not enough shares
             BOOST_REQUIRE_THROW(
-                libBLS::ThresholdEncryption::combineShares( cipheredKey, notEnoughShares ),
+                libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, notEnoughShares ),
                 libBLS::ThresholdUtils::IsNotWellFormed );
     }
 }
@@ -2408,11 +2782,11 @@ BOOST_AUTO_TEST_CASE( ValidateCombinedDecryptionAndDecrypt ) {
                     libBLS::ThresholdEncryption::partialDecrypt( cipheredKey, keys.secretKeys[j] );
                 libBLS::ThresholdEncryption::validateDecryptionShare(
                     cipheredKey, decrShare, keys.publicKeys[j] );
-                decryptSet.addDecryptShare( decrShare );
+                decryptSet.addValidatedDecryptShare( decrShare );
             }
 
             // validate both combined decryption and decryption
-            keyDeciphered = libBLS::ThresholdEncryption::combineShares( cipheredKey, decryptSet );
+            keyDeciphered = libBLS::ThresholdEncryption::combineValidatedShares( cipheredKey, decryptSet );
             libBLS::ThresholdEncryption::validateCombinedDecryption(
                 cipher, keyDeciphered, keys.commonPublic );
             std::vector< uint8_t > decryptedData =

@@ -29,6 +29,37 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 namespace libBLS {
 
+namespace {
+
+Ciphertext encryptInternal( const std::vector< uint8_t >& _message,
+    const std::vector< TEPublicKey >& _commonPublic, const EncryptMetaData& _metaData,
+    const std::optional< Seed256 >& _seed = std::nullopt ) {
+    if ( _commonPublic.empty() || _commonPublic.size() > 2 ) {
+        throw ThresholdUtils::IncorrectInput(
+            "Must provide exactly 1 or 2 public keys for encryption" );
+    }
+
+    std::vector< algebra::G2Point > rawPublicKeys;
+    rawPublicKeys.reserve( _commonPublic.size() );
+    for ( const auto& publicKey : _commonPublic ) {
+        publicKey.validate();
+        rawPublicKeys.push_back( publicKey.getPublicKeyRaw() );
+    }
+
+    CipherResult cipher = _seed ?
+        TE::encryptWithAESDeterministic( _message, rawPublicKeys, *_seed, _metaData ) :
+        TE::encryptWithAES( _message, rawPublicKeys, _metaData );
+
+    if ( !cipher.ciphertext ) {
+        throw ThresholdUtils::IsNotWellFormed( "ciphertext is null" );
+    }
+
+    cipher.ciphertext->validate();
+    return *cipher.ciphertext;
+}
+
+}  // namespace
+
 std::vector< uint8_t > ThresholdEncryption::mockupEncrypt(
     const std::vector< uint8_t >& _message ) {
     if ( _message.empty() ) {
@@ -110,30 +141,27 @@ Ciphertext ThresholdEncryption::encrypt( const std::vector< uint8_t >& _message,
 
 Ciphertext ThresholdEncryption::encrypt( const std::vector< uint8_t >& _message,
     const std::vector< TEPublicKey >& _commonPublic, const EncryptMetaData& _metaData ) {
-    if ( _commonPublic.size() == 0 || _commonPublic.size() > 2 )
-        throw ThresholdUtils::IncorrectInput(
-            "Must provide exactly 1 or 2 public keys for encryption" );
+    return encryptInternal( _message, _commonPublic, _metaData );
+}
 
-    std::vector< algebra::G2Point > rawPublicKeys;
-    for ( const auto& publicKey : _commonPublic ) {
-        publicKey.validate();
-        rawPublicKeys.push_back( publicKey.getPublicKeyRaw() );
-    }
+Ciphertext ThresholdEncryption::encryptDeterministic( const std::vector< uint8_t >& _message,
+    const TEPublicKey& _commonPublic, const Seed256& _seed,
+    const EncryptMetaData& _metaData ) {
+    return encryptDeterministic(
+        _message, std::vector< TEPublicKey >{ _commonPublic }, _seed, _metaData );
+}
 
-    CipherResult cipher = TE::encryptWithAES( _message, rawPublicKeys, _metaData );
-
-    if ( !cipher.ciphertext ) {
-        throw ThresholdUtils::IsNotWellFormed( "ciphertext is null" );
-    }
-
-    cipher.ciphertext->validate();
-
-    return *cipher.ciphertext;
+Ciphertext ThresholdEncryption::encryptDeterministic(
+    const std::vector< uint8_t >& _message, const std::vector< TEPublicKey >& _commonPublic,
+    const Seed256& _seed, const EncryptMetaData& _metaData ) {
+    return encryptInternal( _message, _commonPublic, _metaData, _seed );
 }
 
 void ThresholdEncryption::validateEncryption(
     const CipheredKey& _ciphertext, const std::vector< uint8_t >* _associatedDataTE ) {
-    const auto& [U, V, W] = _ciphertext;
+    const auto& U = _ciphertext.U;
+    const auto& V = _ciphertext.V;
+    const auto& W = _ciphertext.W;
 
     algebra::G1Point H = TE::HashToGroup( U, V, _associatedDataTE );
 
@@ -172,7 +200,9 @@ std::vector< bool > ThresholdEncryption::validateEncryptionBatch(
     }
 
     for ( size_t i = 0; i < size; ++i ) {
-        const auto& [U, V, W] = _ciphertexts.at( i );
+        const auto& U = _ciphertexts.at( i ).U;
+        const auto& V = _ciphertexts.at( i ).V;
+        const auto& W = _ciphertexts.at( i ).W;
         // Apply AAD only if provided and within AAD vector bounds
         const std::vector< uint8_t >* aadPtr =
             ( _associatedDataTE && i < _associatedDataTE->size() ) ? &_associatedDataTE->at( i ) :
@@ -333,7 +363,7 @@ std::vector< bool > ThresholdEncryption::validateDecryptionSharesBatchParallel(
 }
 
 
-AES256Key ThresholdEncryption::combineShares(
+AES256Key ThresholdEncryption::combineValidatedShares(
     const CipheredKey& _cipheredKey, TEDecryptSet& _decryptionSet ) {
     switch ( _decryptionSet.getMergeStatus() ) {
     case TEDecryptSet::MergeStatus::READY_TO_MERGE:
@@ -348,7 +378,8 @@ AES256Key ThresholdEncryption::combineShares(
 
     TE te( _decryptionSet );
 
-    auto secret = te.CombineSharesIntoAESKey( _decryptionSet.getSharesRaw() );
+    auto secret = te.CombineSharesIntoAESKey(
+        _decryptionSet.getThresholdSharesRaw(), _cipheredKey.getVersion() );
 
     AES256Key aesKey;
 
@@ -361,7 +392,7 @@ AES256Key ThresholdEncryption::combineShares(
     return aesKey;
 }
 
-std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatch(
+std::vector< std::optional< AES256Key > > ThresholdEncryption::combineValidatedSharesBatch(
     std::vector< CipheredKey >& _cipheredKeys, std::vector< TEDecryptSet >& _decryptionSets ) {
     if ( _cipheredKeys.empty() ) {
         return {};
@@ -377,7 +408,7 @@ std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatc
     for ( size_t i = 0; i < _cipheredKeys.size(); ++i ) {
         try {
             results.push_back(
-                ThresholdEncryption::combineShares( _cipheredKeys[i], _decryptionSets[i] ) );
+                ThresholdEncryption::combineValidatedShares( _cipheredKeys[i], _decryptionSets[i] ) );
         } catch ( const std::exception& e ) {
             std::cerr << "Error combining shares for ciphertext " << i << ": " << e.what() << "\n";
             results.push_back( std::nullopt );
@@ -387,7 +418,7 @@ std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatc
     return results;
 }
 
-std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatchParallel(
+std::vector< std::optional< AES256Key > > ThresholdEncryption::combineValidatedSharesBatchParallel(
     std::vector< CipheredKey >& _cipheredKeys, std::vector< TEDecryptSet >& _decryptionSets ) {
     if ( _cipheredKeys.empty() ) {
         return {};
@@ -403,7 +434,7 @@ std::vector< std::optional< AES256Key > > ThresholdEncryption::combineSharesBatc
             subset.reserve( endIdx - startIdx );
             for ( size_t j = startIdx; j < endIdx; ++j ) {
                 try {
-                    subset.push_back( ThresholdEncryption::combineShares(
+                    subset.push_back( ThresholdEncryption::combineValidatedShares(
                         _cipheredKeys[j], _decryptionSets[j] ) );
                 } catch ( const std::exception& e ) {
                     std::cerr << "Error combining shares for ciphertext " << j << ": " << e.what()
@@ -534,15 +565,12 @@ void ThresholdEncryption::validateDecipheredMessage(
     algebra::FrScalar r = algebra::FrScalar::fromBytes( secret );
     algebra::G2Point Y = r * _publicKey.getPublicKeyRaw();
     std::string hash = TE::Hash( Y );
-
-    if ( hash.size() < AES_256_KEY_SIZE_BYTES ) {
-        throw ThresholdUtils::IsNotWellFormed( "Hash output size is less than AES key size" );
-    }
+    AES256Key mask = TE::deriveMaskFromHash( hash, _ciphertext.getVersion() );
 
     // Compute V xor G(r'Y) to get M (AES key)
     AES256Key decipheredAesKey;
     for ( size_t i = 0; i < AES_256_KEY_SIZE_BYTES; ++i ) {
-        decipheredAesKey[i] = cipheredAesKey[i] ^ static_cast< uint8_t >( hash[i] );
+        decipheredAesKey[i] = cipheredAesKey[i] ^ mask[i];
     }
 
     // compare the aes keys

@@ -159,6 +159,22 @@ BOOST_AUTO_TEST_CASE( FrScalar_Inverse ) {
         "3126891838834182174606629392179610726935480628630862049099743455225115499374" );
 }
 
+BOOST_AUTO_TEST_CASE( FrScalar_Inverse_Zero ) {
+    BOOST_REQUIRE_THROW( FrScalar::zero().inverse(), libBLS::ThresholdUtils::IncorrectInput );
+}
+
+BOOST_AUTO_TEST_CASE( LagrangeCoeffs_Zero_Index ) {
+    const std::vector< size_t > indexes = { 0, 1, 2 };
+
+    try {
+        lagrangeCoeffs( indexes, indexes.size() );
+        BOOST_FAIL( "Zero signer index must be rejected" );
+    } catch ( const libBLS::ThresholdUtils::IncorrectInput& exception ) {
+        const std::string message = exception.what();
+        BOOST_CHECK_NE( message.find( "signer index 0" ), std::string::npos );
+    }
+}
+
 BOOST_AUTO_TEST_CASE( FrScalar_Pow_Basic ) {
     FrScalar three( 3 );
     auto p5 = power( three, 5 );

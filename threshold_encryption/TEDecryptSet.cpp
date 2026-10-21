@@ -23,6 +23,7 @@ along with libBLS. If not, see <https://www.gnu.org/licenses/>.
 
 #include "TEDecryptSet.h"
 #include "TEBase.h"
+#include <algorithm>
 #include <utility>
 
 #include <tools/utils.h>
@@ -32,13 +33,15 @@ namespace libBLS {
 TEDecryptSet::TEDecryptSet( size_t _requiredSigners, size_t _totalSigners )
     : TEBase( _requiredSigners, _totalSigners ), mergeStatus( MergeStatus::NOT_ENOUGH_SHARES ) {}
 
-bool TEDecryptSet::addDecryptShare( const TEDecryptionShare& _share ) {
+bool TEDecryptSet::addValidatedDecryptShare( const TEDecryptionShare& _share ) {
     if ( mergeStatus == MergeStatus::ALREADY_MERGED ) {
         throw ThresholdUtils::IncorrectInput( "Already Merged" );
     }
 
-    if ( _share.getSignerIndex() > totalSigners ) {
-        throw ThresholdUtils::IncorrectInput( "Signer index is greater than total signers" );
+    const size_t signerIndex = _share.getSignerIndex();
+    if ( signerIndex == 0 || signerIndex > totalSigners ) {
+        throw ThresholdUtils::IncorrectInput(
+            "Signer index must be between 1 and total signers" );
     }
 
     if ( decrypts.size() == totalSigners ) {
@@ -87,10 +90,14 @@ TEDecryptSet::MergeStatus TEDecryptSet::getMergeStatus() const {
 }
 
 
-std::vector< std::pair< algebra::G2Point, size_t > > TEDecryptSet::getSharesRaw() const {
+std::vector< std::pair< algebra::G2Point, size_t > > TEDecryptSet::getThresholdSharesRaw() const {
     std::vector< std::pair< algebra::G2Point, size_t > > decrypted;
-    for ( auto&& share : decrypts ) {
-        decrypted.push_back( share );
+    decrypted.reserve( std::min( requiredSigners, decrypts.size() ) );
+    for ( const auto& share : decrypts ) {
+        if ( decrypted.size() == requiredSigners ) {
+            break;
+        }
+        decrypted.emplace_back( share );
     }
 
     return decrypted;
